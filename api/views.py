@@ -11,6 +11,7 @@ import requests
 import json
 
 # To DO: Create GET, POST, PUT general methods.
+
 stripe.api_key = settings.STRIPE_SECRET_KEY
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
