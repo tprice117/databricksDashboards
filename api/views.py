@@ -1,4 +1,5 @@
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import render
@@ -17,447 +18,124 @@ baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
 API_KEY = '556b608df7434e42464e753f4313254019e2c1f328da783b541505'
 
-@api_view(["GET","POST","PUT"])
-def Task(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "get_all_tasks"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+def call_TG_API(url, payload):
+  attempt_num = 0  # keep track of how many times we've retried
+  while attempt_num < MAX_RETRIES:
+      response = requests.post(url, data = payload)
+      if response.status_code == 200:
+          data = response.json()
+          return Response(data, status=status.HTTP_200_OK)
+      else:
+          attempt_num += 1
+          # You can probably use a logger to log the error here
+          time.sleep(5)  # Wait for 5 seconds before re-trying
+  return Response({"error": "Request failed"}, status=r.status_code)
 
-@api_view(["GET","POST","PUT"])
-def Agent(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "get_all_fleets"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+def get(endpoint):
+  url =  baseUrl + endpoint
+  payload = {"api_key": API_KEY}
+  return call_TG_API(url, payload)
 
-@api_view(["GET","POST","PUT"])
-def Team(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "view_all_team_only"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+def post(endpoint, body):
+  url =  baseUrl + endpoint
+  payload = {"api_key": API_KEY} | body
+  return call_TG_API(url, payload)
 
-@api_view(["GET","POST","PUT"])
-def Manager(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "view_all_manager"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+def put(endpoint, body):
+  url =  baseUrl + endpoint
+  payload = {"api_key": API_KEY} | body
+  return call_TG_API(url, payload)
 
-@api_view(["GET","POST","PUT"])
-def Customer(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "get_all_customers"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+def delete(endpoint, body):
+  url =  baseUrl + endpoint
+  payload = {"api_key": API_KEY} | body
+  return call_TG_API(url, payload)
 
-@api_view(["GET","POST","PUT"])
-def User(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "get_all_fleets"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(["GET","POST","PUT"])
-def Merchant(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "get_all_fleets"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(["GET","POST","PUT"])
-def Mission(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "get_mission_list"
-        payload = {  
-          "api_key": API_KEY,
-          "start_date":"1900-01-01",
-          "end_date":"2999-12-31"
-        }
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+class TaskView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):     
+      return get("get_all_tasks")
 
-@api_view(["GET","POST","PUT"])
-def Geofence(request):
-  if request.method == "GET":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "get_all_fleets"
-        payload = {"api_key": API_KEY}
-        response = requests.post(url, data = payload)
-        if response.status_code == 200:
-            data = response.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "POST":
-    attempt_num = 0  # keep track of how many times we've retried
-    while attempt_num < MAX_RETRIES:
-        url =  baseUrl + "add_agent"
-        payload = BASE_PAYLOAD.extend({
-          "email": "testAPIemail@test.com"
-        })
-        response = requests.post(url, data = payload)
-        if r.status_code == 200:
-            data = r.json()
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            attempt_num += 1
-            # You can probably use a logger to log the error here
-            time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
-  elif request.method == "PUT":
-      attempt_num = 0  # keep track of how many times we've retried
-      while attempt_num < MAX_RETRIES:
-          url = 'www.apiexternal.com/endpoint'
-          payload = {'Token':'My_Secret_Token','product':'product_select_in_form','price':'price_selected_in_form'}
-          response = requests.post(url, data = payload)
-          if r.status_code == 200:
-              data = r.json()
-              return Response(data, status=status.HTTP_200_OK)
-          else:
-              attempt_num += 1
-              # You can probably use a logger to log the error here
-              time.sleep(5)  # Wait for 5 seconds before re-trying
-      return Response({"error": "Request failed"}, status=r.status_code)
-  else:
-    return Response({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs):
+      return post("create_task", request.data)
+
+    def put(self, request, pk=None, *args, **kwargs):
+      player_object = self.get_object(pk or request.query_params.get('id'))
+      return put("edit_task", request.data)
+    
+    def delete(self, request, pk=None, *args, **kwargs):
+      return delete("delete_task", {"job_id": pk or request.query_params.get('id')})
+
+class AgentView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):     
+      return get("get_all_fleets")
+
+    def post(self, request, *args, **kwargs):
+      return post("add_agent", request.data)
+
+    def put(self, request, pk=None, *args, **kwargs):
+      player_object = self.get_object(pk or request.query_params.get('id'))
+      return put("edit_agent", request.data)
+    
+    def delete(self, request, pk=None, *args, **kwargs):
+      return delete("delete_fleet_account", {"team_id": pk or request.query_params.get('id')})
+
+class TeamView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):     
+      return get("view_all_team_only")
+
+    def post(self, request, *args, **kwargs):
+      return post("create_team", request.data)
+
+    def put(self, request, pk=None, *args, **kwargs):
+        player_object = self.get_object(pk or request.query_params.get('id'))
+        return put("update_team", request.data)
+    
+    def delete(self, request, pk=None, *args, **kwargs):
+      return delete("delete_team", {"team_id": pk or request.query_params.get('id')})
+
+class ManagerView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):     
+      return get("view_all_manager")
+
+    def post(self, request, *args, **kwargs):
+      return post("add_manager", request.data)
+    
+    def delete(self, request, pk=None, *args, **kwargs):
+      return delete("delete_manager", {"dispatcher_id": pk or request.query_params.get('id')})
+
+class CustomerView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):     
+      return get("get_all_customers")
+
+    def post(self, request, *args, **kwargs):
+      return post("customer/add", request.data)
+
+    def put(self, request, pk=None, *args, **kwargs):
+        player_object = self.get_object(pk or request.query_params.get('id'))
+        return put("customer/edit", request.data)
+    
+    def delete(self, request, pk=None, *args, **kwargs):
+      return delete("delete_customer", {"customer_id": pk or request.query_params.get('id')})
+
+class MerchantView(APIView):
+    def post(self, request, *args, **kwargs):
+      return post("merchant/sign_up", request.data)
+
+    def put(self, request, pk=None, *args, **kwargs):
+        player_object = self.get_object(pk or request.query_params.get('id'))
+        return put("merchant/edit_merchant", request.data)
+    
+    def delete(self, request, pk=None, *args, **kwargs):
+      return delete("merchant/delete", {"merchant_id": pk or request.query_params.get('id')})
+
+class MissionView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):     
+      return get("get_mission_list")
+
+    def post(self, request, *args, **kwargs):
+      return post("create_mission_task", request.data)
+    
+    def delete(self, request, pk=None, *args, **kwargs):
+      return delete("delete_mission", {"mission_id": pk or request.query_params.get('id')})
