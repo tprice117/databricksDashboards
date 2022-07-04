@@ -54,8 +54,11 @@ def delete(endpoint, body):
 
 
 class TaskView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):     
-      return get("get_all_tasks")
+    def get(self, request, pk=None, *args, **kwargs):  
+      if pk or request.query_params.get('id'):   
+        return post("get_job_details_by_order_id", {"order_id": pk or request.query_params.get('id')})
+      else:
+        return get("get_all_tasks")
 
     def post(self, request, *args, **kwargs):
       return post("create_task", request.data)
@@ -68,8 +71,11 @@ class TaskView(APIView):
       return delete("delete_task", {"job_id": pk or request.query_params.get('id')})
 
 class AgentView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):     
-      return get("get_all_fleets")
+    def get(self, request, pk=None, *args, **kwargs):   
+      if pk or request.query_params.get('id'):   
+        return post("view_fleet_profile", {"fleet_id": pk or request.query_params.get('id')})
+      else:  
+        return get("get_all_fleets")
 
     def post(self, request, *args, **kwargs):
       return post("add_agent", request.data)
@@ -83,7 +89,10 @@ class AgentView(APIView):
 
 class TeamView(APIView):
     def get(self, request, pk=None, *args, **kwargs):     
-      return get("view_all_team_only")
+      if pk or request.query_params.get('id'):   
+        return post("view_teams", {"team_id": pk or request.query_params.get('id')})
+      else:  
+        return get("view_all_team_only")
 
     def post(self, request, *args, **kwargs):
       return post("create_team", request.data)
@@ -107,10 +116,13 @@ class ManagerView(APIView):
 
 class CustomerView(APIView):
     def get(self, request, pk=None, *args, **kwargs):     
-      return get("get_all_customers")
+      if pk or request.query_params.get('id'):   
+        return post("view_customer_profile", {"customer_id": pk or request.query_params.get('id')})
+      else:       
+        return get("get_all_customers")
 
     def post(self, request, *args, **kwargs):
-      return post("customer/add", request.data)
+      return post("customer/add", request.data | {"user_type": 0})
 
     def put(self, request, pk=None, *args, **kwargs):
         player_object = self.get_object(pk or request.query_params.get('id'))
