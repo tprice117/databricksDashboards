@@ -1,5 +1,20 @@
-# from rest_framework import serializers
-# from .models import *
+from rest_framework import serializers
+from .models import *
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        exclude = ["id"] #"__all__"
+
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        exclude = ["id"] #"__all__"
+
+class OpportunitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Opportunity
+        exclude = ["id"] #"__all__"
 
 # class ContactSerializer(serializers.ModelSerializer):
 #     class Meta:

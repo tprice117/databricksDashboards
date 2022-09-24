@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'api'
+    'api',
+    'salesforce',
 ]
 
 MIDDLEWARE = [
@@ -81,11 +82,23 @@ DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
 # if DEVELOPMENT_MODE is True:
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase',
+    },
+    'salesforce': {
+        'ENGINE': 'salesforce.backend',
+        'CONSUMER_KEY': '3MVG9kBt168mda_.s4LfVR2MlrlwgM.salKbMMFI_XRjzg95RD_KWDO_fHvP8TMVmMIgY5pk8yVTIXjt10B_k',                # 'client_id'   in OAuth2 terminology
+        'CONSUMER_SECRET': '617744F8E4B8D21BAF4E496F1650268B345D390557F9D8FD95EFBE6BDBE8187E',             # 'client_secret'
+        'USER': 'thayes@trydownstream.io',
+        'PASSWORD': 'LongLiveTrashGurus1!',
+        'HOST': 'https://login.salesforce.com',
     }
 }
+
+DATABASE_ROUTERS = [
+    "salesforce.router.ModelRouter"
+]
 # elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
 #     if os.getenv("DATABASE_URL", None) is None:
 #         raise Exception("DATABASE_URL environment variable not defined")
@@ -140,4 +153,4 @@ CORS_ORIGIN_WHITELIST = [
      'http://localhost:3000'
 ]
 
-STRIPE_SECRET_KEY = "sk_test_k7kzz0R6mrRogFPs6OVrpgrB00UmEjcUtf"
+SALESFORCE_QUERY_TIMEOUT = (20, 20)  # default (connect timeout, data timeout)

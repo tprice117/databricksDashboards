@@ -13,7 +13,18 @@ import json
 
 # To DO: Create GET, POST, PUT general methods.
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+class AccountViewSet(viewsets.ModelViewSet):
+    queryset = Account.objects.all()
+    serializer_class = AccountSerializer
+
+class OpportunityViewSet(viewsets.ModelViewSet):
+    queryset = Opportunity.objects.all()
+    serializer_class = OpportunitySerializer
+
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
 API_KEY = '556b608df7434e42464e753f4313254019e2c1f328da783b541505'
@@ -50,7 +61,6 @@ def delete(endpoint, body):
   url =  baseUrl + endpoint
   payload = {"api_key": API_KEY} | body
   return call_TG_API(url, payload)
-
 
 
 class TaskView(APIView):

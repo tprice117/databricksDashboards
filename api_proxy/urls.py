@@ -4,10 +4,12 @@ from rest_framework import routers
 from api import views
 
 router = routers.DefaultRouter()
-# router.register(r'scrappers', views.ScrapperView, 'api')
-# router.register(r'agents', views.Agents, 'api')
+router.register(r'orders', views.OrderViewSet, 'api')
+router.register(r'accounts', views.AccountViewSet, 'api')
+router.register(r'opportunities', views.OpportunityViewSet, 'api')
 
 urlpatterns = [
+    path('api/', include(router.urls)),
     path('admin/', admin.site.urls),
     path('task/<int:pk>', views.TaskView.as_view()),
     path('task/', views.TaskView.as_view()),
