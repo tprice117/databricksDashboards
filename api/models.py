@@ -30,7 +30,6 @@ class AcceptedEventRelation(models.Model):
 
 
 class Account(models.Model):
-    # id = models.TextField(primary_key=True)
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     master_record = models.ForeignKey('self', models.DO_NOTHING, db_column='MasterRecordId', related_name='account_masterrecord_set', verbose_name='Master Record ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Account Name')
@@ -8367,7 +8366,6 @@ class OpenActivity(models.Model):
 
 
 class Opportunity(models.Model):
-    # id = models.TextField(primary_key=True)
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', verbose_name='Account ID', blank=True, null=True)  # Master Detail Relationship *
     name = models.CharField(db_column='Name', max_length=120)
@@ -8645,7 +8643,6 @@ class OpportunityStage(models.Model):
 
 
 class Order(models.Model):
-    # id = models.TextField(primary_key=True)
     owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
     contract = models.ForeignKey(Contract, models.DO_NOTHING, db_column='ContractId', verbose_name='Contract ID', blank=True, null=True)  # Master Detail Relationship *
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', verbose_name='Account ID', blank=True, null=True)  # Master Detail Relationship *
