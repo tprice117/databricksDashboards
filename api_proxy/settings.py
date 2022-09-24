@@ -147,10 +147,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# DEFAULT_AUTO_FIELD = 'django.db.models.TextField'
 
 CORS_ORIGIN_WHITELIST = [
      'http://localhost:3000'
 ]
 
 SALESFORCE_QUERY_TIMEOUT = (20, 20)  # default (connect timeout, data timeout)
+SF_PK="id"

@@ -2,18 +2,21 @@ from rest_framework import serializers
 from .models import *
 
 class OrderSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
     class Meta:
         model = Order
         # exclude = ["id"]
         fields = "__all__"
 
 class AccountSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
     class Meta:
         model = Account
         # exclude = ["id"] 
         fields = "__all__"
 
 class OpportunitySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
     class Meta:
         model = Opportunity
         # exclude = ["id"] 
