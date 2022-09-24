@@ -18,7 +18,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
 class AccountViewSet(viewsets.ModelViewSet):
-    queryset = Account.objects.all()
+    queryset = Account.objects.filter(type__in=["Customer", "Partner"])
     serializer_class = AccountSerializer
 
 class OpportunityViewSet(viewsets.ModelViewSet):
