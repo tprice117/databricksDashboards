@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'salesforce',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -152,6 +153,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 CORS_ORIGIN_WHITELIST = [
      'http://localhost:3000'
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'firebase_auth.firebase_authentication.FirebaseAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}
 
 SALESFORCE_QUERY_TIMEOUT = (20, 20)  # default (connect timeout, data timeout)
 SF_PK="id"
