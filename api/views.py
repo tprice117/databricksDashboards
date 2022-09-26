@@ -53,6 +53,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class MainProductFrequencyViewSet(viewsets.ModelViewSet):
     queryset = MainProductFrequency.objects.all()
     serializer_class = MainProductFrequencySerializer
+    filterset_fields = ["main_product"]  
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
