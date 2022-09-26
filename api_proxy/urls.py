@@ -12,6 +12,7 @@ router.register(r'product-category-infos', views.ProductCategoryInfoViewSet, 'ap
 router.register(r'main-products', views.MainProductViewSet, 'api')
 router.register(r'main-product-infos', views.MainProductInfoViewSet, 'api')
 router.register(r'products', views.ProductViewSet, 'api')
+router.register(r'main-product-frequencies', views.MainProductFrequencyViewSet, 'api')
 
 urlpatterns = [
     path('api/', include(router.urls)),

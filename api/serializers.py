@@ -49,6 +49,12 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product2
         fields = "__all__"
 
+class MainProductFrequencySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductFrequency
+        fields = "__all__"
+
 # class ContactSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Contact
