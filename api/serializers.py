@@ -67,6 +67,18 @@ class PriceBookEntrySerializer(serializers.ModelSerializer):
         model = PricebookEntry
         fields = "__all__"
 
+class MainProductAddOnSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductAddOn
+        fields = "__all__"
+
+class MainProductAddOnChoiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductAddOnChoice
+        fields = "__all__"
+
 # class ContactSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Contact

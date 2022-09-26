@@ -15,6 +15,8 @@ router.register(r'products', views.ProductViewSet, 'api')
 router.register(r'main-product-frequencies', views.MainProductFrequencyViewSet, 'api')
 router.register(r'price-books', views.PriceBookViewSet, 'api')
 router.register(r'price-book-entries', views.PriceBookEntryViewSet, 'api')
+router.register(r'main-product-add-ons', views.MainProductAddOnViewSet, 'api')
+router.register(r'main-product-add-on-choices', views.MainProductAddOnChoiceViewSet, 'api')
 
 urlpatterns = [
     path('api/', include(router.urls)),

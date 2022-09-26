@@ -48,7 +48,7 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product2.objects.all()
     serializer_class = ProductSerializer
-    filterset_fields = ["service_provider"]   
+    filterset_fields = ["service_provider", "parent_product"]   
 
 class MainProductFrequencyViewSet(viewsets.ModelViewSet):
     queryset = MainProductFrequency.objects.all()
@@ -64,6 +64,15 @@ class PriceBookEntryViewSet(viewsets.ModelViewSet):
     queryset = PricebookEntry.objects.all()
     serializer_class = PriceBookEntrySerializer
     filterset_fields = ["pricebook2", "product2"]  
+
+class MainProductAddOnViewSet(viewsets.ModelViewSet):
+    queryset = MainProductAddOn.objects.all()
+    serializer_class = MainProductAddOnSerializer
+
+class MainProductAddOnChoiceViewSet(viewsets.ModelViewSet):
+    queryset = MainProductAddOnChoice.objects.all()
+    serializer_class = MainProductAddOnChoiceSerializer
+    
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
