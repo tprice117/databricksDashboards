@@ -26,6 +26,22 @@ class OpportunityViewSet(viewsets.ModelViewSet):
     queryset = Opportunity.objects.all()
     serializer_class = OpportunitySerializer
 
+class ProductCategoryViewSet(viewsets.ModelViewSet):
+    queryset = ProductCategory.objects.all()
+    serializer_class = ProductCategorySerializer
+
+class ProductCategoryInfoViewSet(viewsets.ModelViewSet):
+    queryset = ProductCategoryInfo.objects.all()
+    serializer_class = ProductCategoryInfoSerializer
+
+class MainProductViewSet(viewsets.ModelViewSet):
+    queryset = MainProduct.objects.all()
+    serializer_class = MainProductSerializer
+
+class MainProductInfoViewSet(viewsets.ModelViewSet):
+    queryset = MainProductInfo.objects.all()
+    serializer_class = MainProductInfoSerializer    
+
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
 API_KEY = '556b608df7434e42464e753f4313254019e2c1f328da783b541505'

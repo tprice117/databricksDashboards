@@ -5,21 +5,42 @@ class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = Order
-        # exclude = ["id"]
         fields = "__all__"
 
 class AccountSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = Account
-        # exclude = ["id"] 
         fields = "__all__"
 
 class OpportunitySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = Opportunity
-        # exclude = ["id"] 
+        fields = "__all__"
+
+class ProductCategorySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = ProductCategory
+        fields = "__all__"
+
+class ProductCategoryInfoSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = ProductCategoryInfo
+        fields = "__all__"
+
+class MainProductSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProduct
+        fields = "__all__"
+
+class MainProductInfoSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductInfo
         fields = "__all__"
 
 # class ContactSerializer(serializers.ModelSerializer):
