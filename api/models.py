@@ -7697,7 +7697,7 @@ class MainProductInfo(models.Model):
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    main_product = models.ForeignKey('MainProduct', models.DO_NOTHING, db_column='Main_Product__c', verbose_name='Main Product', blank=True, null=True)
+    main_product = models.ForeignKey('MainProduct', models.DO_NOTHING, db_column='Main_Product__c', verbose_name='Main Product', blank=True, null=True, related_name="main_product_infos")
     class Meta(models.Model.Meta):
         db_table = 'Main_Product_Info__c'
         verbose_name = 'Main Product Info'

@@ -45,6 +45,10 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductInfoSerializer
     filterset_fields = ["main_product"]    
 
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product2.objects.all()
+    serializer_class = ProductSerializer
+
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
 API_KEY = '556b608df7434e42464e753f4313254019e2c1f328da783b541505'

@@ -31,16 +31,23 @@ class ProductCategoryInfoSerializer(serializers.ModelSerializer):
         model = ProductCategoryInfo
         fields = "__all__"
 
-class MainProductSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = MainProduct
-        fields = "__all__"
-
 class MainProductInfoSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = MainProductInfo
+        fields = "__all__"
+
+class MainProductSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    main_product_infos = MainProductInfoSerializer(many=True)
+    class Meta:
+        model = MainProduct
+        fields = "__all__"
+
+class ProductSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = Product2
         fields = "__all__"
 
 # class ContactSerializer(serializers.ModelSerializer):

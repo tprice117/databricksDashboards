@@ -11,7 +11,7 @@ router.register(r'product-categories', views.ProductCategoryViewSet, 'api')
 router.register(r'product-category-infos', views.ProductCategoryInfoViewSet, 'api')
 router.register(r'main-products', views.MainProductViewSet, 'api')
 router.register(r'main-product-infos', views.MainProductInfoViewSet, 'api')
-
+router.register(r'products', views.ProductViewSet, 'api')
 
 urlpatterns = [
     path('api/', include(router.urls)),
