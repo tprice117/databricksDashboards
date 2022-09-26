@@ -38,6 +38,7 @@ class ProductCategoryInfoViewSet(viewsets.ModelViewSet):
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
+    filterset_fields = ["product_category"]
 
 class MainProductInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductInfo.objects.all()
