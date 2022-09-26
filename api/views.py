@@ -33,6 +33,7 @@ class ProductCategoryViewSet(viewsets.ModelViewSet):
 class ProductCategoryInfoViewSet(viewsets.ModelViewSet):
     queryset = ProductCategoryInfo.objects.all()
     serializer_class = ProductCategoryInfoSerializer
+    filterset_fields = ["product_category"]
 
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
@@ -40,7 +41,8 @@ class MainProductViewSet(viewsets.ModelViewSet):
 
 class MainProductInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductInfo.objects.all()
-    serializer_class = MainProductInfoSerializer    
+    serializer_class = MainProductInfoSerializer
+    filterset_fields = ["main_product"]    
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
