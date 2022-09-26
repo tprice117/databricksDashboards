@@ -39,7 +39,6 @@ class MainProductInfoSerializer(serializers.ModelSerializer):
 
 class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    main_product_infos = MainProductInfoSerializer(many=True)
     class Meta:
         model = MainProduct
         fields = "__all__"
