@@ -13,6 +13,8 @@ router.register(r'main-products', views.MainProductViewSet, 'api')
 router.register(r'main-product-infos', views.MainProductInfoViewSet, 'api')
 router.register(r'products', views.ProductViewSet, 'api')
 router.register(r'main-product-frequencies', views.MainProductFrequencyViewSet, 'api')
+router.register(r'price-books', views.PriceBookViewSet, 'api')
+router.register(r'price-book-entries', views.PriceBookEntryViewSet, 'api')
 
 urlpatterns = [
     path('api/', include(router.urls)),

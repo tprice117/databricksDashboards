@@ -55,6 +55,16 @@ class MainProductFrequencyViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductFrequencySerializer
     filterset_fields = ["main_product"]  
 
+class PriceBookViewSet(viewsets.ModelViewSet):
+    queryset = Pricebook2.objects.all()
+    serializer_class = PriceBookSerializer
+    filterset_fields = ["is_standard"]  
+
+class PriceBookEntryViewSet(viewsets.ModelViewSet):
+    queryset = PricebookEntry.objects.all()
+    serializer_class = PriceBookEntrySerializer
+    filterset_fields = ["pricebook2", "product2"]  
+
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
 API_KEY = '556b608df7434e42464e753f4313254019e2c1f328da783b541505'
