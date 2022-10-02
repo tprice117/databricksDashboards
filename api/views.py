@@ -129,6 +129,7 @@ class TaskView(APIView):
       service_date = parse_datetime(request.data["job_delivery_datetime"])
       new_data = {
           **request.data, **{
+            "order_id": "test",
             "customer_username": account.name,
             "customer_phone": account.phone or "1234567890",
             "customer_address": account.billing_street,
