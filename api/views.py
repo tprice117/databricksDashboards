@@ -212,7 +212,8 @@ class CustomerView(APIView):
         **request.data, 
         **{
           "user_type": 0, 
-          "name": request.data["email"], 
+          "name": request.data["customer_email"], 
+          "email": request.data["customer_email"], 
           "phone": randint(1000000000, 9999999999) ,
           }
       }
