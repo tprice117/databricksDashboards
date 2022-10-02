@@ -68,6 +68,7 @@ class PriceBookEntryViewSet(viewsets.ModelViewSet):
 class MainProductAddOnViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOn.objects.all()
     serializer_class = MainProductAddOnSerializer
+    filterset_fields = ["main_product_frequency"] 
 
 class MainProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOnChoice.objects.all()
@@ -91,24 +92,25 @@ def call_TG_API(url, payload):
           time.sleep(5)  # Wait for 5 seconds before re-trying
   return Response({"error": "Request failed"}, status=r.status_code)
 
-def get(endpoint):
+def get(endpoint, body):
   url =  baseUrl + endpoint
-  payload = {"api_key": API_KEY}
+  # payload = {"api_key": API_KEY} | body
+  payload = dict({"api_key": API_KEY}.items() | body.items())
   return call_TG_API(url, payload)
 
 def post(endpoint, body):
   url =  baseUrl + endpoint
-  payload = {"api_key": API_KEY} | body
+  payload = dict({"api_key": API_KEY}.items() | body.items())
   return call_TG_API(url, payload)
 
 def put(endpoint, body):
   url =  baseUrl + endpoint
-  payload = {"api_key": API_KEY} | body
+  payload = dict({"api_key": API_KEY}.items() | body.items())
   return call_TG_API(url, payload)
 
 def delete(endpoint, body):
   url =  baseUrl + endpoint
-  payload = {"api_key": API_KEY} | body
+  payload = dict({"api_key": API_KEY}.items() | body.items())
   return call_TG_API(url, payload)
 
 
@@ -117,7 +119,7 @@ class TaskView(APIView):
       if pk or request.query_params.get('id'):   
         return post("get_job_details_by_order_id", {"order_id": pk or request.query_params.get('id')})
       else:
-        return get("get_all_tasks")
+        return get("get_all_tasks", {"job_type": 3})
 
     def post(self, request, *args, **kwargs):
       return post("create_task", request.data)
@@ -151,7 +153,7 @@ class TeamView(APIView):
       if pk or request.query_params.get('id'):   
         return post("view_teams", {"team_id": pk or request.query_params.get('id')})
       else:  
-        return get("view_all_team_only")
+        return get("view_all_team_only", {})
 
     def post(self, request, *args, **kwargs):
       return post("create_team", request.data)
