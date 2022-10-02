@@ -12,6 +12,7 @@ import requests
 import json
 from datetime import datetime
 from django.utils.dateparse import parse_datetime
+from random import randint
 
 # To DO: Create GET, POST, PUT general methods.
 
@@ -207,7 +208,15 @@ class CustomerView(APIView):
         return get("get_all_customers", {})
 
     def post(self, request, *args, **kwargs):
-      return post("customer/add", request.data | {"user_type": 0})
+      return post("customer/add", {
+        **request.data, 
+        **{
+          "user_type": 0, 
+          "name": request.data["email"], 
+          "phone": randint(1000000000, 9999999999) ,
+          }
+      }
+    )
 
     def put(self, request, pk=None, *args, **kwargs):
         player_object = self.get_object(pk or request.query_params.get('id'))
