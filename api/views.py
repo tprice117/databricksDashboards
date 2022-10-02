@@ -10,6 +10,8 @@ from django.conf import settings
 import stripe
 import requests
 import json
+from datetime import datetime
+from django.utils.dateparse import parse_datetime
 
 # To DO: Create GET, POST, PUT general methods.
 
@@ -77,7 +79,7 @@ class MainProductAddOnChoiceViewSet(viewsets.ModelViewSet):
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
-API_KEY = '556b608df7434e42464e753f4313254019e2c1f328da783b541505'
+API_KEY = '556b608df74309034553676f5d4425401ae6c2fc29db793a5b1501'
 
 def call_TG_API(url, payload):
   attempt_num = 0  # keep track of how many times we've retried
@@ -100,7 +102,8 @@ def get(endpoint, body):
 
 def post(endpoint, body):
   url =  baseUrl + endpoint
-  payload = dict({"api_key": API_KEY}.items() | body.items())
+  payload = {**{"api_key": API_KEY}, **body}
+  print(payload)
   return call_TG_API(url, payload)
 
 def put(endpoint, body):
@@ -119,10 +122,29 @@ class TaskView(APIView):
       if pk or request.query_params.get('id'):   
         return post("get_job_details_by_order_id", {"order_id": pk or request.query_params.get('id')})
       else:
-        return get("get_all_tasks", {"job_type": 3})
+        response = get("get_all_tasks", {"job_type": 3})
 
     def post(self, request, *args, **kwargs):
-      return post("create_task", request.data)
+      service_date = parse_datetime(request.data["job_delivery_datetime"])
+      new_data = {
+          **request.data, **{
+            "customer_username": account.name,
+            "customer_phone": account.phone or "1234567890",
+            "customer_address": account.billing_street,
+            "latitude": str(account.billing_latitude),
+            "longitude": str(account.billing_longitude),
+            "job_delivery_datetime": service_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "job_pickup_datetime": service_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "has_pickup": "0",
+            "has_delivery": "0",
+            "layout_type": "1",
+            "tracking_link": 1,
+            "auto_assignment": "0",
+            "notify": 1,
+          } 
+        }
+      print(new_data)
+      return post("create_task", new_data)
 
     def put(self, request, pk=None, *args, **kwargs):
       player_object = self.get_object(pk or request.query_params.get('id'))
