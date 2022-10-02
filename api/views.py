@@ -126,17 +126,17 @@ class TaskView(APIView):
 
     def post(self, request, *args, **kwargs):
       account = Account.objects.get(id=request.data["customer_comment"])
-      service_date = parse_datetime(request.data["job_delivery_datetime"])
+      job_delivery_datetime = parse_datetime(request.data["job_delivery_datetime"])
+      job_pickup_datetime = parse_datetime(request.data["job_pickup_datetime"])
       new_data = {
           **request.data, **{
-            "order_id": "test",
             "customer_username": account.name,
             "customer_phone": account.phone or "1234567890",
             "customer_address": account.billing_street,
             "latitude": str(account.billing_latitude),
             "longitude": str(account.billing_longitude),
-            "job_delivery_datetime": service_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "job_pickup_datetime": service_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             "has_pickup": "0",
             "has_delivery": "0",
             "layout_type": "1",
