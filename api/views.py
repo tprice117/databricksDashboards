@@ -125,6 +125,7 @@ class TaskView(APIView):
         response = get("get_all_tasks", {"job_type": 3})
 
     def post(self, request, *args, **kwargs):
+      account = Account.objects.get(id=request.data["customer_comment"])
       service_date = parse_datetime(request.data["job_delivery_datetime"])
       new_data = {
           **request.data, **{
