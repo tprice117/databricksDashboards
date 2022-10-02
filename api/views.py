@@ -122,14 +122,15 @@ class TaskView(APIView):
       if pk or request.query_params.get('id'):   
         return post("get_job_details_by_order_id", {"order_id": pk or request.query_params.get('id')})
       else:
-        response = get("get_all_tasks", {"job_type": 3})
+        return get("get_all_tasks", {"job_type": 3})
 
     def post(self, request, *args, **kwargs):
       account = Account.objects.get(id=request.data["customer_comment"])
       job_delivery_datetime = parse_datetime(request.data["job_delivery_datetime"])
       job_pickup_datetime = parse_datetime(request.data["job_pickup_datetime"])
       new_data = {
-          **request.data, **{
+          **request.data, 
+          **{
             "customer_username": account.name,
             "customer_phone": account.phone or "1234567890",
             "customer_address": account.billing_street,
@@ -145,7 +146,6 @@ class TaskView(APIView):
             "notify": 1,
           } 
         }
-      print(new_data)
       return post("create_task", new_data)
 
     def put(self, request, pk=None, *args, **kwargs):
@@ -204,7 +204,7 @@ class CustomerView(APIView):
       if pk or request.query_params.get('id'):   
         return post("view_customer_profile", {"customer_id": pk or request.query_params.get('id')})
       else:       
-        return get("get_all_customers")
+        return get("get_all_customers", {})
 
     def post(self, request, *args, **kwargs):
       return post("customer/add", request.data | {"user_type": 0})
