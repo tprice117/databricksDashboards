@@ -85,7 +85,7 @@ API_KEY = '556b608df74309034553676f5d4425401ae6c2fc29db793a5b1501'
 def call_TG_API(url, payload):
   attempt_num = 0  # keep track of how many times we've retried
   while attempt_num < MAX_RETRIES:
-      response = requests.post(url, data = payload)
+      response = requests.post(url, json=payload)
       if response.status_code == 200:
           data = response.json()
           return Response(data, status=status.HTTP_200_OK)
@@ -122,10 +122,16 @@ class TaskView(APIView):
     def get(self, request, pk=None, *args, **kwargs):  
       if pk or request.query_params.get('id'):   
         print("******8test*******")
-        return post("get_all_tasks", {"job_type": 3, "job_ids": [int(pk or request.query_params.get('id'))]})
+        test = []
+        test.append(int(pk or request.query_params.get('id')))
+        return post("get_job_details", {
+          "job_ids": test,
+          "include_task_history": 0
+        })
       if request.query_params.get('customer_id'):   
         print(request.query_params.get('customer_id'))
         print("******7test*******")
+        print({"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
         return post("get_all_tasks", {"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
       else:
         return get("get_all_tasks", {"job_type": 3, "is_pagination": 0})
