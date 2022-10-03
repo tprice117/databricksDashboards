@@ -121,9 +121,14 @@ def delete(endpoint, body):
 class TaskView(APIView):
     def get(self, request, pk=None, *args, **kwargs):  
       if pk or request.query_params.get('id'):   
-        return post("get_job_details_by_order_id", {"order_id": pk or request.query_params.get('id')})
+        print("******8test*******")
+        return post("get_all_tasks", {"job_type": 3, "job_ids": [int(pk or request.query_params.get('id'))]})
+      if request.query_params.get('customer_id'):   
+        print(request.query_params.get('customer_id'))
+        print("******7test*******")
+        return post("get_all_tasks", {"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
       else:
-        return get("get_all_tasks", {"job_type": 3})
+        return get("get_all_tasks", {"job_type": 3, "is_pagination": 0})
 
     def post(self, request, *args, **kwargs):
       account = Account.objects.get(id=request.data["customer_comment"])
@@ -132,11 +137,11 @@ class TaskView(APIView):
       new_data = {
           **request.data, 
           **{
-            "customer_username": account.name,
-            "customer_phone": account.phone or "1234567890",
-            "customer_address": account.billing_street,
-            "latitude": str(account.billing_latitude),
-            "longitude": str(account.billing_longitude),
+            # "customer_username": account.name,
+            # "customer_phone": account.phone or "1234567890",
+            # "customer_address": account.billing_street,
+            # "latitude": str(account.billing_latitude),
+            # "longitude": str(account.billing_longitude),
             "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             "has_pickup": "0",
