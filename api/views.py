@@ -208,15 +208,13 @@ class CustomerView(APIView):
         return get("get_all_customers", {})
 
     def post(self, request, *args, **kwargs):
-      return post("customer/add", {
-        **request.data, 
-        **{
+      return post("customer/add",
+        {
           "user_type": 0, 
           "name": request.data["customer_email"], 
           "email": request.data["customer_email"], 
-          "phone": randint(1000000000, 9999999999) ,
-          }
-      }
+          "phone": randint(1000000000, 9999999999),
+        }
     )
 
     def put(self, request, pk=None, *args, **kwargs):
