@@ -120,12 +120,12 @@ def delete(endpoint, body):
 
 class TaskView(APIView):
     def get(self, request, pk=None, *args, **kwargs):  
-      if pk or request.query_params.get('id'):   
+      if pk or request.query_params.get('job_id'):   
         print("******8test*******")
-        test = []
-        test.append(int(pk or request.query_params.get('id')))
+        ids = []
+        ids.append(int(pk or request.query_params.get('job_id')))
         return post("get_job_details", {
-          "job_ids": test,
+          "job_ids": ids,
           "include_task_history": 0
         })
       if request.query_params.get('customer_id'):   
