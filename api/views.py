@@ -178,7 +178,7 @@ class AgentView(APIView):
         response = get("get_all_fleets", {})
         new_list = []
         for data in response.data["data"]:
-          new_list.append({**data, **{"team_id": 0,}})
+          new_list.append({**data, **{"team_id": 0, "first_name": ""}})
         response.data["data"] = new_list
         return response
 
