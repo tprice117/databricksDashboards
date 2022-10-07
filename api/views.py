@@ -138,7 +138,7 @@ class TaskView(APIView):
         new_list = []
         for data in response.data["data"]:
           new_list.append({**data, **{"time_start": 0, "time_end": 0}})
-        response.data = new_list
+        response.data["data"] = new_list
         return response
 
     def post(self, request, *args, **kwargs):
