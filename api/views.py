@@ -120,18 +120,14 @@ def delete(endpoint, body):
 
 class TaskView(APIView):
     def get(self, request, pk=None, *args, **kwargs):  
-      if pk or request.query_params.get('job_id'):   
-        print("******8test*******")
+      if pk or request.query_params.get('job_id'):
         ids = []
         ids.append(int(pk or request.query_params.get('job_id')))
         return post("get_job_details", {
           "job_ids": ids,
           "include_task_history": 0
         })
-      if request.query_params.get('customer_id'):   
-        print(request.query_params.get('customer_id'))
-        print("******7test*******")
-        print({"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
+      if request.query_params.get('customer_id'):
         return post("get_all_tasks", {"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
       else:
         response = post("get_all_tasks", {"job_type": 3, "is_pagination": 0})
@@ -153,8 +149,8 @@ class TaskView(APIView):
             "customer_address": account.billing_street,
             "latitude": str(account.billing_latitude),
             "longitude": str(account.billing_longitude),
-            "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + request.data["time_start"] + ":00:00",
+            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d" + " " + request.data["time_end"] + ":00:00",),
             "has_pickup": "0",
             "has_delivery": "0",
             "layout_type": "1",
