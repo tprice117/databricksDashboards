@@ -134,7 +134,12 @@ class TaskView(APIView):
         print({"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
         return post("get_all_tasks", {"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
       else:
-        return get("get_all_tasks", {"job_type": 3, "is_pagination": 0})
+        response = post("get_all_tasks", {"job_type": 3, "is_pagination": 0})
+        new_list = []
+        for data in response.data["data"]:
+          new_list.append({**data, **{"time_start": 0, "time_end": 0}})
+        response.data = new_list
+        return response
 
     def post(self, request, *args, **kwargs):
       account = Account.objects.get(id=request.data["customer_comment"])
