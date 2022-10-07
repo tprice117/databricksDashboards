@@ -149,8 +149,6 @@ class TaskView(APIView):
             "customer_address": account.billing_street,
             "latitude": str(account.billing_latitude),
             "longitude": str(account.billing_longitude),
-            # "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-            # "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
             "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
             "has_pickup": "0",
@@ -177,7 +175,7 @@ class AgentView(APIView):
       if pk or request.query_params.get('id'):   
         return post("view_fleet_profile", {"fleet_id": pk or request.query_params.get('id')})
       else:  
-        return get("get_all_fleets")
+        return get("get_all_fleets", {})
 
     def post(self, request, *args, **kwargs):
       return post("add_agent", request.data)
