@@ -175,7 +175,12 @@ class AgentView(APIView):
       if pk or request.query_params.get('id'):   
         return post("view_fleet_profile", {"fleet_id": pk or request.query_params.get('id')})
       else:  
-        return get("get_all_fleets", {})
+        response = get("get_all_fleets", {})
+        new_list = []
+        for data in response.data["data"]:
+          new_list.append({**data, **{"team_id": 0,}})
+        response.data["data"] = new_list
+        return response
 
     def post(self, request, *args, **kwargs):
       return post("add_agent", request.data)
