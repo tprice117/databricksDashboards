@@ -149,14 +149,18 @@ class TaskView(APIView):
             "customer_address": account.billing_street,
             "latitude": str(account.billing_latitude),
             "longitude": str(account.billing_longitude),
-            "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]) + ":00:00",
-            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]) + ":00:00",
+            # "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            # "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
+            "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
             "has_pickup": "0",
             "has_delivery": "0",
             "layout_type": "1",
             "tracking_link": 1,
             "auto_assignment": "0",
             "notify": 1,
+            "tags":"",
+            "geofence":0,
           } 
         }
       return post("create_task", new_data)
