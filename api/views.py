@@ -150,7 +150,7 @@ class TaskView(APIView):
             "latitude": str(account.billing_latitude),
             "longitude": str(account.billing_longitude),
             "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + request.data["time_start"] + ":00:00",
-            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d" + " " + request.data["time_end"] + ":00:00",),
+            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + request.data["time_end"] + ":00:00",),
             "has_pickup": "0",
             "has_delivery": "0",
             "layout_type": "1",
