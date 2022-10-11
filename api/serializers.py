@@ -7,6 +7,12 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = "__all__"
 
+class ContactSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = Contact
+        fields = "__all__"
+
 class AccountSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:

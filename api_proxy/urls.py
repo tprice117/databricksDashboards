@@ -5,6 +5,7 @@ from api import views
 
 router = routers.DefaultRouter()
 router.register(r'orders', views.OrderViewSet, 'api')
+router.register(r'contacts', views.ContactViewSet, 'api')
 router.register(r'accounts', views.AccountViewSet, 'api')
 router.register(r'opportunities', views.OpportunityViewSet, 'api')
 router.register(r'product-categories', views.ProductCategoryViewSet, 'api')
@@ -35,4 +36,5 @@ urlpatterns = [
     # path('merchant/', views.MerchantView.as_view()),
     # path('mission/<int:pk>', views.MissionView.as_view()),
     # path('mission/', views.MissionView.as_view()),
+    path('api/convert-sf-order-to-scrap-task/<str:pk>', views.ConvertSFOrderToScrapTask.as_view())
 ]

@@ -20,6 +20,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    filterset_fields = ["id"]
+
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.filter(type__in=["Customer", "Partner"])
     serializer_class = AccountSerializer
@@ -263,3 +268,31 @@ class MissionView(APIView):
     
     def delete(self, request, pk=None, *args, **kwargs):
       return delete("delete_mission", {"mission_id": pk or request.query_params.get('id')})
+
+class ConvertSFOrderToScrapTask(APIView):
+    def get(self, request, pk=None, *args, **kwargs):
+        order = Order.objects.get(order_number=pk)
+        account = Account.objects.get(id=order.account_id)
+        service_provider = Order.objects.get(id=order.service_provider)
+        return post("create_task", {
+              "order_id": order.order_number,
+              "customer_username": account.name,
+              "customer_phone": account.phone or "1234567890",
+              "customer_address": account.billing_street,
+              "latitude": str(account.billing_latitude),
+              "longitude": str(account.billing_longitude),
+              "job_pickup_datetime": order.start_date_time.strftime("%Y-%m-%d %H:%m:%s"), #add field to salesforce object
+              "job_delivery_datetime": order.start_date_time.strftime("%Y-%m-%d %H:%m:%s"), # add field to salesforce object
+              "has_pickup": "0",
+              "has_delivery": "0",
+              "layout_type": "1",
+              "tracking_link": 1,
+              "auto_assignment": "0",
+              "timezone": "-420",
+              "notify": 1,
+              "tags":"",
+              "geofence":0,
+              "team_id": service_provider.scrap_team_id,
+              "fleet_id": service_provider.scrap_fleet_id,
+            }
+        )
