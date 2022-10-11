@@ -162,5 +162,5 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
-SALESFORCE_QUERY_TIMEOUT = (20, 20)  # default (connect timeout, data timeout)
+SALESFORCE_QUERY_TIMEOUT = (60, 60)  # default (connect timeout, data timeout)
 SF_PK="id"
