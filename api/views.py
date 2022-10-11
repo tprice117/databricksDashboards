@@ -161,7 +161,7 @@ class TaskView(APIView):
           **{
             "customer_username": account.name,
             "customer_phone": account.phone or "1234567890",
-            "customer_address": account.billing_street,
+            "customer_address": account.billing_street + ", " + account.billing_city + ", " + account.billing_state,
             "latitude": str(account.billing_latitude),
             "longitude": str(account.billing_longitude),
             "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
