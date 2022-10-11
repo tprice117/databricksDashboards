@@ -19,7 +19,15 @@ class AccountSerializer(serializers.ModelSerializer):
         model = Account
         fields = "__all__"
 
-class AccountContactRelationSerializer(serializers.ModelSerializer):
+# class ContactAccountSerializer(serializers.ModelSerializer):
+#     id = serializers.CharField(required=False)
+#     account = AccountSerializer()
+
+#     class Meta:
+#         model = AccountContactRelation
+#         fields = "__all__"
+
+class AccountContactSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     account = AccountSerializer()
     contact = ContactSerializer()

@@ -30,10 +30,15 @@ class AccountViewSet(viewsets.ModelViewSet):
     serializer_class = AccountSerializer
     filterset_fields = ["id", "parent"]
 
-class AccountContactRelationViewSet(viewsets.ModelViewSet):
-    queryset = AccountContactRelation.objects.all()
-    serializer_class = AccountContactRelationSerializer
+class AccountContactViewSet(viewsets.ModelViewSet):
+    queryset = AccountContactRelation.objects.filter(contact__is_user=True)
+    serializer_class = AccountContactSerializer
     filterset_fields = ["id", "account", "contact"]
+
+# class ContactAccountViewSet(viewsets.ModelViewSet):
+#     queryset = AccountContactRelation.objects.filter(contact__is_user=True)
+#     serializer_class = ContactAccountSerializer
+#     filterset_fields = ["id", "account", "contact"]
 
 class OpportunityViewSet(viewsets.ModelViewSet):
     queryset = Opportunity.objects.all()
