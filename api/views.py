@@ -288,7 +288,7 @@ class ConvertSFOrderToScrapTask(APIView):
               "order_id": order.order_number,
               "customer_username": account.name,
               "customer_phone": account.phone or "1234567890",
-              "customer_address": account.billing_street,
+              "customer_address": account.billing_street + ", " + account.billing_city + ", " + account.billing_state,
               "latitude": str(account.billing_latitude),
               "longitude": str(account.billing_longitude),
               "job_pickup_datetime": order.start_date_time.strftime("%Y-%m-%d %H:%m:%s"), #add field to salesforce object
