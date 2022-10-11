@@ -161,9 +161,9 @@ class TaskView(APIView):
           **{
             "customer_username": account.name,
             "customer_phone": account.phone or "1234567890",
-            "customer_address": account.billing_street + ", " + account.billing_city + ", " + account.billing_state,
-            "latitude": str(account.billing_latitude),
-            "longitude": str(account.billing_longitude),
+            "customer_address": account.shipping_street + ", " + account.shipping_city + ", " + account.shipping_state,
+            "latitude": str(account.shipping_latitude),
+            "longitude": str(account.shipping_longitude),
             "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
             "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
             "has_pickup": "0",
@@ -288,9 +288,9 @@ class ConvertSFOrderToScrapTask(APIView):
               "order_id": order.order_number,
               "customer_username": account.name,
               "customer_phone": account.phone or "1234567890",
-              "customer_address": account.billing_street + ", " + account.billing_city + ", " + account.billing_state,
-              "latitude": str(account.billing_latitude),
-              "longitude": str(account.billing_longitude),
+              "customer_address": account.shipping_street + ", " + account.shipping_city + ", " + account.shipping_state,
+              "latitude": str(account.shipping_latitude),
+              "longitude": str(account.shipping_longitude),
               "job_pickup_datetime": order.start_date_time.strftime("%Y-%m-%d %H:%m:%s"), #add field to salesforce object
               "job_delivery_datetime": order.start_date_time.strftime("%Y-%m-%d %H:%m:%s"), # add field to salesforce object
               "has_pickup": "0",
