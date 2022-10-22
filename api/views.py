@@ -15,6 +15,7 @@ from django.utils.dateparse import parse_datetime
 from random import randint
 
 # To DO: Create GET, POST, PUT general methods.
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -43,10 +44,11 @@ class AccountContactViewSet(viewsets.ModelViewSet):
 class OpportunityViewSet(viewsets.ModelViewSet):
     queryset = Opportunity.objects.all()
     serializer_class = OpportunitySerializer
+    filterset_fields = ["id", "account", "is_closed"]
 
-class ProductCategoryViewSet(viewsets.ModelViewSet):
-    queryset = ProductCategory.objects.all()
-    serializer_class = ProductCategorySerializer
+class MainProductCategoryViewSet(viewsets.ModelViewSet):
+    queryset = MainProductCategory.objects.all()
+    serializer_class = MainProductCategorySerializer
 
 class ProductCategoryInfoViewSet(viewsets.ModelViewSet):
     queryset = ProductCategoryInfo.objects.all()
@@ -66,7 +68,7 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product2.objects.all()
     serializer_class = ProductSerializer
-    filterset_fields = ["service_provider", "parent_product"]   
+    filterset_fields = ["service_provider", "main_product"]   
 
 class MainProductFrequencyViewSet(viewsets.ModelViewSet):
     queryset = MainProductFrequency.objects.all()
@@ -88,9 +90,9 @@ class MainProductAddOnViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductAddOnSerializer
     filterset_fields = ["main_product_frequency"] 
 
-class MainProductAddOnChoiceViewSet(viewsets.ModelViewSet):
-    queryset = MainProductAddOnChoice.objects.all()
-    serializer_class = MainProductAddOnChoiceSerializer
+class AddOnChoiceViewSet(viewsets.ModelViewSet):
+    queryset = AddOnChoice.objects.all()
+    serializer_class = AddOnChoiceSerializer
     
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
@@ -306,3 +308,117 @@ class ConvertSFOrderToScrapTask(APIView):
               "fleet_id": service_provider.scrap_fleet_id,
             }
         )
+
+
+
+### Stripe Views
+
+class StripePaymentMethods(APIView):
+    def get(self, request, format=None):
+        stripe_customer_id = self.request.query_params.get('id')
+        print(stripe_customer_id)
+        payment_methods = stripe.Customer.list_payment_methods(
+            stripe_customer_id,
+            type="card",
+        )
+        return Response(payment_methods)
+
+class StripeSetupIntents(APIView):
+    def get(self, request, format=None):
+        stripe_customer_id = self.request.query_params.get('id')
+  
+        # Create Setup Intent.
+        setup_intent = stripe.SetupIntent.create(
+            customer=stripe_customer_id,
+            payment_method_types=["card"],
+            usage="off_session",
+        )
+
+        # Create ephemeral key and add to reponse.
+        ephemeralKey = stripe.EphemeralKey.create(
+            customer=stripe_customer_id,
+            stripe_version='2020-08-27',
+        )
+        setup_intent["ephemeral_key"] = ephemeralKey.secret
+        return Response(setup_intent)
+
+class StripePaymentIntents(APIView):
+    def get(self, request, format=None):
+        stripe_customer_id = self.request.query_params.get('id')
+  
+        # Create Setup Intent.
+        payment_intent = stripe.PaymentIntent.create(
+            customer=stripe_customer_id,
+            payment_method_types=["card"],
+            amount=1000,
+            currency='usd',
+        )
+
+        # Create ephemeral key and add to reponse.
+        ephemeralKey = stripe.EphemeralKey.create(
+            customer=stripe_customer_id,
+            stripe_version='2020-08-27',
+        )
+        payment_intent["ephemeral_key"] = ephemeralKey.secret
+        return Response(payment_intent)
+
+class StripeCreateCheckoutSession(APIView):
+    def get(self, request, format=None):
+        customer_id = self.request.query_params.get('customer_id')
+        price_id = self.request.query_params.get('price_id')
+        mode = self.request.query_params.get('mode')
+
+        session = stripe.checkout.Session.create(
+            customer=customer_id,
+            success_url="https://success.com",
+            cancel_url="https://cancel.com",
+            line_items=[
+                {
+                "price": price_id,
+                "quantity": 1,
+                },
+            ],
+            mode=mode,
+        )
+        return Response(session)
+
+class StripeConnectPayoutForService(APIView):
+    # Payout Accepted Vendor for Service Request.
+    def get(self, request, pk, format=None):
+        service_request = ServiceRequest.objects.get(pk=pk)
+
+        # Get accpeted quote (will error if more than 1 accepted).
+        accepted_quote = service_request.quotes.get(accepted=True)
+
+        # Calculate the total amount_received for this service request.
+        payment_intents = stripe.PaymentIntent.search(
+            query='metadata["service_request_id"]:"' + str(service_request.id) + '"'
+        )
+        total_received = sum(payment_intent.amount_received for payment_intent in payment_intents)
+       
+        # Calculate the total amount payed out to the vendor.
+        transfers = stripe.Transfer.list(transfer_group=str(service_request.id))
+        total_transferred = sum(transfer.amount for transfer in transfers)
+
+        # Calculate Hohm fee.
+        customer_fee_ratio = service_request.platform_fee / 100
+        vendor_fee_ratio = accepted_quote.platform_fee / 100
+
+        customer_fee_dollar = total_received * customer_fee_ratio
+        vendor_fee_dollar = (total_received - customer_fee_dollar) * vendor_fee_ratio
+        total_platform_fee_dollar = customer_fee_dollar + vendor_fee_dollar
+
+        # Transfer remaining vendor-payout (considering what has already been transffered).
+        total_payout = total_received - total_platform_fee_dollar
+        remaining_transfer_amount = total_payout - total_transferred
+        if round(remaining_transfer_amount) > 1:
+            transfer = stripe.Transfer.create(
+                amount=round(remaining_transfer_amount),
+                currency="usd",
+                destination=accepted_quote.vendor.connect_express_account_id,
+                transfer_group=service_request.id,
+            )
+            return Response(transfer)
+        else:
+            return Response()
+        

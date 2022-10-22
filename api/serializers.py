@@ -3,6 +3,7 @@ from .models import *
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
+    order_number = serializers.CharField(required=False)
     class Meta:
         model = Order
         fields = "__all__"
@@ -18,6 +19,7 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = "__all__"
+        validators = []
 
 # class ContactAccountSerializer(serializers.ModelSerializer):
 #     id = serializers.CharField(required=False)
@@ -41,10 +43,10 @@ class OpportunitySerializer(serializers.ModelSerializer):
         model = Opportunity
         fields = "__all__"
 
-class ProductCategorySerializer(serializers.ModelSerializer):
+class MainProductCategorySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = ProductCategory
+        model = MainProductCategory
         fields = "__all__"
 
 class ProductCategoryInfoSerializer(serializers.ModelSerializer):
@@ -95,10 +97,10 @@ class MainProductAddOnSerializer(serializers.ModelSerializer):
         model = MainProductAddOn
         fields = "__all__"
 
-class MainProductAddOnChoiceSerializer(serializers.ModelSerializer):
+class AddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = MainProductAddOnChoice
+        model = AddOnChoice
         fields = "__all__"
 
 # class ContactSerializer(serializers.ModelSerializer):

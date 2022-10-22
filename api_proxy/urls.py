@@ -10,8 +10,8 @@ router.register(r'accounts', views.AccountViewSet, 'api')
 router.register(r'account-contacts', views.AccountContactViewSet, 'api')
 # router.register(r'contact-accounts', views.ContactAccountViewSet, 'api')
 router.register(r'opportunities', views.OpportunityViewSet, 'api')
-router.register(r'product-categories', views.ProductCategoryViewSet, 'api')
-router.register(r'product-category-infos', views.ProductCategoryInfoViewSet, 'api')
+router.register(r'main-product-categories', views.MainProductCategoryViewSet, 'api')
+router.register(r'main-product-category-infos', views.ProductCategoryInfoViewSet, 'api')
 router.register(r'main-products', views.MainProductViewSet, 'api')
 router.register(r'main-product-infos', views.MainProductInfoViewSet, 'api')
 router.register(r'products', views.ProductViewSet, 'api')
@@ -19,7 +19,7 @@ router.register(r'main-product-frequencies', views.MainProductFrequencyViewSet, 
 router.register(r'price-books', views.PriceBookViewSet, 'api')
 router.register(r'price-book-entries', views.PriceBookEntryViewSet, 'api')
 router.register(r'main-product-add-ons', views.MainProductAddOnViewSet, 'api')
-router.register(r'main-product-add-on-choices', views.MainProductAddOnChoiceViewSet, 'api')
+router.register(r'main-product-add-on-choices', views.AddOnChoiceViewSet, 'api')
 
 urlpatterns = [
     path('api/', include(router.urls)),
@@ -38,5 +38,11 @@ urlpatterns = [
     # path('merchant/', views.MerchantView.as_view()),
     # path('mission/<int:pk>', views.MissionView.as_view()),
     # path('mission/', views.MissionView.as_view()),
-    path('api/convert-sf-order-to-scrap-task/<str:pk>', views.ConvertSFOrderToScrapTask.as_view())
+    path('api/convert-sf-order-to-scrap-task/<str:pk>', views.ConvertSFOrderToScrapTask.as_view()),
+    ## Stripe.
+    path('api/payment-methods/', views.StripePaymentMethods.as_view()),
+    path('api/setup-intents/', views.StripeSetupIntents.as_view()),
+    path('api/payment-intents/', views.StripePaymentIntents.as_view()),
+    path('api/service-requests/<str:pk>/payout', views.StripeConnectPayoutForService.as_view(), name="payout"),
+    path('api/sessions', views.StripeCreateCheckoutSession.as_view()),
 ]

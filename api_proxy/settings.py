@@ -164,3 +164,6 @@ REST_FRAMEWORK = {
 
 SALESFORCE_QUERY_TIMEOUT = (60, 60)  # default (connect timeout, data timeout)
 SF_PK="id"
+
+STRIPE_PUBLISHABLE_KEY = 'pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf'
+STRIPE_SECRET_KEY = 'sk_test_k7kzz0R6mrRogFPs6OVrpgrB00UmEjcUtf'
