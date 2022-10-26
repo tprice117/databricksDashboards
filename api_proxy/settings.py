@@ -150,9 +150,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # DEFAULT_AUTO_FIELD = 'django.db.models.TextField'
 
-CORS_ORIGIN_WHITELIST = [
-     'http://localhost:3000'
-]
+# CORS_ORIGIN_WHITELIST = [
+#      'http://localhost:3000',
+#      'http://localhost:62964',
+# ]
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

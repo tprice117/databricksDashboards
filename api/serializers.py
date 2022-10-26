@@ -21,18 +21,8 @@ class AccountSerializer(serializers.ModelSerializer):
         fields = "__all__"
         validators = []
 
-# class ContactAccountSerializer(serializers.ModelSerializer):
-#     id = serializers.CharField(required=False)
-#     account = AccountSerializer()
-
-#     class Meta:
-#         model = AccountContactRelation
-#         fields = "__all__"
-
 class AccountContactSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    account = AccountSerializer()
-    contact = ContactSerializer()
     class Meta:
         model = AccountContactRelation
         fields = "__all__"
@@ -73,11 +63,11 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product2
         fields = "__all__"
 
-class MainProductFrequencySerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = MainProductFrequency
-        fields = "__all__"
+# class MainProductFrequencySerializer(serializers.ModelSerializer):
+#     id = serializers.CharField(required=False)
+#     class Meta:
+#         model = MainProductFrequency
+#         fields = "__all__"
 
 class PriceBookSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
@@ -97,64 +87,33 @@ class MainProductAddOnSerializer(serializers.ModelSerializer):
         model = MainProductAddOn
         fields = "__all__"
 
+class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = ProductAddOnChoice
+        fields = "__all__"
+
+class AddOnSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = AddOn
+        fields = "__all__"
+
 class AddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = AddOnChoice
         fields = "__all__"
 
-# class ContactSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Contact
-#         exclude=("scrapper",)
+class LocationZoneSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = LocationZone
+        fields = "__all__"
 
-# class AddressSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Address
-#         exclude=("scrapper",)
-
-# class VehicleSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Vehicle
-#         exclude=("scrapper",)
-
-# class ScrapperSerializer(serializers.ModelSerializer):
-#   contact = ContactSerializer()
-#   address = AddressSerializer()
-#   vehicle = VehicleSerializer()
-#   class Meta:
-#     model = Scrapper
-#     fields = "__all__"
-
-#   # Now override the default create method to create a new object.
-#   # A similar overriding can be done for update as well.
-#   def create(self, validated_data):
-#       scrapper = Scrapper.objects.create(type = validated_data.pop('type'))
-#       Contact.objects.create(scrapper=scrapper, **validated_data.pop("contact"))
-#       Address.objects.create(scrapper=scrapper, **validated_data.pop('address'))
-#       Vehicle.objects.create(scrapper=scrapper, **validated_data.pop('vehicle'))
-#       return scrapper
-
-#   # Now override the default create method to create a new object.
-#   # A similar overriding can be done for update as well.
-#   def update(self, instance, validated_data):
-#       instance.type = validated_data.get('type', instance.type)
-#       instance.save()
-
-#       contact_old = Contact.objects.get(pk=instance.id, scrapper=instance)
-#       contact_new = ContactSerializer(contact_old, data=validated_data.pop("contact"))
-#       if (contact_new.is_valid()):
-#         contact_new.save()
-
-#       address_old = Address.objects.get(pk=instance.id, scrapper=instance)
-#       address_new = AddressSerializer(address_old, data=validated_data.pop("address"))
-#       if (address_new.is_valid()):
-#         address_new.save()
-
-#       vehicle_old = Vehicle.objects.get(pk=instance.id, scrapper=instance)
-#       vehicle_new = VehicleSerializer(vehicle_old, data=validated_data.pop("vehicle"))
-#       if (vehicle_new.is_valid()):
-#         vehicle_new.save()
-#       return instance
-    
+class PostalCodeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = PostalCode
+        fields = "__all__"
 

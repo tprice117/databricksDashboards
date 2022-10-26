@@ -24,7 +24,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
-    filterset_fields = ["id"]
+    filterset_fields = ["id", "user_id"]
 
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.filter(type__in=["Customer", "Partner"])
@@ -32,14 +32,10 @@ class AccountViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "parent"]
 
 class AccountContactViewSet(viewsets.ModelViewSet):
-    queryset = AccountContactRelation.objects.filter(contact__is_user=True)
+    # queryset = AccountContactRelation.objects.filter(contact__is_user=True)
+    queryset = AccountContactRelation.objects.all()
     serializer_class = AccountContactSerializer
     filterset_fields = ["id", "account", "contact"]
-
-# class ContactAccountViewSet(viewsets.ModelViewSet):
-#     queryset = AccountContactRelation.objects.filter(contact__is_user=True)
-#     serializer_class = ContactAccountSerializer
-#     filterset_fields = ["id", "account", "contact"]
 
 class OpportunityViewSet(viewsets.ModelViewSet):
     queryset = Opportunity.objects.all()
@@ -70,10 +66,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     filterset_fields = ["service_provider", "main_product"]   
 
-class MainProductFrequencyViewSet(viewsets.ModelViewSet):
-    queryset = MainProductFrequency.objects.all()
-    serializer_class = MainProductFrequencySerializer
-    filterset_fields = ["main_product"]  
+# class MainProductFrequencyViewSet(viewsets.ModelViewSet):
+#     queryset = MainProductFrequency.objects.all()
+#     serializer_class = MainProductFrequencySerializer
+#     filterset_fields = ["main_product"]  
 
 class PriceBookViewSet(viewsets.ModelViewSet):
     queryset = Pricebook2.objects.all()
@@ -88,12 +84,40 @@ class PriceBookEntryViewSet(viewsets.ModelViewSet):
 class MainProductAddOnViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOn.objects.all()
     serializer_class = MainProductAddOnSerializer
-    filterset_fields = ["main_product_frequency"] 
+    filterset_fields = ["main_product", "add_on"] 
+  
+class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
+    queryset = ProductAddOnChoice.objects.all()
+    serializer_class = ProductAddOnChoiceSerializer
+    filterset_fields = ["product", "add_on_choice"] 
+
+class AddOnViewSet(viewsets.ModelViewSet):
+    queryset = AddOn.objects.all()
+    serializer_class = AddOnSerializer
 
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
     serializer_class = AddOnChoiceSerializer
+    filterset_fields = ["add_on"] 
+
+class LocationZoneViewSet(viewsets.ModelViewSet):
+    queryset = LocationZone.objects.all()
+    serializer_class = LocationZoneSerializer
+    # filterset_fields = [""] 
+
+class PostalCodeViewSet(viewsets.ModelViewSet):
+    queryset = PostalCode.objects.all()
+    serializer_class = PostalCodeSerializer
+    filterset_fields = ["name"] 
     
+class PriceBookViewSet(viewsets.ModelViewSet):
+    queryset = Pricebook2.objects.all()
+    serializer_class = PriceBookSerializer
+
+class PriceBookEntryViewSet(viewsets.ModelViewSet):
+    queryset = PricebookEntry.objects.all()
+    serializer_class = PriceBookEntrySerializer
+    filterset_fields = ["product2", "pricebook2"] 
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
