@@ -370,13 +370,14 @@ class StripeSetupIntents(APIView):
 
 class StripePaymentIntents(APIView):
     def get(self, request, format=None):
-        stripe_customer_id = self.request.query_params.get('id')
+        stripe_customer_id = self.request.query_params.get('customer_id')
+        amount = self.request.query_params.get('amount')
   
         # Create Setup Intent.
         payment_intent = stripe.PaymentIntent.create(
             customer=stripe_customer_id,
             payment_method_types=["card"],
-            amount=1000,
+            amount=amount,
             currency='usd',
         )
 
