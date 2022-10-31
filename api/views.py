@@ -179,28 +179,30 @@ class TaskView(APIView):
         return response
 
     def post(self, request, *args, **kwargs):
-      account = Account.objects.get(id=request.data["customer_comment"])
-      job_delivery_datetime = parse_datetime(request.data["job_delivery_datetime"])
-      job_pickup_datetime = parse_datetime(request.data["job_pickup_datetime"])
+      # account = Account.objects.get(id=request.data["customer_comment"])
+      # job_delivery_datetime = parse_datetime(request.data["job_delivery_datetime"])
+      # job_pickup_datetime = parse_datetime(request.data["job_pickup_datetime"])
       new_data = {
           **request.data, 
-          **{
-            "customer_username": account.name,
-            "customer_phone": account.phone or "1234567890",
-            "customer_address": account.shipping_street + ", " + account.shipping_city + ", " + account.shipping_state,
-            "latitude": str(account.shipping_latitude),
-            "longitude": str(account.shipping_longitude),
-            "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
-            "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
-            "has_pickup": "0",
-            "has_delivery": "0",
-            "layout_type": "1",
-            "tracking_link": 1,
-            "auto_assignment": "0",
-            "notify": 1,
-            "tags":"",
-            "geofence":0,
-          } 
+          # **{
+          #   "customer_username": account.name,
+          #   "customer_phone": account.phone or "1234567890",
+          #   "customer_address": account.shipping_street + ", " + account.shipping_city + ", " + account.shipping_state,
+          #   "latitude": str(account.shipping_latitude),
+          #   "longitude": str(account.shipping_longitude),
+          #   # "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
+          #   # "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
+          #    "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
+          #   "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
+          #   "has_pickup": "0",
+          #   "has_delivery": "0",
+          #   "layout_type": "1",
+          #   "tracking_link": 1,
+          #   "auto_assignment": "0",
+          #   "notify": 1,
+          #   "tags":"",
+          #   "geofence":0,
+          # } 
         }
       return post("create_task", new_data)
 
