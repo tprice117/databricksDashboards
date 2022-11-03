@@ -50,4 +50,11 @@ urlpatterns = [
     path('api/payment-intents/', views.StripePaymentIntents.as_view()),
     path('api/service-requests/<str:pk>/payout', views.StripeConnectPayoutForService.as_view(), name="payout"),
     path('api/sessions', views.StripeCreateCheckoutSession.as_view()),
+
+    # Stripe Dashboarding Endpoints
+    path('api/stripe/connect/accounts', views.StripeConnectAccount.as_view()),
+    path('api/stripe/connect/transfers', views.StripeConnectTransfer.as_view()),
+    path('api/stripe/billing/invoices', views.StripeBillingInvoice.as_view()),
+    path('api/stripe/billing/subscriptions', views.StripeBillingSubscription.as_view()),    
+    path('api/stripe/core/payment-intents', views.StripeCorePaymentIntents.as_view()),
 ]

@@ -54,7 +54,7 @@ class ProductCategoryInfoViewSet(viewsets.ModelViewSet):
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
-    filterset_fields = ["product_category"]
+    filterset_fields = ["id", "product_category"]
 
 class MainProductInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductInfo.objects.all()
@@ -449,3 +449,30 @@ class StripeConnectPayoutForService(APIView):
         else:
             return Response()
         
+## Stripe Dashboarding (GET only endpoints)
+
+class StripeConnectAccount(APIView):
+    def get(self, request, format=None):
+        accounts = stripe.Account.list()
+        return Response(accounts)
+
+class StripeConnectTransfer(APIView):
+    def get(self, request, format=None):
+        transfers = stripe.Transfer.list()
+        return Response(transfers)
+
+class StripeBillingInvoice(APIView):
+    def get(self, request, format=None):
+        invoices = stripe.Invoice.list()
+        return Response(invoices)
+
+class StripeBillingSubscription(APIView):
+    def get(self, request, format=None):
+        subscriptions = stripe.Subscription.list()
+        return Response(subscriptions)
+
+class StripeCorePaymentIntents(APIView):
+    def get(self, request, format=None):
+        payment_intents = stripe.PaymentIntent.list()
+        return Response(payment_intents)
+
