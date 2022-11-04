@@ -8989,7 +8989,7 @@ class Opportunity(models.Model):
     record_type = models.ForeignKey('RecordType', models.DO_NOTHING, db_column='RecordTypeId', verbose_name='Record Type ID', blank=True, null=True)
     name = models.CharField(db_column='Name', max_length=120)
     description = models.TextField(db_column='Description', blank=True, null=True)
-    stage_name = models.CharField(db_column='StageName', max_length=255, verbose_name='Stage', choices=[('Qualification', 'Qualification'), ('Needs Analysis', 'Needs Analysis'), ('Proposal', 'Proposal'), ('Account Created', 'Account Created'), ('Negotiation', 'Negotiation'), ('Onboarding scheduled', 'Onboarding scheduled'), ('Storefront in-progress', 'Storefront in-progress'), ('Closed Won', 'Closed Won'), ('Closed Lost', 'Closed Lost')])
+    stage_name = models.CharField(db_column='StageName', max_length=255, verbose_name='Stage', choices=[('Qualification', 'Qualification'), ('Needs Analysis', 'Needs Analysis'), ('Proposal', 'Proposal'), ('Account Created', 'Account Created'), ('Negotiation', 'Negotiation'), ('Onboarding scheduled', 'Onboarding scheduled'), ('Storefront in-progress', 'Storefront in-progress'), ('Verify Hauler', 'Verify Hauler'), ('Closed Won', 'Closed Won'), ('Closed Lost', 'Closed Lost')])
     amount = models.DecimalField(db_column='Amount', max_digits=18, decimal_places=2, blank=True, null=True)
     probability = models.DecimalField(db_column='Probability', max_digits=3, decimal_places=0, verbose_name='Probability (%)', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
     close_date = models.DateField(db_column='CloseDate')
