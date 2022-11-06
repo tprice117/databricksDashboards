@@ -51,6 +51,12 @@ class MainProductInfoSerializer(serializers.ModelSerializer):
         model = MainProductInfo
         fields = "__all__"
 
+class MainProductVariationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductVariation
+        fields = "__all__"
+
 class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
@@ -87,10 +93,10 @@ class MainProductAddOnSerializer(serializers.ModelSerializer):
         model = MainProductAddOn
         fields = "__all__"
 
-class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
+class MainProductVariationAddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = ProductAddOnChoice
+        model = MainProductVariationAddOnChoice
         fields = "__all__"
 
 class AddOnSerializer(serializers.ModelSerializer):

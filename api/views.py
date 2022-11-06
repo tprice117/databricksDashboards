@@ -61,6 +61,11 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductInfoSerializer
     filterset_fields = ["main_product"]    
 
+class MainProductVariationViewSet(viewsets.ModelViewSet):
+    queryset = MainProductVariation.objects.all()
+    serializer_class = MainProductVariationSerializer
+    filterset_fields = ["main_product"]  
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product2.objects.all()
     serializer_class = ProductSerializer
@@ -86,9 +91,9 @@ class MainProductAddOnViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductAddOnSerializer
     filterset_fields = ["main_product", "add_on"] 
   
-class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
-    queryset = ProductAddOnChoice.objects.all()
-    serializer_class = ProductAddOnChoiceSerializer
+class MainProductVariationAddOnChoiceViewSet(viewsets.ModelViewSet):
+    queryset = MainProductVariationAddOnChoice.objects.all()
+    serializer_class = MainProductVariationAddOnChoiceSerializer
     filterset_fields = ["product", "add_on_choice"] 
 
 class AddOnViewSet(viewsets.ModelViewSet):
