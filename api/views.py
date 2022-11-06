@@ -69,7 +69,7 @@ class MainProductVariationViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product2.objects.all()
     serializer_class = ProductSerializer
-    filterset_fields = ["service_provider", "main_product"]   
+    filterset_fields = ["service_provider", "main_product_variation"]   
 
 # class MainProductFrequencyViewSet(viewsets.ModelViewSet):
 #     queryset = MainProductFrequency.objects.all()
