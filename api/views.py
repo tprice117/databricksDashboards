@@ -94,7 +94,7 @@ class MainProductAddOnViewSet(viewsets.ModelViewSet):
 class MainProductVariationAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = MainProductVariationAddOnChoice.objects.all()
     serializer_class = MainProductVariationAddOnChoiceSerializer
-    filterset_fields = ["product", "add_on_choice"] 
+    filterset_fields = ["main_product_variation", "add_on_choice"] 
 
 class AddOnViewSet(viewsets.ModelViewSet):
     queryset = AddOn.objects.all()
