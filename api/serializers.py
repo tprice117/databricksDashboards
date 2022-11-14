@@ -1,11 +1,29 @@
 from rest_framework import serializers
 from .models import *
 
-class OrderSerializer(serializers.ModelSerializer):
+class AccountContactSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    order_number = serializers.CharField(required=False)
     class Meta:
-        model = Order
+        model = AccountContactRelation
+        fields = "__all__"
+        
+class AccountSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = Account
+        fields = "__all__"
+        validators = []
+        
+class AddOnChoiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = AddOnChoice
+        fields = "__all__"
+        
+class AddOnSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = AddOn
         fields = "__all__"
 
 class ContactSerializer(serializers.ModelSerializer):
@@ -14,23 +32,28 @@ class ContactSerializer(serializers.ModelSerializer):
         model = Contact
         fields = "__all__"
 
-class AccountSerializer(serializers.ModelSerializer):
+class DisposalFeeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Account
-        fields = "__all__"
-        validators = []
-
-class AccountContactSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = AccountContactRelation
+        model = DisposalFee
         fields = "__all__"
 
-class OpportunitySerializer(serializers.ModelSerializer):
+class LocationZoneSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Opportunity
+        model = LocationZone
+        fields = "__all__"
+        
+class MainProductAddOnSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductAddOn
+        fields = "__all__"
+
+class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = ProductCategoryInfo
         fields = "__all__"
 
 class MainProductCategorySerializer(serializers.ModelSerializer):
@@ -39,22 +62,10 @@ class MainProductCategorySerializer(serializers.ModelSerializer):
         model = MainProductCategory
         fields = "__all__"
 
-class ProductCategoryInfoSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = ProductCategoryInfo
-        fields = "__all__"
-
 class MainProductInfoSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = MainProductInfo
-        fields = "__all__"
-
-class MainProductVariationSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = MainProductVariation
         fields = "__all__"
 
 class MainProductSerializer(serializers.ModelSerializer):
@@ -63,22 +74,29 @@ class MainProductSerializer(serializers.ModelSerializer):
         model = MainProduct
         fields = "__all__"
 
-class ProductSerializer(serializers.ModelSerializer):
+class MainProductWasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Product2
+        model = MainProductWasteType
         fields = "__all__"
 
-# class MainProductFrequencySerializer(serializers.ModelSerializer):
-#     id = serializers.CharField(required=False)
-#     class Meta:
-#         model = MainProductFrequency
-#         fields = "__all__"
-
-class PriceBookSerializer(serializers.ModelSerializer):
+class OpportunitySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Pricebook2
+        model = Opportunity
+        fields = "__all__"
+
+class OrderSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    order_number = serializers.CharField(required=False)
+    class Meta:
+        model = Order
+        fields = "__all__"
+
+class PostalCodeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = PostalCode
         fields = "__all__"
 
 class PriceBookEntrySerializer(serializers.ModelSerializer):
@@ -87,39 +105,53 @@ class PriceBookEntrySerializer(serializers.ModelSerializer):
         model = PricebookEntry
         fields = "__all__"
 
-class MainProductAddOnSerializer(serializers.ModelSerializer):
+class PriceBookSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = MainProductAddOn
+        model = Pricebook2
         fields = "__all__"
 
-class MainProductVariationAddOnChoiceSerializer(serializers.ModelSerializer):
+class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = MainProductVariationAddOnChoice
+        model = ProductAddOnChoice
         fields = "__all__"
 
-class AddOnSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = AddOn
+        model = Product2
         fields = "__all__"
 
-class AddOnChoiceSerializer(serializers.ModelSerializer):
+class SellerProductLocationZoneSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = AddOnChoice
+        model = SellerProductLocationZone
         fields = "__all__"
 
-class LocationZoneSerializer(serializers.ModelSerializer):
+class SellerProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = LocationZone
+        model = SellerProduct
         fields = "__all__"
 
-class PostalCodeSerializer(serializers.ModelSerializer):
+class WasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = PostalCode
+        model = WasteType
         fields = "__all__"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

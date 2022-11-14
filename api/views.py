@@ -17,112 +17,120 @@ from random import randint
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-
-class ContactViewSet(viewsets.ModelViewSet):
-    queryset = Contact.objects.all()
-    serializer_class = ContactSerializer
-    filterset_fields = ["id", "user_id"]
+class AccountContactViewSet(viewsets.ModelViewSet):
+    queryset = AccountContactRelation.objects.all()
+    serializer_class = AccountContactSerializer
+    filterset_fields = ["id", "account", "contact"]
 
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.filter(type__in=["Customer", "Partner"])
     serializer_class = AccountSerializer
     filterset_fields = ["id", "parent"]
 
-class AccountContactViewSet(viewsets.ModelViewSet):
-    # queryset = AccountContactRelation.objects.filter(contact__is_user=True)
-    queryset = AccountContactRelation.objects.all()
-    serializer_class = AccountContactSerializer
-    filterset_fields = ["id", "account", "contact"]
+class AddOnChoiceViewSet(viewsets.ModelViewSet):
+    queryset = AddOnChoice.objects.all()
+    serializer_class = AddOnChoiceSerializer
+    filterset_fields = ["add_on"] 
 
-class OpportunityViewSet(viewsets.ModelViewSet):
-    queryset = Opportunity.objects.all()
-    serializer_class = OpportunitySerializer
-    filterset_fields = ["id", "account", "is_closed"]
+class AddOnViewSet(viewsets.ModelViewSet):
+    queryset = AddOn.objects.all()
+    serializer_class = AddOnSerializer
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    filterset_fields = ["id", "user_id"]
+
+class DisposalFeeViewSet(viewsets.ModelViewSet):
+    queryset = DisposalFee.objects.all()
+    serializer_class = DisposalFeeSerializer
+
+class LocationZoneViewSet(viewsets.ModelViewSet):
+    queryset = LocationZone.objects.all()
+    serializer_class = LocationZoneSerializer
+
+class MainProductAddOnViewSet(viewsets.ModelViewSet):
+    queryset = MainProductAddOn.objects.all()
+    serializer_class = MainProductAddOnSerializer
+    filterset_fields = ["main_product", "add_on"] 
+
+class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
+    queryset = ProductCategoryInfo.objects.all()
+    serializer_class = MainProductCategoryInfoSerializer
+    filterset_fields = ["product_category"]
 
 class MainProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
 
-class ProductCategoryInfoViewSet(viewsets.ModelViewSet):
-    queryset = ProductCategoryInfo.objects.all()
-    serializer_class = ProductCategoryInfoSerializer
-    filterset_fields = ["product_category"]
+class MainProductInfoViewSet(viewsets.ModelViewSet):
+    queryset = MainProductInfo.objects.all()
+    serializer_class = MainProductInfoSerializer
+    filterset_fields = ["main_product"]   
 
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
     filterset_fields = ["id", "product_category"]
 
-class MainProductInfoViewSet(viewsets.ModelViewSet):
-    queryset = MainProductInfo.objects.all()
-    serializer_class = MainProductInfoSerializer
-    filterset_fields = ["main_product"]    
+class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
+    queryset = MainProductWasteType.objects.all()
+    serializer_class = MainProductWasteTypeSerializer
+    filterset_fields = ["main_product", "waste_type"]
 
-class MainProductVariationViewSet(viewsets.ModelViewSet):
-    queryset = MainProductVariation.objects.all()
-    serializer_class = MainProductVariationSerializer
-    filterset_fields = ["main_product"]  
+class OpportunityViewSet(viewsets.ModelViewSet):
+    queryset = Opportunity.objects.all()
+    serializer_class = OpportunitySerializer
+    filterset_fields = ["id", "account", "is_closed"]
 
-class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product2.objects.all()
-    serializer_class = ProductSerializer
-    filterset_fields = ["service_provider", "main_product_variation"]   
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
 
-# class MainProductFrequencyViewSet(viewsets.ModelViewSet):
-#     queryset = MainProductFrequency.objects.all()
-#     serializer_class = MainProductFrequencySerializer
-#     filterset_fields = ["main_product"]  
-
-class PriceBookViewSet(viewsets.ModelViewSet):
-    queryset = Pricebook2.objects.all()
-    serializer_class = PriceBookSerializer
-    filterset_fields = ["is_standard"]  
+class PostalCodeViewSet(viewsets.ModelViewSet):
+    queryset = PostalCode.objects.all()
+    serializer_class = PostalCodeSerializer
+    filterset_fields = ["name"] 
 
 class PriceBookEntryViewSet(viewsets.ModelViewSet):
     queryset = PricebookEntry.objects.all()
     serializer_class = PriceBookEntrySerializer
     filterset_fields = ["pricebook2", "product2"]  
 
-class MainProductAddOnViewSet(viewsets.ModelViewSet):
-    queryset = MainProductAddOn.objects.all()
-    serializer_class = MainProductAddOnSerializer
-    filterset_fields = ["main_product", "add_on"] 
-  
-class MainProductVariationAddOnChoiceViewSet(viewsets.ModelViewSet):
-    queryset = MainProductVariationAddOnChoice.objects.all()
-    serializer_class = MainProductVariationAddOnChoiceSerializer
-    filterset_fields = ["main_product_variation", "add_on_choice"] 
-
-class AddOnViewSet(viewsets.ModelViewSet):
-    queryset = AddOn.objects.all()
-    serializer_class = AddOnSerializer
-
-class AddOnChoiceViewSet(viewsets.ModelViewSet):
-    queryset = AddOnChoice.objects.all()
-    serializer_class = AddOnChoiceSerializer
-    filterset_fields = ["add_on"] 
-
-class LocationZoneViewSet(viewsets.ModelViewSet):
-    queryset = LocationZone.objects.all()
-    serializer_class = LocationZoneSerializer
-    # filterset_fields = [""] 
-
-class PostalCodeViewSet(viewsets.ModelViewSet):
-    queryset = PostalCode.objects.all()
-    serializer_class = PostalCodeSerializer
-    filterset_fields = ["name"] 
-    
 class PriceBookViewSet(viewsets.ModelViewSet):
     queryset = Pricebook2.objects.all()
     serializer_class = PriceBookSerializer
+    filterset_fields = ["is_standard"]  
 
-class PriceBookEntryViewSet(viewsets.ModelViewSet):
-    queryset = PricebookEntry.objects.all()
-    serializer_class = PriceBookEntrySerializer
-    filterset_fields = ["product2", "pricebook2"] 
+class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
+    queryset = ProductAddOnChoice.objects.all()
+    serializer_class = ProductAddOnChoiceSerializer
+    filterset_fields = ["product", "add_on_choice"] 
+
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product2.objects.all()
+    serializer_class = ProductSerializer
+    filterset_fields = ["service_provider", "main_product_variation"] 
+
+class SellerProductLocationZoneViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductLocationZone.objects.all()
+    serializer_class = SellerProductLocationZoneSerializer
+    filterset_fields = ["seller_product", "location_zone"] 
+
+class SellerProductViewSet(viewsets.ModelViewSet):
+    queryset = SellerProduct.objects.all()
+    serializer_class = SellerProductSerializer
+    filterset_fields = ["seller_product"] 
+
+class WasteTypeViewSet(viewsets.ModelViewSet):
+    queryset = WasteType.objects.all()
+    serializer_class = WasteTypeSerializer
+
+
+
+
+
+
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5

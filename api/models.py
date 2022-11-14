@@ -8,6 +8,174 @@
 from salesforce import models
 
 
+class Aiapplication(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Name', sf_read_only=models.READ_ONLY)
+    language = models.CharField(db_column='Language', max_length=40, verbose_name='Master Language', sf_read_only=models.READ_ONLY, choices=[('en_US', 'English'), ('de', 'German'), ('es', 'Spanish'), ('fr', 'French'), ('it', 'Italian'), ('ja', 'Japanese'), ('sv', 'Swedish'), ('ko', 'Korean'), ('zh_TW', 'Chinese (Traditional)'), ('zh_CN', 'Chinese (Simplified)'), ('pt_BR', 'Portuguese (Brazil)'), ('nl_NL', 'Dutch'), ('da', 'Danish'), ('th', 'Thai'), ('fi', 'Finnish'), ('ru', 'Russian'), ('es_MX', 'Spanish (Mexico)'), ('no', 'Norwegian')])
+    master_label = models.CharField(db_column='MasterLabel', max_length=80, verbose_name='Label', sf_read_only=models.READ_ONLY)
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='aiapplication_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='aiapplication_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, default='Disabled', choices=[('Draft', '3'), ('Migrated', '2'), ('Enabled', '1'), ('Disabled', '0')])
+    type = models.CharField(db_column='Type', max_length=255, verbose_name='App Type', sf_read_only=models.READ_ONLY, choices=[('PredictionBuilder', '5'), ('RecommendationBuilder', '14')])
+    class Meta(models.Model.Meta):
+        db_table = 'AIApplication'
+        verbose_name = 'AI Application'
+        verbose_name_plural = 'AI Applications'
+        # keyPrefix = '0Pp'
+
+
+
+class AiapplicationConfig(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Name', sf_read_only=models.READ_ONLY)
+    language = models.CharField(db_column='Language', max_length=40, verbose_name='Master Language', sf_read_only=models.READ_ONLY, choices=[('en_US', 'English'), ('de', 'German'), ('es', 'Spanish'), ('fr', 'French'), ('it', 'Italian'), ('ja', 'Japanese'), ('sv', 'Swedish'), ('ko', 'Korean'), ('zh_TW', 'Chinese (Traditional)'), ('zh_CN', 'Chinese (Simplified)'), ('pt_BR', 'Portuguese (Brazil)'), ('nl_NL', 'Dutch'), ('da', 'Danish'), ('th', 'Thai'), ('fi', 'Finnish'), ('ru', 'Russian'), ('es_MX', 'Spanish (Mexico)'), ('no', 'Norwegian')])
+    master_label = models.CharField(db_column='MasterLabel', max_length=80, verbose_name='Label', sf_read_only=models.READ_ONLY)
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='aiapplicationconfig_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='aiapplicationconfig_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'AIApplicationConfig'
+        verbose_name = 'AI Application config'
+        verbose_name_plural = 'AI Application configs'
+        # keyPrefix = '6S9'
+
+
+
+class AiinsightAction(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='aiinsightaction_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='aiinsightaction_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    ai_record_insight = models.ForeignKey('AirecordInsight', models.DO_NOTHING, db_column='AiRecordInsightId', verbose_name='AI Record Insight ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    type = models.CharField(db_column='Type', max_length=255, verbose_name='Action Type', sf_read_only=models.READ_ONLY, choices=[('QuickAction', 'Quick Action'), ('Macro', 'Macro'), ('StandardAction', 'Standard Action'), ('InvocableAction', 'Invocable Action')])
+    confidence = models.DecimalField(db_column='Confidence', max_digits=4, decimal_places=2, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    action_name = models.CharField(db_column='ActionName', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)  # Too long choices skipped
+    action = models.ForeignKey('ApexClass', models.DO_NOTHING, db_column='ActionId', verbose_name='Action ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [ApexClass, AuraDefinitionBundle, CustomNotificationType, Macro]
+    class Meta(models.Model.Meta):
+        db_table = 'AIInsightAction'
+        verbose_name = 'AI Insight Action'
+        verbose_name_plural = 'AI Insight Actions'
+        # keyPrefix = '9qd'
+
+
+
+class AiinsightFeedback(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='aiinsightfeedback_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='aiinsightfeedback_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    ai_record_insight = models.ForeignKey('AirecordInsight', models.DO_NOTHING, db_column='AiRecordInsightId', verbose_name='AI Record Insight ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    ai_insight_feedback_type = models.CharField(db_column='AiInsightFeedbackType', max_length=255, verbose_name='AI Insight Feedback Type', sf_read_only=models.READ_ONLY, choices=[('Implicit', 'Implicit'), ('Explicit', 'Explicit')])
+    ai_feedback = models.CharField(db_column='AiFeedback', max_length=255, verbose_name='AI Insight Feedback', sf_read_only=models.READ_ONLY, choices=[('Positive', 'Positive'), ('Neutral', 'Neutral'), ('Negative', 'Negative')])
+    rank = models.IntegerField(db_column='Rank', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    value = models.ForeignKey(AiinsightAction, models.DO_NOTHING, db_column='ValueId', verbose_name='AI Insight Value ID or AI Insight Action ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [AIInsightAction, AIInsightValue] Master Detail Relationship *
+    actual_value = models.CharField(db_column='ActualValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'AIInsightFeedback'
+        verbose_name = 'AI Insight Feedback'
+        verbose_name_plural = 'AI Insight Feedbacks'
+        # keyPrefix = '9bq'
+
+
+
+class AiinsightReason(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='aiinsightreason_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='aiinsightreason_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    ai_insight_value = models.ForeignKey('AiinsightValue', models.DO_NOTHING, db_column='AiInsightValueId', verbose_name='AI Insight Value ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    intensity = models.DecimalField(db_column='Intensity', max_digits=4, decimal_places=2, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    contribution = models.DecimalField(db_column='Contribution', max_digits=4, decimal_places=2, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    variance = models.DecimalField(db_column='Variance', max_digits=4, decimal_places=2, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    field_name = models.CharField(db_column='FieldName', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    operator = models.CharField(db_column='Operator', max_length=255, sf_read_only=models.READ_ONLY, choices=[('And', 'And'), ('Or', 'Or'), ('Not', 'Not'), ('LessThan', 'LessThan'), ('LessThanOrEqual', 'LessThanOrEqual'), ('GreaterThan', 'GreaterThan'), ('GreaterThanOrEqual', 'GreaterThanOrEqual'), ('Equals', 'Equals'), ('NotEquals', 'NotEquals'), ('Add', 'Add'), ('Subtract', 'Subtract'), ('Multiply', 'Multiply'), ('Divide', 'Divide'), ('IsNull', 'IsNull'), ('IsNotNull', 'IsNotNull'), ('StartsWith', 'StartsWith'), ('EndsWith', 'EndsWith'), ('Contains', 'Contains'), ('Concat', 'Concat'), ('DoesNotContain', 'DoesNotContain'), ('Between', 'Between'), ('In', 'In')], blank=True, null=True)
+    field_value = models.CharField(db_column='FieldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    feature_value = models.CharField(db_column='FeatureValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    feature_type = models.CharField(db_column='FeatureType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Binary', 'Binary'), ('Integral', 'Integral'), ('Real', 'Real'), ('Currency', 'Currency'), ('Email', 'Email'), ('Percent', 'Percent'), ('ID', 'ID'), ('Picklist', 'Picklist'), ('MultiPicklist', 'MultiPicklist'), ('Combobox', 'Combobox'), ('Date', 'Date'), ('DateTime', 'DateTime'), ('Phone', 'Phone'), ('Text', 'Text'), ('TextArea', 'TextArea'), ('URL', 'URL')], blank=True, null=True)
+    related_insight_reason = models.ForeignKey('self', models.DO_NOTHING, db_column='RelatedInsightReasonId', verbose_name='AI Insight Reason ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    sort_order = models.IntegerField(db_column='SortOrder', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    reason_label_key = models.CharField(db_column='ReasonLabelKey', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'AIInsightReason'
+        verbose_name = 'AI Insight Reason'
+        verbose_name_plural = 'AI Insight Reasons'
+        # keyPrefix = '0T2'
+
+
+
+class AiinsightValue(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='aiinsightvalue_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='aiinsightvalue_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    ai_record_insight = models.ForeignKey('AirecordInsight', models.DO_NOTHING, db_column='AiRecordInsightId', verbose_name='AI Record Insight ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    ai_insight_action = models.ForeignKey(AiinsightAction, models.DO_NOTHING, db_column='AiInsightActionId', verbose_name='AI Insight Action ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    value_type = models.CharField(db_column='ValueType', max_length=255, sf_read_only=models.READ_ONLY, default='Number', choices=[('Number', 'Number'), ('Lookup', 'Lookup'), ('String', 'String'), ('Currency', 'Currency'), ('Enum', 'Enum'), ('Boolean', 'Boolean'), ('DateTime', 'DateTime')])
+    sobject_type = models.CharField(db_column='SobjectType', max_length=255, verbose_name='sObject Type', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Too long choices skipped
+    field = models.CharField(db_column='Field', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)  # Too long choices skipped
+    value = models.TextField(db_column='Value', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    field_value_lower_bound = models.TextField(db_column='FieldValueLowerBound', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    field_value_upper_bound = models.TextField(db_column='FieldValueUpperBound', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    confidence = models.DecimalField(db_column='Confidence', max_digits=5, decimal_places=2, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    sobject_lookup_value = models.ForeignKey('Account', models.DO_NOTHING, db_column='SobjectLookupValueId', verbose_name='sObject Lookup Value ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, AccountContactRelation, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWork, Asset, AssetRelationship, AssociatedLocation, Campaign, CampaignMember, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, Contact, ContactRequest, ContentVersion, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, Entitlement, EntityMilestone, Event, Idea, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location, LocationTrustMeasure, Location_Zone__c, Macro, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, OpportunityContactRole, OpportunityLineItem, OpportunityLineItemSchedule, Order, OrderItem, Postal_Code__c, Pricebook2, PricebookEntry, Problem, ProblemIncident, ProblemRelatedItem, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, QuickText, Quote, QuoteLineItem, Recommendation, RecordAction, Reviews__c, Scorecard, ScorecardAssociation, ScorecardMetric, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPersona, SocialPost, Solution, Task, UserProvisioningRequest, UserServicePresence, VoiceCall, Waste_Type__c, WorkBadge, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, WorkThanks, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    class Meta(models.Model.Meta):
+        db_table = 'AIInsightValue'
+        verbose_name = 'AI Insight Value'
+        verbose_name_plural = 'AI Insight Values'
+        # keyPrefix = '9qc'
+
+# Unable to inspect table 'AIPredictionEvent'
+# The error was: Table 'AIPredictionEvent' must contain one field with name 'Id'
+
+
+class AirecordInsight(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='airecordinsight_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='airecordinsight_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    ai_application = models.ForeignKey(Aiapplication, models.DO_NOTHING, db_column='AiApplicationId', verbose_name='AI Application ID', sf_read_only=models.READ_ONLY)
+    target = models.ForeignKey('Account', models.DO_NOTHING, db_column='TargetId', verbose_name='Target ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, AccountContactRelation, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWork, Asset, AssetRelationship, AssociatedLocation, Campaign, CampaignMember, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, Contact, ContactRequest, ContentVersion, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, Entitlement, EntityMilestone, Event, Idea, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location, LocationTrustMeasure, Location_Zone__c, Macro, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, OpportunityContactRole, OpportunityLineItem, OpportunityLineItemSchedule, Order, OrderItem, Postal_Code__c, Pricebook2, PricebookEntry, Problem, ProblemIncident, ProblemRelatedItem, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, QuickText, Quote, QuoteLineItem, Recommendation, RecordAction, Reviews__c, Scorecard, ScorecardAssociation, ScorecardMetric, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPersona, SocialPost, Solution, Task, UserProvisioningRequest, UserServicePresence, VoiceCall, Waste_Type__c, WorkBadge, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, WorkThanks, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    target_sobject_type = models.CharField(db_column='TargetSobjectType', max_length=255, verbose_name='Target sObject Type', sf_read_only=models.READ_ONLY)  # Too long choices skipped
+    type = models.CharField(db_column='Type', max_length=255, sf_read_only=models.READ_ONLY, choices=[('SimilarRecord', 'SimilarRecord'), ('Lookup', 'Lookup'), ('Action', 'Action'), ('SingleValue', 'SingleValue'), ('MultiValue', 'MultiValue')])
+    run_guid = models.CharField(db_column='RunGuid', max_length=250, verbose_name='Run GUID', sf_read_only=models.READ_ONLY)
+    run_start_time = models.DateTimeField(db_column='RunStartTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    valid_until = models.DateTimeField(db_column='ValidUntil', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    confidence = models.DecimalField(db_column='Confidence', max_digits=4, decimal_places=2, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    target_field = models.CharField(db_column='TargetField', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)  # Too long choices skipped
+    status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, choices=[('New', 'New'), ('Defunct', 'Defunct')], blank=True, null=True)
+    model = models.ForeignKey('Mlmodel', models.DO_NOTHING, db_column='ModelId', verbose_name='AI Model ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    ml_prediction_definition = models.ForeignKey('MlpredictionDefinition', models.DO_NOTHING, db_column='MlPredictionDefinitionId', verbose_name='ML Prediction Definition ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    prediction_field = models.CharField(db_column='PredictionField', max_length=250, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'AIRecordInsight'
+        verbose_name = 'AI Record Insight'
+        verbose_name_plural = 'AI Record Insights'
+        # keyPrefix = '9qb'
+
+
+
 class AcceptedEventRelation(models.Model):
     relation = models.ForeignKey('Calendar', models.DO_NOTHING, db_column='RelationId', verbose_name='Relation ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Calendar, Contact, Lead, User]
     event = models.ForeignKey('Event', models.DO_NOTHING, db_column='EventId', verbose_name='Event ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -58,7 +226,7 @@ class Account(models.Model):
     fax = models.CharField(db_column='Fax', max_length=40, verbose_name='Account Fax', blank=True, null=True)
     website = models.URLField(db_column='Website', blank=True, null=True)
     photo_url = models.URLField(db_column='PhotoUrl', verbose_name='Photo URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    industry = models.CharField(db_column='Industry', max_length=255, choices=[('Agriculture', 'Agriculture'), ('Apparel', 'Apparel'), ('Banking', 'Banking'), ('Biotechnology', 'Biotechnology'), ('Chemicals', 'Chemicals'), ('Communications', 'Communications'), ('Construction', 'Construction'), ('Consulting', 'Consulting'), ('Education', 'Education'), ('Electronics', 'Electronics'), ('Energy', 'Energy'), ('Engineering', 'Engineering'), ('Entertainment', 'Entertainment'), ('Environmental', 'Environmental'), ('Finance', 'Finance'), ('Food & Beverage', 'Food & Beverage'), ('Government', 'Government'), ('Healthcare', 'Healthcare'), ('Hospitality', 'Hospitality'), ('Insurance', 'Insurance'), ('Machinery', 'Machinery'), ('Manufacturing', 'Manufacturing'), ('Media', 'Media'), ('Not For Profit', 'Not For Profit'), ('Other', 'Other'), ('Recreation', 'Recreation'), ('Retail', 'Retail'), ('Shipping', 'Shipping'), ('Technology', 'Technology'), ('Telecommunications', 'Telecommunications'), ('Transportation', 'Transportation'), ('Utilities', 'Utilities'), ('Waste management', 'Waste management'), ('Property management', 'Property management')], blank=True, null=True)
+    industry = models.CharField(db_column='Industry', max_length=255, choices=[('Agriculture', 'Agriculture'), ('Apparel', 'Apparel'), ('Banking', 'Banking'), ('Biotechnology', 'Biotechnology'), ('Chemicals', 'Chemicals'), ('Communications', 'Communications'), ('Construction', 'Construction'), ('Consulting', 'Consulting'), ('Education', 'Education'), ('Electronics', 'Electronics'), ('Energy', 'Energy'), ('Engineering', 'Engineering'), ('Entertainment', 'Entertainment'), ('Environmental', 'Environmental'), ('Finance', 'Finance'), ('Food & Beverage', 'Food & Beverage'), ('Government', 'Government'), ('Healthcare', 'Healthcare'), ('Hospitality', 'Hospitality'), ('Insurance', 'Insurance'), ('Machinery', 'Machinery'), ('Manufacturing', 'Manufacturing'), ('Media', 'Media'), ('Not For Profit', 'Not For Profit'), ('Other', 'Other'), ('Property management', 'Property management'), ('Recreation', 'Recreation'), ('Retail', 'Retail'), ('Shipping', 'Shipping'), ('Technology', 'Technology'), ('Telecommunications', 'Telecommunications'), ('Transportation', 'Transportation'), ('Utilities', 'Utilities'), ('Waste management', 'Waste management'), ('Residential', 'Residential')], blank=True, null=True)
     number_of_employees = models.IntegerField(db_column='NumberOfEmployees', verbose_name='Employees', blank=True, null=True)
     description = models.TextField(db_column='Description', verbose_name='Account Description', blank=True, null=True)
     owner = models.ForeignKey('User', models.DO_NOTHING, db_column='OwnerId', related_name='account_owner_set', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)
@@ -537,7 +705,7 @@ class ActiveProfileMetric(models.Model):
 class ActivityHistory(models.Model):
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', related_name='activityhistory_account_set', verbose_name='Account ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
     who = models.ForeignKey('Contact', models.DO_NOTHING, db_column='WhoId', related_name='activityhistory_who_set', verbose_name='Name ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Contact, Lead] Master Detail Relationship *
-    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='activityhistory_what_set', verbose_name='Related To ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
+    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='activityhistory_what_set', verbose_name='Related To ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Location, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
     subject = models.CharField(db_column='Subject', max_length=80, sf_read_only=models.READ_ONLY, choices=[('Call', 'Call'), ('Send Letter', 'Send Letter of Authorization'), ('Send Quote', 'Send Quote'), ('Other', 'Other')], blank=True, null=True)
     is_task = models.BooleanField(db_column='IsTask', verbose_name='Task', sf_read_only=models.READ_ONLY, default=False)
     activity_date = models.DateField(db_column='ActivityDate', verbose_name='Date', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -680,6 +848,7 @@ class AddOn(models.Model):
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     display_name = models.CharField(db_column='Display_Name__c', max_length=255, verbose_name='Display Name', blank=True, null=True)
+    sort = models.DecimalField(db_column='Sort__c', max_digits=18, decimal_places=0, blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'Add_On__c'
         verbose_name = 'Add On'
@@ -717,7 +886,7 @@ class AgentWork(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='agentwork_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     user = models.ForeignKey('User', models.DO_NOTHING, db_column='UserId', related_name='agentwork_user_set', verbose_name='User ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    work_item = models.ForeignKey(Account, models.DO_NOTHING, db_column='WorkItemId', verbose_name='WorkItem ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Contact, ContactRequest, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Product_Category_Info__c, Reviews__c, SocialPost, VoiceCall, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    work_item = models.ForeignKey(Account, models.DO_NOTHING, db_column='WorkItemId', verbose_name='WorkItem ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Contact, ContactRequest, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, SocialPost, VoiceCall, Waste_Type__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Assigned', 'Assigned'), ('Unavailable', 'Unavailable'), ('Declined', 'Declined'), ('Opened', 'Opened'), ('Closed', 'Closed'), ('DeclinedOnPushTimeout', 'Declined on Push Time-Out'), ('Canceled', 'Canceled'), ('Transferred', 'Transferred')])
     service_channel = models.ForeignKey('ServiceChannel', models.DO_NOTHING, db_column='ServiceChannelId', verbose_name='Service Channel ID', sf_read_only=models.NOT_UPDATEABLE)
     original_queue = models.ForeignKey('Group', models.DO_NOTHING, db_column='OriginalQueueId', related_name='agentwork_originalqueue_set', verbose_name='Queue ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -821,6 +990,28 @@ class Announcement(models.Model):
 
 
 
+class ApexClass(models.Model):
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    name = models.CharField(db_column='Name', max_length=255)
+    api_version = models.DecimalField(db_column='ApiVersion', max_digits=18, decimal_places=1)
+    status = models.CharField(db_column='Status', max_length=40, choices=[('Inactive', 'Inactive'), ('Active', 'Active'), ('Deleted', 'Deleted')])
+    is_valid = models.BooleanField(db_column='IsValid', default=False)
+    body_crc = models.DecimalField(db_column='BodyCrc', max_digits=18, decimal_places=0, verbose_name='Body CRC', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    body = models.TextField(db_column='Body', blank=True, null=True)
+    length_without_comments = models.IntegerField(db_column='LengthWithoutComments', verbose_name='Size Without Comments')
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='apexclass_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='apexclass_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexClass'
+        verbose_name = 'Apex Class'
+        verbose_name_plural = 'Apex Classes'
+        # keyPrefix = '01p'
+
+
+
 class ApexComponent(models.Model):
     namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
     name = models.CharField(db_column='Name', max_length=80)
@@ -840,6 +1031,23 @@ class ApexComponent(models.Model):
         verbose_name = 'Visualforce Component'
         verbose_name_plural = 'Visualforce Components'
         # keyPrefix = '099'
+
+
+
+class ApexEmailNotification(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='apexemailnotification_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='apexemailnotification_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    user = models.OneToOneField('User', models.DO_NOTHING, db_column='UserId', related_name='apexemailnotification_user_set', verbose_name='User ID', blank=True, null=True)  # Master Detail Relationship *
+    email = models.CharField(db_column='Email', unique=True, max_length=255, verbose_name='email', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexEmailNotification'
+        verbose_name = 'Apex Email Notification'
+        verbose_name_plural = 'Apex Email Notifications'
+        # keyPrefix = '06j'
 
 
 
@@ -903,6 +1111,166 @@ class ApexPageInfo(models.Model):
         verbose_name = 'Apex Page Info'
         verbose_name_plural = 'Apex Pages Info'
         # keyPrefix = '4ve'
+
+
+
+class ApexTestQueueItem(models.Model):
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    apex_class = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='ApexClassId', verbose_name='Class ID', sf_read_only=models.NOT_UPDATEABLE)
+    status = models.CharField(db_column='Status', max_length=40, sf_read_only=models.NOT_CREATEABLE, choices=[('Queued', 'Queued'), ('Processing', 'Processing'), ('Aborted', 'Aborted'), ('Completed', 'Completed'), ('Failed', 'Failed'), ('Preparing', 'Preparing'), ('Holding', 'Holding')])
+    extended_status = models.CharField(db_column='ExtendedStatus', max_length=1000, verbose_name='Status Detail', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    parent_job = models.ForeignKey('AsyncApexJob', models.DO_NOTHING, db_column='ParentJobId', verbose_name='Apex Job ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    test_run_result = models.ForeignKey('ApexTestRunResult', models.DO_NOTHING, db_column='TestRunResultId', verbose_name='ApexTestRunResult ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    should_skip_code_coverage = models.BooleanField(db_column='ShouldSkipCodeCoverage', default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexTestQueueItem'
+        verbose_name = 'Apex Test Queue Item'
+        verbose_name_plural = 'Apex Test Queue Items'
+        # keyPrefix = '709'
+
+
+
+class ApexTestResult(models.Model):
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    test_timestamp = models.DateTimeField(db_column='TestTimestamp', verbose_name='Time Started')
+    outcome = models.CharField(db_column='Outcome', max_length=40, verbose_name='Pass/Fail', choices=[('Pass', 'Pass'), ('Fail', 'Fail'), ('CompileFail', 'CompileFail'), ('Skip', 'Skip')])
+    apex_class = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='ApexClassId', verbose_name='Class ID')
+    method_name = models.CharField(db_column='MethodName', max_length=255, blank=True, null=True)
+    message = models.CharField(db_column='Message', max_length=4000, verbose_name='Error Message', blank=True, null=True)
+    stack_trace = models.CharField(db_column='StackTrace', max_length=4000, blank=True, null=True)
+    async_apex_job = models.ForeignKey('AsyncApexJob', models.DO_NOTHING, db_column='AsyncApexJobId', verbose_name='Apex Job ID', blank=True, null=True)
+    queue_item = models.ForeignKey(ApexTestQueueItem, models.DO_NOTHING, db_column='QueueItemId', verbose_name='Apex Test Queue Item ID', blank=True, null=True)
+    apex_log = models.ForeignKey(ApexLog, models.DO_NOTHING, db_column='ApexLogId', verbose_name='Log ID', blank=True, null=True)
+    apex_test_run_result = models.ForeignKey('ApexTestRunResult', models.DO_NOTHING, db_column='ApexTestRunResultId', verbose_name='ApexTestRunResult ID', blank=True, null=True)
+    run_time = models.IntegerField(db_column='RunTime', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexTestResult'
+        verbose_name = 'Apex Test Result'
+        verbose_name_plural = 'Apex Test Results'
+        # keyPrefix = '07M'
+
+
+
+class ApexTestResultLimits(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='apextestresultlimits_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='apextestresultlimits_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    apex_test_result = models.OneToOneField(ApexTestResult, models.DO_NOTHING, db_column='ApexTestResultId', verbose_name='Apex Test Result ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    soql = models.IntegerField(db_column='Soql', verbose_name='Total number of SOQL queries issued')
+    query_rows = models.IntegerField(db_column='QueryRows', verbose_name='Total number of records retrieved by SOQL queries')
+    sosl = models.IntegerField(db_column='Sosl', verbose_name='Total number of SOSL queries issued')
+    dml = models.IntegerField(db_column='Dml', verbose_name='Total number of DML statements issued')
+    dml_rows = models.IntegerField(db_column='DmlRows', verbose_name='Total number of records processed as a result of DML statements')
+    cpu = models.IntegerField(db_column='Cpu', verbose_name='Maximum CPU time on the Salesforce servers')
+    callouts = models.IntegerField(db_column='Callouts', verbose_name='Total number of callouts')
+    email = models.IntegerField(db_column='Email', verbose_name='Total number of sendEmail methods allowed')
+    async_calls = models.IntegerField(db_column='AsyncCalls', verbose_name='Total number of async calls')
+    mobile_push = models.IntegerField(db_column='MobilePush', verbose_name='Maximum number of push notification method calls allowed per Apex transaction')
+    limit_context = models.CharField(db_column='LimitContext', max_length=255, verbose_name='LimitContext', blank=True, null=True)
+    limit_exceptions = models.CharField(db_column='LimitExceptions', max_length=255, verbose_name='LimitExceptions', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexTestResultLimits'
+        verbose_name = 'Apex Test Result Limit'
+        verbose_name_plural = 'Apex Test Result Limit'
+        # keyPrefix = '05n'
+
+
+
+class ApexTestRunResult(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='apextestrunresult_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='apextestrunresult_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    async_apex_job = models.OneToOneField('AsyncApexJob', models.DO_NOTHING, db_column='AsyncApexJobId', verbose_name='Apex Job ID', blank=True, null=True)
+    user = models.ForeignKey('User', models.DO_NOTHING, db_column='UserId', related_name='apextestrunresult_user_set', verbose_name='User ID', blank=True, null=True)
+    job_name = models.CharField(db_column='JobName', max_length=255, verbose_name='Name of the job', blank=True, null=True)
+    is_all_tests = models.BooleanField(db_column='IsAllTests', verbose_name='allTests', default=False)
+    source = models.CharField(db_column='Source', max_length=255, verbose_name='Client that kicked off the test run', blank=True, null=True)
+    start_time = models.DateTimeField(db_column='StartTime', verbose_name='Start time of the test run')
+    end_time = models.DateTimeField(db_column='EndTime', verbose_name='End time of the test run', blank=True, null=True)
+    test_time = models.IntegerField(db_column='TestTime', verbose_name='Time(ms) actually spent running tests', blank=True, null=True)
+    status = models.CharField(db_column='Status', max_length=255, verbose_name='Status of the test run', choices=[('Queued', 'Queued'), ('Processing', 'Processing'), ('Aborted', 'Aborted'), ('Completed', 'Completed'), ('Failed', 'Failed'), ('Preparing', 'Preparing'), ('Holding', 'Holding')])
+    classes_enqueued = models.IntegerField(db_column='ClassesEnqueued', verbose_name='Number of classes enqueued in this test run')
+    classes_completed = models.IntegerField(db_column='ClassesCompleted', verbose_name='Number of classes completed in this test run', blank=True, null=True)
+    methods_enqueued = models.IntegerField(db_column='MethodsEnqueued', verbose_name='Number of methods enqueued in this test run', blank=True, null=True)
+    methods_completed = models.IntegerField(db_column='MethodsCompleted', verbose_name='Number of methods completed in this test run', blank=True, null=True)
+    methods_failed = models.IntegerField(db_column='MethodsFailed', verbose_name='Number of methods failed in this test run', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexTestRunResult'
+        verbose_name = 'Apex Test Run Result'
+        verbose_name_plural = 'Apex Test Run Result'
+        # keyPrefix = '05m'
+
+
+
+class ApexTestSuite(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='apextestsuite_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='apextestsuite_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    test_suite_name = models.CharField(db_column='TestSuiteName', unique=True, max_length=255)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexTestSuite'
+        verbose_name = 'Apex Test Suite'
+        verbose_name_plural = 'Apex Test Suites'
+        # keyPrefix = '05F'
+
+
+
+class ApexTrigger(models.Model):
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    name = models.CharField(db_column='Name', max_length=255)
+    table_enum_or_id = models.CharField(db_column='TableEnumOrId', max_length=40, verbose_name='Custom Object Definition ID', blank=True, null=True)  # Too long choices skipped
+    usage_before_insert = models.BooleanField(db_column='UsageBeforeInsert', verbose_name='BeforeInsert')
+    usage_after_insert = models.BooleanField(db_column='UsageAfterInsert', verbose_name='AfterInsert')
+    usage_before_update = models.BooleanField(db_column='UsageBeforeUpdate', verbose_name='BeforeUpdate')
+    usage_after_update = models.BooleanField(db_column='UsageAfterUpdate', verbose_name='AfterUpdate')
+    usage_before_delete = models.BooleanField(db_column='UsageBeforeDelete', verbose_name='BeforeDelete')
+    usage_after_delete = models.BooleanField(db_column='UsageAfterDelete', verbose_name='AfterDelete')
+    usage_is_bulk = models.BooleanField(db_column='UsageIsBulk', verbose_name='IsBulk')
+    usage_after_undelete = models.BooleanField(db_column='UsageAfterUndelete', verbose_name='AfterUndelete')
+    api_version = models.DecimalField(db_column='ApiVersion', max_digits=18, decimal_places=1)
+    status = models.CharField(db_column='Status', max_length=40, choices=[('Inactive', 'Inactive'), ('Active', 'Active'), ('Deleted', 'Deleted')])
+    is_valid = models.BooleanField(db_column='IsValid', default=False)
+    body_crc = models.DecimalField(db_column='BodyCrc', max_digits=18, decimal_places=0, verbose_name='Body CRC', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    body = models.TextField(db_column='Body', blank=True, null=True)
+    length_without_comments = models.IntegerField(db_column='LengthWithoutComments', verbose_name='Size Without Comments')
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='apextrigger_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='apextrigger_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexTrigger'
+        verbose_name = 'Apex Trigger'
+        verbose_name_plural = 'Apex Triggers'
+        # keyPrefix = '01q'
+
+
+
+class ApexTypeImplementor(models.Model):
+    durable_id = models.CharField(db_column='DurableId', max_length=255, verbose_name='Durable ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    apex_class = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='ApexClassId', related_name='apextypeimplementor_apexclass_set', verbose_name='Class ID', sf_read_only=models.READ_ONLY)
+    class_name = models.CharField(db_column='ClassName', max_length=81, sf_read_only=models.READ_ONLY)
+    class_namespace_prefix = models.CharField(db_column='ClassNamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_concrete = models.BooleanField(db_column='IsConcrete', sf_read_only=models.READ_ONLY, default=False)
+    interface_apex_class = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='InterfaceApexClassId', related_name='apextypeimplementor_interfaceapexclass_set', verbose_name='Class ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    interface_name = models.CharField(db_column='InterfaceName', max_length=81, sf_read_only=models.READ_ONLY)
+    interface_namespace_prefix = models.CharField(db_column='InterfaceNamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'ApexTypeImplementor'
+        verbose_name = 'Apex Type Implementor'
+        verbose_name_plural = 'Apex Type Implementors'
+        # keyPrefix = '0kt'
 
 
 
@@ -1123,7 +1491,7 @@ class AssetHistory(models.Model):
     asset = models.ForeignKey(Asset, models.DO_NOTHING, db_column='AssetId', verbose_name='Asset ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account'), ('Address', 'Address'), ('AssetLevel', 'Asset Level'), ('Name', 'Asset Name'), ('Owner', 'Asset Owner'), ('AssetProvidedBy', 'Asset Provided By'), ('AssetServicedBy', 'Asset Serviced By'), ('City', 'City'), ('IsCompetitorProduct', 'Competitor Asset'), ('ConsequenceOfFailure', 'Consequence Of Failure'), ('Contact', 'Contact'), ('Country', 'Country'), ('created', 'Created.'), ('Description', 'Description'), ('DigitalAssetStatus', 'Digital Asset Status'), ('ExternalIdentifier', 'External Id'), ('feedEvent', 'Feed event'), ('GeocodeAccuracy', 'Geocode Accuracy'), ('individualMerged', 'Individual Merged'), ('InstallDate', 'Install Date'), ('IsInternal', 'Internal Asset'), ('Latitude', 'Latitude'), ('Longitude', 'Longitude'), ('ManufactureDate', 'Manufacture Date'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('Parent', 'Parent Asset'), ('PostalCode', 'Postal Code'), ('Price', 'Price'), ('Product2', 'Product'), ('PurchaseDate', 'Purchase Date'), ('Quantity', 'Quantity'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootAsset', 'Root Asset'), ('SerialNumber', 'Serial Number'), ('State', 'State'), ('Status', 'Status'), ('StatusReason', 'Status Reason'), ('Street', 'Street'), ('Uuid', 'Unique Identifier'), ('UsageEndDate', 'Usage End Date')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account'), ('Address', 'Address'), ('AssetLevel', 'Asset Level'), ('Name', 'Asset Name'), ('Owner', 'Asset Owner'), ('AssetProvidedBy', 'Asset Provided By'), ('AssetServicedBy', 'Asset Serviced By'), ('City', 'City'), ('IsCompetitorProduct', 'Competitor Asset'), ('ConsequenceOfFailure', 'Consequence Of Failure'), ('Contact', 'Contact'), ('Country', 'Country'), ('created', 'Created.'), ('Description', 'Description'), ('DigitalAssetStatus', 'Digital Asset Status'), ('ExternalIdentifier', 'External Id'), ('feedEvent', 'Feed event'), ('GeocodeAccuracy', 'Geocode Accuracy'), ('individualMerged', 'Individual Merged'), ('InstallDate', 'Install Date'), ('IsInternal', 'Internal Asset'), ('Latitude', 'Latitude'), ('Location', 'Location'), ('Longitude', 'Longitude'), ('ManufactureDate', 'Manufacture Date'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('Parent', 'Parent Asset'), ('PostalCode', 'Postal Code'), ('Price', 'Price'), ('Product2', 'Product'), ('PurchaseDate', 'Purchase Date'), ('Quantity', 'Quantity'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootAsset', 'Root Asset'), ('SerialNumber', 'Serial Number'), ('State', 'State'), ('Status', 'Status'), ('StatusReason', 'Status Reason'), ('Street', 'Street'), ('Uuid', 'Unique Identifier'), ('UsageEndDate', 'Usage End Date')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -1233,9 +1601,73 @@ class AssignmentRule(models.Model):
 
 
 
+class AssociatedLocation(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    associated_location_number = models.CharField(db_column='AssociatedLocationNumber', max_length=255, verbose_name='Associated Location Name', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='associatedlocation_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='associatedlocation_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    parent_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentRecordId', verbose_name='Account Name ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    location = models.ForeignKey('Location', models.DO_NOTHING, db_column='LocationId', verbose_name='Location ID')  # Master Detail Relationship *
+    type = models.CharField(db_column='Type', max_length=40, blank=True, null=True)
+    active_from = models.DateTimeField(db_column='ActiveFrom', blank=True, null=True)
+    active_to = models.DateTimeField(db_column='ActiveTo', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'AssociatedLocation'
+        verbose_name = 'Associated Location'
+        verbose_name_plural = 'Associated Locations'
+        # keyPrefix = '0Kt'
+
+
+
+class AssociatedLocationHistory(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    associated_location = models.ForeignKey(AssociatedLocation, models.DO_NOTHING, db_column='AssociatedLocationId', verbose_name='Associated Location ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('ParentRecord', 'Account Name'), ('ActiveFrom', 'Active From'), ('ActiveTo', 'Active To'), ('Name', 'Associated Location Name'), ('created', 'Created.'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('Location', 'Location Name'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('Type', 'Type')])
+    data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
+    old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'AssociatedLocationHistory'
+        verbose_name = 'Associated Location History'
+        verbose_name_plural = 'Associated Location History'
+        # keyPrefix = None
+
+
+
+class AsyncApexJob(models.Model):
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    job_type = models.CharField(db_column='JobType', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Future', 'Future'), ('SharingRecalculation', 'Sharing Recalculation'), ('ScheduledApex', 'Scheduled Apex'), ('BatchApex', 'Batch Apex'), ('BatchApexWorker', 'Batch Apex Worker'), ('TestRequest', 'Test Request'), ('TestWorker', 'Test Worker'), ('ApexToken', 'Apex Token'), ('Queueable', 'Queueable')])
+    apex_class = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='ApexClassId', verbose_name='Class ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    status = models.CharField(db_column='Status', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Queued', 'Queued'), ('Processing', 'Processing'), ('Aborted', 'Aborted'), ('Completed', 'Completed'), ('Failed', 'Failed'), ('Preparing', 'Preparing'), ('Holding', 'Holding')])
+    job_items_processed = models.IntegerField(db_column='JobItemsProcessed', verbose_name='Batches Processed', sf_read_only=models.READ_ONLY)
+    total_job_items = models.IntegerField(db_column='TotalJobItems', verbose_name='Total Batches', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    number_of_errors = models.IntegerField(db_column='NumberOfErrors', verbose_name='Failures', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    completed_date = models.DateTimeField(db_column='CompletedDate', verbose_name='Completion Date', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    method_name = models.CharField(db_column='MethodName', max_length=255, verbose_name='Apex Method', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    extended_status = models.CharField(db_column='ExtendedStatus', max_length=255, verbose_name='Status Detail', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    parent_job = models.ForeignKey('self', models.DO_NOTHING, db_column='ParentJobId', verbose_name='Apex Job ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_processed = models.CharField(db_column='LastProcessed', max_length=15, verbose_name='Last ID processed and committed', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_processed_offset = models.IntegerField(db_column='LastProcessedOffset', verbose_name='Offset of last ID processed and committed', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    cron_trigger = models.ForeignKey('CronTrigger', models.DO_NOTHING, db_column='CronTriggerId', verbose_name='Scheduled Job ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'AsyncApexJob'
+        verbose_name = 'Apex Job'
+        verbose_name_plural = 'Apex Jobs'
+        # keyPrefix = '707'
+
+
+
 class AttachedContentDocument(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
-    linked_entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='LinkedEntityId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    linked_entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='LinkedEntityId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     content_document = models.ForeignKey('ContentDocument', models.DO_NOTHING, db_column='ContentDocumentId', verbose_name='ContentDocument ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
     title = models.CharField(db_column='Title', max_length=255, sf_read_only=models.READ_ONLY)
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='attachedcontentdocument_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
@@ -1259,7 +1691,7 @@ class AttachedContentDocument(models.Model):
 
 class AttachedContentNote(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
-    linked_entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='LinkedEntityId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    linked_entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='LinkedEntityId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     content_document = models.ForeignKey('ContentDocument', models.DO_NOTHING, db_column='ContentDocumentId', verbose_name='ContentDocument ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
     title = models.CharField(db_column='Title', max_length=255, sf_read_only=models.READ_ONLY)
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='attachedcontentnote_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
@@ -1280,7 +1712,7 @@ class AttachedContentNote(models.Model):
 
 class Attachment(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
-    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, Campaign, Case, ChangeRequest, Contact, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, EmailMessage, EmailTemplate, Entitlement, Event, Image, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product2, Product_Category_Info__c, Quote, Reviews__c, ServiceContract, ServiceResource, SocialPost, Solution, Task, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, Campaign, Case, ChangeRequest, Contact, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Disposal_Fee__c, EmailMessage, EmailTemplate, Entitlement, Event, Image, Incident, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, SocialPost, Solution, Task, Waste_Type__c, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     name = models.CharField(db_column='Name', max_length=255, verbose_name='File Name')
     is_private = models.BooleanField(db_column='IsPrivate', verbose_name='Private', default=False)
     content_type = models.CharField(db_column='ContentType', max_length=120, blank=True, null=True)
@@ -1421,6 +1853,7 @@ class AuthProvider(models.Model):
     provider_type = models.CharField(db_column='ProviderType', max_length=40, choices=[('Facebook', 'Facebook'), ('Janrain', 'Janrain'), ('Salesforce', 'Salesforce'), ('OpenIdConnect', 'Open ID Connect'), ('MicrosoftACS', 'Microsoft Access Control Service'), ('LinkedIn', 'LinkedIn'), ('Twitter', 'Twitter'), ('Google', 'Google'), ('GitHub', 'GitHub'), ('Custom', 'Custom'), ('Apple', 'Apple'), ('Evergreen', 'Evergreen'), ('Slack', 'Slack'), ('HubSpot', 'Hubspot'), ('Microsoft', 'Microsoft')])
     friendly_name = models.CharField(db_column='FriendlyName', max_length=32, verbose_name='Name')
     developer_name = models.CharField(db_column='DeveloperName', max_length=32, verbose_name='URL Suffix')
+    registration_handler = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='RegistrationHandlerId', related_name='authprovider_registrationhandler_set', verbose_name='Class ID', blank=True, null=True)
     execution_user = models.ForeignKey('User', models.DO_NOTHING, db_column='ExecutionUserId', verbose_name='User ID', blank=True, null=True)
     consumer_key = models.CharField(db_column='ConsumerKey', max_length=256, blank=True, null=True)
     consumer_secret = models.CharField(db_column='ConsumerSecret', max_length=100, sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
@@ -1436,6 +1869,7 @@ class AuthProvider(models.Model):
     options_send_secret_in_apis = models.BooleanField(db_column='OptionsSendSecretInApis', verbose_name='Include Consumer Secret in SOAP API Responses')
     icon_url = models.URLField(db_column='IconUrl', verbose_name='Icon URL', blank=True, null=True)
     logout_url = models.URLField(db_column='LogoutUrl', verbose_name='Custom Logout URL', blank=True, null=True)
+    plugin = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='PluginId', related_name='authprovider_plugin_set', verbose_name='Class ID', blank=True, null=True)
     custom_metadata_type_record = models.CharField(db_column='CustomMetadataTypeRecord', max_length=15, blank=True, null=True)
     ec_key = models.CharField(db_column='EcKey', max_length=30, verbose_name='Elliptic Curve Key', blank=True, null=True)
     apple_team = models.CharField(db_column='AppleTeam', max_length=12, blank=True, null=True)
@@ -1612,14 +2046,14 @@ class BriefcaseRule(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='briefcaserule_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     briefcase = models.ForeignKey(BriefcaseDefinition, models.DO_NOTHING, db_column='BriefcaseId', verbose_name='Briefcase Definition ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
-    target_entity = models.CharField(db_column='TargetEntity', max_length=255, verbose_name='Target Object', sf_read_only=models.READ_ONLY, choices=[('Account', None), ('AccountContactRelation', None), ('Asset', None), ('AssetRelationship', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('Contact', None), ('ContactRequest', None), ('ContentVersion', None), ('Contract', None), ('ContractLineItem', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntityMilestone', None), ('Event', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('Macro', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('OpportunityLineItemSchedule', None), ('Order', None), ('OrderItem', None), ('Pricebook2', None), ('PricebookEntry', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('Scorecard', None), ('ScorecardAssociation', None), ('ScorecardMetric', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('Task', None), ('User', None), ('UserProvisioningRequest', None), ('VoiceCall', None), ('WebCartDocument', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
+    target_entity = models.CharField(db_column='TargetEntity', max_length=255, verbose_name='Target Object', sf_read_only=models.READ_ONLY, choices=[('Account', None), ('AccountContactRelation', None), ('Asset', None), ('AssetRelationship', None), ('AssociatedLocation', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('Contact', None), ('ContactRequest', None), ('ContentVersion', None), ('Contract', None), ('ContractLineItem', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntityMilestone', None), ('Event', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('Location', None), ('LocationTrustMeasure', None), ('Macro', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('OpportunityLineItemSchedule', None), ('Order', None), ('OrderItem', None), ('Pricebook2', None), ('PricebookEntry', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('Scorecard', None), ('ScorecardAssociation', None), ('ScorecardMetric', None), ('ServiceAppointmentGroup', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('Task', None), ('User', None), ('UserProvisioningRequest', None), ('VoiceCall', None), ('WebCartDocument', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkProcedure', None), ('WorkProcedureStep', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
     parent_rule = models.ForeignKey('self', models.DO_NOTHING, db_column='ParentRuleId', verbose_name='Briefcase Rule ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
     filter_logic = models.CharField(db_column='FilterLogic', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     query_scope = models.CharField(db_column='QueryScope', max_length=255, verbose_name='Scope', sf_read_only=models.READ_ONLY, choices=[('everything', None), ('assignedToMe', None), ('mine', None)])
     record_limit = models.IntegerField(db_column='RecordLimit', verbose_name='Limit', sf_read_only=models.READ_ONLY, blank=True, null=True)
     order_by = models.CharField(db_column='OrderBy', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)  # Too long choices skipped
     is_ascending_order = models.BooleanField(db_column='IsAscendingOrder', verbose_name='Ascending', sf_read_only=models.READ_ONLY, default=False)
-    relationship_field = models.CharField(db_column='RelationshipField', max_length=255, verbose_name='Custom Field Definition ID', sf_read_only=models.READ_ONLY, choices=[('Account', None), ('AccountRollup', None), ('Action', None), ('ActivatedBy', None), ('Activity', None), ('ArchivedBy', None), ('Asset', None), ('AssetProvidedBy', None), ('AssetServicedBy', None), ('AttachedTo', None), ('BasisTransactionItem', None), ('BillToContact', None), ('Campaign', None), ('CampaignMember', None), ('Case', None), ('ChangeRequest', None), ('CompanyAuthorizedBy', None), ('CompanySigned', None), ('Contact', None), ('ContentModifiedBy', None), ('Contract', None), ('ContractLineItem', None), ('ConvertedAccount', None), ('ConvertedContact', None), ('ConvertedOpportunity', None), ('CreatedBy', None), ('CustomerAuthorizedBy', None), ('CustomerSigned', None), ('Definition', None), ('DelegatedApprover', None), ('DeletedBy', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('FirstPublishLocation', None), ('From', None), ('Giver', None), ('HiddenBy', None), ('Incident', None), ('Issue', None), ('LastModifiedBy', None), ('Lead', None), ('LeadOrContact', None), ('LeadOrContactOwner', None), ('Manager', None), ('MasterEvent', None), ('MasterRecord', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('Order', None), ('Organizer', None), ('Owner', None), ('Parent', None), ('ParentContractLineItem', None), ('ParentEntity', None), ('ParentIdea', None), ('ParentIncident', None), ('ParentProblem', None), ('ParentRecord', None), ('ParentServiceContract', None), ('ParentWorkOrder', None), ('ParentWorkOrderLineItem', None), ('Persona', None), ('Pricebook2', None), ('PricebookEntry', None), ('PrimaryPartnerAccount', None), ('Problem', None), ('Product', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillUser', None), ('Quote', None), ('QuoteLineItem', None), ('Recipient', None), ('Record', None), ('RecurrenceActivity', None), ('RelatedAsset', None), ('RelatedIssue', None), ('RelatedRecord', None), ('RelatedTo', None), ('ReplyTo', None), ('ReplyToEmailMessage', None), ('ReportsTo', None), ('ResolvedBy', None), ('Reviewer', None), ('RootAsset', None), ('RootContractLineItem', None), ('RootServiceContract', None), ('RootWorkOrder', None), ('RootWorkOrderLineItem', None), ('SalesforceUser', None), ('Scorecard', None), ('ServiceContract', None), ('ServiceResource', None), ('ShipToContact', None), ('Source', None), ('SyncedQuote', None), ('TargetEntity', None), ('User', None), ('What', None), ('Who', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkStepTemplate', None)], blank=True, null=True)
+    relationship_field = models.CharField(db_column='RelationshipField', max_length=255, verbose_name='Custom Field Definition ID', sf_read_only=models.READ_ONLY, choices=[('Account', None), ('AccountRollup', None), ('Action', None), ('ActivatedBy', None), ('Activity', None), ('ArchivedBy', None), ('Asset', None), ('AssetProvidedBy', None), ('AssetServicedBy', None), ('AttachedTo', None), ('BasisTransactionItem', None), ('BillToContact', None), ('Campaign', None), ('CampaignMember', None), ('Case', None), ('ChangeRequest', None), ('CompanyAuthorizedBy', None), ('CompanySigned', None), ('Contact', None), ('ContentModifiedBy', None), ('Contract', None), ('ContractLineItem', None), ('ConvertedAccount', None), ('ConvertedContact', None), ('ConvertedOpportunity', None), ('CreatedBy', None), ('CustomerAuthorizedBy', None), ('CustomerSigned', None), ('Definition', None), ('DelegatedApprover', None), ('DeletedBy', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('FirstPublishLocation', None), ('From', None), ('Giver', None), ('HiddenBy', None), ('Incident', None), ('Issue', None), ('LastModifiedBy', None), ('Lead', None), ('LeadOrContact', None), ('LeadOrContactOwner', None), ('Location', None), ('Manager', None), ('MasterEvent', None), ('MasterRecord', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('Order', None), ('Organizer', None), ('OriginalOrder', None), ('OriginalOrderItem', None), ('Owner', None), ('Parent', None), ('ParentContractLineItem', None), ('ParentEntity', None), ('ParentIdea', None), ('ParentIncident', None), ('ParentLocation', None), ('ParentProblem', None), ('ParentRecord', None), ('ParentServiceContract', None), ('ParentWorkOrder', None), ('ParentWorkOrderLineItem', None), ('Persona', None), ('Pricebook2', None), ('PricebookEntry', None), ('PrimaryPartnerAccount', None), ('Problem', None), ('Product', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillUser', None), ('Quote', None), ('QuoteLineItem', None), ('Recipient', None), ('Record', None), ('RecurrenceActivity', None), ('ReferenceRecord', None), ('RelatedAsset', None), ('RelatedIssue', None), ('RelatedRecord', None), ('RelatedTo', None), ('ReplyTo', None), ('ReplyToEmailMessage', None), ('ReportsTo', None), ('ResolvedBy', None), ('Reviewer', None), ('RootAsset', None), ('RootContractLineItem', None), ('RootLocation', None), ('RootServiceContract', None), ('RootWorkOrder', None), ('RootWorkOrderLineItem', None), ('SalesforceUser', None), ('Scorecard', None), ('ServiceContract', None), ('ServiceResource', None), ('ShipToContact', None), ('Source', None), ('SyncedQuote', None), ('TargetEntity', None), ('User', None), ('What', None), ('Who', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkStepTemplate', None)], blank=True, null=True)
     relationship_type = models.CharField(db_column='RelationshipType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('ParentToChild', None), ('ChildToParent', None)], blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'BriefcaseRule'
@@ -2024,6 +2458,7 @@ class Case(models.Model):
     status = models.CharField(db_column='Status', max_length=255, default='New', choices=[('On Hold', 'On Hold'), ('Escalated', 'Escalated'), ('Closed', 'Closed'), ('New', 'New'), ('In Progress', 'In Progress'), ('Waiting for Customer', 'Waiting for Customer'), ('Merged', 'Merged'), ('Response Received', 'Response Received')], blank=True, null=True)
     reason = models.CharField(db_column='Reason', max_length=255, verbose_name='Case Reason', choices=[("User didn't attend training", "User didn't attend training"), ('Complex functionality', 'Complex functionality'), ('Existing problem', 'Existing problem'), ('Instructions not clear', 'Instructions not clear'), ('New problem', 'New problem')], blank=True, null=True)
     origin = models.CharField(db_column='Origin', max_length=255, verbose_name='Case Origin', choices=[('Email', 'Email'), ('Phone', 'Phone'), ('Web', 'Web')], blank=True, null=True)
+    language = models.CharField(db_column='Language', max_length=40, choices=[('en_US', 'English'), ('de', 'German'), ('es', 'Spanish'), ('fr', 'French'), ('it', 'Italian'), ('ja', 'Japanese'), ('sv', 'Swedish'), ('ko', 'Korean'), ('zh_TW', 'Chinese (Traditional)'), ('zh_CN', 'Chinese (Simplified)'), ('pt_BR', 'Portuguese (Brazil)'), ('nl_NL', 'Dutch'), ('da', 'Danish'), ('th', 'Thai'), ('fi', 'Finnish'), ('ru', 'Russian'), ('es_MX', 'Spanish (Mexico)'), ('no', 'Norwegian')], blank=True, null=True)
     subject = models.CharField(db_column='Subject', max_length=255, blank=True, null=True)
     priority = models.CharField(db_column='Priority', max_length=255, default='Medium', choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')], blank=True, null=True)
     description = models.TextField(db_column='Description', blank=True, null=True)
@@ -2118,7 +2553,7 @@ class CaseHistory(models.Model):
     case = models.ForeignKey(Case, models.DO_NOTHING, db_column='CaseId', verbose_name='Case ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account Name'), ('Asset', 'Asset'), ('BusinessHours', 'Business Hours'), ('caseMerged', 'Case Merged'), ('Origin', 'Case Origin'), ('Owner', 'Case Owner'), ('Reason', 'Case Reason'), ('Source', 'Case Source'), ('closed', 'Closed.'), ('IsClosedOnCreate', 'Closed When Created'), ('Contact', 'Contact Name'), ('created', 'Created.'), ('Description', 'Description'), ('Entitlement', 'Entitlement Name'), ('SlaStartDate', 'Entitlement Process Start Time'), ('IsEscalated', 'Escalated'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ownerEscalated', 'Owner (Escalation)'), ('Parent', 'Parent Case'), ('Priority', 'Priority'), ('Product', 'Product'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('ServiceContract', 'Service Contract'), ('Status', 'Status'), ('IsStopped', 'Stopped'), ('Subject', 'Subject'), ('Type', 'Type'), ('typeform__Typeform_Form_Mapping__c', 'Typeform Form Mapping')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account Name'), ('Asset', 'Asset'), ('BusinessHours', 'Business Hours'), ('caseMerged', 'Case Merged'), ('Origin', 'Case Origin'), ('Owner', 'Case Owner'), ('Reason', 'Case Reason'), ('Source', 'Case Source'), ('closed', 'Closed.'), ('IsClosedOnCreate', 'Closed When Created'), ('Contact', 'Contact Name'), ('created', 'Created.'), ('Description', 'Description'), ('Entitlement', 'Entitlement Name'), ('SlaStartDate', 'Entitlement Process Start Time'), ('IsEscalated', 'Escalated'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('Language', 'Language'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ownerEscalated', 'Owner (Escalation)'), ('Parent', 'Parent Case'), ('Priority', 'Priority'), ('Product', 'Product'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('ServiceContract', 'Service Contract'), ('Status', 'Status'), ('IsStopped', 'Stopped'), ('Subject', 'Subject'), ('Type', 'Type'), ('typeform__Typeform_Form_Mapping__c', 'Typeform Form Mapping')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -2227,6 +2662,22 @@ class CaseRelatedIssueHistory(models.Model):
 
 
 
+class CaseShare(models.Model):
+    case = models.ForeignKey(Case, models.DO_NOTHING, db_column='CaseId', verbose_name='Case ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey('Group', models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    case_access_level = models.CharField(db_column='CaseAccessLevel', max_length=40, verbose_name='Case Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'CaseShare'
+        verbose_name = 'Case Share'
+        verbose_name_plural = 'Case Share'
+        # keyPrefix = '01n'
+
+
+
 class CaseSolution(models.Model):
     case = models.ForeignKey(Case, models.DO_NOTHING, db_column='CaseId', verbose_name='Case ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     solution = models.ForeignKey('Solution', models.DO_NOTHING, db_column='SolutionId', verbose_name='Solution ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
@@ -2279,6 +2730,89 @@ class CaseSubjectParticle(models.Model):
         verbose_name = 'Case Subject Particle'
         verbose_name_plural = 'Case Subject Particles'
         # keyPrefix = '0Oi'
+
+
+
+class CaseTeamMember(models.Model):
+    parent = models.ForeignKey(Case, models.DO_NOTHING, db_column='ParentId', verbose_name='Case ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    member = models.ForeignKey('Contact', models.DO_NOTHING, db_column='MemberId', verbose_name='Member ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Contact, User] Master Detail Relationship *
+    team_template_member = models.ForeignKey('CaseTeamTemplateMember', models.DO_NOTHING, db_column='TeamTemplateMemberId', verbose_name='Team Template Member ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    team_role = models.ForeignKey('CaseTeamRole', models.DO_NOTHING, db_column='TeamRoleId', verbose_name='Team Role ID')
+    team_template = models.ForeignKey('CaseTeamTemplate', models.DO_NOTHING, db_column='TeamTemplateId', verbose_name='Team Template ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='caseteammember_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='caseteammember_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'CaseTeamMember'
+        verbose_name = 'Case Team Member'
+        verbose_name_plural = 'Case Team Member'
+        # keyPrefix = None
+
+
+
+class CaseTeamRole(models.Model):
+    name = models.CharField(db_column='Name', max_length=80)
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, choices=[('None', 'Private'), ('Read', 'Read Only'), ('Edit', 'Read/Write')])
+    preferences_visible_in_csp = models.BooleanField(db_column='PreferencesVisibleInCSP', verbose_name='Visible in Customer Portal')
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='caseteamrole_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='caseteamrole_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'CaseTeamRole'
+        verbose_name = 'Case Team Member Role'
+        verbose_name_plural = 'Case Team Member Role'
+        # keyPrefix = None
+
+
+
+class CaseTeamTemplate(models.Model):
+    name = models.CharField(db_column='Name', max_length=80)
+    description = models.TextField(db_column='Description', blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='caseteamtemplate_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='caseteamtemplate_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'CaseTeamTemplate'
+        verbose_name = 'Predefined Case Team'
+        verbose_name_plural = 'Predefined Case Team'
+        # keyPrefix = None
+
+
+
+class CaseTeamTemplateMember(models.Model):
+    team_template = models.ForeignKey(CaseTeamTemplate, models.DO_NOTHING, db_column='TeamTemplateId', verbose_name='Team Template ID', sf_read_only=models.NOT_UPDATEABLE)
+    member = models.ForeignKey('Contact', models.DO_NOTHING, db_column='MemberId', verbose_name='Member ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Contact, User] Master Detail Relationship *
+    team_role = models.ForeignKey(CaseTeamRole, models.DO_NOTHING, db_column='TeamRoleId', verbose_name='Team Role ID', blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='caseteamtemplatemember_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='caseteamtemplatemember_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'CaseTeamTemplateMember'
+        verbose_name = 'Predefined Case Team Member'
+        verbose_name_plural = 'Predefined Case Team Member'
+        # keyPrefix = None
+
+
+
+class CaseTeamTemplateRecord(models.Model):
+    parent = models.ForeignKey(Case, models.DO_NOTHING, db_column='ParentId', verbose_name='Case ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    team_template = models.ForeignKey(CaseTeamTemplate, models.DO_NOTHING, db_column='TeamTemplateId', verbose_name='Team Template ID', sf_read_only=models.NOT_UPDATEABLE)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'CaseTeamTemplateRecord'
+        verbose_name = 'Predefined Case Team Record'
+        verbose_name_plural = 'Predefined Case Team Record'
+        # keyPrefix = None
 
 
 
@@ -2721,7 +3255,7 @@ class CollaborationGroupRecord(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='collaborationgrouprecord_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     collaboration_group = models.ForeignKey(CollaborationGroup, models.DO_NOTHING, db_column='CollaborationGroupId', verbose_name='Chatter Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RecordId', verbose_name='Record ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Campaign, Case, Contact, Contract, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, In_App_Checklist_Settings__c, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Postal_Code__c, Product_Category_Info__c, Reviews__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RecordId', verbose_name='Record ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Campaign, Case, Contact, Contract, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, In_App_Checklist_Settings__c, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, Waste_Type__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     class Meta(models.Model.Meta):
         db_table = 'CollaborationGroupRecord'
         verbose_name = 'Group Record'
@@ -2767,7 +3301,7 @@ class ColorDefinition(models.Model):
 
 class CombinedAttachment(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
-    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     record_type = models.CharField(db_column='RecordType', max_length=30, verbose_name='Type', sf_read_only=models.READ_ONLY, blank=True, null=True)
     title = models.CharField(db_column='Title', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     created_date = models.DateTimeField(db_column='CreatedDate', verbose_name='Created', sf_read_only=models.READ_ONLY)
@@ -2966,7 +3500,7 @@ class ContactRequest(models.Model):
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', verbose_name='Related To ID', blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, In_App_Checklist_Settings__c, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Postal_Code__c, Product_Category_Info__c, Reviews__c, WorkOrder, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', verbose_name='Related To ID', blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, In_App_Checklist_Settings__c, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, Waste_Type__c, WorkOrder, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
     who = models.ForeignKey(Contact, models.DO_NOTHING, db_column='WhoId', verbose_name='Requestor ID', blank=True, null=True)  # Reference to tables [Contact, Lead, User]
     preferred_phone = models.CharField(db_column='PreferredPhone', max_length=40, verbose_name='Preferred Phone Number', blank=True, null=True)
     preferred_channel = models.CharField(db_column='PreferredChannel', max_length=40, default='Phone', choices=[('Phone', 'Phone')])
@@ -3054,7 +3588,7 @@ class ContentDistribution(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     content_version = models.ForeignKey('ContentVersion', models.DO_NOTHING, db_column='ContentVersionId', verbose_name='ContentVersion ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     content_document = models.ForeignKey('ContentDocument', models.DO_NOTHING, db_column='ContentDocumentId', verbose_name='ContentDocument ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    related_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedRecordId', verbose_name='Related Record ID', blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Campaign, Case, Contact, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EmailMessage, In_App_Checklist_Settings__c, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Postal_Code__c, Product_Category_Info__c, Reviews__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    related_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedRecordId', verbose_name='Related Record ID', blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Campaign, Case, Contact, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EmailMessage, In_App_Checklist_Settings__c, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, Waste_Type__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     preferences_allow_pdfdownload = models.BooleanField(db_column='PreferencesAllowPDFDownload', verbose_name='Allow Download as PDF')
     preferences_allow_original_download = models.BooleanField(db_column='PreferencesAllowOriginalDownload', verbose_name='Allow Download in Original Format')
     preferences_password_required = models.BooleanField(db_column='PreferencesPasswordRequired', verbose_name='Require Password to Access Content')
@@ -3172,7 +3706,7 @@ class ContentDocumentHistory(models.Model):
 
 
 class ContentDocumentLink(models.Model):
-    linked_entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='LinkedEntityId', verbose_name='Linked Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, OutgoingEmail, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    linked_entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='LinkedEntityId', verbose_name='Linked Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, OutgoingEmail, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     content_document = models.ForeignKey(ContentDocument, models.DO_NOTHING, db_column='ContentDocumentId', verbose_name='ContentDocument ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     is_deleted = models.BooleanField(db_column='IsDeleted', sf_read_only=models.READ_ONLY, default=False)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
@@ -3363,7 +3897,7 @@ class ContentVersion(models.Model):
     version_data = models.TextField(db_column='VersionData', blank=True, null=True)
     content_size = models.IntegerField(db_column='ContentSize', verbose_name='Size', sf_read_only=models.READ_ONLY, blank=True, null=True)
     file_extension = models.CharField(db_column='FileExtension', max_length=40, sf_read_only=models.READ_ONLY, blank=True, null=True)
-    first_publish_location = models.ForeignKey(Account, models.DO_NOTHING, db_column='FirstPublishLocationId', verbose_name='First Publish Location ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, OutgoingEmail, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    first_publish_location = models.ForeignKey(Account, models.DO_NOTHING, db_column='FirstPublishLocationId', verbose_name='First Publish Location ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentWorkspace, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EmailMessage, EmailTemplate, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Organization, OutgoingEmail, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
     origin = models.CharField(db_column='Origin', max_length=40, verbose_name='Content Origin', sf_read_only=models.NOT_UPDATEABLE, default='C', choices=[('C', 'Content'), ('H', 'Chatter')])
     content_location = models.CharField(db_column='ContentLocation', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='S', choices=[('S', 'Salesforce'), ('E', 'External'), ('L', 'Social Customer Service')])
     text_preview = models.CharField(db_column='TextPreview', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -3666,6 +4200,7 @@ class ContractLineItem(models.Model):
     status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Inactive', 'Inactive'), ('Active', 'Active'), ('Expired', 'Expired')], blank=True, null=True)
     parent_contract_line_item = models.ForeignKey('self', models.DO_NOTHING, db_column='ParentContractLineItemId', related_name='contractlineitem_parentcontractlineitem_set', verbose_name='Contract Line Item ID', blank=True, null=True)
     root_contract_line_item = models.ForeignKey('self', models.DO_NOTHING, db_column='RootContractLineItemId', related_name='contractlineitem_rootcontractlineitem_set', verbose_name='Contract Line Item ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    location = models.ForeignKey('Location', models.DO_NOTHING, db_column='LocationId', verbose_name='Location ID', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'ContractLineItem'
         verbose_name = 'Contract Line Item'
@@ -3704,7 +4239,7 @@ class ContractLineItemHistory(models.Model):
     contract_line_item = models.ForeignKey(ContractLineItem, models.DO_NOTHING, db_column='ContractLineItemId', verbose_name='Contract Line Item ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Asset', 'Asset Name'), ('created', 'Created.'), ('Description', 'Description'), ('Discount', 'Discount'), ('EndDate', 'End Date'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('ListPrice', 'List Price'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ParentContractLineItem', 'Parent Contract Line Item'), ('PricebookEntry', 'Price Book Entry'), ('Quantity', 'Quantity'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootContractLineItem', 'Root Contract Line Item'), ('UnitPrice', 'Sales Price'), ('ServiceContract', 'Service Contract'), ('StartDate', 'Start Date'), ('Status', 'Status'), ('StatusIndicator', 'Status Icon'), ('Subtotal', 'Subtotal '), ('TotalPrice', 'Total Price')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Asset', 'Asset Name'), ('created', 'Created.'), ('Description', 'Description'), ('Discount', 'Discount'), ('EndDate', 'End Date'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('ListPrice', 'List Price'), ('Location', 'Location'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ParentContractLineItem', 'Parent Contract Line Item'), ('PricebookEntry', 'Price Book Entry'), ('Quantity', 'Quantity'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootContractLineItem', 'Root Contract Line Item'), ('UnitPrice', 'Sales Price'), ('ServiceContract', 'Service Contract'), ('StartDate', 'Start Date'), ('Status', 'Status'), ('StatusIndicator', 'Status Icon'), ('Subtotal', 'Subtotal '), ('TotalPrice', 'Total Price')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -3752,6 +4287,39 @@ class CorsWhitelistEntry(models.Model):
         verbose_name = 'CORS Allowed Origin List'
         verbose_name_plural = 'CORS Allowed Origins List'
         # keyPrefix = '074'
+
+
+
+class CronJobDetail(models.Model):
+    name = models.CharField(db_column='Name', max_length=255, verbose_name='Job Name', sf_read_only=models.READ_ONLY)
+    job_type = models.CharField(db_column='JobType', max_length=40, verbose_name='Type', sf_read_only=models.READ_ONLY, choices=[('1', 'Data Export'), ('3', 'Dashboard Refresh'), ('4', 'Reporting Snapshot'), ('6', 'Scheduled Flow'), ('7', 'Scheduled Apex'), ('8', 'Report Run'), ('9', 'Batch Job'), ('A', 'Reporting Notification')], blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'CronJobDetail'
+        verbose_name = 'Cron Job'
+        verbose_name_plural = 'Cron Job'
+        # keyPrefix = '08a'
+
+
+
+class CronTrigger(models.Model):
+    cron_job_detail = models.ForeignKey(CronJobDetail, models.DO_NOTHING, db_column='CronJobDetailId', verbose_name='Job ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    next_fire_time = models.DateTimeField(db_column='NextFireTime', verbose_name='Next Run Time', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    previous_fire_time = models.DateTimeField(db_column='PreviousFireTime', verbose_name='Previous Run Time', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    state = models.CharField(db_column='State', max_length=16, verbose_name='Job State', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    start_time = models.DateTimeField(db_column='StartTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    end_time = models.DateTimeField(db_column='EndTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    cron_expression = models.CharField(db_column='CronExpression', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    time_zone_sid_key = models.CharField(db_column='TimeZoneSidKey', max_length=40, verbose_name='Java Time Zone Id', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Too long choices skipped
+    owner = models.ForeignKey('User', models.DO_NOTHING, db_column='OwnerId', related_name='crontrigger_owner_set', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='crontrigger_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='crontrigger_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    times_triggered = models.IntegerField(db_column='TimesTriggered', verbose_name='Job Fired Count', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'CronTrigger'
+        verbose_name = 'Scheduled Jobs'
+        verbose_name_plural = 'Scheduled Jobs'
+        # keyPrefix = '08e'
 
 
 
@@ -4163,7 +4731,7 @@ class DataIntegrationRecordPurchasePermission(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='dataintegrationrecordpurchasepermission_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     user = models.ForeignKey('User', models.DO_NOTHING, db_column='UserId', related_name='dataintegrationrecordpurchasepermission_user_set', verbose_name='User ID')  # Master Detail Relationship *
-    external_object = models.CharField(db_column='ExternalObject', max_length=255, verbose_name='Custom Object Definition ID', choices=[('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Configuration__mdt', None), ('ActiveCamp__Setup_Data__c', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('Dhruvsoft__O2O_Logs__c', None), ('Location_Zone__c', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Variation_Add_On_Choice__c', None), ('pandadoc__DocStatus__c', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Product_Category_Info__c', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('typeform__Field_Type_Mapping__mdt', None), ('typeform__Form__c', None), ('typeform__Form_Mapping__c', None), ('typeform__InstallationSettings__c', None), ('typeform__oAuthSettings__mdt', None), ('typeform__Target_Object__mdt', None), ('typeform__Typeform_Error__c', None)], blank=True, null=True)
+    external_object = models.CharField(db_column='ExternalObject', max_length=255, verbose_name='Custom Object Definition ID', choices=[('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Configuration__mdt', None), ('ActiveCamp__Setup_Data__c', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('Dhruvsoft__O2O_Logs__c', None), ('Disposal_Fee__c', None), ('Location_Zone__c', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Waste_Type__c', None), ('pandadoc__DocStatus__c', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Product_Add_On_Choice__c', None), ('Product_Category_Info__c', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('Seller_Product__c', None), ('Seller_Product_Location_Zone__c', None), ('typeform__Field_Type_Mapping__mdt', None), ('typeform__Form__c', None), ('typeform__Form_Mapping__c', None), ('typeform__InstallationSettings__c', None), ('typeform__oAuthSettings__mdt', None), ('typeform__Target_Object__mdt', None), ('typeform__Typeform_Error__c', None), ('Waste_Type__c', None)], blank=True, null=True)
     user_record_purchase_limit = models.IntegerField(db_column='UserRecordPurchaseLimit', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'DataIntegrationRecordPurchasePermission'
@@ -4379,6 +4947,45 @@ class DialerCallUsageShare(models.Model):
 
 
 
+class DisposalFeeShare(models.Model):
+    parent = models.ForeignKey('DisposalFee', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey('Group', models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='Manual', choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'Disposal_Fee__Share'
+        verbose_name = 'Share: Disposal Fee'
+        verbose_name_plural = 'Share: Disposal Fee'
+        # keyPrefix = None
+
+
+
+class DisposalFee(models.Model):
+    owner = models.ForeignKey('Group', models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=80, verbose_name='Disposal Fee Name', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='disposalfee_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='disposalfee_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    account = models.ForeignKey(Account, models.DO_NOTHING, db_column='Account__c', blank=True, null=True)
+    waste_type = models.ForeignKey('WasteType', models.DO_NOTHING, db_column='Waste_Type__c', verbose_name='Waste Type', blank=True, null=True)
+    location_zone = models.ForeignKey('LocationZone', models.DO_NOTHING, db_column='Location_Zone__c', verbose_name='Location Zone', blank=True, null=True)
+    price = models.DecimalField(db_column='Price__c', max_digits=18, decimal_places=2, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Disposal_Fee__c'
+        verbose_name = 'Disposal Fee'
+        verbose_name_plural = 'Disposal Fees'
+        # keyPrefix = 'a0y'
+
+
+
 class Document(models.Model):
     folder = models.ForeignKey('Folder', models.DO_NOTHING, db_column='FolderId', verbose_name='Folder ID')  # Reference to tables [Folder, User]
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
@@ -4445,6 +5052,23 @@ class Domain(models.Model):
 
 
 
+class DomainSite(models.Model):
+    domain = models.ForeignKey(Domain, models.DO_NOTHING, db_column='DomainId', verbose_name='Domain ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    site = models.ForeignKey('Site', models.DO_NOTHING, db_column='SiteId', verbose_name='Site ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    path_prefix = models.CharField(db_column='PathPrefix', max_length=255, verbose_name='Path', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='domainsite_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='domainsite_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'DomainSite'
+        verbose_name = 'Custom URL'
+        verbose_name_plural = 'Custom URLs'
+        # keyPrefix = '0Jf'
+
+
+
 class DuplicateRecordItem(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Duplicate Record Item Name', sf_read_only=models.READ_ONLY)
@@ -4454,7 +5078,7 @@ class DuplicateRecordItem(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='duplicaterecorditem_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     duplicate_record_set = models.ForeignKey('DuplicateRecordSet', models.DO_NOTHING, db_column='DuplicateRecordSetId', verbose_name='Duplicate Record Set ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RecordId', verbose_name='Record ID')  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Contact, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, In_App_Checklist_Settings__c, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Postal_Code__c, Product_Category_Info__c, Reviews__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RecordId', verbose_name='Record ID')  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Contact, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, In_App_Checklist_Settings__c, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, Waste_Type__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     class Meta(models.Model.Meta):
         db_table = 'DuplicateRecordItem'
         verbose_name = 'Duplicate Record Item'
@@ -4604,7 +5228,7 @@ class EmailMessage(models.Model):
     message_identifier = models.CharField(db_column='MessageIdentifier', max_length=765, verbose_name='Message ID', blank=True, null=True)
     thread_identifier = models.CharField(db_column='ThreadIdentifier', max_length=765, verbose_name='Thread ID', blank=True, null=True)
     is_client_managed = models.BooleanField(db_column='IsClientManaged', sf_read_only=models.NOT_UPDATEABLE, default=False)
-    related_to = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedToId', verbose_name='Related To ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c]
+    related_to = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedToId', verbose_name='Related To ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Location, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c]
     is_tracked = models.BooleanField(db_column='IsTracked', default=False)
     is_opened = models.BooleanField(db_column='IsOpened', verbose_name='Opened?', sf_read_only=models.READ_ONLY, default=False)
     first_opened_date = models.DateTimeField(db_column='FirstOpenedDate', verbose_name='First Opened', blank=True, null=True)
@@ -4687,6 +5311,7 @@ class EmailServicesFunction(models.Model):
     is_authentication_required = models.BooleanField(db_column='IsAuthenticationRequired', verbose_name='Advanced Email Security Settings', default=False)
     is_tls_required = models.BooleanField(db_column='IsTlsRequired', verbose_name='TLS Required', default=False)
     attachment_option = models.CharField(db_column='AttachmentOption', max_length=40, verbose_name='Accept Attachments', default='All', choices=[('None', 'None'), ('TextOnly', 'Text attachments only'), ('BinaryOnly', 'Binary attachments only'), ('All', 'All'), ('NoContent', 'Attachment names only, no content')])
+    apex_class = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='ApexClassId', verbose_name='Class ID', blank=True, null=True)
     over_limit_action = models.CharField(db_column='OverLimitAction', max_length=40, verbose_name='Over Email Rate Limit Action', default='UseSystemDefault', choices=[('UseSystemDefault', 'Use System Default'), ('Bounce', 'Bounce message'), ('Discard', 'Discard message'), ('Requeue', 'Requeue message')], blank=True, null=True)
     function_inactive_action = models.CharField(db_column='FunctionInactiveAction', max_length=40, verbose_name='Deactivated Email Service Action', default='UseSystemDefault', choices=[('UseSystemDefault', 'Use System Default'), ('Bounce', 'Bounce message'), ('Discard', 'Discard message'), ('Requeue', 'Requeue message')], blank=True, null=True)
     address_inactive_action = models.CharField(db_column='AddressInactiveAction', max_length=40, verbose_name='Deactivated Email Address Action', default='UseSystemDefault', choices=[('UseSystemDefault', 'Use System Default'), ('Bounce', 'Bounce message'), ('Discard', 'Discard message'), ('Requeue', 'Requeue message')], blank=True, null=True)
@@ -4764,6 +5389,59 @@ class EmailTemplate(models.Model):
 
 
 
+class EmbeddedServiceDetail(models.Model):
+    durable_id = models.CharField(db_column='DurableId', max_length=255, verbose_name='Embedded Service Durable ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    site = models.CharField(db_column='Site', max_length=18, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    primary_color = models.CharField(db_column='PrimaryColor', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    secondary_color = models.CharField(db_column='SecondaryColor', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    contrast_primary_color = models.CharField(db_column='ContrastPrimaryColor', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    contrast_inverted_color = models.CharField(db_column='ContrastInvertedColor', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    nav_bar_color = models.CharField(db_column='NavBarColor', max_length=255, verbose_name='NavBar Color', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    nav_bar_text_color = models.CharField(db_column='NavBarTextColor', max_length=255, verbose_name='NavBar Text Color', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    secondary_nav_bar_color = models.CharField(db_column='SecondaryNavBarColor', max_length=255, verbose_name='Secondary NavBar Color', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    font = models.CharField(db_column='Font', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_live_agent_enabled = models.BooleanField(db_column='IsLiveAgentEnabled', verbose_name='Enabled', sf_read_only=models.READ_ONLY, default=False)
+    is_field_service_enabled = models.BooleanField(db_column='IsFieldServiceEnabled', verbose_name='Enabled', sf_read_only=models.READ_ONLY, default=False)
+    width = models.IntegerField(db_column='Width', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    height = models.IntegerField(db_column='Height', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_prechat_enabled = models.BooleanField(db_column='IsPrechatEnabled', verbose_name='Pre-Chat Enabled', sf_read_only=models.READ_ONLY, default=False)
+    custom_prechat_component = models.CharField(db_column='CustomPrechatComponent', max_length=18, verbose_name='Custom Prechat Component Developer Name', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    avatar_img = models.CharField(db_column='AvatarImg', max_length=255, verbose_name='Avatar Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    small_company_logo_img = models.CharField(db_column='SmallCompanyLogoImg', max_length=255, verbose_name='Small Company Logo Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    prechat_background_img = models.CharField(db_column='PrechatBackgroundImg', max_length=255, verbose_name='Pre-Chat Background Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    waiting_state_background_img = models.CharField(db_column='WaitingStateBackgroundImg', max_length=255, verbose_name='Waiting State Background Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    font_size = models.CharField(db_column='FontSize', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Small', None), ('Medium', None), ('Large', None)], blank=True, null=True)
+    offline_case_background_img = models.CharField(db_column='OfflineCaseBackgroundImg', max_length=255, verbose_name='Offline Case Background Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_offline_case_enabled = models.BooleanField(db_column='IsOfflineCaseEnabled', verbose_name='Offline Case Enabled', sf_read_only=models.READ_ONLY, default=False)
+    is_queue_position_enabled = models.BooleanField(db_column='IsQueuePositionEnabled', verbose_name='Queue Position Enabled', sf_read_only=models.READ_ONLY, default=False)
+    should_show_new_appointment = models.BooleanField(db_column='ShouldShowNewAppointment', verbose_name='Show New Appointment', sf_read_only=models.READ_ONLY, default=False)
+    should_show_existing_appointment = models.BooleanField(db_column='ShouldShowExistingAppointment', verbose_name='Show Existing Appointment', sf_read_only=models.READ_ONLY, default=False)
+    field_service_home_img = models.CharField(db_column='FieldServiceHomeImg', max_length=255, verbose_name='Field Service Home Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    field_service_logo_img = models.CharField(db_column='FieldServiceLogoImg', max_length=255, verbose_name='Field Service Logo Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    field_service_confirm_card_img = models.CharField(db_column='FieldServiceConfirmCardImg', max_length=255, verbose_name='Field Service Confirmation Card Image URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    should_hide_auth_dialog = models.BooleanField(db_column='ShouldHideAuthDialog', verbose_name='Hide Authentication Dialog', sf_read_only=models.READ_ONLY, default=False)
+    custom_minimized_component = models.CharField(db_column='CustomMinimizedComponent', max_length=18, verbose_name='Custom Minimized Component Developer Name', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'EmbeddedServiceDetail'
+        verbose_name = 'Embedded Service'
+        verbose_name_plural = 'Embedded Services'
+        # keyPrefix = '0Lq'
+
+
+
+class EmbeddedServiceLabel(models.Model):
+    durable_id = models.CharField(db_column='DurableId', max_length=255, verbose_name='Embedded Service Label Durable ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    embedded_service_config_developer_name = models.CharField(db_column='EmbeddedServiceConfigDeveloperName', max_length=80, verbose_name=' Embedded Service Config Developer Name', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    label_key = models.CharField(db_column='LabelKey', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)  # Too long choices skipped
+    custom_label_name = models.CharField(db_column='CustomLabelName', max_length=80, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'EmbeddedServiceLabel'
+        verbose_name = 'Embedded Service Label'
+        verbose_name_plural = 'Embedded Service Labels'
+        # keyPrefix = '0Uu'
+
+
+
 class EnhancedLetterhead(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     name = models.CharField(db_column='Name', max_length=255)
@@ -4833,6 +5511,7 @@ class Entitlement(models.Model):
     cases_per_entitlement = models.IntegerField(db_column='CasesPerEntitlement', blank=True, null=True)
     remaining_cases = models.IntegerField(db_column='RemainingCases', blank=True, null=True)
     status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Inactive', 'Inactive'), ('Active', 'Active'), ('Expired', 'Expired')], blank=True, null=True)
+    location = models.ForeignKey('Location', models.DO_NOTHING, db_column='LocationId', verbose_name='Location ID', blank=True, null=True)
     work_orders_per_entitlement = models.IntegerField(db_column='WorkOrdersPerEntitlement', blank=True, null=True)
     remaining_work_orders = models.IntegerField(db_column='RemainingWorkOrders', blank=True, null=True)
     class Meta(models.Model.Meta):
@@ -4891,7 +5570,7 @@ class EntitlementHistory(models.Model):
     entitlement = models.ForeignKey(Entitlement, models.DO_NOTHING, db_column='EntitlementId', verbose_name='Entitlement ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account Name'), ('Asset', 'Asset Name'), ('BusinessHours', 'Business Hours'), ('CasesPerEntitlement', 'Cases Per Entitlement'), ('ContractLineItem', 'Contract Line Item'), ('created', 'Created.'), ('EndDate', 'End Date'), ('Name', 'Entitlement Name'), ('SlaProcess', 'Entitlement Process'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('IsPerIncident', 'Per Incident'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RemainingCases', 'Remaining Cases'), ('RemainingWorkOrders', 'Remaining Work Orders'), ('ServiceContract', 'Service Contract'), ('StartDate', 'Start Date'), ('Status', 'Status'), ('StatusIndicator', 'Status Icon'), ('Type', 'Type'), ('WorkOrdersPerEntitlement', 'Work Orders Per Entitlement')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account Name'), ('Asset', 'Asset Name'), ('BusinessHours', 'Business Hours'), ('CasesPerEntitlement', 'Cases Per Entitlement'), ('ContractLineItem', 'Contract Line Item'), ('created', 'Created.'), ('EndDate', 'End Date'), ('Name', 'Entitlement Name'), ('SlaProcess', 'Entitlement Process'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('Location', 'Location'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('IsPerIncident', 'Per Incident'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RemainingCases', 'Remaining Cases'), ('RemainingWorkOrders', 'Remaining Work Orders'), ('ServiceContract', 'Service Contract'), ('StartDate', 'Start Date'), ('Status', 'Status'), ('StatusIndicator', 'Status Icon'), ('Type', 'Type'), ('WorkOrdersPerEntitlement', 'Work Orders Per Entitlement')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -5129,7 +5808,7 @@ class EntityParticle(models.Model):
 
 
 class EntitySubscription(models.Model):
-    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentDocument, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentDocument, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     subscriber = models.ForeignKey('User', models.DO_NOTHING, db_column='SubscriberId', related_name='entitysubscription_subscriber_set', verbose_name='Subscriber ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='entitysubscription_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
@@ -5144,7 +5823,7 @@ class EntitySubscription(models.Model):
 
 class Event(models.Model):
     who = models.ForeignKey(Contact, models.DO_NOTHING, db_column='WhoId', verbose_name='Name ID', blank=True, null=True)  # Reference to tables [Contact, Lead] Master Detail Relationship *
-    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='event_what_set', verbose_name='Related To ID', blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
+    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='event_what_set', verbose_name='Related To ID', blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Location, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
     who_count = models.IntegerField(db_column='WhoCount', verbose_name='Relation Count', sf_read_only=models.READ_ONLY, blank=True, null=True)
     what_count = models.IntegerField(db_column='WhatCount', verbose_name='Related To Count', sf_read_only=models.READ_ONLY, blank=True, null=True)
     subject = models.CharField(db_column='Subject', max_length=255, choices=[('Call', 'Call'), ('Email', 'Email'), ('Meeting', 'Meeting'), ('Send Letter/Quote', 'Send Letter/Quote'), ('Other', 'Other')], blank=True, null=True)
@@ -5263,8 +5942,31 @@ class EventFeed(models.Model):
 
 
 
+class EventLogFile(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='eventlogfile_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='eventlogfile_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    event_type = models.CharField(db_column='EventType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('API', 'API'), ('ApiTotalUsage', 'Api Total Usage'), ('ApexCallout', 'Apex Callout'), ('ApexExecution', 'Apex Execution'), ('ApexRestApi', 'Apex REST API'), ('ApexSoap', 'Apex SOAP'), ('ApexTrigger', 'Apex Trigger'), ('ApexUnexpectedException', 'Apex Unexpected Exception'), ('AsyncReportRun', 'Asynchronous Report Run'), ('CorsViolation', 'CORS Violation Record'), ('AuraRequest', 'Aura Request'), ('ConcurrentLongRunningApexLimit', 'Concurrent Long Running Apex Limit'), ('ContinuationCallout', 'Continuation Callout'), ('ExternalCrossOrgCallout', 'External Cross-Org Callout'), ('ExternalCustomApexCallout', 'External Custom Apex Callout'), ('ExternalDataSourceCallout', 'External Data Source Callout'), ('ExternalODataCallout', 'External OData Callout'), ('BulkApi', 'Bulk API'), ('BulkApi2', 'Bulk API 2.0'), ('ChangeSetOperation', 'Change Set Operation'), ('Console', 'Console'), ('ContentDistribution', 'Content Distribution'), ('ContentDocumentLink', 'Content Document Link'), ('ContentTransfer', 'Content Transfer'), ('Dashboard', 'Dashboard'), ('DocumentAttachmentDownloads', 'Document Attachment Downloads'), ('FlowExecution', 'Flow Execution'), ('HostnameRedirects', 'Hostname Redirects'), ('InsecureExternalAssets', 'Insecure External Assets'), ('KnowledgeArticleView', 'Knowledge Article View'), ('LightningError', 'Lightning Error'), ('LightningInteraction', 'Lightning Interaction'), ('LightningPageView', 'Lightning Page View'), ('LightningPerformance', 'Lightning Performance'), ('Login', 'Login'), ('LoginAs', 'Login As'), ('Logout', 'Logout'), ('MetadataApiOperation', 'Metadata API Operation'), ('MultiBlockReport', 'Multiblock Report'), ('NamedCredential', 'Named Credential'), ('OneCommerceUsage', 'One Commerce Usage'), ('PackageInstall', 'Package Install'), ('QueuedExecution', 'Queued Execution'), ('Report', 'Report'), ('ReportExport', 'Report Export'), ('RestApi', 'Rest API'), ('Sandbox', 'Sandbox'), ('Search', 'Search'), ('SearchClick', 'Search Click'), ('Sites', 'Sites'), ('PlatformEncryption', 'Platform Encryption'), ('TimeBasedWorkflow', 'Time-Based Workflow'), ('TransactionSecurity', 'Transaction Security'), ('UITracking', 'UI Tracking'), ('URI', 'URI'), ('VisualforceRequest', 'Visualforce Request'), ('WaveChange', 'Wave Change'), ('WaveDownload', 'Wave Download'), ('WaveInteraction', 'Wave Interaction'), ('WavePerformance', 'Wave Performance')])
+    log_date = models.DateTimeField(db_column='LogDate', sf_read_only=models.READ_ONLY)
+    log_file_length = models.DecimalField(db_column='LogFileLength', max_digits=18, decimal_places=0, sf_read_only=models.READ_ONLY)
+    log_file_content_type = models.CharField(db_column='LogFileContentType', max_length=255, sf_read_only=models.READ_ONLY)
+    api_version = models.DecimalField(db_column='ApiVersion', max_digits=18, decimal_places=1, verbose_name='API Version', sf_read_only=models.READ_ONLY)
+    log_file_field_names = models.CharField(db_column='LogFileFieldNames', max_length=1333, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    log_file_field_types = models.CharField(db_column='LogFileFieldTypes', max_length=1333, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    log_file = models.TextField(db_column='LogFile', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'EventLogFile'
+        verbose_name = 'Event Log File'
+        verbose_name_plural = 'Event Log Files'
+        # keyPrefix = '0AT'
+
+
+
 class EventRelation(models.Model):
-    relation = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelationId', related_name='eventrelation_relation_set', verbose_name='Relation ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Calendar, Campaign, Case, ChangeRequest, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Entitlement, Image, In_App_Checklist_Settings__c, Incident, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, ProcessException, Product2, Product_Category_Info__c, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, User, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    relation = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelationId', related_name='eventrelation_relation_set', verbose_name='Relation ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Calendar, Campaign, Case, ChangeRequest, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, Entitlement, Image, In_App_Checklist_Settings__c, Incident, Lead, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, Solution, User, Waste_Type__c, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     event = models.ForeignKey(Event, models.DO_NOTHING, db_column='EventId', verbose_name='Event ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     is_what = models.BooleanField(db_column='IsWhat', sf_read_only=models.NOT_UPDATEABLE, default=False)
     is_parent = models.BooleanField(db_column='IsParent', default=False)
@@ -5284,6 +5986,53 @@ class EventRelation(models.Model):
         verbose_name = 'Event Relation'
         verbose_name_plural = 'Event Relations'
         # keyPrefix = '0RE'
+
+
+
+class EventRelayConfig(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Name', sf_read_only=models.READ_ONLY)
+    language = models.CharField(db_column='Language', max_length=40, verbose_name='Master Language', sf_read_only=models.READ_ONLY, choices=[('en_US', 'English'), ('de', 'German'), ('es', 'Spanish'), ('fr', 'French'), ('it', 'Italian'), ('ja', 'Japanese'), ('sv', 'Swedish'), ('ko', 'Korean'), ('zh_TW', 'Chinese (Traditional)'), ('zh_CN', 'Chinese (Simplified)'), ('pt_BR', 'Portuguese (Brazil)'), ('nl_NL', 'Dutch'), ('da', 'Danish'), ('th', 'Thai'), ('fi', 'Finnish'), ('ru', 'Russian'), ('es_MX', 'Spanish (Mexico)'), ('no', 'Norwegian')])
+    master_label = models.CharField(db_column='MasterLabel', max_length=80, verbose_name='Label', sf_read_only=models.READ_ONLY)
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='eventrelayconfig_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='eventrelayconfig_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    event_channel = models.CharField(db_column='EventChannel', max_length=255, verbose_name='Platform Event Channel ID', sf_read_only=models.READ_ONLY, choices=[('ChangeEvents', None), ('CreChangeEvents', None), ('ConversationIntelligenceVirtualChannel', None), ('ConsentCDCChannel', None), ('CommerceChangeEvents', None), ('ActivityEngagementVirtualChannel', None), ('PardotSyncStdChannel', None), ('ChangeDataStandardSales', None), ('FTestStandardChannel', None), ('FTestStandardInternalChannel', None), ('CommerceSearchIncrementalIndex', None), ('ConsentCDCStandardChannel', None), ('ChangeDataCaptureDiffeoStandard', None), ('EinsteinPlatformStandardChannel', None), ('EinsteinDiscoveryWBChannel', None), ('EventBusRelayChangeEventChannel', None), ('HighVolumePriming', None), ('WorkPlansCDCEventChannel', None), ('GlobalIdentityStandard', None), ('LearningItemProgress', None), ('IsotopeStandardChangeEvents', None), ('SlackAlertsEventChannel', None), ('VideoCall', None)])
+    destination_resource_name = models.CharField(db_column='DestinationResourceName', max_length=255, sf_read_only=models.READ_ONLY)
+    state = models.CharField(db_column='State', max_length=255, verbose_name='Event Relay Config State', sf_read_only=models.READ_ONLY, default='STOP', choices=[('RUN', None), ('STOP', None), ('PAUSE', None)])
+    class Meta(models.Model.Meta):
+        db_table = 'EventRelayConfig'
+        verbose_name = 'Event Relay Config'
+        verbose_name_plural = 'Event Relay Configs'
+        # keyPrefix = '7k2'
+
+
+
+class EventRelayFeedback(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    event_relay_number = models.CharField(db_column='EventRelayNumber', max_length=255, verbose_name='Event Relay Feedback Name', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='eventrelayfeedback_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='eventrelayfeedback_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    event_relay_config = models.ForeignKey(EventRelayConfig, models.DO_NOTHING, db_column='EventRelayConfigId', verbose_name='Event Relay Config ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    remote_resource = models.CharField(db_column='RemoteResource', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    replay = models.CharField(db_column='Replay', max_length=255, verbose_name='Last Replay', sf_read_only=models.READ_ONLY)
+    num_events_dropped = models.TextField(db_column='NumEventsDropped', verbose_name='Number of events dropped and not relayed', sf_read_only=models.READ_ONLY, blank=True, null=True)  # This field type is a guess.
+    num_events_relayed = models.TextField(db_column='NumEventsRelayed', verbose_name='Number of events relayed', sf_read_only=models.READ_ONLY, blank=True, null=True)  # This field type is a guess.
+    status = models.CharField(db_column='Status', max_length=255, verbose_name='Current Status', sf_read_only=models.READ_ONLY, default='STOPPED', choices=[('RUNNING', None), ('STOPPED', None), ('PAUSED', None), ('ERROR', None)])
+    error_message = models.TextField(db_column='ErrorMessage', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    error_time = models.DateTimeField(db_column='ErrorTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    error_identifier = models.CharField(db_column='ErrorIdentifier', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'EventRelayFeedback'
+        verbose_name = 'Event Relay Feedback'
+        verbose_name_plural = 'Event Relay Feedbacks'
+        # keyPrefix = '7k4'
 
 
 
@@ -5532,7 +6281,7 @@ class ExternalSocialAccount(models.Model):
 
 
 class FeedAttachment(models.Model):
-    feed_entity = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedEntityId', verbose_name='Feed Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedComment, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_entity = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedEntityId', verbose_name='Feed Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedComment, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
     type = models.CharField(db_column='Type', max_length=40, verbose_name='Feed Attachment Type', sf_read_only=models.NOT_UPDATEABLE, choices=[('Content', None), ('InlineImage', None), ('Link', None), ('FeedEntity', None), ('ChatterExtension', None), ('Record', None)])
     record = models.ForeignKey(ContentDocument, models.DO_NOTHING, db_column='RecordId', verbose_name='Attachment Record ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [ContentDocument, ContentVersion, FeedItem]
     title = models.CharField(db_column='Title', max_length=255, verbose_name='Feed Attachment Title', blank=True, null=True)
@@ -5547,8 +6296,8 @@ class FeedAttachment(models.Model):
 
 
 class FeedComment(models.Model):
-    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
-    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentDocument, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentDocument, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='feedcomment_createdby_set', verbose_name='Created By ID', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE)  # Master Detail Relationship *
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
@@ -5577,7 +6326,7 @@ class FeedComment(models.Model):
 
 
 class FeedItem(models.Model):
-    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentDocument, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, OrderItem, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContentDocument, Contract, ContractLineItem, Dashboard, DashboardComponent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EnhancedLetterhead, Entitlement, EntityMilestone, Event, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrderItem, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, Quote, Report, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPost, Solution, Task, Topic, User, VoiceCall, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     type = models.CharField(db_column='Type', max_length=40, verbose_name='Feed Item Type', sf_read_only=models.NOT_UPDATEABLE, choices=[('TrackedChange', 'Tracked Change'), ('UserStatus', 'User Status'), ('TextPost', 'Text Post'), ('AdvancedTextPost', 'Advanced Text Post'), ('LinkPost', 'Link Post'), ('ContentPost', 'Content Post'), ('PollPost', 'Poll'), ('RypplePost', 'WDC Thanks'), ('ProfileSkillPost', 'Profile Skill Post'), ('DashboardComponentSnapshot', 'Dashboard Component Snapshot'), ('ApprovalPost', 'Approval Post'), ('CaseCommentPost', 'Case Comment Feed'), ('ReplyPost', 'Reply Post'), ('EmailMessageEvent', 'Email Message Feed'), ('CallLogPost', 'Call Log Feed'), ('ChangeStatusPost', 'Change Status Feed'), ('AttachArticleEvent', 'Attached Article'), ('MilestoneEvent', 'Milestone Event'), ('ActivityEvent', 'Activity Change'), ('ChatTranscriptPost', 'Chat Transcript Post'), ('CollaborationGroupCreated', 'Collaboration Group Created'), ('CollaborationGroupUnarchived', 'Collaboration Group Reactivated'), ('SocialPost', 'Social Post'), ('QuestionPost', 'Question Post'), ('FacebookPost', 'Facebook Post'), ('BasicTemplateFeedItem', 'Basic Template Post'), ('CreateRecordEvent', 'Created Record'), ('CanvasPost', 'Canvas'), ('AnnouncementPost', 'a')], blank=True, null=True)
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='feeditem_createdby_set', verbose_name='Created By ID', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE)  # Master Detail Relationship *
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE)
@@ -5611,8 +6360,8 @@ class FeedItem(models.Model):
 
 
 class FeedLike(models.Model):
-    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', related_name='feedlike_feeditem_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
-    feed_entity = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedEntityId', related_name='feedlike_feedentity_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedComment, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', related_name='feedlike_feeditem_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_entity = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedEntityId', related_name='feedlike_feedentity_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedComment, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='feedlike_createdby_set', verbose_name='Created By ID', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE)  # Master Detail Relationship *
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE)
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
@@ -5626,7 +6375,7 @@ class FeedLike(models.Model):
 
 
 class FeedPollChoice(models.Model):
-    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.READ_ONLY)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.READ_ONLY)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
     position = models.IntegerField(db_column='Position', sf_read_only=models.READ_ONLY)
     choice_body = models.TextField(db_column='ChoiceBody', verbose_name='ChoiceBody', sf_read_only=models.READ_ONLY)
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
@@ -5641,7 +6390,7 @@ class FeedPollChoice(models.Model):
 
 
 class FeedPollVote(models.Model):
-    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.READ_ONLY)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.READ_ONLY)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
     choice = models.ForeignKey(FeedPollChoice, models.DO_NOTHING, db_column='ChoiceId', verbose_name='Feed Poll Choice ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
@@ -5675,8 +6424,8 @@ class FeedRevision(models.Model):
 
 
 class FeedSignal(models.Model):
-    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', related_name='feedsignal_feeditem_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
-    feed_entity = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedEntityId', related_name='feedsignal_feedentity_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedComment, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', related_name='feedsignal_feeditem_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_entity = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedEntityId', related_name='feedsignal_feedentity_set', verbose_name='Feed Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedComment, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
     signal_value = models.IntegerField(db_column='SignalValue', verbose_name='Signal value', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
     signal_type = models.CharField(db_column='SignalType', max_length=40, verbose_name='Signal type', sf_read_only=models.NOT_UPDATEABLE, choices=[('UpDownVote', None), ('Verified', None), ('UserVerified', None)], blank=True, null=True)
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='feedsignal_createdby_set', verbose_name='Created By ID', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE)  # Master Detail Relationship *
@@ -5692,7 +6441,7 @@ class FeedSignal(models.Model):
 
 
 class FeedTrackedChange(models.Model):
-    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.READ_ONLY)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
+    feed_item = models.ForeignKey(AccountFeed, models.DO_NOTHING, db_column='FeedItemId', verbose_name='Feed Item ID', sf_read_only=models.READ_ONLY)  # Reference to tables [AccountFeed, AssetFeed, AssetRelationshipFeed, CampaignFeed, CaseFeed, CaseRelatedIssueFeed, ChangeRequestFeed, ChangeRequestRelatedIssueFeed, ChangeRequestRelatedItemFeed, CollaborationGroupFeed, ContactFeed, ContentDocumentFeed, ContractFeed, ContractLineItemFeed, DashboardComponentFeed, DashboardFeed, EnhancedLetterheadFeed, EntitlementFeed, EntityMilestoneFeed, EventFeed, FeedItem, ImageFeed, IncidentFeed, IncidentRelatedItemFeed, LeadFeed, LocationFeed, OpportunityFeed, OrderFeed, OrderItemFeed, ProblemFeed, ProblemIncidentFeed, ProblemRelatedItemFeed, Product2Feed, ProfileSkillEndorsementFeed, ProfileSkillFeed, ProfileSkillUserFeed, QuoteFeed, ReportFeed, ServiceContractFeed, ServiceResourceFeed, ServiceResourceSkillFeed, SiteFeed, SkillRequirementFeed, SocialPostFeed, SolutionFeed, TaskFeed, TopicFeed, UserFeed, VoiceCallFeed, WorkBadgeDefinitionFeed, WorkOrderFeed, WorkOrderLineItemFeed, WorkPlanFeed, WorkPlanTemplateEntryFeed, WorkPlanTemplateFeed, WorkStepFeed, WorkStepTemplateFeed] Master Detail Relationship *
     field_name = models.CharField(db_column='FieldName', max_length=120, verbose_name='Field', sf_read_only=models.READ_ONLY)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -5745,6 +6494,7 @@ class FieldDefinition(models.Model):
     is_compound = models.BooleanField(db_column='IsCompound', verbose_name='Is Field a compound field', sf_read_only=models.READ_ONLY, default=False)
     is_search_prefilterable = models.BooleanField(db_column='IsSearchPrefilterable', verbose_name='Is Field Search Prefilterable?', sf_read_only=models.READ_ONLY, default=False)
     is_polymorphic_foreign_key = models.BooleanField(db_column='IsPolymorphicForeignKey', verbose_name='Is ForeignKey Polymorphic?', sf_read_only=models.READ_ONLY, default=False)
+    is_ai_prediction_field = models.BooleanField(db_column='IsAiPredictionField', verbose_name='Is Field AI Prediction Field?', sf_read_only=models.READ_ONLY, default=False)
     business_owner = models.ForeignKey('Group', models.DO_NOTHING, db_column='BusinessOwnerId', verbose_name='Business Owner ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Group, User]
     business_status = models.CharField(db_column='BusinessStatus', max_length=40, verbose_name='Field Usage', sf_read_only=models.READ_ONLY, choices=[('Active', 'Active'), ('DeprecateCandidate', 'DeprecateCandidate'), ('Hidden', 'Hidden')], blank=True, null=True)
     security_classification = models.CharField(db_column='SecurityClassification', max_length=40, verbose_name='Data Sensitivity Level', sf_read_only=models.READ_ONLY, choices=[('Public', 'Public'), ('Internal', 'Internal'), ('Confidential', 'Confidential'), ('Restricted', 'Restricted'), ('MissionCritical', 'MissionCritical')], blank=True, null=True)
@@ -5760,7 +6510,7 @@ class FieldDefinition(models.Model):
 
 class FieldPermissions(models.Model):
     parent = models.ForeignKey('PermissionSet', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    sobject_type = models.CharField(db_column='SobjectType', max_length=40, verbose_name='SObject Type Name', sf_read_only=models.NOT_UPDATEABLE, choices=[('Account', None), ('AccountContactRelation', None), ('Asset', None), ('AssetRelationship', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('Contact', None), ('ContactRequest', None), ('Contract', None), ('ContractLineItem', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntityMilestone', None), ('Event', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('Macro', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('OpportunityLineItemSchedule', None), ('Order', None), ('OrderItem', None), ('Pricebook2', None), ('PricebookEntry', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('Scorecard', None), ('ScorecardAssociation', None), ('ScorecardMetric', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('Task', None), ('User', None), ('UserProvisioningRequest', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
+    sobject_type = models.CharField(db_column='SobjectType', max_length=40, verbose_name='SObject Type Name', sf_read_only=models.NOT_UPDATEABLE, choices=[('Account', None), ('AccountContactRelation', None), ('Asset', None), ('AssetRelationship', None), ('AssociatedLocation', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('Contact', None), ('ContactRequest', None), ('Contract', None), ('ContractLineItem', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntityMilestone', None), ('Event', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('Location', None), ('LocationTrustMeasure', None), ('Macro', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('OpportunityLineItemSchedule', None), ('Order', None), ('OrderItem', None), ('Pricebook2', None), ('PricebookEntry', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('Scorecard', None), ('ScorecardAssociation', None), ('ScorecardMetric', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('Task', None), ('User', None), ('UserProvisioningRequest', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
     field = models.CharField(db_column='Field', max_length=40, verbose_name='Field Name', sf_read_only=models.NOT_UPDATEABLE)  # Too long choices skipped
     permissions_edit = models.BooleanField(db_column='PermissionsEdit', verbose_name='Edit Field', default=False)
     permissions_read = models.BooleanField(db_column='PermissionsRead', verbose_name='Read Field', default=False)
@@ -5836,6 +6586,19 @@ class FiscalYearSettings(models.Model):
         verbose_name = 'Fiscal Year Settings'
         verbose_name_plural = 'Fiscal Year Settings'
         # keyPrefix = '022'
+
+
+
+class FlexQueueItem(models.Model):
+    flex_queue_item_id = models.CharField(db_column='FlexQueueItemId', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    job_type = models.CharField(db_column='JobType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Future', 'Future'), ('SharingRecalculation', 'Sharing Recalculation'), ('ScheduledApex', 'Scheduled Apex'), ('BatchApex', 'Batch Apex'), ('BatchApexWorker', 'Batch Apex Worker'), ('TestRequest', 'Test Request'), ('TestWorker', 'Test Worker'), ('ApexToken', 'Apex Token'), ('Queueable', 'Queueable')])
+    async_apex_job = models.ForeignKey(AsyncApexJob, models.DO_NOTHING, db_column='AsyncApexJobId', verbose_name='Apex Job ID', sf_read_only=models.READ_ONLY)
+    job_position = models.IntegerField(db_column='JobPosition', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'FlexQueueItem'
+        verbose_name = 'Flex Queue Item'
+        verbose_name_plural = 'Flex Queue Items'
+        # keyPrefix = '06i'
 
 
 
@@ -5982,6 +6745,158 @@ class FlowInterviewShare(models.Model):
 
 
 
+class FlowOrchestrationInstance(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='floworchestrationinstance_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='floworchestrationinstance_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.NOT_CREATEABLE, choices=[('NotStarted', 'Not Started'), ('InProgress', 'In Progress'), ('Completed', 'Completed'), ('Error', 'Error'), ('Discontinued', 'Discontinued'), ('Canceled', 'Canceled')])
+    interview = models.OneToOneField(FlowInterview, models.DO_NOTHING, db_column='InterviewId', verbose_name='Interview ID', sf_read_only=models.NOT_CREATEABLE, blank=True, null=True)
+    orchestration_developer_name = models.CharField(db_column='OrchestrationDeveloperName', max_length=80, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationInstance'
+        verbose_name = 'Orchestration Run'
+        verbose_name_plural = 'Orchestration Runs'
+        # keyPrefix = '0jE'
+
+
+
+class FlowOrchestrationInstanceShare(models.Model):
+    parent = models.ForeignKey(FlowOrchestrationInstance, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey('Group', models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationInstanceShare'
+        verbose_name = 'Orchestration Run Share'
+        verbose_name_plural = 'Orchestration Run Share'
+        # keyPrefix = None
+
+
+
+class FlowOrchestrationStageInstance(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='floworchestrationstageinstance_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='floworchestrationstageinstance_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    orchestration_instance = models.ForeignKey(FlowOrchestrationInstance, models.DO_NOTHING, db_column='OrchestrationInstanceId', verbose_name='Orchestration Run ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, choices=[('NotStarted', 'Not Started'), ('InProgress', 'In Progress'), ('Completed', 'Completed'), ('Error', 'Error'), ('Discontinued', 'Discontinued'), ('Canceled', 'Canceled')])
+    position = models.IntegerField(db_column='Position', sf_read_only=models.READ_ONLY)
+    label = models.CharField(db_column='Label', max_length=80, sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationStageInstance'
+        verbose_name = 'Orchestration Stage Run'
+        verbose_name_plural = 'Orchestration Stage Runs'
+        # keyPrefix = '0jF'
+
+
+
+class FlowOrchestrationStageInstanceShare(models.Model):
+    parent = models.ForeignKey(FlowOrchestrationStageInstance, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey('Group', models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationStageInstanceShare'
+        verbose_name = 'Orchestration Stage Run Share'
+        verbose_name_plural = 'Orchestration Stage Run Share'
+        # keyPrefix = None
+
+
+
+class FlowOrchestrationStepInstance(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='floworchestrationstepinstance_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='floworchestrationstepinstance_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    orchestration_instance = models.ForeignKey(FlowOrchestrationInstance, models.DO_NOTHING, db_column='OrchestrationInstanceId', verbose_name='Orchestration Run ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    stage_instance = models.ForeignKey(FlowOrchestrationStageInstance, models.DO_NOTHING, db_column='StageInstanceId', verbose_name='Orchestration Stage Run ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    step_type = models.CharField(db_column='StepType', max_length=255, sf_read_only=models.READ_ONLY)
+    status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, choices=[('NotStarted', 'Not Started'), ('InProgress', 'In Progress'), ('Completed', 'Completed'), ('Error', 'Error'), ('Discontinued', 'Discontinued'), ('Canceled', 'Canceled')])
+    label = models.CharField(db_column='Label', max_length=80, sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationStepInstance'
+        verbose_name = 'Orchestration Step Run'
+        verbose_name_plural = 'Orchestration Step Runs'
+        # keyPrefix = '0jL'
+
+
+
+class FlowOrchestrationStepInstanceShare(models.Model):
+    parent = models.ForeignKey(FlowOrchestrationStepInstance, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey('Group', models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationStepInstanceShare'
+        verbose_name = 'Orchestration Step Run Share'
+        verbose_name_plural = 'Orchestration Step Run Share'
+        # keyPrefix = None
+
+
+
+class FlowOrchestrationWorkItem(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='floworchestrationworkitem_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='floworchestrationworkitem_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    step_instance = models.ForeignKey(FlowOrchestrationStepInstance, models.DO_NOTHING, db_column='StepInstanceId', verbose_name='Orchestration Step Run ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    status = models.CharField(db_column='Status', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Assigned', 'Assigned'), ('Completed', 'Completed')])
+    related_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedRecordId', verbose_name='Context Record ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWork, AgentWorkSkill, Asset, AssetRelationship, Campaign, Case, CaseComment, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, Entitlement, EntitlementContact, EntityMilestone, ExpressionFilter, ExpressionFilterCriteria, ExternalEventMapping, FlowOrchestrationInstance, Idea, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, Lead, Location, LocationTrustMeasure, Location_Zone__c, Macro, MacroInstruction, MacroUsage, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, ManagedContentVariant, Opportunity, Order, OrderItem, OrgMetricScanResult, OrgMetricScanSummary, Organization, PendingServiceRouting, Postal_Code__c, Problem, ProblemIncident, ProblemRelatedItem, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, PromptAction, PromptError, QuickText, QuickTextUsage, Quote, QuoteLineItem, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, Site, SkillRequirement, SocialPersona, SocialPost, Solution, StreamingChannel, Topic, User, UserLicense, UserProvisioningRequest, UserServicePresence, Waste_Type__c, WorkBadge, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, WorkThanks, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    label = models.CharField(db_column='Label', max_length=80, verbose_name='Step', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    description = models.CharField(db_column='Description', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    assignee = models.ForeignKey('Group', models.DO_NOTHING, db_column='AssigneeId', verbose_name='Assignee ID', sf_read_only=models.NOT_CREATEABLE)  # Reference to tables [Group, Group, User] Master Detail Relationship *
+    screen_flow = models.CharField(db_column='ScreenFlow', max_length=255, verbose_name='Screen Flow ID', sf_read_only=models.READ_ONLY, choices=[('healthcloud_pm_flows__AcceptSlots', None), ('hvs_linkedin__ConnectionRequest', None), ('hvs_linkedin__InMail', None), ('omnichannel_chat__QueuesChat', None), ('omnichannel_chat__SkillsChat', None), ('omnichannel_messaging__MsgRouting', None), ('omnichannel_voice__VoiceRouting', None), ('opencti__SCV_Basic_Routing_Flow', None), ('runtime_appointmentbooking__Flow', None), ('runtime_appointmentbooking__Guest_Flow', None), ('runtime_appointmentbooking__In_Cancel', None), ('runtime_appointmentbooking__In_Modify', None), ('runtime_appointmentbooking__In_New', None), ('runtime_appointmentbooking__Inv_Book', None), ('runtime_appointmentbooking__Inv_Gen', None), ('runtime_appointmentbooking__Out_Modify', None), ('runtime_industries_recurrence__Orch', None), ('runtime_industries_recurrence__Schdlr', None), ('runtime_service_incident_mgmt__CCOIO', None), ('runtime_service_incident_mgmt__CRRI', None), ('setup_service_experience__Create_Case', None), ('setup_service_experience__Reset_Pwd', None), ('setup_service_experience__Verify_Cust', None)], blank=True, null=True)
+    screen_flow_inputs = models.TextField(db_column='ScreenFlowInputs', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationWorkItem'
+        verbose_name = 'Orchestration Work Item'
+        verbose_name_plural = 'Orchestration Work Items'
+        # keyPrefix = '0jf'
+
+
+
+class FlowOrchestrationWorkItemShare(models.Model):
+    parent = models.ForeignKey(FlowOrchestrationWorkItem, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey('Group', models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'FlowOrchestrationWorkItemShare'
+        verbose_name = 'Orchestration Work Item Share'
+        verbose_name_plural = 'Orchestration Work Item Share'
+        # keyPrefix = None
+
+
+
 class FlowRecordRelation(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
@@ -5991,7 +6906,7 @@ class FlowRecordRelation(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='flowrecordrelation_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     parent = models.ForeignKey(FlowInterview, models.DO_NOTHING, db_column='ParentId', verbose_name='Flow Interview ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    related_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedRecordId', verbose_name='Record ID')  # Reference to tables [Account, AccountContactRelation, AccountContactRole, AccountPartner, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWork, AgentWorkSkill, Announcement, AppAnalyticsQueryRequest, Approval, Asset, AssetRelationship, Attachment, BackgroundOperation, BriefcaseAssignment, CalendarView, Campaign, CampaignMember, Case, CaseContactRole, CaseMilestone, CaseRelatedIssue, CaseSolution, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, CollaborationGroupMember, CollaborationGroupMemberRequest, CollaborationGroupRecord, CollaborationInvitation, ConferenceNumber, Contact, ContactRequest, ContentDistribution, ContentDocument, ContentDocumentLink, ContentDocumentSubscription, ContentFolder, ContentFolderLink, ContentFolderMember, ContentNote, ContentNotification, ContentVersion, ContentVersionComment, ContentVersionRating, ContentWorkspaceDoc, Contract, ContractContactRole, ContractLineItem, Dashboard, DashboardComponent, DataAssessmentFieldMetric, DataAssessmentMetric, DataAssessmentValueMetric, DeleteEvent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, DialerCallUsage, Document, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, EmailMessageRelation, EnhancedLetterhead, Entitlement, EntityMilestone, EntitySubscription, Event, EventRelation, ExpressionFilter, ExpressionFilterCriteria, ExternalEvent, ExternalEventMapping, FeedAttachment, FeedComment, FeedItem, FeedPollChoice, FeedPollVote, FeedRevision, FileSearchActivity, FlowInterviewLog, FlowInterviewLogEntry, FlowStageRelation, FlowTestResult, ForecastingAdjustment, ForecastingFact, ForecastingItem, ForecastingOwnerAdjustment, ForecastingQuota, Idea, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, InstalledMobileApp, Lead, ListEmail, ListEmailIndividualRecipient, ListEmailRecipientSource, Location_Zone__c, Macro, MacroInstruction, MacroUsage, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, ManagedContent, ManagedContentChannel, ManagedContentSpace, ManagedContentVariant, MatchingInformation, Note, Opportunity, OpportunityContactRole, OpportunityLineItem, OpportunityLineItemSchedule, OpportunityPartner, Order, OrderItem, OrgMetric, OrgMetricScanResult, OrgMetricScanSummary, OutOfOffice, Partner, PendingServiceRouting, PendingServiceRoutingInteractionInfo, Postal_Code__c, Pricebook2, PricebookEntry, Problem, ProblemIncident, ProblemRelatedItem, ProcessException, Product2, ProductEntitlementTemplate, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, PromptAction, PromptError, PushTopic, QuickText, QuickTextUsage, Quote, QuoteDocument, QuoteLineItem, Recommendation, RecommendationResponse, RecordAction, Report, Reviews__c, Scorecard, ScorecardAssociation, ScorecardMetric, ServiceContract, ServiceResource, ServiceResourceSkill, ServiceSetupProvisioning, SetupAssistantStep, SkillRequirement, SocialPersona, SocialPost, Solution, StreamingChannel, Task, TaskRelation, TodayGoal, Topic, TopicAssignment, UserAppInfo, UserAppMenuCustomization, UserEmailPreferredPerson, UserProvAccount, UserProvAccountStaging, UserProvMockTarget, UserProvisioningLog, UserProvisioningRequest, UserServicePresence, VoiceCall, VoiceCallList, VoiceCallListItem, VoiceCallQualityFeedback, VoiceCallRecording, VoiceCoaching, VoiceMailContent, VoiceMailGreeting, VoiceMailMessage, VoiceVendorLine, WaveAutoInstallRequest, WaveCompatibilityCheckItem, WorkAccess, WorkBadge, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, WorkThanks, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    related_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedRecordId', verbose_name='Record ID')  # Reference to tables [Account, AccountContactRelation, AccountContactRole, AccountPartner, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWork, AgentWorkSkill, Announcement, ApexTestQueueItem, AppAnalyticsQueryRequest, Approval, Asset, AssetRelationship, AssociatedLocation, AsyncApexJob, Attachment, BackgroundOperation, BriefcaseAssignment, CalendarView, Campaign, CampaignMember, Case, CaseContactRole, CaseMilestone, CaseRelatedIssue, CaseSolution, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, CollaborationGroupMember, CollaborationGroupMemberRequest, CollaborationGroupRecord, CollaborationInvitation, ConferenceNumber, Contact, ContactRequest, ContentDistribution, ContentDocument, ContentDocumentLink, ContentDocumentSubscription, ContentFolder, ContentFolderLink, ContentFolderMember, ContentNote, ContentNotification, ContentVersion, ContentVersionComment, ContentVersionRating, ContentWorkspaceDoc, Contract, ContractContactRole, ContractLineItem, Dashboard, DashboardComponent, DataAssessmentFieldMetric, DataAssessmentMetric, DataAssessmentValueMetric, DeleteEvent, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, DialerCallUsage, Disposal_Fee__c, Document, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, EmailMessageRelation, EnhancedLetterhead, Entitlement, EntityMilestone, EntitySubscription, Event, EventRelation, EventRelayFeedback, ExpressionFilter, ExpressionFilterCriteria, ExternalEvent, ExternalEventMapping, FeedAttachment, FeedComment, FeedItem, FeedPollChoice, FeedPollVote, FeedRevision, FileSearchActivity, FlowInterviewLog, FlowInterviewLogEntry, FlowOrchestrationInstance, FlowOrchestrationStageInstance, FlowOrchestrationStepInstance, FlowOrchestrationWorkItem, FlowStageRelation, FlowTestResult, ForecastingAdjustment, ForecastingFact, ForecastingItem, ForecastingOwnerAdjustment, ForecastingQuota, Idea, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, InstalledMobileApp, Lead, ListEmail, ListEmailIndividualRecipient, ListEmailRecipientSource, Location, LocationTrustMeasure, Location_Zone__c, MLModel, MLModelFactor, MLModelFactorComponent, MLModelMetric, Macro, MacroInstruction, MacroUsage, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, ManagedContent, ManagedContentChannel, ManagedContentSpace, ManagedContentVariant, MatchingInformation, Note, Opportunity, OpportunityContactRole, OpportunityLineItem, OpportunityLineItemSchedule, OpportunityPartner, Order, OrderItem, OrgMetric, OrgMetricScanResult, OrgMetricScanSummary, OutOfOffice, Partner, PendingServiceRouting, PendingServiceRoutingInteractionInfo, Postal_Code__c, Pricebook2, PricebookEntry, Problem, ProblemIncident, ProblemRelatedItem, ProcessException, ProcessInstance, ProcessInstanceNode, Product2, ProductEntitlementTemplate, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, PromptAction, PromptError, PushTopic, QuickText, QuickTextUsage, Quote, QuoteDocument, QuoteLineItem, Recommendation, RecommendationResponse, RecordAction, Report, Reviews__c, Scorecard, ScorecardAssociation, ScorecardMetric, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, ServiceSetupProvisioning, SetupAssistantStep, SkillRequirement, SocialPersona, SocialPost, Solution, StreamingChannel, Task, TaskRelation, TodayGoal, Topic, TopicAssignment, UserAppInfo, UserAppMenuCustomization, UserEmailPreferredPerson, UserProvAccount, UserProvAccountStaging, UserProvMockTarget, UserProvisioningLog, UserProvisioningRequest, UserServicePresence, VoiceCall, VoiceCallList, VoiceCallListItem, VoiceCallQualityFeedback, VoiceCallRecording, VoiceCoaching, VoiceMailContent, VoiceMailGreeting, VoiceMailMessage, VoiceVendorLine, Waste_Type__c, WaveAutoInstallRequest, WaveCompatibilityCheckItem, WorkAccess, WorkBadge, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, WorkThanks, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
     class Meta(models.Model.Meta):
         db_table = 'FlowRecordRelation'
         verbose_name = 'Flow Record Relation'
@@ -7105,7 +8020,7 @@ class Lead(models.Model):
     photo_url = models.URLField(db_column='PhotoUrl', verbose_name='Photo URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
     lead_source = models.CharField(db_column='LeadSource', max_length=255, choices=[('Advertisement', 'Advertisement'), ('Customer Event', 'Customer Event'), ('Employee Referral', 'Employee Referral'), ('External Referral', 'External Referral'), ('Google AdWords', 'Google AdWords'), ('Other', 'Other'), ('Partner', 'Partner'), ('Purchased List', 'Purchased List'), ('Trade Show', 'Trade Show'), ('Webinar', 'Webinar'), ('Website', 'Website')], blank=True, null=True)
     status = models.CharField(db_column='Status', max_length=255, default='New', choices=[('Unqualified', 'Unqualified'), ('New', 'New'), ('Working', 'Working'), ('Nurturing', 'Nurturing'), ('Qualified', 'Qualified')])
-    industry = models.CharField(db_column='Industry', max_length=255, choices=[('Agriculture', 'Agriculture'), ('Apparel', 'Apparel'), ('Banking', 'Banking'), ('Biotechnology', 'Biotechnology'), ('Chemicals', 'Chemicals'), ('Communications', 'Communications'), ('Construction', 'Construction'), ('Consulting', 'Consulting'), ('Education', 'Education'), ('Electronics', 'Electronics'), ('Energy', 'Energy'), ('Engineering', 'Engineering'), ('Entertainment', 'Entertainment'), ('Environmental', 'Environmental'), ('Finance', 'Finance'), ('Food & Beverage', 'Food & Beverage'), ('Government', 'Government'), ('Healthcare', 'Healthcare'), ('Hospitality', 'Hospitality'), ('Insurance', 'Insurance'), ('Machinery', 'Machinery'), ('Manufacturing', 'Manufacturing'), ('Media', 'Media'), ('Not For Profit', 'Not For Profit'), ('Other', 'Other'), ('Recreation', 'Recreation'), ('Retail', 'Retail'), ('Shipping', 'Shipping'), ('Technology', 'Technology'), ('Telecommunications', 'Telecommunications'), ('Transportation', 'Transportation'), ('Utilities', 'Utilities'), ('Waste management', 'Waste management'), ('Property management', 'Property management')], blank=True, null=True)
+    industry = models.CharField(db_column='Industry', max_length=255, choices=[('Agriculture', 'Agriculture'), ('Apparel', 'Apparel'), ('Banking', 'Banking'), ('Biotechnology', 'Biotechnology'), ('Chemicals', 'Chemicals'), ('Communications', 'Communications'), ('Construction', 'Construction'), ('Consulting', 'Consulting'), ('Education', 'Education'), ('Electronics', 'Electronics'), ('Energy', 'Energy'), ('Engineering', 'Engineering'), ('Entertainment', 'Entertainment'), ('Environmental', 'Environmental'), ('Finance', 'Finance'), ('Food & Beverage', 'Food & Beverage'), ('Government', 'Government'), ('Healthcare', 'Healthcare'), ('Hospitality', 'Hospitality'), ('Insurance', 'Insurance'), ('Machinery', 'Machinery'), ('Manufacturing', 'Manufacturing'), ('Media', 'Media'), ('Not For Profit', 'Not For Profit'), ('Other', 'Other'), ('Property management', 'Property management'), ('Recreation', 'Recreation'), ('Retail', 'Retail'), ('Shipping', 'Shipping'), ('Technology', 'Technology'), ('Telecommunications', 'Telecommunications'), ('Transportation', 'Transportation'), ('Utilities', 'Utilities'), ('Waste management', 'Waste management'), ('Residential', 'Residential')], blank=True, null=True)
     rating = models.CharField(db_column='Rating', max_length=255, choices=[('Hot', 'Hot'), ('Warm', 'Warm'), ('Cold', 'Cold')], blank=True, null=True)
     number_of_employees = models.IntegerField(db_column='NumberOfEmployees', verbose_name='Employees', blank=True, null=True)
     owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
@@ -7186,6 +8101,22 @@ class LeadHistory(models.Model):
         verbose_name = 'Lead History'
         verbose_name_plural = 'Lead History'
         # keyPrefix = None
+
+
+
+class LeadShare(models.Model):
+    lead = models.ForeignKey(Lead, models.DO_NOTHING, db_column='LeadId', verbose_name='Lead ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    lead_access_level = models.CharField(db_column='LeadAccessLevel', max_length=40, verbose_name='Lead Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'LeadShare'
+        verbose_name = 'Lead Share'
+        verbose_name_plural = 'Lead Share'
+        # keyPrefix = '01o'
 
 
 
@@ -7535,6 +8466,131 @@ class ListViewChartInstance(models.Model):
 
 
 
+class Location(models.Model):
+    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, verbose_name='Location Name')
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='location_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='location_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    location_type = models.CharField(db_column='LocationType', max_length=40)
+    is_mobile = models.BooleanField(db_column='IsMobile', verbose_name='Mobile Location', default=False)
+    is_inventory_location = models.BooleanField(db_column='IsInventoryLocation', verbose_name='Inventory Location', default=False)
+    root_location = models.ForeignKey('self', models.DO_NOTHING, db_column='RootLocationId', verbose_name='Root Location ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    external_reference = models.CharField(db_column='ExternalReference', max_length=255, blank=True, null=True)
+    logo = models.ForeignKey(ContentAsset, models.DO_NOTHING, db_column='LogoId', verbose_name='Asset File ID', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Location'
+        verbose_name = 'Location'
+        verbose_name_plural = 'Locations'
+        # keyPrefix = '131'
+
+
+
+class LocationFeed(models.Model):
+    parent = models.ForeignKey(Location, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    type = models.CharField(db_column='Type', max_length=40, verbose_name='Feed Item Type', sf_read_only=models.READ_ONLY, choices=[('TrackedChange', 'Tracked Change'), ('UserStatus', 'User Status'), ('TextPost', 'Text Post'), ('AdvancedTextPost', 'Advanced Text Post'), ('LinkPost', 'Link Post'), ('ContentPost', 'Content Post'), ('PollPost', 'Poll'), ('RypplePost', 'WDC Thanks'), ('ProfileSkillPost', 'Profile Skill Post'), ('DashboardComponentSnapshot', 'Dashboard Component Snapshot'), ('ApprovalPost', 'Approval Post'), ('CaseCommentPost', 'Case Comment Feed'), ('ReplyPost', 'Reply Post'), ('EmailMessageEvent', 'Email Message Feed'), ('CallLogPost', 'Call Log Feed'), ('ChangeStatusPost', 'Change Status Feed'), ('AttachArticleEvent', 'Attached Article'), ('MilestoneEvent', 'Milestone Event'), ('ActivityEvent', 'Activity Change'), ('ChatTranscriptPost', 'Chat Transcript Post'), ('CollaborationGroupCreated', 'Collaboration Group Created'), ('CollaborationGroupUnarchived', 'Collaboration Group Reactivated'), ('SocialPost', 'Social Post'), ('QuestionPost', 'Question Post'), ('FacebookPost', 'Facebook Post'), ('BasicTemplateFeedItem', 'Basic Template Post'), ('CreateRecordEvent', 'Created Record'), ('CanvasPost', 'Canvas'), ('AnnouncementPost', 'a')], blank=True, null=True)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='locationfeed_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    comment_count = models.IntegerField(db_column='CommentCount', sf_read_only=models.READ_ONLY)
+    like_count = models.IntegerField(db_column='LikeCount', sf_read_only=models.READ_ONLY)
+    title = models.CharField(db_column='Title', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    body = models.TextField(db_column='Body', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    link_url = models.URLField(db_column='LinkUrl', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_rich_text = models.BooleanField(db_column='IsRichText', sf_read_only=models.READ_ONLY, default=False)
+    related_record = models.ForeignKey(ContentVersion, models.DO_NOTHING, db_column='RelatedRecordId', verbose_name='Related Record ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [ContentVersion, WorkThanks]
+    inserted_by = models.ForeignKey('User', models.DO_NOTHING, db_column='InsertedById', related_name='locationfeed_insertedby_set', verbose_name='InsertedBy ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    best_comment = models.ForeignKey(FeedComment, models.DO_NOTHING, db_column='BestCommentId', verbose_name='Best Comment ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'LocationFeed'
+        verbose_name = 'Location Feed'
+        verbose_name_plural = 'Location Feed'
+        # keyPrefix = None
+
+
+
+class LocationHistory(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    location = models.ForeignKey(Location, models.DO_NOTHING, db_column='LocationId', verbose_name='Location ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('CloseDate', 'Close Date'), ('ConstructionEndDate', 'Construction End Date'), ('ConstructionStartDate', 'Construction Start Date'), ('created', 'Created.'), ('Description', 'Description'), ('DrivingDirections', 'Driving Directions'), ('ExternalReference', 'External Reference'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('IsInventoryLocation', 'Inventory Location'), ('Latitude', 'Latitude'), ('Location', 'Location'), ('LocationLevel', 'Location Level'), ('Name', 'Location Name'), ('LocationType', 'Location Type'), ('Logo', 'Logo'), ('Longitude', 'Longitude'), ('IsMobile', 'Mobile Location'), ('OpenDate', 'Open Date'), ('Owner', 'Owner'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ParentLocation', 'Parent Location'), ('PossessionDate', 'Possession Date'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RemodelEndDate', 'Remodel End Date'), ('RemodelStartDate', 'Remodel Start Date'), ('RootLocation', 'Root Location'), ('TimeZone', 'Time Zone')])
+    data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
+    old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'LocationHistory'
+        verbose_name = 'Location History'
+        verbose_name_plural = 'Location History'
+        # keyPrefix = None
+
+
+
+class LocationShare(models.Model):
+    parent = models.ForeignKey(Location, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'LocationShare'
+        verbose_name = 'Location Share'
+        verbose_name_plural = 'Location Share'
+        # keyPrefix = None
+
+
+
+class LocationTrustMeasure(models.Model):
+    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, verbose_name='Location Trust Measure Name', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='locationtrustmeasure_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='locationtrustmeasure_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    location = models.ForeignKey(Location, models.DO_NOTHING, db_column='LocationId', verbose_name='Location ID', help_text='The store, hotel, or other physical space that your business occupies. Each trust measure lives at a single location. If no external reference exists on the location, the trust card won’t display. If you get an error, edit the location to add an external reference.')
+    title = models.CharField(db_column='Title', max_length=40, help_text='The header for your trust measure that’s displayed to viewers. Keep it short and sweet! You can use up to 40 characters, but 20 is best to keep your title on one line.')
+    is_visible_in_public = models.BooleanField(db_column='IsVisibleInPublic', verbose_name='Trust Measure Is Published', default=False, help_text='Publishes this trust measure to the location you select.')
+    icon_url = models.CharField(db_column='IconUrl', max_length=255, help_text='The URL where your icon is hosted. You create and host the icon for each trust measure.', blank=True, null=True)
+    description = models.CharField(db_column='Description', max_length=255, help_text='Explain how you’ll carry out the trust measure. Be concise. Prioritize clarity over complete sentences — you have only 250 characters.')
+    sort_order = models.IntegerField(db_column='SortOrder', verbose_name='Display Order', help_text='Indicates where this trust measure is positioned in your layout. For example, in a banner layout, a display order of 1 places the trust card to the left. A display order of 2 places the trust measure to the right of 1.', blank=True, null=True)
+    location_external_reference = models.CharField(db_column='LocationExternalReference', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'LocationTrustMeasure'
+        verbose_name = 'Location Trust Measure'
+        verbose_name_plural = 'Location Trust Measures'
+        # keyPrefix = '20X'
+
+
+
+class LocationTrustMeasureShare(models.Model):
+    parent = models.ForeignKey(LocationTrustMeasure, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'LocationTrustMeasureShare'
+        verbose_name = 'Location Trust Measure Share'
+        verbose_name_plural = 'Location Trust Measure Share'
+        # keyPrefix = None
+
+
+
 class LocationZoneShare(models.Model):
     parent = models.ForeignKey('LocationZone', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
@@ -7640,7 +8696,7 @@ class LoginIp(models.Model):
 class LookedUpFromActivity(models.Model):
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', related_name='lookedupfromactivity_account_set', verbose_name='Account ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
     who = models.ForeignKey(Contact, models.DO_NOTHING, db_column='WhoId', related_name='lookedupfromactivity_who_set', verbose_name='Name ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Contact, Lead]
-    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='lookedupfromactivity_what_set', verbose_name='Related To ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Entitlement, Image, In_App_Checklist_Settings__c, Incident, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, ProcessException, Product2, Product_Category_Info__c, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='lookedupfromactivity_what_set', verbose_name='Related To ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, Entitlement, Image, In_App_Checklist_Settings__c, Incident, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, Solution, Waste_Type__c, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
     subject = models.CharField(db_column='Subject', max_length=80, sf_read_only=models.READ_ONLY, choices=[('Call', 'Call'), ('Send Letter', 'Send Letter of Authorization'), ('Send Quote', 'Send Quote'), ('Other', 'Other')], blank=True, null=True)
     is_task = models.BooleanField(db_column='IsTask', verbose_name='Task', sf_read_only=models.READ_ONLY, default=False)
     activity_date = models.DateField(db_column='ActivityDate', verbose_name='Date', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -7701,6 +8757,166 @@ class LookedUpFromActivity(models.Model):
 
 
 
+class Mlfield(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mlfield_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mlfield_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    entity = models.CharField(db_column='Entity', max_length=255, verbose_name='Custom Object Definition ID', sf_read_only=models.READ_ONLY)  # Too long choices skipped
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Custom Field Definition ID', sf_read_only=models.READ_ONLY)  # Too long choices skipped
+    class Meta(models.Model.Meta):
+        db_table = 'MLField'
+        verbose_name = 'Entity'
+        verbose_name_plural = 'ML Prediction Fields'
+        # keyPrefix = '6e8'
+
+
+
+class Mlmodel(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mlmodel_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mlmodel_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    prediction_definition = models.ForeignKey('MlpredictionDefinition', models.DO_NOTHING, db_column='PredictionDefinitionId', verbose_name='ML Prediction Definition ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    approval_status = models.CharField(db_column='ApprovalStatus', max_length=255, sf_read_only=models.READ_ONLY, default='Pending', choices=[('Pending', None), ('Approved', None), ('Rejected', None)], blank=True, null=True)
+    scoring_status = models.CharField(db_column='ScoringStatus', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Enabled', None), ('Disabled', None)])
+    model_type = models.CharField(db_column='ModelType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('RandomForest', None), ('LogisticRegression', None), ('LinearRegression', None), ('DecisionTree', None), ('DeepLearningIntent', None), ('DeepLearningNER', None), ('GlobalDeepLearningIntent', None), ('GlobalDeepLearningNER', None), ('GlobalLanguageDetection', None), ('BinaryClassification', None), ('GeneralizedLinearModels', None), ('GradientBoostedTrees', None), ('LinearSupportVectorClassifiers', None), ('MulticlassClassification', None), ('NaiveBayes', None), ('Regression', None), ('XGBoost', None), ('NeuralNet', None), ('PopularityCount', None)], blank=True, null=True)
+    training_start_time = models.DateTimeField(db_column='TrainingStartTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    training_end_time = models.DateTimeField(db_column='TrainingEndTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    dataset = models.CharField(db_column='Dataset', max_length=80, verbose_name='Dataset Id', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    recommendation_definition = models.ForeignKey('MlrecommendationDefinition', models.DO_NOTHING, db_column='RecommendationDefinitionId', verbose_name='ML Recommendation Definition ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'MLModel'
+        verbose_name = 'ML Model'
+        verbose_name_plural = 'ML Models'
+        # keyPrefix = '873'
+
+
+
+class MlmodelFactor(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mlmodelfactor_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mlmodelfactor_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    model = models.ForeignKey(Mlmodel, models.DO_NOTHING, db_column='ModelId', verbose_name='ML Model ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    type = models.CharField(db_column='Type', max_length=255, verbose_name='Factor Type', sf_read_only=models.READ_ONLY, choices=[('Basic', None), ('And', None), ('Or', None)], blank=True, null=True)
+    weight = models.DecimalField(db_column='Weight', max_digits=18, decimal_places=0, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    importance = models.DecimalField(db_column='Importance', max_digits=18, decimal_places=0, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    correlation = models.DecimalField(db_column='Correlation', max_digits=18, decimal_places=0, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    factor_type = models.CharField(db_column='FactorType', max_length=255, verbose_name='Factor Category', sf_read_only=models.READ_ONLY, choices=[('ModelFactor', 'ModelFactor'), ('ModelFactlet', 'ModelFactlet')], blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'MLModelFactor'
+        verbose_name = 'ML Model Factor'
+        verbose_name_plural = 'ML Model Factors'
+        # keyPrefix = '876'
+
+
+
+class MlmodelFactorComponent(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mlmodelfactorcomponent_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mlmodelfactorcomponent_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    model_factor = models.ForeignKey(MlmodelFactor, models.DO_NOTHING, db_column='ModelFactorId', verbose_name='ML Model Factor ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    model = models.ForeignKey(Mlmodel, models.DO_NOTHING, db_column='ModelId', verbose_name='ML Model ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    left_hand_derived_field = models.CharField(db_column='LeftHandDerivedField', max_length=120, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    operator = models.CharField(db_column='Operator', max_length=255, sf_read_only=models.READ_ONLY, choices=[('LessThan', None), ('Equals', None), ('NotEquals', None), ('GreaterThan', None), ('IsNull', None), ('IsNotNull', None), ('StartsWith', None), ('EndsWith', None), ('Contains', None)], blank=True, null=True)
+    right_hand_derived_field = models.CharField(db_column='RightHandDerivedField', max_length=120, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    value = models.CharField(db_column='Value', max_length=120, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    sort_order = models.IntegerField(db_column='SortOrder', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    feature_type = models.CharField(db_column='FeatureType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Binary', 'Binary'), ('Integral', 'Integral'), ('Real', 'Real'), ('Currency', 'Currency'), ('Email', 'Email'), ('Percent', 'Percent'), ('ID', 'ID'), ('Picklist', 'Picklist'), ('MultiPicklist', 'MultiPicklist'), ('Combobox', 'Combobox'), ('Date', 'Date'), ('DateTime', 'DateTime'), ('Phone', 'Phone'), ('Text', 'Text'), ('TextArea', 'TextArea'), ('URL', 'URL')], blank=True, null=True)
+    feature_value = models.CharField(db_column='FeatureValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    factor_label_key = models.CharField(db_column='FactorLabelKey', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'MLModelFactorComponent'
+        verbose_name = 'ML Model Factor Component'
+        verbose_name_plural = 'ML Model Factor Components'
+        # keyPrefix = '877'
+
+
+
+class MlmodelMetric(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mlmodelmetric_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mlmodelmetric_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    model = models.ForeignKey(Mlmodel, models.DO_NOTHING, db_column='ModelId', verbose_name='ML Model ID', sf_read_only=models.READ_ONLY)
+    metric_type = models.CharField(db_column='MetricType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('auROC', None), ('Accuracy', None), ('BalancedAccuracy', None), ('Precision', None), ('Recall', None), ('FMeasure', None), ('RootMeanSquaredError', None), ('MeanAbsoluteError', None), ('RSquared', None), ('auPR', None), ('PrecisionAtK', None), ('RecallAtK', None), ('HitRateAtK', None), ('F1Score', None), ('MeanPercentileRank', None), ('MeanAbsoluteRank', None), ('ExpectedTopPercentileRank', None), ('ExpectedTopAbsoluteRank', None), ('MeanReciprocalRankAtK', None), ('DiscountedCumulativeGainAtK', None), ('NormalizedDiscountedCumulativeGainsAtK', None), ('AveragePrecision', None), ('MeanAveragePrecisionAtK', None), ('MeanReciprocalRank', None), ('MeanTopReciprocalRank', None), ('LiftBucket', None)], blank=True, null=True)
+    basic_metric_value = models.DecimalField(db_column='BasicMetricValue', max_digits=24, decimal_places=8, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    row_count = models.IntegerField(db_column='RowCount', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    start_time = models.DateTimeField(db_column='StartTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    end_time = models.DateTimeField(db_column='EndTime', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    span = models.CharField(db_column='Span', max_length=255, verbose_name='Metric Span', sf_read_only=models.READ_ONLY, choices=[('Hour', None), ('Day', None), ('Week', None), ('Month', None), ('SinceLastAction', None)], blank=True, null=True)
+    graph_type = models.CharField(db_column='GraphType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('ConfidencePlot', None), ('LiftPlot', None), ('PrecisionGraph', None), ('RecallGraph', None), ('HitRateGraph', None), ('MeanReciprocalRankGraph', None), ('DiscountedCumulativeGainsGraph', None), ('NormalizedDiscountedCumulativeGainsGraph', None), ('KBasedRankingGraph', None), ('ConfusionMatrixPerThreshold', None), ('RegressionErrorBands', None), ('MultiClassMisclassifications', None), ('MultiClassConfusionMatrixPerThreshold', None)], blank=True, null=True)
+    data_set_type = models.CharField(db_column='DataSetType', max_length=255, verbose_name='Dataset Type', sf_read_only=models.READ_ONLY, choices=[('HoldOut', None), ('Training', None), ('Live', None), ('Model', None), ('Baseline', None)], blank=True, null=True)
+    complex_metric_value = models.TextField(db_column='ComplexMetricValue', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'MLModelMetric'
+        verbose_name = 'ML Model Metric'
+        verbose_name_plural = 'ML Model Metrics'
+        # keyPrefix = '874'
+
+
+
+class MlpredictionDefinition(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Name', sf_read_only=models.READ_ONLY)
+    language = models.CharField(db_column='Language', max_length=40, verbose_name='Master Language', sf_read_only=models.READ_ONLY, choices=[('en_US', 'English'), ('de', 'German'), ('es', 'Spanish'), ('fr', 'French'), ('it', 'Italian'), ('ja', 'Japanese'), ('sv', 'Swedish'), ('ko', 'Korean'), ('zh_TW', 'Chinese (Traditional)'), ('zh_CN', 'Chinese (Simplified)'), ('pt_BR', 'Portuguese (Brazil)'), ('nl_NL', 'Dutch'), ('da', 'Danish'), ('th', 'Thai'), ('fi', 'Finnish'), ('ru', 'Russian'), ('es_MX', 'Spanish (Mexico)'), ('no', 'Norwegian')])
+    master_label = models.CharField(db_column='MasterLabel', max_length=80, verbose_name='Label', sf_read_only=models.READ_ONLY)
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mlpredictiondefinition_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mlpredictiondefinition_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    application = models.ForeignKey(Aiapplication, models.DO_NOTHING, db_column='ApplicationId', verbose_name='AI Application ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    type = models.CharField(db_column='Type', max_length=255, verbose_name='ML Prediction Type', sf_read_only=models.READ_ONLY, choices=[('ScoringSpecificOutcome', '0'), ('BinaryClassification', '1'), ('MulticlassClassification', '2'), ('Regression', '3'), ('LanguageDetection', '4'), ('DeepLearningIntentClassification', '5'), ('DeepLearningNameEntityRecognition', '6'), ('GlobalDeepLearningIntentClassification', '7'), ('GlobalDeepLearningNameEntityRecognition', '8')])
+    status = models.CharField(db_column='Status', max_length=255, verbose_name='ML Prediction Status', sf_read_only=models.READ_ONLY, choices=[('Enabled', None), ('Disabled', None), ('Draft', None)])
+    prediction_field = models.CharField(db_column='PredictionField', max_length=255, verbose_name='Prediction Field ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    pushback_field = models.CharField(db_column='PushbackField', max_length=255, verbose_name='Pushback Field ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'MLPredictionDefinition'
+        verbose_name = 'ML Prediction Definition'
+        verbose_name_plural = 'ML Prediction Definitions'
+        # keyPrefix = '6gt'
+
+
+
+class MlrecommendationDefinition(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Name', sf_read_only=models.READ_ONLY)
+    language = models.CharField(db_column='Language', max_length=40, verbose_name='Master Language', sf_read_only=models.READ_ONLY, choices=[('en_US', 'English'), ('de', 'German'), ('es', 'Spanish'), ('fr', 'French'), ('it', 'Italian'), ('ja', 'Japanese'), ('sv', 'Swedish'), ('ko', 'Korean'), ('zh_TW', 'Chinese (Traditional)'), ('zh_CN', 'Chinese (Simplified)'), ('pt_BR', 'Portuguese (Brazil)'), ('nl_NL', 'Dutch'), ('da', 'Danish'), ('th', 'Thai'), ('fi', 'Finnish'), ('ru', 'Russian'), ('es_MX', 'Spanish (Mexico)'), ('no', 'Norwegian')])
+    master_label = models.CharField(db_column='MasterLabel', max_length=80, verbose_name='Label', sf_read_only=models.READ_ONLY)
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mlrecommendationdefinition_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mlrecommendationdefinition_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    application = models.ForeignKey(Aiapplication, models.DO_NOTHING, db_column='ApplicationId', verbose_name='AI Application ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    status = models.CharField(db_column='Status', max_length=255, verbose_name='ML Recommendation Definition Status', sf_read_only=models.READ_ONLY, choices=[('Enabled', None), ('Disabled', None), ('Draft', None)])
+    class Meta(models.Model.Meta):
+        db_table = 'MLRecommendationDefinition'
+        verbose_name = 'ML Recommendation Definition'
+        verbose_name_plural = 'ML Recommendation Definitions'
+        # keyPrefix = '7gh'
+
+
+
 class Macro(models.Model):
     owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
@@ -7715,7 +8931,7 @@ class Macro(models.Model):
     description = models.TextField(db_column='Description', blank=True, null=True)
     is_aloha_supported = models.BooleanField(db_column='IsAlohaSupported', verbose_name='Supports Classic', sf_read_only=models.READ_ONLY, default=False)
     is_lightning_supported = models.BooleanField(db_column='IsLightningSupported', verbose_name='Supports Lightning', sf_read_only=models.READ_ONLY, default=False)
-    starting_context = models.CharField(db_column='StartingContext', max_length=255, verbose_name='Apply To', sf_read_only=models.NOT_UPDATEABLE, choices=[('Account', 'Account'), ('AccountContactRelation', 'Account Contact Relationship'), ('Add_On__c', 'Add On'), ('Add_On_Choice__c', 'Add On Choice'), ('Asset', 'Asset'), ('AssetRelationship', 'Asset Relationship'), ('Case', 'Case'), ('CaseRelatedIssue', 'Case Related Issue'), ('ChangeRequest', 'Change Request'), ('ChangeRequestRelatedIssue', 'Change Request Related Issue'), ('ChangeRequestRelatedItem', 'Change Request Related Item'), ('Contact', 'Contact'), ('Contract', 'Contract'), ('ContractLineItem', 'Contract Line Item'), ('ActiveCamp__CXA_Usage__c', 'CXA Usage'), ('ActiveCamp__Dashboard_Log__c', 'Dashboard Log'), ('pandadoc__DocStatus__c', 'Doc Status'), ('ActiveCamp__Error_Log__c', 'Error Log'), ('Event', 'Event'), ('FeedItem', 'Feed Item'), ('CollaborationGroup', 'Group'), ('Image', 'Image'), ('Incident', 'Incident'), ('IncidentRelatedItem', 'Incident Related Item'), ('typeform__InstallationSettings__c', 'Installation Settings'), ('Lead', 'Lead'), ('Location_Zone__c', 'Location Zone'), ('Main_Product__c', 'Main Product'), ('Main_Product_Add_On__c', 'Main Product Add On'), ('Main_Product_Category__c', 'Main Product Category'), ('Main_Product_Info__c', 'Main Product Info'), ('Main_Product_Type__c', 'Main Product Type'), ('Main_Product_Type_Product_Relationship__c', 'Main Product Type Product Relationship'), ('Main_Product_Variation__c', 'Main Product Variation'), ('Main_Product_Variation_Add_On_Choice__c', 'Main Product Variation Add On Choice'), ('Dhruvsoft__O2O_Logs__c', 'O2O Log'), ('EntityMilestone', 'Object Milestone'), ('pandadoc__Object_Tokens__c', 'Object Tokens'), ('Opportunity', 'Opportunity'), ('OpportunityContactRole', 'Opportunity Contact Role'), ('Order', 'Order'), ('pandadoc__PandaDocDocument__c', 'PandaDoc Document'), ('pandadoc__PandaDocLog__c', 'PandaDoc Log'), ('Postal_Code__c', 'Postal Code'), ('pandadoc__Pricing_Item_Mapping__c', 'Pricing Item Map'), ('Problem', 'Problem'), ('ProblemRelatedItem', 'Problem Related Item'), ('Product2', 'Product'), ('Product_Category_Info__c', 'Product Category Info'), ('ContentDocumentListViewMapping', 'Quip Document from List View'), ('Quote', 'Quote'), ('pandadoc__Recipient_Map__c', 'Recipient Map'), ('ProblemIncident', 'Related Problem and Incident'), ('Reviews__c', 'Review'), ('ServiceContract', 'Service Contract'), ('ServiceResource', 'Service Resource'), ('ActiveCamp__Setup_Data__c', 'Setup Data'), ('ProfileSkill', 'Skill'), ('ProfileSkillUser', 'Skill User'), ('SocialPost', 'Social Post'), ('sansancard__SSCard__c', 'SSCard'), ('Task', 'Task'), ('sansancard__TransferMeta__c', 'Transfer Metadata'), ('pandadoc__TriggerSetting__c', 'Trigger Setting'), ('typeform__Typeform_Error__c', 'Typeform Error'), ('typeform__Form__c', 'Typeform Form'), ('typeform__Form_Mapping__c', 'Typeform Form Mapping'), ('User', 'User'), ('VoiceCall', 'Voice Call'), ('WebCartDocument', 'Web Cart Document'), ('WorkOrder', 'Work Order'), ('WorkOrderLineItem', 'Work Order Line Item'), ('WorkPlan', 'Work Plan'), ('WorkPlanTemplate', 'Work Plan Template'), ('WorkPlanTemplateEntry', 'Work Plan Template Entry'), ('WorkStep', 'Work Step'), ('WorkStepTemplate', 'Work Step Template')], blank=True, null=True)
+    starting_context = models.CharField(db_column='StartingContext', max_length=255, verbose_name='Apply To', sf_read_only=models.NOT_UPDATEABLE, choices=[('Account', 'Account'), ('AccountContactRelation', 'Account Contact Relationship'), ('Add_On__c', 'Add On'), ('Add_On_Choice__c', 'Add On Choice'), ('Asset', 'Asset'), ('AssetRelationship', 'Asset Relationship'), ('Case', 'Case'), ('CaseRelatedIssue', 'Case Related Issue'), ('ChangeRequest', 'Change Request'), ('ChangeRequestRelatedIssue', 'Change Request Related Issue'), ('ChangeRequestRelatedItem', 'Change Request Related Item'), ('Contact', 'Contact'), ('Contract', 'Contract'), ('ContractLineItem', 'Contract Line Item'), ('ActiveCamp__CXA_Usage__c', 'CXA Usage'), ('ActiveCamp__Dashboard_Log__c', 'Dashboard Log'), ('Disposal_Fee__c', 'Disposal Fee'), ('pandadoc__DocStatus__c', 'Doc Status'), ('ActiveCamp__Error_Log__c', 'Error Log'), ('Event', 'Event'), ('FeedItem', 'Feed Item'), ('CollaborationGroup', 'Group'), ('Image', 'Image'), ('Incident', 'Incident'), ('IncidentRelatedItem', 'Incident Related Item'), ('typeform__InstallationSettings__c', 'Installation Settings'), ('Lead', 'Lead'), ('Location', 'Location'), ('LocationTrustMeasure', 'Location Trust Measure'), ('Location_Zone__c', 'Location Zone'), ('Main_Product__c', 'Main Product'), ('Main_Product_Add_On__c', 'Main Product Add On'), ('Main_Product_Category__c', 'Main Product Category'), ('Main_Product_Info__c', 'Main Product Info'), ('Main_Product_Type__c', 'Main Product Type'), ('Main_Product_Type_Product_Relationship__c', 'Main Product Type Product Relationship'), ('Main_Product_Variation__c', 'Main Product Variation'), ('Main_Product_Waste_Type__c', 'Main Product Waste Type'), ('Dhruvsoft__O2O_Logs__c', 'O2O Log'), ('EntityMilestone', 'Object Milestone'), ('pandadoc__Object_Tokens__c', 'Object Tokens'), ('Opportunity', 'Opportunity'), ('OpportunityContactRole', 'Opportunity Contact Role'), ('Order', 'Order'), ('pandadoc__PandaDocDocument__c', 'PandaDoc Document'), ('pandadoc__PandaDocLog__c', 'PandaDoc Log'), ('Postal_Code__c', 'Postal Code'), ('pandadoc__Pricing_Item_Mapping__c', 'Pricing Item Map'), ('Problem', 'Problem'), ('ProblemRelatedItem', 'Problem Related Item'), ('Product2', 'Product'), ('Product_Add_On_Choice__c', 'Product Add On Choice'), ('Product_Category_Info__c', 'Product Category Info'), ('ContentDocumentListViewMapping', 'Quip Document from List View'), ('Quote', 'Quote'), ('pandadoc__Recipient_Map__c', 'Recipient Map'), ('ProblemIncident', 'Related Problem and Incident'), ('Reviews__c', 'Review'), ('Seller_Product__c', 'Seller Product'), ('Seller_Product_Location_Zone__c', 'Seller Product Location Zone'), ('ServiceAppointmentGroup', 'Service Appointment Group'), ('ServiceContract', 'Service Contract'), ('ServiceResource', 'Service Resource'), ('ActiveCamp__Setup_Data__c', 'Setup Data'), ('ProfileSkill', 'Skill'), ('ProfileSkillUser', 'Skill User'), ('SocialPost', 'Social Post'), ('sansancard__SSCard__c', 'SSCard'), ('Task', 'Task'), ('sansancard__TransferMeta__c', 'Transfer Metadata'), ('pandadoc__TriggerSetting__c', 'Trigger Setting'), ('typeform__Typeform_Error__c', 'Typeform Error'), ('typeform__Form__c', 'Typeform Form'), ('typeform__Form_Mapping__c', 'Typeform Form Mapping'), ('User', 'User'), ('VoiceCall', 'Voice Call'), ('Waste_Type__c', 'Waste Type'), ('WebCartDocument', 'Web Cart Document'), ('WorkOrder', 'Work Order'), ('WorkOrderLineItem', 'Work Order Line Item'), ('WorkPlan', 'Work Plan'), ('WorkPlanTemplate', 'Work Plan Template'), ('WorkPlanTemplateEntry', 'Work Plan Template Entry'), ('WorkProcedure', 'Work Procedure'), ('WorkProcedureStep', 'Work Procedure Step'), ('WorkStep', 'Work Step'), ('WorkStepTemplate', 'Work Step Template')], blank=True, null=True)
     folder = models.ForeignKey(Folder, models.DO_NOTHING, db_column='FolderId', verbose_name='Folder ID', blank=True, null=True)
     folder_name = models.CharField(db_column='FolderName', max_length=256, sf_read_only=models.READ_ONLY, blank=True, null=True)
     class Meta(models.Model.Meta):
@@ -7920,6 +9136,7 @@ class MainProductCategory(models.Model):
     image = models.TextField(db_column='Image__c', blank=True, null=True)
     icon = models.TextField(db_column='Icon__c', blank=True, null=True)
     sort = models.DecimalField(db_column='Sort__c', max_digits=18, decimal_places=0, blank=True, null=True)
+    display_name = models.CharField(db_column='Display_Name__c', max_length=255, verbose_name='Display Name', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'Main_Product_Category__c'
         verbose_name = 'Main Product Category'
@@ -8036,43 +9253,6 @@ class MainProductType(models.Model):
 
 
 
-class MainProductVariationAddOnChoiceShare(models.Model):
-    parent = models.ForeignKey('MainProductVariationAddOnChoice', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
-    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
-    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='Manual', choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
-    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
-    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
-    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
-    class Meta(models.Model.Meta):
-        db_table = 'Main_Product_Variation_Add_On_Choice__Share'
-        verbose_name = 'Share: Main Product Variation Add On Choice'
-        verbose_name_plural = 'Share: Main Product Variation Add On Choice'
-        # keyPrefix = None
-
-
-
-class MainProductVariationAddOnChoice(models.Model):
-    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
-    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
-    name = models.CharField(db_column='Name', max_length=80, verbose_name='Main Product Variation Add On Name', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
-    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mainproductvariationaddonchoice_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
-    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
-    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mainproductvariationaddonchoice_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
-    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
-    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    main_product_variation = models.ForeignKey('MainProductVariation', models.DO_NOTHING, db_column='Main_Product_Variation__c', verbose_name='Main Product Variation', blank=True, null=True)
-    add_on_choice = models.ForeignKey(AddOnChoice, models.DO_NOTHING, db_column='Add_On_Choice__c', verbose_name='Add On Choice', blank=True, null=True)
-    class Meta(models.Model.Meta):
-        db_table = 'Main_Product_Variation_Add_On_Choice__c'
-        verbose_name = 'Main Product Variation Add On Choice'
-        verbose_name_plural = 'Main Product Variation Add On Choices'
-        # keyPrefix = 'a0n'
-
-
-
 class MainProductVariationShare(models.Model):
     parent = models.ForeignKey('MainProductVariation', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
@@ -8100,12 +9280,48 @@ class MainProductVariation(models.Model):
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    main_product = models.ForeignKey('MainProduct', models.DO_NOTHING, db_column='Main_Product__c', verbose_name='Main Product', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'Main_Product_Variation__c'
         verbose_name = 'Main Product Variation'
         verbose_name_plural = 'Main Product Variations'
-        # keyPrefix = 'a0i'
+        # keyPrefix = 'a0r'
+
+
+
+class MainProductWasteTypeShare(models.Model):
+    parent = models.ForeignKey('MainProductWasteType', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='Manual', choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'Main_Product_Waste_Type__Share'
+        verbose_name = 'Share: Main Product Waste Type'
+        verbose_name_plural = 'Share: Main Product Waste Type'
+        # keyPrefix = None
+
+
+
+class MainProductWasteType(models.Model):
+    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=80, verbose_name='Main Product Waste Type Name', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='mainproductwastetype_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mainproductwastetype_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    waste_type = models.ForeignKey('WasteType', models.DO_NOTHING, db_column='Waste_Type__c', verbose_name='Waste Type', blank=True, null=True)
+    main_product = models.ForeignKey('MainProduct', models.DO_NOTHING, db_column='Main_Product__c', verbose_name='Main Product', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Main_Product_Waste_Type__c'
+        verbose_name = 'Main Product Waste Type'
+        verbose_name_plural = 'Main Product Waste Types'
+        # keyPrefix = 'a10'
 
 
 
@@ -8142,9 +9358,11 @@ class MainProduct(models.Model):
     image_del = models.TextField(db_column='Image_del__c', verbose_name='Image', blank=True, null=True)
     product_category = models.ForeignKey(MainProductCategory, models.DO_NOTHING, db_column='Product_Category__c', verbose_name='Product Category', blank=True, null=True)
     sort = models.DecimalField(db_column='Sort__c', max_digits=18, decimal_places=0, blank=True, null=True)
-    included_tonnage = models.DecimalField(db_column='Included_Tonnage__c', max_digits=18, decimal_places=0, verbose_name='Included Tonnage', blank=True, null=True)
+    included_tonnage_quantity = models.DecimalField(db_column='Included_Tonnage_Quantity__c', max_digits=18, decimal_places=0, verbose_name='Included Tonnage Quantity', blank=True, null=True)
     price_per_additional_ton = models.DecimalField(db_column='Price_Per_Additional_Ton__c', max_digits=18, decimal_places=2, verbose_name='Price Per Additional Ton', blank=True, null=True)
-    max_tonnage = models.DecimalField(db_column='Max_Tonnage__c', max_digits=18, decimal_places=0, verbose_name='Max Tonnage', blank=True, null=True)
+    max_tonnage_quantity = models.DecimalField(db_column='Max_Tonnage_Quantity__c', max_digits=18, decimal_places=0, verbose_name='Max Tonnage Quantity', blank=True, null=True)
+    max_rate = models.DecimalField(db_column='Max_Rate__c', max_digits=18, decimal_places=0, verbose_name='Max Rate Quantity', blank=True, null=True)
+    included_rate_quantity = models.DecimalField(db_column='Included_Rate_Quantity__c', max_digits=18, decimal_places=0, verbose_name='Included Rate Quantity', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'Main_Product__c'
         verbose_name = 'Main Product'
@@ -8398,11 +9616,13 @@ class MutingPermissionSet(models.Model):
     permissions_send_sit_requests = models.BooleanField(db_column='PermissionsSendSitRequests', verbose_name='Send Stay-in-Touch Requests')
     permissions_override_forecasts = models.BooleanField(db_column='PermissionsOverrideForecasts', verbose_name='Override Forecasts')
     permissions_view_all_forecasts = models.BooleanField(db_column='PermissionsViewAllForecasts', verbose_name='View All Forecasts')
+    permissions_api_user_only = models.BooleanField(db_column='PermissionsApiUserOnly', verbose_name='Api Only User')
     permissions_manage_remote_access = models.BooleanField(db_column='PermissionsManageRemoteAccess', verbose_name='Manage Connected Apps')
     permissions_can_use_new_dashboard_builder = models.BooleanField(db_column='PermissionsCanUseNewDashboardBuilder', verbose_name='Drag-and-Drop Dashboard Builder')
     permissions_manage_categories = models.BooleanField(db_column='PermissionsManageCategories', verbose_name='Manage Categories')
     permissions_convert_leads = models.BooleanField(db_column='PermissionsConvertLeads', verbose_name='Convert Leads')
     permissions_password_never_expires = models.BooleanField(db_column='PermissionsPasswordNeverExpires', verbose_name='Password Never Expires')
+    permissions_use_team_reassign_wizards = models.BooleanField(db_column='PermissionsUseTeamReassignWizards', verbose_name='Use Team Reassignment Wizards')
     permissions_edit_activated_orders = models.BooleanField(db_column='PermissionsEditActivatedOrders', verbose_name='Edit Activated Orders')
     permissions_install_packaging = models.BooleanField(db_column='PermissionsInstallPackaging', verbose_name='Download AppExchange Packages')
     permissions_publish_packaging = models.BooleanField(db_column='PermissionsPublishPackaging', verbose_name='Upload AppExchange Packages')
@@ -8420,6 +9640,9 @@ class MutingPermissionSet(models.Model):
     permissions_enable_notifications = models.BooleanField(db_column='PermissionsEnableNotifications', verbose_name='Send Outbound Messages')
     permissions_manage_data_integrations = models.BooleanField(db_column='PermissionsManageDataIntegrations', verbose_name='Manage Data Integrations')
     permissions_distribute_from_pers_wksp = models.BooleanField(db_column='PermissionsDistributeFromPersWksp', verbose_name='Create Content Deliveries')
+    permissions_view_data_categories = models.BooleanField(db_column='PermissionsViewDataCategories', verbose_name='View Data Categories in Setup')
+    permissions_manage_data_categories = models.BooleanField(db_column='PermissionsManageDataCategories', verbose_name='Manage Data Categories')
+    permissions_author_apex = models.BooleanField(db_column='PermissionsAuthorApex', verbose_name='Author Apex')
     permissions_manage_mobile = models.BooleanField(db_column='PermissionsManageMobile', verbose_name='Manage Mobile Configurations')
     permissions_api_enabled = models.BooleanField(db_column='PermissionsApiEnabled', verbose_name='API Enabled')
     permissions_manage_custom_report_types = models.BooleanField(db_column='PermissionsManageCustomReportTypes', verbose_name='Manage Custom Report Types')
@@ -8430,11 +9653,13 @@ class MutingPermissionSet(models.Model):
     permissions_manage_content_permissions = models.BooleanField(db_column='PermissionsManageContentPermissions', verbose_name='Manage Content Permissions')
     permissions_manage_content_properties = models.BooleanField(db_column='PermissionsManageContentProperties', verbose_name='Manage Content Properties')
     permissions_manage_content_types = models.BooleanField(db_column='PermissionsManageContentTypes', verbose_name='Manage record types and layouts for Files')
+    permissions_schedule_job = models.BooleanField(db_column='PermissionsScheduleJob', verbose_name='Schedule Dashboards')
     permissions_manage_exchange_config = models.BooleanField(db_column='PermissionsManageExchangeConfig', verbose_name='Manage Lightning Sync')
     permissions_manage_analytic_snapshots = models.BooleanField(db_column='PermissionsManageAnalyticSnapshots', verbose_name='Manage Reporting Snapshots')
     permissions_schedule_reports = models.BooleanField(db_column='PermissionsScheduleReports', verbose_name='Schedule Reports')
     permissions_manage_business_hour_holidays = models.BooleanField(db_column='PermissionsManageBusinessHourHolidays', verbose_name='Manage Business Hours Holidays')
     permissions_manage_entitlements = models.BooleanField(db_column='PermissionsManageEntitlements', verbose_name='Manage Entitlements')
+    permissions_manage_dynamic_dashboards = models.BooleanField(db_column='PermissionsManageDynamicDashboards', verbose_name='Manage Dynamic Dashboards')
     permissions_custom_sidebar_on_all_pages = models.BooleanField(db_column='PermissionsCustomSidebarOnAllPages', verbose_name='Show Custom Sidebar On All Pages')
     permissions_manage_interaction = models.BooleanField(db_column='PermissionsManageInteraction', verbose_name='Manage Flow')
     permissions_view_my_teams_dashboards = models.BooleanField(db_column='PermissionsViewMyTeamsDashboards', verbose_name="View My Team's Dashboards")
@@ -8449,6 +9674,8 @@ class MutingPermissionSet(models.Model):
     permissions_allow_email_ic = models.BooleanField(db_column='PermissionsAllowEmailIC', verbose_name='Email-Based Identity Verification Option')
     permissions_chatter_file_link = models.BooleanField(db_column='PermissionsChatterFileLink', verbose_name='Create Public Links')
     permissions_force_two_factor = models.BooleanField(db_column='PermissionsForceTwoFactor', verbose_name='Multi-Factor Authentication for User Interface Logins')
+    permissions_view_event_log_files = models.BooleanField(db_column='PermissionsViewEventLogFiles', verbose_name='View Event Log Files')
+    permissions_manage_networks = models.BooleanField(db_column='PermissionsManageNetworks', verbose_name='Create and Set Up Experiences')
     permissions_view_case_interaction = models.BooleanField(db_column='PermissionsViewCaseInteraction', verbose_name='Use Case Feed')
     permissions_manage_auth_providers = models.BooleanField(db_column='PermissionsManageAuthProviders', verbose_name='Manage Auth. Providers')
     permissions_run_flow = models.BooleanField(db_column='PermissionsRunFlow', verbose_name='Run Flows')
@@ -8468,6 +9695,7 @@ class MutingPermissionSet(models.Model):
     permissions_connect_org_to_environment_hub = models.BooleanField(db_column='PermissionsConnectOrgToEnvironmentHub', verbose_name='Connect Organization to Environment Hub')
     permissions_create_customize_filters = models.BooleanField(db_column='PermissionsCreateCustomizeFilters', verbose_name='Create and Customize List Views')
     permissions_content_hub_user = models.BooleanField(db_column='PermissionsContentHubUser', verbose_name='Files Connect Cloud')
+    permissions_govern_networks = models.BooleanField(db_column='PermissionsGovernNetworks', verbose_name='Manage Experiences')
     permissions_sales_console = models.BooleanField(db_column='PermissionsSalesConsole', verbose_name='Sales Console')
     permissions_two_factor_api = models.BooleanField(db_column='PermissionsTwoFactorApi', verbose_name='Multi-Factor Authentication for API Logins')
     permissions_delete_topics = models.BooleanField(db_column='PermissionsDeleteTopics', verbose_name='Delete Topics')
@@ -8488,6 +9716,7 @@ class MutingPermissionSet(models.Model):
     permissions_manage_internal_users = models.BooleanField(db_column='PermissionsManageInternalUsers', verbose_name='Manage Internal Users')
     permissions_manage_password_policies = models.BooleanField(db_column='PermissionsManagePasswordPolicies', verbose_name='Manage Password Policies')
     permissions_manage_login_access_policies = models.BooleanField(db_column='PermissionsManageLoginAccessPolicies', verbose_name='Manage Login Access Policies')
+    permissions_manage_custom_permissions = models.BooleanField(db_column='PermissionsManageCustomPermissions', verbose_name='Manage Custom Permissions')
     permissions_can_verify_comment = models.BooleanField(db_column='PermissionsCanVerifyComment', verbose_name='Verify Answers to Chatter Questions')
     permissions_manage_unlisted_groups = models.BooleanField(db_column='PermissionsManageUnlistedGroups', verbose_name='Manage Unlisted Groups')
     permissions_std_automatic_activity_capture = models.BooleanField(db_column='PermissionsStdAutomaticActivityCapture', verbose_name='Use Einstein Activity Capture Standard')
@@ -8516,6 +9745,7 @@ class MutingPermissionSet(models.Model):
     permissions_delegated_two_factor = models.BooleanField(db_column='PermissionsDelegatedTwoFactor', verbose_name='Manage Multi-Factor Authentication in User Interface')
     permissions_chatter_compose_ui_codesnippet = models.BooleanField(db_column='PermissionsChatterComposeUiCodesnippet', verbose_name='Allow Inclusion of Code Snippets from UI')
     permissions_select_files_from_salesforce = models.BooleanField(db_column='PermissionsSelectFilesFromSalesforce', verbose_name='Select Files from Salesforce')
+    permissions_moderate_network_users = models.BooleanField(db_column='PermissionsModerateNetworkUsers', verbose_name='Moderate Experience Cloud Site Users')
     permissions_voice_outbound = models.BooleanField(db_column='PermissionsVoiceOutbound', verbose_name='Access Dialer Outbound Calls')
     permissions_voice_inbound = models.BooleanField(db_column='PermissionsVoiceInbound', verbose_name='Access Dialer Inbound Calls')
     permissions_voice_minutes = models.BooleanField(db_column='PermissionsVoiceMinutes', verbose_name='Access Dialer Minutes')
@@ -8533,6 +9763,7 @@ class MutingPermissionSet(models.Model):
     permissions_allow_view_edit_converted_leads = models.BooleanField(db_column='PermissionsAllowViewEditConvertedLeads', verbose_name='View and Edit Converted Leads')
     permissions_social_insights_logo_admin = models.BooleanField(db_column='PermissionsSocialInsightsLogoAdmin', verbose_name='Remove Logos from Accounts')
     permissions_show_company_name_as_user_badge = models.BooleanField(db_column='PermissionsShowCompanyNameAsUserBadge', verbose_name='Show Company Name as Site Role')
+    permissions_access_cmc = models.BooleanField(db_column='PermissionsAccessCMC', verbose_name='Access Experience Management')
     permissions_view_health_check = models.BooleanField(db_column='PermissionsViewHealthCheck', verbose_name='View Health Check')
     permissions_manage_health_check = models.BooleanField(db_column='PermissionsManageHealthCheck', verbose_name='Manage Health Check')
     permissions_packaging2 = models.BooleanField(db_column='PermissionsPackaging2', verbose_name='Create and Update Second-Generation Packages')
@@ -8571,6 +9802,7 @@ class MutingPermissionSet(models.Model):
     permissions_wave_manage_private_assets_user = models.BooleanField(db_column='PermissionsWaveManagePrivateAssetsUser', verbose_name='Manage CRM Analytics Private Assets')
     permissions_can_edit_data_prep_recipe = models.BooleanField(db_column='PermissionsCanEditDataPrepRecipe', verbose_name='Edit Dataset Recipes')
     permissions_add_analytics_remote_connections = models.BooleanField(db_column='PermissionsAddAnalyticsRemoteConnections', verbose_name='Add CRM Analytics Remote Connections')
+    permissions_manage_surveys = models.BooleanField(db_column='PermissionsManageSurveys', verbose_name='Manage Surveys')
     permissions_use_assistant_dialog = models.BooleanField(db_column='PermissionsUseAssistantDialog', verbose_name='Instant Actionable Results')
     permissions_use_query_suggestions = models.BooleanField(db_column='PermissionsUseQuerySuggestions', verbose_name='Natural Language Search')
     permissions_view_roles = models.BooleanField(db_column='PermissionsViewRoles', verbose_name='View Roles and Role Hierarchy')
@@ -8601,14 +9833,20 @@ class MutingPermissionSet(models.Model):
     permissions_learning_manager = models.BooleanField(db_column='PermissionsLearningManager', verbose_name='Manage Learning')
     permissions_send_custom_notifications = models.BooleanField(db_column='PermissionsSendCustomNotifications', verbose_name='Send Custom Notifications')
     permissions_packaging2_delete = models.BooleanField(db_column='PermissionsPackaging2Delete', verbose_name='Delete Second-Generation Packages')
+    permissions_manage_trust_measures = models.BooleanField(db_column='PermissionsManageTrustMeasures', verbose_name='Manage Trust Measures')
+    permissions_view_trust_measures = models.BooleanField(db_column='PermissionsViewTrustMeasures', verbose_name='View Trust Measures')
     permissions_manage_learning_reporting = models.BooleanField(db_column='PermissionsManageLearningReporting', verbose_name='Manage Learning Reporting')
     permissions_isotope_cto_cuser = models.BooleanField(db_column='PermissionsIsotopeCToCUser', verbose_name='Salesforce Anywhere Integration Access')
+    permissions_has_unlimited_erb_scoring_requests = models.BooleanField(db_column='PermissionsHasUnlimitedErbScoringRequests', verbose_name='User Has Unlimited Erb Model Scoring')
     permissions_isotope_access = models.BooleanField(db_column='PermissionsIsotopeAccess', verbose_name='Salesforce Anywhere on Mobile')
     permissions_isotope_lex = models.BooleanField(db_column='PermissionsIsotopeLEX', verbose_name='Salesforce Anywhere in Lightning Experience')
     permissions_quip_metrics_access = models.BooleanField(db_column='PermissionsQuipMetricsAccess', verbose_name='Quip Metrics')
     permissions_quip_user_engagement_metrics = models.BooleanField(db_column='PermissionsQuipUserEngagementMetrics', verbose_name='Quip User Engagement Metrics')
     permissions_manage_external_connections = models.BooleanField(db_column='PermissionsManageExternalConnections', verbose_name='Allow user to modify Private Connections')
     permissions_use_subscription_emails = models.BooleanField(db_column='PermissionsUseSubscriptionEmails', verbose_name='Subscribe to CRM Analytics Assets')
+    permissions_aiview_insight_objects = models.BooleanField(db_column='PermissionsAIViewInsightObjects', verbose_name='View AI Insight Objects')
+    permissions_aicreate_insight_objects = models.BooleanField(db_column='PermissionsAICreateInsightObjects', verbose_name='Create AI Insight Objects')
+    permissions_view_mlmodels = models.BooleanField(db_column='PermissionsViewMLModels', verbose_name='Allow users to view MLModels and related Entities')
     permissions_native_webview_scrolling = models.BooleanField(db_column='PermissionsNativeWebviewScrolling', verbose_name='Salesforce Mobile App: Native scrolling on webviews')
     permissions_view_developer_name = models.BooleanField(db_column='PermissionsViewDeveloperName', verbose_name='View DeveloperName')
     permissions_bypass_mfafor_ui_logins = models.BooleanField(db_column='PermissionsBypassMFAForUiLogins', verbose_name='Waive Multi-Factor Authentication for Exempt Users')
@@ -8634,6 +9872,7 @@ class MyDomainDiscoverableLogin(models.Model):
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='mydomaindiscoverablelogin_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    apex_handler = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='ApexHandlerId', verbose_name='Class ID')
     execute_apex_handler_as = models.ForeignKey('User', models.DO_NOTHING, db_column='ExecuteApexHandlerAsId', related_name='mydomaindiscoverablelogin_executeapexhandleras_set', verbose_name='User ID', blank=True, null=True)
     username_label = models.CharField(db_column='UsernameLabel', max_length=255, verbose_name='Login Prompt', blank=True, null=True)
     class Meta(models.Model.Meta):
@@ -8704,7 +9943,7 @@ class NamedCredential(models.Model):
 
 class Note(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
-    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, ChangeRequest, Contact, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product2, Product_Category_Info__c, Quote, Reviews__c, ServiceContract, ServiceResource, SocialPost, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, ChangeRequest, Contact, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Disposal_Fee__c, Entitlement, Image, Incident, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, SocialPost, Waste_Type__c, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     title = models.CharField(db_column='Title', max_length=80)
     is_private = models.BooleanField(db_column='IsPrivate', verbose_name='Private', default=False)
     body = models.TextField(db_column='Body', blank=True, null=True)
@@ -8725,7 +9964,7 @@ class Note(models.Model):
 class NoteAndAttachment(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     is_note = models.BooleanField(db_column='IsNote', sf_read_only=models.READ_ONLY, default=False)
-    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, ChangeRequest, Contact, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product2, Product_Category_Info__c, Quote, Reviews__c, ServiceContract, ServiceResource, SocialPost, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    parent = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, ChangeRequest, Contact, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Disposal_Fee__c, Entitlement, Image, Incident, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, SocialPost, Waste_Type__c, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     title = models.CharField(db_column='Title', max_length=80, sf_read_only=models.READ_ONLY, blank=True, null=True)
     is_private = models.BooleanField(db_column='IsPrivate', verbose_name='Private', sf_read_only=models.READ_ONLY, default=False)
     owner = models.ForeignKey('User', models.DO_NOTHING, db_column='OwnerId', related_name='noteandattachment_owner_set', verbose_name='Owner ID', sf_read_only=models.READ_ONLY)
@@ -8966,7 +10205,7 @@ class OnboardingMetrics(models.Model):
 class OpenActivity(models.Model):
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', related_name='openactivity_account_set', verbose_name='Account ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
     who = models.ForeignKey(Contact, models.DO_NOTHING, db_column='WhoId', related_name='openactivity_who_set', verbose_name='Name ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Contact, Lead] Master Detail Relationship *
-    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='openactivity_what_set', verbose_name='Related To ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
+    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='openactivity_what_set', verbose_name='Related To ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Location, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
     subject = models.CharField(db_column='Subject', max_length=80, sf_read_only=models.READ_ONLY, choices=[('Call', 'Call'), ('Send Letter', 'Send Letter of Authorization'), ('Send Quote', 'Send Quote'), ('Other', 'Other')], blank=True, null=True)
     is_task = models.BooleanField(db_column='IsTask', verbose_name='Task', sf_read_only=models.READ_ONLY, default=False)
     activity_date = models.DateField(db_column='ActivityDate', verbose_name='Date', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -9323,8 +10562,10 @@ class Order(models.Model):
     contract = models.ForeignKey(Contract, models.DO_NOTHING, db_column='ContractId', verbose_name='Contract ID', blank=True, null=True)  # Master Detail Relationship *
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', related_name='order_account_set', verbose_name='Account ID', blank=True, null=True)  # Master Detail Relationship *
     pricebook2 = models.ForeignKey('Pricebook2', models.DO_NOTHING, db_column='Pricebook2Id', verbose_name='Price Book ID', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    original_order = models.ForeignKey('self', models.DO_NOTHING, db_column='OriginalOrderId', verbose_name='Order ID', sf_read_only=models.NOT_UPDATEABLE, default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
     effective_date = models.DateField(db_column='EffectiveDate', verbose_name='Order Start Date')
     end_date = models.DateField(db_column='EndDate', verbose_name='Order End Date', blank=True, null=True)
+    is_reduction_order = models.BooleanField(db_column='IsReductionOrder', verbose_name='Reduction Order', sf_read_only=models.NOT_UPDATEABLE, default=False)
     status = models.CharField(db_column='Status', max_length=100, choices=[('Scheduled', 'Scheduled'), ('Pending_Acceptance', 'Pending Acceptance'), ('Declined', 'Declined'), ('Accepted', 'Accepted'), ('On the way', 'On the way'), ('Arrived', 'Arrived'), ('Price Changed', 'Price Changed'), ('Price Approved', 'Price Approved'), ('Complete', 'Complete'), ('Invoiced', 'Invoiced'), ('Paid_To_Hauler', 'Paid To Hauler'), ('Paid_By_Customer', 'Paid By Customer')])
     description = models.TextField(db_column='Description', blank=True, null=True)
     customer_authorized_by = models.ForeignKey(Contact, models.DO_NOTHING, db_column='CustomerAuthorizedById', verbose_name='Customer Authorized By ID', blank=True, null=True)
@@ -9429,6 +10670,8 @@ class OrderItem(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     order = models.ForeignKey(Order, models.DO_NOTHING, db_column='OrderId', verbose_name='Order ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     pricebook_entry = models.ForeignKey('PricebookEntry', models.DO_NOTHING, db_column='PricebookEntryId', verbose_name='Price Book Entry ID', sf_read_only=models.NOT_UPDATEABLE)
+    original_order_item = models.ForeignKey('self', models.DO_NOTHING, db_column='OriginalOrderItemId', verbose_name='Original Order Item ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
+    available_quantity = models.DecimalField(db_column='AvailableQuantity', max_digits=18, decimal_places=2, sf_read_only=models.READ_ONLY, blank=True, null=True)
     quantity = models.DecimalField(db_column='Quantity', max_digits=18, decimal_places=2)
     unit_price = models.DecimalField(db_column='UnitPrice', max_digits=18, decimal_places=2, blank=True, null=True)
     list_price = models.DecimalField(db_column='ListPrice', max_digits=18, decimal_places=2, sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
@@ -9494,6 +10737,22 @@ class OrderItemHistory(models.Model):
         verbose_name = 'Order Product History'
         verbose_name_plural = 'Order Product History'
         # keyPrefix = None
+
+
+
+class OrderShare(models.Model):
+    order = models.ForeignKey(Order, models.DO_NOTHING, db_column='OrderId', verbose_name='Order ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Group, User] Master Detail Relationship *
+    order_access_level = models.CharField(db_column='OrderAccessLevel', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, verbose_name='Apex Sharing Reason ID', sf_read_only=models.READ_ONLY, choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'OrderShare'
+        verbose_name = 'Order Share'
+        verbose_name_plural = 'Order Share'
+        # keyPrefix = '0Fy'
 
 
 
@@ -9650,6 +10909,8 @@ class Organization(models.Model):
     instance_name = models.CharField(db_column='InstanceName', max_length=5, sf_read_only=models.READ_ONLY, blank=True, null=True)
     is_sandbox = models.BooleanField(db_column='IsSandbox', sf_read_only=models.READ_ONLY, default=False)
     web_to_case_default_origin = models.CharField(db_column='WebToCaseDefaultOrigin', max_length=40, verbose_name='Web to Cases Default Origin', sf_read_only=models.NOT_CREATEABLE, blank=True, null=True)
+    monthly_page_views_used = models.IntegerField(db_column='MonthlyPageViewsUsed', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    monthly_page_views_entitlement = models.IntegerField(db_column='MonthlyPageViewsEntitlement', verbose_name='Monthly Page Views Allowed', sf_read_only=models.READ_ONLY, blank=True, null=True)
     is_read_only = models.BooleanField(db_column='IsReadOnly', sf_read_only=models.READ_ONLY, default=False)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='organization_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
@@ -9692,7 +10953,7 @@ class OutgoingEmail(models.Model):
     subject = models.CharField(db_column='Subject', max_length=3000, sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
     text_body = models.TextField(db_column='TextBody', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
     html_body = models.TextField(db_column='HtmlBody', verbose_name='HTML Body', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
-    related_to = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedToId', verbose_name='Related To ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c]
+    related_to = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelatedToId', verbose_name='Related To ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, Location, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c]
     who = models.ForeignKey(Contact, models.DO_NOTHING, db_column='WhoId', verbose_name='Name ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)  # Reference to tables [Contact, Lead]
     email_template = models.ForeignKey(EmailTemplate, models.DO_NOTHING, db_column='EmailTemplateId', verbose_name='Email Template ID', sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
     in_reply_to = models.CharField(db_column='InReplyTo', max_length=4000, sf_read_only=models.NOT_UPDATEABLE, blank=True, null=True)
@@ -9825,7 +11086,7 @@ class PendingServiceRouting(models.Model):
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='pendingservicerouting_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
-    work_item = models.OneToOneField(Account, models.DO_NOTHING, db_column='WorkItemId', verbose_name='WorkItem ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Contact, ContactRequest, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Product_Category_Info__c, Reviews__c, SocialPost, VoiceCall, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    work_item = models.OneToOneField(Account, models.DO_NOTHING, db_column='WorkItemId', verbose_name='WorkItem ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Contact, ContactRequest, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, SocialPost, VoiceCall, Waste_Type__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     queue = models.ForeignKey(Group, models.DO_NOTHING, db_column='QueueId', related_name='pendingservicerouting_queue_set', verbose_name='Queue ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
     is_push_attempted = models.BooleanField(db_column='IsPushAttempted', sf_read_only=models.READ_ONLY)
     service_channel = models.ForeignKey('ServiceChannel', models.DO_NOTHING, db_column='ServiceChannelId', verbose_name='Service Channel ID', sf_read_only=models.NOT_UPDATEABLE)
@@ -9863,8 +11124,8 @@ class PendingServiceRoutingInteractionInfo(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='pendingserviceroutinginteractioninfo_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     pending_service_routing = models.ForeignKey(PendingServiceRouting, models.DO_NOTHING, db_column='PendingServiceRoutingId', verbose_name='Pending Service Routing ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
-    target_object = models.ForeignKey(Account, models.DO_NOTHING, db_column='TargetObjectId', related_name='pendingserviceroutinginteractioninfo_targetobject_set', verbose_name='Target Object ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, AccountContactRole, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWork, AgentWorkSkill, Announcement, AppAnalyticsQueryRequest, Asset, AssetRelationship, BackgroundOperation, BriefcaseAssignment, CalendarView, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, CollaborationGroupRecord, ConferenceNumber, Contact, ContactRequest, ContentDistribution, ContentDocument, ContentFolder, ContentVersion, Contract, ContractLineItem, Dashboard, DataAssessmentFieldMetric, DataAssessmentMetric, DataAssessmentValueMetric, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, DialerCallUsage, Document, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, EnhancedLetterhead, Entitlement, EntityMilestone, ExpressionFilter, ExpressionFilterCriteria, ExternalEvent, ExternalEventMapping, FileSearchActivity, FlowInterview, FlowInterviewLog, FlowInterviewLogEntry, FlowRecordRelation, FlowStageRelation, FlowTestResult, ForecastingOwnerAdjustment, Idea, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, InstalledMobileApp, Lead, ListEmail, ListEmailIndividualRecipient, ListEmailRecipientSource, Location_Zone__c, Macro, MacroInstruction, MacroUsage, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, ManagedContent, ManagedContentChannel, ManagedContentSpace, ManagedContentVariant, MatchingInformation, Opportunity, Order, OrderItem, OrgMetric, OrgMetricScanResult, OrgMetricScanSummary, OutOfOffice, PendingServiceRouting, PendingServiceRoutingInteractionInfo, Postal_Code__c, Pricebook2, Problem, ProblemIncident, ProblemRelatedItem, ProcessException, Product2, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, PromptAction, PromptError, QuickText, QuickTextUsage, Quote, QuoteLineItem, Recommendation, RecommendationResponse, RecordAction, Report, Reviews__c, Scorecard, ScorecardAssociation, ScorecardMetric, ServiceContract, ServiceResource, ServiceResourceSkill, ServiceSetupProvisioning, SetupAssistantStep, SkillRequirement, SocialPersona, SocialPost, Solution, StreamingChannel, TodayGoal, Topic, User, UserAppInfo, UserAppMenuCustomization, UserEmailPreferredPerson, UserProvAccount, UserProvAccountStaging, UserProvMockTarget, UserProvisioningLog, UserProvisioningRequest, UserServicePresence, VoiceCall, VoiceCallList, VoiceCallListItem, VoiceCallQualityFeedback, VoiceCallRecording, VoiceCoaching, VoiceMailContent, VoiceMailGreeting, VoiceMailMessage, VoiceVendorLine, WaveAutoInstallRequest, WaveCompatibilityCheckItem, WorkAccess, WorkBadge, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, WorkThanks, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
-    primary_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='PrimaryRecordId', related_name='pendingserviceroutinginteractioninfo_primaryrecord_set', verbose_name='Primary Record ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Contact, ContactRequest, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Product_Category_Info__c, Reviews__c, SocialPost, VoiceCall, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    target_object = models.ForeignKey(AiinsightAction, models.DO_NOTHING, db_column='TargetObjectId', verbose_name='Target Object ID', sf_read_only=models.READ_ONLY)  # Reference to tables [AIInsightAction, AIInsightFeedback, AIInsightReason, AIInsightValue, AIRecordInsight, Account, AccountContactRole, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWork, AgentWorkSkill, Announcement, AppAnalyticsQueryRequest, Asset, AssetRelationship, AssociatedLocation, BackgroundOperation, BriefcaseAssignment, CalendarView, Campaign, Case, CaseRelatedIssue, ChangeRequest, ChangeRequestRelatedIssue, ChangeRequestRelatedItem, CollaborationGroup, CollaborationGroupRecord, ConferenceNumber, Contact, ContactRequest, ContentDistribution, ContentDocument, ContentFolder, ContentVersion, Contract, ContractLineItem, Dashboard, DataAssessmentFieldMetric, DataAssessmentMetric, DataAssessmentValueMetric, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, DialerCallUsage, Disposal_Fee__c, Document, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, EnhancedLetterhead, Entitlement, EntityMilestone, EventRelayFeedback, ExpressionFilter, ExpressionFilterCriteria, ExternalEvent, ExternalEventMapping, FileSearchActivity, FlowInterview, FlowInterviewLog, FlowInterviewLogEntry, FlowOrchestrationInstance, FlowOrchestrationStageInstance, FlowOrchestrationStepInstance, FlowOrchestrationWorkItem, FlowRecordRelation, FlowStageRelation, FlowTestResult, ForecastingOwnerAdjustment, Idea, Image, In_App_Checklist_Settings__c, Incident, IncidentRelatedItem, InstalledMobileApp, Lead, ListEmail, ListEmailIndividualRecipient, ListEmailRecipientSource, Location, LocationTrustMeasure, Location_Zone__c, MLModel, MLModelFactor, MLModelFactorComponent, MLModelMetric, Macro, MacroInstruction, MacroUsage, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, ManagedContent, ManagedContentChannel, ManagedContentSpace, ManagedContentVariant, MatchingInformation, Opportunity, Order, OrderItem, OrgMetric, OrgMetricScanResult, OrgMetricScanSummary, OutOfOffice, PendingServiceRouting, PendingServiceRoutingInteractionInfo, Postal_Code__c, Pricebook2, Problem, ProblemIncident, ProblemRelatedItem, ProcessException, ProcessInstanceNode, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, PromptAction, PromptError, QuickText, QuickTextUsage, Quote, QuoteLineItem, Recommendation, RecommendationResponse, RecordAction, Report, Reviews__c, Scorecard, ScorecardAssociation, ScorecardMetric, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, ServiceSetupProvisioning, SetupAssistantStep, SkillRequirement, SocialPersona, SocialPost, Solution, StreamingChannel, TodayGoal, Topic, User, UserAppInfo, UserAppMenuCustomization, UserEmailPreferredPerson, UserProvAccount, UserProvAccountStaging, UserProvMockTarget, UserProvisioningLog, UserProvisioningRequest, UserServicePresence, VoiceCall, VoiceCallList, VoiceCallListItem, VoiceCallQualityFeedback, VoiceCallRecording, VoiceCoaching, VoiceMailContent, VoiceMailGreeting, VoiceMailMessage, VoiceVendorLine, Waste_Type__c, WaveAutoInstallRequest, WaveCompatibilityCheckItem, WorkAccess, WorkBadge, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, WorkThanks, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    primary_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='PrimaryRecordId', verbose_name='Primary Record ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Case, Contact, ContactRequest, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, SocialPost, VoiceCall, Waste_Type__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     is_focused = models.BooleanField(db_column='IsFocused', sf_read_only=models.READ_ONLY)
     class Meta(models.Model.Meta):
         db_table = 'PendingServiceRoutingInteractionInfo'
@@ -9953,11 +11214,13 @@ class PermissionSet(models.Model):
     permissions_send_sit_requests = models.BooleanField(db_column='PermissionsSendSitRequests', verbose_name='Send Stay-in-Touch Requests')
     permissions_override_forecasts = models.BooleanField(db_column='PermissionsOverrideForecasts', verbose_name='Override Forecasts')
     permissions_view_all_forecasts = models.BooleanField(db_column='PermissionsViewAllForecasts', verbose_name='View All Forecasts')
+    permissions_api_user_only = models.BooleanField(db_column='PermissionsApiUserOnly', verbose_name='Api Only User')
     permissions_manage_remote_access = models.BooleanField(db_column='PermissionsManageRemoteAccess', verbose_name='Manage Connected Apps')
     permissions_can_use_new_dashboard_builder = models.BooleanField(db_column='PermissionsCanUseNewDashboardBuilder', verbose_name='Drag-and-Drop Dashboard Builder')
     permissions_manage_categories = models.BooleanField(db_column='PermissionsManageCategories', verbose_name='Manage Categories')
     permissions_convert_leads = models.BooleanField(db_column='PermissionsConvertLeads', verbose_name='Convert Leads')
     permissions_password_never_expires = models.BooleanField(db_column='PermissionsPasswordNeverExpires', verbose_name='Password Never Expires')
+    permissions_use_team_reassign_wizards = models.BooleanField(db_column='PermissionsUseTeamReassignWizards', verbose_name='Use Team Reassignment Wizards')
     permissions_edit_activated_orders = models.BooleanField(db_column='PermissionsEditActivatedOrders', verbose_name='Edit Activated Orders')
     permissions_install_packaging = models.BooleanField(db_column='PermissionsInstallPackaging', verbose_name='Download AppExchange Packages')
     permissions_publish_packaging = models.BooleanField(db_column='PermissionsPublishPackaging', verbose_name='Upload AppExchange Packages')
@@ -9975,6 +11238,9 @@ class PermissionSet(models.Model):
     permissions_enable_notifications = models.BooleanField(db_column='PermissionsEnableNotifications', verbose_name='Send Outbound Messages')
     permissions_manage_data_integrations = models.BooleanField(db_column='PermissionsManageDataIntegrations', verbose_name='Manage Data Integrations')
     permissions_distribute_from_pers_wksp = models.BooleanField(db_column='PermissionsDistributeFromPersWksp', verbose_name='Create Content Deliveries')
+    permissions_view_data_categories = models.BooleanField(db_column='PermissionsViewDataCategories', verbose_name='View Data Categories in Setup')
+    permissions_manage_data_categories = models.BooleanField(db_column='PermissionsManageDataCategories', verbose_name='Manage Data Categories')
+    permissions_author_apex = models.BooleanField(db_column='PermissionsAuthorApex', verbose_name='Author Apex')
     permissions_manage_mobile = models.BooleanField(db_column='PermissionsManageMobile', verbose_name='Manage Mobile Configurations')
     permissions_api_enabled = models.BooleanField(db_column='PermissionsApiEnabled', verbose_name='API Enabled')
     permissions_manage_custom_report_types = models.BooleanField(db_column='PermissionsManageCustomReportTypes', verbose_name='Manage Custom Report Types')
@@ -9985,11 +11251,13 @@ class PermissionSet(models.Model):
     permissions_manage_content_permissions = models.BooleanField(db_column='PermissionsManageContentPermissions', verbose_name='Manage Content Permissions')
     permissions_manage_content_properties = models.BooleanField(db_column='PermissionsManageContentProperties', verbose_name='Manage Content Properties')
     permissions_manage_content_types = models.BooleanField(db_column='PermissionsManageContentTypes', verbose_name='Manage record types and layouts for Files')
+    permissions_schedule_job = models.BooleanField(db_column='PermissionsScheduleJob', verbose_name='Schedule Dashboards')
     permissions_manage_exchange_config = models.BooleanField(db_column='PermissionsManageExchangeConfig', verbose_name='Manage Lightning Sync')
     permissions_manage_analytic_snapshots = models.BooleanField(db_column='PermissionsManageAnalyticSnapshots', verbose_name='Manage Reporting Snapshots')
     permissions_schedule_reports = models.BooleanField(db_column='PermissionsScheduleReports', verbose_name='Schedule Reports')
     permissions_manage_business_hour_holidays = models.BooleanField(db_column='PermissionsManageBusinessHourHolidays', verbose_name='Manage Business Hours Holidays')
     permissions_manage_entitlements = models.BooleanField(db_column='PermissionsManageEntitlements', verbose_name='Manage Entitlements')
+    permissions_manage_dynamic_dashboards = models.BooleanField(db_column='PermissionsManageDynamicDashboards', verbose_name='Manage Dynamic Dashboards')
     permissions_custom_sidebar_on_all_pages = models.BooleanField(db_column='PermissionsCustomSidebarOnAllPages', verbose_name='Show Custom Sidebar On All Pages')
     permissions_manage_interaction = models.BooleanField(db_column='PermissionsManageInteraction', verbose_name='Manage Flow')
     permissions_view_my_teams_dashboards = models.BooleanField(db_column='PermissionsViewMyTeamsDashboards', verbose_name="View My Team's Dashboards")
@@ -10004,6 +11272,8 @@ class PermissionSet(models.Model):
     permissions_allow_email_ic = models.BooleanField(db_column='PermissionsAllowEmailIC', verbose_name='Email-Based Identity Verification Option')
     permissions_chatter_file_link = models.BooleanField(db_column='PermissionsChatterFileLink', verbose_name='Create Public Links')
     permissions_force_two_factor = models.BooleanField(db_column='PermissionsForceTwoFactor', verbose_name='Multi-Factor Authentication for User Interface Logins')
+    permissions_view_event_log_files = models.BooleanField(db_column='PermissionsViewEventLogFiles', verbose_name='View Event Log Files')
+    permissions_manage_networks = models.BooleanField(db_column='PermissionsManageNetworks', verbose_name='Create and Set Up Experiences')
     permissions_view_case_interaction = models.BooleanField(db_column='PermissionsViewCaseInteraction', verbose_name='Use Case Feed')
     permissions_manage_auth_providers = models.BooleanField(db_column='PermissionsManageAuthProviders', verbose_name='Manage Auth. Providers')
     permissions_run_flow = models.BooleanField(db_column='PermissionsRunFlow', verbose_name='Run Flows')
@@ -10023,6 +11293,7 @@ class PermissionSet(models.Model):
     permissions_connect_org_to_environment_hub = models.BooleanField(db_column='PermissionsConnectOrgToEnvironmentHub', verbose_name='Connect Organization to Environment Hub')
     permissions_create_customize_filters = models.BooleanField(db_column='PermissionsCreateCustomizeFilters', verbose_name='Create and Customize List Views')
     permissions_content_hub_user = models.BooleanField(db_column='PermissionsContentHubUser', verbose_name='Files Connect Cloud')
+    permissions_govern_networks = models.BooleanField(db_column='PermissionsGovernNetworks', verbose_name='Manage Experiences')
     permissions_sales_console = models.BooleanField(db_column='PermissionsSalesConsole', verbose_name='Sales Console')
     permissions_two_factor_api = models.BooleanField(db_column='PermissionsTwoFactorApi', verbose_name='Multi-Factor Authentication for API Logins')
     permissions_delete_topics = models.BooleanField(db_column='PermissionsDeleteTopics', verbose_name='Delete Topics')
@@ -10043,6 +11314,7 @@ class PermissionSet(models.Model):
     permissions_manage_internal_users = models.BooleanField(db_column='PermissionsManageInternalUsers', verbose_name='Manage Internal Users')
     permissions_manage_password_policies = models.BooleanField(db_column='PermissionsManagePasswordPolicies', verbose_name='Manage Password Policies')
     permissions_manage_login_access_policies = models.BooleanField(db_column='PermissionsManageLoginAccessPolicies', verbose_name='Manage Login Access Policies')
+    permissions_manage_custom_permissions = models.BooleanField(db_column='PermissionsManageCustomPermissions', verbose_name='Manage Custom Permissions')
     permissions_can_verify_comment = models.BooleanField(db_column='PermissionsCanVerifyComment', verbose_name='Verify Answers to Chatter Questions')
     permissions_manage_unlisted_groups = models.BooleanField(db_column='PermissionsManageUnlistedGroups', verbose_name='Manage Unlisted Groups')
     permissions_std_automatic_activity_capture = models.BooleanField(db_column='PermissionsStdAutomaticActivityCapture', verbose_name='Use Einstein Activity Capture Standard')
@@ -10071,6 +11343,7 @@ class PermissionSet(models.Model):
     permissions_delegated_two_factor = models.BooleanField(db_column='PermissionsDelegatedTwoFactor', verbose_name='Manage Multi-Factor Authentication in User Interface')
     permissions_chatter_compose_ui_codesnippet = models.BooleanField(db_column='PermissionsChatterComposeUiCodesnippet', verbose_name='Allow Inclusion of Code Snippets from UI')
     permissions_select_files_from_salesforce = models.BooleanField(db_column='PermissionsSelectFilesFromSalesforce', verbose_name='Select Files from Salesforce')
+    permissions_moderate_network_users = models.BooleanField(db_column='PermissionsModerateNetworkUsers', verbose_name='Moderate Experience Cloud Site Users')
     permissions_voice_outbound = models.BooleanField(db_column='PermissionsVoiceOutbound', verbose_name='Access Dialer Outbound Calls')
     permissions_voice_inbound = models.BooleanField(db_column='PermissionsVoiceInbound', verbose_name='Access Dialer Inbound Calls')
     permissions_voice_minutes = models.BooleanField(db_column='PermissionsVoiceMinutes', verbose_name='Access Dialer Minutes')
@@ -10088,6 +11361,7 @@ class PermissionSet(models.Model):
     permissions_allow_view_edit_converted_leads = models.BooleanField(db_column='PermissionsAllowViewEditConvertedLeads', verbose_name='View and Edit Converted Leads')
     permissions_social_insights_logo_admin = models.BooleanField(db_column='PermissionsSocialInsightsLogoAdmin', verbose_name='Remove Logos from Accounts')
     permissions_show_company_name_as_user_badge = models.BooleanField(db_column='PermissionsShowCompanyNameAsUserBadge', verbose_name='Show Company Name as Site Role')
+    permissions_access_cmc = models.BooleanField(db_column='PermissionsAccessCMC', verbose_name='Access Experience Management')
     permissions_view_health_check = models.BooleanField(db_column='PermissionsViewHealthCheck', verbose_name='View Health Check')
     permissions_manage_health_check = models.BooleanField(db_column='PermissionsManageHealthCheck', verbose_name='Manage Health Check')
     permissions_packaging2 = models.BooleanField(db_column='PermissionsPackaging2', verbose_name='Create and Update Second-Generation Packages')
@@ -10126,6 +11400,7 @@ class PermissionSet(models.Model):
     permissions_wave_manage_private_assets_user = models.BooleanField(db_column='PermissionsWaveManagePrivateAssetsUser', verbose_name='Manage CRM Analytics Private Assets')
     permissions_can_edit_data_prep_recipe = models.BooleanField(db_column='PermissionsCanEditDataPrepRecipe', verbose_name='Edit Dataset Recipes')
     permissions_add_analytics_remote_connections = models.BooleanField(db_column='PermissionsAddAnalyticsRemoteConnections', verbose_name='Add CRM Analytics Remote Connections')
+    permissions_manage_surveys = models.BooleanField(db_column='PermissionsManageSurveys', verbose_name='Manage Surveys')
     permissions_use_assistant_dialog = models.BooleanField(db_column='PermissionsUseAssistantDialog', verbose_name='Instant Actionable Results')
     permissions_use_query_suggestions = models.BooleanField(db_column='PermissionsUseQuerySuggestions', verbose_name='Natural Language Search')
     permissions_view_roles = models.BooleanField(db_column='PermissionsViewRoles', verbose_name='View Roles and Role Hierarchy')
@@ -10156,14 +11431,20 @@ class PermissionSet(models.Model):
     permissions_learning_manager = models.BooleanField(db_column='PermissionsLearningManager', verbose_name='Manage Learning')
     permissions_send_custom_notifications = models.BooleanField(db_column='PermissionsSendCustomNotifications', verbose_name='Send Custom Notifications')
     permissions_packaging2_delete = models.BooleanField(db_column='PermissionsPackaging2Delete', verbose_name='Delete Second-Generation Packages')
+    permissions_manage_trust_measures = models.BooleanField(db_column='PermissionsManageTrustMeasures', verbose_name='Manage Trust Measures')
+    permissions_view_trust_measures = models.BooleanField(db_column='PermissionsViewTrustMeasures', verbose_name='View Trust Measures')
     permissions_manage_learning_reporting = models.BooleanField(db_column='PermissionsManageLearningReporting', verbose_name='Manage Learning Reporting')
     permissions_isotope_cto_cuser = models.BooleanField(db_column='PermissionsIsotopeCToCUser', verbose_name='Salesforce Anywhere Integration Access')
+    permissions_has_unlimited_erb_scoring_requests = models.BooleanField(db_column='PermissionsHasUnlimitedErbScoringRequests', verbose_name='User Has Unlimited Erb Model Scoring')
     permissions_isotope_access = models.BooleanField(db_column='PermissionsIsotopeAccess', verbose_name='Salesforce Anywhere on Mobile')
     permissions_isotope_lex = models.BooleanField(db_column='PermissionsIsotopeLEX', verbose_name='Salesforce Anywhere in Lightning Experience')
     permissions_quip_metrics_access = models.BooleanField(db_column='PermissionsQuipMetricsAccess', verbose_name='Quip Metrics')
     permissions_quip_user_engagement_metrics = models.BooleanField(db_column='PermissionsQuipUserEngagementMetrics', verbose_name='Quip User Engagement Metrics')
     permissions_manage_external_connections = models.BooleanField(db_column='PermissionsManageExternalConnections', verbose_name='Allow user to modify Private Connections')
     permissions_use_subscription_emails = models.BooleanField(db_column='PermissionsUseSubscriptionEmails', verbose_name='Subscribe to CRM Analytics Assets')
+    permissions_aiview_insight_objects = models.BooleanField(db_column='PermissionsAIViewInsightObjects', verbose_name='View AI Insight Objects')
+    permissions_aicreate_insight_objects = models.BooleanField(db_column='PermissionsAICreateInsightObjects', verbose_name='Create AI Insight Objects')
+    permissions_view_mlmodels = models.BooleanField(db_column='PermissionsViewMLModels', verbose_name='Allow users to view MLModels and related Entities')
     permissions_native_webview_scrolling = models.BooleanField(db_column='PermissionsNativeWebviewScrolling', verbose_name='Salesforce Mobile App: Native scrolling on webviews')
     permissions_view_developer_name = models.BooleanField(db_column='PermissionsViewDeveloperName', verbose_name='View DeveloperName')
     permissions_bypass_mfafor_ui_logins = models.BooleanField(db_column='PermissionsBypassMFAForUiLogins', verbose_name='Waive Multi-Factor Authentication for Exempt Users')
@@ -10294,11 +11575,13 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_send_sit_requests = models.BooleanField(db_column='MaximumPermissionsSendSitRequests', verbose_name='Send Stay-in-Touch Requests', sf_read_only=models.READ_ONLY)
     maximum_permissions_override_forecasts = models.BooleanField(db_column='MaximumPermissionsOverrideForecasts', verbose_name='Override Forecasts', sf_read_only=models.READ_ONLY)
     maximum_permissions_view_all_forecasts = models.BooleanField(db_column='MaximumPermissionsViewAllForecasts', verbose_name='View All Forecasts', sf_read_only=models.READ_ONLY)
+    maximum_permissions_api_user_only = models.BooleanField(db_column='MaximumPermissionsApiUserOnly', verbose_name='Api Only User', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_remote_access = models.BooleanField(db_column='MaximumPermissionsManageRemoteAccess', verbose_name='Manage Connected Apps', sf_read_only=models.READ_ONLY)
     maximum_permissions_can_use_new_dashboard_builder = models.BooleanField(db_column='MaximumPermissionsCanUseNewDashboardBuilder', verbose_name='Drag-and-Drop Dashboard Builder', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_categories = models.BooleanField(db_column='MaximumPermissionsManageCategories', verbose_name='Manage Categories', sf_read_only=models.READ_ONLY)
     maximum_permissions_convert_leads = models.BooleanField(db_column='MaximumPermissionsConvertLeads', verbose_name='Convert Leads', sf_read_only=models.READ_ONLY)
     maximum_permissions_password_never_expires = models.BooleanField(db_column='MaximumPermissionsPasswordNeverExpires', verbose_name='Password Never Expires', sf_read_only=models.READ_ONLY)
+    maximum_permissions_use_team_reassign_wizards = models.BooleanField(db_column='MaximumPermissionsUseTeamReassignWizards', verbose_name='Use Team Reassignment Wizards', sf_read_only=models.READ_ONLY)
     maximum_permissions_edit_activated_orders = models.BooleanField(db_column='MaximumPermissionsEditActivatedOrders', verbose_name='Edit Activated Orders', sf_read_only=models.READ_ONLY)
     maximum_permissions_install_packaging = models.BooleanField(db_column='MaximumPermissionsInstallPackaging', verbose_name='Download AppExchange Packages', sf_read_only=models.READ_ONLY)
     maximum_permissions_publish_packaging = models.BooleanField(db_column='MaximumPermissionsPublishPackaging', verbose_name='Upload AppExchange Packages', sf_read_only=models.READ_ONLY)
@@ -10316,6 +11599,9 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_enable_notifications = models.BooleanField(db_column='MaximumPermissionsEnableNotifications', verbose_name='Send Outbound Messages', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_data_integrations = models.BooleanField(db_column='MaximumPermissionsManageDataIntegrations', verbose_name='Manage Data Integrations', sf_read_only=models.READ_ONLY)
     maximum_permissions_distribute_from_pers_wksp = models.BooleanField(db_column='MaximumPermissionsDistributeFromPersWksp', verbose_name='Create Content Deliveries', sf_read_only=models.READ_ONLY)
+    maximum_permissions_view_data_categories = models.BooleanField(db_column='MaximumPermissionsViewDataCategories', verbose_name='View Data Categories in Setup', sf_read_only=models.READ_ONLY)
+    maximum_permissions_manage_data_categories = models.BooleanField(db_column='MaximumPermissionsManageDataCategories', verbose_name='Manage Data Categories', sf_read_only=models.READ_ONLY)
+    maximum_permissions_author_apex = models.BooleanField(db_column='MaximumPermissionsAuthorApex', verbose_name='Author Apex', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_mobile = models.BooleanField(db_column='MaximumPermissionsManageMobile', verbose_name='Manage Mobile Configurations', sf_read_only=models.READ_ONLY)
     maximum_permissions_api_enabled = models.BooleanField(db_column='MaximumPermissionsApiEnabled', verbose_name='API Enabled', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_custom_report_types = models.BooleanField(db_column='MaximumPermissionsManageCustomReportTypes', verbose_name='Manage Custom Report Types', sf_read_only=models.READ_ONLY)
@@ -10326,11 +11612,13 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_manage_content_permissions = models.BooleanField(db_column='MaximumPermissionsManageContentPermissions', verbose_name='Manage Content Permissions', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_content_properties = models.BooleanField(db_column='MaximumPermissionsManageContentProperties', verbose_name='Manage Content Properties', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_content_types = models.BooleanField(db_column='MaximumPermissionsManageContentTypes', verbose_name='Manage record types and layouts for Files', sf_read_only=models.READ_ONLY)
+    maximum_permissions_schedule_job = models.BooleanField(db_column='MaximumPermissionsScheduleJob', verbose_name='Schedule Dashboards', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_exchange_config = models.BooleanField(db_column='MaximumPermissionsManageExchangeConfig', verbose_name='Manage Lightning Sync', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_analytic_snapshots = models.BooleanField(db_column='MaximumPermissionsManageAnalyticSnapshots', verbose_name='Manage Reporting Snapshots', sf_read_only=models.READ_ONLY)
     maximum_permissions_schedule_reports = models.BooleanField(db_column='MaximumPermissionsScheduleReports', verbose_name='Schedule Reports', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_business_hour_holidays = models.BooleanField(db_column='MaximumPermissionsManageBusinessHourHolidays', verbose_name='Manage Business Hours Holidays', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_entitlements = models.BooleanField(db_column='MaximumPermissionsManageEntitlements', verbose_name='Manage Entitlements', sf_read_only=models.READ_ONLY)
+    maximum_permissions_manage_dynamic_dashboards = models.BooleanField(db_column='MaximumPermissionsManageDynamicDashboards', verbose_name='Manage Dynamic Dashboards', sf_read_only=models.READ_ONLY)
     maximum_permissions_custom_sidebar_on_all_pages = models.BooleanField(db_column='MaximumPermissionsCustomSidebarOnAllPages', verbose_name='Show Custom Sidebar On All Pages', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_interaction = models.BooleanField(db_column='MaximumPermissionsManageInteraction', verbose_name='Manage Flow', sf_read_only=models.READ_ONLY)
     maximum_permissions_view_my_teams_dashboards = models.BooleanField(db_column='MaximumPermissionsViewMyTeamsDashboards', verbose_name="View My Team's Dashboards", sf_read_only=models.READ_ONLY)
@@ -10345,6 +11633,8 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_allow_email_ic = models.BooleanField(db_column='MaximumPermissionsAllowEmailIC', verbose_name='Email-Based Identity Verification Option', sf_read_only=models.READ_ONLY)
     maximum_permissions_chatter_file_link = models.BooleanField(db_column='MaximumPermissionsChatterFileLink', verbose_name='Create Public Links', sf_read_only=models.READ_ONLY)
     maximum_permissions_force_two_factor = models.BooleanField(db_column='MaximumPermissionsForceTwoFactor', verbose_name='Multi-Factor Authentication for User Interface Logins', sf_read_only=models.READ_ONLY)
+    maximum_permissions_view_event_log_files = models.BooleanField(db_column='MaximumPermissionsViewEventLogFiles', verbose_name='View Event Log Files', sf_read_only=models.READ_ONLY)
+    maximum_permissions_manage_networks = models.BooleanField(db_column='MaximumPermissionsManageNetworks', verbose_name='Create and Set Up Experiences', sf_read_only=models.READ_ONLY)
     maximum_permissions_view_case_interaction = models.BooleanField(db_column='MaximumPermissionsViewCaseInteraction', verbose_name='Use Case Feed', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_auth_providers = models.BooleanField(db_column='MaximumPermissionsManageAuthProviders', verbose_name='Manage Auth. Providers', sf_read_only=models.READ_ONLY)
     maximum_permissions_run_flow = models.BooleanField(db_column='MaximumPermissionsRunFlow', verbose_name='Run Flows', sf_read_only=models.READ_ONLY)
@@ -10364,6 +11654,7 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_connect_org_to_environment_hub = models.BooleanField(db_column='MaximumPermissionsConnectOrgToEnvironmentHub', verbose_name='Connect Organization to Environment Hub', sf_read_only=models.READ_ONLY)
     maximum_permissions_create_customize_filters = models.BooleanField(db_column='MaximumPermissionsCreateCustomizeFilters', verbose_name='Create and Customize List Views', sf_read_only=models.READ_ONLY)
     maximum_permissions_content_hub_user = models.BooleanField(db_column='MaximumPermissionsContentHubUser', verbose_name='Files Connect Cloud', sf_read_only=models.READ_ONLY)
+    maximum_permissions_govern_networks = models.BooleanField(db_column='MaximumPermissionsGovernNetworks', verbose_name='Manage Experiences', sf_read_only=models.READ_ONLY)
     maximum_permissions_sales_console = models.BooleanField(db_column='MaximumPermissionsSalesConsole', verbose_name='Sales Console', sf_read_only=models.READ_ONLY)
     maximum_permissions_two_factor_api = models.BooleanField(db_column='MaximumPermissionsTwoFactorApi', verbose_name='Multi-Factor Authentication for API Logins', sf_read_only=models.READ_ONLY)
     maximum_permissions_delete_topics = models.BooleanField(db_column='MaximumPermissionsDeleteTopics', verbose_name='Delete Topics', sf_read_only=models.READ_ONLY)
@@ -10384,6 +11675,7 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_manage_internal_users = models.BooleanField(db_column='MaximumPermissionsManageInternalUsers', verbose_name='Manage Internal Users', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_password_policies = models.BooleanField(db_column='MaximumPermissionsManagePasswordPolicies', verbose_name='Manage Password Policies', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_login_access_policies = models.BooleanField(db_column='MaximumPermissionsManageLoginAccessPolicies', verbose_name='Manage Login Access Policies', sf_read_only=models.READ_ONLY)
+    maximum_permissions_manage_custom_permissions = models.BooleanField(db_column='MaximumPermissionsManageCustomPermissions', verbose_name='Manage Custom Permissions', sf_read_only=models.READ_ONLY)
     maximum_permissions_can_verify_comment = models.BooleanField(db_column='MaximumPermissionsCanVerifyComment', verbose_name='Verify Answers to Chatter Questions', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_unlisted_groups = models.BooleanField(db_column='MaximumPermissionsManageUnlistedGroups', verbose_name='Manage Unlisted Groups', sf_read_only=models.READ_ONLY)
     maximum_permissions_std_automatic_activity_capture = models.BooleanField(db_column='MaximumPermissionsStdAutomaticActivityCapture', verbose_name='Use Einstein Activity Capture Standard', sf_read_only=models.READ_ONLY)
@@ -10412,6 +11704,7 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_delegated_two_factor = models.BooleanField(db_column='MaximumPermissionsDelegatedTwoFactor', verbose_name='Manage Multi-Factor Authentication in User Interface', sf_read_only=models.READ_ONLY)
     maximum_permissions_chatter_compose_ui_codesnippet = models.BooleanField(db_column='MaximumPermissionsChatterComposeUiCodesnippet', verbose_name='Allow Inclusion of Code Snippets from UI', sf_read_only=models.READ_ONLY)
     maximum_permissions_select_files_from_salesforce = models.BooleanField(db_column='MaximumPermissionsSelectFilesFromSalesforce', verbose_name='Select Files from Salesforce', sf_read_only=models.READ_ONLY)
+    maximum_permissions_moderate_network_users = models.BooleanField(db_column='MaximumPermissionsModerateNetworkUsers', verbose_name='Moderate Experience Cloud Site Users', sf_read_only=models.READ_ONLY)
     maximum_permissions_voice_outbound = models.BooleanField(db_column='MaximumPermissionsVoiceOutbound', verbose_name='Access Dialer Outbound Calls', sf_read_only=models.READ_ONLY)
     maximum_permissions_voice_inbound = models.BooleanField(db_column='MaximumPermissionsVoiceInbound', verbose_name='Access Dialer Inbound Calls', sf_read_only=models.READ_ONLY)
     maximum_permissions_voice_minutes = models.BooleanField(db_column='MaximumPermissionsVoiceMinutes', verbose_name='Access Dialer Minutes', sf_read_only=models.READ_ONLY)
@@ -10429,6 +11722,7 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_allow_view_edit_converted_leads = models.BooleanField(db_column='MaximumPermissionsAllowViewEditConvertedLeads', verbose_name='View and Edit Converted Leads', sf_read_only=models.READ_ONLY)
     maximum_permissions_social_insights_logo_admin = models.BooleanField(db_column='MaximumPermissionsSocialInsightsLogoAdmin', verbose_name='Remove Logos from Accounts', sf_read_only=models.READ_ONLY)
     maximum_permissions_show_company_name_as_user_badge = models.BooleanField(db_column='MaximumPermissionsShowCompanyNameAsUserBadge', verbose_name='Show Company Name as Site Role', sf_read_only=models.READ_ONLY)
+    maximum_permissions_access_cmc = models.BooleanField(db_column='MaximumPermissionsAccessCMC', verbose_name='Access Experience Management', sf_read_only=models.READ_ONLY)
     maximum_permissions_view_health_check = models.BooleanField(db_column='MaximumPermissionsViewHealthCheck', verbose_name='View Health Check', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_health_check = models.BooleanField(db_column='MaximumPermissionsManageHealthCheck', verbose_name='Manage Health Check', sf_read_only=models.READ_ONLY)
     maximum_permissions_packaging2 = models.BooleanField(db_column='MaximumPermissionsPackaging2', verbose_name='Create and Update Second-Generation Packages', sf_read_only=models.READ_ONLY)
@@ -10467,6 +11761,7 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_wave_manage_private_assets_user = models.BooleanField(db_column='MaximumPermissionsWaveManagePrivateAssetsUser', verbose_name='Manage CRM Analytics Private Assets', sf_read_only=models.READ_ONLY)
     maximum_permissions_can_edit_data_prep_recipe = models.BooleanField(db_column='MaximumPermissionsCanEditDataPrepRecipe', verbose_name='Edit Dataset Recipes', sf_read_only=models.READ_ONLY)
     maximum_permissions_add_analytics_remote_connections = models.BooleanField(db_column='MaximumPermissionsAddAnalyticsRemoteConnections', verbose_name='Add CRM Analytics Remote Connections', sf_read_only=models.READ_ONLY)
+    maximum_permissions_manage_surveys = models.BooleanField(db_column='MaximumPermissionsManageSurveys', verbose_name='Manage Surveys', sf_read_only=models.READ_ONLY)
     maximum_permissions_use_assistant_dialog = models.BooleanField(db_column='MaximumPermissionsUseAssistantDialog', verbose_name='Instant Actionable Results', sf_read_only=models.READ_ONLY)
     maximum_permissions_use_query_suggestions = models.BooleanField(db_column='MaximumPermissionsUseQuerySuggestions', verbose_name='Natural Language Search', sf_read_only=models.READ_ONLY)
     maximum_permissions_view_roles = models.BooleanField(db_column='MaximumPermissionsViewRoles', verbose_name='View Roles and Role Hierarchy', sf_read_only=models.READ_ONLY)
@@ -10497,14 +11792,20 @@ class PermissionSetLicense(models.Model):
     maximum_permissions_learning_manager = models.BooleanField(db_column='MaximumPermissionsLearningManager', verbose_name='Manage Learning', sf_read_only=models.READ_ONLY)
     maximum_permissions_send_custom_notifications = models.BooleanField(db_column='MaximumPermissionsSendCustomNotifications', verbose_name='Send Custom Notifications', sf_read_only=models.READ_ONLY)
     maximum_permissions_packaging2_delete = models.BooleanField(db_column='MaximumPermissionsPackaging2Delete', verbose_name='Delete Second-Generation Packages', sf_read_only=models.READ_ONLY)
+    maximum_permissions_manage_trust_measures = models.BooleanField(db_column='MaximumPermissionsManageTrustMeasures', verbose_name='Manage Trust Measures', sf_read_only=models.READ_ONLY)
+    maximum_permissions_view_trust_measures = models.BooleanField(db_column='MaximumPermissionsViewTrustMeasures', verbose_name='View Trust Measures', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_learning_reporting = models.BooleanField(db_column='MaximumPermissionsManageLearningReporting', verbose_name='Manage Learning Reporting', sf_read_only=models.READ_ONLY)
     maximum_permissions_isotope_cto_cuser = models.BooleanField(db_column='MaximumPermissionsIsotopeCToCUser', verbose_name='Salesforce Anywhere Integration Access', sf_read_only=models.READ_ONLY)
+    maximum_permissions_has_unlimited_erb_scoring_requests = models.BooleanField(db_column='MaximumPermissionsHasUnlimitedErbScoringRequests', verbose_name='User Has Unlimited Erb Model Scoring', sf_read_only=models.READ_ONLY)
     maximum_permissions_isotope_access = models.BooleanField(db_column='MaximumPermissionsIsotopeAccess', verbose_name='Salesforce Anywhere on Mobile', sf_read_only=models.READ_ONLY)
     maximum_permissions_isotope_lex = models.BooleanField(db_column='MaximumPermissionsIsotopeLEX', verbose_name='Salesforce Anywhere in Lightning Experience', sf_read_only=models.READ_ONLY)
     maximum_permissions_quip_metrics_access = models.BooleanField(db_column='MaximumPermissionsQuipMetricsAccess', verbose_name='Quip Metrics', sf_read_only=models.READ_ONLY)
     maximum_permissions_quip_user_engagement_metrics = models.BooleanField(db_column='MaximumPermissionsQuipUserEngagementMetrics', verbose_name='Quip User Engagement Metrics', sf_read_only=models.READ_ONLY)
     maximum_permissions_manage_external_connections = models.BooleanField(db_column='MaximumPermissionsManageExternalConnections', verbose_name='Allow user to modify Private Connections', sf_read_only=models.READ_ONLY)
     maximum_permissions_use_subscription_emails = models.BooleanField(db_column='MaximumPermissionsUseSubscriptionEmails', verbose_name='Subscribe to CRM Analytics Assets', sf_read_only=models.READ_ONLY)
+    maximum_permissions_aiview_insight_objects = models.BooleanField(db_column='MaximumPermissionsAIViewInsightObjects', verbose_name='View AI Insight Objects', sf_read_only=models.READ_ONLY)
+    maximum_permissions_aicreate_insight_objects = models.BooleanField(db_column='MaximumPermissionsAICreateInsightObjects', verbose_name='Create AI Insight Objects', sf_read_only=models.READ_ONLY)
+    maximum_permissions_view_mlmodels = models.BooleanField(db_column='MaximumPermissionsViewMLModels', verbose_name='Allow users to view MLModels and related Entities', sf_read_only=models.READ_ONLY)
     maximum_permissions_native_webview_scrolling = models.BooleanField(db_column='MaximumPermissionsNativeWebviewScrolling', verbose_name='Salesforce Mobile App: Native scrolling on webviews', sf_read_only=models.READ_ONLY)
     maximum_permissions_view_developer_name = models.BooleanField(db_column='MaximumPermissionsViewDeveloperName', verbose_name='View DeveloperName', sf_read_only=models.READ_ONLY)
     maximum_permissions_bypass_mfafor_ui_logins = models.BooleanField(db_column='MaximumPermissionsBypassMFAForUiLogins', verbose_name='Waive Multi-Factor Authentication for Exempt Users', sf_read_only=models.READ_ONLY)
@@ -10607,6 +11908,48 @@ class PlatformAction(models.Model):
         verbose_name = 'Platform Action'
         verbose_name_plural = 'Platform Actions'
         # keyPrefix = '0JV'
+
+
+
+class PlatformCachePartition(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Name')
+    language = models.CharField(db_column='Language', max_length=40, verbose_name='Master Language', default=models.DEFAULTED_ON_CREATE, choices=[('en_US', 'English'), ('de', 'German'), ('es', 'Spanish'), ('fr', 'French'), ('it', 'Italian'), ('ja', 'Japanese'), ('sv', 'Swedish'), ('ko', 'Korean'), ('zh_TW', 'Chinese (Traditional)'), ('zh_CN', 'Chinese (Simplified)'), ('pt_BR', 'Portuguese (Brazil)'), ('nl_NL', 'Dutch'), ('da', 'Danish'), ('th', 'Thai'), ('fi', 'Finnish'), ('ru', 'Russian'), ('es_MX', 'Spanish (Mexico)'), ('no', 'Norwegian')], blank=True, null=True)
+    master_label = models.CharField(db_column='MasterLabel', max_length=80, verbose_name='Label')
+    namespace_prefix = models.CharField(db_column='NamespacePrefix', max_length=15, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='platformcachepartition_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='platformcachepartition_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    description = models.TextField(db_column='Description', blank=True, null=True)
+    is_default_partition = models.BooleanField(db_column='IsDefaultPartition', verbose_name='Default Partition', default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'PlatformCachePartition'
+        verbose_name = 'Platform Cache Partition'
+        verbose_name_plural = 'Platform Cache Partitions'
+        # keyPrefix = '0Er'
+
+
+
+class PlatformCachePartitionType(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='platformcachepartitiontype_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='platformcachepartitiontype_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    platform_cache_partition = models.ForeignKey(PlatformCachePartition, models.DO_NOTHING, db_column='PlatformCachePartitionId', verbose_name='Platform Cache Partition ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    cache_type = models.CharField(db_column='CacheType', max_length=255, choices=[('Session', None), ('Organization', None)])
+    allocated_capacity = models.IntegerField(db_column='AllocatedCapacity', blank=True, null=True)
+    allocated_purchased_capacity = models.IntegerField(db_column='AllocatedPurchasedCapacity', verbose_name='Allocated Namespaced Purchased Capacity', blank=True, null=True)
+    allocated_trial_capacity = models.IntegerField(db_column='AllocatedTrialCapacity', blank=True, null=True)
+    allocated_partner_capacity = models.IntegerField(db_column='AllocatedPartnerCapacity', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'PlatformCachePartitionType'
+        verbose_name = 'Platform Cache Partition Type'
+        verbose_name_plural = 'Platform Cache Partition Types'
+        # keyPrefix = '0Ev'
 
 
 
@@ -11057,6 +12400,27 @@ class ProblemShare(models.Model):
 
 
 
+class ProcessDefinition(models.Model):
+    name = models.CharField(db_column='Name', max_length=40, sf_read_only=models.READ_ONLY)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Unique Name', sf_read_only=models.READ_ONLY)
+    type = models.CharField(db_column='Type', max_length=40, verbose_name='Process Definition Type', sf_read_only=models.READ_ONLY, default='Approval', choices=[('Approval', 'Approval Process'), ('State', 'State-based Process')])
+    description = models.TextField(db_column='Description', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    table_enum_or_id = models.CharField(db_column='TableEnumOrId', max_length=40, verbose_name='Custom Object Definition ID', sf_read_only=models.READ_ONLY, choices=[('Account', None), ('AgentWorkSkill', None), ('Asset', None), ('AssetRelationship', None), ('AssistantProgress', None), ('Campaign', None), ('Case', None), ('ChangeRequest', None), ('Contact', None), ('Contract', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntityMilestone', None), ('ExchangeUserMapping', None), ('ExternalEventMapping', None), ('FlowOrchestrationInstance', None), ('FlowOrchestrationWorkItem', None), ('Image', None), ('Lead', None), ('LearningAssignment', None), ('LearningAssignmentProgress', None), ('LearningItem', None), ('LearningLinkProgress', None), ('Location', None), ('LocationTrustMeasure', None), ('MacroUsage', None), ('ManagedContentTranslationJobLanguage', None), ('MLModel', None), ('MLModelFactor', None), ('MLModelFactorComponent', None), ('MobileHomeConfiguration', None), ('Opportunity', None), ('Order', None), ('OrgDeleteRequest', None), ('OrgMetricScanResult', None), ('OrgMetricScanSummary', None), ('PendingServiceRouting', None), ('ProcessException', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('PromptAction', None), ('PromptError', None), ('QuickTextUsage', None), ('Quote', None), ('RecordMergeHistory', None), ('RequestsForAccessSIQ', None), ('ServiceAppointmentGroup', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SiteUserViewMode', None), ('SkillRequirement', None), ('SocialPost', None), ('Solution', None), ('StreamingChannel', None), ('TenantSecurityLogin', None), ('TenantSecurityMonitorMetric', None), ('TenantSecurityTenantInfo', None), ('UserExternalCredential', None), ('UserProvisioningRequest', None), ('UserServicePresence', None), ('WebCartDocument', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkProcedure', None), ('WorkProcedureStep', None), ('WorkStep', None), ('WorkStepTemplate', None)])
+    lock_type = models.CharField(db_column='LockType', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Total', None), ('Admin', None), ('Owner', None), ('Workitem', None), ('Node', None), ('none', None)])
+    state = models.CharField(db_column='State', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Active', 'Active'), ('Inactive', 'Inactive'), ('Obsolete', 'Obsolete')])
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='processdefinition_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='processdefinition_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ProcessDefinition'
+        verbose_name = 'Process Definition'
+        verbose_name_plural = 'Process Definition'
+        # keyPrefix = '04a'
+
+
+
 class ProcessException(models.Model):
     owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
@@ -11068,7 +12432,7 @@ class ProcessException(models.Model):
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
-    attached_to = models.ForeignKey(ActiveCampCxaUsage, models.DO_NOTHING, db_column='AttachedToId', verbose_name='Attached To ID')  # Reference to tables [ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, In_App_Checklist_Settings__c, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Order, OrderItem, Postal_Code__c, Product_Category_Info__c, Reviews__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    attached_to = models.ForeignKey(ActiveCampCxaUsage, models.DO_NOTHING, db_column='AttachedToId', verbose_name='Attached To ID')  # Reference to tables [ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, In_App_Checklist_Settings__c, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Order, OrderItem, Postal_Code__c, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, Waste_Type__c, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     message = models.CharField(db_column='Message', max_length=255)
     status_category = models.CharField(db_column='StatusCategory', max_length=255, sf_read_only=models.READ_ONLY, choices=[('ACTIVE', 'Active'), ('INACTIVE', 'Inactive'), ('RESOLVED', 'Resolved')])
     status = models.CharField(db_column='Status', max_length=40, default='New', choices=[('New', 'New'), ('Triaged', 'Triaged'), ('Paused', 'Paused'), ('Ignored', 'Ignored'), ('Resolved', 'Resolved'), ('Voided', 'Voided')])
@@ -11105,6 +12469,133 @@ class ProcessExceptionShare(models.Model):
 
 
 
+class ProcessInstance(models.Model):
+    process_definition = models.ForeignKey(ProcessDefinition, models.DO_NOTHING, db_column='ProcessDefinitionId', verbose_name='Approval Process ID', sf_read_only=models.READ_ONLY)
+    target_object = models.ForeignKey(Account, models.DO_NOTHING, db_column='TargetObjectId', verbose_name='Target Object ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWorkSkill, Asset, AssetRelationship, Campaign, Case, ChangeRequest, Contact, Contract, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, Entitlement, EntityMilestone, ExternalEventMapping, FlowOrchestrationInstance, FlowOrchestrationWorkItem, Image, In_App_Checklist_Settings__c, Lead, Location, LocationTrustMeasure, Location_Zone__c, MLModel, MLModelFactor, MLModelFactorComponent, MacroUsage, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrgMetricScanResult, OrgMetricScanSummary, PendingServiceRouting, Postal_Code__c, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, PromptAction, PromptError, QuickTextUsage, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, StreamingChannel, UserProvisioningRequest, UserServicePresence, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    status = models.CharField(db_column='Status', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Approved', 'Approved'), ('Rejected', 'Rejected'), ('Removed', 'Recalled'), ('Fault', 'Fault'), ('Pending', 'Pending'), ('Held', 'Hold'), ('Reassigned', 'Reassigned'), ('Started', 'Submitted'), ('NoResponse', 'No Response')])
+    completed_date = models.DateTimeField(db_column='CompletedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_actor = models.ForeignKey('User', models.DO_NOTHING, db_column='LastActorId', related_name='processinstance_lastactor_set', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    elapsed_time_in_days = models.DecimalField(db_column='ElapsedTimeInDays', max_digits=7, decimal_places=3, verbose_name='Elapsed Time in Days', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_hours = models.DecimalField(db_column='ElapsedTimeInHours', max_digits=7, decimal_places=2, verbose_name='Elapsed Time in Hours', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_minutes = models.DecimalField(db_column='ElapsedTimeInMinutes', max_digits=8, decimal_places=0, verbose_name='Elapsed Time in Minutes', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    submitted_by = models.ForeignKey('User', models.DO_NOTHING, db_column='SubmittedById', related_name='processinstance_submittedby_set', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='processinstance_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='processinstance_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ProcessInstance'
+        verbose_name = 'Process Instance'
+        verbose_name_plural = 'Process Instance'
+        # keyPrefix = '04g'
+
+
+
+class ProcessInstanceHistory(models.Model):
+    is_pending = models.BooleanField(db_column='IsPending', sf_read_only=models.READ_ONLY, default=False)
+    process_instance = models.ForeignKey(ProcessInstance, models.DO_NOTHING, db_column='ProcessInstanceId', verbose_name='Process Instance ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    target_object = models.ForeignKey(Account, models.DO_NOTHING, db_column='TargetObjectId', verbose_name='Target Object ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, AgentWorkSkill, Asset, AssetRelationship, Campaign, Case, ChangeRequest, Contact, Contract, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, DuplicateRecordItem, DuplicateRecordSet, EmailMessage, Entitlement, EntityMilestone, ExternalEventMapping, FlowOrchestrationInstance, FlowOrchestrationWorkItem, Image, In_App_Checklist_Settings__c, Lead, Location, LocationTrustMeasure, Location_Zone__c, MLModel, MLModelFactor, MLModelFactorComponent, MacroUsage, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, OrgMetricScanResult, OrgMetricScanSummary, PendingServiceRouting, Postal_Code__c, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, ProfileSkill, ProfileSkillEndorsement, ProfileSkillUser, PromptAction, PromptError, QuickTextUsage, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPost, Solution, StreamingChannel, UserProvisioningRequest, UserServicePresence, Waste_Type__c, WorkBadgeDefinition, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    step_status = models.CharField(db_column='StepStatus', max_length=40, verbose_name='Status', sf_read_only=models.READ_ONLY, choices=[('Approved', 'Approved'), ('Rejected', 'Rejected'), ('Removed', 'Recalled'), ('Fault', 'Fault'), ('Pending', 'Pending'), ('Held', 'Hold'), ('Reassigned', 'Reassigned'), ('Started', 'Submitted'), ('NoResponse', 'No Response')], blank=True, null=True)
+    process_node = models.ForeignKey('ProcessNode', models.DO_NOTHING, db_column='ProcessNodeId', verbose_name='Process Node ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    original_actor = models.ForeignKey(Group, models.DO_NOTHING, db_column='OriginalActorId', related_name='processinstancehistory_originalactor_set', verbose_name='Original Actor ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Group, User]
+    actor = models.ForeignKey(Group, models.DO_NOTHING, db_column='ActorId', related_name='processinstancehistory_actor_set', verbose_name='Actor ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Group, User]
+    reminders_sent = models.IntegerField(db_column='RemindersSent', verbose_name='RemindersSent', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_days = models.DecimalField(db_column='ElapsedTimeInDays', max_digits=18, decimal_places=0, verbose_name='Elapsed Time in Days', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_hours = models.DecimalField(db_column='ElapsedTimeInHours', max_digits=7, decimal_places=2, verbose_name='Elapsed Time in Hours', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_minutes = models.DecimalField(db_column='ElapsedTimeInMinutes', max_digits=8, decimal_places=0, verbose_name='Elapsed Time in Minutes', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    comments = models.CharField(db_column='Comments', max_length=4000, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ProcessInstanceHistory'
+        verbose_name = 'Process Instance History'
+        verbose_name_plural = 'Process Instance History'
+        # keyPrefix = None
+
+
+
+class ProcessInstanceNode(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='processinstancenode_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='processinstancenode_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    process_instance = models.ForeignKey(ProcessInstance, models.DO_NOTHING, db_column='ProcessInstanceId', verbose_name='Process Instance ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    process_node = models.ForeignKey('ProcessNode', models.DO_NOTHING, db_column='ProcessNodeId', verbose_name='Process Node ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    node_status = models.CharField(db_column='NodeStatus', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Approved', 'Approved'), ('Rejected', 'Rejected'), ('Removed', 'Recalled'), ('Fault', 'Fault'), ('Pending', 'Pending'), ('Held', 'Hold'), ('Reassigned', 'Reassigned'), ('Started', 'Submitted'), ('NoResponse', 'No Response')], blank=True, null=True)
+    completed_date = models.DateTimeField(db_column='CompletedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_actor = models.ForeignKey('User', models.DO_NOTHING, db_column='LastActorId', related_name='processinstancenode_lastactor_set', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    process_node_name = models.CharField(db_column='ProcessNodeName', max_length=255, verbose_name='Name', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_days = models.DecimalField(db_column='ElapsedTimeInDays', max_digits=7, decimal_places=3, verbose_name='Elapsed Time in Days', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_hours = models.DecimalField(db_column='ElapsedTimeInHours', max_digits=7, decimal_places=2, verbose_name='Elapsed Time in Hours', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_minutes = models.DecimalField(db_column='ElapsedTimeInMinutes', max_digits=8, decimal_places=0, verbose_name='Elapsed Time in Minutes', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'ProcessInstanceNode'
+        verbose_name = 'Process Instance Node'
+        verbose_name_plural = 'Process Instance Node'
+        # keyPrefix = '0OO'
+
+
+
+class ProcessInstanceStep(models.Model):
+    process_instance = models.ForeignKey(ProcessInstance, models.DO_NOTHING, db_column='ProcessInstanceId', verbose_name='Process Instance ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    step_status = models.CharField(db_column='StepStatus', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Approved', 'Approved'), ('Rejected', 'Rejected'), ('Removed', 'Recalled'), ('Fault', 'Fault'), ('Pending', 'Pending'), ('Held', 'Hold'), ('Reassigned', 'Reassigned'), ('Started', 'Submitted'), ('NoResponse', 'No Response')], blank=True, null=True)
+    original_actor = models.ForeignKey(Group, models.DO_NOTHING, db_column='OriginalActorId', related_name='processinstancestep_originalactor_set', verbose_name='Original Actor ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Group, User] Master Detail Relationship *
+    actor = models.ForeignKey(Group, models.DO_NOTHING, db_column='ActorId', related_name='processinstancestep_actor_set', verbose_name='Actor ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Group, User] Master Detail Relationship *
+    comments = models.CharField(db_column='Comments', max_length=4000, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    step_node = models.ForeignKey('ProcessNode', models.DO_NOTHING, db_column='StepNodeId', verbose_name='Process Node ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Master Detail Relationship *
+    elapsed_time_in_days = models.DecimalField(db_column='ElapsedTimeInDays', max_digits=18, decimal_places=0, verbose_name='Elapsed Time in Days', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_hours = models.DecimalField(db_column='ElapsedTimeInHours', max_digits=7, decimal_places=2, verbose_name='Elapsed Time in Hours', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_minutes = models.DecimalField(db_column='ElapsedTimeInMinutes', max_digits=8, decimal_places=0, verbose_name='Elapsed Time in Minutes', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ProcessInstanceStep'
+        verbose_name = 'Process Instance Step'
+        verbose_name_plural = 'Process Instance Step'
+        # keyPrefix = '04h'
+
+
+
+class ProcessInstanceWorkitem(models.Model):
+    process_instance = models.ForeignKey(ProcessInstance, models.DO_NOTHING, db_column='ProcessInstanceId', verbose_name='Process Instance ID', sf_read_only=models.NOT_CREATEABLE)  # Master Detail Relationship *
+    original_actor = models.ForeignKey(Group, models.DO_NOTHING, db_column='OriginalActorId', related_name='processinstanceworkitem_originalactor_set', verbose_name='Original Actor ID', sf_read_only=models.NOT_CREATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    actor = models.ForeignKey(Group, models.DO_NOTHING, db_column='ActorId', related_name='processinstanceworkitem_actor_set', verbose_name='Actor ID', sf_read_only=models.NOT_CREATEABLE)  # Reference to tables [Group, User]
+    elapsed_time_in_days = models.DecimalField(db_column='ElapsedTimeInDays', max_digits=7, decimal_places=3, verbose_name='Elapsed Time in Days', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_hours = models.DecimalField(db_column='ElapsedTimeInHours', max_digits=7, decimal_places=2, verbose_name='Elapsed Time in Hours', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    elapsed_time_in_minutes = models.DecimalField(db_column='ElapsedTimeInMinutes', max_digits=8, decimal_places=0, verbose_name='Elapsed Time in Minutes', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ProcessInstanceWorkitem'
+        verbose_name = 'Approval Request'
+        verbose_name_plural = 'Approval Requests'
+        # keyPrefix = '04i'
+
+
+
+class ProcessNode(models.Model):
+    name = models.CharField(db_column='Name', max_length=255, sf_read_only=models.READ_ONLY)
+    developer_name = models.CharField(db_column='DeveloperName', max_length=80, verbose_name='Unique Name', sf_read_only=models.READ_ONLY)
+    process_definition = models.ForeignKey(ProcessDefinition, models.DO_NOTHING, db_column='ProcessDefinitionId', verbose_name='Approval Process ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    description = models.TextField(db_column='Description', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'ProcessNode'
+        verbose_name = 'Process Node'
+        verbose_name_plural = 'Process Node'
+        # keyPrefix = '04b'
+
+
+
 class Product2(models.Model):
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Product Name')
     product_code = models.CharField(db_column='ProductCode', max_length=255, blank=True, null=True)
@@ -11131,15 +12622,10 @@ class Product2(models.Model):
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     stock_keeping_unit = models.CharField(db_column='StockKeepingUnit', max_length=180, verbose_name='Product SKU', blank=True, null=True)
-    service_provider = models.ForeignKey(Account, models.DO_NOTHING, db_column='Service_Provider__c', verbose_name='Service Provider', blank=True, null=True)
     city = models.CharField(db_column='City__c', max_length=255, choices=[('Denver', 'Denver')], blank=True, null=True)
     status = models.CharField(db_column='Status__c', max_length=255, default='Incomplete', choices=[('Incomplete', 'Incomplete'), ('Ready for Review', 'Ready for Review'), ('Under Review', 'Under Review'), ('Rejected', 'Rejected'), ('Approved', 'Approved')], blank=True, null=True)
-    location_zone = models.ForeignKey(LocationZone, models.DO_NOTHING, db_column='Location_Zone__c', verbose_name='Location Zone', blank=True, null=True)
     product_type = models.CharField(db_column='Product_Type__c', max_length=255, verbose_name='Product Type', choices=[('Service', 'Service'), ('Drop off', 'Drop off')], blank=True, null=True)
-    product_cubic_yards = models.DecimalField(db_column='Product_cubic_yards__c', max_digits=17, decimal_places=1, verbose_name='Product cubic yards', blank=True, null=True)
-    product_base_price = models.DecimalField(db_column='Product_Base_Price__c', max_digits=18, decimal_places=2, verbose_name='Product Base Price')
-    main_product_variation = models.ForeignKey(MainProductVariation, models.DO_NOTHING, db_column='Main_Product_Variation__c', verbose_name='Main Product Variation', blank=True, null=True)
-    merchant_payout = models.DecimalField(db_column='Merchant_Payout__c', max_digits=18, decimal_places=0, verbose_name='Merchant Payout', blank=True, null=True)
+    main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, db_column='Main_Product__c', verbose_name='Main Product', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'Product2'
         verbose_name = 'Product'
@@ -11178,7 +12664,7 @@ class Product2History(models.Model):
     product2 = models.ForeignKey(Product2, models.DO_NOTHING, db_column='Product2Id', verbose_name='Product ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('IsActive', 'Active'), ('City__c', 'City'), ('created', 'Created.'), ('DisplayUrl', 'Display URL'), ('ExternalDataSource', 'External Data Source'), ('ExternalId', 'External ID'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('Location_Zone__c', 'Location Zone'), ('Main_Product_Variation__c', 'Main Product Variation'), ('Merchant_Payout__c', 'Merchant Payout'), ('NumberOfQuantityInstallments', 'Number Of Quantity Installments'), ('NumberOfRevenueInstallments', 'Number Of Revenue Installments'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('Product_Base_Price__c', 'Product Base Price'), ('ProductCode', 'Product Code'), ('Product_cubic_yards__c', 'Product cubic yards'), ('Description', 'Product Description'), ('Family', 'Product Family'), ('Name', 'Product Name'), ('StockKeepingUnit', 'Product SKU'), ('Product_Type__c', 'Product Type'), ('QuantityInstallmentPeriod', 'Quantity Installment Period'), ('QuantityScheduleType', 'Quantity Schedule Type'), ('CanUseQuantitySchedule', 'Quantity Scheduling Enabled'), ('QuantityUnitOfMeasure', 'Quantity Unit Of Measure'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RevenueInstallmentPeriod', 'Revenue Installment Period'), ('RevenueScheduleType', 'Revenue Schedule Type'), ('CanUseRevenueSchedule', 'Revenue Scheduling Enabled'), ('Service_Provider__c', 'Service Provider'), ('Status__c', 'Status')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('IsActive', 'Active'), ('City__c', 'City'), ('created', 'Created.'), ('DisplayUrl', 'Display URL'), ('ExternalDataSource', 'External Data Source'), ('ExternalId', 'External ID'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('Main_Product__c', 'Main Product'), ('NumberOfQuantityInstallments', 'Number Of Quantity Installments'), ('NumberOfRevenueInstallments', 'Number Of Revenue Installments'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ProductCode', 'Product Code'), ('Description', 'Product Description'), ('Family', 'Product Family'), ('Name', 'Product Name'), ('StockKeepingUnit', 'Product SKU'), ('Product_Type__c', 'Product Type'), ('QuantityInstallmentPeriod', 'Quantity Installment Period'), ('QuantityScheduleType', 'Quantity Schedule Type'), ('CanUseQuantitySchedule', 'Quantity Scheduling Enabled'), ('QuantityUnitOfMeasure', 'Quantity Unit Of Measure'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RevenueInstallmentPeriod', 'Revenue Installment Period'), ('RevenueScheduleType', 'Revenue Schedule Type'), ('CanUseRevenueSchedule', 'Revenue Scheduling Enabled'), ('Status__c', 'Status')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -11201,6 +12687,43 @@ class ProductEntitlementTemplate(models.Model):
         verbose_name = 'Product Entitlement Template'
         verbose_name_plural = 'Product Entitlement Template'
         # keyPrefix = '0E9'
+
+
+
+class ProductAddOnChoiceShare(models.Model):
+    parent = models.ForeignKey('ProductAddOnChoice', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='Manual', choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'Product_Add_On_Choice__Share'
+        verbose_name = 'Share: Product Add On Choice'
+        verbose_name_plural = 'Share: Product Add On Choice'
+        # keyPrefix = None
+
+
+
+class ProductAddOnChoice(models.Model):
+    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=80, verbose_name='Product Add On Choice Name', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='productaddonchoice_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='productaddonchoice_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    product = models.ForeignKey(Product2, models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
+    add_on_choice = models.ForeignKey(AddOnChoice, models.DO_NOTHING, db_column='Add_On_Choice__c', verbose_name='Add On Choice', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Product_Add_On_Choice__c'
+        verbose_name = 'Product Add On Choice'
+        verbose_name_plural = 'Product Add On Choices'
+        # keyPrefix = 'a0v'
 
 
 
@@ -11279,11 +12802,13 @@ class Profile(models.Model):
     permissions_send_sit_requests = models.BooleanField(db_column='PermissionsSendSitRequests', verbose_name='Send Stay-in-Touch Requests')
     permissions_override_forecasts = models.BooleanField(db_column='PermissionsOverrideForecasts', verbose_name='Override Forecasts')
     permissions_view_all_forecasts = models.BooleanField(db_column='PermissionsViewAllForecasts', verbose_name='View All Forecasts')
+    permissions_api_user_only = models.BooleanField(db_column='PermissionsApiUserOnly', verbose_name='Api Only User')
     permissions_manage_remote_access = models.BooleanField(db_column='PermissionsManageRemoteAccess', verbose_name='Manage Connected Apps')
     permissions_can_use_new_dashboard_builder = models.BooleanField(db_column='PermissionsCanUseNewDashboardBuilder', verbose_name='Drag-and-Drop Dashboard Builder')
     permissions_manage_categories = models.BooleanField(db_column='PermissionsManageCategories', verbose_name='Manage Categories')
     permissions_convert_leads = models.BooleanField(db_column='PermissionsConvertLeads', verbose_name='Convert Leads')
     permissions_password_never_expires = models.BooleanField(db_column='PermissionsPasswordNeverExpires', verbose_name='Password Never Expires')
+    permissions_use_team_reassign_wizards = models.BooleanField(db_column='PermissionsUseTeamReassignWizards', verbose_name='Use Team Reassignment Wizards')
     permissions_edit_activated_orders = models.BooleanField(db_column='PermissionsEditActivatedOrders', verbose_name='Edit Activated Orders')
     permissions_install_multiforce = models.BooleanField(db_column='PermissionsInstallMultiforce', verbose_name='Download AppExchange Packages')
     permissions_publish_multiforce = models.BooleanField(db_column='PermissionsPublishMultiforce', verbose_name='Upload AppExchange Packages')
@@ -11301,6 +12826,9 @@ class Profile(models.Model):
     permissions_enable_notifications = models.BooleanField(db_column='PermissionsEnableNotifications', verbose_name='Send Outbound Messages')
     permissions_manage_data_integrations = models.BooleanField(db_column='PermissionsManageDataIntegrations', verbose_name='Manage Data Integrations')
     permissions_distribute_from_pers_wksp = models.BooleanField(db_column='PermissionsDistributeFromPersWksp', verbose_name='Create Content Deliveries')
+    permissions_view_data_categories = models.BooleanField(db_column='PermissionsViewDataCategories', verbose_name='View Data Categories in Setup')
+    permissions_manage_data_categories = models.BooleanField(db_column='PermissionsManageDataCategories', verbose_name='Manage Data Categories')
+    permissions_author_apex = models.BooleanField(db_column='PermissionsAuthorApex', verbose_name='Author Apex')
     permissions_manage_mobile = models.BooleanField(db_column='PermissionsManageMobile', verbose_name='Manage Mobile Configurations')
     permissions_api_enabled = models.BooleanField(db_column='PermissionsApiEnabled', verbose_name='API Enabled')
     permissions_manage_custom_report_types = models.BooleanField(db_column='PermissionsManageCustomReportTypes', verbose_name='Manage Custom Report Types')
@@ -11311,11 +12839,13 @@ class Profile(models.Model):
     permissions_manage_content_permissions = models.BooleanField(db_column='PermissionsManageContentPermissions', verbose_name='Manage Content Permissions')
     permissions_manage_content_properties = models.BooleanField(db_column='PermissionsManageContentProperties', verbose_name='Manage Content Properties')
     permissions_manage_content_types = models.BooleanField(db_column='PermissionsManageContentTypes', verbose_name='Manage record types and layouts for Files')
+    permissions_schedule_job = models.BooleanField(db_column='PermissionsScheduleJob', verbose_name='Schedule Dashboards')
     permissions_manage_exchange_config = models.BooleanField(db_column='PermissionsManageExchangeConfig', verbose_name='Manage Lightning Sync')
     permissions_manage_analytic_snapshots = models.BooleanField(db_column='PermissionsManageAnalyticSnapshots', verbose_name='Manage Reporting Snapshots')
     permissions_schedule_reports = models.BooleanField(db_column='PermissionsScheduleReports', verbose_name='Schedule Reports')
     permissions_manage_business_hour_holidays = models.BooleanField(db_column='PermissionsManageBusinessHourHolidays', verbose_name='Manage Business Hours Holidays')
     permissions_manage_entitlements = models.BooleanField(db_column='PermissionsManageEntitlements', verbose_name='Manage Entitlements')
+    permissions_manage_dynamic_dashboards = models.BooleanField(db_column='PermissionsManageDynamicDashboards', verbose_name='Manage Dynamic Dashboards')
     permissions_custom_sidebar_on_all_pages = models.BooleanField(db_column='PermissionsCustomSidebarOnAllPages', verbose_name='Show Custom Sidebar On All Pages')
     permissions_manage_interaction = models.BooleanField(db_column='PermissionsManageInteraction', verbose_name='Manage Flow')
     permissions_view_my_teams_dashboards = models.BooleanField(db_column='PermissionsViewMyTeamsDashboards', verbose_name="View My Team's Dashboards")
@@ -11330,6 +12860,8 @@ class Profile(models.Model):
     permissions_allow_email_ic = models.BooleanField(db_column='PermissionsAllowEmailIC', verbose_name='Email-Based Identity Verification Option')
     permissions_chatter_file_link = models.BooleanField(db_column='PermissionsChatterFileLink', verbose_name='Create Public Links')
     permissions_force_two_factor = models.BooleanField(db_column='PermissionsForceTwoFactor', verbose_name='Multi-Factor Authentication for User Interface Logins')
+    permissions_view_event_log_files = models.BooleanField(db_column='PermissionsViewEventLogFiles', verbose_name='View Event Log Files')
+    permissions_manage_networks = models.BooleanField(db_column='PermissionsManageNetworks', verbose_name='Create and Set Up Experiences')
     permissions_view_case_interaction = models.BooleanField(db_column='PermissionsViewCaseInteraction', verbose_name='Use Case Feed')
     permissions_manage_auth_providers = models.BooleanField(db_column='PermissionsManageAuthProviders', verbose_name='Manage Auth. Providers')
     permissions_run_flow = models.BooleanField(db_column='PermissionsRunFlow', verbose_name='Run Flows')
@@ -11349,6 +12881,7 @@ class Profile(models.Model):
     permissions_connect_org_to_environment_hub = models.BooleanField(db_column='PermissionsConnectOrgToEnvironmentHub', verbose_name='Connect Organization to Environment Hub')
     permissions_create_customize_filters = models.BooleanField(db_column='PermissionsCreateCustomizeFilters', verbose_name='Create and Customize List Views')
     permissions_content_hub_user = models.BooleanField(db_column='PermissionsContentHubUser', verbose_name='Files Connect Cloud')
+    permissions_govern_networks = models.BooleanField(db_column='PermissionsGovernNetworks', verbose_name='Manage Experiences')
     permissions_sales_console = models.BooleanField(db_column='PermissionsSalesConsole', verbose_name='Sales Console')
     permissions_two_factor_api = models.BooleanField(db_column='PermissionsTwoFactorApi', verbose_name='Multi-Factor Authentication for API Logins')
     permissions_delete_topics = models.BooleanField(db_column='PermissionsDeleteTopics', verbose_name='Delete Topics')
@@ -11369,6 +12902,7 @@ class Profile(models.Model):
     permissions_manage_internal_users = models.BooleanField(db_column='PermissionsManageInternalUsers', verbose_name='Manage Internal Users')
     permissions_manage_password_policies = models.BooleanField(db_column='PermissionsManagePasswordPolicies', verbose_name='Manage Password Policies')
     permissions_manage_login_access_policies = models.BooleanField(db_column='PermissionsManageLoginAccessPolicies', verbose_name='Manage Login Access Policies')
+    permissions_manage_custom_permissions = models.BooleanField(db_column='PermissionsManageCustomPermissions', verbose_name='Manage Custom Permissions')
     permissions_can_verify_comment = models.BooleanField(db_column='PermissionsCanVerifyComment', verbose_name='Verify Answers to Chatter Questions')
     permissions_manage_unlisted_groups = models.BooleanField(db_column='PermissionsManageUnlistedGroups', verbose_name='Manage Unlisted Groups')
     permissions_std_automatic_activity_capture = models.BooleanField(db_column='PermissionsStdAutomaticActivityCapture', verbose_name='Use Einstein Activity Capture Standard')
@@ -11397,6 +12931,7 @@ class Profile(models.Model):
     permissions_delegated_two_factor = models.BooleanField(db_column='PermissionsDelegatedTwoFactor', verbose_name='Manage Multi-Factor Authentication in User Interface')
     permissions_chatter_compose_ui_codesnippet = models.BooleanField(db_column='PermissionsChatterComposeUiCodesnippet', verbose_name='Allow Inclusion of Code Snippets from UI')
     permissions_select_files_from_salesforce = models.BooleanField(db_column='PermissionsSelectFilesFromSalesforce', verbose_name='Select Files from Salesforce')
+    permissions_moderate_network_users = models.BooleanField(db_column='PermissionsModerateNetworkUsers', verbose_name='Moderate Experience Cloud Site Users')
     permissions_voice_outbound = models.BooleanField(db_column='PermissionsVoiceOutbound', verbose_name='Access Dialer Outbound Calls')
     permissions_voice_inbound = models.BooleanField(db_column='PermissionsVoiceInbound', verbose_name='Access Dialer Inbound Calls')
     permissions_voice_minutes = models.BooleanField(db_column='PermissionsVoiceMinutes', verbose_name='Access Dialer Minutes')
@@ -11414,6 +12949,7 @@ class Profile(models.Model):
     permissions_allow_view_edit_converted_leads = models.BooleanField(db_column='PermissionsAllowViewEditConvertedLeads', verbose_name='View and Edit Converted Leads')
     permissions_social_insights_logo_admin = models.BooleanField(db_column='PermissionsSocialInsightsLogoAdmin', verbose_name='Remove Logos from Accounts')
     permissions_show_company_name_as_user_badge = models.BooleanField(db_column='PermissionsShowCompanyNameAsUserBadge', verbose_name='Show Company Name as Site Role')
+    permissions_access_cmc = models.BooleanField(db_column='PermissionsAccessCMC', verbose_name='Access Experience Management')
     permissions_view_health_check = models.BooleanField(db_column='PermissionsViewHealthCheck', verbose_name='View Health Check')
     permissions_manage_health_check = models.BooleanField(db_column='PermissionsManageHealthCheck', verbose_name='Manage Health Check')
     permissions_packaging2 = models.BooleanField(db_column='PermissionsPackaging2', verbose_name='Create and Update Second-Generation Packages')
@@ -11452,6 +12988,7 @@ class Profile(models.Model):
     permissions_wave_manage_private_assets_user = models.BooleanField(db_column='PermissionsWaveManagePrivateAssetsUser', verbose_name='Manage CRM Analytics Private Assets')
     permissions_can_edit_data_prep_recipe = models.BooleanField(db_column='PermissionsCanEditDataPrepRecipe', verbose_name='Edit Dataset Recipes')
     permissions_add_analytics_remote_connections = models.BooleanField(db_column='PermissionsAddAnalyticsRemoteConnections', verbose_name='Add CRM Analytics Remote Connections')
+    permissions_manage_surveys = models.BooleanField(db_column='PermissionsManageSurveys', verbose_name='Manage Surveys')
     permissions_use_assistant_dialog = models.BooleanField(db_column='PermissionsUseAssistantDialog', verbose_name='Instant Actionable Results')
     permissions_use_query_suggestions = models.BooleanField(db_column='PermissionsUseQuerySuggestions', verbose_name='Natural Language Search')
     permissions_view_roles = models.BooleanField(db_column='PermissionsViewRoles', verbose_name='View Roles and Role Hierarchy')
@@ -11482,14 +13019,20 @@ class Profile(models.Model):
     permissions_learning_manager = models.BooleanField(db_column='PermissionsLearningManager', verbose_name='Manage Learning')
     permissions_send_custom_notifications = models.BooleanField(db_column='PermissionsSendCustomNotifications', verbose_name='Send Custom Notifications')
     permissions_packaging2_delete = models.BooleanField(db_column='PermissionsPackaging2Delete', verbose_name='Delete Second-Generation Packages')
+    permissions_manage_trust_measures = models.BooleanField(db_column='PermissionsManageTrustMeasures', verbose_name='Manage Trust Measures')
+    permissions_view_trust_measures = models.BooleanField(db_column='PermissionsViewTrustMeasures', verbose_name='View Trust Measures')
     permissions_manage_learning_reporting = models.BooleanField(db_column='PermissionsManageLearningReporting', verbose_name='Manage Learning Reporting')
     permissions_isotope_cto_cuser = models.BooleanField(db_column='PermissionsIsotopeCToCUser', verbose_name='Salesforce Anywhere Integration Access')
+    permissions_has_unlimited_erb_scoring_requests = models.BooleanField(db_column='PermissionsHasUnlimitedErbScoringRequests', verbose_name='User Has Unlimited Erb Model Scoring')
     permissions_isotope_access = models.BooleanField(db_column='PermissionsIsotopeAccess', verbose_name='Salesforce Anywhere on Mobile')
     permissions_isotope_lex = models.BooleanField(db_column='PermissionsIsotopeLEX', verbose_name='Salesforce Anywhere in Lightning Experience')
     permissions_quip_metrics_access = models.BooleanField(db_column='PermissionsQuipMetricsAccess', verbose_name='Quip Metrics')
     permissions_quip_user_engagement_metrics = models.BooleanField(db_column='PermissionsQuipUserEngagementMetrics', verbose_name='Quip User Engagement Metrics')
     permissions_manage_external_connections = models.BooleanField(db_column='PermissionsManageExternalConnections', verbose_name='Allow user to modify Private Connections')
     permissions_use_subscription_emails = models.BooleanField(db_column='PermissionsUseSubscriptionEmails', verbose_name='Subscribe to CRM Analytics Assets')
+    permissions_aiview_insight_objects = models.BooleanField(db_column='PermissionsAIViewInsightObjects', verbose_name='View AI Insight Objects')
+    permissions_aicreate_insight_objects = models.BooleanField(db_column='PermissionsAICreateInsightObjects', verbose_name='Create AI Insight Objects')
+    permissions_view_mlmodels = models.BooleanField(db_column='PermissionsViewMLModels', verbose_name='Allow users to view MLModels and related Entities')
     permissions_native_webview_scrolling = models.BooleanField(db_column='PermissionsNativeWebviewScrolling', verbose_name='Salesforce Mobile App: Native scrolling on webviews')
     permissions_view_developer_name = models.BooleanField(db_column='PermissionsViewDeveloperName', verbose_name='View DeveloperName')
     permissions_bypass_mfafor_ui_logins = models.BooleanField(db_column='PermissionsBypassMFAForUiLogins', verbose_name='Waive Multi-Factor Authentication for Exempt Users')
@@ -11960,7 +13503,7 @@ class QueueRoutingConfig(models.Model):
 
 class QueueSobject(models.Model):
     queue = models.ForeignKey(Group, models.DO_NOTHING, db_column='QueueId', verbose_name='Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    sobject_type = models.CharField(db_column='SobjectType', max_length=41, verbose_name='sObject Type', sf_read_only=models.NOT_UPDATEABLE, choices=[('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Data__c', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('AgentWork', None), ('Case', None), ('ChangeRequest', None), ('ContactRequest', None), ('Dhruvsoft__O2O_Logs__c', None), ('Image', None), ('Incident', None), ('Lead', None), ('Location_Zone__c', None), ('Macro', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Variation_Add_On_Choice__c', None), ('Order', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Problem', None), ('ProcessException', None), ('Product_Category_Info__c', None), ('ProfileSkill', None), ('QuickText', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('Scorecard', None), ('ServiceContract', None), ('ServiceResource', None), ('SocialPost', None), ('Task', None), ('typeform__Form__c', None), ('typeform__InstallationSettings__c', None), ('typeform__Typeform_Error__c', None), ('UserProvisioningRequest', None), ('UserServicePresence', None), ('VoiceCall', None), ('WebCartDocument', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
+    sobject_type = models.CharField(db_column='SobjectType', max_length=41, verbose_name='sObject Type', sf_read_only=models.NOT_UPDATEABLE, choices=[('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Data__c', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('AgentWork', None), ('Case', None), ('ChangeRequest', None), ('ContactRequest', None), ('Dhruvsoft__O2O_Logs__c', None), ('Disposal_Fee__c', None), ('Image', None), ('Incident', None), ('Lead', None), ('Location', None), ('Location_Zone__c', None), ('LocationTrustMeasure', None), ('Macro', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Waste_Type__c', None), ('Order', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Problem', None), ('ProcessException', None), ('Product_Add_On_Choice__c', None), ('Product_Category_Info__c', None), ('ProfileSkill', None), ('QuickText', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('Scorecard', None), ('Seller_Product__c', None), ('Seller_Product_Location_Zone__c', None), ('ServiceAppointmentGroup', None), ('ServiceContract', None), ('ServiceResource', None), ('SocialPost', None), ('Task', None), ('typeform__Form__c', None), ('typeform__InstallationSettings__c', None), ('typeform__Typeform_Error__c', None), ('UserProvisioningRequest', None), ('UserServicePresence', None), ('VoiceCall', None), ('Waste_Type__c', None), ('WebCartDocument', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkProcedure', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     class Meta(models.Model.Meta):
@@ -12270,7 +13813,7 @@ class RecentlyViewed(models.Model):
     first_name = models.CharField(db_column='FirstName', max_length=40, sf_read_only=models.READ_ONLY, blank=True, null=True)
     middle_name = models.CharField(db_column='MiddleName', max_length=40, sf_read_only=models.READ_ONLY, blank=True, null=True)
     suffix = models.CharField(db_column='Suffix', max_length=40, sf_read_only=models.READ_ONLY, blank=True, null=True)
-    type = models.CharField(db_column='Type', max_length=41, sf_read_only=models.READ_ONLY, choices=[('Account', None), ('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Data__c', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('AppAnalyticsQueryRequest', None), ('Asset', None), ('AssetRelationship', None), ('BusinessHours', None), ('Campaign', None), ('Case', None), ('ChangeRequest', None), ('CollaborationGroup', None), ('Contact', None), ('ContactRequest', None), ('ContentDocument', None), ('Contract', None), ('ContractLineItem', None), ('Dashboard', None), ('Dhruvsoft__O2O_Logs__c', None), ('Document', None), ('DuplicateRecordSet', None), ('EnhancedLetterhead', None), ('Entitlement', None), ('Event', None), ('Idea', None), ('Image', None), ('Incident', None), ('Lead', None), ('ListEmail', None), ('ListView', None), ('Location_Zone__c', None), ('Macro', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Variation_Add_On_Choice__c', None), ('ManagedContentSpace', None), ('Opportunity', None), ('OpportunityLineItem', None), ('Order', None), ('pandadoc__DocStatus__c', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Pricebook2', None), ('PricebookEntry', None), ('Problem', None), ('ProcessException', None), ('Product_Category_Info__c', None), ('Product2', None), ('Profile', None), ('ProfileSkill', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('Report', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('Scorecard', None), ('ScorecardAssociation', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('Skill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('StreamingChannel', None), ('Task', None), ('Topic', None), ('typeform__Form__c', None), ('typeform__Form_Mapping__c', None), ('typeform__InstallationSettings__c', None), ('typeform__Typeform_Error__c', None), ('User', None), ('UserAppMenuItem', None), ('VoiceCall', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkStep', None), ('WorkStepTemplate', None)], blank=True, null=True)
+    type = models.CharField(db_column='Type', max_length=41, sf_read_only=models.READ_ONLY, choices=[('Account', None), ('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Data__c', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('AppAnalyticsQueryRequest', None), ('Asset', None), ('AssetRelationship', None), ('AssociatedLocation', None), ('BusinessHours', None), ('Campaign', None), ('Case', None), ('ChangeRequest', None), ('CollaborationGroup', None), ('Contact', None), ('ContactRequest', None), ('ContentDocument', None), ('Contract', None), ('ContractLineItem', None), ('Dashboard', None), ('Dhruvsoft__O2O_Logs__c', None), ('Disposal_Fee__c', None), ('Document', None), ('DuplicateRecordSet', None), ('EnhancedLetterhead', None), ('Entitlement', None), ('Event', None), ('FlowOrchestrationInstance', None), ('FlowOrchestrationWorkItem', None), ('Idea', None), ('Image', None), ('Incident', None), ('Lead', None), ('ListEmail', None), ('ListView', None), ('Location', None), ('Location_Zone__c', None), ('LocationTrustMeasure', None), ('Macro', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Waste_Type__c', None), ('ManagedContentSpace', None), ('Opportunity', None), ('OpportunityLineItem', None), ('Order', None), ('pandadoc__DocStatus__c', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Pricebook2', None), ('PricebookEntry', None), ('Problem', None), ('ProcessException', None), ('Product_Add_On_Choice__c', None), ('Product_Category_Info__c', None), ('Product2', None), ('Profile', None), ('ProfileSkill', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('Report', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('Scorecard', None), ('ScorecardAssociation', None), ('Seller_Product__c', None), ('Seller_Product_Location_Zone__c', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('Skill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('StreamingChannel', None), ('Task', None), ('Topic', None), ('typeform__Form__c', None), ('typeform__Form_Mapping__c', None), ('typeform__InstallationSettings__c', None), ('typeform__Typeform_Error__c', None), ('User', None), ('UserAppMenuItem', None), ('VoiceCall', None), ('Waste_Type__c', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkStep', None), ('WorkStepTemplate', None)], blank=True, null=True)
     alias = models.CharField(db_column='Alias', max_length=8, sf_read_only=models.READ_ONLY, blank=True, null=True)
     user_role = models.ForeignKey('UserRole', models.DO_NOTHING, db_column='UserRoleId', verbose_name='Role ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
     record_type = models.ForeignKey('RecordType', models.DO_NOTHING, db_column='RecordTypeId', verbose_name='Record Type ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -12308,6 +13851,8 @@ class Recommendation(models.Model):
     rejection_label = models.CharField(db_column='RejectionLabel', max_length=80)
     is_action_active = models.BooleanField(db_column='IsActionActive', sf_read_only=models.READ_ONLY, default=False)
     external_id = models.CharField(db_column='ExternalId', max_length=255, blank=True, null=True)
+    recommendation_mode = models.CharField(db_column='RecommendationMode', max_length=255, choices=[('Learning', None), ('Intelligent', None)], blank=True, null=True)
+    recommendation_score = models.DecimalField(db_column='RecommendationScore', max_digits=5, decimal_places=2, blank=True, null=True)
     recommendation_key = models.CharField(db_column='RecommendationKey', max_length=255, verbose_name='RecommendationResponse Identifier', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'Recommendation'
@@ -12352,14 +13897,14 @@ class RecordAction(models.Model):
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='recordaction_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
-    record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RecordId', verbose_name='Parent Record ID')  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, CampaignMember, Case, ChangeRequest, CollaborationGroup, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EnhancedLetterhead, Entitlement, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Pricebook2, PricebookEntry, Problem, Product2, Product_Category_Info__c, Quote, QuoteLineItem, Reviews__c, Scorecard, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPersona, SocialPost, User, VoiceCall, WorkOrder, WorkOrderLineItem, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
-    flow_definition = models.CharField(db_column='FlowDefinition', max_length=255, verbose_name='Interaction Definition ID', choices=[('hvs_linkedin__ConnectionRequest', None), ('hvs_linkedin__InMail', None), ('runtime_industries_recurrence__Orch', None), ('runtime_industries_recurrence__Schdlr', None), ('runtime_service_incident_mgmt__CCOIO', None), ('runtime_service_incident_mgmt__CRRI', None), ('setup_service_experience__Create_Case', None), ('setup_service_experience__Reset_Pwd', None), ('setup_service_experience__Verify_Cust', None)], blank=True, null=True)
+    record = models.ForeignKey(Account, models.DO_NOTHING, db_column='RecordId', verbose_name='Parent Record ID')  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, AssociatedLocation, Campaign, CampaignMember, Case, ChangeRequest, CollaborationGroup, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EnhancedLetterhead, Entitlement, In_App_Checklist_Settings__c, Incident, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Pricebook2, PricebookEntry, Problem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, QuoteLineItem, Reviews__c, Scorecard, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPersona, SocialPost, User, VoiceCall, Waste_Type__c, WorkOrder, WorkOrderLineItem, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    flow_definition = models.CharField(db_column='FlowDefinition', max_length=255, verbose_name='Interaction Definition ID', choices=[('healthcloud_pm_flows__AcceptSlots', None), ('hvs_linkedin__ConnectionRequest', None), ('hvs_linkedin__InMail', None), ('runtime_industries_recurrence__Orch', None), ('runtime_industries_recurrence__Schdlr', None), ('runtime_service_incident_mgmt__CCOIO', None), ('runtime_service_incident_mgmt__CRRI', None), ('setup_service_experience__Create_Case', None), ('setup_service_experience__Reset_Pwd', None), ('setup_service_experience__Verify_Cust', None)], blank=True, null=True)
     flow_interview = models.ForeignKey(FlowInterview, models.DO_NOTHING, db_column='FlowInterviewId', verbose_name='FlowInterview ID', blank=True, null=True)
     order = models.IntegerField(db_column='Order')
     status = models.CharField(db_column='Status', max_length=255, default='New', choices=[('New', 'New'), ('Paused', 'Paused'), ('Complete', 'Complete'), ('Started', 'Started'), ('Unlinked', 'Unlinked')], blank=True, null=True)
     pinned = models.CharField(db_column='Pinned', max_length=255, default='None', choices=[('None', 'None'), ('Top', 'Top'), ('Bottom', 'Bottom')], blank=True, null=True)
     action_type = models.CharField(db_column='ActionType', max_length=255, default='Flow', choices=[('Flow', 'Flow'), ('QuickAction', 'QuickAction'), ('Omniscript', '2')], blank=True, null=True)
-    action_definition = models.CharField(db_column='ActionDefinition', max_length=255, choices=[('hvs_linkedin__ConnectionRequest', None), ('hvs_linkedin__InMail', None), ('QuickActionDefinition.Campaign.Child_Campaign', None), ('QuickActionDefinition.Case._LightningUpdateCase', None), ('QuickActionDefinition.Case.NewChildCase', None), ('QuickActionDefinition.Case.SendEmail', None), ('QuickActionDefinition.Case.SocialPublisher', None), ('QuickActionDefinition.ChangeRequest._LightningUpdateChangeRequest', None), ('QuickActionDefinition.CollaborationGroup.NewGroupMember', None), ('QuickActionDefinition.CollaborationGroup.NewGroupRecord', None), ('QuickActionDefinition.Contact._LightningRelatedContact', None), ('QuickActionDefinition.Dhruvsoft__Convert_To_Order', None), ('QuickActionDefinition.FeedItem.ContentNote', None), ('QuickActionDefinition.FeedItem.ContentPost', None), ('QuickActionDefinition.FeedItem.LinkPost', None), ('QuickActionDefinition.FeedItem.MobileSmartActions', None), ('QuickActionDefinition.FeedItem.PollPost', None), ('QuickActionDefinition.FeedItem.QuestionPost', None), ('QuickActionDefinition.FeedItem.RypplePost', None), ('QuickActionDefinition.FeedItem.TextPost', None), ('QuickActionDefinition.Follow_Up', None), ('QuickActionDefinition.Incident._LightningUpdateIncident', None), ('QuickActionDefinition.Lead.SocialPublisher', None), ('QuickActionDefinition.LogACall', None), ('QuickActionDefinition.NewCase', None), ('QuickActionDefinition.NewContact', None), ('QuickActionDefinition.NewEvent', None), ('QuickActionDefinition.NewGroup', None), ('QuickActionDefinition.NewTask', None), ('QuickActionDefinition.Problem._LightningUpdateProblem', None), ('QuickActionDefinition.Quote.SendEmail', None), ('QuickActionDefinition.SendEmail', None), ('QuickActionDefinition.SocialPost.SocialPublisher', None), ('QuickActionDefinition.typeform__Form__c.typeform__New_Typeform_Mapping', None), ('runtime_industries_recurrence__Orch', None), ('runtime_industries_recurrence__Schdlr', None), ('runtime_service_incident_mgmt__CCOIO', None), ('runtime_service_incident_mgmt__CRRI', None), ('setup_service_experience__Create_Case', None), ('setup_service_experience__Reset_Pwd', None), ('setup_service_experience__Verify_Cust', None)], blank=True, null=True)
+    action_definition = models.CharField(db_column='ActionDefinition', max_length=255, choices=[('healthcloud_pm_flows__AcceptSlots', None), ('hvs_linkedin__ConnectionRequest', None), ('hvs_linkedin__InMail', None), ('QuickActionDefinition.Campaign.Child_Campaign', None), ('QuickActionDefinition.Case._LightningUpdateCase', None), ('QuickActionDefinition.Case.NewChildCase', None), ('QuickActionDefinition.Case.SendEmail', None), ('QuickActionDefinition.Case.SocialPublisher', None), ('QuickActionDefinition.ChangeRequest._LightningUpdateChangeRequest', None), ('QuickActionDefinition.CollaborationGroup.NewGroupMember', None), ('QuickActionDefinition.CollaborationGroup.NewGroupRecord', None), ('QuickActionDefinition.Contact._LightningRelatedContact', None), ('QuickActionDefinition.Dhruvsoft__Convert_To_Order', None), ('QuickActionDefinition.FeedItem.ContentNote', None), ('QuickActionDefinition.FeedItem.ContentPost', None), ('QuickActionDefinition.FeedItem.LinkPost', None), ('QuickActionDefinition.FeedItem.MobileSmartActions', None), ('QuickActionDefinition.FeedItem.PollPost', None), ('QuickActionDefinition.FeedItem.QuestionPost', None), ('QuickActionDefinition.FeedItem.RypplePost', None), ('QuickActionDefinition.FeedItem.TextPost', None), ('QuickActionDefinition.Follow_Up', None), ('QuickActionDefinition.Incident._LightningUpdateIncident', None), ('QuickActionDefinition.Lead.SocialPublisher', None), ('QuickActionDefinition.LogACall', None), ('QuickActionDefinition.NewCase', None), ('QuickActionDefinition.NewContact', None), ('QuickActionDefinition.NewEvent', None), ('QuickActionDefinition.NewGroup', None), ('QuickActionDefinition.NewTask', None), ('QuickActionDefinition.Problem._LightningUpdateProblem', None), ('QuickActionDefinition.Quote.SendEmail', None), ('QuickActionDefinition.SendEmail', None), ('QuickActionDefinition.SocialPost.SocialPublisher', None), ('QuickActionDefinition.typeform__Form__c.typeform__New_Typeform_Mapping', None), ('runtime_industries_recurrence__Orch', None), ('runtime_industries_recurrence__Schdlr', None), ('runtime_service_incident_mgmt__CCOIO', None), ('runtime_service_incident_mgmt__CRRI', None), ('setup_service_experience__Create_Case', None), ('setup_service_experience__Reset_Pwd', None), ('setup_service_experience__Verify_Cust', None)], blank=True, null=True)
     is_mandatory = models.BooleanField(db_column='IsMandatory', default=False)
     is_ui_remove_hidden = models.BooleanField(db_column='IsUiRemoveHidden', verbose_name='Hide Remove Action in UI', default=False)
     class Meta(models.Model.Meta):
@@ -12376,7 +13921,7 @@ class RecordActionHistory(models.Model):
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='recordactionhistory_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
-    parent_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentRecordId', verbose_name='Parent Record ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, CampaignMember, Case, ChangeRequest, CollaborationGroup, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, EnhancedLetterhead, Entitlement, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Pricebook2, PricebookEntry, Problem, Product2, Product_Category_Info__c, Quote, QuoteLineItem, Reviews__c, Scorecard, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPersona, SocialPost, User, VoiceCall, WorkOrder, WorkOrderLineItem, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
+    parent_record = models.ForeignKey(Account, models.DO_NOTHING, db_column='ParentRecordId', verbose_name='Parent Record ID', sf_read_only=models.READ_ONLY)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, AssociatedLocation, Campaign, CampaignMember, Case, ChangeRequest, CollaborationGroup, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, EnhancedLetterhead, Entitlement, In_App_Checklist_Settings__c, Incident, Lead, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Pricebook2, PricebookEntry, Problem, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, QuoteLineItem, Reviews__c, Scorecard, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, ServiceResourceSkill, SkillRequirement, SocialPersona, SocialPost, User, VoiceCall, Waste_Type__c, WorkOrder, WorkOrderLineItem, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c]
     action_definition_api_name = models.CharField(db_column='ActionDefinitionApiName', max_length=255, verbose_name='Action Definition API Name', sf_read_only=models.READ_ONLY)
     action_definition_label = models.CharField(db_column='ActionDefinitionLabel', max_length=255, sf_read_only=models.READ_ONLY)
     action_type = models.CharField(db_column='ActionType', max_length=255, sf_read_only=models.READ_ONLY, default='Flow', choices=[('Flow', 'Flow'), ('QuickAction', 'QuickAction'), ('Omniscript', '2')])
@@ -12654,6 +14199,7 @@ class SamlSsoConfig(models.Model):
     audience = models.CharField(db_column='Audience', max_length=255, verbose_name='Entity ID', sf_read_only=models.READ_ONLY)
     identity_mapping = models.CharField(db_column='IdentityMapping', max_length=255, verbose_name='SAML Identity Type', sf_read_only=models.READ_ONLY, choices=[('Username', None), ('FederationId', None), ('UserId', None)])
     identity_location = models.CharField(db_column='IdentityLocation', max_length=255, verbose_name='SAML Identity Location', sf_read_only=models.READ_ONLY, choices=[('SubjectNameId', None), ('Attribute', None)])
+    saml_jit_handler = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='SamlJitHandlerId', verbose_name='Class ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
     execution_user = models.ForeignKey('User', models.DO_NOTHING, db_column='ExecutionUserId', related_name='samlssoconfig_executionuser_set', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
     login_url = models.CharField(db_column='LoginUrl', max_length=1500, verbose_name='Identity Provider Login URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
     logout_url = models.CharField(db_column='LogoutUrl', max_length=1500, verbose_name='Identity Provider Logout URL', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -12811,6 +14357,83 @@ class SecurityCustomBaseline(models.Model):
         verbose_name = 'Security Custom Baseline'
         verbose_name_plural = 'Security Custom Baselines'
         # keyPrefix = '09v'
+
+
+
+class SellerProductLocationZoneShare(models.Model):
+    parent = models.ForeignKey('SellerProductLocationZone', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='Manual', choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'Seller_Product_Location_Zone__Share'
+        verbose_name = 'Share: Seller Product Location Zone'
+        verbose_name_plural = 'Share: Seller Product Location Zone'
+        # keyPrefix = None
+
+
+
+class SellerProductLocationZone(models.Model):
+    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=80, verbose_name='Seller Product Location Zone Name', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='sellerproductlocationzone_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='sellerproductlocationzone_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    seller_product = models.ForeignKey('SellerProduct', models.DO_NOTHING, db_column='Seller_Product__c', verbose_name='Seller Product', blank=True, null=True)
+    location_zone = models.ForeignKey(LocationZone, models.DO_NOTHING, db_column='Location_Zone__c', verbose_name='Location Zone', blank=True, null=True)
+    delivery_fee = models.DecimalField(db_column='Delivery_Fee__c', max_digits=18, decimal_places=2, verbose_name='Delivery Fee', blank=True, null=True)
+    pickup_fee = models.DecimalField(db_column='Pickup_Fee__c', max_digits=18, decimal_places=2, verbose_name='Pickup Fee', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Seller_Product_Location_Zone__c'
+        verbose_name = 'Seller Product Location Zone'
+        verbose_name_plural = 'Seller Product Location Zones'
+        # keyPrefix = 'a0x'
+
+
+
+class SellerProductShare(models.Model):
+    parent = models.ForeignKey('SellerProduct', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='Manual', choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'Seller_Product__Share'
+        verbose_name = 'Share: Seller Product'
+        verbose_name_plural = 'Share: Seller Product'
+        # keyPrefix = None
+
+
+
+class SellerProduct(models.Model):
+    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=80, verbose_name='Seller Product Name', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='sellerproduct_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='sellerproduct_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    product = models.ForeignKey(Product2, models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
+    rate = models.DecimalField(db_column='Rate__c', max_digits=18, decimal_places=2, blank=True, null=True)
+    service_provider = models.ForeignKey(Account, models.DO_NOTHING, db_column='Service_Provider__c', verbose_name='Service Provider', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Seller_Product__c'
+        verbose_name = 'Seller Product'
+        verbose_name_plural = 'Seller Products'
+        # keyPrefix = 'a0w'
 
 
 
@@ -13061,7 +14684,7 @@ class ServiceResourceHistory(models.Model):
     service_resource = models.ForeignKey(ServiceResource, models.DO_NOTHING, db_column='ServiceResourceId', verbose_name='Resource ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account'), ('IsActive', 'Active'), ('created', 'Created.'), ('Description', 'Description'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('Name', 'Name'), ('Owner', 'Owner'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('ResourceType', 'Resource Type'), ('RelatedRecord', 'User')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account'), ('IsActive', 'Active'), ('created', 'Created.'), ('Description', 'Description'), ('feedEvent', 'Feed event'), ('individualMerged', 'Individual Merged'), ('Location', 'Location'), ('Name', 'Name'), ('Owner', 'Owner'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('ResourceType', 'Resource Type'), ('RelatedRecord', 'User')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -13230,14 +14853,151 @@ class SetupAuditTrail(models.Model):
 
 class SetupEntityAccess(models.Model):
     parent = models.ForeignKey(PermissionSet, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    setup_entity = models.ForeignKey(ApexPage, models.DO_NOTHING, db_column='SetupEntityId', verbose_name='Setup Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [ApexPage, ConnectedApplication, CustomPermission, ExternalDataSource, ExternalSocialAccount, NamedCredential, ServicePresenceStatus] Master Detail Relationship *
-    setup_entity_type = models.CharField(db_column='SetupEntityType', max_length=40, sf_read_only=models.READ_ONLY, choices=[('ApexPage', None), ('ConnectedApplication', None), ('ConnectedApplication', None), ('CustomEntityDefinition', None), ('CustomPermission', None), ('ExternalDataSource', None), ('ExternalSocialAccount', None), ('NamedCredential', None), ('ServicePresenceStatus', None), ('TabSet', None)], blank=True, null=True)
+    setup_entity = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='SetupEntityId', verbose_name='Setup Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [ApexClass, ApexPage, ConnectedApplication, CustomPermission, ExternalDataSource, ExternalSocialAccount, NamedCredential, ServicePresenceStatus] Master Detail Relationship *
+    setup_entity_type = models.CharField(db_column='SetupEntityType', max_length=40, sf_read_only=models.READ_ONLY, choices=[('ApexClass', None), ('ApexPage', None), ('ConnectedApplication', None), ('ConnectedApplication', None), ('CustomEntityDefinition', None), ('CustomPermission', None), ('ExternalDataSource', None), ('ExternalSocialAccount', None), ('NamedCredential', None), ('ServicePresenceStatus', None), ('TabSet', None)], blank=True, null=True)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
     class Meta(models.Model.Meta):
         db_table = 'SetupEntityAccess'
         verbose_name = 'Setup Entity Access'
         verbose_name_plural = 'Setup Entity Access'
         # keyPrefix = '0J0'
+
+
+
+class Site(models.Model):
+    name = models.CharField(db_column='Name', max_length=80, verbose_name='Site Name', sf_read_only=models.READ_ONLY)
+    subdomain = models.CharField(db_column='Subdomain', max_length=80, verbose_name='Site Subdomain Prefix', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    url_path_prefix = models.CharField(db_column='UrlPathPrefix', max_length=40, verbose_name='Default Web Address', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    guest_user = models.ForeignKey('User', models.DO_NOTHING, db_column='GuestUserId', related_name='site_guestuser_set', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    status = models.CharField(db_column='Status', max_length=40, verbose_name='Site Status', sf_read_only=models.READ_ONLY, choices=[('Active', 'Active'), ('Inactive', 'In Maintenance')])
+    admin = models.ForeignKey('User', models.DO_NOTHING, db_column='AdminId', related_name='site_admin_set', verbose_name='User ID', sf_read_only=models.READ_ONLY)
+    options_enable_feeds = models.BooleanField(db_column='OptionsEnableFeeds', verbose_name='Enable Feeds', sf_read_only=models.READ_ONLY)
+    options_redirect_to_custom_domain = models.BooleanField(db_column='OptionsRedirectToCustomDomain', verbose_name='Redirect to custom domain', sf_read_only=models.READ_ONLY)
+    options_allow_guest_payments_api = models.BooleanField(db_column='OptionsAllowGuestPaymentsApi', verbose_name='Guest Access to the Payments API', sf_read_only=models.READ_ONLY)
+    options_has_stored_path_prefix = models.BooleanField(db_column='OptionsHasStoredPathPrefix', verbose_name='HasStoredPathPrefix', sf_read_only=models.READ_ONLY)
+    options_cookie_consent = models.BooleanField(db_column='OptionsCookieConsent', verbose_name='Enforce Cookie Consent', sf_read_only=models.READ_ONLY)
+    options_cache_public_vf_pages_in_proxies = models.BooleanField(db_column='OptionsCachePublicVfPagesInProxies', verbose_name='Cache public Visualforce pages', sf_read_only=models.READ_ONLY)
+    options_allow_home_page = models.BooleanField(db_column='OptionsAllowHomePage', verbose_name='Enable Standard Home Page', sf_read_only=models.READ_ONLY)
+    options_allow_standard_ideas_pages = models.BooleanField(db_column='OptionsAllowStandardIdeasPages', verbose_name='Enable Standard Ideas Pages', sf_read_only=models.READ_ONLY)
+    options_allow_standard_search = models.BooleanField(db_column='OptionsAllowStandardSearch', verbose_name='Enable Standard Lookup Pages', sf_read_only=models.READ_ONLY)
+    options_allow_standard_lookups = models.BooleanField(db_column='OptionsAllowStandardLookups', verbose_name='Enable Standard Search Pages', sf_read_only=models.READ_ONLY)
+    options_allow_standard_answers_pages = models.BooleanField(db_column='OptionsAllowStandardAnswersPages', verbose_name='Enable Standard Answers Pages', sf_read_only=models.READ_ONLY)
+    options_allow_guest_support_api = models.BooleanField(db_column='OptionsAllowGuestSupportApi', verbose_name='Guest Access to the Support API', sf_read_only=models.READ_ONLY)
+    options_allow_standard_portal_pages = models.BooleanField(db_column='OptionsAllowStandardPortalPages', verbose_name='Allow Access to Standard Salesforce Pages', sf_read_only=models.READ_ONLY)
+    options_content_sniffing_protection = models.BooleanField(db_column='OptionsContentSniffingProtection', verbose_name='Enable Content Sniffing Protection', sf_read_only=models.READ_ONLY)
+    options_browser_xss_protection = models.BooleanField(db_column='OptionsBrowserXssProtection', verbose_name='Enable Browser Cross Site Scripting Protection', sf_read_only=models.READ_ONLY)
+    options_referrer_policy_origin_when_cross_origin = models.BooleanField(db_column='OptionsReferrerPolicyOriginWhenCrossOrigin', verbose_name='Referrer URL Protection', sf_read_only=models.READ_ONLY)
+    description = models.TextField(db_column='Description', verbose_name='Site Description', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    master_label = models.CharField(db_column='MasterLabel', max_length=255, verbose_name='Site Label', sf_read_only=models.READ_ONLY)
+    analytics_tracking_code = models.CharField(db_column='AnalyticsTrackingCode', max_length=40, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    site_type = models.CharField(db_column='SiteType', max_length=40, sf_read_only=models.READ_ONLY, choices=[('Siteforce', 'Site.com'), ('Visualforce', 'Force.com')])
+    clickjack_protection_level = models.CharField(db_column='ClickjackProtectionLevel', max_length=40, sf_read_only=models.READ_ONLY, default='SameOriginOnly', choices=[('AllowAllFraming', 'Allow framing by any page (No protection)'), ('External', 'Allow framing of site pages on external domains (Good protection)'), ('SameOriginOnly', 'Allow framing by the same origin only (Recommended)'), ('NoFraming', "Don't allow framing by any page (Most protection)")])
+    daily_bandwidth_limit = models.IntegerField(db_column='DailyBandwidthLimit', verbose_name='Daily Bandwidth Limit (MB)', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    daily_bandwidth_used = models.IntegerField(db_column='DailyBandwidthUsed', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    daily_request_time_limit = models.IntegerField(db_column='DailyRequestTimeLimit', verbose_name='Daily Request Time Limit (min)', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    daily_request_time_used = models.IntegerField(db_column='DailyRequestTimeUsed', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    monthly_page_views_entitlement = models.IntegerField(db_column='MonthlyPageViewsEntitlement', verbose_name='Monthly Page Views Allowed', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='site_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='site_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    guest_record_default_owner = models.ForeignKey('User', models.DO_NOTHING, db_column='GuestRecordDefaultOwnerId', related_name='site_guestrecorddefaultowner_set', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Site'
+        verbose_name = 'Site'
+        verbose_name_plural = 'Sites'
+        # keyPrefix = '0DM'
+
+
+
+class SiteDetail(models.Model):
+    durable_id = models.CharField(db_column='DurableId', max_length=255, verbose_name='Site ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_registration_enabled = models.BooleanField(db_column='IsRegistrationEnabled', verbose_name='Self-Registration Enabled', sf_read_only=models.READ_ONLY, default=False)
+    secure_url = models.URLField(db_column='SecureUrl', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'SiteDetail'
+        verbose_name = 'Site Detail'
+        verbose_name_plural = 'Site Details'
+        # keyPrefix = '0GV'
+
+
+
+class SiteFeed(models.Model):
+    parent = models.ForeignKey(Site, models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    type = models.CharField(db_column='Type', max_length=40, verbose_name='Feed Item Type', sf_read_only=models.READ_ONLY, choices=[('TrackedChange', 'Tracked Change'), ('UserStatus', 'User Status'), ('TextPost', 'Text Post'), ('AdvancedTextPost', 'Advanced Text Post'), ('LinkPost', 'Link Post'), ('ContentPost', 'Content Post'), ('PollPost', 'Poll'), ('RypplePost', 'WDC Thanks'), ('ProfileSkillPost', 'Profile Skill Post'), ('DashboardComponentSnapshot', 'Dashboard Component Snapshot'), ('ApprovalPost', 'Approval Post'), ('CaseCommentPost', 'Case Comment Feed'), ('ReplyPost', 'Reply Post'), ('EmailMessageEvent', 'Email Message Feed'), ('CallLogPost', 'Call Log Feed'), ('ChangeStatusPost', 'Change Status Feed'), ('AttachArticleEvent', 'Attached Article'), ('MilestoneEvent', 'Milestone Event'), ('ActivityEvent', 'Activity Change'), ('ChatTranscriptPost', 'Chat Transcript Post'), ('CollaborationGroupCreated', 'Collaboration Group Created'), ('CollaborationGroupUnarchived', 'Collaboration Group Reactivated'), ('SocialPost', 'Social Post'), ('QuestionPost', 'Question Post'), ('FacebookPost', 'Facebook Post'), ('BasicTemplateFeedItem', 'Basic Template Post'), ('CreateRecordEvent', 'Created Record'), ('CanvasPost', 'Canvas'), ('AnnouncementPost', 'a')], blank=True, null=True)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='sitefeed_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    comment_count = models.IntegerField(db_column='CommentCount', sf_read_only=models.READ_ONLY)
+    like_count = models.IntegerField(db_column='LikeCount', sf_read_only=models.READ_ONLY)
+    title = models.CharField(db_column='Title', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    body = models.TextField(db_column='Body', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    link_url = models.URLField(db_column='LinkUrl', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    is_rich_text = models.BooleanField(db_column='IsRichText', sf_read_only=models.READ_ONLY, default=False)
+    related_record = models.ForeignKey(ContentVersion, models.DO_NOTHING, db_column='RelatedRecordId', verbose_name='Related Record ID', sf_read_only=models.READ_ONLY, blank=True, null=True)  # Reference to tables [ContentVersion, WorkThanks]
+    inserted_by = models.ForeignKey('User', models.DO_NOTHING, db_column='InsertedById', related_name='sitefeed_insertedby_set', verbose_name='InsertedBy ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    best_comment = models.ForeignKey(FeedComment, models.DO_NOTHING, db_column='BestCommentId', verbose_name='Best Comment ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'SiteFeed'
+        verbose_name = 'Site'
+        verbose_name_plural = 'Site'
+        # keyPrefix = None
+
+
+
+class SiteHistory(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    site = models.ForeignKey(Site, models.DO_NOTHING, db_column='SiteId', verbose_name='Site ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('siteActive', 'Active'), ('IndexPage', 'Active Site Home Page'), ('SiteAllowStandardPortalPages', 'Allow Access to Standard Salesforce Pages'), ('AnalyticsTrackingCode', 'Analytics Tracking Code'), ('siteOverride401', 'Authorization Required Page (401)'), ('siteOverrideChangePassword', 'Change Password Page'), ('ClickjackProtectionLevel', 'Clickjack Protection Level'), ('created', 'Created.'), ('SiteDeleteDomain', 'Custom Web Address'), ('siteNewDomain', 'Custom Web Address'), ('TopLevelDomain', 'Custom Web Address'), ('DefaultDomain', 'Default Site Domain'), ('siteSetPrimaryDomain', 'Default Site Domain'), ('UrlPathPrefix', 'Default Web Address'), ('siteBTDisabled', 'Disable Site'), ('siteEnableFeeds', 'Enable Feeds'), ('siteAllowStandardAnswersPages', 'Enable Standard Answers Pages'), ('siteAllowHomePage', 'Enable Standard Home Page'), ('siteAllowStandardIdeasPages', 'Enable Standard Ideas Pages'), ('siteAllowStandardSearch', 'Enable Standard Lookup Pages'), ('siteAllowStandardLookups', 'Enable Standard Search Pages'), ('feedEvent', 'Feed event'), ('siteOverrideForgotPassword', 'Forgot Password Page'), ('siteOverride500', 'Generic Error Page'), ('GuestUser', 'Guest User'), ('siteOverrideInactive', 'Inactive Site Home Page'), ('individualMerged', 'Individual Merged'), ('TemplateInfo', 'Lightning Community Template'), ('siteOverride509', 'Limit Exceeded Page (509)'), ('siteOverride503', 'Maintenance Page(500/503)'), ('sitePageLimitExceeded', 'Monthly page view limit exceeded for org'), ('siteOverrideMyProfile', 'My Profile Page'), ('NewPassTemplate', 'New Password Template'), ('NewUserTemplate', 'New User Template'), ('Options', 'Options'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('siteOverride404', 'Page Not Found Page (404)'), ('Portal', 'Portal'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('siteNewRedirect', 'redirection mappings. Created a new mapping'), ('siteDeleteRedirect', 'redirection mappings. Deleted the mapping'), ('siteChangeRedirect', 'redirection mappings. The new mapping value is'), ('siteRequireInsecurePortalAccess', 'Require Non-Secure Connections (HTTP)'), ('siteRequireHttps', 'Require Secure Connections (HTTPS)'), ('siteOverrideSelfReg', 'Self Registration Page'), ('ServerIsDown', 'Service Not Available'), ('Admin', 'Site Contact'), ('Description', 'Site Description'), ('FavoriteIcon', 'Site Favorite Icon'), ('MasterLabel', 'Site Label'), ('Language', 'Site Master Language'), ('Name', 'Site Name'), ('siteOverrideRobotsTxt', 'Site Robots.txt'), ('Status', 'Site Status'), ('Subdomain', 'Site Subdomain Prefix'), ('siteOverrideTemplate', 'Site Template'), ('SiteType', 'Site Type'), ('Guid', 'Unique ID'), ('UrlRewriterClass', 'URL Rewriter Class'), ('GuestRecordDefaultOwner', 'User')])
+    data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
+    old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'SiteHistory'
+        verbose_name = 'Site History'
+        verbose_name_plural = 'Site History'
+        # keyPrefix = None
+
+
+
+class SiteIframeWhiteListUrl(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='siteiframewhitelisturl_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='siteiframewhitelisturl_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    site = models.ForeignKey(Site, models.DO_NOTHING, db_column='SiteId', verbose_name='Site ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    url = models.CharField(db_column='Url', max_length=255, verbose_name='Domain', help_text='Accepts these formats: example.com, *.example.com, and http://example.com', blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'SiteIframeWhiteListUrl'
+        verbose_name = 'Trusted Domains for Inline Frames'
+        verbose_name_plural = 'Trusted Domains for Inline Frames'
+        # keyPrefix = '0Xs'
+
+
+
+class SiteRedirectMapping(models.Model):
+    site = models.ForeignKey(Site, models.DO_NOTHING, db_column='SiteId', verbose_name='Site ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    is_active = models.BooleanField(db_column='IsActive', verbose_name='Active', default=False)
+    source = models.URLField(db_column='Source', verbose_name='Source URL', sf_read_only=models.NOT_UPDATEABLE)
+    target = models.URLField(db_column='Target', verbose_name='Target URL', sf_read_only=models.NOT_UPDATEABLE)
+    action = models.CharField(db_column='Action', max_length=40, verbose_name='Redirect Type', sf_read_only=models.NOT_UPDATEABLE, choices=[('Permanent', 'Permanent (301)'), ('Temporary', 'Temporary (302)')])
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='siteredirectmapping_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='siteredirectmapping_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    class Meta(models.Model.Meta):
+        db_table = 'SiteRedirectMapping'
+        verbose_name = 'Site Redirect Mapping'
+        verbose_name_plural = 'Site Redirect Mapping'
+        # keyPrefix = '0H0'
 
 
 
@@ -13332,7 +15092,7 @@ class SlaProcess(models.Model):
     description = models.TextField(db_column='Description', sf_read_only=models.READ_ONLY, blank=True, null=True)
     is_active = models.BooleanField(db_column='IsActive', verbose_name='Active', sf_read_only=models.READ_ONLY, default=False)
     start_date_field = models.CharField(db_column='StartDateField', max_length=40, verbose_name='Custom Field Definition ID', sf_read_only=models.READ_ONLY, choices=[('Case.ClosedDate', None), ('Case.CreatedDate', None), ('Case.LastModifiedDate', None), ('Case.SlaStartDate', None), ('Case.StopStartDate', None), ('Incident.CreatedDate', None), ('Incident.DetectedDateTime', None), ('Incident.EndDateTime', None), ('Incident.LastModifiedDate', None), ('Incident.ResolutionDateTime', None), ('Incident.SlaStartDate', None), ('Incident.StartDateTime', None), ('Incident.StopStartDate', None), ('WorkOrder.CreatedDate', None), ('WorkOrder.EndDate', None), ('WorkOrder.LastModifiedDate', None), ('WorkOrder.SlaStartDate', None), ('WorkOrder.StartDate', None), ('WorkOrder.StopStartDate', None)])
-    sobject_type = models.CharField(db_column='SobjectType', max_length=40, verbose_name='Entitlement Process Type', sf_read_only=models.READ_ONLY, choices=[('Account', None), ('AccountContactRelation', None), ('AgentWork', None), ('AgentWorkSkill', None), ('Asset', None), ('AssetRelationship', None), ('AssistantProgress', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseComment', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('ChatterActivity', None), ('CollaborationGroup', None), ('CollaborationGroupMember', None), ('Contact', None), ('ContactRequest', None), ('Contract', None), ('ContractLineItem', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntitlementContact', None), ('EntityMilestone', None), ('Event', None), ('ExchangeUserMapping', None), ('ExpressionFilter', None), ('ExpressionFilterCriteria', None), ('ExternalEventMapping', None), ('FeedItem', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('LearningAssignment', None), ('LearningAssignmentProgress', None), ('LearningItem', None), ('LearningLinkProgress', None), ('Macro', None), ('MacroAction', None), ('MacroInstruction', None), ('MacroUsage', None), ('ManagedContentTranslationJobLanguage', None), ('MobileHomeConfiguration', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('Order', None), ('OrderItem', None), ('OrgDeleteRequest', None), ('OrgMetricScanResult', None), ('OrgMetricScanSummary', None), ('PendingServiceRouting', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('PromptAction', None), ('PromptError', None), ('QuickText', None), ('QuickTextUsage', None), ('Quote', None), ('QuoteLineItem', None), ('RecordMergeHistory', None), ('RequestsForAccessSIQ', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SiteUserViewMode', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('StreamActivityAccess', None), ('StreamingChannel', None), ('Task', None), ('TenantSecurityLogin', None), ('TenantSecurityMonitorMetric', None), ('TenantSecurityTenantInfo', None), ('Topic', None), ('TopicAssignment', None), ('User', None), ('UserExternalCredential', None), ('UserProvisioningRequest', None), ('UserServicePresence', None), ('VoiceCall', None), ('WebCartDocument', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
+    sobject_type = models.CharField(db_column='SobjectType', max_length=40, verbose_name='Entitlement Process Type', sf_read_only=models.READ_ONLY, choices=[('Account', None), ('AccountContactRelation', None), ('AgentWork', None), ('AgentWorkSkill', None), ('Asset', None), ('AssetRelationship', None), ('AssistantProgress', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseComment', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('ChatterActivity', None), ('CollaborationGroup', None), ('CollaborationGroupMember', None), ('Contact', None), ('ContactRequest', None), ('Contract', None), ('ContractLineItem', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntitlementContact', None), ('EntityMilestone', None), ('Event', None), ('ExchangeUserMapping', None), ('ExpressionFilter', None), ('ExpressionFilterCriteria', None), ('ExternalEventMapping', None), ('FeedItem', None), ('FlowOrchestrationInstance', None), ('FlowOrchestrationWorkItem', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('LearningAssignment', None), ('LearningAssignmentProgress', None), ('LearningItem', None), ('LearningLinkProgress', None), ('Location', None), ('LocationTrustMeasure', None), ('Macro', None), ('MacroAction', None), ('MacroInstruction', None), ('MacroUsage', None), ('ManagedContentTranslationJobLanguage', None), ('MLModel', None), ('MLModelFactor', None), ('MLModelFactorComponent', None), ('MobileHomeConfiguration', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('Order', None), ('OrderItem', None), ('Organization', None), ('OrgDeleteRequest', None), ('OrgMetricScanResult', None), ('OrgMetricScanSummary', None), ('PendingServiceRouting', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('PromptAction', None), ('PromptError', None), ('QuickText', None), ('QuickTextUsage', None), ('Quote', None), ('QuoteLineItem', None), ('RecordMergeHistory', None), ('RequestsForAccessSIQ', None), ('ServiceAppointmentGroup', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('Site', None), ('SiteUserViewMode', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('StreamActivityAccess', None), ('StreamingChannel', None), ('Task', None), ('TenantSecurityLogin', None), ('TenantSecurityMonitorMetric', None), ('TenantSecurityTenantInfo', None), ('Topic', None), ('TopicAssignment', None), ('User', None), ('UserExternalCredential', None), ('UserProvisioningRequest', None), ('UserServicePresence', None), ('VoiceCall', None), ('WebCartDocument', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkProcedure', None), ('WorkProcedureStep', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
     created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='slaprocess_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
@@ -13677,6 +15437,7 @@ class StaticResource(models.Model):
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
     last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='staticresource_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
     system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    cache_control = models.CharField(db_column='CacheControl', max_length=40, choices=[('Private', 'Private'), ('Public', 'Public')])
     class Meta(models.Model.Meta):
         db_table = 'StaticResource'
         verbose_name = 'Static Resource'
@@ -13744,7 +15505,7 @@ class TabDefinition(models.Model):
 
 class Task(models.Model):
     who = models.ForeignKey(Contact, models.DO_NOTHING, db_column='WhoId', verbose_name='Name ID', blank=True, null=True)  # Reference to tables [Contact, Lead] Master Detail Relationship *
-    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='task_what_set', verbose_name='Related To ID', blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
+    what = models.ForeignKey(Account, models.DO_NOTHING, db_column='WhatId', related_name='task_what_set', verbose_name='Related To ID', blank=True, null=True)  # Reference to tables [Account, Asset, AssetRelationship, Campaign, Case, ChangeRequest, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Entitlement, Image, Incident, ListEmail, Location, Opportunity, Order, Problem, ProcessException, Product2, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, typeform__Form__c] Master Detail Relationship *
     who_count = models.IntegerField(db_column='WhoCount', verbose_name='Relation Count', sf_read_only=models.READ_ONLY, blank=True, null=True)
     what_count = models.IntegerField(db_column='WhatCount', verbose_name='Related To Count', sf_read_only=models.READ_ONLY, blank=True, null=True)
     subject = models.CharField(db_column='Subject', max_length=255, choices=[('Call', 'Call'), ('Send Letter', 'Send Letter of Authorization'), ('Send Quote', 'Send Quote'), ('Other', 'Other')], blank=True, null=True)
@@ -13856,7 +15617,7 @@ class TaskPriority(models.Model):
 
 
 class TaskRelation(models.Model):
-    relation = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelationId', related_name='taskrelation_relation_set', verbose_name='Relation ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, ChangeRequest, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Entitlement, Image, In_App_Checklist_Settings__c, Incident, Lead, ListEmail, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, ProcessException, Product2, Product_Category_Info__c, Quote, Reviews__c, ServiceContract, ServiceResource, Solution, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    relation = models.ForeignKey(Account, models.DO_NOTHING, db_column='RelationId', related_name='taskrelation_relation_set', verbose_name='Relation ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, AssetRelationship, Campaign, Case, ChangeRequest, Contact, ContactRequest, Contract, ContractLineItem, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, Entitlement, Image, In_App_Checklist_Settings__c, Incident, Lead, ListEmail, Location, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, ProcessException, Product2, Product_Add_On_Choice__c, Product_Category_Info__c, Quote, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceContract, ServiceResource, Solution, Waste_Type__c, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     task = models.ForeignKey(Task, models.DO_NOTHING, db_column='TaskId', verbose_name='Task ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
     is_what = models.BooleanField(db_column='IsWhat', sf_read_only=models.NOT_UPDATEABLE, default=False)
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', related_name='taskrelation_account_set', verbose_name='Account ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -13939,6 +15700,23 @@ class TenantUsageEntitlement(models.Model):
 
 
 
+class TestSuiteMembership(models.Model):
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey('User', models.DO_NOTHING, db_column='CreatedById', related_name='testsuitemembership_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey('User', models.DO_NOTHING, db_column='LastModifiedById', related_name='testsuitemembership_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    apex_test_suite = models.ForeignKey(ApexTestSuite, models.DO_NOTHING, db_column='ApexTestSuiteId', verbose_name='Test Suite ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    apex_class = models.ForeignKey(ApexClass, models.DO_NOTHING, db_column='ApexClassId', verbose_name='Class ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    class Meta(models.Model.Meta):
+        db_table = 'TestSuiteMembership'
+        verbose_name = 'Test Suite Membership'
+        verbose_name_plural = 'Test Suite Memberships'
+        # keyPrefix = '0Hd'
+
+
+
 class ThirdPartyAccountLink(models.Model):
     third_party_account_link_key = models.CharField(db_column='ThirdPartyAccountLinkKey', max_length=255, verbose_name='Third Party Account Link Unique Key', sf_read_only=models.READ_ONLY, blank=True, null=True)
     user = models.ForeignKey('User', models.DO_NOTHING, db_column='UserId', verbose_name='User ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -14009,7 +15787,7 @@ class Topic(models.Model):
 
 class TopicAssignment(models.Model):
     topic = models.ForeignKey(Topic, models.DO_NOTHING, db_column='TopicId', verbose_name='Topic ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
-    entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='EntityId', verbose_name='Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, Campaign, Case, ChangeRequest, Contact, ContentDocument, Contract, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Event, FeedItem, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation_Add_On_Choice__c, Main_Product_Variation__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product_Category_Info__c, Reviews__c, ServiceResource, ServiceResourceSkill, Solution, Task, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
+    entity = models.ForeignKey(Account, models.DO_NOTHING, db_column='EntityId', verbose_name='Entity ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Account, ActiveCamp__CXA_Usage__c, ActiveCamp__Dashboard_Log__c, ActiveCamp__Error_Log__c, ActiveCamp__Setup_Data__c, Add_On_Choice__c, Add_On__c, Asset, Campaign, Case, ChangeRequest, Contact, ContentDocument, Contract, Dhruvsoft__O2O_Logs__c, Dhruvsoft__OpptyProductOrderProductMapping__c, Disposal_Fee__c, Event, FeedItem, In_App_Checklist_Settings__c, Incident, Lead, Location_Zone__c, Main_Product_Add_On__c, Main_Product_Category__c, Main_Product_Info__c, Main_Product_Type_Product_Relationship__c, Main_Product_Type__c, Main_Product_Variation__c, Main_Product_Waste_Type__c, Main_Product__c, Opportunity, Order, Postal_Code__c, Problem, Product_Add_On_Choice__c, Product_Category_Info__c, Reviews__c, Seller_Product_Location_Zone__c, Seller_Product__c, ServiceResource, ServiceResourceSkill, Solution, Task, Waste_Type__c, WorkOrder, WorkOrderLineItem, WorkPlan, WorkPlanTemplate, WorkPlanTemplateEntry, WorkStep, WorkStepTemplate, pandadoc__DocStatus__c, pandadoc__Object_Tokens__c, pandadoc__PandaDocDocument__c, pandadoc__PandaDocLog__c, pandadoc__PandaDoc_JsonBulder_Mapping__c, pandadoc__Pricing_Item_Mapping__c, pandadoc__Recipient_Map__c, pandadoc__Settings__c, pandadoc__TriggerSetting__c, sansancard__SSCard__c, sansancard__ScanToSalesforce_Setting__c, sansancard__TransferMeta__c, typeform__Form_Mapping__c, typeform__Form__c, typeform__InstallationSettings__c, typeform__Typeform_API_Settings__c, typeform__Typeform_Error__c] Master Detail Relationship *
     entity_key_prefix = models.CharField(db_column='EntityKeyPrefix', max_length=3, verbose_name='Record Key Prefix', sf_read_only=models.READ_ONLY)
     entity_type = models.CharField(db_column='EntityType', max_length=80, verbose_name='Object Type', sf_read_only=models.READ_ONLY, blank=True, null=True)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
@@ -14220,6 +15998,8 @@ class User(models.Model):
     user_preferences_disable_later_comment_email = models.BooleanField(db_column='UserPreferencesDisableLaterCommentEmail', verbose_name='DisableLaterCommentEmail')
     user_preferences_dis_prof_post_comment_email = models.BooleanField(db_column='UserPreferencesDisProfPostCommentEmail', verbose_name='DisProfPostCommentEmail')
     user_preferences_apex_pages_developer_mode = models.BooleanField(db_column='UserPreferencesApexPagesDeveloperMode', verbose_name='ApexPagesDeveloperMode')
+    user_preferences_receive_no_notifications_as_approver = models.BooleanField(db_column='UserPreferencesReceiveNoNotificationsAsApprover', verbose_name='ReceiveNoNotificationsAsApprover')
+    user_preferences_receive_notifications_as_delegated_approver = models.BooleanField(db_column='UserPreferencesReceiveNotificationsAsDelegatedApprover', verbose_name='ReceiveNotificationsAsDelegatedApprover')
     user_preferences_hide_csnget_chatter_mobile_task = models.BooleanField(db_column='UserPreferencesHideCSNGetChatterMobileTask', verbose_name='HideCSNGetChatterMobileTask')
     user_preferences_disable_mentions_post_email = models.BooleanField(db_column='UserPreferencesDisableMentionsPostEmail', verbose_name='DisableMentionsPostEmail')
     user_preferences_dis_mentions_comment_email = models.BooleanField(db_column='UserPreferencesDisMentionsCommentEmail', verbose_name='DisMentionsCommentEmail')
@@ -14255,6 +16035,7 @@ class User(models.Model):
     user_preferences_hide_s1_browser_ui = models.BooleanField(db_column='UserPreferencesHideS1BrowserUI', verbose_name='HideS1BrowserUI')
     user_preferences_disable_endorsement_email = models.BooleanField(db_column='UserPreferencesDisableEndorsementEmail', verbose_name='DisableEndorsementEmail')
     user_preferences_path_assistant_collapsed = models.BooleanField(db_column='UserPreferencesPathAssistantCollapsed', verbose_name='PathAssistantCollapsed')
+    user_preferences_cache_diagnostics = models.BooleanField(db_column='UserPreferencesCacheDiagnostics', verbose_name='CacheDiagnostics')
     user_preferences_show_email_to_guest_users = models.BooleanField(db_column='UserPreferencesShowEmailToGuestUsers', verbose_name='ShowEmailToGuestUsers')
     user_preferences_show_manager_to_guest_users = models.BooleanField(db_column='UserPreferencesShowManagerToGuestUsers', verbose_name='ShowManagerToGuestUsers')
     user_preferences_show_work_phone_to_guest_users = models.BooleanField(db_column='UserPreferencesShowWorkPhoneToGuestUsers', verbose_name='ShowWorkPhoneToGuestUsers')
@@ -14629,11 +16410,13 @@ class UserPermissionAccess(models.Model):
     permissions_send_sit_requests = models.BooleanField(db_column='PermissionsSendSitRequests', verbose_name='Send Stay-in-Touch Requests', sf_read_only=models.READ_ONLY)
     permissions_override_forecasts = models.BooleanField(db_column='PermissionsOverrideForecasts', verbose_name='Override Forecasts', sf_read_only=models.READ_ONLY)
     permissions_view_all_forecasts = models.BooleanField(db_column='PermissionsViewAllForecasts', verbose_name='View All Forecasts', sf_read_only=models.READ_ONLY)
+    permissions_api_user_only = models.BooleanField(db_column='PermissionsApiUserOnly', verbose_name='Api Only User', sf_read_only=models.READ_ONLY)
     permissions_manage_remote_access = models.BooleanField(db_column='PermissionsManageRemoteAccess', verbose_name='Manage Connected Apps', sf_read_only=models.READ_ONLY)
     permissions_can_use_new_dashboard_builder = models.BooleanField(db_column='PermissionsCanUseNewDashboardBuilder', verbose_name='Drag-and-Drop Dashboard Builder', sf_read_only=models.READ_ONLY)
     permissions_manage_categories = models.BooleanField(db_column='PermissionsManageCategories', verbose_name='Manage Categories', sf_read_only=models.READ_ONLY)
     permissions_convert_leads = models.BooleanField(db_column='PermissionsConvertLeads', verbose_name='Convert Leads', sf_read_only=models.READ_ONLY)
     permissions_password_never_expires = models.BooleanField(db_column='PermissionsPasswordNeverExpires', verbose_name='Password Never Expires', sf_read_only=models.READ_ONLY)
+    permissions_use_team_reassign_wizards = models.BooleanField(db_column='PermissionsUseTeamReassignWizards', verbose_name='Use Team Reassignment Wizards', sf_read_only=models.READ_ONLY)
     permissions_edit_activated_orders = models.BooleanField(db_column='PermissionsEditActivatedOrders', verbose_name='Edit Activated Orders', sf_read_only=models.READ_ONLY)
     permissions_install_packaging = models.BooleanField(db_column='PermissionsInstallPackaging', verbose_name='Download AppExchange Packages', sf_read_only=models.READ_ONLY)
     permissions_publish_packaging = models.BooleanField(db_column='PermissionsPublishPackaging', verbose_name='Upload AppExchange Packages', sf_read_only=models.READ_ONLY)
@@ -14651,6 +16434,9 @@ class UserPermissionAccess(models.Model):
     permissions_enable_notifications = models.BooleanField(db_column='PermissionsEnableNotifications', verbose_name='Send Outbound Messages', sf_read_only=models.READ_ONLY)
     permissions_manage_data_integrations = models.BooleanField(db_column='PermissionsManageDataIntegrations', verbose_name='Manage Data Integrations', sf_read_only=models.READ_ONLY)
     permissions_distribute_from_pers_wksp = models.BooleanField(db_column='PermissionsDistributeFromPersWksp', verbose_name='Create Content Deliveries', sf_read_only=models.READ_ONLY)
+    permissions_view_data_categories = models.BooleanField(db_column='PermissionsViewDataCategories', verbose_name='View Data Categories in Setup', sf_read_only=models.READ_ONLY)
+    permissions_manage_data_categories = models.BooleanField(db_column='PermissionsManageDataCategories', verbose_name='Manage Data Categories', sf_read_only=models.READ_ONLY)
+    permissions_author_apex = models.BooleanField(db_column='PermissionsAuthorApex', verbose_name='Author Apex', sf_read_only=models.READ_ONLY)
     permissions_manage_mobile = models.BooleanField(db_column='PermissionsManageMobile', verbose_name='Manage Mobile Configurations', sf_read_only=models.READ_ONLY)
     permissions_api_enabled = models.BooleanField(db_column='PermissionsApiEnabled', verbose_name='API Enabled', sf_read_only=models.READ_ONLY)
     permissions_manage_custom_report_types = models.BooleanField(db_column='PermissionsManageCustomReportTypes', verbose_name='Manage Custom Report Types', sf_read_only=models.READ_ONLY)
@@ -14661,11 +16447,13 @@ class UserPermissionAccess(models.Model):
     permissions_manage_content_permissions = models.BooleanField(db_column='PermissionsManageContentPermissions', verbose_name='Manage Content Permissions', sf_read_only=models.READ_ONLY)
     permissions_manage_content_properties = models.BooleanField(db_column='PermissionsManageContentProperties', verbose_name='Manage Content Properties', sf_read_only=models.READ_ONLY)
     permissions_manage_content_types = models.BooleanField(db_column='PermissionsManageContentTypes', verbose_name='Manage record types and layouts for Files', sf_read_only=models.READ_ONLY)
+    permissions_schedule_job = models.BooleanField(db_column='PermissionsScheduleJob', verbose_name='Schedule Dashboards', sf_read_only=models.READ_ONLY)
     permissions_manage_exchange_config = models.BooleanField(db_column='PermissionsManageExchangeConfig', verbose_name='Manage Lightning Sync', sf_read_only=models.READ_ONLY)
     permissions_manage_analytic_snapshots = models.BooleanField(db_column='PermissionsManageAnalyticSnapshots', verbose_name='Manage Reporting Snapshots', sf_read_only=models.READ_ONLY)
     permissions_schedule_reports = models.BooleanField(db_column='PermissionsScheduleReports', verbose_name='Schedule Reports', sf_read_only=models.READ_ONLY)
     permissions_manage_business_hour_holidays = models.BooleanField(db_column='PermissionsManageBusinessHourHolidays', verbose_name='Manage Business Hours Holidays', sf_read_only=models.READ_ONLY)
     permissions_manage_entitlements = models.BooleanField(db_column='PermissionsManageEntitlements', verbose_name='Manage Entitlements', sf_read_only=models.READ_ONLY)
+    permissions_manage_dynamic_dashboards = models.BooleanField(db_column='PermissionsManageDynamicDashboards', verbose_name='Manage Dynamic Dashboards', sf_read_only=models.READ_ONLY)
     permissions_custom_sidebar_on_all_pages = models.BooleanField(db_column='PermissionsCustomSidebarOnAllPages', verbose_name='Show Custom Sidebar On All Pages', sf_read_only=models.READ_ONLY)
     permissions_manage_interaction = models.BooleanField(db_column='PermissionsManageInteraction', verbose_name='Manage Flow', sf_read_only=models.READ_ONLY)
     permissions_view_my_teams_dashboards = models.BooleanField(db_column='PermissionsViewMyTeamsDashboards', verbose_name="View My Team's Dashboards", sf_read_only=models.READ_ONLY)
@@ -14680,6 +16468,8 @@ class UserPermissionAccess(models.Model):
     permissions_allow_email_ic = models.BooleanField(db_column='PermissionsAllowEmailIC', verbose_name='Email-Based Identity Verification Option', sf_read_only=models.READ_ONLY)
     permissions_chatter_file_link = models.BooleanField(db_column='PermissionsChatterFileLink', verbose_name='Create Public Links', sf_read_only=models.READ_ONLY)
     permissions_force_two_factor = models.BooleanField(db_column='PermissionsForceTwoFactor', verbose_name='Multi-Factor Authentication for User Interface Logins', sf_read_only=models.READ_ONLY)
+    permissions_view_event_log_files = models.BooleanField(db_column='PermissionsViewEventLogFiles', verbose_name='View Event Log Files', sf_read_only=models.READ_ONLY)
+    permissions_manage_networks = models.BooleanField(db_column='PermissionsManageNetworks', verbose_name='Create and Set Up Experiences', sf_read_only=models.READ_ONLY)
     permissions_view_case_interaction = models.BooleanField(db_column='PermissionsViewCaseInteraction', verbose_name='Use Case Feed', sf_read_only=models.READ_ONLY)
     permissions_manage_auth_providers = models.BooleanField(db_column='PermissionsManageAuthProviders', verbose_name='Manage Auth. Providers', sf_read_only=models.READ_ONLY)
     permissions_run_flow = models.BooleanField(db_column='PermissionsRunFlow', verbose_name='Run Flows', sf_read_only=models.READ_ONLY)
@@ -14699,6 +16489,7 @@ class UserPermissionAccess(models.Model):
     permissions_connect_org_to_environment_hub = models.BooleanField(db_column='PermissionsConnectOrgToEnvironmentHub', verbose_name='Connect Organization to Environment Hub', sf_read_only=models.READ_ONLY)
     permissions_create_customize_filters = models.BooleanField(db_column='PermissionsCreateCustomizeFilters', verbose_name='Create and Customize List Views', sf_read_only=models.READ_ONLY)
     permissions_content_hub_user = models.BooleanField(db_column='PermissionsContentHubUser', verbose_name='Files Connect Cloud', sf_read_only=models.READ_ONLY)
+    permissions_govern_networks = models.BooleanField(db_column='PermissionsGovernNetworks', verbose_name='Manage Experiences', sf_read_only=models.READ_ONLY)
     permissions_sales_console = models.BooleanField(db_column='PermissionsSalesConsole', verbose_name='Sales Console', sf_read_only=models.READ_ONLY)
     permissions_two_factor_api = models.BooleanField(db_column='PermissionsTwoFactorApi', verbose_name='Multi-Factor Authentication for API Logins', sf_read_only=models.READ_ONLY)
     permissions_delete_topics = models.BooleanField(db_column='PermissionsDeleteTopics', verbose_name='Delete Topics', sf_read_only=models.READ_ONLY)
@@ -14719,6 +16510,7 @@ class UserPermissionAccess(models.Model):
     permissions_manage_internal_users = models.BooleanField(db_column='PermissionsManageInternalUsers', verbose_name='Manage Internal Users', sf_read_only=models.READ_ONLY)
     permissions_manage_password_policies = models.BooleanField(db_column='PermissionsManagePasswordPolicies', verbose_name='Manage Password Policies', sf_read_only=models.READ_ONLY)
     permissions_manage_login_access_policies = models.BooleanField(db_column='PermissionsManageLoginAccessPolicies', verbose_name='Manage Login Access Policies', sf_read_only=models.READ_ONLY)
+    permissions_manage_custom_permissions = models.BooleanField(db_column='PermissionsManageCustomPermissions', verbose_name='Manage Custom Permissions', sf_read_only=models.READ_ONLY)
     permissions_can_verify_comment = models.BooleanField(db_column='PermissionsCanVerifyComment', verbose_name='Verify Answers to Chatter Questions', sf_read_only=models.READ_ONLY)
     permissions_manage_unlisted_groups = models.BooleanField(db_column='PermissionsManageUnlistedGroups', verbose_name='Manage Unlisted Groups', sf_read_only=models.READ_ONLY)
     permissions_std_automatic_activity_capture = models.BooleanField(db_column='PermissionsStdAutomaticActivityCapture', verbose_name='Use Einstein Activity Capture Standard', sf_read_only=models.READ_ONLY)
@@ -14747,6 +16539,7 @@ class UserPermissionAccess(models.Model):
     permissions_delegated_two_factor = models.BooleanField(db_column='PermissionsDelegatedTwoFactor', verbose_name='Manage Multi-Factor Authentication in User Interface', sf_read_only=models.READ_ONLY)
     permissions_chatter_compose_ui_codesnippet = models.BooleanField(db_column='PermissionsChatterComposeUiCodesnippet', verbose_name='Allow Inclusion of Code Snippets from UI', sf_read_only=models.READ_ONLY)
     permissions_select_files_from_salesforce = models.BooleanField(db_column='PermissionsSelectFilesFromSalesforce', verbose_name='Select Files from Salesforce', sf_read_only=models.READ_ONLY)
+    permissions_moderate_network_users = models.BooleanField(db_column='PermissionsModerateNetworkUsers', verbose_name='Moderate Experience Cloud Site Users', sf_read_only=models.READ_ONLY)
     permissions_voice_outbound = models.BooleanField(db_column='PermissionsVoiceOutbound', verbose_name='Access Dialer Outbound Calls', sf_read_only=models.READ_ONLY)
     permissions_voice_inbound = models.BooleanField(db_column='PermissionsVoiceInbound', verbose_name='Access Dialer Inbound Calls', sf_read_only=models.READ_ONLY)
     permissions_voice_minutes = models.BooleanField(db_column='PermissionsVoiceMinutes', verbose_name='Access Dialer Minutes', sf_read_only=models.READ_ONLY)
@@ -14764,6 +16557,7 @@ class UserPermissionAccess(models.Model):
     permissions_allow_view_edit_converted_leads = models.BooleanField(db_column='PermissionsAllowViewEditConvertedLeads', verbose_name='View and Edit Converted Leads', sf_read_only=models.READ_ONLY)
     permissions_social_insights_logo_admin = models.BooleanField(db_column='PermissionsSocialInsightsLogoAdmin', verbose_name='Remove Logos from Accounts', sf_read_only=models.READ_ONLY)
     permissions_show_company_name_as_user_badge = models.BooleanField(db_column='PermissionsShowCompanyNameAsUserBadge', verbose_name='Show Company Name as Site Role', sf_read_only=models.READ_ONLY)
+    permissions_access_cmc = models.BooleanField(db_column='PermissionsAccessCMC', verbose_name='Access Experience Management', sf_read_only=models.READ_ONLY)
     permissions_view_health_check = models.BooleanField(db_column='PermissionsViewHealthCheck', verbose_name='View Health Check', sf_read_only=models.READ_ONLY)
     permissions_manage_health_check = models.BooleanField(db_column='PermissionsManageHealthCheck', verbose_name='Manage Health Check', sf_read_only=models.READ_ONLY)
     permissions_packaging2 = models.BooleanField(db_column='PermissionsPackaging2', verbose_name='Create and Update Second-Generation Packages', sf_read_only=models.READ_ONLY)
@@ -14802,6 +16596,7 @@ class UserPermissionAccess(models.Model):
     permissions_wave_manage_private_assets_user = models.BooleanField(db_column='PermissionsWaveManagePrivateAssetsUser', verbose_name='Manage CRM Analytics Private Assets', sf_read_only=models.READ_ONLY)
     permissions_can_edit_data_prep_recipe = models.BooleanField(db_column='PermissionsCanEditDataPrepRecipe', verbose_name='Edit Dataset Recipes', sf_read_only=models.READ_ONLY)
     permissions_add_analytics_remote_connections = models.BooleanField(db_column='PermissionsAddAnalyticsRemoteConnections', verbose_name='Add CRM Analytics Remote Connections', sf_read_only=models.READ_ONLY)
+    permissions_manage_surveys = models.BooleanField(db_column='PermissionsManageSurveys', verbose_name='Manage Surveys', sf_read_only=models.READ_ONLY)
     permissions_use_assistant_dialog = models.BooleanField(db_column='PermissionsUseAssistantDialog', verbose_name='Instant Actionable Results', sf_read_only=models.READ_ONLY)
     permissions_use_query_suggestions = models.BooleanField(db_column='PermissionsUseQuerySuggestions', verbose_name='Natural Language Search', sf_read_only=models.READ_ONLY)
     permissions_view_roles = models.BooleanField(db_column='PermissionsViewRoles', verbose_name='View Roles and Role Hierarchy', sf_read_only=models.READ_ONLY)
@@ -14832,14 +16627,20 @@ class UserPermissionAccess(models.Model):
     permissions_learning_manager = models.BooleanField(db_column='PermissionsLearningManager', verbose_name='Manage Learning', sf_read_only=models.READ_ONLY)
     permissions_send_custom_notifications = models.BooleanField(db_column='PermissionsSendCustomNotifications', verbose_name='Send Custom Notifications', sf_read_only=models.READ_ONLY)
     permissions_packaging2_delete = models.BooleanField(db_column='PermissionsPackaging2Delete', verbose_name='Delete Second-Generation Packages', sf_read_only=models.READ_ONLY)
+    permissions_manage_trust_measures = models.BooleanField(db_column='PermissionsManageTrustMeasures', verbose_name='Manage Trust Measures', sf_read_only=models.READ_ONLY)
+    permissions_view_trust_measures = models.BooleanField(db_column='PermissionsViewTrustMeasures', verbose_name='View Trust Measures', sf_read_only=models.READ_ONLY)
     permissions_manage_learning_reporting = models.BooleanField(db_column='PermissionsManageLearningReporting', verbose_name='Manage Learning Reporting', sf_read_only=models.READ_ONLY)
     permissions_isotope_cto_cuser = models.BooleanField(db_column='PermissionsIsotopeCToCUser', verbose_name='Salesforce Anywhere Integration Access', sf_read_only=models.READ_ONLY)
+    permissions_has_unlimited_erb_scoring_requests = models.BooleanField(db_column='PermissionsHasUnlimitedErbScoringRequests', verbose_name='User Has Unlimited Erb Model Scoring', sf_read_only=models.READ_ONLY)
     permissions_isotope_access = models.BooleanField(db_column='PermissionsIsotopeAccess', verbose_name='Salesforce Anywhere on Mobile', sf_read_only=models.READ_ONLY)
     permissions_isotope_lex = models.BooleanField(db_column='PermissionsIsotopeLEX', verbose_name='Salesforce Anywhere in Lightning Experience', sf_read_only=models.READ_ONLY)
     permissions_quip_metrics_access = models.BooleanField(db_column='PermissionsQuipMetricsAccess', verbose_name='Quip Metrics', sf_read_only=models.READ_ONLY)
     permissions_quip_user_engagement_metrics = models.BooleanField(db_column='PermissionsQuipUserEngagementMetrics', verbose_name='Quip User Engagement Metrics', sf_read_only=models.READ_ONLY)
     permissions_manage_external_connections = models.BooleanField(db_column='PermissionsManageExternalConnections', verbose_name='Allow user to modify Private Connections', sf_read_only=models.READ_ONLY)
     permissions_use_subscription_emails = models.BooleanField(db_column='PermissionsUseSubscriptionEmails', verbose_name='Subscribe to CRM Analytics Assets', sf_read_only=models.READ_ONLY)
+    permissions_aiview_insight_objects = models.BooleanField(db_column='PermissionsAIViewInsightObjects', verbose_name='View AI Insight Objects', sf_read_only=models.READ_ONLY)
+    permissions_aicreate_insight_objects = models.BooleanField(db_column='PermissionsAICreateInsightObjects', verbose_name='Create AI Insight Objects', sf_read_only=models.READ_ONLY)
+    permissions_view_mlmodels = models.BooleanField(db_column='PermissionsViewMLModels', verbose_name='Allow users to view MLModels and related Entities', sf_read_only=models.READ_ONLY)
     permissions_native_webview_scrolling = models.BooleanField(db_column='PermissionsNativeWebviewScrolling', verbose_name='Salesforce Mobile App: Native scrolling on webviews', sf_read_only=models.READ_ONLY)
     permissions_view_developer_name = models.BooleanField(db_column='PermissionsViewDeveloperName', verbose_name='View DeveloperName', sf_read_only=models.READ_ONLY)
     permissions_bypass_mfafor_ui_logins = models.BooleanField(db_column='PermissionsBypassMFAForUiLogins', verbose_name='Waive Multi-Factor Authentication for Exempt Users', sf_read_only=models.READ_ONLY)
@@ -15647,6 +17448,41 @@ class Vote(models.Model):
 
 
 
+class WasteTypeShare(models.Model):
+    parent = models.ForeignKey('WasteType', models.DO_NOTHING, db_column='ParentId', verbose_name='Parent ID', sf_read_only=models.NOT_UPDATEABLE)  # Master Detail Relationship *
+    user_or_group = models.ForeignKey(Group, models.DO_NOTHING, db_column='UserOrGroupId', verbose_name='User/Group ID', sf_read_only=models.NOT_UPDATEABLE)  # Reference to tables [Group, User] Master Detail Relationship *
+    access_level = models.CharField(db_column='AccessLevel', max_length=40, verbose_name='Custom Object Access', choices=[('Read', 'Read Only'), ('Edit', 'Read/Write'), ('All', 'Owner')])
+    row_cause = models.CharField(db_column='RowCause', max_length=40, sf_read_only=models.NOT_UPDATEABLE, default='Manual', choices=[('Owner', 'Owner'), ('Manual', 'Manual Sharing'), ('Rule', 'Sharing Rule'), ('ImplicitChild', 'Account Sharing'), ('ImplicitParent', 'Associated record owner or sharing'), ('ImplicitPerson', 'Person Contact'), ('Team', 'Sales Team'), ('Territory', 'Territory Assignment Rule'), ('TerritoryManual', 'Territory Manual'), ('Territory2AssociationManual', 'Territory Manual'), ('TerritoryRule', 'Territory Sharing Rule'), ('Territory2Forecast', 'Territory assignment for forecasting and reporting'), ('GuestRule', 'Guest User Sharing Rule'), ('GuestParentImplicit', 'Associated guest user sharing'), ('GuestPersonImplicit', 'Associated Guest User Sharing'), ('SurveyShare', 'Survey Sharing Rule'), ('CompliantDataSharing', 'Compliant Data Sharing'), ('MfgTargetShare', 'Manufacturing Target Sharing Rule'), ('SharingRecordCollection', 'Record Collection'), ('LearningAssignment', 'Learning Assignment Share'), ('LearningAssignmentImplicit', 'Learning Assignment Implicit Share'), ('LearningItemAssignment', 'Learning Item Assignment Share')], blank=True, null=True)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey(User, models.DO_NOTHING, db_column='LastModifiedById', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    class Meta(models.Model.Meta):
+        db_table = 'Waste_Type__Share'
+        verbose_name = 'Share: Waste Type'
+        verbose_name_plural = 'Share: Waste Type'
+        # keyPrefix = None
+
+
+
+class WasteType(models.Model):
+    owner = models.ForeignKey(Group, models.DO_NOTHING, db_column='OwnerId', verbose_name='Owner ID', default=models.DEFAULTED_ON_CREATE)  # Reference to tables [Group, User]
+    is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
+    name = models.CharField(db_column='Name', max_length=80, verbose_name='Waste Type Name', default=models.DEFAULTED_ON_CREATE, blank=True, null=True)
+    created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
+    created_by = models.ForeignKey(User, models.DO_NOTHING, db_column='CreatedById', related_name='wastetype_createdby_set', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
+    last_modified_date = models.DateTimeField(db_column='LastModifiedDate', sf_read_only=models.READ_ONLY)
+    last_modified_by = models.ForeignKey(User, models.DO_NOTHING, db_column='LastModifiedById', related_name='wastetype_lastmodifiedby_set', verbose_name='Last Modified By ID', sf_read_only=models.READ_ONLY)
+    system_modstamp = models.DateTimeField(db_column='SystemModstamp', sf_read_only=models.READ_ONLY)
+    last_viewed_date = models.DateTimeField(db_column='LastViewedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    class Meta(models.Model.Meta):
+        db_table = 'Waste_Type__c'
+        verbose_name = 'Waste Type'
+        verbose_name_plural = 'Waste Types'
+        # keyPrefix = 'a0z'
+
+
+
 class WaveAutoInstallRequest(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Request Name')
@@ -15694,7 +17530,7 @@ class WaveCompatibilityCheckItem(models.Model):
 
 
 class WebLink(models.Model):
-    page_or_sobject_type = models.CharField(db_column='PageOrSobjectType', max_length=41, verbose_name='Page or sObject Type Name', sf_read_only=models.NOT_UPDATEABLE, choices=[('Account', None), ('AccountContactRelation', None), ('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Configuration__mdt', None), ('ActiveCamp__Setup_Data__c', None), ('Activity', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('AgentWork', None), ('Asset', None), ('AssetRelationship', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('Contact', None), ('ContactRequest', None), ('ContentVersion', None), ('Contract', None), ('ContractLineItem', None), ('CustomPageItem', None), ('DashboardComponent', None), ('Dhruvsoft__O2O_Logs__c', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntityMilestone', None), ('Event', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('Location_Zone__c', None), ('Macro', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Variation_Add_On_Choice__c', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('OpportunityLineItemSchedule', None), ('Order', None), ('OrderItem', None), ('pandadoc__DocStatus__c', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product_Category_Info__c', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('RecordAction', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('Scorecard', None), ('ScorecardAssociation', None), ('ScorecardMetric', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('Task', None), ('typeform__Field_Type_Mapping__mdt', None), ('typeform__Form__c', None), ('typeform__Form_Mapping__c', None), ('typeform__InstallationSettings__c', None), ('typeform__oAuthSettings__mdt', None), ('typeform__Target_Object__mdt', None), ('typeform__Typeform_Error__c', None), ('User', None), ('UserProvisioningRequest', None), ('UserServicePresence', None), ('VoiceCall', None), ('WebCartDocument', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
+    page_or_sobject_type = models.CharField(db_column='PageOrSobjectType', max_length=41, verbose_name='Page or sObject Type Name', sf_read_only=models.NOT_UPDATEABLE, choices=[('Account', None), ('AccountContactRelation', None), ('ActiveCamp__CXA_Usage__c', None), ('ActiveCamp__Dashboard_Log__c', None), ('ActiveCamp__Error_Log__c', None), ('ActiveCamp__Setup_Configuration__mdt', None), ('ActiveCamp__Setup_Data__c', None), ('Activity', None), ('Add_On__c', None), ('Add_On_Choice__c', None), ('AgentWork', None), ('Asset', None), ('AssetRelationship', None), ('AssociatedLocation', None), ('Campaign', None), ('CampaignInfluence', None), ('CampaignMember', None), ('Case', None), ('CaseRelatedIssue', None), ('ChangeRequest', None), ('ChangeRequestRelatedIssue', None), ('ChangeRequestRelatedItem', None), ('Contact', None), ('ContactRequest', None), ('ContentVersion', None), ('Contract', None), ('ContractLineItem', None), ('CustomPageItem', None), ('DashboardComponent', None), ('Dhruvsoft__O2O_Logs__c', None), ('Disposal_Fee__c', None), ('DuplicateRecordItem', None), ('DuplicateRecordSet', None), ('EmailMessage', None), ('Entitlement', None), ('EntityMilestone', None), ('Event', None), ('Idea', None), ('Image', None), ('Incident', None), ('IncidentRelatedItem', None), ('Lead', None), ('Location', None), ('Location_Zone__c', None), ('LocationTrustMeasure', None), ('Macro', None), ('Main_Product__c', None), ('Main_Product_Add_On__c', None), ('Main_Product_Category__c', None), ('Main_Product_Info__c', None), ('Main_Product_Type__c', None), ('Main_Product_Type_Product_Relationship__c', None), ('Main_Product_Variation__c', None), ('Main_Product_Waste_Type__c', None), ('Opportunity', None), ('OpportunityContactRole', None), ('OpportunityLineItem', None), ('OpportunityLineItemSchedule', None), ('Order', None), ('OrderItem', None), ('pandadoc__DocStatus__c', None), ('pandadoc__Object_Tokens__c', None), ('pandadoc__PandaDocDocument__c', None), ('pandadoc__PandaDocLog__c', None), ('pandadoc__Pricing_Item_Mapping__c', None), ('pandadoc__Recipient_Map__c', None), ('pandadoc__TriggerSetting__c', None), ('Postal_Code__c', None), ('Problem', None), ('ProblemIncident', None), ('ProblemRelatedItem', None), ('ProcessException', None), ('Product_Add_On_Choice__c', None), ('Product_Category_Info__c', None), ('Product2', None), ('ProfileSkill', None), ('ProfileSkillEndorsement', None), ('ProfileSkillUser', None), ('QuickText', None), ('Quote', None), ('QuoteLineItem', None), ('Recommendation', None), ('RecordAction', None), ('Reviews__c', None), ('sansancard__SSCard__c', None), ('sansancard__TransferMeta__c', None), ('Scorecard', None), ('ScorecardAssociation', None), ('ScorecardMetric', None), ('Seller_Product__c', None), ('Seller_Product_Location_Zone__c', None), ('ServiceAppointmentGroup', None), ('ServiceContract', None), ('ServiceResource', None), ('ServiceResourceSkill', None), ('SkillRequirement', None), ('SocialPersona', None), ('SocialPost', None), ('Solution', None), ('Task', None), ('typeform__Field_Type_Mapping__mdt', None), ('typeform__Form__c', None), ('typeform__Form_Mapping__c', None), ('typeform__InstallationSettings__c', None), ('typeform__oAuthSettings__mdt', None), ('typeform__Target_Object__mdt', None), ('typeform__Typeform_Error__c', None), ('User', None), ('UserProvisioningRequest', None), ('UserServicePresence', None), ('VoiceCall', None), ('Waste_Type__c', None), ('WebCartDocument', None), ('WorkBadge', None), ('WorkBadgeDefinition', None), ('WorkOrder', None), ('WorkOrderLineItem', None), ('WorkPlan', None), ('WorkPlanTemplate', None), ('WorkPlanTemplateEntry', None), ('WorkProcedure', None), ('WorkProcedureStep', None), ('WorkStep', None), ('WorkStepTemplate', None), ('WorkThanks', None)])
     name = models.CharField(db_column='Name', max_length=240)
     is_protected = models.BooleanField(db_column='IsProtected', verbose_name='Protected Component', default=False)
     url = models.TextField(db_column='Url', verbose_name='URL', blank=True, null=True)
@@ -15926,6 +17762,7 @@ class WorkOrder(models.Model):
     duration_in_minutes = models.DecimalField(db_column='DurationInMinutes', max_digits=18, decimal_places=2, verbose_name='Duration in Minutes', sf_read_only=models.READ_ONLY, blank=True, null=True)
     service_appointment_count = models.IntegerField(db_column='ServiceAppointmentCount', sf_read_only=models.READ_ONLY, blank=True, null=True)
     status_category = models.CharField(db_column='StatusCategory', max_length=255, sf_read_only=models.READ_ONLY, default='None', choices=[('New', 'New'), ('InProgress', 'In Progress'), ('OnHold', 'On Hold'), ('Completed', 'Completed'), ('Closed', 'Closed'), ('None', 'None'), ('CannotComplete', 'Cannot Complete'), ('Canceled', 'Canceled')], blank=True, null=True)
+    location = models.ForeignKey(Location, models.DO_NOTHING, db_column='LocationId', verbose_name='Location ID', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'WorkOrder'
         verbose_name = 'Work Order'
@@ -15964,7 +17801,7 @@ class WorkOrderHistory(models.Model):
     work_order = models.ForeignKey(WorkOrder, models.DO_NOTHING, db_column='WorkOrderId', verbose_name='Work Order ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey(User, models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account'), ('Address', 'Address'), ('Asset', 'Asset'), ('BusinessHours', 'Business Hours'), ('Case', 'Case'), ('City', 'City'), ('Contact', 'Contact'), ('Country', 'Country'), ('created', 'Created.'), ('Description', 'Description'), ('Duration', 'Duration'), ('DurationInMinutes', 'Duration in Minutes'), ('DurationType', 'Duration Type'), ('EndDate', 'End Date'), ('Entitlement', 'Entitlement'), ('SlaExitDate', 'Entitlement Process End Time'), ('SlaStartDate', 'Entitlement Process Start Time'), ('feedEvent', 'Feed event'), ('GeocodeAccuracy', 'Geocode Accuracy'), ('individualMerged', 'Individual Merged'), ('IsClosed', 'Is Closed'), ('Latitude', 'Latitude'), ('LineItemAutonumberMaster', 'LineItemAutonumberMaster'), ('LineItemCount', 'Line Items'), ('Longitude', 'Longitude'), ('Owner', 'Owner'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ParentWorkOrder', 'Parent Work Order'), ('Pricebook2', 'Price Book'), ('Priority', 'Priority'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootWorkOrder', 'Root Work Order'), ('ServiceContract', 'Service Contract'), ('StartDate', 'Start Date'), ('State', 'State/Province'), ('Status', 'Status'), ('StatusCategory', 'Status Category'), ('IsStopped', 'Stopped'), ('StopStartDate', 'Stopped Since'), ('Street', 'Street'), ('Subject', 'Subject'), ('Subtotal', 'Subtotal'), ('Tax', 'Tax'), ('TotalPrice', 'Total Price'), ('PostalCode', 'Zip/Postal Code')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Account', 'Account'), ('Address', 'Address'), ('Asset', 'Asset'), ('BusinessHours', 'Business Hours'), ('Case', 'Case'), ('City', 'City'), ('Contact', 'Contact'), ('Country', 'Country'), ('created', 'Created.'), ('Description', 'Description'), ('Duration', 'Duration'), ('DurationInMinutes', 'Duration in Minutes'), ('DurationType', 'Duration Type'), ('EndDate', 'End Date'), ('Entitlement', 'Entitlement'), ('SlaExitDate', 'Entitlement Process End Time'), ('SlaStartDate', 'Entitlement Process Start Time'), ('feedEvent', 'Feed event'), ('GeocodeAccuracy', 'Geocode Accuracy'), ('individualMerged', 'Individual Merged'), ('IsClosed', 'Is Closed'), ('Latitude', 'Latitude'), ('LineItemAutonumberMaster', 'LineItemAutonumberMaster'), ('LineItemCount', 'Line Items'), ('Location', 'Location'), ('Longitude', 'Longitude'), ('Owner', 'Owner'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ParentWorkOrder', 'Parent Work Order'), ('Pricebook2', 'Price Book'), ('Priority', 'Priority'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootWorkOrder', 'Root Work Order'), ('ServiceContract', 'Service Contract'), ('StartDate', 'Start Date'), ('State', 'State/Province'), ('Status', 'Status'), ('StatusCategory', 'Status Category'), ('IsStopped', 'Stopped'), ('StopStartDate', 'Stopped Since'), ('Street', 'Street'), ('Subject', 'Subject'), ('Subtotal', 'Subtotal'), ('Tax', 'Tax'), ('TotalPrice', 'Total Price'), ('PostalCode', 'Zip/Postal Code')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -16020,6 +17857,7 @@ class WorkOrderLineItem(models.Model):
     is_closed = models.BooleanField(db_column='IsClosed', sf_read_only=models.READ_ONLY, default=False)
     priority = models.CharField(db_column='Priority', max_length=40, default='Low', choices=[('Low', 'Low'), ('Medium', 'Medium'), ('High', 'High'), ('Critical', 'Critical')], blank=True, null=True)
     service_appointment_count = models.IntegerField(db_column='ServiceAppointmentCount', sf_read_only=models.READ_ONLY, blank=True, null=True)
+    location = models.ForeignKey(Location, models.DO_NOTHING, db_column='LocationId', verbose_name='Location ID', blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'WorkOrderLineItem'
         verbose_name = 'Work Order Line Item'
@@ -16058,7 +17896,7 @@ class WorkOrderLineItemHistory(models.Model):
     work_order_line_item = models.ForeignKey(WorkOrderLineItem, models.DO_NOTHING, db_column='WorkOrderLineItemId', verbose_name='Work Order Line Item ID', sf_read_only=models.READ_ONLY)  # Master Detail Relationship *
     created_by = models.ForeignKey(User, models.DO_NOTHING, db_column='CreatedById', verbose_name='Created By ID', sf_read_only=models.READ_ONLY)
     created_date = models.DateTimeField(db_column='CreatedDate', sf_read_only=models.READ_ONLY)
-    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Address', 'Address'), ('Asset', 'Asset'), ('City', 'City'), ('Country', 'Country'), ('created', 'Created.'), ('Description', 'Description'), ('Discount', 'Discount'), ('Duration', 'Duration'), ('DurationInMinutes', 'Duration in Minutes'), ('DurationType', 'Duration Type'), ('EndDate', 'End Date'), ('feedEvent', 'Feed event'), ('GeocodeAccuracy', 'Geocode Accuracy'), ('individualMerged', 'Individual Merged'), ('IsClosed', 'Is Closed'), ('Latitude', 'Latitude'), ('Longitude', 'Longitude'), ('Order', 'Order'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ParentWorkOrderLineItem', 'Parent Work Order Line Item'), ('Priority', 'Priority'), ('PricebookEntry', 'Product'), ('Product2', 'Product'), ('Quantity', 'Quantity'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootWorkOrderLineItem', 'Root Work Order Line Item'), ('StartDate', 'Start Date'), ('State', 'State/Province'), ('Status', 'Status'), ('StatusCategory', 'Status Category'), ('Street', 'Street'), ('Subject', 'Subject'), ('UnitPrice', 'Unit Price'), ('WorkOrder', 'Work Order'), ('PostalCode', 'Zip/Postal Code')])
+    field = models.CharField(db_column='Field', max_length=255, verbose_name='Changed Field', sf_read_only=models.READ_ONLY, choices=[('Address', 'Address'), ('Asset', 'Asset'), ('City', 'City'), ('Country', 'Country'), ('created', 'Created.'), ('Description', 'Description'), ('Discount', 'Discount'), ('Duration', 'Duration'), ('DurationInMinutes', 'Duration in Minutes'), ('DurationType', 'Duration Type'), ('EndDate', 'End Date'), ('feedEvent', 'Feed event'), ('GeocodeAccuracy', 'Geocode Accuracy'), ('individualMerged', 'Individual Merged'), ('IsClosed', 'Is Closed'), ('Latitude', 'Latitude'), ('Location', 'Location'), ('Longitude', 'Longitude'), ('Order', 'Order'), ('ownerAccepted', 'Owner (Accepted)'), ('ownerAssignment', 'Owner (Assignment)'), ('ParentWorkOrderLineItem', 'Parent Work Order Line Item'), ('Priority', 'Priority'), ('PricebookEntry', 'Product'), ('Product2', 'Product'), ('Quantity', 'Quantity'), ('locked', 'Record locked.'), ('unlocked', 'Record unlocked.'), ('RootWorkOrderLineItem', 'Root Work Order Line Item'), ('StartDate', 'Start Date'), ('State', 'State/Province'), ('Status', 'Status'), ('StatusCategory', 'Status Category'), ('Street', 'Street'), ('Subject', 'Subject'), ('UnitPrice', 'Unit Price'), ('WorkOrder', 'Work Order'), ('PostalCode', 'Zip/Postal Code')])
     data_type = models.CharField(db_column='DataType', max_length=40, verbose_name='Datatype', sf_read_only=models.READ_ONLY, choices=[('Address', None), ('AnyType', None), ('AutoNumber', None), ('Base64', None), ('BitVector', None), ('Boolean', None), ('Content', None), ('Currency', None), ('DataCategoryGroupReference', None), ('DateOnly', None), ('DateTime', None), ('Division', None), ('Double', None), ('DynamicEnum', None), ('Email', None), ('EncryptedBase64', None), ('EncryptedText', None), ('EntityId', None), ('EnumOrId', None), ('ExternalId', None), ('Fax', None), ('File', None), ('HtmlMultiLineText', None), ('HtmlStringPlusClob', None), ('InetAddress', None), ('Json', None), ('JsonStringPlusClob', None), ('Location', None), ('MultiEnum', None), ('MultiLineText', None), ('Namespace', None), ('Percent', None), ('PersonName', None), ('Phone', None), ('Raw', None), ('RecordType', None), ('SfdcEncryptedText', None), ('SimpleNamespace', None), ('StringPlusClob', None), ('Switchable_PersonName', None), ('Text', None), ('TimeOnly', None), ('Url', None), ('YearQuarter', None)], blank=True, null=True)
     old_value = models.CharField(db_column='OldValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
     new_value = models.CharField(db_column='NewValue', max_length=255, sf_read_only=models.READ_ONLY, blank=True, null=True)
@@ -16370,7 +18208,7 @@ class WorkStep(models.Model):
     start_time = models.DateTimeField(db_column='StartTime', blank=True, null=True)
     end_time = models.DateTimeField(db_column='EndTime', blank=True, null=True)
     paused_flow_interview = models.ForeignKey(FlowInterview, models.DO_NOTHING, db_column='PausedFlowInterviewId', verbose_name='Paused Flow Interview ID', blank=True, null=True)
-    action_definition = models.CharField(db_column='ActionDefinition', max_length=255, help_text='Find and select the associated global action, quick action, screen flow, or mobile flow.', choices=[('hvs_linkedin__ConnectionRequest', 'Send LinkedIn Connection Request'), ('hvs_linkedin__InMail', 'Send Linkedin InMail'), ('setup_service_experience__Create_Case', 'Create a Case'), ('setup_service_experience__Reset_Pwd', 'Reset Password'), ('setup_service_experience__Verify_Cust', 'Verify Identity'), ('Dhruvsoft__Convert_To_Order', 'Convert To Order'), ('SendEmail', 'Email'), ('Follow_Up', 'Follow Up'), ('LogACall', 'Log a Call'), ('NewAccount', 'New Account'), ('NewCase', 'New Case'), ('NewContact', 'New Contact'), ('_NewQuipDocument', 'New Document'), ('NewEvent', 'New Event'), ('NewGroup', 'New Group'), ('NewLead', 'New Lead'), ('FeedItem.ContentNote', 'New Note'), ('FeedItem.ContentNote', 'New Note'), ('NewOpportunity', 'New Opportunity'), ('NewTask', 'New Task')], blank=True, null=True)
+    action_definition = models.CharField(db_column='ActionDefinition', max_length=255, help_text='Find and select the associated global action, quick action, screen flow, or mobile flow.', choices=[('healthcloud_pm_flows__AcceptSlots', 'Confirm Booking Request'), ('hvs_linkedin__ConnectionRequest', 'Send LinkedIn Connection Request'), ('hvs_linkedin__InMail', 'Send Linkedin InMail'), ('setup_service_experience__Create_Case', 'Create a Case'), ('setup_service_experience__Reset_Pwd', 'Reset Password'), ('setup_service_experience__Verify_Cust', 'Verify Identity'), ('Dhruvsoft__Convert_To_Order', 'Convert To Order'), ('SendEmail', 'Email'), ('Follow_Up', 'Follow Up'), ('LogACall', 'Log a Call'), ('NewAccount', 'New Account'), ('NewCase', 'New Case'), ('NewContact', 'New Contact'), ('_NewQuipDocument', 'New Document'), ('NewEvent', 'New Event'), ('NewGroup', 'New Group'), ('NewLead', 'New Lead'), ('FeedItem.ContentNote', 'New Note'), ('FeedItem.ContentNote', 'New Note'), ('NewOpportunity', 'New Opportunity'), ('NewTask', 'New Task')], blank=True, null=True)
     action_type = models.CharField(db_column='ActionType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Flow', 'Flow'), ('QuickAction', 'Quick Action')], blank=True, null=True)
     status = models.CharField(db_column='Status', max_length=40, default='New', choices=[('New', 'New'), ('In Progress', 'In Progress'), ('Paused', 'Paused'), ('Completed', 'Completed'), ('Not Applicable', 'Not Applicable')], blank=True, null=True)
     status_category = models.CharField(db_column='StatusCategory', max_length=255, sf_read_only=models.READ_ONLY, default='New', choices=[('New', 'New'), ('InProgress', 'In Progress'), ('Paused', 'Paused'), ('Completed', 'Completed'), ('NotApplicable', 'Not Applicable')], blank=True, null=True)
@@ -16458,7 +18296,7 @@ class WorkStepTemplate(models.Model):
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', sf_read_only=models.READ_ONLY, blank=True, null=True)
     is_active = models.BooleanField(db_column='IsActive', verbose_name='Active', default=models.DEFAULTED_ON_CREATE)
     description = models.TextField(db_column='Description', blank=True, null=True)
-    action_definition = models.CharField(db_column='ActionDefinition', max_length=255, help_text='Find and select the associated global action, quick action, screen flow, or mobile flow.', choices=[('hvs_linkedin__ConnectionRequest', 'Send LinkedIn Connection Request'), ('hvs_linkedin__InMail', 'Send Linkedin InMail'), ('setup_service_experience__Create_Case', 'Create a Case'), ('setup_service_experience__Reset_Pwd', 'Reset Password'), ('setup_service_experience__Verify_Cust', 'Verify Identity'), ('Dhruvsoft__Convert_To_Order', 'Convert To Order'), ('SendEmail', 'Email'), ('Follow_Up', 'Follow Up'), ('LogACall', 'Log a Call'), ('NewAccount', 'New Account'), ('NewCase', 'New Case'), ('NewContact', 'New Contact'), ('_NewQuipDocument', 'New Document'), ('NewEvent', 'New Event'), ('NewGroup', 'New Group'), ('NewLead', 'New Lead'), ('FeedItem.ContentNote', 'New Note'), ('FeedItem.ContentNote', 'New Note'), ('NewOpportunity', 'New Opportunity'), ('NewTask', 'New Task')], blank=True, null=True)
+    action_definition = models.CharField(db_column='ActionDefinition', max_length=255, help_text='Find and select the associated global action, quick action, screen flow, or mobile flow.', choices=[('healthcloud_pm_flows__AcceptSlots', 'Confirm Booking Request'), ('hvs_linkedin__ConnectionRequest', 'Send LinkedIn Connection Request'), ('hvs_linkedin__InMail', 'Send Linkedin InMail'), ('setup_service_experience__Create_Case', 'Create a Case'), ('setup_service_experience__Reset_Pwd', 'Reset Password'), ('setup_service_experience__Verify_Cust', 'Verify Identity'), ('Dhruvsoft__Convert_To_Order', 'Convert To Order'), ('SendEmail', 'Email'), ('Follow_Up', 'Follow Up'), ('LogACall', 'Log a Call'), ('NewAccount', 'New Account'), ('NewCase', 'New Case'), ('NewContact', 'New Contact'), ('_NewQuipDocument', 'New Document'), ('NewEvent', 'New Event'), ('NewGroup', 'New Group'), ('NewLead', 'New Lead'), ('FeedItem.ContentNote', 'New Note'), ('FeedItem.ContentNote', 'New Note'), ('NewOpportunity', 'New Opportunity'), ('NewTask', 'New Task')], blank=True, null=True)
     action_type = models.CharField(db_column='ActionType', max_length=255, sf_read_only=models.READ_ONLY, choices=[('Flow', 'Flow'), ('QuickAction', 'Quick Action')], blank=True, null=True)
     class Meta(models.Model.Meta):
         db_table = 'WorkStepTemplate'
@@ -17061,4 +18899,3 @@ class TypeformTypeformError(models.Model):
         verbose_name = 'Typeform Error'
         verbose_name_plural = 'Typeform Errors'
         # keyPrefix = 'a0g'
-
