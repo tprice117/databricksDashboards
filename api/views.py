@@ -110,7 +110,6 @@ class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product2.objects.all()
     serializer_class = ProductSerializer
-    filterset_fields = ["service_provider", "main_product_variation"] 
 
 class SellerProductLocationZoneViewSet(viewsets.ModelViewSet):
     queryset = SellerProductLocationZone.objects.all()
