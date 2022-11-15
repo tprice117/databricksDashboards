@@ -125,6 +125,7 @@ class SellerProductViewSet(viewsets.ModelViewSet):
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
+    filterset_fields = ["account", "location_zone","waste_type"]
 
 
 
