@@ -120,7 +120,7 @@ class SellerProductLocationZoneViewSet(viewsets.ModelViewSet):
 class SellerProductViewSet(viewsets.ModelViewSet):
     queryset = SellerProduct.objects.all()
     serializer_class = SellerProductSerializer
-    filterset_fields = ["seller_product"] 
+    filterset_fields = ["product"] 
 
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
