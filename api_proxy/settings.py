@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'api',
     'salesforce',
     'django_filters',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -61,7 +62,9 @@ ROOT_URLCONF = 'api_proxy.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            str(BASE_DIR) + '/templates/',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -163,6 +166,7 @@ REST_FRAMEWORK = {
         # 'firebase_auth.firebase_authentication.FirebaseAuthentication',
     ),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SALESFORCE_QUERY_TIMEOUT = (60, 60)  # default (connect timeout, data timeout)

@@ -1,3 +1,5 @@
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from django.views.generic import TemplateView
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
@@ -29,7 +31,14 @@ router.register(r'seller-products', views.SellerProductViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
 
 urlpatterns = [
+    # Base API URL.
     path('api/', include(router.urls)),
+    # Schema URLs.
+    # YOUR PATTERNS
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    # Optional UI:
+    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     # path('admin/', admin.site.urls),
     path('api/tasks/<int:pk>', views.TaskView.as_view()),
     path('api/tasks/', views.TaskView.as_view()),
