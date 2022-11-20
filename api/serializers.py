@@ -57,14 +57,10 @@ class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class MainProductCategorySerializer(serializers.ModelSerializer):
-    main_product_category_infos = serializers.SerializerMethodField(read_only=True)
     id = serializers.CharField(required=False)
     class Meta:
         model = MainProductCategory
         fields = "__all__"
-
-    def get_main_product_category_infos(self, main_product_category):
-        return MainProductCategoryInfoSerializer(ProductCategoryInfo.objects.filter(product_category=main_product_category), many=True).data
 
 class MainProductInfoSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
@@ -73,15 +69,10 @@ class MainProductInfoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class MainProductSerializer(serializers.ModelSerializer):
-    main_product_infos = serializers.SerializerMethodField(read_only=True)
     id = serializers.CharField(required=False)
     class Meta:
         model = MainProduct
         fields = "__all__"
-    
-    def get_main_product_infos(self, main_product):
-        return MainProductInfoSerializer(MainProductInfo.objects.filter(main_product=main_product), many=True).data
-
 
 class MainProductWasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
