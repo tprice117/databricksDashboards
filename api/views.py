@@ -25,7 +25,7 @@ class AccountContactViewSet(viewsets.ModelViewSet):
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.filter(type__in=["Customer", "Partner"])
     serializer_class = AccountSerializer
-    filterset_fields = ["id", "parent"]
+    filterset_fields = ["id", "parent", "type"]
 
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
