@@ -68,4 +68,5 @@ urlpatterns = [
     path('api/stripe/billing/invoices', views.StripeBillingInvoice.as_view()),
     path('api/stripe/billing/subscriptions', views.StripeBillingSubscription.as_view()),    
     path('api/stripe/core/payment-intents', views.StripeCorePaymentIntents.as_view()),
+    path('api/stripe/core/balance', views.StripeCoreBalance.as_view()),
 ]
