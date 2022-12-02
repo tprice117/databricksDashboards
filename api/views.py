@@ -529,3 +529,15 @@ class StripeCoreBalance(APIView):
     def get(self, request, format=None):
         balance = stripe.Balance.retrieve()
         return Response(balance)
+
+class StripeCoreBalanceTransactions(APIView):
+    def get(self, request, format=None):
+        has_more = True
+        starting_after = None
+        data = []
+        while has_more:
+            payment_intents = stripe.BalanceTransaction.list(limit=100, starting_after=starting_after)
+            data = data + payment_intents["data"]
+            has_more = payment_intents["has_more"]
+            starting_after = data[-1]["id"]
+        return Response(data)
