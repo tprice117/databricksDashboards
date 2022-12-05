@@ -201,7 +201,7 @@ class Account(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', sf_read_only=models.READ_ONLY, default=False)
     master_record = models.ForeignKey('self', models.DO_NOTHING, db_column='MasterRecordId', related_name='account_masterrecord_set', verbose_name='Master Record ID', sf_read_only=models.READ_ONLY, blank=True, null=True)
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Account Name')
-    type = models.CharField(db_column='Type', max_length=255, verbose_name='Account Type', choices=[('Analyst', 'Analyst'), ('Competitor', 'Competitor'), ('Customer', 'Customer'), ('Integrator', 'Integrator'), ('Investor', 'Investor'), ('Partner', 'Partner'), ('Press', 'Press'), ('Prospect', 'Prospect'), ('Reseller', 'Reseller'), ('Other', 'Other')], blank=True, null=True)
+    type = models.CharField(db_column='Type', max_length=255, verbose_name='Account Type', choices=[('Analyst', 'Analyst'), ('Competitor', 'Competitor'), ('Customer', 'Customer'), ('Integrator', 'Integrator'), ('Investor', 'Investor'), ('Partner', 'Partner'), ('Press', 'Press'), ('Prospect', 'Prospect'), ('Seller', 'Seller'), ('Other', 'Other')], blank=True, null=True)
     record_type = models.ForeignKey('RecordType', models.DO_NOTHING, db_column='RecordTypeId', verbose_name='Record Type ID', blank=True, null=True)
     parent = models.ForeignKey('self', models.DO_NOTHING, db_column='ParentId', related_name='account_parent_set', verbose_name='Parent Account ID', blank=True, null=True)
     billing_street = models.TextField(db_column='BillingStreet', blank=True, null=True)

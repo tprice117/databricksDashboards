@@ -23,7 +23,7 @@ class AccountContactViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "account", "contact"]
 
 class AccountViewSet(viewsets.ModelViewSet):
-    queryset = Account.objects.filter(type__in=["Customer", "Partner"])
+    queryset = Account.objects.filter(type__in=["Customer", "Seller"])
     serializer_class = AccountSerializer
     filterset_fields = ["id", "parent", "type"]
 
