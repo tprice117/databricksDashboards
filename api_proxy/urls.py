@@ -31,6 +31,7 @@ router.register(r'seller-products', views.SellerProductViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
     # Base API URL.
     path('api/', include(router.urls)),
     # Schema URLs.

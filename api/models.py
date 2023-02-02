@@ -230,7 +230,7 @@ class MainProductCategory(models.Model):
     sort = models.DecimalField(db_column='Sort__c', max_digits=18, decimal_places=0, blank=True, null=True)
     display_name = models.CharField(db_column='Display_Name__c', max_length=255, verbose_name='Display Name', blank=True, null=True)
 
-class ProductCategoryInfo(models.Model):
+class MainProductCategoryInfo(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', default=False)
     name = models.CharField(db_column='Name', max_length=80, verbose_name='Product Category Name', blank=True, null=True)
     created_date = models.DateTimeField(db_column='CreatedDate')
@@ -298,7 +298,7 @@ class Opportunity(models.Model):
     forecast_category = models.CharField(db_column='ForecastCategory', max_length=40, choices=[('Omitted', 'Omitted'), ('Pipeline', 'Pipeline'), ('BestCase', 'Best Case'), ('MostLikely', 'Most Likely'), ('Forecast', 'Commit'), ('Closed', 'Closed')])
     forecast_category_name = models.CharField(db_column='ForecastCategoryName', max_length=255, verbose_name='Forecast Category', choices=[('Omitted', 'Omitted'), ('Pipeline', 'Pipeline'), ('Best Case', 'Best Case'), ('Commit', 'Commit'), ('Closed', 'Closed')], blank=True, null=True)
     has_opportunity_line_item = models.BooleanField(db_column='HasOpportunityLineItem', verbose_name='Has Line Item', default=False)
-    pricebook2 = models.ForeignKey('Pricebook2', models.DO_NOTHING, db_column='Pricebook2Id', verbose_name='Price Book ID', blank=True, null=True)
+    pricebook2 = models.ForeignKey('Pricebook', models.DO_NOTHING, db_column='PricebookId', verbose_name='Price Book ID', blank=True, null=True)
     created_date = models.DateTimeField(db_column='CreatedDate')
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate')
     system_modstamp = models.DateTimeField(db_column='SystemModstamp')
@@ -326,7 +326,7 @@ class Opportunity(models.Model):
     active_camp_active_campaign_sync_status = models.CharField(db_column='ActiveCamp__ActiveCampaign_Sync_Status__c', max_length=255, verbose_name='ActiveCampaign Sync Status', choices=[('Waiting For Next Sync', 'Waiting For Next Sync'), ('Successfully Synced', 'Successfully Synced'), ('Does Not Meet Sync Criteria', 'Does Not Meet Sync Criteria')], blank=True, null=True) 
     active_camp_last_synced = models.DateTimeField(db_column='ActiveCamp__Last_Synced__c', verbose_name='ActiveCampaign Last Synced', blank=True, null=True) 
     pandadoc_tracking_number = models.CharField(db_column='pandadoc__TrackingNumber__c', max_length=12, verbose_name='Tracking Number', blank=True, null=True) 
-    product = models.ForeignKey('Product2', models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
+    product = models.ForeignKey('Product', models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
     service_provider = models.ForeignKey(Account, models.DO_NOTHING, db_column='Service_Provider__c', related_name='opportunity_serviceprovider_set', verbose_name='Service Provider', blank=True, null=True)
     start_date_time = models.DateTimeField(db_column='Start_DateTime__c', verbose_name='Start DateTime', blank=True, null=True)
     end_date_time = models.DateTimeField(db_column='End_DateTime__c', verbose_name='End DateTime', blank=True, null=True)
@@ -337,7 +337,7 @@ class Opportunity(models.Model):
 
 class Order(models.Model):
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', related_name='order_account_set', verbose_name='Account ID', blank=True, null=True)  # Master Detail Relationship *
-    pricebook2 = models.ForeignKey('Pricebook2', models.DO_NOTHING, db_column='Pricebook2Id', verbose_name='Price Book ID', blank=True, null=True)
+    pricebook2 = models.ForeignKey('Pricebook', models.DO_NOTHING, db_column='PricebookId', verbose_name='Price Book ID', blank=True, null=True)
     original_order = models.ForeignKey('self', models.DO_NOTHING, db_column='OriginalOrderId', verbose_name='Order ID', blank=True, null=True)
     effective_date = models.DateField(db_column='EffectiveDate', verbose_name='Order Start Date')
     end_date = models.DateField(db_column='EndDate', verbose_name='Order End Date', blank=True, null=True)
@@ -401,7 +401,7 @@ class PostalCode(models.Model):
     county = models.CharField(db_column='County__c', max_length=255, blank=True, null=True)
     city = models.CharField(db_column='City__c', max_length=255, blank=True, null=True)
 
-class Pricebook2(models.Model):
+class Pricebook(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', default=False)
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Price Book Name')
     created_date = models.DateTimeField(db_column='CreatedDate')
@@ -416,8 +416,8 @@ class Pricebook2(models.Model):
 
 class PricebookEntry(models.Model):
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Product Name', blank=True, null=True)
-    pricebook2 = models.ForeignKey(Pricebook2, models.DO_NOTHING, db_column='Pricebook2Id', verbose_name='Price Book ID')  # Master Detail Relationship *
-    product2 = models.ForeignKey('Product2', models.DO_NOTHING, db_column='Product2Id', verbose_name='Product ID')  # Master Detail Relationship *
+    pricebook = models.ForeignKey(Pricebook, models.DO_NOTHING, db_column='PricebookId', verbose_name='Price Book ID')  # Master Detail Relationship *
+    product = models.ForeignKey('Product', models.DO_NOTHING, db_column='ProductId', verbose_name='Product ID')  # Master Detail Relationship *
     unit_price = models.DecimalField(db_column='UnitPrice', max_digits=18, decimal_places=2, verbose_name='List Price')
     is_active = models.BooleanField(db_column='IsActive', verbose_name='Active', default=False)
     use_standard_price = models.BooleanField(db_column='UseStandardPrice', default=False)
@@ -428,7 +428,7 @@ class PricebookEntry(models.Model):
     is_deleted = models.BooleanField(db_column='IsDeleted', verbose_name='Deleted', default=False)
     is_archived = models.BooleanField(db_column='IsArchived', verbose_name='Archived', default=False)
 
-class Product2(models.Model):
+class Product(models.Model):
     name = models.CharField(db_column='Name', max_length=255, verbose_name='Product Name')
     product_code = models.CharField(db_column='ProductCode', max_length=255, blank=True, null=True)
     description = models.TextField(db_column='Description', verbose_name='Product Description', blank=True, null=True)
@@ -464,7 +464,7 @@ class ProductAddOnChoice(models.Model):
     system_modstamp = models.DateTimeField(db_column='SystemModstamp')
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', blank=True, null=True)
-    product = models.ForeignKey(Product2, models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
+    product = models.ForeignKey(Product, models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
     add_on_choice = models.ForeignKey(AddOnChoice, models.DO_NOTHING, db_column='Add_On_Choice__c', verbose_name='Add On Choice', blank=True, null=True)
 
 class SellerProductLocationZone(models.Model):
@@ -487,7 +487,7 @@ class SellerProduct(models.Model):
     system_modstamp = models.DateTimeField(db_column='SystemModstamp')
     last_viewed_date = models.DateTimeField(db_column='LastViewedDate', blank=True, null=True)
     last_referenced_date = models.DateTimeField(db_column='LastReferencedDate', blank=True, null=True)
-    product = models.ForeignKey(Product2, models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
+    product = models.ForeignKey(Product, models.DO_NOTHING, db_column='Product__c', blank=True, null=True)
     rate = models.DecimalField(db_column='Rate__c', max_digits=18, decimal_places=2, blank=True, null=True)
     service_provider = models.ForeignKey(Account, models.DO_NOTHING, db_column='Service_Provider__c', verbose_name='Service Provider', blank=True, null=True)
 

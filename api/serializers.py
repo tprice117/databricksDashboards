@@ -53,7 +53,7 @@ class MainProductAddOnSerializer(serializers.ModelSerializer):
 class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = ProductCategoryInfo
+        model = MainProductCategoryInfo
         fields = "__all__"
 
 class MainProductCategorySerializer(serializers.ModelSerializer):
@@ -108,7 +108,7 @@ class PriceBookEntrySerializer(serializers.ModelSerializer):
 class PriceBookSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Pricebook2
+        model = Pricebook
         fields = "__all__"
 
 class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
@@ -120,7 +120,7 @@ class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Product2
+        model = Product
         fields = "__all__"
 
 class SellerProductLocationZoneSerializer(serializers.ModelSerializer):

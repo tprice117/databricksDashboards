@@ -56,7 +56,7 @@ class MainProductAddOnViewSet(viewsets.ModelViewSet):
     filterset_fields = ["main_product", "add_on"] 
 
 class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
-    queryset = ProductCategoryInfo.objects.all()
+    queryset = MainProductCategoryInfo.objects.all()
     serializer_class = MainProductCategoryInfoSerializer
     filterset_fields = ["product_category"]
 
@@ -99,7 +99,7 @@ class PriceBookEntryViewSet(viewsets.ModelViewSet):
     filterset_fields = ["pricebook2", "product2"]  
 
 class PriceBookViewSet(viewsets.ModelViewSet):
-    queryset = Pricebook2.objects.all()
+    queryset = Pricebook.objects.all()
     serializer_class = PriceBookSerializer
     filterset_fields = ["is_standard"]  
 
@@ -109,7 +109,7 @@ class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     filterset_fields = ["product", "add_on_choice"] 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product2.objects.all()
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filterset_fields = ["main_product"]
 
