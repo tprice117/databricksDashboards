@@ -298,7 +298,7 @@ class Opportunity(models.Model):
     forecast_category = models.CharField(db_column='ForecastCategory', max_length=40, choices=[('Omitted', 'Omitted'), ('Pipeline', 'Pipeline'), ('BestCase', 'Best Case'), ('MostLikely', 'Most Likely'), ('Forecast', 'Commit'), ('Closed', 'Closed')])
     forecast_category_name = models.CharField(db_column='ForecastCategoryName', max_length=255, verbose_name='Forecast Category', choices=[('Omitted', 'Omitted'), ('Pipeline', 'Pipeline'), ('Best Case', 'Best Case'), ('Commit', 'Commit'), ('Closed', 'Closed')], blank=True, null=True)
     has_opportunity_line_item = models.BooleanField(db_column='HasOpportunityLineItem', verbose_name='Has Line Item', default=False)
-    pricebook2 = models.ForeignKey('Pricebook', models.DO_NOTHING, db_column='PricebookId', verbose_name='Price Book ID', blank=True, null=True)
+    pricebook = models.ForeignKey('Pricebook', models.DO_NOTHING, db_column='PricebookId', verbose_name='Price Book ID', blank=True, null=True)
     created_date = models.DateTimeField(db_column='CreatedDate')
     last_modified_date = models.DateTimeField(db_column='LastModifiedDate')
     system_modstamp = models.DateTimeField(db_column='SystemModstamp')
@@ -337,7 +337,7 @@ class Opportunity(models.Model):
 
 class Order(models.Model):
     account = models.ForeignKey(Account, models.DO_NOTHING, db_column='AccountId', related_name='order_account_set', verbose_name='Account ID', blank=True, null=True)  # Master Detail Relationship *
-    pricebook2 = models.ForeignKey('Pricebook', models.DO_NOTHING, db_column='PricebookId', verbose_name='Price Book ID', blank=True, null=True)
+    pricebook = models.ForeignKey('Pricebook', models.DO_NOTHING, db_column='PricebookId', verbose_name='Price Book ID', blank=True, null=True)
     original_order = models.ForeignKey('self', models.DO_NOTHING, db_column='OriginalOrderId', verbose_name='Order ID', blank=True, null=True)
     effective_date = models.DateField(db_column='EffectiveDate', verbose_name='Order Start Date')
     end_date = models.DateField(db_column='EndDate', verbose_name='Order End Date', blank=True, null=True)
