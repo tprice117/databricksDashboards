@@ -85,10 +85,20 @@ WSGI_APPLICATION = 'api_proxy.wsgi.application'
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
 # if DEVELOPMENT_MODE is True:
+# DATABASES = {
+#      'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': 'sqllite.db',
+#     },
+# }
 DATABASES = {
-     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'sqllite.db',
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ds-marketplace',
+        'USER': 'postgres',
+        'PASSWORD': 'LongLiveDownstream1!',
+        'HOST': '23.236.63.33',
+        'PORT': '5432',
     },
 }
 
