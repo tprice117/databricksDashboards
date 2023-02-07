@@ -17,7 +17,7 @@ import sys
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
