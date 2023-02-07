@@ -84,6 +84,16 @@ WSGI_APPLICATION = 'api_proxy.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'doadmin',
+        'USER': 'myprojectuser',
+        'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
+        'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
+        'PORT': '25060',
+    }
+}
 # if DEVELOPMENT_MODE is True:
 # DATABASES = {
 #      'default': {
@@ -91,16 +101,22 @@ DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 #         'NAME': 'sqllite.db',
 #     },
 # }
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ds-marketplace',
-        'USER': 'postgres',
-        'PASSWORD': 'LongLiveDownstream1!',
-        'HOST': '23.236.63.33',
-        'PORT': '5432',
-    },
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'ds-marketplace',
+#         'USER': 'postgres',
+#         'PASSWORD': 'LongLiveDownstream1!',
+#         'HOST': '23.236.63.33',
+#         'PORT': '5432',
+#         # 'OPTIONS': {
+#         #     'sslmode': 'verify-ca', #leave this line intact
+#         #     'sslrootcert': 'ssl/server-ca.pem',
+#         #     "sslcert": "ssl/client-cert.pem",
+#         #     "sslkey": "ssl/client-key.pem",
+#         # }
+#     },
+# }
 
 # DATABASE_ROUTERS = [
 #     "salesforce.router.ModelRouter"
