@@ -8,17 +8,15 @@ paths:
       operationId: account_contacts_list
       parameters:
       - in: query
-        name: account
-        schema:
-          type: integer
-      - in: query
         name: contact
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: id
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - account-contacts
       security:
@@ -64,8 +62,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account Contact Relationship.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account contact relation.
         required: true
       tags:
       - account-contacts
@@ -84,8 +83,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account Contact Relationship.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account contact relation.
         required: true
       tags:
       - account-contacts
@@ -116,8 +116,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account Contact Relationship.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account contact relation.
         required: true
       tags:
       - account-contacts
@@ -147,8 +148,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account Contact Relationship.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account contact relation.
         required: true
       tags:
       - account-contacts
@@ -164,11 +166,30 @@ paths:
       - in: query
         name: id
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: parent
         schema:
-          type: integer
+          type: string
+          format: uuid
+      - in: query
+        name: type
+        schema:
+          type: string
+          nullable: true
+          title: Account Type
+          enum:
+          - Analyst
+          - Competitor
+          - Customer
+          - Integrator
+          - Investor
+          - Other
+          - Partner
+          - Press
+          - Prospect
+          - Seller
       tags:
       - accounts
       security:
@@ -214,8 +235,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account.
         required: true
       tags:
       - accounts
@@ -234,8 +256,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account.
         required: true
       tags:
       - accounts
@@ -266,8 +289,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account.
         required: true
       tags:
       - accounts
@@ -297,8 +321,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Account.
+          type: string
+          format: uuid
+        description: A UUID string identifying this account.
         required: true
       tags:
       - accounts
@@ -314,7 +339,8 @@ paths:
       - in: query
         name: add_on
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - add-on-choices
       security:
@@ -343,7 +369,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOnChoice'
-        required: true
       security:
       - {}
       responses:
@@ -360,8 +385,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on choice.
         required: true
       tags:
       - add-on-choices
@@ -380,8 +406,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on choice.
         required: true
       tags:
       - add-on-choices
@@ -396,7 +423,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOnChoice'
-        required: true
       security:
       - {}
       responses:
@@ -412,8 +438,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on choice.
         required: true
       tags:
       - add-on-choices
@@ -443,8 +470,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on choice.
         required: true
       tags:
       - add-on-choices
@@ -484,7 +512,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOn'
-        required: true
       security:
       - {}
       responses:
@@ -501,8 +528,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on.
         required: true
       tags:
       - add-ons
@@ -521,8 +549,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on.
         required: true
       tags:
       - add-ons
@@ -537,7 +566,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOn'
-        required: true
       security:
       - {}
       responses:
@@ -553,8 +581,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on.
         required: true
       tags:
       - add-ons
@@ -584,8 +613,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this add on.
         required: true
       tags:
       - add-ons
@@ -699,7 +729,8 @@ paths:
       - in: query
         name: id
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: user_id
         schema:
@@ -749,8 +780,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Contact.
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
         required: true
       tags:
       - contacts
@@ -769,8 +801,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Contact.
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
         required: true
       tags:
       - contacts
@@ -801,8 +834,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Contact.
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
         required: true
       tags:
       - contacts
@@ -832,8 +866,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Contact.
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
         required: true
       tags:
       - contacts
@@ -963,15 +998,18 @@ paths:
       - in: query
         name: account
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: location_zone
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: waste_type
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - disposal-fees
       security:
@@ -1000,7 +1038,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/DisposalFee'
-        required: true
       security:
       - {}
       responses:
@@ -1017,8 +1054,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Disposal Fee.
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
         required: true
       tags:
       - disposal-fees
@@ -1037,8 +1075,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Disposal Fee.
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
         required: true
       tags:
       - disposal-fees
@@ -1053,7 +1092,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/DisposalFee'
-        required: true
       security:
       - {}
       responses:
@@ -1069,8 +1107,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Disposal Fee.
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
         required: true
       tags:
       - disposal-fees
@@ -1100,8 +1139,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Disposal Fee.
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
         required: true
       tags:
       - disposal-fees
@@ -1141,7 +1181,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/LocationZone'
-        required: true
       security:
       - {}
       responses:
@@ -1158,8 +1197,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Location Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
         required: true
       tags:
       - location-zones
@@ -1178,8 +1218,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Location Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
         required: true
       tags:
       - location-zones
@@ -1194,7 +1235,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/LocationZone'
-        required: true
       security:
       - {}
       responses:
@@ -1210,8 +1250,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Location Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
         required: true
       tags:
       - location-zones
@@ -1241,8 +1282,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Location Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
         required: true
       tags:
       - location-zones
@@ -1258,11 +1300,13 @@ paths:
       - in: query
         name: add_on
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: main_product
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - main-product-add-ons
       security:
@@ -1291,7 +1335,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductAddOn'
-        required: true
       security:
       - {}
       responses:
@@ -1308,8 +1351,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product add on.
         required: true
       tags:
       - main-product-add-ons
@@ -1328,8 +1372,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product add on.
         required: true
       tags:
       - main-product-add-ons
@@ -1344,7 +1389,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductAddOn'
-        required: true
       security:
       - {}
       responses:
@@ -1360,8 +1404,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product add on.
         required: true
       tags:
       - main-product-add-ons
@@ -1391,8 +1436,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Add On.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product add on.
         required: true
       tags:
       - main-product-add-ons
@@ -1432,7 +1478,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategory'
-        required: true
       security:
       - {}
       responses:
@@ -1449,8 +1494,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Category.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category.
         required: true
       tags:
       - main-product-categories
@@ -1469,8 +1515,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Category.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category.
         required: true
       tags:
       - main-product-categories
@@ -1485,7 +1532,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategory'
-        required: true
       security:
       - {}
       responses:
@@ -1501,8 +1547,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Category.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category.
         required: true
       tags:
       - main-product-categories
@@ -1532,8 +1579,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Category.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category.
         required: true
       tags:
       - main-product-categories
@@ -1549,7 +1597,8 @@ paths:
       - in: query
         name: product_category
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - main-product-category-infos
       security:
@@ -1578,7 +1627,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategoryInfo'
-        required: true
       security:
       - {}
       responses:
@@ -1595,8 +1643,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Category Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category info.
         required: true
       tags:
       - main-product-category-infos
@@ -1615,8 +1664,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Category Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category info.
         required: true
       tags:
       - main-product-category-infos
@@ -1631,7 +1681,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategoryInfo'
-        required: true
       security:
       - {}
       responses:
@@ -1647,8 +1696,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Category Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category info.
         required: true
       tags:
       - main-product-category-infos
@@ -1678,8 +1728,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Category Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product category info.
         required: true
       tags:
       - main-product-category-infos
@@ -1695,7 +1746,8 @@ paths:
       - in: query
         name: main_product
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - main-product-infos
       security:
@@ -1724,7 +1776,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductInfo'
-        required: true
       security:
       - {}
       responses:
@@ -1741,8 +1792,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product info.
         required: true
       tags:
       - main-product-infos
@@ -1761,8 +1813,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product info.
         required: true
       tags:
       - main-product-infos
@@ -1777,7 +1830,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductInfo'
-        required: true
       security:
       - {}
       responses:
@@ -1793,8 +1845,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product info.
         required: true
       tags:
       - main-product-infos
@@ -1824,8 +1877,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Info.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product info.
         required: true
       tags:
       - main-product-infos
@@ -1841,11 +1895,13 @@ paths:
       - in: query
         name: main_product
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: waste_type
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - main-product-waste-types
       security:
@@ -1874,7 +1930,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductWasteType'
-        required: true
       security:
       - {}
       responses:
@@ -1891,8 +1946,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product waste type.
         required: true
       tags:
       - main-product-waste-types
@@ -1911,8 +1967,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product waste type.
         required: true
       tags:
       - main-product-waste-types
@@ -1927,7 +1984,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductWasteType'
-        required: true
       security:
       - {}
       responses:
@@ -1943,8 +1999,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product waste type.
         required: true
       tags:
       - main-product-waste-types
@@ -1974,8 +2031,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product waste type.
         required: true
       tags:
       - main-product-waste-types
@@ -1991,11 +2049,13 @@ paths:
       - in: query
         name: id
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: product_category
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - main-products
       security:
@@ -2024,7 +2084,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProduct'
-        required: true
       security:
       - {}
       responses:
@@ -2041,8 +2100,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product.
         required: true
       tags:
       - main-products
@@ -2061,8 +2121,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product.
         required: true
       tags:
       - main-products
@@ -2077,7 +2138,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProduct'
-        required: true
       security:
       - {}
       responses:
@@ -2093,8 +2153,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product.
         required: true
       tags:
       - main-products
@@ -2124,8 +2185,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Main Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product.
         required: true
       tags:
       - main-products
@@ -2141,11 +2203,13 @@ paths:
       - in: query
         name: account
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: id
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: is_closed
         schema:
@@ -2195,8 +2259,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Opportunity.
+          type: string
+          format: uuid
+        description: A UUID string identifying this opportunity.
         required: true
       tags:
       - opportunities
@@ -2215,8 +2280,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Opportunity.
+          type: string
+          format: uuid
+        description: A UUID string identifying this opportunity.
         required: true
       tags:
       - opportunities
@@ -2247,8 +2313,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Opportunity.
+          type: string
+          format: uuid
+        description: A UUID string identifying this opportunity.
         required: true
       tags:
       - opportunities
@@ -2278,8 +2345,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Opportunity.
+          type: string
+          format: uuid
+        description: A UUID string identifying this opportunity.
         required: true
       tags:
       - opportunities
@@ -2336,8 +2404,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Order.
+          type: string
+          format: uuid
+        description: A UUID string identifying this order.
         required: true
       tags:
       - order
@@ -2356,8 +2425,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Order.
+          type: string
+          format: uuid
+        description: A UUID string identifying this order.
         required: true
       tags:
       - order
@@ -2388,8 +2458,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Order.
+          type: string
+          format: uuid
+        description: A UUID string identifying this order.
         required: true
       tags:
       - order
@@ -2419,8 +2490,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Order.
+          type: string
+          format: uuid
+        description: A UUID string identifying this order.
         required: true
       tags:
       - order
@@ -2485,7 +2557,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PostalCode'
-        required: true
       security:
       - {}
       responses:
@@ -2502,8 +2573,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Postal Code.
+          type: string
+          format: uuid
+        description: A UUID string identifying this postal code.
         required: true
       tags:
       - postal-codes
@@ -2522,8 +2594,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Postal Code.
+          type: string
+          format: uuid
+        description: A UUID string identifying this postal code.
         required: true
       tags:
       - postal-codes
@@ -2538,7 +2611,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PostalCode'
-        required: true
       security:
       - {}
       responses:
@@ -2554,8 +2626,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Postal Code.
+          type: string
+          format: uuid
+        description: A UUID string identifying this postal code.
         required: true
       tags:
       - postal-codes
@@ -2585,8 +2658,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Postal Code.
+          type: string
+          format: uuid
+        description: A UUID string identifying this postal code.
         required: true
       tags:
       - postal-codes
@@ -2600,13 +2674,15 @@ paths:
       operationId: price_book_entries_list
       parameters:
       - in: query
-        name: pricebook2
+        name: pricebook
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
-        name: product2
+        name: product
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - price-book-entries
       security:
@@ -2652,8 +2728,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book Entry.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook entry.
         required: true
       tags:
       - price-book-entries
@@ -2672,8 +2749,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book Entry.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook entry.
         required: true
       tags:
       - price-book-entries
@@ -2704,8 +2782,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book Entry.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook entry.
         required: true
       tags:
       - price-book-entries
@@ -2735,8 +2814,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book Entry.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook entry.
         required: true
       tags:
       - price-book-entries
@@ -2798,8 +2878,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook.
         required: true
       tags:
       - price-books
@@ -2818,8 +2899,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook.
         required: true
       tags:
       - price-books
@@ -2850,8 +2932,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook.
         required: true
       tags:
       - price-books
@@ -2881,8 +2964,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Price Book.
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook.
         required: true
       tags:
       - price-books
@@ -2898,11 +2982,13 @@ paths:
       - in: query
         name: add_on_choice
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: product
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - product-add-on-choices
       security:
@@ -2931,7 +3017,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProductAddOnChoice'
-        required: true
       security:
       - {}
       responses:
@@ -2948,8 +3033,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product add on choice.
         required: true
       tags:
       - product-add-on-choices
@@ -2968,8 +3054,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product add on choice.
         required: true
       tags:
       - product-add-on-choices
@@ -2984,7 +3071,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProductAddOnChoice'
-        required: true
       security:
       - {}
       responses:
@@ -3000,8 +3086,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product add on choice.
         required: true
       tags:
       - product-add-on-choices
@@ -3031,8 +3118,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product Add On Choice.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product add on choice.
         required: true
       tags:
       - product-add-on-choices
@@ -3048,7 +3136,8 @@ paths:
       - in: query
         name: main_product
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - products
       security:
@@ -3094,8 +3183,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
         required: true
       tags:
       - products
@@ -3114,8 +3204,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
         required: true
       tags:
       - products
@@ -3146,8 +3237,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
         required: true
       tags:
       - products
@@ -3177,8 +3269,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this product.
         required: true
       tags:
       - products
@@ -3187,6 +3280,148 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - schema
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/seller-product-location-zones/:
     get:
       operationId: seller_product_location_zones_list
@@ -3194,11 +3429,13 @@ paths:
       - in: query
         name: location_zone
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: seller_product
         schema:
-          type: integer
+          type: string
+          format: uuid
       tags:
       - seller-product-location-zones
       security:
@@ -3227,7 +3464,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProductLocationZone'
-        required: true
       security:
       - {}
       responses:
@@ -3244,9 +3480,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product Location
-          Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product location zone.
         required: true
       tags:
       - seller-product-location-zones
@@ -3265,9 +3501,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product Location
-          Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product location zone.
         required: true
       tags:
       - seller-product-location-zones
@@ -3282,7 +3518,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProductLocationZone'
-        required: true
       security:
       - {}
       responses:
@@ -3298,9 +3533,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product Location
-          Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product location zone.
         required: true
       tags:
       - seller-product-location-zones
@@ -3330,9 +3565,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product Location
-          Zone.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product location zone.
         required: true
       tags:
       - seller-product-location-zones
@@ -3348,7 +3583,13 @@ paths:
       - in: query
         name: product
         schema:
-          type: integer
+          type: string
+          format: uuid
+      - in: query
+        name: service_provider
+        schema:
+          type: string
+          format: uuid
       tags:
       - seller-products
       security:
@@ -3377,7 +3618,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProduct'
-        required: true
       security:
       - {}
       responses:
@@ -3394,8 +3634,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product.
         required: true
       tags:
       - seller-products
@@ -3414,8 +3655,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product.
         required: true
       tags:
       - seller-products
@@ -3430,7 +3672,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProduct'
-        required: true
       security:
       - {}
       responses:
@@ -3446,8 +3687,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product.
         required: true
       tags:
       - seller-products
@@ -3477,8 +3719,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Seller Product.
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product.
         required: true
       tags:
       - seller-products
@@ -3556,6 +3799,26 @@ paths:
   /api/stripe/connect/transfers:
     get:
       operationId: stripe_connect_transfers_retrieve
+      tags:
+      - stripe
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/core/balance:
+    get:
+      operationId: stripe_core_balance_retrieve
+      tags:
+      - stripe
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/core/balance-transactions:
+    get:
+      operationId: stripe_core_balance_transactions_retrieve
       tags:
       - stripe
       security:
@@ -3800,7 +4063,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/WasteType'
-        required: true
       security:
       - {}
       responses:
@@ -3817,8 +4079,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this waste type.
         required: true
       tags:
       - waste-types
@@ -3837,8 +4100,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this waste type.
         required: true
       tags:
       - waste-types
@@ -3853,7 +4117,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/WasteType'
-        required: true
       security:
       - {}
       responses:
@@ -3869,8 +4132,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this waste type.
         required: true
       tags:
       - waste-types
@@ -3900,8 +4164,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this Waste Type.
+          type: string
+          format: uuid
+        description: A UUID string identifying this waste type.
         required: true
       tags:
       - waste-types
@@ -3917,6 +4182,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -4039,34 +4312,19 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         number_of_employees:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
           title: Employees
         description:
           type: string
           nullable: true
           title: Account Description
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         last_activity_date:
           type: string
           format: date
           nullable: true
           title: Last Activity
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         jigsaw:
           type: string
           nullable: true
@@ -4087,6 +4345,9 @@ components:
           nullable: true
           title: SIC Description
           maxLength: 80
+        about_us:
+          type: string
+          nullable: true
         number_of_units:
           type: string
           format: decimal
@@ -4290,6 +4551,9 @@ components:
           title: Seller Lead Time (hrs)
         book_online_available:
           type: boolean
+        announcement:
+          type: string
+          nullable: true
         live_menu_is_active:
           type: boolean
         seller_location_logo_url:
@@ -4329,40 +4593,23 @@ components:
           nullable: true
           maxLength: 100
         master_record:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Master Record ID
-        record_type:
-          type: integer
-          nullable: true
-          title: Record Type ID
         parent:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Parent Account ID
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         builders:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
-        typeform_typeform_form_mapping:
-          type: integer
-          nullable: true
-          title: Typeform Form Mapping
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
+      - created_on
       - name
-      - system_modstamp
+      - updated_on
     AccountActiveCampActiveCampaignSyncStatusEnum:
       enum:
       - Waiting For Next Sync
@@ -4376,6 +4623,17 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         roles:
           nullable: true
           oneOf:
@@ -4396,44 +4654,20 @@ components:
           type: string
           format: date
           nullable: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         relationship_strength:
           nullable: true
           oneOf:
           - $ref: '#/components/schemas/RelationshipStrengthEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        account:
-          type: integer
-          title: Account ID
         contact:
-          type: integer
+          type: string
+          format: uuid
           title: Contact ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
       required:
-      - account
       - contact
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     AccountSourceEnum:
       enum:
       - Advertisement
@@ -4458,20 +4692,22 @@ components:
       - Partner
       - Press
       - Prospect
-      - Reseller
+      - Seller
       - Other
-      type: string
-    ActiveCampAccountRelationSyncStatusEnum:
-      enum:
-      - Successfully Synced
-      - Waiting For Next Sync
-      - Waiting For Update
       type: string
     AddOn:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -4480,23 +4716,6 @@ components:
           nullable: true
           title: Add On Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         display_name:
           type: string
           nullable: true
@@ -4506,26 +4725,22 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     AddOnChoice:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -4534,45 +4749,17 @@ components:
           nullable: true
           title: Add On Choice Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         display_name:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         add_on:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     BlankEnum:
       enum:
       - ''
@@ -4585,6 +4772,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -4680,15 +4875,6 @@ components:
           type: string
           nullable: true
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         last_activity_date:
           type: string
           format: date
@@ -4704,14 +4890,6 @@ components:
           format: date-time
           nullable: true
           title: Last Stay-in-Touch Save Date
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         email_bounced_reason:
           type: string
           nullable: true
@@ -4727,95 +4905,49 @@ components:
           format: uri
           nullable: true
           maxLength: 200
-        jigsaw:
-          type: string
-          nullable: true
-          title: Data.com Key
-          maxLength: 20
-        jigsaw_contact_id:
-          type: string
-          nullable: true
-          maxLength: 20
-        sansancard_created_by_scan_to_salesforce:
-          type: boolean
-          title: Created by Scan to Salesforce
         is_user:
           type: boolean
-        active_camp_account_relation_sync_status:
-          nullable: true
-          title: Account Relation Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/ActiveCampAccountRelationSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_active_campaign_sync_status:
-          nullable: true
-          title: ActiveCampaign Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/ContactActiveCampActiveCampaignSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_active_campaign_id:
-          type: string
-          nullable: true
-          title: ActiveCampaign Id
-          maxLength: 255
-        active_camp_last_synced:
-          type: string
-          format: date-time
-          nullable: true
-          title: ActiveCampaign Last Synced
         user_id:
           type: string
           nullable: true
           maxLength: 255
         master_record:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Master Record ID
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Account ID
         reports_to:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Reports To ID
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         property:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
-        typeform_typeform_form_mapping:
-          type: integer
-          nullable: true
-          title: Typeform Form Mapping
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
+      - created_on
       - last_name
       - name
-      - system_modstamp
-    ContactActiveCampActiveCampaignSyncStatusEnum:
-      enum:
-      - Waiting For Next Sync
-      - Successfully Synced
-      - Duplicate Email Found Do Not Sync
-      type: string
+      - updated_on
     DisposalFee:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -4824,52 +4956,26 @@ components:
           nullable: true
           title: Disposal Fee Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         price:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         waste_type:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         location_zone:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     FamilyEnum:
       enum:
       - Junk
@@ -4953,6 +5059,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -4961,38 +5075,9 @@ components:
           nullable: true
           title: Location Zone Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     LossReasonEnum:
       enum:
       - Lost to Competitor
@@ -5020,6 +5105,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -5028,23 +5121,6 @@ components:
           nullable: true
           title: Main Products Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         cubic_yards:
           type: string
           format: decimal
@@ -5093,29 +5169,26 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product_category:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     MainProductAddOn:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -5124,49 +5197,30 @@ components:
           nullable: true
           title: Main Product Add On Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         add_on:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     MainProductCategory:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -5175,27 +5229,9 @@ components:
           nullable: true
           title: Main Product Category Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         description:
           type: string
           nullable: true
-          maxLength: 100
         image:
           type: string
           nullable: true
@@ -5211,26 +5247,22 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     MainProductCategoryInfo:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -5239,46 +5271,26 @@ components:
           nullable: true
           title: Product Category Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product_category:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     MainProductInfo:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -5287,46 +5299,26 @@ components:
           nullable: true
           title: Main Product Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     MainProductWasteType:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -5335,44 +5327,17 @@ components:
           nullable: true
           title: Main Product Waste Type Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         waste_type:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     MerchantTypeEnum:
       enum:
       - Waste hauler
@@ -5405,6 +5370,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -5467,15 +5440,6 @@ components:
         has_opportunity_line_item:
           type: boolean
           title: Has Line Item
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         last_activity_date:
           type: string
           format: date
@@ -5483,6 +5447,8 @@ components:
           title: Last Activity
         push_count:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         last_stage_change_date:
           type: string
@@ -5490,23 +5456,19 @@ components:
           nullable: true
         fiscal_quarter:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         fiscal_year:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         fiscal:
           type: string
           nullable: true
           title: Fiscal Period
           maxLength: 6
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         has_open_activity:
           type: boolean
         has_overdue_task:
@@ -5581,73 +5543,39 @@ components:
         scrapper_is_active:
           type: boolean
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Account ID
-        record_type:
-          type: integer
-          nullable: true
-          title: Record Type ID
-        campaign:
-          type: integer
-          nullable: true
-          title: Campaign ID
-        pricebook2:
-          type: integer
+        pricebook:
+          type: string
+          format: uuid
           nullable: true
           title: Price Book ID
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         contact:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Contact ID
-        synced_quote:
-          type: integer
-          nullable: true
-          title: Quote ID
-        contract:
-          type: integer
-          nullable: true
-          title: Contract ID
-        last_amount_changed_history:
-          type: integer
-          nullable: true
-          title: Opportunity History ID
-        last_close_date_changed_history:
-          type: integer
-          nullable: true
-          title: Opportunity History ID
         product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         service_provider:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
-        typeform_typeform_form_mapping:
-          type: integer
-          nullable: true
-          title: Typeform Form Mapping
       required:
       - close_date
-      - created_by
-      - created_date
+      - created_on
       - forecast_category
-      - last_modified_by
-      - last_modified_date
       - name
       - stage_name
-      - system_modstamp
+      - updated_on
     OpportunityActiveCampActiveCampaignSyncStatusEnum:
       enum:
       - Waiting For Next Sync
@@ -5666,6 +5594,17 @@ components:
           type: string
         order_number:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         effective_date:
           type: string
           format: date
@@ -5781,35 +5720,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           title: Order Amount
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        is_deleted:
-          type: boolean
-          title: Deleted
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        dhruvsoft_order_amt_from_opportunity_amt:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-          title: Order Amount (Opportunity)
-        dhruvsoft_convert_from_opportunity:
-          type: boolean
-          title: Converted from Opportunity
         hauler_payout:
           type: string
           format: decimal
@@ -5846,60 +5756,37 @@ components:
           format: date-time
           nullable: true
           title: End DateTime
-        owner:
-          type: integer
-          title: Owner ID
-        contract:
-          type: integer
-          nullable: true
-          title: Contract ID
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Account ID
-        pricebook2:
-          type: integer
+        pricebook:
+          type: string
+          format: uuid
           nullable: true
           title: Price Book ID
         original_order:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Order ID
         customer_authorized_by:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Customer Authorized By ID
-        company_authorized_by:
-          type: integer
-          nullable: true
-          title: Company Authorized By ID
-        activated_by:
-          type: integer
-          nullable: true
-          title: Activated By ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
-        dhruvsoft_opportunity:
-          type: integer
-          nullable: true
-          title: Opportunity(Deprecated)
         service_provider:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
+      - created_on
       - effective_date
-      - last_modified_by
-      - last_modified_date
       - status
       - status_code
-      - system_modstamp
       - total_amount
+      - updated_on
     OrderStatusEnum:
       enum:
       - Scheduled
@@ -5920,6 +5807,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6042,34 +5937,19 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         number_of_employees:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
           title: Employees
         description:
           type: string
           nullable: true
           title: Account Description
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         last_activity_date:
           type: string
           format: date
           nullable: true
           title: Last Activity
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         jigsaw:
           type: string
           nullable: true
@@ -6090,6 +5970,9 @@ components:
           nullable: true
           title: SIC Description
           maxLength: 80
+        about_us:
+          type: string
+          nullable: true
         number_of_units:
           type: string
           format: decimal
@@ -6293,6 +6176,9 @@ components:
           title: Seller Lead Time (hrs)
         book_online_available:
           type: boolean
+        announcement:
+          type: string
+          nullable: true
         live_menu_is_active:
           type: boolean
         seller_location_logo_url:
@@ -6332,38 +6218,35 @@ components:
           nullable: true
           maxLength: 100
         master_record:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Master Record ID
-        record_type:
-          type: integer
-          nullable: true
-          title: Record Type ID
         parent:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Parent Account ID
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         builders:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
-        typeform_typeform_form_mapping:
-          type: integer
-          nullable: true
-          title: Typeform Form Mapping
     PatchedAccountContact:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         roles:
           nullable: true
           oneOf:
@@ -6384,41 +6267,29 @@ components:
           type: string
           format: date
           nullable: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         relationship_strength:
           nullable: true
           oneOf:
           - $ref: '#/components/schemas/RelationshipStrengthEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        account:
-          type: integer
-          title: Account ID
         contact:
-          type: integer
+          type: string
+          format: uuid
           title: Contact ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
     PatchedAddOn:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6427,23 +6298,6 @@ components:
           nullable: true
           title: Add On Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         display_name:
           type: string
           nullable: true
@@ -6453,20 +6307,19 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
     PatchedAddOnChoice:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6475,44 +6328,27 @@ components:
           nullable: true
           title: Add On Choice Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         display_name:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         add_on:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedContact:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6608,15 +6444,6 @@ components:
           type: string
           nullable: true
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         last_activity_date:
           type: string
           format: date
@@ -6632,14 +6459,6 @@ components:
           format: date-time
           nullable: true
           title: Last Stay-in-Touch Save Date
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         email_bounced_reason:
           type: string
           nullable: true
@@ -6655,81 +6474,44 @@ components:
           format: uri
           nullable: true
           maxLength: 200
-        jigsaw:
-          type: string
-          nullable: true
-          title: Data.com Key
-          maxLength: 20
-        jigsaw_contact_id:
-          type: string
-          nullable: true
-          maxLength: 20
-        sansancard_created_by_scan_to_salesforce:
-          type: boolean
-          title: Created by Scan to Salesforce
         is_user:
           type: boolean
-        active_camp_account_relation_sync_status:
-          nullable: true
-          title: Account Relation Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/ActiveCampAccountRelationSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_active_campaign_sync_status:
-          nullable: true
-          title: ActiveCampaign Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/ContactActiveCampActiveCampaignSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_active_campaign_id:
-          type: string
-          nullable: true
-          title: ActiveCampaign Id
-          maxLength: 255
-        active_camp_last_synced:
-          type: string
-          format: date-time
-          nullable: true
-          title: ActiveCampaign Last Synced
         user_id:
           type: string
           nullable: true
           maxLength: 255
         master_record:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Master Record ID
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Account ID
         reports_to:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Reports To ID
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         property:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
-        typeform_typeform_form_mapping:
-          type: integer
-          nullable: true
-          title: Typeform Form Mapping
     PatchedDisposalFee:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6738,51 +6520,36 @@ components:
           nullable: true
           title: Disposal Fee Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         price:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         waste_type:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         location_zone:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedLocationZone:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6791,37 +6558,19 @@ components:
           nullable: true
           title: Location Zone Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
     PatchedMainProduct:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6830,23 +6579,6 @@ components:
           nullable: true
           title: Main Products Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         cubic_yards:
           type: string
           format: decimal
@@ -6895,23 +6627,23 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product_category:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedMainProductAddOn:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6920,43 +6652,27 @@ components:
           nullable: true
           title: Main Product Add On Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         add_on:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedMainProductCategory:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -6965,27 +6681,9 @@ components:
           nullable: true
           title: Main Product Category Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         description:
           type: string
           nullable: true
-          maxLength: 100
         image:
           type: string
           nullable: true
@@ -7001,20 +6699,19 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
     PatchedMainProductCategoryInfo:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7023,40 +6720,23 @@ components:
           nullable: true
           title: Product Category Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product_category:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedMainProductInfo:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7065,40 +6745,23 @@ components:
           nullable: true
           title: Main Product Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedMainProductWasteType:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7107,43 +6770,27 @@ components:
           nullable: true
           title: Main Product Waste Type Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         waste_type:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedOpportunity:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7206,15 +6853,6 @@ components:
         has_opportunity_line_item:
           type: boolean
           title: Has Line Item
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         last_activity_date:
           type: string
           format: date
@@ -7222,6 +6860,8 @@ components:
           title: Last Activity
         push_count:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         last_stage_change_date:
           type: string
@@ -7229,23 +6869,19 @@ components:
           nullable: true
         fiscal_quarter:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         fiscal_year:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         fiscal:
           type: string
           nullable: true
           title: Fiscal Period
           maxLength: 6
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         has_open_activity:
           type: boolean
         has_overdue_task:
@@ -7320,63 +6956,32 @@ components:
         scrapper_is_active:
           type: boolean
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Account ID
-        record_type:
-          type: integer
-          nullable: true
-          title: Record Type ID
-        campaign:
-          type: integer
-          nullable: true
-          title: Campaign ID
-        pricebook2:
-          type: integer
+        pricebook:
+          type: string
+          format: uuid
           nullable: true
           title: Price Book ID
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         contact:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Contact ID
-        synced_quote:
-          type: integer
-          nullable: true
-          title: Quote ID
-        contract:
-          type: integer
-          nullable: true
-          title: Contract ID
-        last_amount_changed_history:
-          type: integer
-          nullable: true
-          title: Opportunity History ID
-        last_close_date_changed_history:
-          type: integer
-          nullable: true
-          title: Opportunity History ID
         product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         service_provider:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
-        typeform_typeform_form_mapping:
-          type: integer
-          nullable: true
-          title: Typeform Form Mapping
     PatchedOrder:
       type: object
       properties:
@@ -7384,6 +6989,17 @@ components:
           type: string
         order_number:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         effective_date:
           type: string
           format: date
@@ -7499,35 +7115,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           title: Order Amount
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        is_deleted:
-          type: boolean
-          title: Deleted
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        dhruvsoft_order_amt_from_opportunity_amt:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-          title: Order Amount (Opportunity)
-        dhruvsoft_convert_from_opportunity:
-          type: boolean
-          title: Converted from Opportunity
         hauler_payout:
           type: string
           format: decimal
@@ -7564,55 +7151,43 @@ components:
           format: date-time
           nullable: true
           title: End DateTime
-        owner:
-          type: integer
-          title: Owner ID
-        contract:
-          type: integer
-          nullable: true
-          title: Contract ID
         account:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Account ID
-        pricebook2:
-          type: integer
+        pricebook:
+          type: string
+          format: uuid
           nullable: true
           title: Price Book ID
         original_order:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Order ID
         customer_authorized_by:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           title: Customer Authorized By ID
-        company_authorized_by:
-          type: integer
-          nullable: true
-          title: Company Authorized By ID
-        activated_by:
-          type: integer
-          nullable: true
-          title: Activated By ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
-        dhruvsoft_opportunity:
-          type: integer
-          nullable: true
-          title: Opportunity(Deprecated)
         service_provider:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedPostalCode:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7621,23 +7196,6 @@ components:
           nullable: true
           title: Postal Code Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         state:
           type: string
           nullable: true
@@ -7654,23 +7212,23 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         location_zone:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedPriceBook:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7678,23 +7236,6 @@ components:
           type: string
           title: Price Book Name
           maxLength: 255
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         is_active:
           type: boolean
           title: Active
@@ -7708,17 +7249,22 @@ components:
         is_standard:
           type: boolean
           title: Is Standard Price Book
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
     PatchedPriceBookEntry:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         name:
           type: string
           nullable: true
@@ -7734,42 +7280,37 @@ components:
           title: Active
         use_standard_price:
           type: boolean
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         product_code:
           type: string
           nullable: true
           maxLength: 255
-        is_deleted:
-          type: boolean
-          title: Deleted
         is_archived:
           type: boolean
           title: Archived
-        pricebook2:
-          type: integer
+        pricebook:
+          type: string
+          format: uuid
           title: Price Book ID
-        product2:
-          type: integer
+        product:
+          type: string
+          format: uuid
           title: Product ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
     PatchedProduct:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         name:
           type: string
           title: Product Name
@@ -7796,6 +7337,8 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         number_of_quantity_installments:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         revenue_schedule_type:
           nullable: true
@@ -7811,19 +7354,12 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         number_of_revenue_installments:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         is_active:
           type: boolean
           title: Active
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         family:
           nullable: true
           title: Product Family
@@ -7846,20 +7382,9 @@ components:
           - $ref: '#/components/schemas/QuantityUnitOfMeasureEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        is_deleted:
-          type: boolean
-          title: Deleted
         is_archived:
           type: boolean
           title: Archived
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         stock_keeping_unit:
           type: string
           nullable: true
@@ -7883,24 +7408,23 @@ components:
           - $ref: '#/components/schemas/ProductTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
-        external_data_source:
-          type: integer
-          nullable: true
-          title: External Data Source ID
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedProductAddOnChoice:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7909,43 +7433,27 @@ components:
           nullable: true
           title: Product Add On Choice Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         add_on_choice:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedSellerProduct:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -7954,48 +7462,32 @@ components:
           nullable: true
           title: Seller Product Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         rate:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         service_provider:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedSellerProductLocationZone:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8004,23 +7496,6 @@ components:
           nullable: true
           title: Seller Product Location Zone Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         delivery_fee:
           type: string
           format: decimal
@@ -8031,26 +7506,27 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         seller_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         location_zone:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
     PatchedWasteType:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8059,37 +7535,19 @@ components:
           nullable: true
           title: Waste Type Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
     PostalCode:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8098,23 +7556,6 @@ components:
           nullable: true
           title: Postal Code Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         state:
           type: string
           nullable: true
@@ -8131,29 +7572,26 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         location_zone:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     PriceBook:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8161,23 +7599,6 @@ components:
           type: string
           title: Price Book Name
           maxLength: 255
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         is_active:
           type: boolean
           title: Active
@@ -8191,24 +7612,26 @@ components:
         is_standard:
           type: boolean
           title: Is Standard Price Book
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
+      - created_on
       - name
-      - system_modstamp
+      - updated_on
     PriceBookEntry:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         name:
           type: string
           nullable: true
@@ -8224,51 +7647,43 @@ components:
           title: Active
         use_standard_price:
           type: boolean
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         product_code:
           type: string
           nullable: true
           maxLength: 255
-        is_deleted:
-          type: boolean
-          title: Deleted
         is_archived:
           type: boolean
           title: Archived
-        pricebook2:
-          type: integer
+        pricebook:
+          type: string
+          format: uuid
           title: Price Book ID
-        product2:
-          type: integer
+        product:
+          type: string
+          format: uuid
           title: Product ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - pricebook2
-      - product2
-      - system_modstamp
+      - created_on
+      - pricebook
+      - product
       - unit_price
+      - updated_on
     Product:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
         name:
           type: string
           title: Product Name
@@ -8295,6 +7710,8 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         number_of_quantity_installments:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         revenue_schedule_type:
           nullable: true
@@ -8310,19 +7727,12 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         number_of_revenue_installments:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         is_active:
           type: boolean
           title: Active
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
         family:
           nullable: true
           title: Product Family
@@ -8345,20 +7755,9 @@ components:
           - $ref: '#/components/schemas/QuantityUnitOfMeasureEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        is_deleted:
-          type: boolean
-          title: Deleted
         is_archived:
           type: boolean
           title: Archived
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         stock_keeping_unit:
           type: string
           nullable: true
@@ -8382,31 +7781,27 @@ components:
           - $ref: '#/components/schemas/ProductTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
-        external_data_source:
-          type: integer
-          nullable: true
-          title: External Data Source ID
         main_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
+      - created_on
       - name
-      - system_modstamp
+      - updated_on
     ProductAddOnChoice:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8415,44 +7810,17 @@ components:
           nullable: true
           title: Product Add On Choice Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         add_on_choice:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     ProductStatusEnum:
       enum:
       - Incomplete
@@ -8565,6 +7933,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8573,54 +7949,35 @@ components:
           nullable: true
           title: Seller Product Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         rate:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         service_provider:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     SellerProductLocationZone:
       type: object
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8629,23 +7986,6 @@ components:
           nullable: true
           title: Seller Product Location Zone Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
         delivery_fee:
           type: string
           format: decimal
@@ -8656,27 +7996,17 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
         seller_product:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
         location_zone:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on
     SellerStatusEnum:
       enum:
       - Inactive
@@ -8705,13 +8035,15 @@ components:
       type: string
     StageNameEnum:
       enum:
+      - Demo Scheduled
+      - Demo Performed
+      - Account Configuration
+      - Order Acceptance
+      - Platform Engagement
       - Qualification
       - Needs Analysis
       - Proposal
-      - Account Created
       - Negotiation
-      - Onboarding scheduled
-      - Storefront in-progress
       - Verify Hauler
       - Closed Won
       - Closed Lost
@@ -8736,6 +8068,14 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
         is_deleted:
           type: boolean
           title: Deleted
@@ -8744,35 +8084,6 @@ components:
           nullable: true
           title: Waste Type Name
           maxLength: 80
-        created_date:
-          type: string
-          format: date-time
-        last_modified_date:
-          type: string
-          format: date-time
-        system_modstamp:
-          type: string
-          format: date-time
-        last_viewed_date:
-          type: string
-          format: date-time
-          nullable: true
-        last_referenced_date:
-          type: string
-          format: date-time
-          nullable: true
-        owner:
-          type: integer
-          title: Owner ID
-        created_by:
-          type: integer
-          title: Created By ID
-        last_modified_by:
-          type: integer
-          title: Last Modified By ID
       required:
-      - created_by
-      - created_date
-      - last_modified_by
-      - last_modified_date
-      - system_modstamp
+      - created_on
+      - updated_on

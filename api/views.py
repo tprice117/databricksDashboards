@@ -20,7 +20,8 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class AccountContactViewSet(viewsets.ModelViewSet):
     queryset = AccountContactRelation.objects.all()
     serializer_class = AccountContactSerializer
-    filterset_fields = ["id", "account", "contact"]
+    # filterset_fields = ["id", "account", "contact"]
+    filterset_fields = ["id", "contact"]
 
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.filter(type__in=["Customer", "Seller"])
@@ -96,7 +97,7 @@ class PostalCodeViewSet(viewsets.ModelViewSet):
 class PriceBookEntryViewSet(viewsets.ModelViewSet):
     queryset = PricebookEntry.objects.all()
     serializer_class = PriceBookEntrySerializer
-    filterset_fields = ["pricebook2", "product2"]  
+    filterset_fields = ["pricebook", "product"]  
 
 class PriceBookViewSet(viewsets.ModelViewSet):
     queryset = Pricebook.objects.all()
