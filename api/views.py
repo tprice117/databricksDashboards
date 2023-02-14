@@ -9,9 +9,6 @@ from .models import *
 from django.conf import settings
 import stripe
 import requests
-import json
-from datetime import datetime
-from django.utils.dateparse import parse_datetime
 from random import randint
 
 # To DO: Create GET, POST, PUT general methods.

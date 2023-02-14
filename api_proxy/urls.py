@@ -30,40 +30,13 @@ urlpatterns = [
     # Base API URL.
     path('api/', include(router.urls)),
     # Schema URLs.
-    # YOUR PATTERNS
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    # Optional UI:
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    # path('admin/', admin.site.urls),
-    path('api/tasks/<int:pk>', views.TaskView.as_view()),
-    path('api/tasks/', views.TaskView.as_view()),
-    path('api/agents/<int:pk>', views.AgentView.as_view()),
-    path('api/agents/', views.AgentView.as_view()),
-    path('api/teams/<int:pk>', views.TeamView.as_view()),
-    path('api/teams/', views.TeamView.as_view()),
-    # path('manager/<int:pk>', views.ManagerView.as_view()),
-    # path('manager/', views.ManagerView.as_view()),
-    path('api/customers/<int:pk>', views.CustomerView.as_view()),
-    path('api/customers/', views.CustomerView.as_view()),
-    # path('merchant/<int:pk>', views.MerchantView.as_view()),
-    # path('merchant/', views.MerchantView.as_view()),
-    # path('mission/<int:pk>', views.MissionView.as_view()),
-    # path('mission/', views.MissionView.as_view()),
-    path('api/convert-sf-order-to-scrap-task/<str:pk>', views.ConvertSFOrderToScrapTask.as_view()),
     ## Stripe.
     path('api/payment-methods/', views.StripePaymentMethods.as_view()),
     path('api/setup-intents/', views.StripeSetupIntents.as_view()),
     path('api/payment-intents/', views.StripePaymentIntents.as_view()),
     path('api/service-requests/<str:pk>/payout', views.StripeConnectPayoutForService.as_view(), name="payout"),
     path('api/sessions', views.StripeCreateCheckoutSession.as_view()),
-
-    # Stripe Dashboarding Endpoints
-    path('api/stripe/connect/accounts', views.StripeConnectAccount.as_view()),
-    path('api/stripe/connect/transfers', views.StripeConnectTransfer.as_view()),
-    path('api/stripe/billing/invoices', views.StripeBillingInvoice.as_view()),
-    path('api/stripe/billing/subscriptions', views.StripeBillingSubscription.as_view()),    
-    path('api/stripe/core/payment-intents', views.StripeCorePaymentIntents.as_view()),
-    path('api/stripe/core/balance', views.StripeCoreBalance.as_view()),
-    path('api/stripe/core/balance-transactions', views.StripeCoreBalanceTransactions.as_view()),
 ]
