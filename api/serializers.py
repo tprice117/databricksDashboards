@@ -1,16 +1,23 @@
 from rest_framework import serializers
 from .models import *
 
-class AccountContactSerializer(serializers.ModelSerializer):
+class SellerSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = AccountContactRelation
+        model = Seller
         fields = "__all__"
         
-class AccountSerializer(serializers.ModelSerializer):
+class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Account
+        model = UserAddress
+        fields = "__all__"
+        validators = []
+    
+class UserSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = User
         fields = "__all__"
         validators = []
         
@@ -24,24 +31,6 @@ class AddOnSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = AddOn
-        fields = "__all__"
-
-class ContactSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = Contact
-        fields = "__all__"
-
-class DisposalFeeSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = DisposalFee
-        fields = "__all__"
-
-class LocationZoneSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = LocationZone
         fields = "__all__"
         
 class MainProductAddOnSerializer(serializers.ModelSerializer):
@@ -80,10 +69,16 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
         model = MainProductWasteType
         fields = "__all__"
 
-class OpportunitySerializer(serializers.ModelSerializer):
+class OrderDetailsSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = Opportunity
+        model = OrderDetails
+        fields = "__all__"
+
+class OrderDetailsLineItemSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = OrderDetailsLineItem
         fields = "__all__"
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -91,24 +86,6 @@ class OrderSerializer(serializers.ModelSerializer):
     order_number = serializers.CharField(required=False)
     class Meta:
         model = Order
-        fields = "__all__"
-
-class PostalCodeSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = PostalCode
-        fields = "__all__"
-
-class PriceBookEntrySerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = PricebookEntry
-        fields = "__all__"
-
-class PriceBookSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = Pricebook
         fields = "__all__"
 
 class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
@@ -122,13 +99,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = "__all__"
-
-class SellerProductLocationZoneSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = SellerProductLocationZone
-        fields = "__all__"
-
+        
 class SellerProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:

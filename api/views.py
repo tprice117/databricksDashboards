@@ -17,16 +17,20 @@ from random import randint
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-class AccountContactViewSet(viewsets.ModelViewSet):
-    queryset = AccountContactRelation.objects.all()
-    serializer_class = AccountContactSerializer
-    # filterset_fields = ["id", "account", "contact"]
+class SellerViewSet(viewsets.ModelViewSet):
+    queryset = Seller.objects.all()
+    serializer_class = SellerSerializer
     filterset_fields = ["id", "contact"]
 
-class AccountViewSet(viewsets.ModelViewSet):
-    queryset = Account.objects.filter(type__in=["Customer", "Seller"])
-    serializer_class = AccountSerializer
+class UserAddressViewSet(viewsets.ModelViewSet):
+    queryset = UserAddress.objects.all()
+    serializer_class = UserAddressSerializer
     filterset_fields = ["id", "parent", "type"]
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = User
+    filterset_fields = ["id", "user_id"]
 
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
@@ -36,20 +40,6 @@ class AddOnChoiceViewSet(viewsets.ModelViewSet):
 class AddOnViewSet(viewsets.ModelViewSet):
     queryset = AddOn.objects.all()
     serializer_class = AddOnSerializer
-
-class ContactViewSet(viewsets.ModelViewSet):
-    queryset = Contact.objects.all()
-    serializer_class = ContactSerializer
-    filterset_fields = ["id", "user_id"]
-
-class DisposalFeeViewSet(viewsets.ModelViewSet):
-    queryset = DisposalFee.objects.all()
-    serializer_class = DisposalFeeSerializer
-    filterset_fields = ["account","location_zone","waste_type"]
-
-class LocationZoneViewSet(viewsets.ModelViewSet):
-    queryset = LocationZone.objects.all()
-    serializer_class = LocationZoneSerializer
 
 class MainProductAddOnViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOn.objects.all()
@@ -80,29 +70,19 @@ class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductWasteTypeSerializer
     filterset_fields = ["main_product", "waste_type"]
 
-class OpportunityViewSet(viewsets.ModelViewSet):
-    queryset = Opportunity.objects.all()
-    serializer_class = OpportunitySerializer
+class OrderDetailsViewSet(viewsets.ModelViewSet):
+    queryset = OrderDetails.objects.all()
+    serializer_class = OrderDetailsSerializer
+    filterset_fields = ["id", "account", "is_closed"]
+
+class OrderDetailsLineItemViewSet(viewsets.ModelViewSet):
+    queryset = OrderDetailsLineItem.objects.all()
+    serializer_class = OrderDetailsLineItem
     filterset_fields = ["id", "account", "is_closed"]
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-
-class PostalCodeViewSet(viewsets.ModelViewSet):
-    queryset = PostalCode.objects.all()
-    serializer_class = PostalCodeSerializer
-    filterset_fields = ["name"] 
-
-class PriceBookEntryViewSet(viewsets.ModelViewSet):
-    queryset = PricebookEntry.objects.all()
-    serializer_class = PriceBookEntrySerializer
-    filterset_fields = ["pricebook", "product"]  
-
-class PriceBookViewSet(viewsets.ModelViewSet):
-    queryset = Pricebook.objects.all()
-    serializer_class = PriceBookSerializer
-    filterset_fields = ["is_standard"]  
 
 class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
@@ -113,11 +93,6 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filterset_fields = ["main_product"]
-
-class SellerProductLocationZoneViewSet(viewsets.ModelViewSet):
-    queryset = SellerProductLocationZone.objects.all()
-    serializer_class = SellerProductLocationZoneSerializer
-    filterset_fields = ["seller_product", "location_zone"] 
 
 class SellerProductViewSet(viewsets.ModelViewSet):
     queryset = SellerProduct.objects.all()
