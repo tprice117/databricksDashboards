@@ -20,12 +20,12 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class SellerViewSet(viewsets.ModelViewSet):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
-    filterset_fields = ["id", "contact"]
+    filterset_fields = ["id", "user"]
 
 class UserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
     serializer_class = UserAddressSerializer
-    filterset_fields = ["id", "parent", "type"]
+    filterset_fields = ["id", "user"]
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -49,7 +49,7 @@ class MainProductAddOnViewSet(viewsets.ModelViewSet):
 class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategoryInfo.objects.all()
     serializer_class = MainProductCategoryInfoSerializer
-    filterset_fields = ["product_category"]
+    filterset_fields = ["main_product_category"]
 
 class MainProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategory.objects.all()
@@ -63,7 +63,7 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
-    filterset_fields = ["id", "product_category"]
+    filterset_fields = ["id", "main_product_category"]
 
 class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = MainProductWasteType.objects.all()
@@ -73,12 +73,12 @@ class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
 class OrderDetailsViewSet(viewsets.ModelViewSet):
     queryset = OrderDetails.objects.all()
     serializer_class = OrderDetailsSerializer
-    filterset_fields = ["id", "account", "is_closed"]
+    filterset_fields = ["id", "user_address"]
 
 class OrderDetailsLineItemViewSet(viewsets.ModelViewSet):
     queryset = OrderDetailsLineItem.objects.all()
     serializer_class = OrderDetailsLineItem
-    filterset_fields = ["id", "account", "is_closed"]
+    filterset_fields = ["id", "user_address"]
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -97,7 +97,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class SellerProductViewSet(viewsets.ModelViewSet):
     queryset = SellerProduct.objects.all()
     serializer_class = SellerProductSerializer
-    filterset_fields = ["service_provider", "product"] 
+    filterset_fields = ["seller", "product"] 
 
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
