@@ -289,7 +289,676 @@ paths:
         description: A UUID string identifying this add on.
         required: true
       tags:
-      - api
+      - add-ons
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/agents/:
+    get:
+      operationId: agents_retrieve
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: agents_create
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: agents_update
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: agents_destroy
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/agents/{id}:
+    get:
+      operationId: agents_retrieve_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: agents_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: agents_update_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: agents_destroy_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - agents
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/contacts/:
+    get:
+      operationId: contacts_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user_id
+        schema:
+          type: string
+      tags:
+      - contacts
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+          description: ''
+    post:
+      operationId: contacts_create
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contact'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Contact'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Contact'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+          description: ''
+  /api/contacts/{id}/:
+    get:
+      operationId: contacts_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
+        required: true
+      tags:
+      - contacts
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+          description: ''
+    put:
+      operationId: contacts_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
+        required: true
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contact'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Contact'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Contact'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+          description: ''
+    patch:
+      operationId: contacts_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
+        required: true
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedContact'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedContact'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedContact'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+          description: ''
+    delete:
+      operationId: contacts_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this contact.
+        required: true
+      tags:
+      - contacts
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/convert-sf-order-to-scrap-task/{id}:
+    get:
+      operationId: convert_sf_order_to_scrap_task_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - convert-sf-order-to-scrap-task
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/customers/:
+    get:
+      operationId: customers_retrieve
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: customers_create
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: customers_update
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: customers_destroy
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/customers/{id}:
+    get:
+      operationId: customers_retrieve_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: customers_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: customers_update_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: customers_destroy_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - customers
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/disposal-fees/:
+    get:
+      operationId: disposal_fees_list
+      parameters:
+      - in: query
+        name: account
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: location_zone
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: waste_type
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - disposal-fees
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DisposalFee'
+          description: ''
+    post:
+      operationId: disposal_fees_create
+      tags:
+      - disposal-fees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisposalFee'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisposalFee'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisposalFee'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalFee'
+          description: ''
+  /api/disposal-fees/{id}/:
+    get:
+      operationId: disposal_fees_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
+        required: true
+      tags:
+      - disposal-fees
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalFee'
+          description: ''
+    put:
+      operationId: disposal_fees_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
+        required: true
+      tags:
+      - disposal-fees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisposalFee'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisposalFee'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisposalFee'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalFee'
+          description: ''
+    patch:
+      operationId: disposal_fees_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
+        required: true
+      tags:
+      - disposal-fees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalFee'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalFee'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalFee'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalFee'
+          description: ''
+    delete:
+      operationId: disposal_fees_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal fee.
+        required: true
+      tags:
+      - disposal-fees
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/location-zones/:
+    get:
+      operationId: location_zones_list
+      tags:
+      - location-zones
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LocationZone'
+          description: ''
+    post:
+      operationId: location_zones_create
+      tags:
+      - location-zones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationZone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LocationZone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LocationZone'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationZone'
+          description: ''
+  /api/location-zones/{id}/:
+    get:
+      operationId: location_zones_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
+        required: true
+      tags:
+      - location-zones
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationZone'
+          description: ''
+    put:
+      operationId: location_zones_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
+        required: true
+      tags:
+      - location-zones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationZone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LocationZone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LocationZone'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationZone'
+          description: ''
+    patch:
+      operationId: location_zones_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
+        required: true
+      tags:
+      - location-zones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLocationZone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLocationZone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLocationZone'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationZone'
+          description: ''
+    delete:
+      operationId: location_zones_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this location zone.
+        required: true
+      tags:
+      - location-zones
       security:
       - {}
       responses:
@@ -1200,7 +1869,7 @@ paths:
           description: No response body
   /api/order-details/:
     get:
-      operationId: api_order_details_list
+      operationId: opportunities_list
       parameters:
       - in: query
         name: id
@@ -1213,7 +1882,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - api
+      - opportunities
       security:
       - {}
       responses:
@@ -1226,9 +1895,9 @@ paths:
                   $ref: '#/components/schemas/OrderDetails'
           description: ''
     post:
-      operationId: api_order_details_create
+      operationId: opportunities_create
       tags:
-      - api
+      - opportunities
       requestBody:
         content:
           application/json:
@@ -1251,18 +1920,38 @@ paths:
           description: ''
   /api/order-details-line-items/:
     get:
-      operationId: api_order_details_line_items_retrieve
+      operationId: opportunities_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this opportunity.
+        required: true
       tags:
-      - api
+      - opportunities
       security:
       - {}
       responses:
         '200':
           description: No response body
     post:
-      operationId: api_order_details_line_items_create
+      operationId: order_create
       tags:
-      - api
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
       security:
       - {}
       responses:
@@ -1270,7 +1959,7 @@ paths:
           description: No response body
   /api/order-details-line-items/{id}/:
     get:
-      operationId: api_order_details_line_items_retrieve_2
+      operationId: order_retrieve
       parameters:
       - in: path
         name: id
@@ -1280,14 +1969,14 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - api
+      - order
       security:
       - {}
       responses:
         '200':
           description: No response body
     put:
-      operationId: api_order_details_line_items_update
+      operationId: order_update
       parameters:
       - in: path
         name: id
@@ -1297,14 +1986,26 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - api
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
+        required: true
       security:
       - {}
       responses:
         '200':
           description: No response body
     patch:
-      operationId: api_order_details_line_items_partial_update
+      operationId: order_partial_update
       parameters:
       - in: path
         name: id
@@ -1314,14 +2015,25 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - api
+      - order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrder'
       security:
       - {}
       responses:
         '200':
           description: No response body
     delete:
-      operationId: api_order_details_line_items_destroy
+      operationId: order_destroy
       parameters:
       - in: path
         name: id
@@ -1331,7 +2043,7 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - api
+      - order
       security:
       - {}
       responses:
@@ -1339,7 +2051,27 @@ paths:
           description: No response body
   /api/order-details/{id}/:
     get:
-      operationId: api_order_details_retrieve
+      operationId: payment_intents_retrieve
+      tags:
+      - payment-intents
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/payment-methods/:
+    get:
+      operationId: payment_methods_retrieve
+      tags:
+      - payment-methods
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/postal-codes/:
+    get:
+      operationId: postal_codes_list
       parameters:
       - in: path
         name: id
@@ -1349,7 +2081,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - api
+      - postal-codes
       security:
       - {}
       responses:
@@ -1360,7 +2092,7 @@ paths:
                 $ref: '#/components/schemas/OrderDetails'
           description: ''
     put:
-      operationId: api_order_details_update
+      operationId: postal_codes_update
       parameters:
       - in: path
         name: id
@@ -1370,7 +2102,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - api
+      - postal-codes
       requestBody:
         content:
           application/json:
@@ -1392,7 +2124,7 @@ paths:
                 $ref: '#/components/schemas/OrderDetails'
           description: ''
     patch:
-      operationId: api_order_details_partial_update
+      operationId: postal_codes_partial_update
       parameters:
       - in: path
         name: id
@@ -1402,7 +2134,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - api
+      - postal-codes
       requestBody:
         content:
           application/json:
@@ -1424,7 +2156,7 @@ paths:
                 $ref: '#/components/schemas/OrderDetails'
           description: ''
     delete:
-      operationId: api_order_details_destroy
+      operationId: postal_codes_destroy
       parameters:
       - in: path
         name: id
@@ -1434,7 +2166,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - api
+      - postal-codes
       security:
       - {}
       responses:
@@ -1442,9 +2174,20 @@ paths:
           description: No response body
   /api/orders/:
     get:
-      operationId: api_orders_list
+      operationId: price_book_entries_list
+      parameters:
+      - in: query
+        name: pricebook
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: product
+        schema:
+          type: string
+          format: uuid
       tags:
-      - api
+      - price-book-entries
       security:
       - {}
       responses:
@@ -1457,9 +2200,9 @@ paths:
                   $ref: '#/components/schemas/Order'
           description: ''
     post:
-      operationId: api_orders_create
+      operationId: price_book_entries_create
       tags:
-      - api
+      - price-book-entries
       requestBody:
         content:
           application/json:
@@ -1482,7 +2225,7 @@ paths:
           description: ''
   /api/orders/{id}/:
     get:
-      operationId: api_orders_retrieve
+      operationId: price_book_entries_retrieve
       parameters:
       - in: path
         name: id
@@ -1492,7 +2235,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - api
+      - price-book-entries
       security:
       - {}
       responses:
@@ -1503,7 +2246,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     put:
-      operationId: api_orders_update
+      operationId: price_book_entries_update
       parameters:
       - in: path
         name: id
@@ -1513,7 +2256,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - api
+      - price-book-entries
       requestBody:
         content:
           application/json:
@@ -1535,7 +2278,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     patch:
-      operationId: api_orders_partial_update
+      operationId: price_book_entries_partial_update
       parameters:
       - in: path
         name: id
@@ -1545,7 +2288,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - api
+      - price-book-entries
       requestBody:
         content:
           application/json:
@@ -1567,7 +2310,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     delete:
-      operationId: api_orders_destroy
+      operationId: price_book_entries_destroy
       parameters:
       - in: path
         name: id
@@ -1577,7 +2320,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - api
+      - price-book-entries
       security:
       - {}
       responses:
@@ -1585,9 +2328,14 @@ paths:
           description: No response body
   /api/payment-intents/:
     get:
-      operationId: api_payment_intents_retrieve
+      operationId: price_books_list
+      parameters:
+      - in: query
+        name: is_standard
+        schema:
+          type: boolean
       tags:
-      - api
+      - price-books
       security:
       - {}
       responses:
@@ -1595,9 +2343,17 @@ paths:
           description: No response body
   /api/payment-methods/:
     get:
-      operationId: api_payment_methods_retrieve
+      operationId: price_books_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this pricebook.
+        required: true
       tags:
-      - api
+      - price-books
       security:
       - {}
       responses:
@@ -2050,7 +2806,7 @@ paths:
           description: ''
   /api/seller-products/:
     get:
-      operationId: api_seller_products_list
+      operationId: seller_product_location_zones_list
       parameters:
       - in: query
         name: product
@@ -2063,7 +2819,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - api
+      - seller-product-location-zones
       security:
       - {}
       responses:
@@ -2076,9 +2832,9 @@ paths:
                   $ref: '#/components/schemas/SellerProduct'
           description: ''
     post:
-      operationId: api_seller_products_create
+      operationId: seller_product_location_zones_create
       tags:
-      - api
+      - seller-product-location-zones
       requestBody:
         content:
           application/json:
@@ -2101,7 +2857,7 @@ paths:
           description: ''
   /api/seller-products/{id}/:
     get:
-      operationId: api_seller_products_retrieve
+      operationId: seller_product_location_zones_retrieve
       parameters:
       - in: path
         name: id
@@ -2111,7 +2867,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - api
+      - seller-product-location-zones
       security:
       - {}
       responses:
@@ -2122,7 +2878,7 @@ paths:
                 $ref: '#/components/schemas/SellerProduct'
           description: ''
     put:
-      operationId: api_seller_products_update
+      operationId: seller_product_location_zones_update
       parameters:
       - in: path
         name: id
@@ -2132,7 +2888,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - api
+      - seller-product-location-zones
       requestBody:
         content:
           application/json:
@@ -2154,7 +2910,7 @@ paths:
                 $ref: '#/components/schemas/SellerProduct'
           description: ''
     patch:
-      operationId: api_seller_products_partial_update
+      operationId: seller_product_location_zones_partial_update
       parameters:
       - in: path
         name: id
@@ -2164,7 +2920,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - api
+      - seller-product-location-zones
       requestBody:
         content:
           application/json:
@@ -2186,7 +2942,7 @@ paths:
                 $ref: '#/components/schemas/SellerProduct'
           description: ''
     delete:
-      operationId: api_seller_products_destroy
+      operationId: seller_product_location_zones_destroy
       parameters:
       - in: path
         name: id
@@ -2196,7 +2952,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - api
+      - seller-product-location-zones
       security:
       - {}
       responses:
@@ -2204,7 +2960,7 @@ paths:
           description: No response body
   /api/sellers/:
     get:
-      operationId: api_sellers_list
+      operationId: seller_products_list
       parameters:
       - in: query
         name: id
@@ -2221,7 +2977,7 @@ paths:
         explode: true
         style: form
       tags:
-      - api
+      - seller-products
       security:
       - {}
       responses:
@@ -2234,9 +2990,9 @@ paths:
                   $ref: '#/components/schemas/Seller'
           description: ''
     post:
-      operationId: api_sellers_create
+      operationId: seller_products_create
       tags:
-      - api
+      - seller-products
       requestBody:
         content:
           application/json:
@@ -2260,7 +3016,7 @@ paths:
           description: ''
   /api/sellers/{id}/:
     get:
-      operationId: api_sellers_retrieve
+      operationId: seller_products_retrieve
       parameters:
       - in: path
         name: id
@@ -2270,7 +3026,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - api
+      - seller-products
       security:
       - {}
       responses:
@@ -2281,7 +3037,7 @@ paths:
                 $ref: '#/components/schemas/Seller'
           description: ''
     put:
-      operationId: api_sellers_update
+      operationId: seller_products_update
       parameters:
       - in: path
         name: id
@@ -2291,7 +3047,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - api
+      - seller-products
       requestBody:
         content:
           application/json:
@@ -2314,7 +3070,7 @@ paths:
                 $ref: '#/components/schemas/Seller'
           description: ''
     patch:
-      operationId: api_sellers_partial_update
+      operationId: seller_products_partial_update
       parameters:
       - in: path
         name: id
@@ -2324,7 +3080,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - api
+      - seller-products
       requestBody:
         content:
           application/json:
@@ -2346,7 +3102,7 @@ paths:
                 $ref: '#/components/schemas/Seller'
           description: ''
     delete:
-      operationId: api_sellers_destroy
+      operationId: seller_products_destroy
       parameters:
       - in: path
         name: id
@@ -2356,7 +3112,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - api
+      - seller-products
       security:
       - {}
       responses:
@@ -2400,24 +3156,9 @@ paths:
           description: No response body
   /api/user-addresses/:
     get:
-      operationId: api_user_addresses_list
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: user
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        explode: true
-        style: form
+      operationId: stripe_billing_invoices_retrieve
       tags:
-      - api
+      - stripe
       security:
       - {}
       responses:
@@ -2430,21 +3171,9 @@ paths:
                   $ref: '#/components/schemas/UserAddress'
           description: ''
     post:
-      operationId: api_user_addresses_create
+      operationId: tasks_create
       tags:
-      - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserAddress'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/UserAddress'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/UserAddress'
-        required: true
+      - tasks
       security:
       - {}
       responses:
@@ -2456,7 +3185,7 @@ paths:
           description: ''
   /api/user-addresses/{id}/:
     get:
-      operationId: api_user_addresses_retrieve
+      operationId: tasks_retrieve_2
       parameters:
       - in: path
         name: id
@@ -2466,18 +3195,31 @@ paths:
         description: A UUID string identifying this user address.
         required: true
       tags:
-      - api
+      - tasks
       security:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserAddress'
-          description: ''
+          description: No response body
+    post:
+      operationId: tasks_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address.
+        required: true
+      tags:
+      - tasks
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
     put:
-      operationId: api_user_addresses_update
+      operationId: tasks_update_2
       parameters:
       - in: path
         name: id
@@ -2487,51 +3229,7 @@ paths:
         description: A UUID string identifying this user address.
         required: true
       tags:
-      - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserAddress'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/UserAddress'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/UserAddress'
-        required: true
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserAddress'
-          description: ''
-    patch:
-      operationId: api_user_addresses_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this user address.
-        required: true
-      tags:
-      - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedUserAddress'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedUserAddress'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedUserAddress'
+      - tasks
       security:
       - {}
       responses:
@@ -2542,7 +3240,7 @@ paths:
                 $ref: '#/components/schemas/UserAddress'
           description: ''
     delete:
-      operationId: api_user_addresses_destroy
+      operationId: tasks_destroy_2
       parameters:
       - in: path
         name: id
@@ -2552,7 +3250,7 @@ paths:
         description: A UUID string identifying this user address.
         required: true
       tags:
-      - api
+      - tasks
       security:
       - {}
       responses:
@@ -2560,18 +3258,18 @@ paths:
           description: No response body
   /api/users/:
     get:
-      operationId: api_users_retrieve
+      operationId: teams_retrieve
       tags:
-      - api
+      - teams
       security:
       - {}
       responses:
         '200':
           description: No response body
     post:
-      operationId: api_users_create
+      operationId: teams_create
       tags:
-      - api
+      - teams
       security:
       - {}
       responses:
@@ -2579,7 +3277,7 @@ paths:
           description: No response body
   /api/users/{id}/:
     get:
-      operationId: api_users_retrieve_2
+      operationId: teams_retrieve_2
       parameters:
       - in: path
         name: id
@@ -2589,14 +3287,31 @@ paths:
         description: A UUID string identifying this user.
         required: true
       tags:
-      - api
+      - teams
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: teams_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
+      tags:
+      - teams
       security:
       - {}
       responses:
         '200':
           description: No response body
     put:
-      operationId: api_users_update
+      operationId: teams_update_2
       parameters:
       - in: path
         name: id
@@ -2606,31 +3321,14 @@ paths:
         description: A UUID string identifying this user.
         required: true
       tags:
-      - api
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    patch:
-      operationId: api_users_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this user.
-        required: true
-      tags:
-      - api
+      - teams
       security:
       - {}
       responses:
         '200':
           description: No response body
     delete:
-      operationId: api_users_destroy
+      operationId: teams_destroy_2
       parameters:
       - in: path
         name: id
@@ -2640,7 +3338,7 @@ paths:
         description: A UUID string identifying this user.
         required: true
       tags:
-      - api
+      - teams
       security:
       - {}
       responses:
@@ -3104,10 +3802,182 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_invoice_id:
+          title: Deleted
+        effective_date:
+          type: string
+          format: date
+          title: Order Start Date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          title: Order End Date
+        is_reduction_order:
+          type: boolean
+          title: Reduction Order
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
+        description:
           type: string
           nullable: true
+        type:
+          type: string
+          nullable: true
+          title: Order Type
           maxLength: 255
+        billing_street:
+          type: string
+          nullable: true
+        billing_city:
+          type: string
+          nullable: true
+          maxLength: 40
+        billing_state:
+          type: string
+          nullable: true
+          title: Billing State/Province
+          maxLength: 80
+        billing_postal_code:
+          type: string
+          nullable: true
+          title: Billing Zip/Postal Code
+          maxLength: 20
+        billing_country:
+          type: string
+          nullable: true
+          maxLength: 80
+        billing_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        billing_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        billing_geocode_accuracy:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        billing_address:
+          type: string
+          nullable: true
+        shipping_street:
+          type: string
+          nullable: true
+        shipping_city:
+          type: string
+          nullable: true
+          maxLength: 40
+        shipping_state:
+          type: string
+          nullable: true
+          title: Shipping State/Province
+          maxLength: 80
+        shipping_postal_code:
+          type: string
+          nullable: true
+          title: Shipping Zip/Postal Code
+          maxLength: 20
+        shipping_country:
+          type: string
+          nullable: true
+          maxLength: 80
+        shipping_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        shipping_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        shipping_geocode_accuracy:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        shipping_address:
+          type: string
+          nullable: true
+        activated_date:
+          type: string
+          format: date-time
+          nullable: true
+        status_code:
+          allOf:
+          - $ref: '#/components/schemas/StatusCodeEnum'
+          title: Status Category
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          title: Order Amount
+        hauler_payout:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        additional_schedule_details:
+          type: string
+          nullable: true
+        access_schedule_details:
+          type: string
+          nullable: true
+        scheduled_time_slot:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ScheduledTimeSlotEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        scrap_task_id:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        start_date_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: Start DateTime
+        end_date_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: End DateTime
+        account:
+          type: string
+          format: uuid
+          nullable: true
+          title: Account ID
+        pricebook:
+          type: string
+          format: uuid
+          nullable: true
+          title: Price Book ID
+        original_order:
+          type: string
+          format: uuid
+          nullable: true
+          title: Order ID
+        customer_authorized_by:
+          type: string
+          format: uuid
+          nullable: true
+          title: Customer Authorized By ID
+        service_provider:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - created_on
       - updated_on
@@ -3153,17 +4023,57 @@ components:
           type: string
           format: uuid
           nullable: true
-        subscription:
+          title: Parent Account ID
+        builders:
           type: string
           format: uuid
           nullable: true
-        order:
+    PatchedAccountContact:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          title: Deleted
+        roles:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RolesEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        is_direct:
+          type: boolean
+          title: Direct
+        is_active:
+          type: boolean
+          title: Active
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        relationship_strength:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RelationshipStrengthEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        contact:
           type: string
           format: uuid
-          nullable: true
-      required:
-      - created_on
-      - updated_on
+          title: Contact ID
     PatchedAddOn:
       type: object
       properties:
@@ -3426,11 +4336,196 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_invoice_id:
+          title: Deleted
+        name:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+          nullable: true
+        stage_name:
+          allOf:
+          - $ref: '#/components/schemas/StageNameEnum'
+          title: Stage
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        probability:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,0})?$
+          nullable: true
+          title: Probability (%)
+        close_date:
+          type: string
+          format: date
+        type:
+          nullable: true
+          title: Opportunity Type
+          oneOf:
+          - $ref: '#/components/schemas/OpportunityTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        next_step:
           type: string
           nullable: true
           maxLength: 255
-    PatchedOrderDetails:
+        lead_source:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/LeadSourceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        is_closed:
+          type: boolean
+          title: Closed
+        is_won:
+          type: boolean
+          title: Won
+        forecast_category:
+          $ref: '#/components/schemas/ForecastCategoryEnum'
+        forecast_category_name:
+          nullable: true
+          title: Forecast Category
+          oneOf:
+          - $ref: '#/components/schemas/ForecastCategoryNameEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        has_opportunity_line_item:
+          type: boolean
+          title: Has Line Item
+        last_activity_date:
+          type: string
+          format: date
+          nullable: true
+          title: Last Activity
+        push_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        last_stage_change_date:
+          type: string
+          format: date-time
+          nullable: true
+        fiscal_quarter:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        fiscal_year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        fiscal:
+          type: string
+          nullable: true
+          title: Fiscal Period
+          maxLength: 6
+        has_open_activity:
+          type: boolean
+        has_overdue_task:
+          type: boolean
+        budget_confirmed:
+          type: boolean
+        discovery_completed:
+          type: boolean
+        roi_analysis_completed:
+          type: boolean
+        dhruvsoft_is_converted1:
+          type: boolean
+          title: IsConverted
+        loss_reason:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/LossReasonEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        dhruvsoft_order_number:
+          type: string
+          nullable: true
+          title: Order Number(Deprecated)
+          maxLength: 8
+        time_slot:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TimeSlotEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        schedule_date:
+          type: string
+          format: date
+          nullable: true
+        additional_schedule_details:
+          type: string
+          nullable: true
+        access_details:
+          type: string
+          nullable: true
+        active_camp_active_campaign_sync_status:
+          nullable: true
+          title: ActiveCampaign Sync Status
+          oneOf:
+          - $ref: '#/components/schemas/OpportunityActiveCampActiveCampaignSyncStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        active_camp_last_synced:
+          type: string
+          format: date-time
+          nullable: true
+          title: ActiveCampaign Last Synced
+        pandadoc_tracking_number:
+          type: string
+          nullable: true
+          title: Tracking Number
+          maxLength: 12
+        start_date_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: Start DateTime
+        end_date_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: End DateTime
+        marketplace_is_active:
+          type: boolean
+        dispatch_is_active:
+          type: boolean
+        scrapper_is_active:
+          type: boolean
+        account:
+          type: string
+          format: uuid
+          nullable: true
+          title: Account ID
+        pricebook:
+          type: string
+          format: uuid
+          nullable: true
+          title: Price Book ID
+        contact:
+          type: string
+          format: uuid
+          nullable: true
+          title: Contact ID
+        product:
+          type: string
+          format: uuid
+          nullable: true
+        service_provider:
+          type: string
+          format: uuid
+          nullable: true
+        main_product:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedOrder:
       type: object
       properties:
         id:
@@ -3472,15 +4567,22 @@ components:
           type: string
           format: uuid
           nullable: true
-        subscription:
+          title: Price Book ID
+        original_order:
           type: string
           format: uuid
           nullable: true
-        order:
+          title: Order ID
+        customer_authorized_by:
           type: string
           format: uuid
           nullable: true
-    PatchedProduct:
+          title: Customer Authorized By ID
+        service_provider:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedPostalCode:
       type: object
       properties:
         id:
@@ -3961,11 +5063,8 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        total_inventory:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
+          title: Product Add On Choice Name
+          maxLength: 80
         product:
           type: string
           format: uuid

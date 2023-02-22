@@ -35,6 +35,22 @@ class Seller(BaseModel):
     composting_classification = models.CharField(max_length=100, blank=True, null=True)
     max_paint_gallons_accepted = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     recycling_disposal_classification = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+class SellerLocation(BaseModel):
+    name = models.CharField(max_length=255)
+    street = models.TextField(blank=True, null=True)
+    city = models.CharField(max_length=40, blank=True, null=True)
+    state = models.CharField(max_length=80, blank=True, null=True)
+    postal_code = models.CharField(max_length=20, blank=True, null=True)
+    country = models.CharField(max_length=80, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
     
 class UserAddress(BaseModel):
     name = models.CharField(max_length=255)
@@ -46,22 +62,34 @@ class UserAddress(BaseModel):
     latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True, null=True)
     longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 class User(BaseModel):
     user_id = models.CharField(max_length=255)
-    addresses = models.ManyToManyField(UserAddress)
+    addresses = models.ManyToManyField(UserAddress, related_name='users')
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, blank=True, null=True)
     photo_url = models.URLField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     stripe_customer_id = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
 
+    def __str__(self):
+        return self.email
+
 class AddOn(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
     sort = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 class AddOnChoice(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
     add_on = models.ForeignKey(AddOn, models.DO_NOTHING, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 class MainProductCategory(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
@@ -70,9 +98,15 @@ class MainProductCategory(BaseModel):
     icon = models.TextField(blank=True, null=True)
     sort = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 class MainProductCategoryInfo(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
     main_product_category = models.ForeignKey(MainProductCategory, models.DO_NOTHING, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 class MainProduct(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
@@ -87,20 +121,32 @@ class MainProduct(BaseModel):
     max_tonnage_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     max_rate = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     included_rate_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
 
 class MainProductInfo(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 class MainProductAddOn(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
     add_on = models.ForeignKey(AddOn, models.DO_NOTHING, blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
+
+    def __str__(self):
+        return self.main_product.name
 
 class SellerProduct(BaseModel):
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True)
@@ -114,6 +160,9 @@ class Subscription(BaseModel): #Added 2/20/23
 
 class Order(BaseModel):    
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.seller.name + ' - ' + self.product.main_product.name
 
 class OrderDetails(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
@@ -137,8 +186,14 @@ class ProductAddOnChoice(BaseModel):
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True)
     add_on_choice = models.ForeignKey(AddOnChoice, models.DO_NOTHING, blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 class WasteType(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 class MainProductWasteType(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
