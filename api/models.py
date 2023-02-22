@@ -67,7 +67,7 @@ class UserAddress(BaseModel):
 
 class User(BaseModel):
     user_id = models.CharField(max_length=255)
-    addresses = models.ManyToManyField(UserAddress)
+    addresses = models.ManyToManyField(UserAddress, related_name='users')
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, blank=True, null=True)
     photo_url = models.URLField(blank=True, null=True)
