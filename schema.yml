@@ -3,335 +3,6 @@ info:
   title: ''
   version: 0.0.0
 paths:
-  /api/account-contacts/:
-    get:
-      operationId: account_contacts_list
-      parameters:
-      - in: query
-        name: contact
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: id
-        schema:
-          type: string
-          format: uuid
-      tags:
-      - account-contacts
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AccountContact'
-          description: ''
-    post:
-      operationId: account_contacts_create
-      tags:
-      - account-contacts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountContact'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AccountContact'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AccountContact'
-        required: true
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountContact'
-          description: ''
-  /api/account-contacts/{id}/:
-    get:
-      operationId: account_contacts_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account contact relation.
-        required: true
-      tags:
-      - account-contacts
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountContact'
-          description: ''
-    put:
-      operationId: account_contacts_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account contact relation.
-        required: true
-      tags:
-      - account-contacts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountContact'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AccountContact'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AccountContact'
-        required: true
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountContact'
-          description: ''
-    patch:
-      operationId: account_contacts_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account contact relation.
-        required: true
-      tags:
-      - account-contacts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedAccountContact'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedAccountContact'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedAccountContact'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountContact'
-          description: ''
-    delete:
-      operationId: account_contacts_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account contact relation.
-        required: true
-      tags:
-      - account-contacts
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/accounts/:
-    get:
-      operationId: accounts_list
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: parent
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: type
-        schema:
-          type: string
-          nullable: true
-          title: Account Type
-          enum:
-          - Analyst
-          - Competitor
-          - Customer
-          - Integrator
-          - Investor
-          - Other
-          - Partner
-          - Press
-          - Prospect
-          - Seller
-      tags:
-      - accounts
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Account'
-          description: ''
-    post:
-      operationId: accounts_create
-      tags:
-      - accounts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Account'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Account'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Account'
-        required: true
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Account'
-          description: ''
-  /api/accounts/{id}/:
-    get:
-      operationId: accounts_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account.
-        required: true
-      tags:
-      - accounts
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Account'
-          description: ''
-    put:
-      operationId: accounts_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account.
-        required: true
-      tags:
-      - accounts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Account'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Account'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Account'
-        required: true
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Account'
-          description: ''
-    patch:
-      operationId: accounts_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account.
-        required: true
-      tags:
-      - accounts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedAccount'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedAccount'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedAccount'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Account'
-          description: ''
-    delete:
-      operationId: accounts_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this account.
-        required: true
-      tags:
-      - accounts
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
   /api/add-on-choices/:
     get:
       operationId: add_on_choices_list
@@ -619,675 +290,6 @@ paths:
         required: true
       tags:
       - add-ons
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/agents/:
-    get:
-      operationId: agents_retrieve
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    post:
-      operationId: agents_create
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    put:
-      operationId: agents_update
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    delete:
-      operationId: agents_destroy
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/agents/{id}:
-    get:
-      operationId: agents_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    post:
-      operationId: agents_create_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    put:
-      operationId: agents_update_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    delete:
-      operationId: agents_destroy_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - agents
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/contacts/:
-    get:
-      operationId: contacts_list
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: user_id
-        schema:
-          type: string
-      tags:
-      - contacts
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Contact'
-          description: ''
-    post:
-      operationId: contacts_create
-      tags:
-      - contacts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Contact'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Contact'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Contact'
-        required: true
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contact'
-          description: ''
-  /api/contacts/{id}/:
-    get:
-      operationId: contacts_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this contact.
-        required: true
-      tags:
-      - contacts
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contact'
-          description: ''
-    put:
-      operationId: contacts_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this contact.
-        required: true
-      tags:
-      - contacts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Contact'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Contact'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Contact'
-        required: true
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contact'
-          description: ''
-    patch:
-      operationId: contacts_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this contact.
-        required: true
-      tags:
-      - contacts
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedContact'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedContact'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedContact'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contact'
-          description: ''
-    delete:
-      operationId: contacts_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this contact.
-        required: true
-      tags:
-      - contacts
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/convert-sf-order-to-scrap-task/{id}:
-    get:
-      operationId: convert_sf_order_to_scrap_task_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - convert-sf-order-to-scrap-task
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-  /api/customers/:
-    get:
-      operationId: customers_retrieve
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    post:
-      operationId: customers_create
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    put:
-      operationId: customers_update
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    delete:
-      operationId: customers_destroy
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/customers/{id}:
-    get:
-      operationId: customers_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    post:
-      operationId: customers_create_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    put:
-      operationId: customers_update_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    delete:
-      operationId: customers_destroy_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - customers
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/disposal-fees/:
-    get:
-      operationId: disposal_fees_list
-      parameters:
-      - in: query
-        name: account
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: location_zone
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: waste_type
-        schema:
-          type: string
-          format: uuid
-      tags:
-      - disposal-fees
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DisposalFee'
-          description: ''
-    post:
-      operationId: disposal_fees_create
-      tags:
-      - disposal-fees
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DisposalFee'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DisposalFee'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DisposalFee'
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DisposalFee'
-          description: ''
-  /api/disposal-fees/{id}/:
-    get:
-      operationId: disposal_fees_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this disposal fee.
-        required: true
-      tags:
-      - disposal-fees
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DisposalFee'
-          description: ''
-    put:
-      operationId: disposal_fees_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this disposal fee.
-        required: true
-      tags:
-      - disposal-fees
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DisposalFee'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DisposalFee'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DisposalFee'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DisposalFee'
-          description: ''
-    patch:
-      operationId: disposal_fees_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this disposal fee.
-        required: true
-      tags:
-      - disposal-fees
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedDisposalFee'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedDisposalFee'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedDisposalFee'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DisposalFee'
-          description: ''
-    delete:
-      operationId: disposal_fees_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this disposal fee.
-        required: true
-      tags:
-      - disposal-fees
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/location-zones/:
-    get:
-      operationId: location_zones_list
-      tags:
-      - location-zones
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/LocationZone'
-          description: ''
-    post:
-      operationId: location_zones_create
-      tags:
-      - location-zones
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LocationZone'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/LocationZone'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/LocationZone'
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LocationZone'
-          description: ''
-  /api/location-zones/{id}/:
-    get:
-      operationId: location_zones_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this location zone.
-        required: true
-      tags:
-      - location-zones
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LocationZone'
-          description: ''
-    put:
-      operationId: location_zones_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this location zone.
-        required: true
-      tags:
-      - location-zones
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LocationZone'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/LocationZone'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/LocationZone'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LocationZone'
-          description: ''
-    patch:
-      operationId: location_zones_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this location zone.
-        required: true
-      tags:
-      - location-zones
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedLocationZone'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedLocationZone'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedLocationZone'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LocationZone'
-          description: ''
-    delete:
-      operationId: location_zones_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this location zone.
-        required: true
-      tags:
-      - location-zones
       security:
       - {}
       responses:
@@ -1595,7 +597,7 @@ paths:
       operationId: main_product_category_infos_list
       parameters:
       - in: query
-        name: product_category
+        name: main_product_category
         schema:
           type: string
           format: uuid
@@ -2052,7 +1054,7 @@ paths:
           type: string
           format: uuid
       - in: query
-        name: product_category
+        name: main_product_category
         schema:
           type: string
           format: uuid
@@ -2196,26 +1198,22 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/opportunities/:
+  /api/order-details/:
     get:
-      operationId: opportunities_list
+      operationId: order_details_list
       parameters:
-      - in: query
-        name: account
-        schema:
-          type: string
-          format: uuid
       - in: query
         name: id
         schema:
           type: string
           format: uuid
       - in: query
-        name: is_closed
+        name: user_address
         schema:
-          type: boolean
+          type: string
+          format: uuid
       tags:
-      - opportunities
+      - order-details
       security:
       - {}
       responses:
@@ -2225,24 +1223,23 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Opportunity'
+                  $ref: '#/components/schemas/OrderDetails'
           description: ''
     post:
-      operationId: opportunities_create
+      operationId: order_details_create
       tags:
-      - opportunities
+      - order-details
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Opportunity'
+              $ref: '#/components/schemas/OrderDetails'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Opportunity'
+              $ref: '#/components/schemas/OrderDetails'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Opportunity'
-        required: true
+              $ref: '#/components/schemas/OrderDetails'
       security:
       - {}
       responses:
@@ -2250,117 +1247,204 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Opportunity'
+                $ref: '#/components/schemas/OrderDetails'
           description: ''
-  /api/opportunities/{id}/:
+  /api/order-details-line-items/:
     get:
-      operationId: opportunities_retrieve
+      operationId: order_details_line_items_retrieve
+      tags:
+      - order-details-line-items
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: order_details_line_items_create
+      tags:
+      - order-details-line-items
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/order-details-line-items/{id}/:
+    get:
+      operationId: order_details_line_items_retrieve_2
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this opportunity.
+        description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - opportunities
+      - order-details-line-items
       security:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Opportunity'
-          description: ''
+          description: No response body
     put:
-      operationId: opportunities_update
+      operationId: order_details_line_items_update
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this opportunity.
+        description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - opportunities
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Opportunity'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Opportunity'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Opportunity'
-        required: true
+      - order-details-line-items
       security:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Opportunity'
-          description: ''
+          description: No response body
     patch:
-      operationId: opportunities_partial_update
+      operationId: order_details_line_items_partial_update
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this opportunity.
+        description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - opportunities
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedOpportunity'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedOpportunity'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedOpportunity'
+      - order-details-line-items
       security:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Opportunity'
-          description: ''
+          description: No response body
     delete:
-      operationId: opportunities_destroy
+      operationId: order_details_line_items_destroy
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this opportunity.
+        description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - opportunities
+      - order-details-line-items
       security:
       - {}
       responses:
         '204':
           description: No response body
-  /api/order/:
+  /api/order-details/{id}/:
     get:
-      operationId: order_list
+      operationId: order_details_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order details.
+        required: true
       tags:
-      - order
+      - order-details
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
+          description: ''
+    put:
+      operationId: order_details_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order details.
+        required: true
+      tags:
+      - order-details
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderDetails'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderDetails'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderDetails'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
+          description: ''
+    patch:
+      operationId: order_details_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order details.
+        required: true
+      tags:
+      - order-details
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderDetails'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderDetails'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderDetails'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
+          description: ''
+    delete:
+      operationId: order_details_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order details.
+        required: true
+      tags:
+      - order-details
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/orders/:
+    get:
+      operationId: orders_list
+      tags:
+      - orders
       security:
       - {}
       responses:
@@ -2373,9 +1457,9 @@ paths:
                   $ref: '#/components/schemas/Order'
           description: ''
     post:
-      operationId: order_create
+      operationId: orders_create
       tags:
-      - order
+      - orders
       requestBody:
         content:
           application/json:
@@ -2387,7 +1471,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
-        required: true
       security:
       - {}
       responses:
@@ -2397,9 +1480,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Order'
           description: ''
-  /api/order/{id}/:
+  /api/orders/{id}/:
     get:
-      operationId: order_retrieve
+      operationId: orders_retrieve
       parameters:
       - in: path
         name: id
@@ -2409,7 +1492,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - order
+      - orders
       security:
       - {}
       responses:
@@ -2420,7 +1503,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     put:
-      operationId: order_update
+      operationId: orders_update
       parameters:
       - in: path
         name: id
@@ -2430,7 +1513,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - order
+      - orders
       requestBody:
         content:
           application/json:
@@ -2442,7 +1525,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
-        required: true
       security:
       - {}
       responses:
@@ -2453,7 +1535,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     patch:
-      operationId: order_partial_update
+      operationId: orders_partial_update
       parameters:
       - in: path
         name: id
@@ -2463,7 +1545,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - order
+      - orders
       requestBody:
         content:
           application/json:
@@ -2485,7 +1567,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     delete:
-      operationId: order_destroy
+      operationId: orders_destroy
       parameters:
       - in: path
         name: id
@@ -2495,7 +1577,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - order
+      - orders
       security:
       - {}
       responses:
@@ -2520,460 +1602,6 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
-  /api/postal-codes/:
-    get:
-      operationId: postal_codes_list
-      parameters:
-      - in: query
-        name: name
-        schema:
-          type: string
-      tags:
-      - postal-codes
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PostalCode'
-          description: ''
-    post:
-      operationId: postal_codes_create
-      tags:
-      - postal-codes
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostalCode'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PostalCode'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PostalCode'
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostalCode'
-          description: ''
-  /api/postal-codes/{id}/:
-    get:
-      operationId: postal_codes_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this postal code.
-        required: true
-      tags:
-      - postal-codes
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostalCode'
-          description: ''
-    put:
-      operationId: postal_codes_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this postal code.
-        required: true
-      tags:
-      - postal-codes
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostalCode'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PostalCode'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PostalCode'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostalCode'
-          description: ''
-    patch:
-      operationId: postal_codes_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this postal code.
-        required: true
-      tags:
-      - postal-codes
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPostalCode'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPostalCode'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPostalCode'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostalCode'
-          description: ''
-    delete:
-      operationId: postal_codes_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this postal code.
-        required: true
-      tags:
-      - postal-codes
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/price-book-entries/:
-    get:
-      operationId: price_book_entries_list
-      parameters:
-      - in: query
-        name: pricebook
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: product
-        schema:
-          type: string
-          format: uuid
-      tags:
-      - price-book-entries
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PriceBookEntry'
-          description: ''
-    post:
-      operationId: price_book_entries_create
-      tags:
-      - price-book-entries
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PriceBookEntry'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PriceBookEntry'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PriceBookEntry'
-        required: true
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBookEntry'
-          description: ''
-  /api/price-book-entries/{id}/:
-    get:
-      operationId: price_book_entries_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook entry.
-        required: true
-      tags:
-      - price-book-entries
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBookEntry'
-          description: ''
-    put:
-      operationId: price_book_entries_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook entry.
-        required: true
-      tags:
-      - price-book-entries
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PriceBookEntry'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PriceBookEntry'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PriceBookEntry'
-        required: true
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBookEntry'
-          description: ''
-    patch:
-      operationId: price_book_entries_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook entry.
-        required: true
-      tags:
-      - price-book-entries
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPriceBookEntry'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPriceBookEntry'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPriceBookEntry'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBookEntry'
-          description: ''
-    delete:
-      operationId: price_book_entries_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook entry.
-        required: true
-      tags:
-      - price-book-entries
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/price-books/:
-    get:
-      operationId: price_books_list
-      parameters:
-      - in: query
-        name: is_standard
-        schema:
-          type: boolean
-      tags:
-      - price-books
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PriceBook'
-          description: ''
-    post:
-      operationId: price_books_create
-      tags:
-      - price-books
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PriceBook'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PriceBook'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PriceBook'
-        required: true
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBook'
-          description: ''
-  /api/price-books/{id}/:
-    get:
-      operationId: price_books_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook.
-        required: true
-      tags:
-      - price-books
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBook'
-          description: ''
-    put:
-      operationId: price_books_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook.
-        required: true
-      tags:
-      - price-books
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PriceBook'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PriceBook'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PriceBook'
-        required: true
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBook'
-          description: ''
-    patch:
-      operationId: price_books_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook.
-        required: true
-      tags:
-      - price-books
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPriceBook'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPriceBook'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPriceBook'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PriceBook'
-          description: ''
-    delete:
-      operationId: price_books_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this pricebook.
-        required: true
-      tags:
-      - price-books
-      security:
-      - {}
-      responses:
-        '204':
           description: No response body
   /api/product-add-on-choices/:
     get:
@@ -3166,7 +1794,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Product'
-        required: true
       security:
       - {}
       responses:
@@ -3221,7 +1848,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Product'
-        required: true
       security:
       - {}
       responses:
@@ -3422,160 +2048,6 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /api/seller-product-location-zones/:
-    get:
-      operationId: seller_product_location_zones_list
-      parameters:
-      - in: query
-        name: location_zone
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: seller_product
-        schema:
-          type: string
-          format: uuid
-      tags:
-      - seller-product-location-zones
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SellerProductLocationZone'
-          description: ''
-    post:
-      operationId: seller_product_location_zones_create
-      tags:
-      - seller-product-location-zones
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SellerProductLocationZone'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SellerProductLocationZone'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SellerProductLocationZone'
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SellerProductLocationZone'
-          description: ''
-  /api/seller-product-location-zones/{id}/:
-    get:
-      operationId: seller_product_location_zones_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this seller product location zone.
-        required: true
-      tags:
-      - seller-product-location-zones
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SellerProductLocationZone'
-          description: ''
-    put:
-      operationId: seller_product_location_zones_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this seller product location zone.
-        required: true
-      tags:
-      - seller-product-location-zones
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SellerProductLocationZone'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SellerProductLocationZone'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SellerProductLocationZone'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SellerProductLocationZone'
-          description: ''
-    patch:
-      operationId: seller_product_location_zones_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this seller product location zone.
-        required: true
-      tags:
-      - seller-product-location-zones
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedSellerProductLocationZone'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedSellerProductLocationZone'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedSellerProductLocationZone'
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SellerProductLocationZone'
-          description: ''
-    delete:
-      operationId: seller_product_location_zones_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this seller product location zone.
-        required: true
-      tags:
-      - seller-product-location-zones
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
   /api/seller-products/:
     get:
       operationId: seller_products_list
@@ -3586,7 +2058,7 @@ paths:
           type: string
           format: uuid
       - in: query
-        name: service_provider
+        name: seller
         schema:
           type: string
           format: uuid
@@ -3730,6 +2202,166 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/sellers/:
+    get:
+      operationId: sellers_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        explode: true
+        style: form
+      tags:
+      - sellers
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Seller'
+          description: ''
+    post:
+      operationId: sellers_create
+      tags:
+      - sellers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Seller'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Seller'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Seller'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seller'
+          description: ''
+  /api/sellers/{id}/:
+    get:
+      operationId: sellers_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller.
+        required: true
+      tags:
+      - sellers
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seller'
+          description: ''
+    put:
+      operationId: sellers_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller.
+        required: true
+      tags:
+      - sellers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Seller'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Seller'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Seller'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seller'
+          description: ''
+    patch:
+      operationId: sellers_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller.
+        required: true
+      tags:
+      - sellers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSeller'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSeller'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSeller'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seller'
+          description: ''
+    delete:
+      operationId: sellers_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller.
+        required: true
+      tags:
+      - sellers
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/service-requests/{id}/payout:
     get:
       operationId: service_requests_payout_retrieve
@@ -3766,267 +2398,240 @@ paths:
       responses:
         '200':
           description: No response body
-  /api/stripe/billing/invoices:
+  /api/user-addresses/:
     get:
-      operationId: stripe_billing_invoices_retrieve
+      operationId: user_addresses_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
       tags:
-      - stripe
+      - user-addresses
       security:
       - {}
       responses:
         '200':
-          description: No response body
-  /api/stripe/billing/subscriptions:
-    get:
-      operationId: stripe_billing_subscriptions_retrieve
-      tags:
-      - stripe
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-  /api/stripe/connect/accounts:
-    get:
-      operationId: stripe_connect_accounts_retrieve
-      tags:
-      - stripe
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-  /api/stripe/connect/transfers:
-    get:
-      operationId: stripe_connect_transfers_retrieve
-      tags:
-      - stripe
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-  /api/stripe/core/balance:
-    get:
-      operationId: stripe_core_balance_retrieve
-      tags:
-      - stripe
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-  /api/stripe/core/balance-transactions:
-    get:
-      operationId: stripe_core_balance_transactions_retrieve
-      tags:
-      - stripe
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-  /api/stripe/core/payment-intents:
-    get:
-      operationId: stripe_core_payment_intents_retrieve
-      tags:
-      - stripe
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-  /api/tasks/:
-    get:
-      operationId: tasks_retrieve
-      tags:
-      - tasks
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserAddress'
+          description: ''
     post:
-      operationId: tasks_create
+      operationId: user_addresses_create
       tags:
-      - tasks
+      - user-addresses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserAddress'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddress'
+          description: ''
+  /api/user-addresses/{id}/:
+    get:
+      operationId: user_addresses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address.
+        required: true
+      tags:
+      - user-addresses
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddress'
+          description: ''
     put:
-      operationId: tasks_update
+      operationId: user_addresses_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address.
+        required: true
       tags:
-      - tasks
+      - user-addresses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserAddress'
+        required: true
       security:
       - {}
       responses:
         '200':
-          description: No response body
-    delete:
-      operationId: tasks_destroy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddress'
+          description: ''
+    patch:
+      operationId: user_addresses_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address.
+        required: true
       tags:
-      - tasks
+      - user-addresses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAddress'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddress'
+          description: ''
+    delete:
+      operationId: user_addresses_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address.
+        required: true
+      tags:
+      - user-addresses
       security:
       - {}
       responses:
         '204':
           description: No response body
-  /api/tasks/{id}:
+  /api/users/:
     get:
-      operationId: tasks_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
+      operationId: users_retrieve
       tags:
-      - tasks
+      - users
       security:
       - {}
       responses:
         '200':
           description: No response body
     post:
-      operationId: tasks_create_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
+      operationId: users_create
       tags:
-      - tasks
+      - users
       security:
       - {}
       responses:
-        '200':
+        '201':
           description: No response body
-    put:
-      operationId: tasks_update_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - tasks
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    delete:
-      operationId: tasks_destroy_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - tasks
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/teams/:
+  /api/users/{id}/:
     get:
-      operationId: teams_retrieve
+      operationId: users_retrieve_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
       tags:
-      - teams
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    post:
-      operationId: teams_create
-      tags:
-      - teams
+      - users
       security:
       - {}
       responses:
         '200':
           description: No response body
     put:
-      operationId: teams_update
+      operationId: users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
       tags:
-      - teams
+      - users
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
+      tags:
+      - users
       security:
       - {}
       responses:
         '200':
           description: No response body
     delete:
-      operationId: teams_destroy
-      tags:
-      - teams
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/teams/{id}:
-    get:
-      operationId: teams_retrieve_2
+      operationId: users_destroy
       parameters:
       - in: path
         name: id
         schema:
-          type: integer
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
         required: true
       tags:
-      - teams
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    post:
-      operationId: teams_create_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - teams
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    put:
-      operationId: teams_update_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - teams
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    delete:
-      operationId: teams_destroy_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - teams
+      - users
       security:
       - {}
       responses:
@@ -4177,524 +2782,6 @@ paths:
           description: No response body
 components:
   schemas:
-    Account:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          title: Account Name
-          maxLength: 255
-        type:
-          nullable: true
-          title: Account Type
-          oneOf:
-          - $ref: '#/components/schemas/AccountTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        billing_street:
-          type: string
-          nullable: true
-        billing_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        billing_state:
-          type: string
-          nullable: true
-          title: Billing State/Province
-          maxLength: 80
-        billing_postal_code:
-          type: string
-          nullable: true
-          title: Billing Zip/Postal Code
-          maxLength: 20
-        billing_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        billing_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        billing_address:
-          type: string
-          nullable: true
-        shipping_street:
-          type: string
-          nullable: true
-        shipping_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        shipping_state:
-          type: string
-          nullable: true
-          title: Shipping State/Province
-          maxLength: 80
-        shipping_postal_code:
-          type: string
-          nullable: true
-          title: Shipping Zip/Postal Code
-          maxLength: 20
-        shipping_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        shipping_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        shipping_address:
-          type: string
-          nullable: true
-        phone:
-          type: string
-          nullable: true
-          title: Account Phone
-          maxLength: 40
-        fax:
-          type: string
-          nullable: true
-          title: Account Fax
-          maxLength: 40
-        website:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        photo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        industry:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/IndustryEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_employees:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-          title: Employees
-        description:
-          type: string
-          nullable: true
-          title: Account Description
-        last_activity_date:
-          type: string
-          format: date
-          nullable: true
-          title: Last Activity
-        jigsaw:
-          type: string
-          nullable: true
-          title: Data.com Key
-          maxLength: 20
-        jigsaw_company_id:
-          type: string
-          nullable: true
-          maxLength: 20
-        account_source:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/AccountSourceEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        sic_desc:
-          type: string
-          nullable: true
-          title: SIC Description
-          maxLength: 80
-        about_us:
-          type: string
-          nullable: true
-        number_of_units:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        number_of_properties:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        aln_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        ncr_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/NcrStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        construction_start_date:
-          type: string
-          format: date
-          nullable: true
-        lease_start_date:
-          type: string
-          format: date
-          nullable: true
-        occupancy_date:
-          type: string
-          format: date
-          nullable: true
-        completion_date:
-          type: string
-          format: date
-          nullable: true
-        occupancy_rate:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        year_built_renovated:
-          type: string
-          nullable: true
-          title: Year Built/Renovated
-          maxLength: 255
-        software_used:
-          type: string
-          nullable: true
-          maxLength: 255
-        property_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/PropertyTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_floors:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        number_of_buildings:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        affordable_housing:
-          type: boolean
-        senior_living:
-          type: boolean
-        section_8:
-          type: boolean
-        student_housing:
-          type: boolean
-        has_valet_trash:
-          type: boolean
-        has_recycling:
-          type: boolean
-        average_rent:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        rent_sq_ft:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-          title: Rent/Sq Ft.
-        average_unit_size:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        has_elevators:
-          type: boolean
-        construction_notes:
-          type: string
-          nullable: true
-        property_ownership:
-          type: string
-          nullable: true
-          maxLength: 255
-        order_support_email:
-          type: string
-          format: email
-          nullable: true
-          maxLength: 254
-        active_camp_active_campaign_id:
-          type: string
-          nullable: true
-          title: ActiveCampaign Id
-          maxLength: 255
-        active_camp_active_campaign_sync_status:
-          nullable: true
-          title: ActiveCampaign Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/AccountActiveCampActiveCampaignSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_last_synced:
-          type: string
-          format: date-time
-          nullable: true
-          title: ActiveCampaign Last Synced
-        scrap_team_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        scrap_fleet_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        dispatch_manager_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        merchant_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MerchantTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_type_display:
-          nullable: true
-          title: Seller Type (Display)
-          oneOf:
-          - $ref: '#/components/schemas/SellerTypeDisplayEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_location_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SellerLocationTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SellerStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        stripe_connect_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        stripe_customer_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        seller_marketplace_display_name:
-          type: string
-          nullable: true
-          maxLength: 20
-        seller_open_days:
-          nullable: true
-          title: Seller Open Day(s)
-          oneOf:
-          - $ref: '#/components/schemas/SellerOpenDaysEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_open_time:
-          type: string
-          format: time
-          nullable: true
-        seller_close_time:
-          type: string
-          format: time
-          nullable: true
-        seller_lead_time_hrs:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-          title: Seller Lead Time (hrs)
-        book_online_available:
-          type: boolean
-        announcement:
-          type: string
-          nullable: true
-        live_menu_is_active:
-          type: boolean
-        seller_location_logo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        downstream_insurance_requirements_met:
-          type: boolean
-        seller_badge:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SellerBadgeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        average_rating:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,1}(?:\.\d{0,1})?$
-          nullable: true
-        tire_recycler_cert_registration_id_co:
-          type: string
-          nullable: true
-          title: Tire Recycler Cert Registration ID - CO
-          maxLength: 100
-        composting_classification:
-          type: string
-          nullable: true
-          maxLength: 100
-        max_paint_gallons_accepted:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        recycling_disposal_classification:
-          type: string
-          nullable: true
-          maxLength: 100
-        master_record:
-          type: string
-          format: uuid
-          nullable: true
-          title: Master Record ID
-        parent:
-          type: string
-          format: uuid
-          nullable: true
-          title: Parent Account ID
-        builders:
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - created_on
-      - name
-      - updated_on
-    AccountActiveCampActiveCampaignSyncStatusEnum:
-      enum:
-      - Waiting For Next Sync
-      - Successfully Synced
-      - Does Not Meet Sync Criteria
-      - Waiting For Update
-      - Account Deleted in ActiveCampaign
-      type: string
-    AccountContact:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        roles:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RolesEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        is_direct:
-          type: boolean
-          title: Direct
-        is_active:
-          type: boolean
-          title: Active
-        start_date:
-          type: string
-          format: date
-          nullable: true
-        end_date:
-          type: string
-          format: date
-          nullable: true
-        relationship_strength:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RelationshipStrengthEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        contact:
-          type: string
-          format: uuid
-          title: Contact ID
-      required:
-      - contact
-      - created_on
-      - updated_on
-    AccountSourceEnum:
-      enum:
-      - Advertisement
-      - Customer Event
-      - Employee Referral
-      - External Referral
-      - Google AdWords
-      - Other
-      - Partner
-      - Purchased List
-      - Trade Show
-      - Webinar
-      - Website
-      type: string
-    AccountTypeEnum:
-      enum:
-      - Analyst
-      - Competitor
-      - Customer
-      - Integrator
-      - Investor
-      - Partner
-      - Press
-      - Prospect
-      - Seller
-      - Other
-      type: string
     AddOn:
       type: object
       properties:
@@ -4710,16 +2797,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Add On Name
           maxLength: 80
-        display_name:
-          type: string
-          nullable: true
-          maxLength: 255
         sort:
           type: string
           format: decimal
@@ -4743,16 +2824,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Add On Choice Name
           maxLength: 80
-        display_name:
-          type: string
-          nullable: true
-          maxLength: 255
         add_on:
           type: string
           format: uuid
@@ -4760,345 +2835,19 @@ components:
       required:
       - created_on
       - updated_on
+    BadgeEnum:
+      enum:
+      - New
+      - Pro
+      - Platinum
+      type: string
     BlankEnum:
       enum:
       - ''
-    CityEnum:
+    LocationTypeEnum:
       enum:
-      - Denver
-      type: string
-    Contact:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        last_name:
-          type: string
-          maxLength: 80
-        first_name:
-          type: string
-          nullable: true
-          maxLength: 40
-        salutation:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SalutationEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        middle_name:
-          type: string
-          nullable: true
-          maxLength: 40
-        suffix:
-          type: string
-          nullable: true
-          maxLength: 40
-        name:
-          type: string
-          title: Full Name
-          maxLength: 121
-        mailing_street:
-          type: string
-          nullable: true
-        mailing_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        mailing_state:
-          type: string
-          nullable: true
-          title: Mailing State/Province
-          maxLength: 80
-        mailing_postal_code:
-          type: string
-          nullable: true
-          title: Mailing Zip/Postal Code
-          maxLength: 20
-        mailing_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        mailing_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        mailing_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        mailing_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        mailing_address:
-          type: string
-          nullable: true
-        phone:
-          type: string
-          nullable: true
-          title: Business Phone
-          maxLength: 40
-        fax:
-          type: string
-          nullable: true
-          title: Business Fax
-          maxLength: 40
-        mobile_phone:
-          type: string
-          nullable: true
-          maxLength: 40
-        email:
-          type: string
-          format: email
-          nullable: true
-          maxLength: 254
-        title:
-          type: string
-          nullable: true
-          maxLength: 128
-        department:
-          type: string
-          nullable: true
-          maxLength: 80
-        last_activity_date:
-          type: string
-          format: date
-          nullable: true
-          title: Last Activity
-        last_curequest_date:
-          type: string
-          format: date-time
-          nullable: true
-          title: Last Stay-in-Touch Request Date
-        last_cuupdate_date:
-          type: string
-          format: date-time
-          nullable: true
-          title: Last Stay-in-Touch Save Date
-        email_bounced_reason:
-          type: string
-          nullable: true
-          maxLength: 255
-        email_bounced_date:
-          type: string
-          format: date-time
-          nullable: true
-        is_email_bounced:
-          type: boolean
-        photo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        is_user:
-          type: boolean
-        user_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        master_record:
-          type: string
-          format: uuid
-          nullable: true
-          title: Master Record ID
-        account:
-          type: string
-          format: uuid
-          nullable: true
-          title: Account ID
-        reports_to:
-          type: string
-          format: uuid
-          nullable: true
-          title: Reports To ID
-        property:
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - created_on
-      - last_name
-      - name
-      - updated_on
-    DisposalFee:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Disposal Fee Name
-          maxLength: 80
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-        account:
-          type: string
-          format: uuid
-          nullable: true
-        waste_type:
-          type: string
-          format: uuid
-          nullable: true
-        location_zone:
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - created_on
-      - updated_on
-    FamilyEnum:
-      enum:
-      - Junk
-      - Business Dumpster
-      - Large Dumpster
-      - Apartment Services
-      - Dispatch - SaaS
-      - Site_Services
-      type: string
-    ForecastCategoryEnum:
-      enum:
-      - Omitted
-      - Pipeline
-      - BestCase
-      - MostLikely
-      - Forecast
-      - Closed
-      type: string
-    ForecastCategoryNameEnum:
-      enum:
-      - Omitted
-      - Pipeline
-      - Best Case
-      - Commit
-      - Closed
-      type: string
-    IndustryEnum:
-      enum:
-      - Agriculture
-      - Apparel
-      - Banking
-      - Biotechnology
-      - Chemicals
-      - Communications
-      - Construction
-      - Consulting
-      - Education
-      - Electronics
-      - Energy
-      - Engineering
-      - Entertainment
-      - Environmental
-      - Finance
-      - Food & Beverage
-      - Government
-      - Healthcare
-      - Hospitality
-      - Insurance
-      - Machinery
-      - Manufacturing
-      - Media
-      - Not For Profit
-      - Other
-      - Property management
-      - Recreation
-      - Retail
-      - Shipping
-      - Technology
-      - Telecommunications
-      - Transportation
-      - Utilities
-      - Waste management
-      - Residential
-      type: string
-    LeadSourceEnum:
-      enum:
-      - Advertisement
-      - Customer Event
-      - Employee Referral
-      - External Referral
-      - Google AdWords
-      - Other
-      - Partner
-      - Purchased List
-      - Trade Show
-      - Webinar
-      - Website
-      type: string
-    LocationZone:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Location Zone Name
-          maxLength: 80
-      required:
-      - created_on
-      - updated_on
-    LossReasonEnum:
-      enum:
-      - Lost to Competitor
-      - No Budget / Lost Funding
-      - No Decision / Non-Responsive
-      - Price
-      - Other
-      type: string
-    MailingGeocodeAccuracyEnum:
-      enum:
-      - Address
-      - NearAddress
-      - Block
-      - Street
-      - ExtendedZip
-      - Zip
-      - Neighborhood
-      - City
-      - County
-      - State
-      - Unknown
+      - Services
+      - Disposal site
       type: string
     MainProduct:
       type: object
@@ -5115,11 +2864,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Products Name
           maxLength: 80
         cubic_yards:
           type: string
@@ -5137,7 +2884,6 @@ components:
         image_del:
           type: string
           nullable: true
-          title: Image
         sort:
           type: string
           format: decimal
@@ -5163,13 +2909,12 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-          title: Max Rate Quantity
         included_rate_quantity:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        product_category:
+        main_product_category:
           type: string
           format: uuid
           nullable: true
@@ -5191,11 +2936,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Product Add On Name
           maxLength: 80
         main_product:
           type: string
@@ -5223,11 +2966,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Product Category Name
           maxLength: 80
         description:
           type: string
@@ -5243,10 +2984,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        display_name:
-          type: string
-          nullable: true
-          maxLength: 255
       required:
       - created_on
       - updated_on
@@ -5265,13 +3002,11 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Product Category Name
           maxLength: 80
-        product_category:
+        main_product_category:
           type: string
           format: uuid
           nullable: true
@@ -5293,11 +3028,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Product Name
           maxLength: 80
         main_product:
           type: string
@@ -5321,12 +3054,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Main Product Waste Type Name
-          maxLength: 80
         waste_type:
           type: string
           format: uuid
@@ -5338,254 +3065,18 @@ components:
       required:
       - created_on
       - updated_on
-    MerchantTypeEnum:
-      enum:
-      - Waste hauler
-      - Landfill
-      - Recycling facility
-      - Transfer station
-      - Scrap yard
-      - Retailer
-      - Scrapper
-      - Equipment manufacturer
-      - Reseller
-      - Community drop spot
-      - Site services
-      - Equipment rentals
-      type: string
-    NcrStatusEnum:
-      enum:
-      - Construction/Lease-Up
-      - Lease-Up
-      - On hold
-      - Planned
-      - Under Construction
-      - Under research
-      type: string
     NullEnum:
       enum:
       - null
-    Opportunity:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-          nullable: true
-        stage_name:
-          allOf:
-          - $ref: '#/components/schemas/StageNameEnum'
-          title: Stage
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-        probability:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,0})?$
-          nullable: true
-          title: Probability (%)
-        close_date:
-          type: string
-          format: date
-        type:
-          nullable: true
-          title: Opportunity Type
-          oneOf:
-          - $ref: '#/components/schemas/OpportunityTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        next_step:
-          type: string
-          nullable: true
-          maxLength: 255
-        lead_source:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/LeadSourceEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        is_closed:
-          type: boolean
-          title: Closed
-        is_won:
-          type: boolean
-          title: Won
-        forecast_category:
-          $ref: '#/components/schemas/ForecastCategoryEnum'
-        forecast_category_name:
-          nullable: true
-          title: Forecast Category
-          oneOf:
-          - $ref: '#/components/schemas/ForecastCategoryNameEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        has_opportunity_line_item:
-          type: boolean
-          title: Has Line Item
-        last_activity_date:
-          type: string
-          format: date
-          nullable: true
-          title: Last Activity
-        push_count:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        last_stage_change_date:
-          type: string
-          format: date-time
-          nullable: true
-        fiscal_quarter:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        fiscal_year:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        fiscal:
-          type: string
-          nullable: true
-          title: Fiscal Period
-          maxLength: 6
-        has_open_activity:
-          type: boolean
-        has_overdue_task:
-          type: boolean
-        budget_confirmed:
-          type: boolean
-        discovery_completed:
-          type: boolean
-        roi_analysis_completed:
-          type: boolean
-        dhruvsoft_is_converted1:
-          type: boolean
-          title: IsConverted
-        loss_reason:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/LossReasonEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        dhruvsoft_order_number:
-          type: string
-          nullable: true
-          title: Order Number(Deprecated)
-          maxLength: 8
-        time_slot:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/TimeSlotEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        schedule_date:
-          type: string
-          format: date
-          nullable: true
-        additional_schedule_details:
-          type: string
-          nullable: true
-        access_details:
-          type: string
-          nullable: true
-        active_camp_active_campaign_sync_status:
-          nullable: true
-          title: ActiveCampaign Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/OpportunityActiveCampActiveCampaignSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_last_synced:
-          type: string
-          format: date-time
-          nullable: true
-          title: ActiveCampaign Last Synced
-        pandadoc_tracking_number:
-          type: string
-          nullable: true
-          title: Tracking Number
-          maxLength: 12
-        start_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: Start DateTime
-        end_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: End DateTime
-        marketplace_is_active:
-          type: boolean
-        dispatch_is_active:
-          type: boolean
-        scrapper_is_active:
-          type: boolean
-        account:
-          type: string
-          format: uuid
-          nullable: true
-          title: Account ID
-        pricebook:
-          type: string
-          format: uuid
-          nullable: true
-          title: Price Book ID
-        contact:
-          type: string
-          format: uuid
-          nullable: true
-          title: Contact ID
-        product:
-          type: string
-          format: uuid
-          nullable: true
-        service_provider:
-          type: string
-          format: uuid
-          nullable: true
-        main_product:
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - close_date
-      - created_on
-      - forecast_category
-      - name
-      - stage_name
-      - updated_on
-    OpportunityActiveCampActiveCampaignSyncStatusEnum:
+    OpenDaysEnum:
       enum:
-      - Waiting For Next Sync
-      - Successfully Synced
-      - Does Not Meet Sync Criteria
-      type: string
-    OpportunityTypeEnum:
-      enum:
-      - Existing Business
-      - New Business
+      - Monday
+      - Tuesday
+      - Wednesday
+      - Thursday
+      - Friday
+      - Saturday
+      - Sunday
       type: string
     Order:
       type: object
@@ -5604,679 +3095,67 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        effective_date:
-          type: string
-          format: date
-          title: Order Start Date
-        end_date:
-          type: string
-          format: date
-          nullable: true
-          title: Order End Date
-        is_reduction_order:
-          type: boolean
-          title: Reduction Order
-        status:
-          $ref: '#/components/schemas/OrderStatusEnum'
-        description:
-          type: string
-          nullable: true
-        type:
-          type: string
-          nullable: true
-          title: Order Type
-          maxLength: 255
-        billing_street:
-          type: string
-          nullable: true
-        billing_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        billing_state:
-          type: string
-          nullable: true
-          title: Billing State/Province
-          maxLength: 80
-        billing_postal_code:
-          type: string
-          nullable: true
-          title: Billing Zip/Postal Code
-          maxLength: 20
-        billing_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        billing_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        billing_address:
-          type: string
-          nullable: true
-        shipping_street:
-          type: string
-          nullable: true
-        shipping_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        shipping_state:
-          type: string
-          nullable: true
-          title: Shipping State/Province
-          maxLength: 80
-        shipping_postal_code:
-          type: string
-          nullable: true
-          title: Shipping Zip/Postal Code
-          maxLength: 20
-        shipping_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        shipping_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        shipping_address:
-          type: string
-          nullable: true
-        activated_date:
-          type: string
-          format: date-time
-          nullable: true
-        status_code:
-          allOf:
-          - $ref: '#/components/schemas/StatusCodeEnum'
-          title: Status Category
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          title: Order Amount
         hauler_payout:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        scheduled_date:
+        stripe_invoice_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        order_details:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - created_on
+      - updated_on
+    OrderDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        description:
+          type: string
+          nullable: true
+        time_slot:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TimeSlotEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        schedule_date:
           type: string
           format: date
           nullable: true
         additional_schedule_details:
           type: string
           nullable: true
-        access_schedule_details:
+        access_details:
           type: string
           nullable: true
-        scheduled_time_slot:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/ScheduledTimeSlotEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        scrap_task_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        start_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: Start DateTime
-        end_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: End DateTime
-        account:
+        user_address:
           type: string
           format: uuid
           nullable: true
-          title: Account ID
-        pricebook:
-          type: string
-          format: uuid
-          nullable: true
-          title: Price Book ID
-        original_order:
-          type: string
-          format: uuid
-          nullable: true
-          title: Order ID
-        customer_authorized_by:
-          type: string
-          format: uuid
-          nullable: true
-          title: Customer Authorized By ID
-        service_provider:
+        seller_product:
           type: string
           format: uuid
           nullable: true
       required:
       - created_on
-      - effective_date
-      - status
-      - status_code
-      - total_amount
       - updated_on
-    OrderStatusEnum:
-      enum:
-      - Scheduled
-      - Pending_Acceptance
-      - Declined
-      - Accepted
-      - On the way
-      - Arrived
-      - Price Changed
-      - Price Approved
-      - Complete
-      - Invoiced
-      - Paid_To_Hauler
-      - Paid_By_Customer
-      type: string
-    PatchedAccount:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          title: Account Name
-          maxLength: 255
-        type:
-          nullable: true
-          title: Account Type
-          oneOf:
-          - $ref: '#/components/schemas/AccountTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        billing_street:
-          type: string
-          nullable: true
-        billing_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        billing_state:
-          type: string
-          nullable: true
-          title: Billing State/Province
-          maxLength: 80
-        billing_postal_code:
-          type: string
-          nullable: true
-          title: Billing Zip/Postal Code
-          maxLength: 20
-        billing_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        billing_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        billing_address:
-          type: string
-          nullable: true
-        shipping_street:
-          type: string
-          nullable: true
-        shipping_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        shipping_state:
-          type: string
-          nullable: true
-          title: Shipping State/Province
-          maxLength: 80
-        shipping_postal_code:
-          type: string
-          nullable: true
-          title: Shipping Zip/Postal Code
-          maxLength: 20
-        shipping_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        shipping_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        shipping_address:
-          type: string
-          nullable: true
-        phone:
-          type: string
-          nullable: true
-          title: Account Phone
-          maxLength: 40
-        fax:
-          type: string
-          nullable: true
-          title: Account Fax
-          maxLength: 40
-        website:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        photo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        industry:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/IndustryEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_employees:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-          title: Employees
-        description:
-          type: string
-          nullable: true
-          title: Account Description
-        last_activity_date:
-          type: string
-          format: date
-          nullable: true
-          title: Last Activity
-        jigsaw:
-          type: string
-          nullable: true
-          title: Data.com Key
-          maxLength: 20
-        jigsaw_company_id:
-          type: string
-          nullable: true
-          maxLength: 20
-        account_source:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/AccountSourceEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        sic_desc:
-          type: string
-          nullable: true
-          title: SIC Description
-          maxLength: 80
-        about_us:
-          type: string
-          nullable: true
-        number_of_units:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        number_of_properties:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        aln_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        ncr_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/NcrStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        construction_start_date:
-          type: string
-          format: date
-          nullable: true
-        lease_start_date:
-          type: string
-          format: date
-          nullable: true
-        occupancy_date:
-          type: string
-          format: date
-          nullable: true
-        completion_date:
-          type: string
-          format: date
-          nullable: true
-        occupancy_rate:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        year_built_renovated:
-          type: string
-          nullable: true
-          title: Year Built/Renovated
-          maxLength: 255
-        software_used:
-          type: string
-          nullable: true
-          maxLength: 255
-        property_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/PropertyTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_floors:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        number_of_buildings:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        affordable_housing:
-          type: boolean
-        senior_living:
-          type: boolean
-        section_8:
-          type: boolean
-        student_housing:
-          type: boolean
-        has_valet_trash:
-          type: boolean
-        has_recycling:
-          type: boolean
-        average_rent:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        rent_sq_ft:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-          title: Rent/Sq Ft.
-        average_unit_size:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        has_elevators:
-          type: boolean
-        construction_notes:
-          type: string
-          nullable: true
-        property_ownership:
-          type: string
-          nullable: true
-          maxLength: 255
-        order_support_email:
-          type: string
-          format: email
-          nullable: true
-          maxLength: 254
-        active_camp_active_campaign_id:
-          type: string
-          nullable: true
-          title: ActiveCampaign Id
-          maxLength: 255
-        active_camp_active_campaign_sync_status:
-          nullable: true
-          title: ActiveCampaign Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/AccountActiveCampActiveCampaignSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_last_synced:
-          type: string
-          format: date-time
-          nullable: true
-          title: ActiveCampaign Last Synced
-        scrap_team_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        scrap_fleet_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        dispatch_manager_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        merchant_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MerchantTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_type_display:
-          nullable: true
-          title: Seller Type (Display)
-          oneOf:
-          - $ref: '#/components/schemas/SellerTypeDisplayEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_location_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SellerLocationTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SellerStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        stripe_connect_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        stripe_customer_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        seller_marketplace_display_name:
-          type: string
-          nullable: true
-          maxLength: 20
-        seller_open_days:
-          nullable: true
-          title: Seller Open Day(s)
-          oneOf:
-          - $ref: '#/components/schemas/SellerOpenDaysEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        seller_open_time:
-          type: string
-          format: time
-          nullable: true
-        seller_close_time:
-          type: string
-          format: time
-          nullable: true
-        seller_lead_time_hrs:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-          title: Seller Lead Time (hrs)
-        book_online_available:
-          type: boolean
-        announcement:
-          type: string
-          nullable: true
-        live_menu_is_active:
-          type: boolean
-        seller_location_logo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        downstream_insurance_requirements_met:
-          type: boolean
-        seller_badge:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SellerBadgeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        average_rating:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,1}(?:\.\d{0,1})?$
-          nullable: true
-        tire_recycler_cert_registration_id_co:
-          type: string
-          nullable: true
-          title: Tire Recycler Cert Registration ID - CO
-          maxLength: 100
-        composting_classification:
-          type: string
-          nullable: true
-          maxLength: 100
-        max_paint_gallons_accepted:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        recycling_disposal_classification:
-          type: string
-          nullable: true
-          maxLength: 100
-        master_record:
-          type: string
-          format: uuid
-          nullable: true
-          title: Master Record ID
-        parent:
-          type: string
-          format: uuid
-          nullable: true
-          title: Parent Account ID
-        builders:
-          type: string
-          format: uuid
-          nullable: true
-    PatchedAccountContact:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        roles:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RolesEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        is_direct:
-          type: boolean
-          title: Direct
-        is_active:
-          type: boolean
-          title: Active
-        start_date:
-          type: string
-          format: date
-          nullable: true
-        end_date:
-          type: string
-          format: date
-          nullable: true
-        relationship_strength:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RelationshipStrengthEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        contact:
-          type: string
-          format: uuid
-          title: Contact ID
     PatchedAddOn:
       type: object
       properties:
@@ -6292,16 +3171,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Add On Name
           maxLength: 80
-        display_name:
-          type: string
-          nullable: true
-          maxLength: 255
         sort:
           type: string
           format: decimal
@@ -6322,242 +3195,14 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Add On Choice Name
           maxLength: 80
-        display_name:
-          type: string
-          nullable: true
-          maxLength: 255
         add_on:
           type: string
           format: uuid
           nullable: true
-    PatchedContact:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        last_name:
-          type: string
-          maxLength: 80
-        first_name:
-          type: string
-          nullable: true
-          maxLength: 40
-        salutation:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SalutationEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        middle_name:
-          type: string
-          nullable: true
-          maxLength: 40
-        suffix:
-          type: string
-          nullable: true
-          maxLength: 40
-        name:
-          type: string
-          title: Full Name
-          maxLength: 121
-        mailing_street:
-          type: string
-          nullable: true
-        mailing_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        mailing_state:
-          type: string
-          nullable: true
-          title: Mailing State/Province
-          maxLength: 80
-        mailing_postal_code:
-          type: string
-          nullable: true
-          title: Mailing Zip/Postal Code
-          maxLength: 20
-        mailing_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        mailing_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        mailing_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        mailing_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        mailing_address:
-          type: string
-          nullable: true
-        phone:
-          type: string
-          nullable: true
-          title: Business Phone
-          maxLength: 40
-        fax:
-          type: string
-          nullable: true
-          title: Business Fax
-          maxLength: 40
-        mobile_phone:
-          type: string
-          nullable: true
-          maxLength: 40
-        email:
-          type: string
-          format: email
-          nullable: true
-          maxLength: 254
-        title:
-          type: string
-          nullable: true
-          maxLength: 128
-        department:
-          type: string
-          nullable: true
-          maxLength: 80
-        last_activity_date:
-          type: string
-          format: date
-          nullable: true
-          title: Last Activity
-        last_curequest_date:
-          type: string
-          format: date-time
-          nullable: true
-          title: Last Stay-in-Touch Request Date
-        last_cuupdate_date:
-          type: string
-          format: date-time
-          nullable: true
-          title: Last Stay-in-Touch Save Date
-        email_bounced_reason:
-          type: string
-          nullable: true
-          maxLength: 255
-        email_bounced_date:
-          type: string
-          format: date-time
-          nullable: true
-        is_email_bounced:
-          type: boolean
-        photo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        is_user:
-          type: boolean
-        user_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        master_record:
-          type: string
-          format: uuid
-          nullable: true
-          title: Master Record ID
-        account:
-          type: string
-          format: uuid
-          nullable: true
-          title: Account ID
-        reports_to:
-          type: string
-          format: uuid
-          nullable: true
-          title: Reports To ID
-        property:
-          type: string
-          format: uuid
-          nullable: true
-    PatchedDisposalFee:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Disposal Fee Name
-          maxLength: 80
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-        account:
-          type: string
-          format: uuid
-          nullable: true
-        waste_type:
-          type: string
-          format: uuid
-          nullable: true
-        location_zone:
-          type: string
-          format: uuid
-          nullable: true
-    PatchedLocationZone:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Location Zone Name
-          maxLength: 80
     PatchedMainProduct:
       type: object
       properties:
@@ -6573,11 +3218,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Products Name
           maxLength: 80
         cubic_yards:
           type: string
@@ -6595,7 +3238,6 @@ components:
         image_del:
           type: string
           nullable: true
-          title: Image
         sort:
           type: string
           format: decimal
@@ -6621,13 +3263,12 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-          title: Max Rate Quantity
         included_rate_quantity:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        product_category:
+        main_product_category:
           type: string
           format: uuid
           nullable: true
@@ -6646,11 +3287,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Product Add On Name
           maxLength: 80
         main_product:
           type: string
@@ -6675,11 +3314,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Product Category Name
           maxLength: 80
         description:
           type: string
@@ -6695,10 +3332,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        display_name:
-          type: string
-          nullable: true
-          maxLength: 255
     PatchedMainProductCategoryInfo:
       type: object
       properties:
@@ -6714,13 +3347,11 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Product Category Name
           maxLength: 80
-        product_category:
+        main_product_category:
           type: string
           format: uuid
           nullable: true
@@ -6739,11 +3370,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Main Product Name
           maxLength: 80
         main_product:
           type: string
@@ -6764,217 +3393,7 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Main Product Waste Type Name
-          maxLength: 80
         waste_type:
-          type: string
-          format: uuid
-          nullable: true
-        main_product:
-          type: string
-          format: uuid
-          nullable: true
-    PatchedOpportunity:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-          nullable: true
-        stage_name:
-          allOf:
-          - $ref: '#/components/schemas/StageNameEnum'
-          title: Stage
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-        probability:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,0})?$
-          nullable: true
-          title: Probability (%)
-        close_date:
-          type: string
-          format: date
-        type:
-          nullable: true
-          title: Opportunity Type
-          oneOf:
-          - $ref: '#/components/schemas/OpportunityTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        next_step:
-          type: string
-          nullable: true
-          maxLength: 255
-        lead_source:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/LeadSourceEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        is_closed:
-          type: boolean
-          title: Closed
-        is_won:
-          type: boolean
-          title: Won
-        forecast_category:
-          $ref: '#/components/schemas/ForecastCategoryEnum'
-        forecast_category_name:
-          nullable: true
-          title: Forecast Category
-          oneOf:
-          - $ref: '#/components/schemas/ForecastCategoryNameEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        has_opportunity_line_item:
-          type: boolean
-          title: Has Line Item
-        last_activity_date:
-          type: string
-          format: date
-          nullable: true
-          title: Last Activity
-        push_count:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        last_stage_change_date:
-          type: string
-          format: date-time
-          nullable: true
-        fiscal_quarter:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        fiscal_year:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        fiscal:
-          type: string
-          nullable: true
-          title: Fiscal Period
-          maxLength: 6
-        has_open_activity:
-          type: boolean
-        has_overdue_task:
-          type: boolean
-        budget_confirmed:
-          type: boolean
-        discovery_completed:
-          type: boolean
-        roi_analysis_completed:
-          type: boolean
-        dhruvsoft_is_converted1:
-          type: boolean
-          title: IsConverted
-        loss_reason:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/LossReasonEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        dhruvsoft_order_number:
-          type: string
-          nullable: true
-          title: Order Number(Deprecated)
-          maxLength: 8
-        time_slot:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/TimeSlotEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        schedule_date:
-          type: string
-          format: date
-          nullable: true
-        additional_schedule_details:
-          type: string
-          nullable: true
-        access_details:
-          type: string
-          nullable: true
-        active_camp_active_campaign_sync_status:
-          nullable: true
-          title: ActiveCampaign Sync Status
-          oneOf:
-          - $ref: '#/components/schemas/OpportunityActiveCampActiveCampaignSyncStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        active_camp_last_synced:
-          type: string
-          format: date-time
-          nullable: true
-          title: ActiveCampaign Last Synced
-        pandadoc_tracking_number:
-          type: string
-          nullable: true
-          title: Tracking Number
-          maxLength: 12
-        start_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: Start DateTime
-        end_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: End DateTime
-        marketplace_is_active:
-          type: boolean
-        dispatch_is_active:
-          type: boolean
-        scrapper_is_active:
-          type: boolean
-        account:
-          type: string
-          format: uuid
-          nullable: true
-          title: Account ID
-        pricebook:
-          type: string
-          format: uuid
-          nullable: true
-          title: Price Book ID
-        contact:
-          type: string
-          format: uuid
-          nullable: true
-          title: Contact ID
-        product:
-          type: string
-          format: uuid
-          nullable: true
-        service_provider:
           type: string
           format: uuid
           nullable: true
@@ -6999,302 +3418,61 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        effective_date:
-          type: string
-          format: date
-          title: Order Start Date
-        end_date:
-          type: string
-          format: date
-          nullable: true
-          title: Order End Date
-        is_reduction_order:
-          type: boolean
-          title: Reduction Order
-        status:
-          $ref: '#/components/schemas/OrderStatusEnum'
-        description:
-          type: string
-          nullable: true
-        type:
-          type: string
-          nullable: true
-          title: Order Type
-          maxLength: 255
-        billing_street:
-          type: string
-          nullable: true
-        billing_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        billing_state:
-          type: string
-          nullable: true
-          title: Billing State/Province
-          maxLength: 80
-        billing_postal_code:
-          type: string
-          nullable: true
-          title: Billing Zip/Postal Code
-          maxLength: 20
-        billing_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        billing_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        billing_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        billing_address:
-          type: string
-          nullable: true
-        shipping_street:
-          type: string
-          nullable: true
-        shipping_city:
-          type: string
-          nullable: true
-          maxLength: 40
-        shipping_state:
-          type: string
-          nullable: true
-          title: Shipping State/Province
-          maxLength: 80
-        shipping_postal_code:
-          type: string
-          nullable: true
-          title: Shipping Zip/Postal Code
-          maxLength: 20
-        shipping_country:
-          type: string
-          nullable: true
-          maxLength: 80
-        shipping_latitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_longitude:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
-        shipping_geocode_accuracy:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/MailingGeocodeAccuracyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        shipping_address:
-          type: string
-          nullable: true
-        activated_date:
-          type: string
-          format: date-time
-          nullable: true
-        status_code:
-          allOf:
-          - $ref: '#/components/schemas/StatusCodeEnum'
-          title: Status Category
-        total_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          title: Order Amount
         hauler_payout:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
-        scheduled_date:
+        stripe_invoice_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        order_details:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedOrderDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        description:
+          type: string
+          nullable: true
+        time_slot:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TimeSlotEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        schedule_date:
           type: string
           format: date
           nullable: true
         additional_schedule_details:
           type: string
           nullable: true
-        access_schedule_details:
+        access_details:
           type: string
           nullable: true
-        scheduled_time_slot:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/ScheduledTimeSlotEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        scrap_task_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        start_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: Start DateTime
-        end_date_time:
-          type: string
-          format: date-time
-          nullable: true
-          title: End DateTime
-        account:
+        user_address:
           type: string
           format: uuid
           nullable: true
-          title: Account ID
-        pricebook:
+        seller_product:
           type: string
           format: uuid
           nullable: true
-          title: Price Book ID
-        original_order:
-          type: string
-          format: uuid
-          nullable: true
-          title: Order ID
-        customer_authorized_by:
-          type: string
-          format: uuid
-          nullable: true
-          title: Customer Authorized By ID
-        service_provider:
-          type: string
-          format: uuid
-          nullable: true
-    PatchedPostalCode:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Postal Code Name
-          maxLength: 80
-        state:
-          type: string
-          nullable: true
-          maxLength: 255
-        state_abbreviation:
-          type: string
-          nullable: true
-          maxLength: 255
-        county:
-          type: string
-          nullable: true
-          maxLength: 255
-        city:
-          type: string
-          nullable: true
-          maxLength: 255
-        location_zone:
-          type: string
-          format: uuid
-          nullable: true
-    PatchedPriceBook:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          title: Price Book Name
-          maxLength: 255
-        is_active:
-          type: boolean
-          title: Active
-        is_archived:
-          type: boolean
-          title: Archived
-        description:
-          type: string
-          nullable: true
-          maxLength: 255
-        is_standard:
-          type: boolean
-          title: Is Standard Price Book
-    PatchedPriceBookEntry:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Product Name
-          maxLength: 255
-        unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          title: List Price
-        is_active:
-          type: boolean
-          title: Active
-        use_standard_price:
-          type: boolean
-        product_code:
-          type: string
-          nullable: true
-          maxLength: 255
-        is_archived:
-          type: boolean
-          title: Archived
-        pricebook:
-          type: string
-          format: uuid
-          title: Price Book ID
-        product:
-          type: string
-          format: uuid
-          title: Product ID
     PatchedProduct:
       type: object
       properties:
@@ -7310,11 +3488,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        name:
-          type: string
-          title: Product Name
-          maxLength: 255
         product_code:
           type: string
           nullable: true
@@ -7322,92 +3495,6 @@ components:
         description:
           type: string
           nullable: true
-          title: Product Description
-        quantity_schedule_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/QuantityScheduleTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        quantity_installment_period:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/QuantityInstallmentPeriodEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_quantity_installments:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        revenue_schedule_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RevenueScheduleTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        revenue_installment_period:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RevenueInstallmentPeriodEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_revenue_installments:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        is_active:
-          type: boolean
-          title: Active
-        family:
-          nullable: true
-          title: Product Family
-          oneOf:
-          - $ref: '#/components/schemas/FamilyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        external_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        display_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        quantity_unit_of_measure:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/QuantityUnitOfMeasureEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        is_archived:
-          type: boolean
-          title: Archived
-        stock_keeping_unit:
-          type: string
-          nullable: true
-          title: Product SKU
-          maxLength: 180
-        city:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/CityEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/ProductStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        product_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/ProductTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
         main_product:
           type: string
           format: uuid
@@ -7427,11 +3514,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Product Add On Choice Name
           maxLength: 80
         product:
           type: string
@@ -7441,6 +3526,129 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedSeller:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          nullable: true
+          maxLength: 40
+        website:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        location_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/LocationTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        status:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        lead_time:
+          type: string
+          nullable: true
+          maxLength: 255
+        type_display:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TypeDisplayEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        stripe_connect_id:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        marketplace_display_name:
+          type: string
+          nullable: true
+          maxLength: 20
+        open_days:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/OpenDaysEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        open_time:
+          type: string
+          format: time
+          nullable: true
+        close_time:
+          type: string
+          format: time
+          nullable: true
+        lead_time_hrs:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        announcement:
+          type: string
+          nullable: true
+        live_menu_is_active:
+          type: boolean
+        location_logo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        downstream_insurance_requirements_met:
+          type: boolean
+        badge:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/BadgeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        average_rating:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,1})?$
+          nullable: true
+        tire_recycler_cert_registration_id_co:
+          type: string
+          nullable: true
+          maxLength: 100
+        composting_classification:
+          type: string
+          nullable: true
+          maxLength: 100
+        max_paint_gallons_accepted:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        recycling_disposal_classification:
+          type: string
+          nullable: true
+          maxLength: 100
     PatchedSellerProduct:
       type: object
       properties:
@@ -7456,12 +3664,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Seller Product Name
-          maxLength: 80
         rate:
           type: string
           format: decimal
@@ -7471,11 +3673,11 @@ components:
           type: string
           format: uuid
           nullable: true
-        service_provider:
+        seller:
           type: string
           format: uuid
           nullable: true
-    PatchedSellerProductLocationZone:
+    PatchedUserAddress:
       type: object
       properties:
         id:
@@ -7490,29 +3692,37 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
+          maxLength: 255
+        street:
+          type: string
           nullable: true
-          title: Seller Product Location Zone Name
+        city:
+          type: string
+          nullable: true
+          maxLength: 40
+        state:
+          type: string
+          nullable: true
           maxLength: 80
-        delivery_fee:
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        country:
+          type: string
+          nullable: true
+          maxLength: 80
+        latitude:
           type: string
           format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
           nullable: true
-        pickup_fee:
+        longitude:
           type: string
           format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-        seller_product:
-          type: string
-          format: uuid
-          nullable: true
-        location_zone:
-          type: string
-          format: uuid
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
           nullable: true
     PatchedWasteType:
       type: object
@@ -7529,145 +3739,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Waste Type Name
           maxLength: 80
-    PostalCode:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Postal Code Name
-          maxLength: 80
-        state:
-          type: string
-          nullable: true
-          maxLength: 255
-        state_abbreviation:
-          type: string
-          nullable: true
-          maxLength: 255
-        county:
-          type: string
-          nullable: true
-          maxLength: 255
-        city:
-          type: string
-          nullable: true
-          maxLength: 255
-        location_zone:
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - created_on
-      - updated_on
-    PriceBook:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          title: Price Book Name
-          maxLength: 255
-        is_active:
-          type: boolean
-          title: Active
-        is_archived:
-          type: boolean
-          title: Archived
-        description:
-          type: string
-          nullable: true
-          maxLength: 255
-        is_standard:
-          type: boolean
-          title: Is Standard Price Book
-      required:
-      - created_on
-      - name
-      - updated_on
-    PriceBookEntry:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Product Name
-          maxLength: 255
-        unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          title: List Price
-        is_active:
-          type: boolean
-          title: Active
-        use_standard_price:
-          type: boolean
-        product_code:
-          type: string
-          nullable: true
-          maxLength: 255
-        is_archived:
-          type: boolean
-          title: Archived
-        pricebook:
-          type: string
-          format: uuid
-          title: Price Book ID
-        product:
-          type: string
-          format: uuid
-          title: Product ID
-      required:
-      - created_on
-      - pricebook
-      - product
-      - unit_price
-      - updated_on
     Product:
       type: object
       properties:
@@ -7683,11 +3758,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        name:
-          type: string
-          title: Product Name
-          maxLength: 255
         product_code:
           type: string
           nullable: true
@@ -7695,99 +3765,12 @@ components:
         description:
           type: string
           nullable: true
-          title: Product Description
-        quantity_schedule_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/QuantityScheduleTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        quantity_installment_period:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/QuantityInstallmentPeriodEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_quantity_installments:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        revenue_schedule_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RevenueScheduleTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        revenue_installment_period:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/RevenueInstallmentPeriodEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        number_of_revenue_installments:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        is_active:
-          type: boolean
-          title: Active
-        family:
-          nullable: true
-          title: Product Family
-          oneOf:
-          - $ref: '#/components/schemas/FamilyEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        external_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        display_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        quantity_unit_of_measure:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/QuantityUnitOfMeasureEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        is_archived:
-          type: boolean
-          title: Archived
-        stock_keeping_unit:
-          type: string
-          nullable: true
-          title: Product SKU
-          maxLength: 180
-        city:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/CityEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/ProductStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        product_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/ProductTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
         main_product:
           type: string
           format: uuid
           nullable: true
       required:
       - created_on
-      - name
       - updated_on
     ProductAddOnChoice:
       type: object
@@ -7804,11 +3787,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Product Add On Choice Name
           maxLength: 80
         product:
           type: string
@@ -7821,113 +3802,133 @@ components:
       required:
       - created_on
       - updated_on
-    ProductStatusEnum:
-      enum:
-      - Incomplete
-      - Ready for Review
-      - Under Review
-      - Rejected
-      - Approved
-      type: string
-    ProductTypeEnum:
-      enum:
-      - Service
-      - Drop off
-      type: string
-    PropertyTypeEnum:
-      enum:
-      - Single Family HOA
-      - Townhome
-      - Garden
-      - Mid-Rise
-      - High-Rise
-      - Build-For-Rent
-      type: string
-    QuantityInstallmentPeriodEnum:
-      enum:
-      - Daily
-      - Weekly
-      - Monthly
-      - Quarterly
-      - Yearly
-      type: string
-    QuantityScheduleTypeEnum:
-      enum:
-      - Divide
-      - Repeat
-      type: string
-    QuantityUnitOfMeasureEnum:
-      enum:
-      - Each
-      type: string
-    RelationshipStrengthEnum:
-      enum:
-      - Strong
-      - Neutral
-      - Weak
-      type: string
-    RevenueInstallmentPeriodEnum:
-      enum:
-      - Daily
-      - Weekly
-      - Monthly
-      - Quarterly
-      - Yearly
-      type: string
-    RevenueScheduleTypeEnum:
-      enum:
-      - Divide
-      - Repeat
-      type: string
-    RolesEnum:
-      enum:
-      - Business User
-      - Decision Maker
-      - Economic Buyer
-      - Economic Decision Maker
-      - Evaluator
-      - Executive Sponsor
-      - Influencer
-      - Technical Buyer
-      - Other
-      type: string
-    SalutationEnum:
-      enum:
-      - Mr.
-      - Ms.
-      - Mrs.
-      - Dr.
-      - Prof.
-      type: string
-    ScheduledTimeSlotEnum:
-      enum:
-      - 4am-8am
-      - 8am-12pm
-      - 12pm-4pm
-      - 4pm-8pm
-      - 8pm-12am
-      type: string
-    SellerBadgeEnum:
-      enum:
-      - New
-      - Pro
-      - Platinum
-      type: string
-    SellerLocationTypeEnum:
-      enum:
-      - Services
-      - Disposal site
-      type: string
-    SellerOpenDaysEnum:
-      enum:
-      - Monday
-      - Tuesday
-      - Wednesday
-      - Thursday
-      - Friday
-      - Saturday
-      - Sunday
-      type: string
+    Seller:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          nullable: true
+          maxLength: 40
+        website:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        location_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/LocationTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        status:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        lead_time:
+          type: string
+          nullable: true
+          maxLength: 255
+        type_display:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TypeDisplayEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        stripe_connect_id:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        marketplace_display_name:
+          type: string
+          nullable: true
+          maxLength: 20
+        open_days:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/OpenDaysEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        open_time:
+          type: string
+          format: time
+          nullable: true
+        close_time:
+          type: string
+          format: time
+          nullable: true
+        lead_time_hrs:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        announcement:
+          type: string
+          nullable: true
+        live_menu_is_active:
+          type: boolean
+        location_logo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        downstream_insurance_requirements_met:
+          type: boolean
+        badge:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/BadgeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        average_rating:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,1})?$
+          nullable: true
+        tire_recycler_cert_registration_id_co:
+          type: string
+          nullable: true
+          maxLength: 100
+        composting_classification:
+          type: string
+          nullable: true
+          maxLength: 100
+        max_paint_gallons_accepted:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        recycling_disposal_classification:
+          type: string
+          nullable: true
+          maxLength: 100
+      required:
+      - created_on
+      - name
+      - updated_on
     SellerProduct:
       type: object
       properties:
@@ -7943,12 +3944,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Seller Product Name
-          maxLength: 80
         rate:
           type: string
           format: decimal
@@ -7958,56 +3953,14 @@ components:
           type: string
           format: uuid
           nullable: true
-        service_provider:
+        seller:
           type: string
           format: uuid
           nullable: true
       required:
       - created_on
       - updated_on
-    SellerProductLocationZone:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-          title: Deleted
-        name:
-          type: string
-          nullable: true
-          title: Seller Product Location Zone Name
-          maxLength: 80
-        delivery_fee:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-        pickup_fee:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
-        seller_product:
-          type: string
-          format: uuid
-          nullable: true
-        location_zone:
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - created_on
-      - updated_on
-    SellerStatusEnum:
+    StatusEnum:
       enum:
       - Inactive
       - Inactive - Onboarding
@@ -8015,7 +3968,15 @@ components:
       - Active - under review
       - Active
       type: string
-    SellerTypeDisplayEnum:
+    TimeSlotEnum:
+      enum:
+      - 4am-8am
+      - 8am-12pm
+      - 12pm-4pm
+      - 4pm-8pm
+      - 8pm-12am
+      type: string
+    TypeDisplayEnum:
       enum:
       - Landfill
       - MRF
@@ -8033,36 +3994,75 @@ components:
       - Broker
       - Equipment
       type: string
-    StageNameEnum:
+    TypeEnum:
       enum:
-      - Demo Scheduled
-      - Demo Performed
-      - Account Configuration
-      - Order Acceptance
-      - Platform Engagement
-      - Qualification
-      - Needs Analysis
-      - Proposal
-      - Negotiation
-      - Verify Hauler
-      - Closed Won
-      - Closed Lost
+      - Landfill
+      - MRF
+      - Industrial
+      - Scrap yard
+      - Compost facility
+      - Processor
+      - Paint recycler
+      - Tires
+      - Other recycler
+      - Roll-off
+      - Mover
+      - Junk
+      - Delivery
+      - Broker
+      - Equipment
       type: string
-    StatusCodeEnum:
-      enum:
-      - Draft
-      - Activated
-      - Canceled
-      - Expired
-      type: string
-    TimeSlotEnum:
-      enum:
-      - 4am-8am
-      - 8am-12pm
-      - 12pm-4pm
-      - 4pm-8pm
-      - 8pm-12am
-      type: string
+    UserAddress:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        street:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+          maxLength: 40
+        state:
+          type: string
+          nullable: true
+          maxLength: 80
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        country:
+          type: string
+          nullable: true
+          maxLength: 80
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+      required:
+      - created_on
+      - name
+      - updated_on
     WasteType:
       type: object
       properties:
@@ -8078,11 +4078,9 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-          title: Deleted
         name:
           type: string
           nullable: true
-          title: Waste Type Name
           maxLength: 80
       required:
       - created_on

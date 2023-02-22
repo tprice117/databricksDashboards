@@ -22,7 +22,7 @@ class SellerViewSet(viewsets.ModelViewSet):
 class UserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
     serializer_class = UserAddressSerializer
-    filterset_fields = ["id", "user"]
+    filterset_fields = ["id"]
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
