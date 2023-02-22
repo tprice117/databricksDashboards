@@ -104,8 +104,16 @@ class Product(BaseModel):
 
 class SellerProduct(BaseModel):
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True)
-    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
+    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True, related_name="seller_products")
     rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
+
+class Subscription(BaseModel): #Added 2/20/23
+    subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
+    interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
+
+class Order(BaseModel):    
+    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
 
 class OrderDetails(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
@@ -115,17 +123,14 @@ class OrderDetails(BaseModel):
     schedule_date = models.DateField(blank=True, null=True)
     additional_schedule_details = models.TextField(blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
+    subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True) #Added 2/20/2023.
+    order = models.ForeignKey(Order, models.DO_NOTHING, blank=True, null=True)
 
 class OrderDetailsLineItem(BaseModel):
     order_details = models.ForeignKey(OrderDetails, models.DO_NOTHING, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     stripe_invoice_line_item_id = models.CharField(max_length=255, blank=True, null=True)
-
-class Order(BaseModel):
-    order_details = models.ForeignKey(OrderDetails, models.DO_NOTHING, blank=True, null=True)
-    hauler_payout = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
 
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)

@@ -3,6 +3,9 @@ from .models import *
 
 class SellerSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
+    #foo = serializers.SerializerMethodField()
+    #def get_foo(self, obj):
+     #   return obj.seller_products
     class Meta:
         model = Seller
         fields = "__all__"
