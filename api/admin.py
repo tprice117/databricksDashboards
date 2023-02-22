@@ -18,11 +18,22 @@ class MainProductCategoryAdmin(admin.ModelAdmin):
 class MainProductInfoInline(admin.TabularInline):
     model = MainProductInfo
 
+class ProductInline(admin.TabularInline):
+    model = Product
+
 class MainProductAdmin(admin.ModelAdmin):
     inlines = [
+        ProductInline,
         MainProductInfoInline,
     ]
 
+class SellerProductInline(admin.TabularInline):
+    model = SellerProduct
+
+class SellerAdmin(admin.ModelAdmin):
+    inlines = [
+        SellerProductInline,
+    ]
 
 # Register your models here.
 admin.site.register(Seller)
@@ -38,8 +49,6 @@ admin.site.register(OrderDetails)
 admin.site.register(OrderDetailsLineItem)
 admin.site.register(Order)
 admin.site.register(ProductAddOnChoice)
-admin.site.register(Product)
-admin.site.register(SellerProduct)
 admin.site.register(WasteType)
 
 # Unregister auth models.
