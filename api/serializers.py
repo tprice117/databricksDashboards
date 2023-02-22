@@ -3,9 +3,11 @@ from .models import *
 
 class SellerSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    #foo = serializers.SerializerMethodField()
-    #def get_foo(self, obj):
-     #   return obj.seller_products
+    has_listings = serializers.SerializerMethodField(read_only=True)
+    
+    def get_has_listings(self, obj):
+       return obj.seller_products.count() > 0
+
     class Meta:
         model = Seller
         fields = "__all__"

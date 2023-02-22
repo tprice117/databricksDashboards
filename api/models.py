@@ -149,8 +149,8 @@ class Product(BaseModel):
         return self.main_product.name
 
 class SellerProduct(BaseModel):
-    product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True)
-    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True, related_name="seller_products")
+    product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True, related_name='seller_products')
+    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True, related_name='seller_products')
     rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
 
