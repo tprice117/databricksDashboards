@@ -2,7 +2,6 @@ from django.contrib import admin
 from .models import *
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.auth.models import Group
-from django.contrib.sites.models import Site
 
 
 # Register your models here.
@@ -28,4 +27,3 @@ admin.site.register(WasteType)
 # Unregister auth models.
 admin.site.unregister(DjangoUser)
 admin.site.unregister(Group)
-admin.site.unregister(Site)

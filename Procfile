@@ -1,1 +1,0 @@
-web: gunicorn --chdir ./api_proxy api_proxy.wsgi --log-file -
