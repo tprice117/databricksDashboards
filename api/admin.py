@@ -3,6 +3,26 @@ from .models import *
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.auth.models import Group
 
+class MainProductCategoryInfoInline(admin.TabularInline):
+    model = MainProductCategoryInfo
+
+class MainProductInline(admin.TabularInline):
+    model = MainProduct
+
+class MainProductCategoryAdmin(admin.ModelAdmin):
+    inlines = [
+        MainProductInline,
+        MainProductCategoryInfoInline,
+    ]
+
+class MainProductInfoInline(admin.TabularInline):
+    model = MainProductInfo
+
+class MainProductAdmin(admin.ModelAdmin):
+    inlines = [
+        MainProductInfoInline,
+    ]
+
 
 # Register your models here.
 admin.site.register(Seller)
@@ -11,10 +31,8 @@ admin.site.register(User)
 admin.site.register(AddOnChoice)
 admin.site.register(AddOn)
 admin.site.register(MainProductAddOn)
-admin.site.register(MainProductCategoryInfo)
-admin.site.register(MainProductCategory)
-admin.site.register(MainProductInfo)
-admin.site.register(MainProduct)
+admin.site.register(MainProductCategory, MainProductCategoryAdmin)
+admin.site.register(MainProduct, MainProductAdmin)
 admin.site.register(MainProductWasteType)
 admin.site.register(OrderDetails)
 admin.site.register(OrderDetailsLineItem)
