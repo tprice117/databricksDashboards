@@ -40,6 +40,7 @@ class Seller(BaseModel):
         return self.name
 
 class SellerLocation(BaseModel):
+    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     name = models.CharField(max_length=255)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40, blank=True, null=True)
