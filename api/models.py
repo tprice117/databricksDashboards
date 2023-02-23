@@ -146,13 +146,16 @@ class Product(BaseModel):
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return self.product_code
+        return self.main_product.name if self.main_product and self.main_product.name else str(self.id)
 
 class SellerProduct(BaseModel):
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True, related_name='seller_products')
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True, related_name='seller_products')
     rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
+
+    def __str__(self):
+        return (self.product.main_product.name if self.product and self.product.main_product else '') + ' - ' + self.seller.name
 
 class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
