@@ -77,6 +77,15 @@ class User(BaseModel):
 
     def __str__(self):
         return self.email
+    
+class UserSellerReview(models.Model): #added this model 2/25/2023 by Dylan
+    seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='UserSellerReview')
+    user = models.ForeignKey(User, models.DO_NOTHING, related_name='UserSellerReview')
+    rating = models.IntegerField()
+    comment = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return f'{self.user.id} - {self.seller.name}'
 
 class AddOn(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
@@ -174,7 +183,6 @@ class Order(BaseModel):
 
 class OrderDetails(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
-    seller_product = models.ForeignKey(SellerProduct, models.DO_NOTHING, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     time_slot = models.CharField(max_length=255, choices=[('4am-8am', '4am-8am'), ('8am-12pm', '8am-12pm'), ('12pm-4pm', '12pm-4pm'), ('4pm-8pm', '4pm-8pm'), ('8pm-12am', '8pm-12am')], blank=True, null=True)
     schedule_date = models.DateField(blank=True, null=True)
@@ -182,6 +190,7 @@ class OrderDetails(BaseModel):
     access_details = models.TextField(blank=True, null=True)
     subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True) #Added 2/20/2023.
     order = models.ForeignKey(Order, models.DO_NOTHING, blank=True, null=True)
+    seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
 class OrderDetailsLineItem(BaseModel):
     order_details = models.ForeignKey(OrderDetails, models.DO_NOTHING, blank=True, null=True)
