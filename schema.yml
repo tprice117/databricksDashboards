@@ -5,7 +5,7 @@ info:
 paths:
   /api/add-on-choices/:
     get:
-      operationId: add_on_choices_list
+      operationId: api_add_on_choices_list
       parameters:
       - in: query
         name: add_on
@@ -13,7 +13,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - add-on-choices
+      - api
       security:
       - {}
       responses:
@@ -26,9 +26,9 @@ paths:
                   $ref: '#/components/schemas/AddOnChoice'
           description: ''
     post:
-      operationId: add_on_choices_create
+      operationId: api_add_on_choices_create
       tags:
-      - add-on-choices
+      - api
       requestBody:
         content:
           application/json:
@@ -51,7 +51,7 @@ paths:
           description: ''
   /api/add-on-choices/{id}/:
     get:
-      operationId: add_on_choices_retrieve
+      operationId: api_add_on_choices_retrieve
       parameters:
       - in: path
         name: id
@@ -61,7 +61,7 @@ paths:
         description: A UUID string identifying this add on choice.
         required: true
       tags:
-      - add-on-choices
+      - api
       security:
       - {}
       responses:
@@ -72,7 +72,7 @@ paths:
                 $ref: '#/components/schemas/AddOnChoice'
           description: ''
     put:
-      operationId: add_on_choices_update
+      operationId: api_add_on_choices_update
       parameters:
       - in: path
         name: id
@@ -82,7 +82,7 @@ paths:
         description: A UUID string identifying this add on choice.
         required: true
       tags:
-      - add-on-choices
+      - api
       requestBody:
         content:
           application/json:
@@ -104,7 +104,7 @@ paths:
                 $ref: '#/components/schemas/AddOnChoice'
           description: ''
     patch:
-      operationId: add_on_choices_partial_update
+      operationId: api_add_on_choices_partial_update
       parameters:
       - in: path
         name: id
@@ -114,7 +114,7 @@ paths:
         description: A UUID string identifying this add on choice.
         required: true
       tags:
-      - add-on-choices
+      - api
       requestBody:
         content:
           application/json:
@@ -136,7 +136,7 @@ paths:
                 $ref: '#/components/schemas/AddOnChoice'
           description: ''
     delete:
-      operationId: add_on_choices_destroy
+      operationId: api_add_on_choices_destroy
       parameters:
       - in: path
         name: id
@@ -146,7 +146,7 @@ paths:
         description: A UUID string identifying this add on choice.
         required: true
       tags:
-      - add-on-choices
+      - api
       security:
       - {}
       responses:
@@ -154,9 +154,9 @@ paths:
           description: No response body
   /api/add-ons/:
     get:
-      operationId: add_ons_list
+      operationId: api_add_ons_list
       tags:
-      - add-ons
+      - api
       security:
       - {}
       responses:
@@ -169,9 +169,9 @@ paths:
                   $ref: '#/components/schemas/AddOn'
           description: ''
     post:
-      operationId: add_ons_create
+      operationId: api_add_ons_create
       tags:
-      - add-ons
+      - api
       requestBody:
         content:
           application/json:
@@ -194,7 +194,7 @@ paths:
           description: ''
   /api/add-ons/{id}/:
     get:
-      operationId: add_ons_retrieve
+      operationId: api_add_ons_retrieve
       parameters:
       - in: path
         name: id
@@ -204,7 +204,7 @@ paths:
         description: A UUID string identifying this add on.
         required: true
       tags:
-      - add-ons
+      - api
       security:
       - {}
       responses:
@@ -215,7 +215,7 @@ paths:
                 $ref: '#/components/schemas/AddOn'
           description: ''
     put:
-      operationId: add_ons_update
+      operationId: api_add_ons_update
       parameters:
       - in: path
         name: id
@@ -225,7 +225,7 @@ paths:
         description: A UUID string identifying this add on.
         required: true
       tags:
-      - add-ons
+      - api
       requestBody:
         content:
           application/json:
@@ -247,7 +247,7 @@ paths:
                 $ref: '#/components/schemas/AddOn'
           description: ''
     patch:
-      operationId: add_ons_partial_update
+      operationId: api_add_ons_partial_update
       parameters:
       - in: path
         name: id
@@ -257,7 +257,7 @@ paths:
         description: A UUID string identifying this add on.
         required: true
       tags:
-      - add-ons
+      - api
       requestBody:
         content:
           application/json:
@@ -279,7 +279,7 @@ paths:
                 $ref: '#/components/schemas/AddOn'
           description: ''
     delete:
-      operationId: add_ons_destroy
+      operationId: api_add_ons_destroy
       parameters:
       - in: path
         name: id
@@ -289,7 +289,7 @@ paths:
         description: A UUID string identifying this add on.
         required: true
       tags:
-      - add-ons
+      - api
       security:
       - {}
       responses:
@@ -297,7 +297,7 @@ paths:
           description: No response body
   /api/main-product-add-ons/:
     get:
-      operationId: main_product_add_ons_list
+      operationId: api_main_product_add_ons_list
       parameters:
       - in: query
         name: add_on
@@ -310,7 +310,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - main-product-add-ons
+      - api
       security:
       - {}
       responses:
@@ -323,9 +323,9 @@ paths:
                   $ref: '#/components/schemas/MainProductAddOn'
           description: ''
     post:
-      operationId: main_product_add_ons_create
+      operationId: api_main_product_add_ons_create
       tags:
-      - main-product-add-ons
+      - api
       requestBody:
         content:
           application/json:
@@ -348,7 +348,7 @@ paths:
           description: ''
   /api/main-product-add-ons/{id}/:
     get:
-      operationId: main_product_add_ons_retrieve
+      operationId: api_main_product_add_ons_retrieve
       parameters:
       - in: path
         name: id
@@ -358,7 +358,7 @@ paths:
         description: A UUID string identifying this main product add on.
         required: true
       tags:
-      - main-product-add-ons
+      - api
       security:
       - {}
       responses:
@@ -369,7 +369,7 @@ paths:
                 $ref: '#/components/schemas/MainProductAddOn'
           description: ''
     put:
-      operationId: main_product_add_ons_update
+      operationId: api_main_product_add_ons_update
       parameters:
       - in: path
         name: id
@@ -379,7 +379,7 @@ paths:
         description: A UUID string identifying this main product add on.
         required: true
       tags:
-      - main-product-add-ons
+      - api
       requestBody:
         content:
           application/json:
@@ -401,7 +401,7 @@ paths:
                 $ref: '#/components/schemas/MainProductAddOn'
           description: ''
     patch:
-      operationId: main_product_add_ons_partial_update
+      operationId: api_main_product_add_ons_partial_update
       parameters:
       - in: path
         name: id
@@ -411,7 +411,7 @@ paths:
         description: A UUID string identifying this main product add on.
         required: true
       tags:
-      - main-product-add-ons
+      - api
       requestBody:
         content:
           application/json:
@@ -433,7 +433,7 @@ paths:
                 $ref: '#/components/schemas/MainProductAddOn'
           description: ''
     delete:
-      operationId: main_product_add_ons_destroy
+      operationId: api_main_product_add_ons_destroy
       parameters:
       - in: path
         name: id
@@ -443,7 +443,7 @@ paths:
         description: A UUID string identifying this main product add on.
         required: true
       tags:
-      - main-product-add-ons
+      - api
       security:
       - {}
       responses:
@@ -451,9 +451,9 @@ paths:
           description: No response body
   /api/main-product-categories/:
     get:
-      operationId: main_product_categories_list
+      operationId: api_main_product_categories_list
       tags:
-      - main-product-categories
+      - api
       security:
       - {}
       responses:
@@ -466,9 +466,9 @@ paths:
                   $ref: '#/components/schemas/MainProductCategory'
           description: ''
     post:
-      operationId: main_product_categories_create
+      operationId: api_main_product_categories_create
       tags:
-      - main-product-categories
+      - api
       requestBody:
         content:
           application/json:
@@ -491,7 +491,7 @@ paths:
           description: ''
   /api/main-product-categories/{id}/:
     get:
-      operationId: main_product_categories_retrieve
+      operationId: api_main_product_categories_retrieve
       parameters:
       - in: path
         name: id
@@ -501,7 +501,7 @@ paths:
         description: A UUID string identifying this main product category.
         required: true
       tags:
-      - main-product-categories
+      - api
       security:
       - {}
       responses:
@@ -512,7 +512,7 @@ paths:
                 $ref: '#/components/schemas/MainProductCategory'
           description: ''
     put:
-      operationId: main_product_categories_update
+      operationId: api_main_product_categories_update
       parameters:
       - in: path
         name: id
@@ -522,7 +522,7 @@ paths:
         description: A UUID string identifying this main product category.
         required: true
       tags:
-      - main-product-categories
+      - api
       requestBody:
         content:
           application/json:
@@ -544,7 +544,7 @@ paths:
                 $ref: '#/components/schemas/MainProductCategory'
           description: ''
     patch:
-      operationId: main_product_categories_partial_update
+      operationId: api_main_product_categories_partial_update
       parameters:
       - in: path
         name: id
@@ -554,7 +554,7 @@ paths:
         description: A UUID string identifying this main product category.
         required: true
       tags:
-      - main-product-categories
+      - api
       requestBody:
         content:
           application/json:
@@ -576,7 +576,7 @@ paths:
                 $ref: '#/components/schemas/MainProductCategory'
           description: ''
     delete:
-      operationId: main_product_categories_destroy
+      operationId: api_main_product_categories_destroy
       parameters:
       - in: path
         name: id
@@ -586,7 +586,7 @@ paths:
         description: A UUID string identifying this main product category.
         required: true
       tags:
-      - main-product-categories
+      - api
       security:
       - {}
       responses:
@@ -594,7 +594,7 @@ paths:
           description: No response body
   /api/main-product-category-infos/:
     get:
-      operationId: main_product_category_infos_list
+      operationId: api_main_product_category_infos_list
       parameters:
       - in: query
         name: main_product_category
@@ -602,7 +602,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - main-product-category-infos
+      - api
       security:
       - {}
       responses:
@@ -615,9 +615,9 @@ paths:
                   $ref: '#/components/schemas/MainProductCategoryInfo'
           description: ''
     post:
-      operationId: main_product_category_infos_create
+      operationId: api_main_product_category_infos_create
       tags:
-      - main-product-category-infos
+      - api
       requestBody:
         content:
           application/json:
@@ -640,7 +640,7 @@ paths:
           description: ''
   /api/main-product-category-infos/{id}/:
     get:
-      operationId: main_product_category_infos_retrieve
+      operationId: api_main_product_category_infos_retrieve
       parameters:
       - in: path
         name: id
@@ -650,7 +650,7 @@ paths:
         description: A UUID string identifying this main product category info.
         required: true
       tags:
-      - main-product-category-infos
+      - api
       security:
       - {}
       responses:
@@ -661,7 +661,7 @@ paths:
                 $ref: '#/components/schemas/MainProductCategoryInfo'
           description: ''
     put:
-      operationId: main_product_category_infos_update
+      operationId: api_main_product_category_infos_update
       parameters:
       - in: path
         name: id
@@ -671,7 +671,7 @@ paths:
         description: A UUID string identifying this main product category info.
         required: true
       tags:
-      - main-product-category-infos
+      - api
       requestBody:
         content:
           application/json:
@@ -693,7 +693,7 @@ paths:
                 $ref: '#/components/schemas/MainProductCategoryInfo'
           description: ''
     patch:
-      operationId: main_product_category_infos_partial_update
+      operationId: api_main_product_category_infos_partial_update
       parameters:
       - in: path
         name: id
@@ -703,7 +703,7 @@ paths:
         description: A UUID string identifying this main product category info.
         required: true
       tags:
-      - main-product-category-infos
+      - api
       requestBody:
         content:
           application/json:
@@ -725,7 +725,7 @@ paths:
                 $ref: '#/components/schemas/MainProductCategoryInfo'
           description: ''
     delete:
-      operationId: main_product_category_infos_destroy
+      operationId: api_main_product_category_infos_destroy
       parameters:
       - in: path
         name: id
@@ -735,7 +735,7 @@ paths:
         description: A UUID string identifying this main product category info.
         required: true
       tags:
-      - main-product-category-infos
+      - api
       security:
       - {}
       responses:
@@ -743,7 +743,7 @@ paths:
           description: No response body
   /api/main-product-infos/:
     get:
-      operationId: main_product_infos_list
+      operationId: api_main_product_infos_list
       parameters:
       - in: query
         name: main_product
@@ -751,7 +751,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - main-product-infos
+      - api
       security:
       - {}
       responses:
@@ -764,9 +764,9 @@ paths:
                   $ref: '#/components/schemas/MainProductInfo'
           description: ''
     post:
-      operationId: main_product_infos_create
+      operationId: api_main_product_infos_create
       tags:
-      - main-product-infos
+      - api
       requestBody:
         content:
           application/json:
@@ -789,7 +789,7 @@ paths:
           description: ''
   /api/main-product-infos/{id}/:
     get:
-      operationId: main_product_infos_retrieve
+      operationId: api_main_product_infos_retrieve
       parameters:
       - in: path
         name: id
@@ -799,7 +799,7 @@ paths:
         description: A UUID string identifying this main product info.
         required: true
       tags:
-      - main-product-infos
+      - api
       security:
       - {}
       responses:
@@ -810,7 +810,7 @@ paths:
                 $ref: '#/components/schemas/MainProductInfo'
           description: ''
     put:
-      operationId: main_product_infos_update
+      operationId: api_main_product_infos_update
       parameters:
       - in: path
         name: id
@@ -820,7 +820,7 @@ paths:
         description: A UUID string identifying this main product info.
         required: true
       tags:
-      - main-product-infos
+      - api
       requestBody:
         content:
           application/json:
@@ -842,7 +842,7 @@ paths:
                 $ref: '#/components/schemas/MainProductInfo'
           description: ''
     patch:
-      operationId: main_product_infos_partial_update
+      operationId: api_main_product_infos_partial_update
       parameters:
       - in: path
         name: id
@@ -852,7 +852,7 @@ paths:
         description: A UUID string identifying this main product info.
         required: true
       tags:
-      - main-product-infos
+      - api
       requestBody:
         content:
           application/json:
@@ -874,7 +874,7 @@ paths:
                 $ref: '#/components/schemas/MainProductInfo'
           description: ''
     delete:
-      operationId: main_product_infos_destroy
+      operationId: api_main_product_infos_destroy
       parameters:
       - in: path
         name: id
@@ -884,7 +884,7 @@ paths:
         description: A UUID string identifying this main product info.
         required: true
       tags:
-      - main-product-infos
+      - api
       security:
       - {}
       responses:
@@ -892,7 +892,7 @@ paths:
           description: No response body
   /api/main-product-waste-types/:
     get:
-      operationId: main_product_waste_types_list
+      operationId: api_main_product_waste_types_list
       parameters:
       - in: query
         name: main_product
@@ -905,7 +905,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - main-product-waste-types
+      - api
       security:
       - {}
       responses:
@@ -918,9 +918,9 @@ paths:
                   $ref: '#/components/schemas/MainProductWasteType'
           description: ''
     post:
-      operationId: main_product_waste_types_create
+      operationId: api_main_product_waste_types_create
       tags:
-      - main-product-waste-types
+      - api
       requestBody:
         content:
           application/json:
@@ -943,7 +943,7 @@ paths:
           description: ''
   /api/main-product-waste-types/{id}/:
     get:
-      operationId: main_product_waste_types_retrieve
+      operationId: api_main_product_waste_types_retrieve
       parameters:
       - in: path
         name: id
@@ -953,7 +953,7 @@ paths:
         description: A UUID string identifying this main product waste type.
         required: true
       tags:
-      - main-product-waste-types
+      - api
       security:
       - {}
       responses:
@@ -964,7 +964,7 @@ paths:
                 $ref: '#/components/schemas/MainProductWasteType'
           description: ''
     put:
-      operationId: main_product_waste_types_update
+      operationId: api_main_product_waste_types_update
       parameters:
       - in: path
         name: id
@@ -974,7 +974,7 @@ paths:
         description: A UUID string identifying this main product waste type.
         required: true
       tags:
-      - main-product-waste-types
+      - api
       requestBody:
         content:
           application/json:
@@ -996,7 +996,7 @@ paths:
                 $ref: '#/components/schemas/MainProductWasteType'
           description: ''
     patch:
-      operationId: main_product_waste_types_partial_update
+      operationId: api_main_product_waste_types_partial_update
       parameters:
       - in: path
         name: id
@@ -1006,7 +1006,7 @@ paths:
         description: A UUID string identifying this main product waste type.
         required: true
       tags:
-      - main-product-waste-types
+      - api
       requestBody:
         content:
           application/json:
@@ -1028,7 +1028,7 @@ paths:
                 $ref: '#/components/schemas/MainProductWasteType'
           description: ''
     delete:
-      operationId: main_product_waste_types_destroy
+      operationId: api_main_product_waste_types_destroy
       parameters:
       - in: path
         name: id
@@ -1038,7 +1038,7 @@ paths:
         description: A UUID string identifying this main product waste type.
         required: true
       tags:
-      - main-product-waste-types
+      - api
       security:
       - {}
       responses:
@@ -1046,7 +1046,7 @@ paths:
           description: No response body
   /api/main-products/:
     get:
-      operationId: main_products_list
+      operationId: api_main_products_list
       parameters:
       - in: query
         name: id
@@ -1059,7 +1059,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - main-products
+      - api
       security:
       - {}
       responses:
@@ -1072,9 +1072,9 @@ paths:
                   $ref: '#/components/schemas/MainProduct'
           description: ''
     post:
-      operationId: main_products_create
+      operationId: api_main_products_create
       tags:
-      - main-products
+      - api
       requestBody:
         content:
           application/json:
@@ -1097,7 +1097,7 @@ paths:
           description: ''
   /api/main-products/{id}/:
     get:
-      operationId: main_products_retrieve
+      operationId: api_main_products_retrieve
       parameters:
       - in: path
         name: id
@@ -1107,7 +1107,7 @@ paths:
         description: A UUID string identifying this main product.
         required: true
       tags:
-      - main-products
+      - api
       security:
       - {}
       responses:
@@ -1118,7 +1118,7 @@ paths:
                 $ref: '#/components/schemas/MainProduct'
           description: ''
     put:
-      operationId: main_products_update
+      operationId: api_main_products_update
       parameters:
       - in: path
         name: id
@@ -1128,7 +1128,7 @@ paths:
         description: A UUID string identifying this main product.
         required: true
       tags:
-      - main-products
+      - api
       requestBody:
         content:
           application/json:
@@ -1150,7 +1150,7 @@ paths:
                 $ref: '#/components/schemas/MainProduct'
           description: ''
     patch:
-      operationId: main_products_partial_update
+      operationId: api_main_products_partial_update
       parameters:
       - in: path
         name: id
@@ -1160,7 +1160,7 @@ paths:
         description: A UUID string identifying this main product.
         required: true
       tags:
-      - main-products
+      - api
       requestBody:
         content:
           application/json:
@@ -1182,7 +1182,7 @@ paths:
                 $ref: '#/components/schemas/MainProduct'
           description: ''
     delete:
-      operationId: main_products_destroy
+      operationId: api_main_products_destroy
       parameters:
       - in: path
         name: id
@@ -1192,7 +1192,7 @@ paths:
         description: A UUID string identifying this main product.
         required: true
       tags:
-      - main-products
+      - api
       security:
       - {}
       responses:
@@ -1200,7 +1200,7 @@ paths:
           description: No response body
   /api/order-details/:
     get:
-      operationId: order_details_list
+      operationId: api_order_details_list
       parameters:
       - in: query
         name: id
@@ -1213,7 +1213,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - order-details
+      - api
       security:
       - {}
       responses:
@@ -1226,9 +1226,9 @@ paths:
                   $ref: '#/components/schemas/OrderDetails'
           description: ''
     post:
-      operationId: order_details_create
+      operationId: api_order_details_create
       tags:
-      - order-details
+      - api
       requestBody:
         content:
           application/json:
@@ -1251,18 +1251,18 @@ paths:
           description: ''
   /api/order-details-line-items/:
     get:
-      operationId: order_details_line_items_retrieve
+      operationId: api_order_details_line_items_retrieve
       tags:
-      - order-details-line-items
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     post:
-      operationId: order_details_line_items_create
+      operationId: api_order_details_line_items_create
       tags:
-      - order-details-line-items
+      - api
       security:
       - {}
       responses:
@@ -1270,7 +1270,7 @@ paths:
           description: No response body
   /api/order-details-line-items/{id}/:
     get:
-      operationId: order_details_line_items_retrieve_2
+      operationId: api_order_details_line_items_retrieve_2
       parameters:
       - in: path
         name: id
@@ -1280,14 +1280,14 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - order-details-line-items
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     put:
-      operationId: order_details_line_items_update
+      operationId: api_order_details_line_items_update
       parameters:
       - in: path
         name: id
@@ -1297,14 +1297,14 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - order-details-line-items
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     patch:
-      operationId: order_details_line_items_partial_update
+      operationId: api_order_details_line_items_partial_update
       parameters:
       - in: path
         name: id
@@ -1314,14 +1314,14 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - order-details-line-items
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     delete:
-      operationId: order_details_line_items_destroy
+      operationId: api_order_details_line_items_destroy
       parameters:
       - in: path
         name: id
@@ -1331,7 +1331,7 @@ paths:
         description: A UUID string identifying this order details line item.
         required: true
       tags:
-      - order-details-line-items
+      - api
       security:
       - {}
       responses:
@@ -1339,7 +1339,7 @@ paths:
           description: No response body
   /api/order-details/{id}/:
     get:
-      operationId: order_details_retrieve
+      operationId: api_order_details_retrieve
       parameters:
       - in: path
         name: id
@@ -1349,7 +1349,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - order-details
+      - api
       security:
       - {}
       responses:
@@ -1360,7 +1360,7 @@ paths:
                 $ref: '#/components/schemas/OrderDetails'
           description: ''
     put:
-      operationId: order_details_update
+      operationId: api_order_details_update
       parameters:
       - in: path
         name: id
@@ -1370,7 +1370,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - order-details
+      - api
       requestBody:
         content:
           application/json:
@@ -1392,7 +1392,7 @@ paths:
                 $ref: '#/components/schemas/OrderDetails'
           description: ''
     patch:
-      operationId: order_details_partial_update
+      operationId: api_order_details_partial_update
       parameters:
       - in: path
         name: id
@@ -1402,7 +1402,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - order-details
+      - api
       requestBody:
         content:
           application/json:
@@ -1424,7 +1424,7 @@ paths:
                 $ref: '#/components/schemas/OrderDetails'
           description: ''
     delete:
-      operationId: order_details_destroy
+      operationId: api_order_details_destroy
       parameters:
       - in: path
         name: id
@@ -1434,7 +1434,7 @@ paths:
         description: A UUID string identifying this order details.
         required: true
       tags:
-      - order-details
+      - api
       security:
       - {}
       responses:
@@ -1442,9 +1442,9 @@ paths:
           description: No response body
   /api/orders/:
     get:
-      operationId: orders_list
+      operationId: api_orders_list
       tags:
-      - orders
+      - api
       security:
       - {}
       responses:
@@ -1457,9 +1457,9 @@ paths:
                   $ref: '#/components/schemas/Order'
           description: ''
     post:
-      operationId: orders_create
+      operationId: api_orders_create
       tags:
-      - orders
+      - api
       requestBody:
         content:
           application/json:
@@ -1482,7 +1482,7 @@ paths:
           description: ''
   /api/orders/{id}/:
     get:
-      operationId: orders_retrieve
+      operationId: api_orders_retrieve
       parameters:
       - in: path
         name: id
@@ -1492,7 +1492,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - orders
+      - api
       security:
       - {}
       responses:
@@ -1503,7 +1503,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     put:
-      operationId: orders_update
+      operationId: api_orders_update
       parameters:
       - in: path
         name: id
@@ -1513,7 +1513,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - orders
+      - api
       requestBody:
         content:
           application/json:
@@ -1535,7 +1535,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     patch:
-      operationId: orders_partial_update
+      operationId: api_orders_partial_update
       parameters:
       - in: path
         name: id
@@ -1545,7 +1545,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - orders
+      - api
       requestBody:
         content:
           application/json:
@@ -1567,7 +1567,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
     delete:
-      operationId: orders_destroy
+      operationId: api_orders_destroy
       parameters:
       - in: path
         name: id
@@ -1577,7 +1577,7 @@ paths:
         description: A UUID string identifying this order.
         required: true
       tags:
-      - orders
+      - api
       security:
       - {}
       responses:
@@ -1585,9 +1585,9 @@ paths:
           description: No response body
   /api/payment-intents/:
     get:
-      operationId: payment_intents_retrieve
+      operationId: api_payment_intents_retrieve
       tags:
-      - payment-intents
+      - api
       security:
       - {}
       responses:
@@ -1595,9 +1595,9 @@ paths:
           description: No response body
   /api/payment-methods/:
     get:
-      operationId: payment_methods_retrieve
+      operationId: api_payment_methods_retrieve
       tags:
-      - payment-methods
+      - api
       security:
       - {}
       responses:
@@ -1605,7 +1605,7 @@ paths:
           description: No response body
   /api/product-add-on-choices/:
     get:
-      operationId: product_add_on_choices_list
+      operationId: api_product_add_on_choices_list
       parameters:
       - in: query
         name: add_on_choice
@@ -1618,7 +1618,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - product-add-on-choices
+      - api
       security:
       - {}
       responses:
@@ -1631,9 +1631,9 @@ paths:
                   $ref: '#/components/schemas/ProductAddOnChoice'
           description: ''
     post:
-      operationId: product_add_on_choices_create
+      operationId: api_product_add_on_choices_create
       tags:
-      - product-add-on-choices
+      - api
       requestBody:
         content:
           application/json:
@@ -1656,7 +1656,7 @@ paths:
           description: ''
   /api/product-add-on-choices/{id}/:
     get:
-      operationId: product_add_on_choices_retrieve
+      operationId: api_product_add_on_choices_retrieve
       parameters:
       - in: path
         name: id
@@ -1666,7 +1666,7 @@ paths:
         description: A UUID string identifying this product add on choice.
         required: true
       tags:
-      - product-add-on-choices
+      - api
       security:
       - {}
       responses:
@@ -1677,7 +1677,7 @@ paths:
                 $ref: '#/components/schemas/ProductAddOnChoice'
           description: ''
     put:
-      operationId: product_add_on_choices_update
+      operationId: api_product_add_on_choices_update
       parameters:
       - in: path
         name: id
@@ -1687,7 +1687,7 @@ paths:
         description: A UUID string identifying this product add on choice.
         required: true
       tags:
-      - product-add-on-choices
+      - api
       requestBody:
         content:
           application/json:
@@ -1709,7 +1709,7 @@ paths:
                 $ref: '#/components/schemas/ProductAddOnChoice'
           description: ''
     patch:
-      operationId: product_add_on_choices_partial_update
+      operationId: api_product_add_on_choices_partial_update
       parameters:
       - in: path
         name: id
@@ -1719,7 +1719,7 @@ paths:
         description: A UUID string identifying this product add on choice.
         required: true
       tags:
-      - product-add-on-choices
+      - api
       requestBody:
         content:
           application/json:
@@ -1741,7 +1741,7 @@ paths:
                 $ref: '#/components/schemas/ProductAddOnChoice'
           description: ''
     delete:
-      operationId: product_add_on_choices_destroy
+      operationId: api_product_add_on_choices_destroy
       parameters:
       - in: path
         name: id
@@ -1751,7 +1751,7 @@ paths:
         description: A UUID string identifying this product add on choice.
         required: true
       tags:
-      - product-add-on-choices
+      - api
       security:
       - {}
       responses:
@@ -1759,7 +1759,7 @@ paths:
           description: No response body
   /api/products/:
     get:
-      operationId: products_list
+      operationId: api_products_list
       parameters:
       - in: query
         name: main_product
@@ -1767,7 +1767,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - products
+      - api
       security:
       - {}
       responses:
@@ -1780,9 +1780,9 @@ paths:
                   $ref: '#/components/schemas/Product'
           description: ''
     post:
-      operationId: products_create
+      operationId: api_products_create
       tags:
-      - products
+      - api
       requestBody:
         content:
           application/json:
@@ -1805,7 +1805,7 @@ paths:
           description: ''
   /api/products/{id}/:
     get:
-      operationId: products_retrieve
+      operationId: api_products_retrieve
       parameters:
       - in: path
         name: id
@@ -1815,7 +1815,7 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - products
+      - api
       security:
       - {}
       responses:
@@ -1826,7 +1826,7 @@ paths:
                 $ref: '#/components/schemas/Product'
           description: ''
     put:
-      operationId: products_update
+      operationId: api_products_update
       parameters:
       - in: path
         name: id
@@ -1836,7 +1836,7 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - products
+      - api
       requestBody:
         content:
           application/json:
@@ -1858,7 +1858,7 @@ paths:
                 $ref: '#/components/schemas/Product'
           description: ''
     patch:
-      operationId: products_partial_update
+      operationId: api_products_partial_update
       parameters:
       - in: path
         name: id
@@ -1868,7 +1868,7 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - products
+      - api
       requestBody:
         content:
           application/json:
@@ -1890,7 +1890,7 @@ paths:
                 $ref: '#/components/schemas/Product'
           description: ''
     delete:
-      operationId: products_destroy
+      operationId: api_products_destroy
       parameters:
       - in: path
         name: id
@@ -1900,7 +1900,7 @@ paths:
         description: A UUID string identifying this product.
         required: true
       tags:
-      - products
+      - api
       security:
       - {}
       responses:
@@ -1908,7 +1908,7 @@ paths:
           description: No response body
   /api/schema/:
     get:
-      operationId: schema_retrieve
+      operationId: api_schema_retrieve
       description: |-
         OpenApi3 schema for this API. Format can be selected via content negotiation.
 
@@ -2025,7 +2025,7 @@ paths:
           - zh-hans
           - zh-hant
       tags:
-      - schema
+      - api
       security:
       - {}
       responses:
@@ -2048,9 +2048,163 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/seller-product-seller-locations/:
+    get:
+      operationId: api_seller_product_seller_locations_list
+      parameters:
+      - in: query
+        name: seller_location
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: seller_product
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+    post:
+      operationId: api_seller_product_seller_locations_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocation'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+  /api/seller-product-seller-locations/{id}/:
+    get:
+      operationId: api_seller_product_seller_locations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+    put:
+      operationId: api_seller_product_seller_locations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocation'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+    patch:
+      operationId: api_seller_product_seller_locations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocation'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+    delete:
+      operationId: api_seller_product_seller_locations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/seller-products/:
     get:
-      operationId: seller_products_list
+      operationId: api_seller_products_list
       parameters:
       - in: query
         name: product
@@ -2063,7 +2217,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - seller-products
+      - api
       security:
       - {}
       responses:
@@ -2076,9 +2230,9 @@ paths:
                   $ref: '#/components/schemas/SellerProduct'
           description: ''
     post:
-      operationId: seller_products_create
+      operationId: api_seller_products_create
       tags:
-      - seller-products
+      - api
       requestBody:
         content:
           application/json:
@@ -2101,7 +2255,7 @@ paths:
           description: ''
   /api/seller-products/{id}/:
     get:
-      operationId: seller_products_retrieve
+      operationId: api_seller_products_retrieve
       parameters:
       - in: path
         name: id
@@ -2111,7 +2265,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - seller-products
+      - api
       security:
       - {}
       responses:
@@ -2122,7 +2276,7 @@ paths:
                 $ref: '#/components/schemas/SellerProduct'
           description: ''
     put:
-      operationId: seller_products_update
+      operationId: api_seller_products_update
       parameters:
       - in: path
         name: id
@@ -2132,7 +2286,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - seller-products
+      - api
       requestBody:
         content:
           application/json:
@@ -2154,7 +2308,7 @@ paths:
                 $ref: '#/components/schemas/SellerProduct'
           description: ''
     patch:
-      operationId: seller_products_partial_update
+      operationId: api_seller_products_partial_update
       parameters:
       - in: path
         name: id
@@ -2164,7 +2318,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - seller-products
+      - api
       requestBody:
         content:
           application/json:
@@ -2186,7 +2340,7 @@ paths:
                 $ref: '#/components/schemas/SellerProduct'
           description: ''
     delete:
-      operationId: seller_products_destroy
+      operationId: api_seller_products_destroy
       parameters:
       - in: path
         name: id
@@ -2196,7 +2350,7 @@ paths:
         description: A UUID string identifying this seller product.
         required: true
       tags:
-      - seller-products
+      - api
       security:
       - {}
       responses:
@@ -2204,7 +2358,7 @@ paths:
           description: No response body
   /api/sellers/:
     get:
-      operationId: sellers_list
+      operationId: api_sellers_list
       parameters:
       - in: query
         name: id
@@ -2221,7 +2375,7 @@ paths:
         explode: true
         style: form
       tags:
-      - sellers
+      - api
       security:
       - {}
       responses:
@@ -2234,9 +2388,9 @@ paths:
                   $ref: '#/components/schemas/Seller'
           description: ''
     post:
-      operationId: sellers_create
+      operationId: api_sellers_create
       tags:
-      - sellers
+      - api
       requestBody:
         content:
           application/json:
@@ -2260,7 +2414,7 @@ paths:
           description: ''
   /api/sellers/{id}/:
     get:
-      operationId: sellers_retrieve
+      operationId: api_sellers_retrieve
       parameters:
       - in: path
         name: id
@@ -2270,7 +2424,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - sellers
+      - api
       security:
       - {}
       responses:
@@ -2281,7 +2435,7 @@ paths:
                 $ref: '#/components/schemas/Seller'
           description: ''
     put:
-      operationId: sellers_update
+      operationId: api_sellers_update
       parameters:
       - in: path
         name: id
@@ -2291,7 +2445,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - sellers
+      - api
       requestBody:
         content:
           application/json:
@@ -2314,7 +2468,7 @@ paths:
                 $ref: '#/components/schemas/Seller'
           description: ''
     patch:
-      operationId: sellers_partial_update
+      operationId: api_sellers_partial_update
       parameters:
       - in: path
         name: id
@@ -2324,7 +2478,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - sellers
+      - api
       requestBody:
         content:
           application/json:
@@ -2346,7 +2500,7 @@ paths:
                 $ref: '#/components/schemas/Seller'
           description: ''
     delete:
-      operationId: sellers_destroy
+      operationId: api_sellers_destroy
       parameters:
       - in: path
         name: id
@@ -2356,7 +2510,7 @@ paths:
         description: A UUID string identifying this seller.
         required: true
       tags:
-      - sellers
+      - api
       security:
       - {}
       responses:
@@ -2364,7 +2518,7 @@ paths:
           description: No response body
   /api/service-requests/{id}/payout:
     get:
-      operationId: service_requests_payout_retrieve
+      operationId: api_service_requests_payout_retrieve
       parameters:
       - in: path
         name: id
@@ -2372,7 +2526,7 @@ paths:
           type: string
         required: true
       tags:
-      - service-requests
+      - api
       security:
       - {}
       responses:
@@ -2380,9 +2534,9 @@ paths:
           description: No response body
   /api/sessions:
     get:
-      operationId: sessions_retrieve
+      operationId: api_sessions_retrieve
       tags:
-      - sessions
+      - api
       security:
       - {}
       responses:
@@ -2390,9 +2544,9 @@ paths:
           description: No response body
   /api/setup-intents/:
     get:
-      operationId: setup_intents_retrieve
+      operationId: api_setup_intents_retrieve
       tags:
-      - setup-intents
+      - api
       security:
       - {}
       responses:
@@ -2400,7 +2554,7 @@ paths:
           description: No response body
   /api/user-addresses/:
     get:
-      operationId: user_addresses_list
+      operationId: api_user_addresses_list
       parameters:
       - in: query
         name: id
@@ -2408,7 +2562,7 @@ paths:
           type: string
           format: uuid
       tags:
-      - user-addresses
+      - api
       security:
       - {}
       responses:
@@ -2421,9 +2575,9 @@ paths:
                   $ref: '#/components/schemas/UserAddress'
           description: ''
     post:
-      operationId: user_addresses_create
+      operationId: api_user_addresses_create
       tags:
-      - user-addresses
+      - api
       requestBody:
         content:
           application/json:
@@ -2447,7 +2601,7 @@ paths:
           description: ''
   /api/user-addresses/{id}/:
     get:
-      operationId: user_addresses_retrieve
+      operationId: api_user_addresses_retrieve
       parameters:
       - in: path
         name: id
@@ -2457,7 +2611,7 @@ paths:
         description: A UUID string identifying this user address.
         required: true
       tags:
-      - user-addresses
+      - api
       security:
       - {}
       responses:
@@ -2468,7 +2622,7 @@ paths:
                 $ref: '#/components/schemas/UserAddress'
           description: ''
     put:
-      operationId: user_addresses_update
+      operationId: api_user_addresses_update
       parameters:
       - in: path
         name: id
@@ -2478,7 +2632,7 @@ paths:
         description: A UUID string identifying this user address.
         required: true
       tags:
-      - user-addresses
+      - api
       requestBody:
         content:
           application/json:
@@ -2501,7 +2655,7 @@ paths:
                 $ref: '#/components/schemas/UserAddress'
           description: ''
     patch:
-      operationId: user_addresses_partial_update
+      operationId: api_user_addresses_partial_update
       parameters:
       - in: path
         name: id
@@ -2511,7 +2665,7 @@ paths:
         description: A UUID string identifying this user address.
         required: true
       tags:
-      - user-addresses
+      - api
       requestBody:
         content:
           application/json:
@@ -2533,7 +2687,7 @@ paths:
                 $ref: '#/components/schemas/UserAddress'
           description: ''
     delete:
-      operationId: user_addresses_destroy
+      operationId: api_user_addresses_destroy
       parameters:
       - in: path
         name: id
@@ -2543,7 +2697,7 @@ paths:
         description: A UUID string identifying this user address.
         required: true
       tags:
-      - user-addresses
+      - api
       security:
       - {}
       responses:
@@ -2551,18 +2705,18 @@ paths:
           description: No response body
   /api/users/:
     get:
-      operationId: users_retrieve
+      operationId: api_users_retrieve
       tags:
-      - users
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     post:
-      operationId: users_create
+      operationId: api_users_create
       tags:
-      - users
+      - api
       security:
       - {}
       responses:
@@ -2570,7 +2724,7 @@ paths:
           description: No response body
   /api/users/{id}/:
     get:
-      operationId: users_retrieve_2
+      operationId: api_users_retrieve_2
       parameters:
       - in: path
         name: id
@@ -2580,14 +2734,14 @@ paths:
         description: A UUID string identifying this user.
         required: true
       tags:
-      - users
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     put:
-      operationId: users_update
+      operationId: api_users_update
       parameters:
       - in: path
         name: id
@@ -2597,14 +2751,14 @@ paths:
         description: A UUID string identifying this user.
         required: true
       tags:
-      - users
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     patch:
-      operationId: users_partial_update
+      operationId: api_users_partial_update
       parameters:
       - in: path
         name: id
@@ -2614,14 +2768,14 @@ paths:
         description: A UUID string identifying this user.
         required: true
       tags:
-      - users
+      - api
       security:
       - {}
       responses:
         '200':
           description: No response body
     delete:
-      operationId: users_destroy
+      operationId: api_users_destroy
       parameters:
       - in: path
         name: id
@@ -2631,7 +2785,7 @@ paths:
         description: A UUID string identifying this user.
         required: true
       tags:
-      - users
+      - api
       security:
       - {}
       responses:
@@ -2639,9 +2793,9 @@ paths:
           description: No response body
   /api/waste-types/:
     get:
-      operationId: waste_types_list
+      operationId: api_waste_types_list
       tags:
-      - waste-types
+      - api
       security:
       - {}
       responses:
@@ -2654,9 +2808,9 @@ paths:
                   $ref: '#/components/schemas/WasteType'
           description: ''
     post:
-      operationId: waste_types_create
+      operationId: api_waste_types_create
       tags:
-      - waste-types
+      - api
       requestBody:
         content:
           application/json:
@@ -2679,7 +2833,7 @@ paths:
           description: ''
   /api/waste-types/{id}/:
     get:
-      operationId: waste_types_retrieve
+      operationId: api_waste_types_retrieve
       parameters:
       - in: path
         name: id
@@ -2689,7 +2843,7 @@ paths:
         description: A UUID string identifying this waste type.
         required: true
       tags:
-      - waste-types
+      - api
       security:
       - {}
       responses:
@@ -2700,7 +2854,7 @@ paths:
                 $ref: '#/components/schemas/WasteType'
           description: ''
     put:
-      operationId: waste_types_update
+      operationId: api_waste_types_update
       parameters:
       - in: path
         name: id
@@ -2710,7 +2864,7 @@ paths:
         description: A UUID string identifying this waste type.
         required: true
       tags:
-      - waste-types
+      - api
       requestBody:
         content:
           application/json:
@@ -2732,7 +2886,7 @@ paths:
                 $ref: '#/components/schemas/WasteType'
           description: ''
     patch:
-      operationId: waste_types_partial_update
+      operationId: api_waste_types_partial_update
       parameters:
       - in: path
         name: id
@@ -2742,7 +2896,7 @@ paths:
         description: A UUID string identifying this waste type.
         required: true
       tags:
-      - waste-types
+      - api
       requestBody:
         content:
           application/json:
@@ -2764,7 +2918,7 @@ paths:
                 $ref: '#/components/schemas/WasteType'
           description: ''
     delete:
-      operationId: waste_types_destroy
+      operationId: api_waste_types_destroy
       parameters:
       - in: path
         name: id
@@ -2774,7 +2928,7 @@ paths:
         description: A UUID string identifying this waste type.
         required: true
       tags:
-      - waste-types
+      - api
       security:
       - {}
       responses:
@@ -3665,6 +3819,29 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        product:
+          type: string
+          format: uuid
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedSellerProductSellerLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
         rate:
           type: string
           format: decimal
@@ -3675,11 +3852,11 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        product:
+        seller_product:
           type: string
           format: uuid
           nullable: true
-        seller:
+        seller_location:
           type: string
           format: uuid
           nullable: true
@@ -3954,6 +4131,32 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        product:
+          type: string
+          format: uuid
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - created_on
+      - updated_on
+    SellerProductSellerLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
         rate:
           type: string
           format: decimal
@@ -3964,11 +4167,11 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
-        product:
+        seller_product:
           type: string
           format: uuid
           nullable: true
-        seller:
+        seller_location:
           type: string
           format: uuid
           nullable: true

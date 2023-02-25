@@ -111,6 +111,12 @@ class SellerProductSerializer(serializers.ModelSerializer):
         model = SellerProduct
         fields = "__all__"
 
+class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocation
+        fields = "__all__"
+
 class WasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:

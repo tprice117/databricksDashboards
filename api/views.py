@@ -96,6 +96,11 @@ class SellerProductViewSet(viewsets.ModelViewSet):
     serializer_class = SellerProductSerializer
     filterset_fields = ["seller", "product"] 
 
+class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocation.objects.all()
+    serializer_class = SellerProductSellerLocationSerializer
+    filterset_fields = ["seller_product", "seller_location"] 
+
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
