@@ -79,8 +79,8 @@ class User(BaseModel):
         return self.email
     
 class UserSellerReview(models.Model): #added this model 2/25/2023 by Dylan
-    seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='UserSellerReview')
-    user = models.ForeignKey(User, models.DO_NOTHING, related_name='UserSellerReview')
+    seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='user_seller_review')
+    user = models.ForeignKey(User, models.DO_NOTHING, related_name='user_seller_review')
     rating = models.IntegerField()
     comment = models.TextField(blank=True, null=True)
     
@@ -166,8 +166,8 @@ class SellerProduct(BaseModel):
         return (self.product.main_product.name if self.product and self.product.main_product else '') + ' - ' + self.seller.name
 
 class SellerProductSellerLocation(BaseModel):
-    seller_product = models.ForeignKey(SellerProduct, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_product')
-    seller_location = models.ForeignKey(SellerLocation, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_product')
+    seller_product = models.ForeignKey(SellerProduct, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_seller_product')
+    seller_location = models.ForeignKey(SellerLocation, models.DO_NOTHING, blank=True, null=True, related_name='seller_location__seller_product')
     rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
 
@@ -176,13 +176,12 @@ class Subscription(BaseModel): #Added 2/20/23
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
 
 class Order(BaseModel):    
-    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-
     def __str__(self):
         return self.seller.name + ' - ' + self.product.main_product.name
 
 class OrderDetails(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
+    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     time_slot = models.CharField(max_length=255, choices=[('4am-8am', '4am-8am'), ('8am-12pm', '8am-12pm'), ('12pm-4pm', '12pm-4pm'), ('4pm-8pm', '4pm-8pm'), ('8pm-12am', '8pm-12am')], blank=True, null=True)
     schedule_date = models.DateField(blank=True, null=True)
