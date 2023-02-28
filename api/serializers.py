@@ -1,16 +1,22 @@
+from django.conf import settings
 from rest_framework import serializers
 from .models import *
+import stripe
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class SellerSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     has_listings = serializers.SerializerMethodField(read_only=True)
-    
-    def get_has_listings(self, obj):
-       return obj.seller_products.count() > 0
 
     class Meta:
         model = Seller
         fields = "__all__"
+    
+    def get_has_listings(self, obj):
+       return obj.seller_products.count() > 0
+
+
         
 class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
@@ -25,6 +31,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
         validators = []
+
+class UserSellerReviewSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = UserSellerReview
+        fields = "__all__"
         
 class AddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
@@ -76,14 +88,28 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
 
 class OrderDetailsSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
+    status = serializers.SerializerMethodField(read_only=True)
+    
     class Meta:
         model = OrderDetails
         fields = "__all__"
+
+    def get_status(self, obj):
+        return stripe.Invoice.retrieve(
+            obj.stripe_invoice_id,
+        ).status
 
 class OrderDetailsLineItemSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = OrderDetailsLineItem
+        fields = "__all__"
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    order_number = serializers.CharField(required=False)
+    class Meta:
+        model = Subscription
         fields = "__all__"
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -113,9 +139,17 @@ class SellerProductSerializer(serializers.ModelSerializer):
 
 class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
+    available_quantity = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = SellerProductSellerLocation
         fields = "__all__"
+    
+    def get_available_quantity(self, obj):
+        order_detail_count = OrderDetails.objects.filter(
+            seller_product_seller_location=obj.id,
+            invoice_status__in=["Paid", "Open"] #TODO: need to grab these statuses from the Stripe API
+        ).count()
+        return obj.total_inventory - order_detail_count
 
 class WasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)

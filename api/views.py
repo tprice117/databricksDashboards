@@ -28,6 +28,11 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = User
     filterset_fields = ["id"]
+  
+class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
+    queryset = UserSellerReview.objects.all()
+    serializer_class = UserSellerReviewSerializer
+    filterset_fields = ["id", "user", "seller"]
 
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
@@ -76,6 +81,11 @@ class OrderDetailsLineItemViewSet(viewsets.ModelViewSet):
     queryset = OrderDetailsLineItem.objects.all()
     serializer_class = OrderDetailsLineItem
     filterset_fields = ["id", "user_address"]
+
+class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+    filterset_fields = ["id"]
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
