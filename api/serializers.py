@@ -16,8 +16,6 @@ class SellerSerializer(serializers.ModelSerializer):
     def get_has_listings(self, obj):
        return obj.seller_products.count() > 0
 
-
-        
 class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:

@@ -167,7 +167,7 @@ class SellerProduct(BaseModel):
 
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_seller_product')
-    seller_location = models.ForeignKey(SellerLocation, models.DO_NOTHING, blank=True, null=True, related_name='seller_location__seller_product')
+    seller_location = models.ForeignKey(SellerLocation, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_seller_product')
     rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
 

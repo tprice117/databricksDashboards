@@ -26,7 +26,7 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = User
+    serializer_class = UserSerializer
     filterset_fields = ["id"]
   
 class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
