@@ -69,6 +69,7 @@ class UserAdmin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(Seller, SellerAdmin)
+admin.site.register(SellerLocation)
 admin.site.register(SellerProduct)
 admin.site.register(SellerProductSellerLocation)
 admin.site.register(UserAddress)
