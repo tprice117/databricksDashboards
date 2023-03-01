@@ -175,10 +175,12 @@ class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
 
-class Order(BaseModel):    
+class Order(BaseModel):
+    order_number = models.CharField(max_length=255, blank=True, null=True)   
     def __str__(self):
-        return self.seller.name + ' - ' + self.product.main_product.name
-
+        #return self.seller.name + ' - ' + self.product.main_product.name # -----REMOVED BECAUSE SELLER HAS NO LINK TO ORDER AND RETURNS ERROR ON API
+        return self.order_number
+    
 class OrderDetails(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
