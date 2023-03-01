@@ -19,6 +19,11 @@ class SellerViewSet(viewsets.ModelViewSet):
     serializer_class = SellerSerializer
     filterset_fields = ["id", "user"]
 
+class SellerLocationViewSet(viewsets.ModelViewSet):
+    queryset = SellerLocation.objects.all()
+    serializer_class = SellerLocationSerializer
+    filterset_fields = ["id", "seller"]
+
 class UserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
     serializer_class = UserAddressSerializer

@@ -15,6 +15,12 @@ class SellerSerializer(serializers.ModelSerializer):
     
     def get_has_listings(self, obj):
        return obj.seller_products.count() > 0
+    
+class SellerLocationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerLocation
+        fields = "__all__"
 
 
         
@@ -145,11 +151,12 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
         fields = "__all__"
     
     def get_available_quantity(self, obj):
-        order_detail_count = OrderDetails.objects.filter(
-            seller_product_seller_location=obj.id,
-            invoice_status__in=["Paid", "Open"] #TODO: need to grab these statuses from the Stripe API
-        ).count()
-        return obj.total_inventory - order_detail_count
+        #order_detail_count = OrderDetails.objects.filter(
+        #seller_product_seller_location=obj.id,
+        #invoice_status__in=["Paid", "Open"] TODO: need to grab these statuses from the Stripe API
+        #).count()
+        return 0
+        #obj.total_inventory - order_detail_count
 
 class WasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)

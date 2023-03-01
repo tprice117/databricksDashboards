@@ -2048,6 +2048,162 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/seller-locations/:
+    get:
+      operationId: api_seller_locations_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: seller
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerLocation'
+          description: ''
+    post:
+      operationId: api_seller_locations_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerLocation'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerLocation'
+          description: ''
+  /api/seller-locations/{id}/:
+    get:
+      operationId: api_seller_locations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller location.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerLocation'
+          description: ''
+    put:
+      operationId: api_seller_locations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller location.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerLocation'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerLocation'
+          description: ''
+    patch:
+      operationId: api_seller_locations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller location.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerLocation'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerLocation'
+          description: ''
+    delete:
+      operationId: api_seller_locations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller location.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/seller-product-seller-locations/:
     get:
       operationId: api_seller_product_seller_locations_list
@@ -2552,6 +2708,157 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/subscriptions/:
+    get:
+      operationId: api_subscriptions_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+          description: ''
+    post:
+      operationId: api_subscriptions_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/subscriptions/{id}/:
+    get:
+      operationId: api_subscriptions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this subscription.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    put:
+      operationId: api_subscriptions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this subscription.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    patch:
+      operationId: api_subscriptions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this subscription.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscription'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscription'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscription'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    delete:
+      operationId: api_subscriptions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this subscription.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/user-addresses/:
     get:
       operationId: api_user_addresses_list
@@ -2703,28 +3010,212 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/users/:
+  /api/user-seller-reviews/:
     get:
-      operationId: api_users_retrieve
+      operationId: api_user_seller_reviews_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: integer
+      - in: query
+        name: seller
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user
+        schema:
+          type: string
+          format: uuid
       tags:
       - api
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSellerReview'
+          description: ''
     post:
-      operationId: api_users_create
+      operationId: api_user_seller_reviews_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSellerReview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSellerReview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSellerReview'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReview'
+          description: ''
+  /api/user-seller-reviews/{id}/:
+    get:
+      operationId: api_user_seller_reviews_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user seller review.
+        required: true
       tags:
       - api
       security:
       - {}
       responses:
-        '201':
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReview'
+          description: ''
+    put:
+      operationId: api_user_seller_reviews_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user seller review.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSellerReview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSellerReview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSellerReview'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReview'
+          description: ''
+    patch:
+      operationId: api_user_seller_reviews_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user seller review.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSellerReview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSellerReview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSellerReview'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReview'
+          description: ''
+    delete:
+      operationId: api_user_seller_reviews_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user seller review.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '204':
           description: No response body
+  /api/users/:
+    get:
+      operationId: api_users_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
+    post:
+      operationId: api_users_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
   /api/users/{id}/:
     get:
-      operationId: api_users_retrieve_2
+      operationId: api_users_retrieve
       parameters:
       - in: path
         name: id
@@ -2739,7 +3230,11 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
     put:
       operationId: api_users_update
       parameters:
@@ -2752,11 +3247,27 @@ paths:
         required: true
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
     patch:
       operationId: api_users_partial_update
       parameters:
@@ -2769,11 +3280,26 @@ paths:
         required: true
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
     delete:
       operationId: api_users_destroy
       parameters:
@@ -3249,10 +3775,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_invoice_id:
-          type: string
-          nullable: true
-          maxLength: 255
       required:
       - created_on
       - updated_on
@@ -3261,6 +3783,9 @@ components:
       properties:
         id:
           type: string
+        status:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -3271,6 +3796,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        stripe_invoice_id:
+          type: string
+          nullable: true
+          maxLength: 255
         description:
           type: string
           nullable: true
@@ -3294,10 +3823,6 @@ components:
           type: string
           format: uuid
           nullable: true
-        seller_product:
-          type: string
-          format: uuid
-          nullable: true
         subscription:
           type: string
           format: uuid
@@ -3306,8 +3831,13 @@ components:
           type: string
           format: uuid
           nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - created_on
+      - status
       - updated_on
     PatchedAddOn:
       type: object
@@ -3571,15 +4101,14 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_invoice_id:
-          type: string
-          nullable: true
-          maxLength: 255
     PatchedOrderDetails:
       type: object
       properties:
         id:
           type: string
+        status:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -3590,6 +4119,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        stripe_invoice_id:
+          type: string
+          nullable: true
+          maxLength: 255
         description:
           type: string
           nullable: true
@@ -3613,15 +4146,15 @@ components:
           type: string
           format: uuid
           nullable: true
-        seller_product:
-          type: string
-          format: uuid
-          nullable: true
         subscription:
           type: string
           format: uuid
           nullable: true
         order:
+          type: string
+          format: uuid
+          nullable: true
+        seller_product_seller_location:
           type: string
           format: uuid
           nullable: true
@@ -3804,6 +4337,57 @@ components:
           type: string
           nullable: true
           maxLength: 100
+    PatchedSellerLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        street:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+          maxLength: 40
+        state:
+          type: string
+          nullable: true
+          maxLength: 80
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        country:
+          type: string
+          nullable: true
+          maxLength: 80
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
     PatchedSellerProduct:
       type: object
       properties:
@@ -3832,6 +4416,9 @@ components:
       properties:
         id:
           type: string
+        available_quantity:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -3860,6 +4447,76 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedSubscription:
+      type: object
+      properties:
+        id:
+          type: string
+        order_number:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        subscription_number:
+          type: string
+          maxLength: 255
+        interval_days:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+    PatchedUser:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user_id:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          nullable: true
+          maxLength: 40
+        email:
+          type: string
+          nullable: true
+          maxLength: 255
+        photo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        stripe_customer_id:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
+        addresses:
+          type: array
+          items:
+            type: string
+            format: uuid
     PatchedUserAddress:
       type: object
       properties:
@@ -3907,6 +4564,24 @@ components:
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
           nullable: true
+    PatchedUserSellerReview:
+      type: object
+      properties:
+        id:
+          type: string
+        rating:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        comment:
+          type: string
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
     PatchedWasteType:
       type: object
       properties:
@@ -4116,6 +4791,61 @@ components:
       - has_listings
       - name
       - updated_on
+    SellerLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        street:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+          maxLength: 40
+        state:
+          type: string
+          nullable: true
+          maxLength: 80
+        postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        country:
+          type: string
+          nullable: true
+          maxLength: 80
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - created_on
+      - name
+      - updated_on
     SellerProduct:
       type: object
       properties:
@@ -4147,6 +4877,9 @@ components:
       properties:
         id:
           type: string
+        available_quantity:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -4176,6 +4909,7 @@ components:
           format: uuid
           nullable: true
       required:
+      - available_quantity
       - created_on
       - updated_on
     StatusEnum:
@@ -4186,6 +4920,35 @@ components:
       - Active - under review
       - Active
       type: string
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        order_number:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        subscription_number:
+          type: string
+          maxLength: 255
+        interval_days:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+      required:
+      - created_on
+      - subscription_number
+      - updated_on
     TimeSlotEnum:
       enum:
       - 4am-8am
@@ -4230,6 +4993,56 @@ components:
       - Broker
       - Equipment
       type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user_id:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          nullable: true
+          maxLength: 40
+        email:
+          type: string
+          nullable: true
+          maxLength: 255
+        photo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        stripe_customer_id:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
+        addresses:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - addresses
+      - created_on
+      - updated_on
+      - user_id
     UserAddress:
       type: object
       properties:
@@ -4281,6 +5094,28 @@ components:
       - created_on
       - name
       - updated_on
+    UserSellerReview:
+      type: object
+      properties:
+        id:
+          type: string
+        rating:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        comment:
+          type: string
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
+      required:
+      - rating
+      - seller
+      - user
     WasteType:
       type: object
       properties:
