@@ -184,7 +184,7 @@ class Subscription(BaseModel): #Added 2/20/23
 
 class Order(BaseModel):    
     def __str__(self):
-        return self.seller.name + ' - ' + self.product.main_product.name
+        return str(self.id)
 
 class OrderDetails(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
