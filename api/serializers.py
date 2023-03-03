@@ -38,6 +38,12 @@ class UserSerializer(serializers.ModelSerializer):
         fields = "__all__"
         validators = []
 
+class UserUserAddressSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = UserUserAddress
+        fields = "__all__"
+
 class UserSellerReviewSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:

@@ -3166,12 +3166,22 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/users/:
+  /api/user-user-addresses/:
     get:
-      operationId: api_users_list
+      operationId: api_user_user_addresses_list
       parameters:
       - in: query
         name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user_address
         schema:
           type: string
           format: uuid
@@ -3186,24 +3196,23 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/UserUserAddress'
           description: ''
     post:
-      operationId: api_users_create
+      operationId: api_user_user_addresses_create
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/UserUserAddress'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/UserUserAddress'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/User'
-        required: true
+              $ref: '#/components/schemas/UserUserAddress'
       security:
       - {}
       responses:
@@ -3211,11 +3220,133 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserUserAddress'
           description: ''
-  /api/users/{id}/:
+  /api/user-user-addresses/{id}/:
+    get:
+      operationId: api_user_user_addresses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user user address.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUserAddress'
+          description: ''
+    put:
+      operationId: api_user_user_addresses_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user user address.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserUserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserUserAddress'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUserAddress'
+          description: ''
+    patch:
+      operationId: api_user_user_addresses_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user user address.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUserAddress'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUserAddress'
+          description: ''
+    delete:
+      operationId: api_user_user_addresses_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user user address.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/users/:
     get:
       operationId: api_users_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: api_users_create
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/users/{id}/:
+    get:
+      operationId: api_users_retrieve_2
       parameters:
       - in: path
         name: id
@@ -3230,11 +3361,7 @@ paths:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
+          description: No response body
     put:
       operationId: api_users_update
       parameters:
@@ -3247,27 +3374,11 @@ paths:
         required: true
       tags:
       - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/User'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/User'
-        required: true
       security:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
+          description: No response body
     patch:
       operationId: api_users_partial_update
       parameters:
@@ -3280,26 +3391,11 @@ paths:
         required: true
       tags:
       - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedUser'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedUser'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedUser'
       security:
       - {}
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
+          description: No response body
     delete:
       operationId: api_users_destroy
       parameters:
@@ -4472,51 +4568,6 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
-    PatchedUser:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        user_id:
-          type: string
-          maxLength: 255
-        phone:
-          type: string
-          nullable: true
-          maxLength: 40
-        email:
-          type: string
-          nullable: true
-          maxLength: 255
-        photo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        stripe_customer_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        seller:
-          type: string
-          format: uuid
-          nullable: true
-        addresses:
-          type: array
-          items:
-            type: string
-            format: uuid
     PatchedUserAddress:
       type: object
       properties:
@@ -4582,6 +4633,29 @@ components:
         user:
           type: string
           format: uuid
+    PatchedUserUserAddress:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user:
+          type: string
+          format: uuid
+          nullable: true
+        user_address:
+          type: string
+          format: uuid
+          nullable: true
     PatchedWasteType:
       type: object
       properties:
@@ -4993,56 +5067,6 @@ components:
       - Broker
       - Equipment
       type: string
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        user_id:
-          type: string
-          maxLength: 255
-        phone:
-          type: string
-          nullable: true
-          maxLength: 40
-        email:
-          type: string
-          nullable: true
-          maxLength: 255
-        photo_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        stripe_customer_id:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        seller:
-          type: string
-          format: uuid
-          nullable: true
-        addresses:
-          type: array
-          items:
-            type: string
-            format: uuid
-      required:
-      - addresses
-      - created_on
-      - updated_on
-      - user_id
     UserAddress:
       type: object
       properties:
@@ -5116,6 +5140,32 @@ components:
       - rating
       - seller
       - user
+    UserUserAddress:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user:
+          type: string
+          format: uuid
+          nullable: true
+        user_address:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - created_on
+      - updated_on
     WasteType:
       type: object
       properties:

@@ -77,6 +77,13 @@ class User(BaseModel):
 
     def __str__(self):
         return self.email
+
+class UserUserAddress(BaseModel):
+    user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
+    user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.user.id} - {self.user_address.id}'
     
 class UserSellerReview(models.Model): #added this model 2/25/2023 by Dylan
     seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='user_seller_review')
@@ -167,7 +174,7 @@ class SellerProduct(BaseModel):
 
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_seller_product')
-    seller_location = models.ForeignKey(SellerLocation, models.DO_NOTHING, blank=True, null=True, related_name='seller_location__seller_product')
+    seller_location = models.ForeignKey(SellerLocation, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_seller_product')
     rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
 
