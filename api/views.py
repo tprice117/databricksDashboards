@@ -80,7 +80,7 @@ class OrderDetailsViewSet(viewsets.ModelViewSet):
 class OrderDetailsLineItemViewSet(viewsets.ModelViewSet):
     queryset = OrderDetailsLineItem.objects.all()
     serializer_class = OrderDetailsLineItem
-    filterset_fields = ["id", "user_address"]
+    filterset_fields = ["id"]
 
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
