@@ -155,6 +155,11 @@ class WasteTypeSerializer(serializers.ModelSerializer):
         model = WasteType
         fields = "__all__"
 
+class DevEnvironTestSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = DevEnvironTest
+        fields = "__all__"
 
 
 

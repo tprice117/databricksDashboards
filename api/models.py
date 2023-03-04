@@ -216,3 +216,9 @@ class WasteType(BaseModel):
 class MainProductWasteType(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
+
+class DevEnvironTest(BaseModel):
+    name = models.CharField(max_length=80, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
