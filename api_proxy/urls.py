@@ -26,6 +26,7 @@ router.register(r'products', views.ProductViewSet, 'api')
 router.register(r'seller-products', views.SellerProductViewSet, 'api')
 router.register(r'seller-product-seller-locations', views.SellerProductSellerLocationViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
+router.register(r'waste-types', views.DevEnvironTest, 'api')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
