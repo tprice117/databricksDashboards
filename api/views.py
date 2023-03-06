@@ -125,6 +125,11 @@ class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
 
+class DevEnvironTestViewset(viewsets.ModelViewSet):
+    queryset = DevEnvironTest.objects.all()
+    serializer_class = DevEnvironTestSerializer
+    filterset_fields = ["id"] 
+
 
 
 

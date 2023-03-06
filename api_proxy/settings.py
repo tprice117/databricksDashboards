@@ -16,12 +16,12 @@ import os
 import sys
 import dj_database_url
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-0+dmu6*lky0l743o^27tn0)dzoi)6-lzb1i)egsso_84h')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = True
+DEBUG = str(os.environ.get('DEBUG')) == "1"
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
@@ -74,18 +74,33 @@ WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
+#DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'defaultdb',
-        'USER': 'doadmin',
-        'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
-        'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
-        'PORT': '25060',
+if os.getenv('ENV') == 'test': #This is currently the server/db that is being used for App created by Tate
+ DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
+            'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
     }
-}
+else:
+        #new db for development purposes 
+ DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
+            'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
+    }
+   
+
 # if DEVELOPMENT_MODE is True:
 # DATABASES = {
 #      'default': {
