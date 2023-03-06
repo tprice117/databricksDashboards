@@ -19,6 +19,11 @@ class SellerViewSet(viewsets.ModelViewSet):
     serializer_class = SellerSerializer
     filterset_fields = ["id", "user"]
 
+class SellerLocationViewSet(viewsets.ModelViewSet):
+    queryset = SellerLocation.objects.all()
+    serializer_class = SellerLocationSerializer
+    filterset_fields = ["id", "seller"]
+
 class UserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
     serializer_class = UserAddressSerializer
@@ -28,6 +33,11 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filterset_fields = ["id"]
+
+class UserUserAddressViewSet(viewsets.ModelViewSet):
+    queryset = UserUserAddress.objects.all()
+    serializer_class = UserUserAddressSerializer
+    filterset_fields = ["id", "user", "user_address"]
   
 class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
     queryset = UserSellerReview.objects.all()

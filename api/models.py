@@ -77,6 +77,13 @@ class User(BaseModel):
 
     def __str__(self):
         return self.email
+
+class UserUserAddress(BaseModel):
+    user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
+    user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.user.id} - {self.user_address.id}'
     
 class UserSellerReview(models.Model): #added this model 2/25/2023 by Dylan
     seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='user_seller_review')
@@ -178,9 +185,8 @@ class Subscription(BaseModel): #Added 2/20/23
 class Order(BaseModel):
     order_number = models.CharField(max_length=255, blank=True, null=True)   
     def __str__(self):
-        #return self.seller.name + ' - ' + self.product.main_product.name # -----REMOVED BECAUSE SELLER HAS NO LINK TO ORDER AND RETURNS ERROR ON API
-        return self.order_number
-    
+        return str(self.id)
+
 class OrderDetails(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)

@@ -7,7 +7,10 @@ from api import views
 
 router = routers.DefaultRouter()
 router.register(r'sellers', views.SellerViewSet, 'api')
+router.register(r'seller-locations', views.SellerLocationViewSet, 'api')
 router.register(r'users', views.UserViewSet, 'api')
+router.register(r'user-user-addresses', views.UserUserAddressViewSet, 'api')
+router.register(r'user-seller-reviews', views.UserSellerReviewViewSet, 'api')
 router.register(r'user-addresses', views.UserAddressViewSet, 'api')
 router.register(r'add-on-choices', views.AddOnChoiceViewSet, 'api')
 router.register(r'add-ons', views.AddOnViewSet, 'api')
