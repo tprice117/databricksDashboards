@@ -31,7 +31,7 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = User
+    serializer_class = UserSerializer
     filterset_fields = ["id"]
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
@@ -90,7 +90,7 @@ class OrderDetailsViewSet(viewsets.ModelViewSet):
 class OrderDetailsLineItemViewSet(viewsets.ModelViewSet):
     queryset = OrderDetailsLineItem.objects.all()
     serializer_class = OrderDetailsLineItem
-    filterset_fields = ["id", "user_address"]
+    filterset_fields = ["id"]
 
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
@@ -124,6 +124,11 @@ class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
+
+class DevEnvironTestViewset(viewsets.ModelViewSet):
+    queryset = DevEnvironTest.objects.all()
+    serializer_class = DevEnvironTestSerializer
+    filterset_fields = ["id"] 
 
 
 

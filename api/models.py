@@ -182,7 +182,8 @@ class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
 
-class Order(BaseModel):    
+class Order(BaseModel):
+    order_number = models.CharField(max_length=255, blank=True, null=True)   
     def __str__(self):
         return str(self.id)
 
@@ -221,3 +222,9 @@ class WasteType(BaseModel):
 class MainProductWasteType(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
+
+class DevEnvironTest(BaseModel):
+    name = models.CharField(max_length=80, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
