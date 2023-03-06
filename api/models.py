@@ -1,5 +1,10 @@
+from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_save
 import uuid
+import stripe
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -199,6 +204,12 @@ class OrderDetails(BaseModel):
     order = models.ForeignKey(Order, models.DO_NOTHING, blank=True, null=True)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
+    def post_create(cls, sender, instance, created, *args, **kwargs):
+        if created:
+            invoice = stripe.Invoice.create()
+            instance.stripe_invoice_id = invoice.id
+            instance.save()
+
 class OrderDetailsLineItem(BaseModel):
     order_details = models.ForeignKey(OrderDetails, models.DO_NOTHING, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -228,3 +239,5 @@ class DevEnvironTest(BaseModel):
 
     def __str__(self):
         return self.name
+    
+post_save.connect(OrderDetails.post_create, sender=OrderDetails)
