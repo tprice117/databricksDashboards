@@ -21,7 +21,8 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-0+dmu6*lky0l74
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = str(os.environ.get('DEBUG')) == "1"
+# DEBUG = str(os.environ.get('DEBUG')) == "1"
+DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [

@@ -204,16 +204,16 @@ class OrderDetails(BaseModel):
     order = models.ForeignKey(Order, models.DO_NOTHING, blank=True, null=True)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
-    def post_create(sender, instance, created, **kwargs):
-        if created:
-            stripe.InvoiceItem.create(
-                customer="cus_MISF99duuyAcH3",
-                amount=1000,
-                currency="usd",
-            )
-            invoice = stripe.Invoice.create(customer="cus_MISF99duuyAcH3")
-            instance.stripe_invoice_id = invoice.id
-            instance.save()
+    # def post_create(sender, instance, created, **kwargs):
+    #     if created:
+    #         stripe.InvoiceItem.create(
+    #             customer="cus_MISF99duuyAcH3",
+    #             amount=1000,
+    #             currency="usd",
+    #         )
+    #         invoice = stripe.Invoice.create(customer="cus_MISF99duuyAcH3")
+    #         instance.stripe_invoice_id = invoice.id
+    #         instance.save()
 
 class OrderDetailsLineItem(BaseModel):
     order_details = models.ForeignKey(OrderDetails, models.DO_NOTHING, blank=True, null=True)
@@ -245,4 +245,4 @@ class DevEnvironTest(BaseModel):
     def __str__(self):
         return self.name
     
-post_save.connect(OrderDetails.post_create, sender=OrderDetails)
+# post_save.connect(OrderDetails.post_create, sender=OrderDetails)
