@@ -55,17 +55,17 @@ class SellerAdmin(admin.ModelAdmin):
         SellerProductInline,
     ]
 
-class UserAddressInline(admin.TabularInline):
-    model = User.addresses.through
-    # fields = ('name',)
-    # readonly_fields = ('name',)
-    show_change_link = True
-    extra=0
+# class UserAddressInline(admin.TabularInline):
+#     model = User.addresses.through
+#     fields = ('name',)
+#     readonly_fields = ('name',)
+#     show_change_link = True
+#     extra=0
 
-class UserAdmin(admin.ModelAdmin):
-    inlines = [
-        UserAddressInline,
-    ]
+# class UserAdmin(admin.ModelAdmin):
+#     inlines = [
+#         UserAddressInline,
+#     ]
 
 # Register your models here.
 admin.site.register(Seller, SellerAdmin)
@@ -73,7 +73,7 @@ admin.site.register(SellerLocation)
 admin.site.register(SellerProduct)
 admin.site.register(SellerProductSellerLocation)
 admin.site.register(UserAddress)
-admin.site.register(User, UserAdmin)
+#admin.site.register(User, UserAdmin)
 admin.site.register(AddOnChoice)
 admin.site.register(AddOn)
 admin.site.register(MainProductAddOn)

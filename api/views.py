@@ -32,7 +32,7 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    filterset_fields = ["id"]
+    filterset_fields = ["id","user_id"]
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()

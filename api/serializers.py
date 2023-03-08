@@ -98,16 +98,16 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
 
 class OrderDetailsSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    # status = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = OrderDetails
         fields = "__all__"
 
-    # def get_status(self, obj):
-    #     return stripe.Invoice.retrieve(
-    #         obj.stripe_invoice_id,
-    #     ).status if obj.stripe_invoice_id and obj.sstripe_invoice_id != "" else None
+    def get_status(self, obj):
+        return stripe.Invoice.retrieve(
+        obj.stripe_invoice_id,
+        ).status if obj.stripe_invoice_id and obj.stripe_invoice_id != "" else None
 
 class OrderDetailsLineItemSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
