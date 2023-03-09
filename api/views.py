@@ -82,24 +82,19 @@ class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductWasteTypeSerializer
     filterset_fields = ["main_product", "waste_type"]
 
-class OrderDetailsViewSet(viewsets.ModelViewSet):
-    queryset = OrderDetails.objects.all()
-    serializer_class = OrderDetailsSerializer
+class OrderGroupViewSet(viewsets.ModelViewSet):
+    queryset = OrderGroup.objects.all()
+    serializer_class = OrderGroupSerializer
+    
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
     filterset_fields = ["id", "user_address"]
-
-class OrderDetailsLineItemViewSet(viewsets.ModelViewSet):
-    queryset = OrderDetailsLineItem.objects.all()
-    serializer_class = OrderDetailsLineItem
-    filterset_fields = ["id"]
 
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filterset_fields = ["id"]
-
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
 
 class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
