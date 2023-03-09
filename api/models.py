@@ -73,7 +73,6 @@ class UserAddress(BaseModel):
 
 class User(BaseModel):
     user_id = models.CharField(max_length=255)
-    addresses = models.ManyToManyField(UserAddress, related_name='users')
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, blank=True, null=True)
     photo_url = models.URLField(blank=True, null=True)
@@ -187,12 +186,11 @@ class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
 
-class Order(BaseModel):
-    order_number = models.CharField(max_length=255, blank=True, null=True)   
+class OrderGroup(BaseModel):
     def __str__(self):
         return str(self.id)
 
-class OrderDetails(BaseModel):
+class Order(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -201,7 +199,7 @@ class OrderDetails(BaseModel):
     additional_schedule_details = models.TextField(blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True) #Added 2/20/2023.
-    order = models.ForeignKey(Order, models.DO_NOTHING, blank=True, null=True)
+    order_group = models.ForeignKey(OrderGroup, models.DO_NOTHING, blank=True, null=True)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
     def post_create(sender, instance, created, **kwargs):
@@ -214,12 +212,6 @@ class OrderDetails(BaseModel):
             invoice = stripe.Invoice.create(customer="cus_MISF99duuyAcH3")
             instance.stripe_invoice_id = invoice.id
             instance.save()
-
-class OrderDetailsLineItem(BaseModel):
-    order_details = models.ForeignKey(OrderDetails, models.DO_NOTHING, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    stripe_invoice_line_item_id = models.CharField(max_length=255, blank=True, null=True)
 
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
@@ -245,4 +237,4 @@ class DevEnvironTest(BaseModel):
     def __str__(self):
         return self.name
     
-post_save.connect(OrderDetails.post_create, sender=OrderDetails)
+post_save.connect(Order.post_create, sender=Order)

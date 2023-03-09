@@ -96,37 +96,30 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
         model = MainProductWasteType
         fields = "__all__"
 
-class OrderDetailsSerializer(serializers.ModelSerializer):
+class OrderGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    # status = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = OrderGroup
+        fields = "__all__"
+
+class OrderSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    status = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
-        model = OrderDetails
+        model = Order
         fields = "__all__"
 
-    # def get_status(self, obj):
-    #     return stripe.Invoice.retrieve(
-    #         obj.stripe_invoice_id,
-    #     ).status if obj.stripe_invoice_id and obj.sstripe_invoice_id != "" else None
-
-class OrderDetailsLineItemSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = OrderDetailsLineItem
-        fields = "__all__"
+    def get_status(self, obj):
+        return stripe.Invoice.retrieve(
+        obj.stripe_invoice_id,
+        ).status if obj.stripe_invoice_id and obj.stripe_invoice_id != "" else None
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     order_number = serializers.CharField(required=False)
     class Meta:
         model = Subscription
-        fields = "__all__"
-
-class OrderSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    order_number = serializers.CharField(required=False)
-    class Meta:
-        model = Order
         fields = "__all__"
 
 class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
@@ -155,7 +148,7 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
         fields = "__all__"
     
     def get_available_quantity(self, obj):
-        #order_detail_count = OrderDetails.objects.filter(
+        #order_detail_count = Order.objects.filter(
         #seller_product_seller_location=obj.id,
         #invoice_status__in=["Paid", "Open"] TODO: need to grab these statuses from the Stripe API
         #).count()
