@@ -6,10 +6,14 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from .serializers import *
 from .models import *
+from .apps import MlConfig
 from django.conf import settings
 import stripe
 import requests
 from random import randint
+import pickle
+import pandas as pd
+from .pricing_ml import xgboost_pricing as xgb
 
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -129,8 +133,6 @@ class DevEnvironTestViewset(viewsets.ModelViewSet):
 
 
 
-
-
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
 API_KEY = '556b608df74309034553676f5d4425401ae6c2fc29db793a5b1501'
@@ -170,6 +172,19 @@ def delete(endpoint, body):
   payload = dict({"api_key": API_KEY}.items() | body.items())
   return call_TG_API(url, payload)
 
+
+# ml views for pricing
+class Prediction(APIView):
+  def post(self, request):
+      # Load the model
+      price_mod = MlConfig.regressor
+      enc = MlConfig.encoder
+      # initialize the modeler
+      modeler = xgb.price_model_xgb(price_mod, enc)
+      # get the data from the request and predict
+      pred = modeler.predict_price(input_data = request.data)
+      response_dict = {"Price": pred}
+      return Response(response_dict)
 
 class TaskView(APIView):
     def get(self, request, pk=None, *args, **kwargs):  

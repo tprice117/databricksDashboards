@@ -35,9 +35,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'api',
+    'api.pricing_ml',
     'django_filters',
     'drf_spectacular',
-]
+    ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -178,6 +179,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
+# Add machine learning models
+ML_MODELS = os.path.join(BASE_DIR, 'api/pricing_ml')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
