@@ -85,18 +85,19 @@ class User(BaseModel):
 class UserUserAddress(BaseModel):
     user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f'{self.user.id} - {self.user_address.id}'
     
-class UserSellerReview(models.Model): #added this model 2/25/2023 by Dylan
+class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='user_seller_review')
     user = models.ForeignKey(User, models.DO_NOTHING, related_name='user_seller_review')
-    rating = models.IntegerField()
+    rating = models.IntegerField(blank=True, null=True)
     comment = models.TextField(blank=True, null=True)
     
     def __str__(self):
-        return f'{self.user.id} - {self.seller.name}'
+        return self.name
 
 class AddOn(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
@@ -231,10 +232,6 @@ class MainProductWasteType(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
 
-class DevEnvironTest(BaseModel):
-    name = models.CharField(max_length=80, blank=True, null=True)
 
-    def __str__(self):
-        return self.name
     
 post_save.connect(Order.post_create, sender=Order)

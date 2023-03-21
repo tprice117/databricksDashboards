@@ -48,6 +48,22 @@ class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
     serializer_class = UserSellerReviewSerializer
     filterset_fields = ["id", "user", "seller"]
 
+class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSellerReviewAggregateSerializer
+
+    def get_queryset(self):
+        queryset = UserSellerReview.objects.values('seller').annotate(
+            rating_avg=Avg('rating'),
+            review_count=Count('seller_id'),
+        ).order_by('seller_id')
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
     serializer_class = AddOnChoiceSerializer
@@ -124,10 +140,6 @@ class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
 
-class DevEnvironTestViewset(viewsets.ModelViewSet):
-    queryset = DevEnvironTest.objects.all()
-    serializer_class = DevEnvironTestSerializer
-    filterset_fields = ["id"] 
 
 
 
