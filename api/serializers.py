@@ -47,7 +47,12 @@ class UserSellerReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserSellerReview
         fields = "__all__"
-        
+
+class UserSellerReviewAggregateSerializer(serializers.Serializer):
+    seller_name = serializers.CharField()
+    rating_avg = serializers.FloatField()
+    review_count = serializers.IntegerField()
+       
 class AddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
@@ -161,11 +166,7 @@ class WasteTypeSerializer(serializers.ModelSerializer):
         model = WasteType
         fields = "__all__"
 
-class DevEnvironTestSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False)
-    class Meta:
-        model = DevEnvironTest
-        fields = "__all__"
+
 
 
 

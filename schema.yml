@@ -1198,20 +1198,9 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/order-details/:
+  /api/order-groups/:
     get:
-      operationId: api_order_details_list
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: user_address
-        schema:
-          type: string
-          format: uuid
+      operationId: api_order_groups_list
       tags:
       - api
       security:
@@ -1223,23 +1212,23 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OrderDetails'
+                  $ref: '#/components/schemas/OrderGroup'
           description: ''
     post:
-      operationId: api_order_details_create
+      operationId: api_order_groups_create
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderDetails'
+              $ref: '#/components/schemas/OrderGroup'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OrderDetails'
+              $ref: '#/components/schemas/OrderGroup'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrderDetails'
+              $ref: '#/components/schemas/OrderGroup'
       security:
       - {}
       responses:
@@ -1247,106 +1236,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderDetails'
+                $ref: '#/components/schemas/OrderGroup'
           description: ''
-  /api/order-details-line-items/:
+  /api/order-groups/{id}/:
     get:
-      operationId: api_order_details_line_items_retrieve
-      tags:
-      - api
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    post:
-      operationId: api_order_details_line_items_create
-      tags:
-      - api
-      security:
-      - {}
-      responses:
-        '201':
-          description: No response body
-  /api/order-details-line-items/{id}/:
-    get:
-      operationId: api_order_details_line_items_retrieve_2
+      operationId: api_order_groups_retrieve
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this order details line item.
-        required: true
-      tags:
-      - api
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    put:
-      operationId: api_order_details_line_items_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this order details line item.
-        required: true
-      tags:
-      - api
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    patch:
-      operationId: api_order_details_line_items_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this order details line item.
-        required: true
-      tags:
-      - api
-      security:
-      - {}
-      responses:
-        '200':
-          description: No response body
-    delete:
-      operationId: api_order_details_line_items_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this order details line item.
-        required: true
-      tags:
-      - api
-      security:
-      - {}
-      responses:
-        '204':
-          description: No response body
-  /api/order-details/{id}/:
-    get:
-      operationId: api_order_details_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this order details.
+        description: A UUID string identifying this order group.
         required: true
       tags:
       - api
@@ -1357,17 +1258,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderDetails'
+                $ref: '#/components/schemas/OrderGroup'
           description: ''
     put:
-      operationId: api_order_details_update
+      operationId: api_order_groups_update
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this order details.
+        description: A UUID string identifying this order group.
         required: true
       tags:
       - api
@@ -1375,13 +1276,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderDetails'
+              $ref: '#/components/schemas/OrderGroup'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OrderDetails'
+              $ref: '#/components/schemas/OrderGroup'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrderDetails'
+              $ref: '#/components/schemas/OrderGroup'
       security:
       - {}
       responses:
@@ -1389,17 +1290,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderDetails'
+                $ref: '#/components/schemas/OrderGroup'
           description: ''
     patch:
-      operationId: api_order_details_partial_update
+      operationId: api_order_groups_partial_update
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this order details.
+        description: A UUID string identifying this order group.
         required: true
       tags:
       - api
@@ -1407,13 +1308,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedOrderDetails'
+              $ref: '#/components/schemas/PatchedOrderGroup'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedOrderDetails'
+              $ref: '#/components/schemas/PatchedOrderGroup'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedOrderDetails'
+              $ref: '#/components/schemas/PatchedOrderGroup'
       security:
       - {}
       responses:
@@ -1421,17 +1322,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderDetails'
+                $ref: '#/components/schemas/OrderGroup'
           description: ''
     delete:
-      operationId: api_order_details_destroy
+      operationId: api_order_groups_destroy
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this order details.
+        description: A UUID string identifying this order group.
         required: true
       tags:
       - api
@@ -1443,6 +1344,17 @@ paths:
   /api/orders/:
     get:
       operationId: api_orders_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user_address
+        schema:
+          type: string
+          format: uuid
       tags:
       - api
       security:
@@ -3010,6 +2922,151 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/user-seller-review-aggregates/:
+    get:
+      operationId: api_user_seller_review_aggregates_list
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSellerReviewAggregate'
+          description: ''
+    post:
+      operationId: api_user_seller_review_aggregates_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSellerReviewAggregate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSellerReviewAggregate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSellerReviewAggregate'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReviewAggregate'
+          description: ''
+  /api/user-seller-review-aggregates/{id}/:
+    get:
+      operationId: api_user_seller_review_aggregates_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReviewAggregate'
+          description: ''
+    put:
+      operationId: api_user_seller_review_aggregates_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSellerReviewAggregate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserSellerReviewAggregate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserSellerReviewAggregate'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReviewAggregate'
+          description: ''
+    patch:
+      operationId: api_user_seller_review_aggregates_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSellerReviewAggregate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSellerReviewAggregate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserSellerReviewAggregate'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSellerReviewAggregate'
+          description: ''
+    delete:
+      operationId: api_user_seller_review_aggregates_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/user-seller-reviews/:
     get:
       operationId: api_user_seller_reviews_list
@@ -3017,7 +3074,8 @@ paths:
       - in: query
         name: id
         schema:
-          type: integer
+          type: string
+          format: uuid
       - in: query
         name: seller
         schema:
@@ -3073,8 +3131,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this user seller review.
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -3093,8 +3152,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this user seller review.
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -3125,8 +3185,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this user seller review.
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -3156,8 +3217,9 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this user seller review.
+          type: string
+          format: uuid
+        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -3327,26 +3389,58 @@ paths:
           description: No response body
   /api/users/:
     get:
-      operationId: api_users_retrieve
+      operationId: api_users_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user_id
+        schema:
+          type: string
       tags:
       - api
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
     post:
       operationId: api_users_create
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
       security:
       - {}
       responses:
         '201':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
   /api/users/{id}/:
     get:
-      operationId: api_users_retrieve_2
+      operationId: api_users_retrieve
       parameters:
       - in: path
         name: id
@@ -3361,7 +3455,11 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
     put:
       operationId: api_users_update
       parameters:
@@ -3374,11 +3472,27 @@ paths:
         required: true
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
     patch:
       operationId: api_users_partial_update
       parameters:
@@ -3391,11 +3505,26 @@ paths:
         required: true
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
     delete:
       operationId: api_users_destroy
       parameters:
@@ -3859,26 +3988,6 @@ components:
       properties:
         id:
           type: string
-        order_number:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-      required:
-      - created_on
-      - updated_on
-    OrderDetails:
-      type: object
-      properties:
-        id:
-          type: string
         status:
           type: string
           readOnly: true
@@ -3923,7 +4032,7 @@ components:
           type: string
           format: uuid
           nullable: true
-        order:
+        order_group:
           type: string
           format: uuid
           nullable: true
@@ -3934,6 +4043,24 @@ components:
       required:
       - created_on
       - status
+      - updated_on
+    OrderGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+      required:
+      - created_on
       - updated_on
     PatchedAddOn:
       type: object
@@ -4185,23 +4312,6 @@ components:
       properties:
         id:
           type: string
-        order_number:
-          type: string
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-    PatchedOrderDetails:
-      type: object
-      properties:
-        id:
-          type: string
         status:
           type: string
           readOnly: true
@@ -4246,7 +4356,7 @@ components:
           type: string
           format: uuid
           nullable: true
-        order:
+        order_group:
           type: string
           format: uuid
           nullable: true
@@ -4254,6 +4364,21 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedOrderGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
     PatchedProduct:
       type: object
       properties:
@@ -4568,6 +4693,46 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
+    PatchedUser:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user_id:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          nullable: true
+          maxLength: 40
+        email:
+          type: string
+          nullable: true
+          maxLength: 255
+        photo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        stripe_customer_id:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
     PatchedUserAddress:
       type: object
       properties:
@@ -4620,10 +4785,21 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
         rating:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+          nullable: true
         comment:
           type: string
           nullable: true
@@ -4633,6 +4809,16 @@ components:
         user:
           type: string
           format: uuid
+    PatchedUserSellerReviewAggregate:
+      type: object
+      properties:
+        seller_name:
+          type: string
+        rating_avg:
+          type: number
+          format: double
+        review_count:
+          type: integer
     PatchedUserUserAddress:
       type: object
       properties:
@@ -4648,6 +4834,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
         user:
           type: string
           format: uuid
@@ -5067,6 +5257,50 @@ components:
       - Broker
       - Equipment
       type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user_id:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          nullable: true
+          maxLength: 40
+        email:
+          type: string
+          nullable: true
+          maxLength: 255
+        photo_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        stripe_customer_id:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        seller:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - created_on
+      - updated_on
+      - user_id
     UserAddress:
       type: object
       properties:
@@ -5123,10 +5357,21 @@ components:
       properties:
         id:
           type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
         rating:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+          nullable: true
         comment:
           type: string
           nullable: true
@@ -5137,9 +5382,24 @@ components:
           type: string
           format: uuid
       required:
-      - rating
+      - created_on
       - seller
+      - updated_on
       - user
+    UserSellerReviewAggregate:
+      type: object
+      properties:
+        seller_name:
+          type: string
+        rating_avg:
+          type: number
+          format: double
+        review_count:
+          type: integer
+      required:
+      - rating_avg
+      - review_count
+      - seller_name
     UserUserAddress:
       type: object
       properties:
@@ -5155,6 +5415,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
         user:
           type: string
           format: uuid

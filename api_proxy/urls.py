@@ -11,6 +11,7 @@ router.register(r'seller-locations', views.SellerLocationViewSet, 'api')
 router.register(r'users', views.UserViewSet, 'api')
 router.register(r'user-user-addresses', views.UserUserAddressViewSet, 'api')
 router.register(r'user-seller-reviews', views.UserSellerReviewViewSet, 'api')
+router.register(r'user-seller-review-aggregates', views.UserSellerReviewAggregateViewSet, 'api')
 router.register(r'user-addresses', views.UserAddressViewSet, 'api')
 router.register(r'add-on-choices', views.AddOnChoiceViewSet, 'api')
 router.register(r'add-ons', views.AddOnViewSet, 'api')
@@ -28,7 +29,6 @@ router.register(r'products', views.ProductViewSet, 'api')
 router.register(r'seller-products', views.SellerProductViewSet, 'api')
 router.register(r'seller-product-seller-locations', views.SellerProductSellerLocationViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
-# router.register(r'dev-environ-test', views.DevEnvironTest, 'api')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
