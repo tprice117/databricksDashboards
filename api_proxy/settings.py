@@ -18,11 +18,13 @@ import dj_database_url
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-0+dmu6*lky0l743o^27tn0)dzoi)6-lzb1i)egsso_84h')
 
+
+ENVIRONMENT = os.getenv('ENV')
+DEBUG = os.getenv('DEBUG', "False") == "True"
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# DEBUG = str(os.environ.get('DEBUG')) == "1"
-DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
@@ -72,13 +74,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-#DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
-
-if os.getenv('ENV') == 'test': #This is currently the server/db that is being used for App created by Tate
- DATABASES = {
+# Database.
+if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
+    DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'defaultdb',
@@ -88,9 +86,9 @@ if os.getenv('ENV') == 'test': #This is currently the server/db that is being us
             'PORT': '25060',
         }
     }
-else:
-        #new db for development purposes 
- DATABASES = {
+elif ENVIRONMENT == 'DEV':
+    #new db for development purposes 
+    DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'defaultdb',
@@ -100,61 +98,13 @@ else:
             'PORT': '25060',
         }
     }
-   
-
-# if DEVELOPMENT_MODE is True:
-# DATABASES = {
-#      'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': 'sqllite.db',
-#     },
-# }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'ds-marketplace',
-#         'USER': 'postgres',
-#         'PASSWORD': 'LongLiveDownstream1!',
-#         'HOST': '23.236.63.33',
-#         'PORT': '5432',
-#         # 'OPTIONS': {
-#         #     'sslmode': 'verify-ca', #leave this line intact
-#         #     'sslrootcert': 'ssl/server-ca.pem',
-#         #     "sslcert": "ssl/client-cert.pem",
-#         #     "sslkey": "ssl/client-key.pem",
-#         # }
-#     },
-# }
-
-# DATABASE_ROUTERS = [
-#     "salesforce.router.ModelRouter"
-# ]
-# elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-#     if os.getenv("DATABASE_URL", None) is None:
-#         raise Exception("DATABASE_URL environment variable not defined")
-#     DATABASES = {
-#         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
-#     }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'sqllite.db',
+        },
+    }
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
