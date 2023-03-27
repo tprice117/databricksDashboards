@@ -46,5 +46,6 @@ urlpatterns = [
     path('api/sessions', views.StripeCreateCheckoutSession.as_view()),
 
     # prediction ML
-    path('api/prediction', views.Prediction.as_view(), name="predictions")
+    path('api/prediction', views.Prediction.as_view(), name="predictions"),
+    path('api/pricing', views.non_ml_pricing)
 ]

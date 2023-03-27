@@ -83,10 +83,13 @@ admin.site.register(MainProductCategoryInfo)
 admin.site.register(MainProduct, MainProductAdmin)
 admin.site.register(MainProductInfo)
 admin.site.register(MainProductWasteType)
+admin.site.register(Product)
 admin.site.register(OrderGroup)
 admin.site.register(Order)
 admin.site.register(ProductAddOnChoice)
 admin.site.register(WasteType)
+admin.site.register(DisposalLocation)
+admin.site.register(DisposalLocationWasteType)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)

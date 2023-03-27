@@ -232,9 +232,28 @@ class WasteType(BaseModel):
         return self.name
 
 class MainProductWasteType(BaseModel):
-    waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
-    main_product = models.ForeignKey(MainProduct, models.DO_NOTHING, blank=True, null=True)
+    waste_type = models.ForeignKey(WasteType, models.CASCADE, blank=True, null=True)
+    main_product = models.ForeignKey(MainProduct, models.CASCADE, blank=True, null=True)
 
+class DisposalLocation(BaseModel):
+    name = models.CharField(max_length=255)
+    street = models.CharField(max_length=255)
+    city = models.CharField(max_length=40)
+    state = models.CharField(max_length=80)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=80)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15)
 
+    def __str__(self):
+        return self.name
+    
+class DisposalLocationWasteType(BaseModel):
+    disposal_location = models.ForeignKey(DisposalLocation, models.CASCADE)
+    waste_type = models.ForeignKey(WasteType, models.CASCADE)
+    price_per_ton = models.DecimalField(max_digits=18, decimal_places=2)
+
+    def __str__(self):
+        return self.disposal_location.name + ' - ' + self.waste_type.name
     
 post_save.connect(Order.post_create, sender=Order)

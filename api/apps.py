@@ -8,9 +8,9 @@ class ApiConfig(AppConfig):
     name = 'api'
 
 
-class MlConfig(AppConfig):    
-    path = os.path.join(settings.ML_MODELS, 'models.pkl')
-    with open(path, 'rb') as pickled:
-       data = pickle.load(pickled)    
-    regressor = data['regressor']
-    encoder = data['enc']
+# class MlConfig(AppConfig):    
+#     path = os.path.join(settings.ML_MODELS, 'models.pkl')
+#     with open(path, 'rb') as pickled:
+#        data = pickle.load(pickled)    
+#     regressor = data['regressor']
+#     encoder = data['enc']

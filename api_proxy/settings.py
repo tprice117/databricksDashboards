@@ -21,6 +21,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-0+dmu6*lky0l74
 
 ENVIRONMENT = os.getenv('ENV')
 DEBUG = os.getenv('DEBUG', "False") == "True"
+DEBUG = True
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,7 +38,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'api',
-    'api.pricing_ml',
+    # 'api.pricing_ml',
     'django_filters',
     'drf_spectacular',
     ]
@@ -75,37 +76,48 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
-# Database.
-if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'defaultdb',
-            'USER': 'doadmin',
-            'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
-            'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
-            'PORT': '25060',
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'defaultdb',
+        'USER': 'doadmin',
+        'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
+        'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
+        'PORT': '25060',
     }
-elif ENVIRONMENT == 'DEV':
-    #new db for development purposes 
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'defaultdb',
-            'USER': 'doadmin',
-            'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
-            'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
-            'PORT': '25060',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'sqllite.db',
-        },
-    }
+}
+
+# # Database.
+# if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'defaultdb',
+#             'USER': 'doadmin',
+#             'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
+#             'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
+#             'PORT': '25060',
+#         }
+#     }
+# elif ENVIRONMENT == 'DEV':
+#     #new db for development purposes 
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'defaultdb',
+#             'USER': 'doadmin',
+#             'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
+#             'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
+#             'PORT': '25060',
+#         }
+#     }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': 'sqllite.db',
+#         },
+#     }
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
