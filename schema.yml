@@ -4729,6 +4729,18 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        device_token:
+          type: string
+          nullable: true
+          maxLength: 255
         seller:
           type: string
           format: uuid
@@ -5293,6 +5305,18 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        device_token:
+          type: string
+          nullable: true
+          maxLength: 255
         seller:
           type: string
           format: uuid
