@@ -241,7 +241,7 @@ def non_ml_pricing(request):
       tip_fees = disposal_location_waste_type.price_per_ton * included_tons
 
       # Add daily rate.
-      rental_cost = (end_date - start_date).days * 5
+      rental_cost = (end_date - start_date).days * 22
 
       prices.append({
         'seller_location': seller_location.id,
