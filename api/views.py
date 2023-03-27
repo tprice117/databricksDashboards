@@ -6,14 +6,15 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from .serializers import *
 from .models import *
-from .apps import MlConfig
+# from .apps import MlConfig
 from django.conf import settings
 import stripe
 import requests
 from random import randint
+import math
 import pickle
-import pandas as pd
-from .pricing_ml import xgboost_pricing as xgb
+# import pandas as pd
+# from .pricing_ml import xgboost_pricing as xgb
 
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -183,6 +184,56 @@ def delete(endpoint, body):
   url =  baseUrl + endpoint
   payload = dict({"api_key": API_KEY}.items() | body.items())
   return call_TG_API(url, payload)
+
+# Non-ML Pricing Endpoint.
+@api_view(['POST'])
+def non_ml_pricing(request):
+  # Assign posted data to variables.
+  customer_lat = request.data['customer_lat']
+  customer_long = request.data['customer_long']
+  # business_lat = request.data['business_lat']
+  # business_long = request.data['business_long']
+  product_id = request.data['product_id']
+
+  # Get SellerLocations that offer the product.
+  seller_products = SellerProduct.objects.filter(product=product_id)
+  seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
+  seller_locations = SellerLocation.objects.filter(id__in=seller_product_seller_locations.values_list('seller_location', flat=True))
+  
+  # Returned List of Prices.
+  prices = []
+
+  # Approximate radius of earth in km
+  R = 6373.0
+
+  # Calculate distance from customer to each SellerLocation.
+  for seller_id in seller_locations.values('seller').distinct():
+    seller_locations_by_seller = seller_locations.filter(seller=seller_id)
+    for seller_location in seller_locations_by_seller:
+      dlon = customer_long - float(seller_location.longitude)
+      dlat = customer_lat - float(seller_location.latitude)
+
+      a = math.sin(dlat / 2)**2 + math.cos(seller_location.longitude) * math.cos(customer_long) * math.sin(dlon / 2)**2
+      c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+      # Calculate the distance between seller location and customer location.
+      distance = R * c * 0.62137119 
+
+      # Add arbitrary 10 miles to distance. This represents the distance the truck will travel to dump the trash.
+      distance = 10 + distance
+
+      # Add tip fees for waste type multiplied by tons.
+      waste_type_fee = 50
+      included_tons = 2
+      tip_fees = waste_type_fee * included_tons
+
+      
+
+      return {
+        "price": seller_location.price,
+        'seller_location': seller_location.id,
+      }
+      print(distance)
 
 
 # ml views for pricing
