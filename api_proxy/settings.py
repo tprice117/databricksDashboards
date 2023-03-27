@@ -76,48 +76,38 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'defaultdb',
-        'USER': 'doadmin',
-        'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
-        'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
-        'PORT': '25060',
-    }
-}
 
-# # Database.
-# if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'defaultdb',
-#             'USER': 'doadmin',
-#             'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
-#             'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
-#             'PORT': '25060',
-#         }
-#     }
-# elif ENVIRONMENT == 'DEV':
-#     #new db for development purposes 
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'defaultdb',
-#             'USER': 'doadmin',
-#             'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
-#             'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
-#             'PORT': '25060',
-#         }
-#     }
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': 'sqllite.db',
-#         },
-#     }
+# Database.
+if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
+            'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
+    }
+elif ENVIRONMENT == 'DEV':
+    #new db for development purposes 
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
+            'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'sqllite.db',
+        },
+    }
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
