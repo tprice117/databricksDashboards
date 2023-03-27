@@ -1,9 +1,12 @@
+import datetime
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import render
 from rest_framework import viewsets
+
+from api.utils import get_distance
 from .serializers import *
 from .models import *
 # from .apps import MlConfig
@@ -194,6 +197,9 @@ def non_ml_pricing(request):
   # business_lat = request.data['business_lat']
   # business_long = request.data['business_long']
   product_id = request.data['product_id']
+  waste_type = request.data['waste_type']
+  start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
+  end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
 
   # Get SellerLocations that offer the product.
   seller_products = SellerProduct.objects.filter(product=product_id)
@@ -205,35 +211,47 @@ def non_ml_pricing(request):
 
   # Approximate radius of earth in km
   R = 6373.0
+  disposal_locations = DisposalLocation.objects.all()
 
   # Calculate distance from customer to each SellerLocation.
   for seller_id in seller_locations.values('seller').distinct():
-    seller_locations_by_seller = seller_locations.filter(seller=seller_id)
+    seller_locations_by_seller = seller_locations.filter(seller=seller_id['seller'])
     for seller_location in seller_locations_by_seller:
-      dlon = customer_long - float(seller_location.longitude)
-      dlat = customer_lat - float(seller_location.latitude)
+      distance = get_distance(customer_lat, customer_long, seller_location.latitude, seller_location.longitude)
 
-      a = math.sin(dlat / 2)**2 + math.cos(seller_location.longitude) * math.cos(customer_long) * math.sin(dlon / 2)**2
-      c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+      # Find closest DisposalLocation between customer and business.
+      best_disposal_location = None
+      best_total_distance = None
+      for disposal_location in disposal_locations:
+        seller_customer_distance = get_distance(seller_location.latitude, seller_location.longitude, customer_lat, customer_long)
+        customer_disposal_distance = get_distance(customer_lat, customer_long, disposal_location.latitude, disposal_location.longitude)
+        disposal_seller_distance = get_distance(disposal_location.latitude, disposal_location.longitude, seller_location.latitude, seller_location.longitude)
+        total_distance = (3 * seller_customer_distance) + customer_disposal_distance + disposal_seller_distance
+  
+        if best_disposal_location is None or best_total_distance is None or total_distance < best_total_distance:
+          best_disposal_location = disposal_location
+          best_total_distance = total_distance
 
-      # Calculate the distance between seller location and customer location.
-      distance = R * c * 0.62137119 
-
-      # Add arbitrary 10 miles to distance. This represents the distance the truck will travel to dump the trash.
-      distance = 10 + distance
+      # Calculate milage cost.
+      milage_cost = best_total_distance * 5
 
       # Add tip fees for waste type multiplied by tons.
-      waste_type_fee = 50
-      included_tons = 2
-      tip_fees = waste_type_fee * included_tons
+      disposal_location_waste_type = DisposalLocationWasteType.objects.get(disposal_location=best_disposal_location.id, waste_type=waste_type)
+      included_tons = 4
+      tip_fees = disposal_location_waste_type.price_per_ton * included_tons
 
-      
+      # Add daily rate.
+      rental_cost = (end_date - start_date).days * 5
 
-      return {
-        "price": seller_location.price,
+      prices.append({
         'seller_location': seller_location.id,
-      }
-      print(distance)
+        'disposal_location': best_disposal_location.id,
+        'milage_cost': milage_cost,
+        'tip_fees': tip_fees,
+        'rental_cost': rental_cost,
+        'price': float(milage_cost) + float(tip_fees) + float(rental_cost),
+      })
+  return Response(prices)
 
 
 # ml views for pricing
