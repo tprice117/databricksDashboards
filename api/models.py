@@ -79,7 +79,7 @@ class User(BaseModel):
     email = models.CharField(max_length=255, blank=True, null=True)
     photo_url = models.URLField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
-    stripe_customer_id = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     device_token= models.CharField(max_length=255, blank=True, null=True)
