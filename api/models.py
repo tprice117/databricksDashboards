@@ -86,6 +86,12 @@ class User(BaseModel):
 
     def __str__(self):
         return self.email
+    
+    def post_create(sender, instance, created, **kwargs):
+        if created:
+            customer = stripe.Customer.create()
+            instance.stripe_customer_id = customer.id
+            instance.save()
 
 class UserUserAddress(BaseModel):
     user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
@@ -268,5 +274,6 @@ class DisposalLocationWasteType(BaseModel):
 
     def __str__(self):
         return self.disposal_location.name + ' - ' + self.waste_type.name
-    
+
+post_save.connect(User.post_create, sender=User)  
 post_save.connect(Order.post_create, sender=Order)
