@@ -215,9 +215,9 @@ def non_ml_pricing(request):
 
   # Calculate distance from customer to each SellerLocation.
   for seller_id in seller_locations.values('seller').distinct():
-    seller_locations_by_seller = seller_locations.filter(seller=seller_id['seller'])
-    for seller_location in seller_locations_by_seller:
-      prices.append(get_price_for_seller(seller_location, customer_lat, customer_long, waste_type, start_date, end_date, disposal_locations))
+    seller_product_seller_locations_by_seller = seller_product_seller_locations.filter(seller_location__seller=seller_id['seller'])
+    for seller_product_seller_location in seller_product_seller_locations_by_seller:
+      prices.append(get_price_for_seller(seller_product_seller_location, customer_lat, customer_long, waste_type, start_date, end_date, disposal_locations))
   return Response(prices)
 
 
