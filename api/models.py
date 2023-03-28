@@ -4,6 +4,8 @@ from django.db.models.signals import post_save
 import uuid
 import stripe
 
+from api.utils import get_price_for_seller
+
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class BaseModel(models.Model):
@@ -208,12 +210,23 @@ class Order(BaseModel):
 
     def post_create(sender, instance, created, **kwargs):
         if created:
+            disposal_locations = DisposalLocation.objects.all()
+            waste_type = WasteType.objects.all()[0]
+            price = get_price_for_seller(
+                instance.seller_product_seller_location, 
+                instance.user_address.latitude, 
+                instance.user_address.longitude,
+                waste_type, 
+                instance.schedule_date, 
+                instance.schedule_date, 
+                disposal_locations
+            )
             stripe.InvoiceItem.create(
-                customer="cus_MISF99duuyAcH3",
-                amount=1000,
+                customer=instance.user_address.user.stripe_customer_id,
+                amount=price['price'],
                 currency="usd",
             )
-            invoice = stripe.Invoice.create(customer="cus_MISF99duuyAcH3")
+            invoice = stripe.Invoice.create(customer=instance.user_address.user.stripe_customer_id)
             instance.stripe_invoice_id = invoice.id
             instance.save()
 
