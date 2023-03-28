@@ -42,6 +42,7 @@ urlpatterns = [
     path('api/payment-methods/', views.StripePaymentMethods.as_view()),
     path('api/setup-intents/', views.StripeSetupIntents.as_view()),
     path('api/payment-intents/', views.StripePaymentIntents.as_view()),
+    path('api/customer-portal/<str:customer_id>/', views.stripe_customer_portal_url),
     path('api/service-requests/<str:pk>/payout', views.StripeConnectPayoutForService.as_view(), name="payout"),
     path('api/sessions', views.StripeCreateCheckoutSession.as_view()),
 

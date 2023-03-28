@@ -414,6 +414,16 @@ class ConvertSFOrderToScrapTask(APIView):
 
 ### Stripe Views
 
+@api_view(['GET'])
+def stripe_customer_portal_url(request, customer_id):
+    billing_portal_session = stripe.billing_portal.Session.create(
+        customer=customer_id,
+    )
+
+    return Response({
+        "url": billing_portal_session.url
+    })
+
 class StripePaymentMethods(APIView):
     def get(self, request, format=None):
         stripe_customer_id = self.request.query_params.get('id')

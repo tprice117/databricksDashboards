@@ -79,13 +79,19 @@ class User(BaseModel):
     email = models.CharField(max_length=255, blank=True, null=True)
     photo_url = models.URLField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
-    stripe_customer_id = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     device_token= models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.email
+    
+    def post_create(sender, instance, created, **kwargs):
+        if created:
+            customer = stripe.Customer.create()
+            instance.stripe_customer_id = customer.id
+            instance.save()
 
 class UserUserAddress(BaseModel):
     user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
@@ -268,5 +274,6 @@ class DisposalLocationWasteType(BaseModel):
 
     def __str__(self):
         return self.disposal_location.name + ' - ' + self.waste_type.name
-    
+
+post_save.connect(User.post_create, sender=User)  
 post_save.connect(Order.post_create, sender=Order)

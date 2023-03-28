@@ -1,6 +1,6 @@
 import math
 
-from api.models import DisposalLocationWasteType
+from .models import *
  
 
 def get_distance(lat1, lon1, lat2, lon2):
