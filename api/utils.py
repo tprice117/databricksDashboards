@@ -49,4 +49,18 @@ def get_price_for_seller(seller_product_seller_location, customer_lat, customer_
     'tip_fees': tip_fees,
     'rental_cost': rental_cost,
     'price': float(milage_cost) + float(tip_fees) + float(rental_cost),
+    'line_items': [
+      {
+        'name': 'Milage Cost',
+        'price': milage_cost,
+      },
+      {
+        'name': 'Tip Fees',
+        'price': tip_fees,
+      },
+      {
+        'name': 'Rental Cost',
+        'price': rental_cost,
+      },
+    ]
   }
