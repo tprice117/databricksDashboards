@@ -1,6 +1,5 @@
+import api.models
 import math
-
-from .models import *
  
 
 def get_distance(lat1, lon1, lat2, lon2):
@@ -34,7 +33,7 @@ def get_price_for_seller(seller_product_seller_location, customer_lat, customer_
   milage_cost = best_total_distance * 5
 
   # Add tip fees for waste type multiplied by tons.
-  disposal_location_waste_type = DisposalLocationWasteType.objects.get(disposal_location=best_disposal_location.id, waste_type=waste_type)
+  disposal_location_waste_type = api.models.DisposalLocationWasteType.objects.get(disposal_location=best_disposal_location.id, waste_type=waste_type)
   included_tons = 4
   tip_fees = disposal_location_waste_type.price_per_ton * included_tons
 
