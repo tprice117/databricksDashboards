@@ -222,7 +222,7 @@ class Order(BaseModel):
                 instance.seller_product_seller_location, 
                 instance.user_address.latitude, 
                 instance.user_address.longitude,
-                waste_type, 
+                waste_type.id, 
                 instance.schedule_date, 
                 instance.schedule_date, 
                 disposal_locations
