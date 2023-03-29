@@ -202,42 +202,6 @@ class OrderGroup(BaseModel):
     def __str__(self):
         return str(self.id)
 
-class Order(BaseModel):
-    user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
-    user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
-    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    time_slot = models.CharField(max_length=255, choices=[('4am-8am', '4am-8am'), ('8am-12pm', '8am-12pm'), ('12pm-4pm', '12pm-4pm'), ('4pm-8pm', '4pm-8pm'), ('8pm-12am', '8pm-12am')], blank=True, null=True)
-    schedule_date = models.DateField(blank=True, null=True)
-    additional_schedule_details = models.TextField(blank=True, null=True)
-    access_details = models.TextField(blank=True, null=True)
-    subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True) #Added 2/20/2023.
-    order_group = models.ForeignKey(OrderGroup, models.DO_NOTHING, blank=True, null=True)
-    seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
-
-    def post_create(sender, instance, created, **kwargs):
-        if created:
-            disposal_locations = DisposalLocation.objects.all()
-            waste_type = "4214fb3b-a104-49c3-95d1-bcea6ccdfeb6"
-            price = get_price_for_seller(
-                instance.seller_product_seller_location, 
-                instance.user_address.latitude, 
-                instance.user_address.longitude,
-                waste_type, 
-                instance.schedule_date, 
-                instance.schedule_date, 
-                disposal_locations
-            )
-
-            stripe.InvoiceItem.create(
-                customer=instance.user.stripe_customer_id,
-                amount=round(price['price']*100),
-                currency="usd",
-            )
-            invoice = stripe.Invoice.create(customer=instance.user.stripe_customer_id)
-            instance.stripe_invoice_id = invoice.id
-            instance.save()
-
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80, blank=True, null=True)
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True)
@@ -276,6 +240,45 @@ class DisposalLocationWasteType(BaseModel):
 
     def __str__(self):
         return self.disposal_location.name + ' - ' + self.waste_type.name
+    
+class Order(BaseModel):
+    user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
+    user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
+    subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True)
+    order_group = models.ForeignKey(OrderGroup, models.DO_NOTHING, blank=True, null=True)
+    waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
+    disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
+    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    time_slot = models.CharField(max_length=255, choices=[('4am-8am', '4am-8am'), ('8am-12pm', '8am-12pm'), ('12pm-4pm', '12pm-4pm'), ('4pm-8pm', '4pm-8pm'), ('8pm-12am', '8pm-12am')], blank=True, null=True)
+    schedule_date = models.DateField(blank=True, null=True)
+    additional_schedule_details = models.TextField(blank=True, null=True)
+    access_details = models.TextField(blank=True, null=True)
+    seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
+
+    def post_create(sender, instance, created, **kwargs):
+        if created:
+            disposal_locations = DisposalLocation.objects.all()
+            price = get_price_for_seller(
+                instance.seller_product_seller_location, 
+                instance.user_address.latitude, 
+                instance.user_address.longitude,
+                instance.waste_type.id, 
+                instance.schedule_date, 
+                instance.schedule_date, 
+                disposal_locations
+            )
+
+            for item in price['line_items']:
+                stripe.InvoiceItem.create(
+                    customer=instance.user.stripe_customer_id,
+                    amount=round(item['price']*100),
+                    description=item['name'],
+                    currency="usd",
+                )
+            invoice = stripe.Invoice.create(customer=instance.user.stripe_customer_id)
+            instance.stripe_invoice_id = invoice.id
+            instance.save()
 
 post_save.connect(User.post_create, sender=User)  
 post_save.connect(Order.post_create, sender=Order)
