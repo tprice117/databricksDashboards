@@ -203,6 +203,7 @@ class OrderGroup(BaseModel):
         return str(self.id)
 
 class Order(BaseModel):
+    user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -217,22 +218,23 @@ class Order(BaseModel):
     def post_create(sender, instance, created, **kwargs):
         if created:
             disposal_locations = DisposalLocation.objects.all()
-            waste_type = WasteType.objects.all()[0]
+            waste_type = "4214fb3b-a104-49c3-95d1-bcea6ccdfeb6"
             price = get_price_for_seller(
                 instance.seller_product_seller_location, 
                 instance.user_address.latitude, 
                 instance.user_address.longitude,
-                waste_type.id, 
+                waste_type, 
                 instance.schedule_date, 
                 instance.schedule_date, 
                 disposal_locations
             )
+
             stripe.InvoiceItem.create(
-                customer=instance.user_address.user.stripe_customer_id,
-                amount=price['price'],
+                customer=instance.user.stripe_customer_id,
+                amount=round(price['price']*100),
                 currency="usd",
             )
-            invoice = stripe.Invoice.create(customer=instance.user_address.user.stripe_customer_id)
+            invoice = stripe.Invoice.create(customer=instance.user.stripe_customer_id)
             instance.stripe_invoice_id = invoice.id
             instance.save()
 
