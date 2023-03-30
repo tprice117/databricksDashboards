@@ -113,7 +113,7 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = ["id", "user_address"]
+    filterset_fields = ["id", "user_address", "user"]
 
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
