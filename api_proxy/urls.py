@@ -45,6 +45,7 @@ urlpatterns = [
     path('api/customer-portal/<str:customer_id>/', views.stripe_customer_portal_url),
     path('api/service-requests/<str:pk>/payout', views.StripeConnectPayoutForService.as_view(), name="payout"),
     path('api/sessions', views.StripeCreateCheckoutSession.as_view()),
+    path('api/order/pricing/<str:order_id>/', views.order_pricing),
 
     # prediction ML
     path('api/prediction', views.Prediction.as_view(), name="predictions"),
