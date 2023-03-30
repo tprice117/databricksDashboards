@@ -250,8 +250,8 @@ class Order(BaseModel):
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    time_slot = models.CharField(max_length=255, choices=[('4am-8am', '4am-8am'), ('8am-12pm', '8am-12pm'), ('12pm-4pm', '12pm-4pm'), ('4pm-8pm', '4pm-8pm'), ('8pm-12am', '8pm-12am')], blank=True, null=True)
-    schedule_date = models.DateField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
     additional_schedule_details = models.TextField(blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
@@ -264,8 +264,8 @@ class Order(BaseModel):
                 instance.user_address.latitude, 
                 instance.user_address.longitude,
                 instance.waste_type.id, 
-                instance.schedule_date, 
-                instance.schedule_date, 
+                instance.start_date, 
+                instance.end_date, 
                 disposal_locations
             )
 

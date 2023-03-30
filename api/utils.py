@@ -23,7 +23,7 @@ def get_price_for_seller(seller_product_seller_location, customer_lat, customer_
     seller_customer_distance = get_distance(seller_product_seller_location.seller_location.latitude, seller_product_seller_location.seller_location.longitude, customer_lat, customer_long)
     customer_disposal_distance = get_distance(customer_lat, customer_long, disposal_location.latitude, disposal_location.longitude)
     disposal_seller_distance = get_distance(disposal_location.latitude, disposal_location.longitude, seller_product_seller_location.seller_location.latitude, seller_product_seller_location.seller_location.longitude)
-    total_distance = (3 * seller_customer_distance) + customer_disposal_distance + disposal_seller_distance
+    total_distance = seller_customer_distance + customer_disposal_distance #+ disposal_seller_distance
 
     if best_disposal_location is None or best_total_distance is None or total_distance < best_total_distance:
       best_disposal_location = disposal_location
