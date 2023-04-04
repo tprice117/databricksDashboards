@@ -49,5 +49,14 @@ urlpatterns = [
 
     # prediction ML
     path('api/prediction', views.Prediction.as_view(), name="predictions"),
-    path('api/pricing/', views.non_ml_pricing)
+    path('api/pricing/', views.non_ml_pricing),
+
+    # Stripe Dashboarding Endpoints
+    path('api/stripe/connect/accounts', views.StripeConnectAccount.as_view()),
+    path('api/stripe/connect/transfers', views.StripeConnectTransfer.as_view()),
+    path('api/stripe/billing/invoices', views.StripeBillingInvoice.as_view()),
+    path('api/stripe/billing/subscriptions', views.StripeBillingSubscription.as_view()),    
+    path('api/stripe/core/payment-intents', views.StripeCorePaymentIntents.as_view()),
+    path('api/stripe/core/balance', views.StripeCoreBalance.as_view()),
+    path('api/stripe/core/balance-transactions', views.StripeCoreBalanceTransactions.as_view()),
 ]
