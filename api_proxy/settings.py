@@ -76,47 +76,37 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'defaultdb',
-        'USER': 'doadmin',
-        'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
-        'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
-        'PORT': '25060',
+# Database.
+if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
+            'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
     }
-}
-# # Database.
-# if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'defaultdb',
-#             'USER': 'doadmin',
-#             'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
-#             'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
-#             'PORT': '25060',
-#         }
-#     }
-# elif ENVIRONMENT == 'DEV':
-#     #new db for development purposes 
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'defaultdb',
-#             'USER': 'doadmin',
-#             'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
-#             'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
-#             'PORT': '25060',
-#         }
-#     }
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': 'sqllite.db',
-#         },
-#     }
+elif ENVIRONMENT == 'DEV':
+    #new db for development purposes 
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
+            'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'sqllite.db',
+        },
+    }
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -166,9 +156,10 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+if ENVIRONMENT == 'TEST':
+    STRIPE_PUBLISHABLE_KEY = 'pk_live_H293e3qNvoJB8isKoALzyCFs00v6DmDPGg'
+    STRIPE_SECRET_KEY = 'sk_live_wYw9ZQ4Gzp8V1n2EOVJ7ZRFW00DX5CyS6c'
+else:    
+    STRIPE_PUBLISHABLE_KEY = 'pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf'
+    STRIPE_SECRET_KEY = 'sk_test_k7kzz0R6mrRogFPs6OVrpgrB00UmEjcUtf' 
 
-STRIPE_PUBLISHABLE_KEY = 'pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf'
-STRIPE_SECRET_KEY = 'sk_test_k7kzz0R6mrRogFPs6OVrpgrB00UmEjcUtf' 
-
-# STRIPE_PUBLISHABLE_KEY = 'pk_live_H293e3qNvoJB8isKoALzyCFs00v6DmDPGg'
-# STRIPE_SECRET_KEY = 'sk_live_wYw9ZQ4Gzp8V1n2EOVJ7ZRFW00DX5CyS6c'
