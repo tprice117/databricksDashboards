@@ -280,5 +280,8 @@ class Order(BaseModel):
             instance.stripe_invoice_id = invoice.id
             instance.save()
 
+    def __str__(self):
+        return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
+
 post_save.connect(User.post_create, sender=User)  
 post_save.connect(Order.post_create, sender=Order)
