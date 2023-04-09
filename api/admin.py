@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import *
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.auth.models import Group
+from .forms import *
 
 class MainProductCategoryInfoInline(admin.TabularInline):
     model = MainProductCategoryInfo
@@ -51,6 +52,7 @@ class SellerProductInline(admin.TabularInline):
     extra=0
 
 class SellerAdmin(admin.ModelAdmin):
+    form =  OpenDaysAdminForm
     inlines = [
         SellerProductInline,
     ]
