@@ -55,25 +55,25 @@ class SellerAdmin(admin.ModelAdmin):
         SellerProductInline,
     ]
 
-# class UserAddressInline(admin.TabularInline):
-#     model = User.addresses.through
-#     fields = ('name',)
-#     readonly_fields = ('name',)
-#     show_change_link = True
-#     extra=0
+class UserAddressAdmin(admin.ModelAdmin):
+    model = UserAddress
+    search_fields = ["name", "street"]
 
-# class UserAdmin(admin.ModelAdmin):
-#     inlines = [
-#         UserAddressInline,
-#     ]
+class UserAdmin(admin.ModelAdmin):
+    model = User
+    search_fields = ["email", "first_name", "last_name"]
+
+class OrderAdmin(admin.ModelAdmin):
+    model = Order
+    autocomplete_fields = ["user_address", "user"]
 
 # Register your models here.
 admin.site.register(Seller, SellerAdmin)
 admin.site.register(SellerLocation)
 admin.site.register(SellerProduct)
 admin.site.register(SellerProductSellerLocation)
-admin.site.register(UserAddress)
-admin.site.register(User)
+admin.site.register(UserAddress, UserAddressAdmin)
+admin.site.register(User, UserAdmin)
 admin.site.register(UserUserAddress)
 admin.site.register(AddOnChoice)
 admin.site.register(AddOn)
@@ -85,7 +85,7 @@ admin.site.register(MainProductInfo)
 admin.site.register(MainProductWasteType)
 admin.site.register(Product)
 admin.site.register(OrderGroup)
-admin.site.register(Order)
+admin.site.register(Order, OrderAdmin)
 admin.site.register(ProductAddOnChoice)
 admin.site.register(WasteType)
 admin.site.register(DisposalLocation)
