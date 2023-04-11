@@ -107,7 +107,7 @@ class UserUserAddress(BaseModel):
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING)
 
     def __str__(self):
-        return f'{self.user.id} - {self.user_address.id}'
+        return f'{self.user.email} - {self.user_address.street}'
     
 class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='user_seller_review')
@@ -201,6 +201,9 @@ class SellerProductSellerLocation(BaseModel):
     rate = models.DecimalField(max_digits=18, decimal_places=2)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
 
+    def __str__(self):
+        return f'{self.seller_location.seller.name} - {self.seller_location.name} - {self.seller_product.product.main_product.name}'
+    
 class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
@@ -226,6 +229,9 @@ class WasteType(BaseModel):
 class MainProductWasteType(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.CASCADE)
     main_product = models.ForeignKey(MainProduct, models.CASCADE)
+
+    def __str__(self):
+        return f'{self.main_product.name} - {self.waste_type.name}'
 
 class DisposalLocation(BaseModel):
     name = models.CharField(max_length=255)
