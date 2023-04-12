@@ -165,7 +165,7 @@ class AddOn(BaseModel):
     sort = models.DecimalField(max_digits=18, decimal_places=0)
 
     def __str__(self):
-        return self.name
+        return f'{self.main_product.name} - {self.name}'
 
 class AddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
@@ -219,7 +219,7 @@ class ProductAddOnChoice(BaseModel):
     add_on_choice = models.ForeignKey(AddOnChoice, models.DO_NOTHING)
 
     def __str__(self):
-        return self.name
+        return f'{self.product.main_product.name} - {self.add_on_choice.add_on.name} - {self.add_on_choice.name}'
 
 class WasteType(BaseModel):
     name = models.CharField(max_length=80)
