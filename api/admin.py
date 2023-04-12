@@ -35,6 +35,12 @@ class ProductInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class ProductAddOnChoiceInline(admin.TabularInline):
+    model = ProductAddOnChoice
+    fields = ('name', 'product', 'add_on_choice')
+    show_change_link = True
+    extra=0
+
 class SellerLocationInline(admin.TabularInline):
     model = SellerLocation
     fields = ('name',)
@@ -85,6 +91,9 @@ class MainProductCategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     search_fields = ["description", "main_product__name"]
     list_display = ('description', 'main_product')
+    inlines = [
+        ProductAddOnChoiceInline,
+    ]
 
 class MainProductAdmin(admin.ModelAdmin):
     search_fields = ["name", "main_product_category__name"]
