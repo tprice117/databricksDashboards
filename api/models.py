@@ -165,7 +165,7 @@ class AddOn(BaseModel):
     sort = models.DecimalField(max_digits=18, decimal_places=0)
 
     def __str__(self):
-        return self.name
+        return f'{self.main_product.name} - {self.name}'
 
 class AddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
