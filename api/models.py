@@ -150,7 +150,7 @@ class MainProduct(BaseModel):
     included_rate_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     
     def __str__(self):
-        return self.name
+        return f'{self.main_product_category.name} - {self.name}'
 
 class MainProductInfo(BaseModel):
     name = models.CharField(max_length=80)
