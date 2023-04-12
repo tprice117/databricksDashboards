@@ -118,20 +118,6 @@ class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     def __str__(self):
         return self.name
 
-class AddOn(BaseModel):
-    name = models.CharField(max_length=80)
-    sort = models.DecimalField(max_digits=18, decimal_places=0)
-
-    def __str__(self):
-        return self.name
-
-class AddOnChoice(BaseModel):
-    name = models.CharField(max_length=80)
-    add_on = models.ForeignKey(AddOn, models.DO_NOTHING)
-
-    def __str__(self):
-        return f'{self.add_on.name} - {self.name}'
-
 class MainProductCategory(BaseModel):
     name = models.CharField(max_length=80)
     description = models.TextField(blank=True, null=True)
@@ -173,6 +159,21 @@ class MainProductInfo(BaseModel):
     def __str__(self):
         return self.name
 
+class AddOn(BaseModel):
+    main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
+    name = models.CharField(max_length=80)
+    sort = models.DecimalField(max_digits=18, decimal_places=0)
+
+    def __str__(self):
+        return self.name
+
+class AddOnChoice(BaseModel):
+    name = models.CharField(max_length=80)
+    add_on = models.ForeignKey(AddOn, models.DO_NOTHING)
+
+    def __str__(self):
+        return f'{self.add_on.name} - {self.name}'
+    
 class MainProductAddOn(BaseModel):
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
     add_on = models.ForeignKey(AddOn, models.DO_NOTHING)
