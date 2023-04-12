@@ -187,7 +187,7 @@ class Product(BaseModel):
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
 
     def __str__(self):
-        return self.main_product.name if self.main_product and self.main_product.name else str(self.id)
+        return f'{self.main_product.name} - {self.product_code}'
 
 class SellerProduct(BaseModel):
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True, related_name='seller_products')
