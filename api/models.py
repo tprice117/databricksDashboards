@@ -172,7 +172,7 @@ class AddOnChoice(BaseModel):
     add_on = models.ForeignKey(AddOn, models.DO_NOTHING)
 
     def __str__(self):
-        return f'{self.add_on.name} - {self.name}'
+        return f'{self.add_on.main_product.name} - {self.add_on.name} - {self.name}'
     
 class MainProductAddOn(BaseModel):
     main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
