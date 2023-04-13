@@ -90,6 +90,7 @@ class MainProductCategoryAdmin(admin.ModelAdmin):
 
 class ProductAdmin(admin.ModelAdmin):
     search_fields = ["description", "main_product__name"]
+    list_display = ('__str__', 'main_product')
     inlines = [
         ProductAddOnChoiceInline,
     ]
@@ -126,8 +127,9 @@ class SellerLocationAdmin(admin.ModelAdmin):
         return super(SellerLocationAdmin, self).get_form(request, obj, **kwargs)
     
 class SellerProductAdmin(admin.ModelAdmin):
-    search_fields = ["product__description", "seller__name"]
+    search_fields = ["product__name", "seller__name"]
     list_display = ('product', 'seller')
+    list_filter = ('product__main_product__main_product_category', 'seller')
 
 class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
