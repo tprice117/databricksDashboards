@@ -194,7 +194,7 @@ class SellerProduct(BaseModel):
     seller = models.ForeignKey(Seller, models.CASCADE, blank=True, null=True, related_name='seller_products')
    
     def __str__(self):
-        return self.product.main_product.name + ' - ' + self.product.product_code + ' - ' + self.seller.name
+        return self.product.main_product.name + ' - ' + (self.product.product_code or "") + ' - ' + self.seller.name
 
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
