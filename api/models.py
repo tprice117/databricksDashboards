@@ -56,7 +56,7 @@ class Seller(BaseModel):
         return self.name
 
 class SellerLocation(BaseModel):
-    seller = models.ForeignKey(Seller, models.DO_NOTHING)
+    seller = models.ForeignKey(Seller, models.CASCADE)
     name = models.CharField(max_length=255)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)
@@ -103,8 +103,8 @@ class User(BaseModel):
             instance.save()
 
 class UserUserAddress(BaseModel):
-    user = models.ForeignKey(User, models.DO_NOTHING)
-    user_address = models.ForeignKey(UserAddress, models.DO_NOTHING)
+    user = models.ForeignKey(User, models.CASCADE)
+    user_address = models.ForeignKey(UserAddress, models.CASCADE)
 
     def __str__(self):
         return f'{self.user.email} - {self.user_address.street}'
@@ -130,7 +130,7 @@ class MainProductCategory(BaseModel):
 
 class MainProductCategoryInfo(BaseModel):
     name = models.CharField(max_length=80)
-    main_product_category = models.ForeignKey(MainProductCategory, models.DO_NOTHING)
+    main_product_category = models.ForeignKey(MainProductCategory, models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -141,7 +141,7 @@ class MainProduct(BaseModel):
     ar_url = models.URLField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
-    main_product_category = models.ForeignKey(MainProductCategory, models.DO_NOTHING)
+    main_product_category = models.ForeignKey(MainProductCategory, models.CASCADE)
     sort = models.DecimalField(max_digits=18, decimal_places=0)
     included_tonnage_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     price_per_additional_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
@@ -154,13 +154,13 @@ class MainProduct(BaseModel):
 
 class MainProductInfo(BaseModel):
     name = models.CharField(max_length=80)
-    main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
+    main_product = models.ForeignKey(MainProduct, models.CASCADE)
 
     def __str__(self):
         return self.name
 
 class AddOn(BaseModel):
-    main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
+    main_product = models.ForeignKey(MainProduct, models.CASCADE)
     name = models.CharField(max_length=80)
     sort = models.DecimalField(max_digits=18, decimal_places=0)
 
@@ -169,14 +169,14 @@ class AddOn(BaseModel):
 
 class AddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
-    add_on = models.ForeignKey(AddOn, models.DO_NOTHING)
+    add_on = models.ForeignKey(AddOn, models.CASCADE)
 
     def __str__(self):
         return f'{self.add_on.main_product.name} - {self.add_on.name} - {self.name}'
     
 class MainProductAddOn(BaseModel):
-    main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
-    add_on = models.ForeignKey(AddOn, models.DO_NOTHING)
+    main_product = models.ForeignKey(MainProduct, models.CASCADE)
+    add_on = models.ForeignKey(AddOn, models.CASCADE)
 
     def __str__(self):
         return f'{self.main_product.name} - {self.add_on.name}'
@@ -184,21 +184,21 @@ class MainProductAddOn(BaseModel):
 class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    main_product = models.ForeignKey(MainProduct, models.DO_NOTHING)
+    main_product = models.ForeignKey(MainProduct, models.CASCADE)
 
     def __str__(self):
         return f'{self.main_product.name} - {self.product_code}'
 
 class SellerProduct(BaseModel):
-    product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True, related_name='seller_products')
-    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True, related_name='seller_products')
+    product = models.ForeignKey(Product, models.CASCADE, blank=True, null=True, related_name='seller_products')
+    seller = models.ForeignKey(Seller, models.CASCADE, blank=True, null=True, related_name='seller_products')
    
     def __str__(self):
-        return (self.product.main_product.name if self.product and self.product.main_product else '') + ' - ' + self.seller.name
+        return self.product.main_product.name + ' - ' + self.product.product_code + ' - ' + self.seller.name
 
 class SellerProductSellerLocation(BaseModel):
-    seller_product = models.ForeignKey(SellerProduct, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_seller_product')
-    seller_location = models.ForeignKey(SellerLocation, models.DO_NOTHING, blank=True, null=True, related_name='seller_location_seller_product')
+    seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
+    seller_location = models.ForeignKey(SellerLocation, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
     rate = models.DecimalField(max_digits=18, decimal_places=2)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
 
@@ -215,8 +215,8 @@ class OrderGroup(BaseModel):
 
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
-    product = models.ForeignKey(Product, models.DO_NOTHING)
-    add_on_choice = models.ForeignKey(AddOnChoice, models.DO_NOTHING)
+    product = models.ForeignKey(Product, models.CASCADE)
+    add_on_choice = models.ForeignKey(AddOnChoice, models.CASCADE)
 
     def __str__(self):
         return f'{self.product.main_product.name} - {self.add_on_choice.add_on.name} - {self.add_on_choice.name}'
