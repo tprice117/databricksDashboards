@@ -50,6 +50,10 @@ urlpatterns = [
     # prediction ML
     path('api/prediction', views.Prediction.as_view(), name="predictions"),
     path('api/pricing/', views.non_ml_pricing),
+    
+    # add user test
+    path('add_user/', views.AddUser.as_view(), name='add_user'),
+
 
     # Stripe Dashboarding Endpoints
     path('api/stripe/connect/accounts', views.StripeConnectAccount.as_view()),

@@ -254,7 +254,8 @@ class DisposalLocationWasteType(BaseModel):
 
     def __str__(self):
         return self.disposal_location.name + ' - ' + self.waste_type.name
-    
+
+
 class Order(BaseModel):
     user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
