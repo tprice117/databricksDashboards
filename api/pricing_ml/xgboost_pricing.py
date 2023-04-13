@@ -4,8 +4,8 @@ import numpy as np
 import json
 import requests
 
-class price_model_xgb:
-    def __init__(self, model, enc):
+class price_model:
+    def __init__(self, model = None, enc = None):
         self.model = model
         self.enc = enc
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
@@ -84,3 +84,6 @@ class price_model_xgb:
         except Exception as e:
             print(e)
             return {"status": "Error", "message": str(e)}
+        
+    def junk_price(self, input_data):
+        
