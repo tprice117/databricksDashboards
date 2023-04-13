@@ -227,6 +227,20 @@ def non_ml_pricing(request):
       prices.append(get_price_for_seller(seller_product_seller_location, customer_lat, customer_long, waste_type, start_date, end_date, disposal_locations))
   return Response(prices)
 
+class AddUser(APIView):
+    # def get(self, request):
+    #     form = UserForm()
+    #    context = {'form': form}
+    #    return render(request, 'add_user.html', context)
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # ml views for pricing
 class Prediction(APIView):
@@ -500,6 +514,7 @@ class StripeCreateCheckoutSession(APIView):
             mode=mode,
         )
         return Response(session)
+        
 
 class StripeConnectPayoutForService(APIView):
     # Payout Accepted Vendor for Service Request.
@@ -540,6 +555,8 @@ class StripeConnectPayoutForService(APIView):
             return Response(transfer)
         else:
             return Response()
+        
+
         
 ## Stripe Dashboarding (GET only endpoints)
 

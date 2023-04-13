@@ -90,7 +90,6 @@ class MainProductCategoryAdmin(admin.ModelAdmin):
 
 class ProductAdmin(admin.ModelAdmin):
     search_fields = ["description", "main_product__name"]
-    list_display = ('name', 'description', 'main_product')
     inlines = [
         ProductAddOnChoiceInline,
     ]
