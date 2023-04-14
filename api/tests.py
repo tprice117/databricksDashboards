@@ -4,8 +4,6 @@ from django.test import TestCase, Client
 # from pricing_ml import price_model_xgb
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
-from .models import User
 from django.contrib.admin.models import LogEntry, DELETION
 from django.contrib.contenttypes.models import ContentType
 
@@ -15,7 +13,6 @@ from django.contrib.contenttypes.models import ContentType
 # from .models import Seller, Product, Order, User
 # from .serializers import SellerSerializer, ProductSerializer, OrderSerializer
 from rest_framework import status
-from rest_framework.test import APITestCase
 
 ### TEST PRICING MODULE ###
 """

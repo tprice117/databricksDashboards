@@ -3,11 +3,24 @@ import googlemaps
 import numpy as np
 import json
 import requests
+import datetime  
 
-class price_model:
-    def __init__(self, model = None, enc = None):
+class Price_Model:
+    def __init__(self, request, hauler_loc, model = None, enc = None):
+
+        # Assign model and encoder
         self.model = model
         self.enc = enc
+
+        # Assign posted data to variables
+        self.customer_lat = request.data['customer_lat'].astype(float)
+        self.customer_long = request.data['customer_long'].astype(float)
+        self.business_lat = hauler_loc.seller_location.latitude # process this request in views
+        self.business_long = hauler_loc.seller_location.longitude # process this request in views
+        self.product_id = request.data['product_id']
+        self.waste_type = request.data['waste_type']
+        self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
+        self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
         self.fred_api = r'fa4d32f5c98c51ccb516742cf566950f'
 
@@ -85,5 +98,38 @@ class price_model:
             print(e)
             return {"status": "Error", "message": str(e)}
         
-    def junk_price(self, input_data):
-        
+    def junk_price(self):
+        """Calc static junk price with distance from hauler to seller and diesel price."""
+        try:
+            # get diesel price from FRED
+            fredid = 'GASDESW'
+            latest_diesel = self.getdatafred(fredid, self.fred_api)
+            value = latest_diesel.loc[:,'value'].iloc[-1]
+        except:
+            value = 5
+
+        # static value now, change in future
+        mpg = 6.5
+
+        # seller to buyer distance
+        lat1, lon1 = self.customer_lat, self.customer_long
+        lat2, lon2 = self.business_lat, self.business_long
+        distance_miles = self.distance(lat1, lon1, lat2, lon2)
+
+        # set junk base price
+        if self.product == 'Junk - Extra Large':
+            base_price = 1200
+        elif self.product == 'Junk - Large':
+            base_price = 1000
+        elif self.product == 'Junk - Medium':
+            base_price = 800
+        elif self.product == 'Junk - Small':
+            base_price = 600
+        else:
+            base_price = 500
+
+        # calculate price components
+        self.base_price = base_price
+        self.variable_cost = (distance_miles / mpg) * value
+
+        return self.base_price + self.variable_cost

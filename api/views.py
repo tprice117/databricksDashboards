@@ -17,7 +17,7 @@ from random import randint
 import math
 import pickle
 # import pandas as pd
-# from .pricing_ml import xgboost_pricing as xgb
+from .pricing_ml import pricing
 
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -226,6 +226,29 @@ def non_ml_pricing(request):
     for seller_product_seller_location in seller_product_seller_locations_by_seller:
       prices.append(get_price_for_seller(seller_product_seller_location, customer_lat, customer_long, waste_type, start_date, end_date, disposal_locations))
   return Response(prices)
+
+@api_view(['POST'])
+def junk_price(request):
+  product_id = request.data['product_id']
+
+  # call pricing class and run junk method
+  seller_products = SellerProduct.objects.filter(product=product_id)
+  seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
+  seller_locations = SellerLocation.objects.filter(id__in=seller_product_seller_locations.values_list('seller_location', flat=True)).values('seller').distinct()
+  seller_product_seller_locations_by_seller = [seller_product_seller_locations.filter(seller_location__seller=seller_id['seller']) for seller_id in seller_locations]
+
+  # return all quotes
+  quotes = list()
+  for i in seller_product_seller_locations_by_seller:
+    price_mod = pricing.Price_Model(request=request, hauler_loc=i)
+    quotes.append(price_mod.junk_price())
+
+  return Response(quotes)
+
+
+
+   
+   
 
 class AddUser(APIView):
     # def get(self, request):

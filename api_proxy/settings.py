@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'api',
-    # 'api.pricing_ml',
+    'api.pricing_ml',
     'django_filters',
     'drf_spectacular',
     ]
