@@ -12,15 +12,29 @@ class Price_Model:
         self.model = model
         self.enc = enc
 
-        # Assign posted data to variables
+        # always need customer lat and long
         self.customer_lat = request.data['customer_lat'].astype(float)
         self.customer_long = request.data['customer_long'].astype(float)
+
+        # always need business lat and long or one seller to process pricing request
         self.business_lat = hauler_loc.seller_location.latitude # process this request in views
         self.business_long = hauler_loc.seller_location.longitude # process this request in views
+
+        # product characteristics required fields
         self.product_id = request.data['product_id']
         self.waste_type = request.data['waste_type']
-        self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
-        self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
+
+
+        # assign logic for junk pricing; don't need dates for pricing junk
+        if self.waste_type == 'Junk':
+            self.start_date = None
+            self.end_date = None
+        else:
+            # Assign posted data to variables
+            self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
+            self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
+
+
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
         self.fred_api = r'fa4d32f5c98c51ccb516742cf566950f'
 
