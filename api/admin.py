@@ -90,7 +90,7 @@ class MainProductCategoryAdmin(admin.ModelAdmin):
 
 class ProductAdmin(admin.ModelAdmin):
     search_fields = ["description", "main_product__name"]
-    list_display = ('name', 'description', 'main_product')
+    list_display = ('__str__', 'main_product')
     inlines = [
         ProductAddOnChoiceInline,
     ]
@@ -108,6 +108,7 @@ class MainProductInfoAdmin(admin.ModelAdmin):
     list_display = ('name', 'main_product')
     
 class SellerAdmin(admin.ModelAdmin):
+    search_fields = ["name",]
     form =  OpenDaysAdminForm
     inlines = [
         SellerProductInline,
@@ -127,8 +128,14 @@ class SellerLocationAdmin(admin.ModelAdmin):
         return super(SellerLocationAdmin, self).get_form(request, obj, **kwargs)
     
 class SellerProductAdmin(admin.ModelAdmin):
-    search_fields = ["product__description", "seller__name"]
+    search_fields = ["product__product_code", "seller__name"]
     list_display = ('product', 'seller')
+    list_filter = ('product__main_product__main_product_category', 'seller')
+
+class SellerProductSellerLocationAdmin(admin.ModelAdmin):
+    search_fields = ["seller_location__seller__name",]
+    autocomplete_fields = ["seller_product", "seller_location"]
+    list_filter = ('seller_product__product__main_product__main_product_category', 'seller_location__seller')
 
 class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
@@ -152,7 +159,7 @@ class MainProductWasteTypeAdmin(admin.ModelAdmin):
 admin.site.register(Seller, SellerAdmin)
 admin.site.register(SellerLocation, SellerLocationAdmin)
 admin.site.register(SellerProduct, SellerProductAdmin)
-admin.site.register(SellerProductSellerLocation)
+admin.site.register(SellerProductSellerLocation, SellerProductSellerLocationAdmin)
 admin.site.register(UserAddress, UserAddressAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(UserUserAddress)

@@ -76,6 +76,7 @@ class AddOnChoiceViewSet(viewsets.ModelViewSet):
 class AddOnViewSet(viewsets.ModelViewSet):
     queryset = AddOn.objects.all()
     serializer_class = AddOnSerializer
+    filterset_fields = ["main_product"] 
 
 class MainProductAddOnViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOn.objects.all()
@@ -201,8 +202,6 @@ def non_ml_pricing(request):
   # Assign posted data to variables.
   customer_lat = request.data['customer_lat']
   customer_long = request.data['customer_long']
-  # business_lat = request.data['business_lat']
-  # business_long = request.data['business_long']
   product_id = request.data['product_id']
   waste_type = request.data['waste_type']
   start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
