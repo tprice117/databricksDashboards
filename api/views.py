@@ -231,16 +231,18 @@ def junk_price(request):
   product_id = request.data['product_id']
 
   # call pricing class and run junk method
+  # Get SellerLocations that offer the product.
   seller_products = SellerProduct.objects.filter(product=product_id)
   seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
-  seller_locations = SellerLocation.objects.filter(id__in=seller_product_seller_locations.values_list('seller_location', flat=True)).values('seller').distinct()
-  seller_product_seller_locations_by_seller = [seller_product_seller_locations.filter(seller_location__seller=seller_id['seller']) for seller_id in seller_locations]
-
-  # return all quotes
+  seller_locations = SellerLocation.objects.filter(id__in=seller_product_seller_locations.values_list('seller_location', flat=True))
+  
   quotes = list()
-  for i in seller_product_seller_locations_by_seller:
-    price_mod = pricing.Price_Model(request=request, hauler_loc=i)
-    quotes.append(price_mod.junk_price())
+
+  for seller_id in seller_locations.values('seller').distinct():
+      seller_product_seller_locations_by_seller = seller_product_seller_locations.filter(seller_location__seller=seller_id['seller'])
+      for seller_product_seller_location in seller_product_seller_locations_by_seller:
+        price_mod = pricing.Price_Model(request=request, hauler_loc=seller_product_seller_location)
+        quotes.append(price_mod.junk_price())
 
   return Response(quotes)
 

@@ -13,8 +13,8 @@ class Price_Model:
         self.enc = enc
 
         # always need customer lat and long
-        self.customer_lat = request.data['customer_lat'].astype(float)
-        self.customer_long = request.data['customer_long'].astype(float)
+        self.customer_lat = float(request.data['customer_lat'])
+        self.customer_long = float(request.data['customer_long'])
 
         # always need business lat and long or one seller to process pricing request
         self.business_lat = hauler_loc.seller_location.latitude # process this request in views
@@ -38,11 +38,17 @@ class Price_Model:
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
         self.fred_api = r'fa4d32f5c98c51ccb516742cf566950f'
 
-    def distance(self, lat1, lon1, lat2, lon2):
+    def distance(self, lat1, lon1, lat2, lon2, unit='M'):
         """Use google maps api to calculate the driving distance between two points."""
         gmaps = googlemaps.Client(key=self.google_maps_api)
         try:
-            return gmaps.distance_matrix((lat1, lon1), (lat2, lon2), mode='driving')['rows'][0]['elements'][0]['distance']['value']
+            distance = gmaps.distance_matrix((lat1, lon1), (lat2, lon2), mode='driving')['rows'][0]['elements'][0]['distance']['value']
+            if unit == 'M':
+                return distance * 0.000621371
+            elif unit == 'K':
+                return distance * 0.001
+            else:
+                return distance
         except:
             return np.nan
         
@@ -131,19 +137,19 @@ class Price_Model:
         distance_miles = self.distance(lat1, lon1, lat2, lon2)
 
         # set junk base price
-        if self.product == 'Junk - Extra Large':
+        if self.product_id == 'Junk - Extra Large':
             base_price = 1200
-        elif self.product == 'Junk - Large':
+        elif self.product_id == "f286c2ec-628c-428b-8688-28efae888bc7":
             base_price = 1000
-        elif self.product == 'Junk - Medium':
+        elif self.product_id == 'Junk - Medium':
             base_price = 800
-        elif self.product == 'Junk - Small':
+        elif self.product_id == 'Junk - Small':
             base_price = 600
         else:
             base_price = 500
 
         # calculate price components
-        self.base_price = base_price
-        self.variable_cost = (distance_miles / mpg) * value
+        self.base_price = float(base_price)
+        self.variable_cost = (float(distance_miles) / float(mpg)) * float(value)
 
         return self.base_price + self.variable_cost
