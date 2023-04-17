@@ -241,8 +241,33 @@ def junk_price(request):
   for seller_id in seller_locations.values('seller').distinct():
       seller_product_seller_locations_by_seller = seller_product_seller_locations.filter(seller_location__seller=seller_id['seller'])
       for seller_product_seller_location in seller_product_seller_locations_by_seller:
+        # init a price model
         price_mod = pricing.Price_Model(request=request, hauler_loc=seller_product_seller_location)
-        quotes.append(price_mod.junk_price())
+
+        # return seller price and associated metadata
+        quote =  {
+        'seller': seller_product_seller_location.seller_location.seller.id,
+        'seller_location': seller_product_seller_location.seller_location.id,
+        'seller_product_seller_location': seller_product_seller_location.id,
+        # 'disposal_location': best_disposal_location.id,
+        'distance' : float(price_mod.distance_miles),
+        'milage_cost': float(price_mod.variable_cost),
+        'diesel_price': float(price_mod.latest_gas_price),
+        # 'tip_fees': tip_fees,
+        'rental_cost': float(price_mod.junk_price()),
+        'price': float(price_mod.junk_price()) +  float(price_mod.variable_cost),
+        'line_items': [
+          {
+            'name': 'Milage Cost',
+            'price': float(price_mod.variable_cost)
+          },
+          {
+            'name': 'Service Cost',
+            'price': float(price_mod.junk_price()),
+          }]}
+        
+        # add to list of quotes
+        quotes.append(quote)
 
   return Response(quotes)
 

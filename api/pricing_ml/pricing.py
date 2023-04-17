@@ -4,6 +4,7 @@ import numpy as np
 import json
 import requests
 import datetime  
+# from api.models import *
 
 class Price_Model:
     def __init__(self, request, hauler_loc, model = None, enc = None):
@@ -22,21 +23,34 @@ class Price_Model:
 
         # product characteristics required fields
         self.product_id = request.data['product_id']
-        self.waste_type = request.data['waste_type']
+        # self.waste_type = request.data['waste_type'] # add later
 
 
         # assign logic for junk pricing; don't need dates for pricing junk
-        if self.waste_type == 'Junk':
-            self.start_date = None
-            self.end_date = None
-        else:
-            # Assign posted data to variables
-            self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
-            self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
+        # if self.product_type == 'Junk':
+        #     self.start_date = None
+        #     self.end_date = None
+        # else:
+        #     # Assign posted data to variables
+        #     self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
+        #     self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
 
 
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
         self.fred_api = r'fa4d32f5c98c51ccb516742cf566950f'
+
+        self.distance_miles = self.distance(self.customer_lat, self.customer_long, self.business_lat, self.business_long)
+        self.mpg = 6.5
+
+        try:
+            self.latest_gas_price = self.getdatafred('GASDESW', self.fred_api).loc[:,'value'].iloc[-1]
+        except:
+            self.latest_gas_price= 5 # assume $5/gallon if no diesel price is given
+
+        self.variable_cost = (float(self.distance_miles) / float(self.mpg)) * float(self.latest_gas_price)
+
+
+
 
     def distance(self, lat1, lon1, lat2, lon2, unit='M'):
         """Use google maps api to calculate the driving distance between two points."""
@@ -120,36 +134,21 @@ class Price_Model:
         
     def junk_price(self):
         """Calc static junk price with distance from hauler to seller and diesel price."""
-        try:
-            # get diesel price from FRED
-            fredid = 'GASDESW'
-            latest_diesel = self.getdatafred(fredid, self.fred_api)
-            value = latest_diesel.loc[:,'value'].iloc[-1]
-        except:
-            value = 5
-
-        # static value now, change in future
-        mpg = 6.5
-
-        # seller to buyer distance
-        lat1, lon1 = self.customer_lat, self.customer_long
-        lat2, lon2 = self.business_lat, self.business_long
-        distance_miles = self.distance(lat1, lon1, lat2, lon2)
 
         # set junk base price
-        if self.product_id == 'Junk - Extra Large':
-            base_price = 1200
-        elif self.product_id == "f286c2ec-628c-428b-8688-28efae888bc7":
+        # if self.product_id == 'Junk - Extra Large':
+        #     base_price = 1200
+        if self.product_id == "f286c2ec-628c-428b-8688-28efae888bc7":
             base_price = 1000
-        elif self.product_id == 'Junk - Medium':
-            base_price = 800
-        elif self.product_id == 'Junk - Small':
+        # elif self.product_id == 'Junk - Medium':
+        #     base_price = 800
+        elif self.product_id == "fac96db2-396d-4cd6-bf34-1c84d07e068f":
             base_price = 600
         else:
             base_price = 500
 
         # calculate price components
         self.base_price = float(base_price)
-        self.variable_cost = (float(distance_miles) / float(mpg)) * float(value)
+        # self.variable_cost = (float(self.distance_miles) / float(self.mpg)) * float(self.latest_gas_price)
 
-        return self.base_price + self.variable_cost
+        return self.base_price # + self.variable_cost
