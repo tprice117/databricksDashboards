@@ -224,7 +224,7 @@ class Price_Model:
             'milage_cost': milage_cost,
             'tip_fees': tip_fees,
             'rental_cost': base_cost,
-            'price': float(milage_cost) + float(tip_fees) + float(base_cost),
+            'price': float(milage_cost or 0.0) + float(tip_fees or 0.0) + float(base_cost or 0.0),
             'line_items': [
                 {
                     'name': 'Milage Cost',
