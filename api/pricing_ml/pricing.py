@@ -199,6 +199,7 @@ class Price_Model:
             base_cost =(self.end_date - self.start_date).days * 22
         elif self.product.main_product.main_product_category.name == "Junk Removal":
             print("JUNK REMOVAL")
+            print(self.product.product_code)
             if self.product.product_code == "JR3CY":
                 base_cost = 100
             elif self.product.product_code == "JR4CY":
