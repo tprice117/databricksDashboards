@@ -49,8 +49,7 @@ urlpatterns = [
 
     # prediction ML
     path('api/prediction', views.Prediction.as_view(), name="predictions"),
-    path('api/pricing/', views.non_ml_pricing),
-    path('api/pricing/junk/', views.junk_price),
+    path('api/pricing/', views.get_pricing),
     
     # add user test
     path('add_user/', views.AddUser.as_view(), name='add_user'),

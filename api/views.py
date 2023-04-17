@@ -198,53 +198,9 @@ def order_pricing(request, order_id):
 
 # Non-ML Pricing Endpoint.
 @api_view(['POST'])
-def non_ml_pricing(request):
-  # Assign posted data to variables.
-  customer_lat = request.data['customer_lat']
-  customer_long = request.data['customer_long']
-  product_id = request.data['product_id']
-  waste_type = request.data['waste_type']
-  start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
-  end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
-
-  # Get SellerLocations that offer the product.
-  seller_products = SellerProduct.objects.filter(product=product_id)
-  seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
-  seller_locations = SellerLocation.objects.filter(id__in=seller_product_seller_locations.values_list('seller_location', flat=True))
-  
-  # Returned List of Prices.
-  prices = []
-
-  # Approximate radius of earth in km
-  R = 6373.0
-  disposal_locations = DisposalLocation.objects.all()
-
-  # Calculate distance from customer to each SellerLocation.
-  for seller_id in seller_locations.values('seller').distinct():
-    seller_product_seller_locations_by_seller = seller_product_seller_locations.filter(seller_location__seller=seller_id['seller'])
-    for seller_product_seller_location in seller_product_seller_locations_by_seller:
-      prices.append(get_price_for_seller(seller_product_seller_location, customer_lat, customer_long, waste_type, start_date, end_date, disposal_locations))
-  return Response(prices)
-
-@api_view(['POST'])
-def junk_price(request):
-  product_id = request.data['product_id']
-
-  # call pricing class and run junk method
-  # Get SellerLocations that offer the product.
-  seller_products = SellerProduct.objects.filter(product=product_id)
-  seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
-  seller_locations = SellerLocation.objects.filter(id__in=seller_product_seller_locations.values_list('seller_location', flat=True))
-  
-  quotes = list()
-
-  for seller_id in seller_locations.values('seller').distinct():
-      seller_product_seller_locations_by_seller = seller_product_seller_locations.filter(seller_location__seller=seller_id['seller'])
-      for seller_product_seller_location in seller_product_seller_locations_by_seller:
-        price_mod = pricing.Price_Model(request=request, hauler_loc=seller_product_seller_location)
-        quotes.append(price_mod.junk_price())
-
-  return Response(quotes)
+def get_pricing(request):
+  price_mod = pricing.Price_Model(request=request)
+  return Response(price_mod.get_prices())
 
 
 
