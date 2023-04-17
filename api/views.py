@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import render
 from rest_framework import viewsets
-
 from api.utils import get_distance, get_price_for_seller
 from .serializers import *
 from .models import *
@@ -17,7 +16,7 @@ from random import randint
 import math
 import pickle
 # import pandas as pd
-# from .pricing_ml import xgboost_pricing as xgb
+from .pricing_ml import pricing
 
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -196,35 +195,11 @@ def order_pricing(request, order_id):
   invoice = stripe.Invoice.retrieve(order.stripe_invoice_id)
   return Response({"order_total": invoice.amount_due/100}, status=status.HTTP_200_OK)
 
-# Non-ML Pricing Endpoint.
+# Pricing Endpoint.
 @api_view(['POST'])
-def non_ml_pricing(request):
-  # Assign posted data to variables.
-  customer_lat = request.data['customer_lat']
-  customer_long = request.data['customer_long']
-  product_id = request.data['product_id']
-  waste_type = request.data['waste_type']
-  start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
-  end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
-
-  # Get SellerLocations that offer the product.
-  seller_products = SellerProduct.objects.filter(product=product_id)
-  seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
-  seller_locations = SellerLocation.objects.filter(id__in=seller_product_seller_locations.values_list('seller_location', flat=True))
-  
-  # Returned List of Prices.
-  prices = []
-
-  # Approximate radius of earth in km
-  R = 6373.0
-  disposal_locations = DisposalLocation.objects.all()
-
-  # Calculate distance from customer to each SellerLocation.
-  for seller_id in seller_locations.values('seller').distinct():
-    seller_product_seller_locations_by_seller = seller_product_seller_locations.filter(seller_location__seller=seller_id['seller'])
-    for seller_product_seller_location in seller_product_seller_locations_by_seller:
-      prices.append(get_price_for_seller(seller_product_seller_location, customer_lat, customer_long, waste_type, start_date, end_date, disposal_locations))
-  return Response(prices)
+def get_pricing(request):
+  price_mod = pricing.Price_Model(request=request)
+  return Response(price_mod.get_prices())
 
 class AddUser(APIView):
     # def get(self, request):
