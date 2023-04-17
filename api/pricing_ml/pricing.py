@@ -6,7 +6,6 @@ import numpy as np
 import json
 import requests
 import datetime  
-# from api.models import *
 
 class Price_Model:
     def __init__(self, request, model = None, enc = None):
@@ -195,24 +194,27 @@ class Price_Model:
         # Add daily rate.
         base_cost = None
         if self.product.main_product.main_product_category.name == "Roll Off Dumpster":
-            base_cost =(self.end_date - self.start_date).days * 22
+            base_cost =(self.end_date - self.start_date).days * 22 # assume $22 per day for roll off dumpsters
         elif self.product.main_product.main_product_category.name == "Junk Removal":
+            # ascending order for junk removal, let's assume $100 for each CY, then discount for larger sizes
+            # 1200 for median pricing for a XL junk removal from other sellers historically
+            # XL = 16 CY, XXL = 20 CY
             if self.product.product_code == "JR3CY":
-                base_cost = 100
-            elif self.product.product_code == "JR4CY":
-                base_cost = 150
-            elif self.product.product_code == "JR5CY":
-                base_cost = 200
-            elif self.product.product_code == "JR8CY":
-                base_cost = 250
-            elif self.product.product_code == "JR10CY":
                 base_cost = 300
-            elif self.product.product_code == "JR12CY":
-                base_cost = 350
-            elif self.product.product_code == "JR16CY":
+            elif self.product.product_code == "JR4CY":
                 base_cost = 400
+            elif self.product.product_code == "JR5CY":
+                base_cost = 500
+            elif self.product.product_code == "JR8CY":
+                base_cost = 750
+            elif self.product.product_code == "JR10CY":
+                base_cost = 900
+            elif self.product.product_code == "JR12CY":
+                base_cost = 1050
+            elif self.product.product_code == "JR16CY":
+                base_cost = 1200
             elif self.product.product_code == "JR20CY":
-                base_cost = 450
+                base_cost = 1350
 
         return {
             'seller': seller_product_seller_location.seller_location.seller.id,
