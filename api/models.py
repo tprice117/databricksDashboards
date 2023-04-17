@@ -124,6 +124,7 @@ class MainProductCategory(BaseModel):
     image = models.TextField(blank=True, null=True)
     icon = models.TextField(blank=True, null=True)
     sort = models.DecimalField(max_digits=18, decimal_places=0)
+    main_product_category_code = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -148,6 +149,7 @@ class MainProduct(BaseModel):
     max_tonnage_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     max_rate = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     included_rate_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    main_product_code = models.CharField(max_length=255, blank=True, null=True) 
     
     def __str__(self):
         return f'{self.main_product_category.name} - {self.name}'
