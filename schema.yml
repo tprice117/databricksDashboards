@@ -3,6 +3,16 @@ info:
   title: ''
   version: 0.0.0
 paths:
+  /add_user/:
+    post:
+      operationId: add_user_create
+      tags:
+      - add_user
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/add-on-choices/:
     get:
       operationId: api_add_on_choices_list
@@ -40,6 +50,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOnChoice'
+        required: true
       security:
       - {}
       responses:
@@ -94,6 +105,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOnChoice'
+        required: true
       security:
       - {}
       responses:
@@ -155,6 +167,12 @@ paths:
   /api/add-ons/:
     get:
       operationId: api_add_ons_list
+      parameters:
+      - in: query
+        name: main_product
+        schema:
+          type: string
+          format: uuid
       tags:
       - api
       security:
@@ -183,6 +201,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOn'
+        required: true
       security:
       - {}
       responses:
@@ -237,6 +256,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AddOn'
+        required: true
       security:
       - {}
       responses:
@@ -295,6 +315,22 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/customer-portal/{customer_id}/:
+    get:
+      operationId: api_customer_portal_retrieve
+      parameters:
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/main-product-add-ons/:
     get:
       operationId: api_main_product_add_ons_list
@@ -337,6 +373,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductAddOn'
+        required: true
       security:
       - {}
       responses:
@@ -391,6 +428,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductAddOn'
+        required: true
       security:
       - {}
       responses:
@@ -480,6 +518,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategory'
+        required: true
       security:
       - {}
       responses:
@@ -534,6 +573,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategory'
+        required: true
       security:
       - {}
       responses:
@@ -629,6 +669,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategoryInfo'
+        required: true
       security:
       - {}
       responses:
@@ -683,6 +724,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductCategoryInfo'
+        required: true
       security:
       - {}
       responses:
@@ -778,6 +820,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductInfo'
+        required: true
       security:
       - {}
       responses:
@@ -832,6 +875,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductInfo'
+        required: true
       security:
       - {}
       responses:
@@ -932,6 +976,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductWasteType'
+        required: true
       security:
       - {}
       responses:
@@ -986,6 +1031,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProductWasteType'
+        required: true
       security:
       - {}
       responses:
@@ -1086,6 +1132,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProduct'
+        required: true
       security:
       - {}
       responses:
@@ -1140,6 +1187,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MainProduct'
+        required: true
       security:
       - {}
       responses:
@@ -1341,12 +1389,33 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/order/pricing/{order_id}/:
+    get:
+      operationId: api_order_pricing_retrieve
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/orders/:
     get:
       operationId: api_orders_list
       parameters:
       - in: query
         name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user
         schema:
           type: string
           format: uuid
@@ -1515,6 +1584,26 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/prediction:
+    post:
+      operationId: api_prediction_create
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/pricing/:
+    post:
+      operationId: api_pricing_create
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/product-add-on-choices/:
     get:
       operationId: api_product_add_on_choices_list
@@ -1557,6 +1646,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProductAddOnChoice'
+        required: true
       security:
       - {}
       responses:
@@ -1611,6 +1701,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProductAddOnChoice'
+        required: true
       security:
       - {}
       responses:
@@ -1706,6 +1797,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Product'
+        required: true
       security:
       - {}
       responses:
@@ -1760,6 +1852,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Product'
+        required: true
       security:
       - {}
       responses:
@@ -2158,6 +2251,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProductSellerLocation'
+        required: true
       security:
       - {}
       responses:
@@ -2212,6 +2306,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProductSellerLocation'
+        required: true
       security:
       - {}
       responses:
@@ -2620,6 +2715,76 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/stripe/billing/invoices:
+    get:
+      operationId: api_stripe_billing_invoices_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/billing/subscriptions:
+    get:
+      operationId: api_stripe_billing_subscriptions_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/connect/accounts:
+    get:
+      operationId: api_stripe_connect_accounts_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/connect/transfers:
+    get:
+      operationId: api_stripe_connect_transfers_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/core/balance:
+    get:
+      operationId: api_stripe_core_balance_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/core/balance-transactions:
+    get:
+      operationId: api_stripe_core_balance_transactions_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/stripe/core/payment-intents:
+    get:
+      operationId: api_stripe_core_payment_intents_retrieve
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/subscriptions/:
     get:
       operationId: api_subscriptions_list
@@ -2971,8 +3136,6 @@ paths:
         name: id
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -2992,8 +3155,6 @@ paths:
         name: id
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -3025,8 +3186,6 @@ paths:
         name: id
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -3057,8 +3216,6 @@ paths:
         name: id
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this user seller review.
         required: true
       tags:
       - api
@@ -3275,6 +3432,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/UserUserAddress'
+        required: true
       security:
       - {}
       responses:
@@ -3329,6 +3487,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/UserUserAddress'
+        required: true
       security:
       - {}
       responses:
@@ -3573,6 +3732,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/WasteType'
+        required: true
       security:
       - {}
       responses:
@@ -3627,6 +3787,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/WasteType'
+        required: true
       security:
       - {}
       responses:
@@ -3704,15 +3865,19 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         sort:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
+        main_product:
+          type: string
+          format: uuid
       required:
       - created_on
+      - main_product
+      - name
+      - sort
       - updated_on
     AddOnChoice:
       type: object
@@ -3731,14 +3896,14 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         add_on:
           type: string
           format: uuid
-          nullable: true
       required:
+      - add_on
       - created_on
+      - name
       - updated_on
     BadgeEnum:
       enum:
@@ -3771,7 +3936,6 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         cubic_yards:
           type: string
@@ -3793,7 +3957,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
         included_tonnage_quantity:
           type: string
           format: decimal
@@ -3819,12 +3982,18 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+        main_product_code:
+          type: string
+          nullable: true
+          maxLength: 255
         main_product_category:
           type: string
           format: uuid
-          nullable: true
       required:
       - created_on
+      - main_product_category
+      - name
+      - sort
       - updated_on
     MainProductAddOn:
       type: object
@@ -3841,20 +4010,16 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        name:
-          type: string
-          nullable: true
-          maxLength: 80
         main_product:
           type: string
           format: uuid
-          nullable: true
         add_on:
           type: string
           format: uuid
-          nullable: true
       required:
+      - add_on
       - created_on
+      - main_product
       - updated_on
     MainProductCategory:
       type: object
@@ -3873,7 +4038,6 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         description:
           type: string
@@ -3888,9 +4052,14 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+        main_product_category_code:
+          type: string
           nullable: true
+          maxLength: 255
       required:
       - created_on
+      - name
+      - sort
       - updated_on
     MainProductCategoryInfo:
       type: object
@@ -3909,14 +4078,14 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         main_product_category:
           type: string
           format: uuid
-          nullable: true
       required:
       - created_on
+      - main_product_category
+      - name
       - updated_on
     MainProductInfo:
       type: object
@@ -3935,14 +4104,14 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         main_product:
           type: string
           format: uuid
-          nullable: true
       required:
       - created_on
+      - main_product
+      - name
       - updated_on
     MainProductWasteType:
       type: object
@@ -3962,14 +4131,14 @@ components:
         waste_type:
           type: string
           format: uuid
-          nullable: true
         main_product:
           type: string
           format: uuid
-          nullable: true
       required:
       - created_on
+      - main_product
       - updated_on
+      - waste_type
     NullEnum:
       enum:
       - null
@@ -3988,9 +4157,6 @@ components:
       properties:
         id:
           type: string
-        status:
-          type: string
-          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -4008,13 +4174,11 @@ components:
         description:
           type: string
           nullable: true
-        time_slot:
+        start_date:
+          type: string
+          format: date
           nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/TimeSlotEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        schedule_date:
+        end_date:
           type: string
           format: date
           nullable: true
@@ -4023,6 +4187,10 @@ components:
           nullable: true
         access_details:
           type: string
+          nullable: true
+        user:
+          type: string
+          format: uuid
           nullable: true
         user_address:
           type: string
@@ -4036,13 +4204,20 @@ components:
           type: string
           format: uuid
           nullable: true
+        waste_type:
+          type: string
+          format: uuid
+          nullable: true
+        disposal_location:
+          type: string
+          format: uuid
+          nullable: true
         seller_product_seller_location:
           type: string
           format: uuid
           nullable: true
       required:
       - created_on
-      - status
       - updated_on
     OrderGroup:
       type: object
@@ -4079,13 +4254,14 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         sort:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
+        main_product:
+          type: string
+          format: uuid
     PatchedAddOnChoice:
       type: object
       properties:
@@ -4103,12 +4279,10 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         add_on:
           type: string
           format: uuid
-          nullable: true
     PatchedMainProduct:
       type: object
       properties:
@@ -4126,7 +4300,6 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         cubic_yards:
           type: string
@@ -4148,7 +4321,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
         included_tonnage_quantity:
           type: string
           format: decimal
@@ -4174,10 +4346,13 @@ components:
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+        main_product_code:
+          type: string
+          nullable: true
+          maxLength: 255
         main_product_category:
           type: string
           format: uuid
-          nullable: true
     PatchedMainProductAddOn:
       type: object
       properties:
@@ -4193,18 +4368,12 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        name:
-          type: string
-          nullable: true
-          maxLength: 80
         main_product:
           type: string
           format: uuid
-          nullable: true
         add_on:
           type: string
           format: uuid
-          nullable: true
     PatchedMainProductCategory:
       type: object
       properties:
@@ -4222,7 +4391,6 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         description:
           type: string
@@ -4237,7 +4405,10 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+        main_product_category_code:
+          type: string
           nullable: true
+          maxLength: 255
     PatchedMainProductCategoryInfo:
       type: object
       properties:
@@ -4255,12 +4426,10 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         main_product_category:
           type: string
           format: uuid
-          nullable: true
     PatchedMainProductInfo:
       type: object
       properties:
@@ -4278,12 +4447,10 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         main_product:
           type: string
           format: uuid
-          nullable: true
     PatchedMainProductWasteType:
       type: object
       properties:
@@ -4302,19 +4469,14 @@ components:
         waste_type:
           type: string
           format: uuid
-          nullable: true
         main_product:
           type: string
           format: uuid
-          nullable: true
     PatchedOrder:
       type: object
       properties:
         id:
           type: string
-        status:
-          type: string
-          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -4332,13 +4494,11 @@ components:
         description:
           type: string
           nullable: true
-        time_slot:
+        start_date:
+          type: string
+          format: date
           nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/TimeSlotEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        schedule_date:
+        end_date:
           type: string
           format: date
           nullable: true
@@ -4347,6 +4507,10 @@ components:
           nullable: true
         access_details:
           type: string
+          nullable: true
+        user:
+          type: string
+          format: uuid
           nullable: true
         user_address:
           type: string
@@ -4357,6 +4521,14 @@ components:
           format: uuid
           nullable: true
         order_group:
+          type: string
+          format: uuid
+          nullable: true
+        waste_type:
+          type: string
+          format: uuid
+          nullable: true
+        disposal_location:
           type: string
           format: uuid
           nullable: true
@@ -4404,7 +4576,6 @@ components:
         main_product:
           type: string
           format: uuid
-          nullable: true
     PatchedProductAddOnChoice:
       type: object
       properties:
@@ -4422,16 +4593,13 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         product:
           type: string
           format: uuid
-          nullable: true
         add_on_choice:
           type: string
           format: uuid
-          nullable: true
     PatchedSeller:
       type: object
       properties:
@@ -4455,7 +4623,6 @@ components:
           maxLength: 255
         phone:
           type: string
-          nullable: true
           maxLength: 40
         website:
           type: string
@@ -4498,7 +4665,7 @@ components:
         marketplace_display_name:
           type: string
           nullable: true
-          maxLength: 20
+          maxLength: 255
         open_days:
           nullable: true
           oneOf:
@@ -4517,7 +4684,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
         announcement:
           type: string
           nullable: true
@@ -4536,11 +4702,6 @@ components:
           - $ref: '#/components/schemas/BadgeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        average_rating:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,1}(?:\.\d{0,1})?$
-          nullable: true
         tire_recycler_cert_registration_id_co:
           type: string
           nullable: true
@@ -4581,34 +4742,27 @@ components:
           nullable: true
         city:
           type: string
-          nullable: true
           maxLength: 40
         state:
           type: string
-          nullable: true
           maxLength: 80
         postal_code:
           type: string
-          nullable: true
           maxLength: 20
         country:
           type: string
-          nullable: true
           maxLength: 80
         latitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
         longitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
         seller:
           type: string
           format: uuid
-          nullable: true
     PatchedSellerProduct:
       type: object
       properties:
@@ -4654,7 +4808,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
         total_inventory:
           type: string
           format: decimal
@@ -4690,8 +4843,6 @@ components:
           maxLength: 255
         interval_days:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
           nullable: true
     PatchedUser:
       type: object
@@ -4726,9 +4877,8 @@ components:
           maxLength: 200
         stripe_customer_id:
           type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+          maxLength: 255
         first_name:
           type: string
           nullable: true
@@ -4768,30 +4918,24 @@ components:
           nullable: true
         city:
           type: string
-          nullable: true
           maxLength: 40
         state:
           type: string
-          nullable: true
           maxLength: 80
         postal_code:
           type: string
-          nullable: true
           maxLength: 20
         country:
           type: string
-          nullable: true
           maxLength: 80
         latitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
         longitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
     PatchedUserSellerReview:
       type: object
       properties:
@@ -4809,8 +4953,6 @@ components:
           type: boolean
         rating:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
           nullable: true
         comment:
           type: string
@@ -4846,18 +4988,12 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        name:
-          type: string
-          nullable: true
-          maxLength: 255
         user:
           type: string
           format: uuid
-          nullable: true
         user_address:
           type: string
           format: uuid
-          nullable: true
     PatchedWasteType:
       type: object
       properties:
@@ -4875,7 +5011,6 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
     Product:
       type: object
@@ -4902,9 +5037,9 @@ components:
         main_product:
           type: string
           format: uuid
-          nullable: true
       required:
       - created_on
+      - main_product
       - updated_on
     ProductAddOnChoice:
       type: object
@@ -4923,18 +5058,18 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
         product:
           type: string
           format: uuid
-          nullable: true
         add_on_choice:
           type: string
           format: uuid
-          nullable: true
       required:
+      - add_on_choice
       - created_on
+      - name
+      - product
       - updated_on
     Seller:
       type: object
@@ -4959,7 +5094,6 @@ components:
           maxLength: 255
         phone:
           type: string
-          nullable: true
           maxLength: 40
         website:
           type: string
@@ -5002,7 +5136,7 @@ components:
         marketplace_display_name:
           type: string
           nullable: true
-          maxLength: 20
+          maxLength: 255
         open_days:
           nullable: true
           oneOf:
@@ -5021,7 +5155,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
         announcement:
           type: string
           nullable: true
@@ -5040,11 +5173,6 @@ components:
           - $ref: '#/components/schemas/BadgeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        average_rating:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,1}(?:\.\d{0,1})?$
-          nullable: true
         tire_recycler_cert_registration_id_co:
           type: string
           nullable: true
@@ -5065,7 +5193,9 @@ components:
       required:
       - created_on
       - has_listings
+      - lead_time_hrs
       - name
+      - phone
       - updated_on
     SellerLocation:
       type: object
@@ -5090,37 +5220,37 @@ components:
           nullable: true
         city:
           type: string
-          nullable: true
           maxLength: 40
         state:
           type: string
-          nullable: true
           maxLength: 80
         postal_code:
           type: string
-          nullable: true
           maxLength: 20
         country:
           type: string
-          nullable: true
           maxLength: 80
         latitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
         longitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
         seller:
           type: string
           format: uuid
-          nullable: true
       required:
+      - city
+      - country
       - created_on
+      - latitude
+      - longitude
       - name
+      - postal_code
+      - seller
+      - state
       - updated_on
     SellerProduct:
       type: object
@@ -5170,7 +5300,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
-          nullable: true
         total_inventory:
           type: string
           format: decimal
@@ -5187,6 +5316,7 @@ components:
       required:
       - available_quantity
       - created_on
+      - rate
       - updated_on
     StatusEnum:
       enum:
@@ -5218,21 +5348,11 @@ components:
           maxLength: 255
         interval_days:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
           nullable: true
       required:
       - created_on
       - subscription_number
       - updated_on
-    TimeSlotEnum:
-      enum:
-      - 4am-8am
-      - 8am-12pm
-      - 12pm-4pm
-      - 4pm-8pm
-      - 8pm-12am
-      type: string
     TypeDisplayEnum:
       enum:
       - Landfill
@@ -5253,21 +5373,24 @@ components:
       type: string
     TypeEnum:
       enum:
-      - Landfill
-      - MRF
-      - Industrial
-      - Scrap yard
-      - Compost facility
-      - Processor
-      - Paint recycler
-      - Tires
-      - Other recycler
-      - Roll-off
-      - Mover
-      - Junk
-      - Delivery
       - Broker
+      - Compost facility
+      - Delivery
       - Equipment
+      - Fencing
+      - Industrial
+      - Junk
+      - Landfill
+      - Mover
+      - MRF
+      - Other recycler
+      - Paint recycler
+      - Portable Storage
+      - Portable Toilet
+      - Processor
+      - Roll-off
+      - Scrap yard
+      - Tires
       type: string
     User:
       type: object
@@ -5302,9 +5425,8 @@ components:
           maxLength: 200
         stripe_customer_id:
           type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+          maxLength: 255
         first_name:
           type: string
           nullable: true
@@ -5348,33 +5470,33 @@ components:
           nullable: true
         city:
           type: string
-          nullable: true
           maxLength: 40
         state:
           type: string
-          nullable: true
           maxLength: 80
         postal_code:
           type: string
-          nullable: true
           maxLength: 20
         country:
           type: string
-          nullable: true
           maxLength: 80
         latitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
         longitude:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
-          nullable: true
       required:
+      - city
+      - country
       - created_on
+      - latitude
+      - longitude
       - name
+      - postal_code
+      - state
       - updated_on
     UserSellerReview:
       type: object
@@ -5393,8 +5515,6 @@ components:
           type: boolean
         rating:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
           nullable: true
         comment:
           type: string
@@ -5439,21 +5559,17 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        name:
-          type: string
-          nullable: true
-          maxLength: 255
         user:
           type: string
           format: uuid
-          nullable: true
         user_address:
           type: string
           format: uuid
-          nullable: true
       required:
       - created_on
       - updated_on
+      - user
+      - user_address
     WasteType:
       type: object
       properties:
@@ -5471,8 +5587,8 @@ components:
           type: boolean
         name:
           type: string
-          nullable: true
           maxLength: 80
       required:
       - created_on
+      - name
       - updated_on

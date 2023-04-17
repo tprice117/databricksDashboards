@@ -76,7 +76,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
-# Database.
+#Database.
 if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
     DATABASES = {
         'default': {
