@@ -26,15 +26,10 @@ class Price_Model:
         self.product_id = request.data['product_id']
         self.waste_type = request.data['waste_type']
 
-        # assign logic for junk pricing; don't need dates for pricing junk
-        # if self.product_type == 'Junk':
-        #     self.start_date = None
-        #     self.end_date = None
-        # else:
-        #     # Assign posted data to variables
-        #     self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
-        #     self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
 
+        # Assign posted data to variables
+        self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d') if 'start_date' in request.data else None
+        self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d') if 'end_date' in request.data else None
 
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
         self.fred_api = r'fa4d32f5c98c51ccb516742cf566950f'
@@ -262,7 +257,7 @@ class Price_Model:
         # seller to buyer distance
         lat1, lon1 = self.customer_lat, self.customer_long
         lat2, lon2 = self.business_lat, self.business_long
-        distance_miles = self.get_driving_distance(lat1, lon1, lat2, lon2)
+        distance_miles = self.distance(lat1, lon1, lat2, lon2)
 
         # set junk base price
         # if self.product_id == 'Junk - Extra Large':
@@ -281,4 +276,3 @@ class Price_Model:
         # self.variable_cost = (float(self.distance_miles) / float(self.mpg)) * float(self.latest_gas_price)
 
         return self.base_price + self.variable_cost
-    
