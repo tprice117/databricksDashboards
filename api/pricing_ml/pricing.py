@@ -6,6 +6,7 @@ import numpy as np
 import json
 import requests
 import datetime  
+# from api.models import *
 
 class Price_Model:
     def __init__(self, request, model = None, enc = None):
@@ -26,13 +27,13 @@ class Price_Model:
         self.waste_type = request.data['waste_type']
 
         # assign logic for junk pricing; don't need dates for pricing junk
-        if self.waste_type == 'Junk':
-            self.start_date = None
-            self.end_date = None
-        else:
-            # Assign posted data to variables
-            self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
-            self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
+        # if self.product_type == 'Junk':
+        #     self.start_date = None
+        #     self.end_date = None
+        # else:
+        #     # Assign posted data to variables
+        #     self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d')
+        #     self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d')
 
 
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
@@ -264,20 +265,20 @@ class Price_Model:
         distance_miles = self.get_driving_distance(lat1, lon1, lat2, lon2)
 
         # set junk base price
-        if self.product_id == 'Junk - Extra Large':
-            base_price = 1200
-        elif self.product_id == "f286c2ec-628c-428b-8688-28efae888bc7":
+        # if self.product_id == 'Junk - Extra Large':
+        #     base_price = 1200
+        if self.product_id == "f286c2ec-628c-428b-8688-28efae888bc7":
             base_price = 1000
-        elif self.product_id == 'Junk - Medium':
-            base_price = 800
-        elif self.product_id == 'Junk - Small':
+        # elif self.product_id == 'Junk - Medium':
+        #     base_price = 800
+        elif self.product_id == "fac96db2-396d-4cd6-bf34-1c84d07e068f":
             base_price = 600
         else:
             base_price = 500
 
         # calculate price components
         self.base_price = float(base_price)
-        self.variable_cost = (float(distance_miles) / float(mpg)) * float(value)
+        # self.variable_cost = (float(self.distance_miles) / float(self.mpg)) * float(self.latest_gas_price)
 
         return self.base_price + self.variable_cost
     
