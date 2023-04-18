@@ -200,21 +200,21 @@ class Price_Model:
             # 1200 for median pricing for a XL junk removal from other sellers historically
             # XL = 16 CY, XXL = 20 CY
             if self.product.product_code == "JR3CY":
-                base_cost = 300
+                base_cost = 113
             elif self.product.product_code == "JR4CY":
-                base_cost = 400
+                base_cost = 249
             elif self.product.product_code == "JR5CY":
-                base_cost = 500
+                base_cost = 349
             elif self.product.product_code == "JR8CY":
-                base_cost = 750
+                base_cost = 379
             elif self.product.product_code == "JR10CY":
-                base_cost = 900
+                base_cost = 479
             elif self.product.product_code == "JR12CY":
-                base_cost = 1050
+                base_cost = 509
             elif self.product.product_code == "JR16CY":
-                base_cost = 1200
+                base_cost = 639
             elif self.product.product_code == "JR20CY":
-                base_cost = 1350
+                base_cost = 699
             else:
                 base_cost = 750 # assume $75 per CY for junk removal if no prod added
 
