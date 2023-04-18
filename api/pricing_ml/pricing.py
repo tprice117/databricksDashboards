@@ -215,6 +215,8 @@ class Price_Model:
                 base_cost = 1200
             elif self.product.product_code == "JR20CY":
                 base_cost = 1350
+            else:
+                base_cost = 750 # assume $75 per CY for junk removal if no prod added
 
         return {
             'seller': seller_product_seller_location.seller_location.seller.id,
