@@ -193,9 +193,9 @@ class Price_Model:
 
         # Add daily rate.
         base_cost = None
-        if self.product.main_product.main_product_category.name == "Roll Off Dumpster":
+        if self.product.main_product.main_product_category.main_product_category_code == "RO":
             base_cost =(self.end_date - self.start_date).days * 22 # assume $22 per day for roll off dumpsters
-        elif self.product.main_product.main_product_category.name == "Junk Removal":
+        elif self.product.main_product.main_product_category.main_product_category_code == "JR":
             # ascending order for junk removal, let's assume $100 for each CY, then discount for larger sizes
             # 1200 for median pricing for a XL junk removal from other sellers historically
             # XL = 16 CY, XXL = 20 CY
