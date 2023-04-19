@@ -132,6 +132,7 @@ class MainProductCategory(BaseModel):
 class MainProductCategoryInfo(BaseModel):
     name = models.CharField(max_length=80)
     main_product_category = models.ForeignKey(MainProductCategory, models.CASCADE)
+    sort = models.IntegerField()
 
     def __str__(self):
         return self.name
@@ -157,6 +158,7 @@ class MainProduct(BaseModel):
 class MainProductInfo(BaseModel):
     name = models.CharField(max_length=80)
     main_product = models.ForeignKey(MainProduct, models.CASCADE)
+    sort = models.IntegerField()
 
     def __str__(self):
         return self.name
