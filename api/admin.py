@@ -69,6 +69,18 @@ class SellerProductSellerLocationInline(admin.TabularInline):
             else:
                 field.queryset = field.queryset.none()
         return field
+    
+class UserGroupInline(admin.TabularInline):
+    model = UserGroup
+    fields = ('name',)
+    show_change_link = True
+    extra=0
+
+class UserInline(admin.TabularInline):
+    model = User
+    fields = ('email',)
+    show_change_link = True
+    extra=0
 
 
 
@@ -144,6 +156,17 @@ class UserAddressAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
     model = User
     search_fields = ["email", "first_name", "last_name"]
+    inlines = [
+        UserGroupInline,
+    ]
+
+class UserGroupAdmin(admin.ModelAdmin):
+    model = UserGroup
+    search_fields = ["name",]
+    list_display = ('name',)
+    inlines = [
+        UserInline,
+    ]
 
 class OrderAdmin(admin.ModelAdmin):
     model = Order
@@ -161,6 +184,7 @@ admin.site.register(SellerLocation, SellerLocationAdmin)
 admin.site.register(SellerProduct, SellerProductAdmin)
 admin.site.register(SellerProductSellerLocation, SellerProductSellerLocationAdmin)
 admin.site.register(UserAddress, UserAddressAdmin)
+admin.site.register(UserGroup, UserGroupAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(UserUserAddress)
 admin.site.register(AddOnChoice, AddOnChoiceAdmin)

@@ -82,7 +82,21 @@ class UserAddress(BaseModel):
     def __str__(self):
         return self.name
 
+class UserGroup(BaseModel):
+    name = models.CharField(max_length=255)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+    
+    def post_create(sender, instance, created, **kwargs):
+        if created:
+            customer = stripe.Customer.create()
+            instance.stripe_customer_id = customer.id
+            instance.save()
+
 class User(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
     user_id = models.CharField(max_length=255)
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, blank=True, null=True)
@@ -101,6 +115,13 @@ class User(BaseModel):
             customer = stripe.Customer.create()
             instance.stripe_customer_id = customer.id
             instance.save()
+
+class UserGroupUser(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE)
+    user = models.ForeignKey(User, models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user_group.name} - {self.user.email}'
 
 class UserUserAddress(BaseModel):
     user = models.ForeignKey(User, models.CASCADE)
