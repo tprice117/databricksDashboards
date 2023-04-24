@@ -68,19 +68,6 @@ class SellerLocation(BaseModel):
 
     def __str__(self):
         return self.name
-    
-class UserAddress(BaseModel):
-    name = models.CharField(max_length=255)
-    street = models.TextField(blank=True, null=True)
-    city = models.CharField(max_length=40)
-    state = models.CharField(max_length=80)
-    postal_code = models.CharField(max_length=20)
-    country = models.CharField(max_length=80)
-    latitude = models.DecimalField(max_digits=18, decimal_places=15)
-    longitude = models.DecimalField(max_digits=18, decimal_places=15)
-
-    def __str__(self):
-        return self.name
 
 class UserGroup(BaseModel):
     name = models.CharField(max_length=255)
@@ -94,6 +81,20 @@ class UserGroup(BaseModel):
             customer = stripe.Customer.create()
             instance.stripe_customer_id = customer.id
             instance.save()
+
+class UserAddress(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
+    name = models.CharField(max_length=255)
+    street = models.TextField(blank=True, null=True)
+    city = models.CharField(max_length=40)
+    state = models.CharField(max_length=80)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=80)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15)
+
+    def __str__(self):
+        return self.name
 
 class User(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
