@@ -77,7 +77,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
 #Database.
-if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used for App created by Tate
+if ENVIRONMENT == 'TEST':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -89,7 +89,6 @@ if ENVIRONMENT == 'TEST': #This is currently the server/db that is being used fo
         }
     }
 elif ENVIRONMENT == 'DEV':
-    #new db for development purposes 
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

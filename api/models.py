@@ -68,8 +68,22 @@ class SellerLocation(BaseModel):
 
     def __str__(self):
         return self.name
+
+class UserGroup(BaseModel):
+    name = models.CharField(max_length=255)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
     
+    def post_create(sender, instance, created, **kwargs):
+        if created:
+            customer = stripe.Customer.create()
+            instance.stripe_customer_id = customer.id
+            instance.save()
+
 class UserAddress(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)
@@ -83,6 +97,7 @@ class UserAddress(BaseModel):
         return self.name
 
 class User(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
     user_id = models.CharField(max_length=255)
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, blank=True, null=True)
@@ -101,6 +116,13 @@ class User(BaseModel):
             customer = stripe.Customer.create()
             instance.stripe_customer_id = customer.id
             instance.save()
+
+class UserGroupUser(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE)
+    user = models.ForeignKey(User, models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user_group.name} - {self.user.email}'
 
 class UserUserAddress(BaseModel):
     user = models.ForeignKey(User, models.CASCADE)
@@ -132,6 +154,7 @@ class MainProductCategory(BaseModel):
 class MainProductCategoryInfo(BaseModel):
     name = models.CharField(max_length=80)
     main_product_category = models.ForeignKey(MainProductCategory, models.CASCADE)
+    sort = models.IntegerField()
 
     def __str__(self):
         return self.name
@@ -157,6 +180,7 @@ class MainProduct(BaseModel):
 class MainProductInfo(BaseModel):
     name = models.CharField(max_length=80)
     main_product = models.ForeignKey(MainProduct, models.CASCADE)
+    sort = models.IntegerField()
 
     def __str__(self):
         return self.name
@@ -300,5 +324,6 @@ class Order(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
 
+post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
 post_save.connect(Order.post_create, sender=Order)
