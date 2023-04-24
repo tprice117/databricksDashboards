@@ -1,3 +1,5 @@
+from uuid import uuid4
+import requests
 import api.models
 import math
  
@@ -64,3 +66,66 @@ def get_price_for_seller(seller_product_seller_location, customer_lat, customer_
       },
     ]
   }
+
+# Helper methods.
+def get_auth0_access_token():
+    # Get access_token.
+    payload = {
+        "client_id":"zk3ULUpybm5gp0FyBcKE0k8WUPVdaDW3",
+        "client_secret":"srBzQ02G9r4IVQ9F1S2P1yW_hYsS-ly-XI_DbMOeoqVGvdRea-hocCdYYOdaiFZv",
+        "audience":"https://dev-jy1f5kgzroj4fcci.us.auth0.com/api/v2/",
+        "grant_type":"client_credentials"
+    }
+    headers = { 'content-type': "application/json" }
+    response = requests.post(
+        'https://dev-jy1f5kgzroj4fcci.us.auth0.com/oauth/token',
+        json=payload,
+        headers=headers,
+        timeout=5,
+    )
+    return response.json()["access_token"]
+
+def create_user(email):
+    headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+    response = requests.post(
+        'https://dev-jy1f5kgzroj4fcci.us.auth0.com/api/v2/users',
+        json={
+          "email": email,
+          "connection": "Username-Password-Authentication",
+          "password": str(uuid4())[:12],
+        },
+        headers=headers,
+        timeout=30,
+    )
+    print(response.json())
+    return response.json()['user_id'] if 'user_id' in response.json() else None
+
+def get_user_data(user_id):
+    headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+    response = requests.get(
+        'https://dev-jy1f5kgzroj4fcci.us.auth0.com/api/v2/users/' + user_id,
+        headers=headers,
+        timeout=30,
+    )
+    return response.json()
+
+def get_user_from_email(email):
+    headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+    response = requests.get(
+        'https://dev-jy1f5kgzroj4fcci.us.auth0.com/api/v2/users-by-email?email=' + email,
+        headers=headers,
+        timeout=30,
+    )
+    json = response.json()
+    print(json)
+    return json[0]['user_id'] if len(json) > 0 and 'user_id' in json[0] else None
+
+def delete_user(user_id):
+    if user_id is not None:
+        headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+        response = requests.delete(
+            'https://dev-jy1f5kgzroj4fcci.us.auth0.com/api/v2/users/' + user_id,
+            headers=headers,
+            timeout=30,
+        )
+        return response.json()

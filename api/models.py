@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 import uuid
 import stripe
 
-from api.utils import get_price_for_seller
+from api.utils import create_user, get_price_for_seller, get_user_from_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -98,9 +98,9 @@ class UserAddress(BaseModel):
 
 class User(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
-    user_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
-    email = models.CharField(max_length=255, blank=True, null=True)
+    email = models.CharField(max_length=255)
     photo_url = models.URLField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
@@ -113,8 +113,25 @@ class User(BaseModel):
     
     def post_create(sender, instance, created, **kwargs):
         if created:
-            customer = stripe.Customer.create()
-            instance.stripe_customer_id = customer.id
+            # Create stripe customer.
+            try:
+                print('creating stripe customer')
+                customer = stripe.Customer.create()
+                instance.stripe_customer_id = customer.id
+            except Exception as e:
+                pass
+                
+            # Create or attach to Auth0 user.
+            print('creating or attaching to auth0 user')
+            user_id = get_user_from_email(instance.email)
+            if user_id:
+                print('auth0 user exists')
+                # User already exists in Auth0.
+                instance.user_id = user_id
+            else:
+                print('auth0 user does not exist')
+                # Create user in Auth0.
+                instance.user_id = create_user(instance.email)
             instance.save()
 
 class UserGroupUser(BaseModel):
