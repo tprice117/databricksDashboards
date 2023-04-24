@@ -140,10 +140,15 @@ class Price_Model:
         seller_products = SellerProduct.objects.filter(product=self.product)
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
 
-        # Get prices for each SellerLocation.
+        # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
         seller_location_prices = []
         for seller_product_seller_location in seller_product_seller_locations:
-            seller_location_prices.append(self.get_price_for_seller_product_seller_location(seller_product_seller_location.id, diesel_price))
+            price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location.id, diesel_price)
+            if price_obj['distance_miles'] <= 40:
+                seller_location_prices.append(price_obj)
+            else:
+                print('Skipping seller_location: ', seller_product_seller_location.seller_location.id ,\
+                       ' distance: ', price_obj['distance_miles'])
 
         print(seller_location_prices)    
 
@@ -216,7 +221,7 @@ class Price_Model:
             elif self.product.product_code == "JR20CY":
                 base_cost = 699
             else:
-                base_cost = 750 # assume $75 per CY for junk removal if no prod added
+                base_cost = 349 # assume $349 per CY for junk removal if no prod added
 
         return {
             'seller': seller_product_seller_location.seller_location.seller.id,
@@ -226,6 +231,7 @@ class Price_Model:
             'milage_cost': milage_cost,
             'tip_fees': tip_fees,
             'rental_cost': base_cost,
+            'total_distance' : total_distance,
             'price': float(milage_cost or 0.0) + float(tip_fees or 0.0) + float(base_cost or 0.0),
             'line_items': [
                 {
@@ -242,39 +248,3 @@ class Price_Model:
                 },
             ]
         }
-
-    def junk_price(self):
-        """Calc static junk price with distance from hauler to seller and diesel price."""
-        try:
-            # get diesel price from FRED
-            fredid = 'GASDESW'
-            latest_diesel = self.getdatafred(fredid, self.fred_api)
-            value = latest_diesel.loc[:,'value'].iloc[-1]
-        except:
-            value = 5
-
-        # static value now, change in future
-        mpg = 6.5
-
-        # seller to buyer distance
-        lat1, lon1 = self.customer_lat, self.customer_long
-        lat2, lon2 = self.business_lat, self.business_long
-        distance_miles = self.distance(lat1, lon1, lat2, lon2)
-
-        # set junk base price
-        # if self.product_id == 'Junk - Extra Large':
-        #     base_price = 1200
-        if self.product_id == "f286c2ec-628c-428b-8688-28efae888bc7":
-            base_price = 1000
-        # elif self.product_id == 'Junk - Medium':
-        #     base_price = 800
-        elif self.product_id == "fac96db2-396d-4cd6-bf34-1c84d07e068f":
-            base_price = 600
-        else:
-            base_price = 500
-
-        # calculate price components
-        self.base_price = float(base_price)
-        # self.variable_cost = (float(self.distance_miles) / float(self.mpg)) * float(self.latest_gas_price)
-
-        return self.base_price + self.variable_cost
