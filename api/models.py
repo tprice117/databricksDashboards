@@ -312,35 +312,35 @@ class Order(BaseModel):
     end_date = models.DateField(blank=True, null=True)
     additional_schedule_details = models.TextField(blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
-    def post_create(sender, instance, created, **kwargs):
-        if created:
-            disposal_locations = DisposalLocation.objects.all()
-            price = get_price_for_seller(
-                instance.seller_product_seller_location, 
-                instance.user_address.latitude, 
-                instance.user_address.longitude,
-                instance.waste_type.id, 
-                instance.start_date, 
-                instance.end_date, 
-                disposal_locations
-            )
+    # def post_create(sender, instance, created, **kwargs):
+    #     if created:
+    #         disposal_locations = DisposalLocation.objects.all()
+    #         price = get_price_for_seller(
+    #             instance.seller_product_seller_location, 
+    #             instance.user_address.latitude, 
+    #             instance.user_address.longitude,
+    #             instance.waste_type.id, 
+    #             instance.start_date, 
+    #             instance.end_date, 
+    #             disposal_locations
+    #         )
 
-            for item in price['line_items']:
-                stripe.InvoiceItem.create(
-                    customer=instance.user.stripe_customer_id,
-                    amount=round(item['price']*100),
-                    description=item['name'],
-                    currency="usd",
-                )
-            invoice = stripe.Invoice.create(customer=instance.user.stripe_customer_id)
-            instance.stripe_invoice_id = invoice.id
-            instance.save()
+    #         for item in price['line_items']:
+    #             stripe.InvoiceItem.create(
+    #                 customer=instance.user.stripe_customer_id,
+    #                 amount=round(item['price']*100),
+    #                 description=item['name'],
+    #                 currency="usd",
+    #             )
+    #         invoice = stripe.Invoice.create(customer=instance.user.stripe_customer_id)
+    #         instance.stripe_invoice_id = invoice.id
+    #         instance.save()
 
     def __str__(self):
         return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
-post_save.connect(Order.post_create, sender=Order)
