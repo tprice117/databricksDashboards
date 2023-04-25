@@ -144,11 +144,11 @@ class Price_Model:
         seller_location_prices = []
         for seller_product_seller_location in seller_product_seller_locations:
             price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location.id, diesel_price)
-            if price_obj['distance_miles'] <= 40:
+            if price_obj['total_distance'] <= 40:
                 seller_location_prices.append(price_obj)
             else:
                 print('Skipping seller_location: ', seller_product_seller_location.seller_location.id ,\
-                       ' distance: ', price_obj['distance_miles'])
+                       ' distance: ', price_obj['total_distance'])
 
         print(seller_location_prices)    
 
