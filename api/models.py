@@ -155,7 +155,7 @@ class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     comment = models.TextField(blank=True, null=True)
     
     def __str__(self):
-        return self.name
+        return f'{self.seller.name} - {self.rating if self.rating else ""}'
 
 class MainProductCategory(BaseModel):
     name = models.CharField(max_length=80)
