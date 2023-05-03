@@ -198,6 +198,7 @@ admin.site.register(WasteType)
 admin.site.register(DisposalLocation)
 admin.site.register(DisposalLocationWasteType)
 admin.site.register(UserSellerReview)
+admin.site.register(UserAddressType)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)

@@ -82,8 +82,15 @@ class UserGroup(BaseModel):
             instance.stripe_customer_id = customer.id
             instance.save()
 
+class UserAddressType(BaseModel):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 class UserAddress(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
+    user_address_type = models.ForeignKey(UserAddressType, models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)

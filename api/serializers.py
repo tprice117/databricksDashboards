@@ -22,6 +22,12 @@ class SellerLocationSerializer(serializers.ModelSerializer):
         model = SellerLocation
         fields = "__all__"
 
+class UserAddressTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = UserAddressType
+        fields = "__all__"
+
 class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
