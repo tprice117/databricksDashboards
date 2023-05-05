@@ -1,9 +1,10 @@
+import datetime
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save, post_save
 import uuid
 import stripe
-
+from simple_salesforce import Salesforce
 from api.utils import create_user, get_price_for_seller, get_user_from_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -314,6 +315,7 @@ class Order(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
+    salesforce_order_id = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
@@ -322,32 +324,25 @@ class Order(BaseModel):
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
-    # def post_create(sender, instance, created, **kwargs):
-    #     if created:
-    #         disposal_locations = DisposalLocation.objects.all()
-    #         price = get_price_for_seller(
-    #             instance.seller_product_seller_location, 
-    #             instance.user_address.latitude, 
-    #             instance.user_address.longitude,
-    #             instance.waste_type.id, 
-    #             instance.start_date, 
-    #             instance.end_date, 
-    #             disposal_locations
-    #         )
-
-    #         for item in price['line_items']:
-    #             stripe.InvoiceItem.create(
-    #                 customer=instance.user.stripe_customer_id,
-    #                 amount=round(item['price']*100),
-    #                 description=item['name'],
-    #                 currency="usd",
-    #             )
-    #         invoice = stripe.Invoice.create(customer=instance.user.stripe_customer_id)
-    #         instance.stripe_invoice_id = invoice.id
-    #         instance.save()
+    def pre_create(sender, instance, *args, **kwargs):
+        if Order.objects.filter(pk=instance.pk).count() == 0: 
+            sf = Salesforce(
+                username='thayes@trydownstream.io.stage', 
+                password='LongLiveDownstream12!', 
+                security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
+                domain='test'
+            )
+            order = sf.Order.create({
+                "accountId": "0014x00001RgLBMAA3",
+                "status": "Waiting for Request",
+                "effectiveDate": datetime.datetime.now().strftime('%Y-%m-%d'),
+                "schedule_details__c": "User: " + instance.user.email + " | User Address: " + instance.user_address.name + " " + instance.user_address.street + " " + instance.user_address.city + " " + instance.user_address.state + " " + instance.user_address.postal_code + " | Waste Type: " + instance.waste_type.name + " | Disposal Location: " + instance.disposal_location.name + " | Start Date: " + str(instance.start_date) + " | End Date: " + str(instance.end_date) + " | Additional Schedule Details: " + instance.additional_schedule_details + " | Access Details: " + instance.access_details + " | Price: " + str(instance.price) + " | Seller Product Seller Location: " + instance.seller_product_seller_location.seller_product.product.main_product.name + " - " + instance.seller_product_seller_location.seller_location.name + " | Seller: " + instance.seller_product_seller_location.seller_location.seller.name + " | Seller Location: " + instance.seller_product_seller_location.seller_location.name,
+            })
+            instance.salesforce_order_id = order['id']
 
     def __str__(self):
         return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
+pre_save.connect(Order.pre_create, sender=Order)
