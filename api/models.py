@@ -9,6 +9,13 @@ from api.utils import create_user, get_price_for_seller, get_user_from_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+sf = Salesforce(
+    username='thayes@trydownstream.io.stage', 
+    password='LongLiveDownstream12!', 
+    security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
+    domain='test'
+)
+
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -326,19 +333,34 @@ class Order(BaseModel):
 
     def pre_create(sender, instance, *args, **kwargs):
         if Order.objects.filter(pk=instance.pk).count() == 0: 
-            sf = Salesforce(
-                username='thayes@trydownstream.io.stage', 
-                password='LongLiveDownstream12!', 
-                security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
-                domain='test'
-            )
             order = sf.Order.create({
+                "order_type__c": "Delivery",
                 "accountId": "0014x00001RgLBMAA3",
                 "status": "Waiting for Request",
-                "effectiveDate": datetime.datetime.now().strftime('%Y-%m-%d'),
-                "schedule_details__c": "User: " + instance.user.email + " | User Address: " + instance.user_address.name + " " + instance.user_address.street + " " + instance.user_address.city + " " + instance.user_address.state + " " + instance.user_address.postal_code + " | Waste Type: " + instance.waste_type.name + " | Disposal Location: " + instance.disposal_location.name + " | Start Date: " + str(instance.start_date) + " | End Date: " + str(instance.end_date) + " | Additional Schedule Details: " + instance.additional_schedule_details + " | Access Details: " + instance.access_details + " | Price: " + str(instance.price) + " | Seller Product Seller Location: " + instance.seller_product_seller_location.seller_product.product.main_product.name + " - " + instance.seller_product_seller_location.seller_location.name + " | Seller: " + instance.seller_product_seller_location.seller_location.seller.name + " | Seller Location: " + instance.seller_product_seller_location.seller_location.name,
+                "Rental_Start_Date__c": instance.start_date.strftime('%Y-%m-%d'),
+                "Service_Date__c": instance.start_date.strftime('%Y-%m-%d'),
+                "Rental_End_Date__c": instance.end_date.strftime('%Y-%m-%d'),
+                "effectiveDate": instance.start_date.strftime('%Y-%m-%d'),
+                "Access_Details__c": instance.access_details,
+                "schedule_details__c": instance.additional_schedule_details,
+                "description": "User: " + instance.user.email + " | User Address: " + instance.user_address.name + " " + instance.user_address.street + " " + instance.user_address.city + " " + instance.user_address.state + " " + instance.user_address.postal_code + " | Waste Type: " + instance.waste_type.name + " | Disposal Location: " + instance.disposal_location.name + " | Price: " + str(instance.price) + " | Main Product: " + instance.seller_product_seller_location.seller_product.product.main_product.name + " - " + instance.seller_product_seller_location.seller_location.name + " | Seller: " + instance.seller_product_seller_location.seller_location.seller.name + " | Seller Location: " + instance.seller_product_seller_location.seller_location.name,
             })
             instance.salesforce_order_id = order['id']
+
+    def post_update(sender, instance, created, **kwargs):
+        if not created:
+            sf.Order.update(
+                instance.salesforce_order_id,
+                {
+                    "Access_Details__c": instance.access_details,
+                    "schedule_details__c": instance.additional_schedule_details,
+                }
+            )
+
+            customer = stripe.Customer.create()
+            instance.stripe_customer_id = customer.id
+            instance.save()
+
 
     def __str__(self):
         return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
@@ -346,3 +368,4 @@ class Order(BaseModel):
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
 pre_save.connect(Order.pre_create, sender=Order)
+post_save.connect(Order.post_update, sender=Order)
