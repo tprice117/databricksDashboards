@@ -2936,6 +2936,157 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/user-address-types/:
+    get:
+      operationId: api_user_address_types_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserAddressType'
+          description: ''
+    post:
+      operationId: api_user_address_types_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAddressType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserAddressType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserAddressType'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddressType'
+          description: ''
+  /api/user-address-types/{id}/:
+    get:
+      operationId: api_user_address_types_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address type.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddressType'
+          description: ''
+    put:
+      operationId: api_user_address_types_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address type.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAddressType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserAddressType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserAddressType'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddressType'
+          description: ''
+    patch:
+      operationId: api_user_address_types_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address type.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAddressType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAddressType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserAddressType'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddressType'
+          description: ''
+    delete:
+      operationId: api_user_address_types_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user address type.
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/user-addresses/:
     get:
       operationId: api_user_addresses_list
@@ -4079,6 +4230,10 @@ components:
         name:
           type: string
           maxLength: 80
+        sort:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
         main_product_category:
           type: string
           format: uuid
@@ -4086,6 +4241,7 @@ components:
       - created_on
       - main_product_category
       - name
+      - sort
       - updated_on
     MainProductInfo:
       type: object
@@ -4105,6 +4261,10 @@ components:
         name:
           type: string
           maxLength: 80
+        sort:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
         main_product:
           type: string
           format: uuid
@@ -4112,6 +4272,7 @@ components:
       - created_on
       - main_product
       - name
+      - sort
       - updated_on
     MainProductWasteType:
       type: object
@@ -4171,6 +4332,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        salesforce_order_id:
+          type: string
+          maxLength: 255
         description:
           type: string
           nullable: true
@@ -4187,6 +4351,11 @@ components:
           nullable: true
         access_details:
           type: string
+          nullable: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
         user:
           type: string
@@ -4427,6 +4596,10 @@ components:
         name:
           type: string
           maxLength: 80
+        sort:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
         main_product_category:
           type: string
           format: uuid
@@ -4448,6 +4621,10 @@ components:
         name:
           type: string
           maxLength: 80
+        sort:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
         main_product:
           type: string
           format: uuid
@@ -4491,6 +4668,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        salesforce_order_id:
+          type: string
+          maxLength: 255
         description:
           type: string
           nullable: true
@@ -4507,6 +4687,11 @@ components:
           nullable: true
         access_details:
           type: string
+          nullable: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
         user:
           type: string
@@ -4843,6 +5028,8 @@ components:
           maxLength: 255
         interval_days:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
     PatchedUser:
       type: object
@@ -4868,7 +5055,6 @@ components:
           maxLength: 40
         email:
           type: string
-          nullable: true
           maxLength: 255
         photo_url:
           type: string
@@ -4891,6 +5077,10 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        user_group:
+          type: string
+          format: uuid
+          nullable: true
         seller:
           type: string
           format: uuid
@@ -4936,6 +5126,32 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+        user_group:
+          type: string
+          format: uuid
+          nullable: true
+        user_address_type:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedUserAddressType:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
     PatchedUserSellerReview:
       type: object
       properties:
@@ -4953,6 +5169,8 @@ components:
           type: boolean
         rating:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         comment:
           type: string
@@ -5348,6 +5566,8 @@ components:
           maxLength: 255
         interval_days:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
       required:
       - created_on
@@ -5416,7 +5636,6 @@ components:
           maxLength: 40
         email:
           type: string
-          nullable: true
           maxLength: 255
         photo_url:
           type: string
@@ -5439,14 +5658,18 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        user_group:
+          type: string
+          format: uuid
+          nullable: true
         seller:
           type: string
           format: uuid
           nullable: true
       required:
       - created_on
+      - email
       - updated_on
-      - user_id
     UserAddress:
       type: object
       properties:
@@ -5488,6 +5711,14 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+        user_group:
+          type: string
+          format: uuid
+          nullable: true
+        user_address_type:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - city
       - country
@@ -5497,6 +5728,28 @@ components:
       - name
       - postal_code
       - state
+      - updated_on
+    UserAddressType:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - created_on
+      - name
       - updated_on
     UserSellerReview:
       type: object
@@ -5515,6 +5768,8 @@ components:
           type: boolean
         rating:
           type: integer
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
         comment:
           type: string
