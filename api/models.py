@@ -317,6 +317,18 @@ class DisposalLocationWasteType(BaseModel):
 
 
 class Order(BaseModel):
+    PENDING = "PENDING"
+    SCHEDULED = "SCHEDULED"
+    INPROGRESS = "IN-PROGRESS"
+    COMPLETE = "COMPLETE"
+
+    STATUS_CHOICES = (
+        (PENDING, "Pending"),
+        (SCHEDULED, "Scheduled"),
+        (INPROGRESS, "In-Progress"),
+        (COMPLETE, "Complete"),
+    )
+
     user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
     user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
     subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True)
@@ -331,6 +343,7 @@ class Order(BaseModel):
     additional_schedule_details = models.TextField(blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
     def pre_create(sender, instance, *args, **kwargs):
