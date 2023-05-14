@@ -4357,6 +4357,8 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
         user:
           type: string
           format: uuid
@@ -4406,6 +4408,13 @@ components:
       required:
       - created_on
       - updated_on
+    OrderStatusEnum:
+      enum:
+      - PENDING
+      - SCHEDULED
+      - IN-PROGRESS
+      - COMPLETE
+      type: string
     PatchedAddOn:
       type: object
       properties:
@@ -4693,6 +4702,8 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
         user:
           type: string
           format: uuid
@@ -4829,7 +4840,7 @@ components:
         status:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/SellerStatusEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         lead_time:
@@ -5333,7 +5344,7 @@ components:
         status:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/SellerStatusEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
         lead_time:
@@ -5536,7 +5547,7 @@ components:
       - created_on
       - rate
       - updated_on
-    StatusEnum:
+    SellerStatusEnum:
       enum:
       - Inactive
       - Inactive - Onboarding
