@@ -115,7 +115,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    # status = serializers.SerializerMethodField(read_only=True)
+    status = serializers.CharField(read_only=True)
     
     class Meta:
         model = Order
