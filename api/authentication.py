@@ -3,7 +3,7 @@ from rest_framework import exceptions
 import requests
 
 from api.utils import get_user_data
-from .models import User, Goal, ConnectedItem, Account, Holding
+from .models import User
 
 class CustomAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):

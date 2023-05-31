@@ -120,6 +120,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     filterset_fields = ["id", "user_address", "user"]
 
+    def get_queryset(self):
+        queryset = self.queryset
+        query_set = queryset.filter(user__id=self.request.user.id)
+        return query_set
+
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
