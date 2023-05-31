@@ -159,13 +159,22 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        "api.authentication.CustomAuthentication",
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'firebase_auth.firebase_authentication.FirebaseAuthentication',
     ),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    'COERCE_DECIMAL_TO_STRING': False
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         "api.authentication.CustomAuthentication",
+#         'rest_framework.authentication.SessionAuthentication',
+#         'rest_framework.authentication.BasicAuthentication',
+#     ),
+#     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+#     'COERCE_DECIMAL_TO_STRING': False
+# }
 
 if ENVIRONMENT == 'TEST':
     STRIPE_PUBLISHABLE_KEY = 'pk_live_H293e3qNvoJB8isKoALzyCFs00v6DmDPGg'
