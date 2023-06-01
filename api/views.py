@@ -6,6 +6,7 @@ from rest_framework import status
 from django.shortcuts import render
 from rest_framework import viewsets
 from api.utils import get_distance, get_price_for_seller
+from rest_framework.decorators import permission_classes, authentication_classes
 from .serializers import *
 from .models import *
 # from .apps import MlConfig
@@ -98,25 +99,23 @@ class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductCategoryInfoSerializer
     filterset_fields = ["main_product_category"]
 
+@authentication_classes([])
+@permission_classes([])
 class MainProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
-
-    def get_permissions(self):
-       return []
 
 class MainProductInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductInfo.objects.all()
     serializer_class = MainProductInfoSerializer
     filterset_fields = ["main_product"]   
 
+@authentication_classes([])
+@permission_classes([])
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
     filterset_fields = ["id", "main_product_category"]
-
-    def get_permissions(self):
-       return []
 
 class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = MainProductWasteType.objects.all()
