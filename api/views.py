@@ -41,6 +41,12 @@ class UserAddressViewSet(viewsets.ModelViewSet):
     serializer_class = UserAddressSerializer
     filterset_fields = ["id"]
 
+    def get_queryset(self):
+        queryset = self.queryset
+        user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
+        query_set = queryset.filter(id__in=user_address_ids)
+        return query_set
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
