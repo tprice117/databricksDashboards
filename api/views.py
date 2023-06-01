@@ -96,6 +96,9 @@ class MainProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
 
+    def get_permissions(self):
+       return []
+
 class MainProductInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductInfo.objects.all()
     serializer_class = MainProductInfoSerializer
@@ -105,6 +108,9 @@ class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
     filterset_fields = ["id", "main_product_category"]
+
+    def get_permissions(self):
+       return []
 
 class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = MainProductWasteType.objects.all()
