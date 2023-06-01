@@ -76,6 +76,12 @@ class UserGroupUserInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class OrderDisposalTicketInline(admin.TabularInline):
+    model = OrderDisposalTicket
+    fields = ('ticket_id', 'waste_type', 'weight')
+    show_change_link = True
+    extra=0
+
 
 
 
@@ -168,6 +174,9 @@ class OrderAdmin(admin.ModelAdmin):
     autocomplete_fields = ["user_address", "user"]
     search_fields = ["user__email", 'user_address', 'seller_product_seller_location']
     list_display = ('user', 'user_address', 'seller_product_seller_location', 'start_date', 'end_date')
+    inlines = [
+        OrderDisposalTicketInline,
+    ]
 
 class MainProductWasteTypeAdmin(admin.ModelAdmin):
     model = UserAddress
@@ -199,6 +208,7 @@ admin.site.register(DisposalLocation)
 admin.site.register(DisposalLocationWasteType)
 admin.site.register(UserSellerReview)
 admin.site.register(UserAddressType)
+admin.site.register(OrderDisposalTicket)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)

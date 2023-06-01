@@ -315,7 +315,6 @@ class DisposalLocationWasteType(BaseModel):
     def __str__(self):
         return self.disposal_location.name + ' - ' + self.waste_type.name
 
-
 class Order(BaseModel):
     PENDING = "PENDING"
     SCHEDULED = "SCHEDULED"
@@ -376,10 +375,19 @@ class Order(BaseModel):
             instance.stripe_customer_id = customer.id
             instance.save()
 
-
     def __str__(self):
         return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
 
+class OrderDisposalTicket(BaseModel):
+    order = models.ForeignKey(Order, models.PROTECT)
+    waste_type = models.ForeignKey(WasteType, models.PROTECT)
+    disposal_location = models.ForeignKey(DisposalLocation, models.PROTECT)
+    ticket_id = models.CharField(max_length=255)
+    weight = models.DecimalField(max_digits=18, decimal_places=2)
+
+    def __str__(self):
+        return self.ticket_id + ' - ' + self.order.user_address.name
+    
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
 pre_save.connect(Order.pre_create, sender=Order)
