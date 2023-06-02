@@ -389,4 +389,4 @@ class OrderDisposalTicket(BaseModel):
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
 pre_save.connect(Order.pre_create, sender=Order)
-post_save.connect(Order.post_update, sender=Order)
+# post_save.connect(Order.post_update, sender=Order)
