@@ -695,7 +695,7 @@ def denver_compliance_report(request):
             "donation_reuse": str(ticket.weight) if ticket.waste_type.name == "Salvage for Donation/Reuse" else "",
             "other": "",
             "total_diversion": "0",
-            "total_cd_debris": "0",
+            "total_cd_debris": str(ticket.weight),
             "hauler": ticket.order.seller_product_seller_location.seller_location.seller.name,
             "destination": ticket.disposal_location.name,
         })
