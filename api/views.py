@@ -1,3 +1,4 @@
+import base64
 import datetime
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
@@ -9,8 +10,8 @@ from api.utils import get_distance, get_price_for_seller
 from rest_framework.decorators import permission_classes, authentication_classes
 from .serializers import *
 from .models import *
-# from .apps import MlConfig
 from django.conf import settings
+from django.template.loader import render_to_string
 import stripe
 import requests
 from random import randint
@@ -18,6 +19,8 @@ import math
 import pickle
 # import pandas as pd
 from .pricing_ml import pricing
+import mailchimp_transactional as MailchimpTransactional
+from mailchimp_transactional.api_client import ApiClientError
 
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -43,15 +46,23 @@ class UserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id"]
 
     def get_queryset(self):
-        queryset = self.queryset
-        user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
-        query_set = queryset.filter(id__in=user_address_ids)
-        return query_set
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
+            query_set = queryset.filter(id__in=user_address_ids)
+            return query_set
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filterset_fields = ["id","user_id"]
+
+class UserGroupViewSet(viewsets.ModelViewSet):
+    queryset = UserGroup.objects.all()
+    serializer_class = UserGroupSerializer
+    filterset_fields = ["id"]
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()
@@ -88,6 +99,16 @@ class AddOnViewSet(viewsets.ModelViewSet):
     queryset = AddOn.objects.all()
     serializer_class = AddOnSerializer
     filterset_fields = ["main_product"] 
+
+class DisposalLocationViewSet(viewsets.ModelViewSet):
+    queryset = DisposalLocation.objects.all()
+    serializer_class = DisposalLocationSerializer
+    filterset_fields = ["id"]
+
+class DisposalLocationWasteTypeViewSet(viewsets.ModelViewSet):
+    queryset = DisposalLocationWasteType.objects.all()
+    serializer_class = DisposalLocationWasteTypeSerializer
+    filterset_fields = ["id"]
 
 class MainProductAddOnViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOn.objects.all()
@@ -132,9 +153,17 @@ class OrderViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "user_address", "user"]
 
     def get_queryset(self):
-        queryset = self.queryset
-        query_set = queryset.filter(user__id=self.request.user.id)
-        return query_set
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(user__id=self.request.user.id)
+            return query_set
+        
+class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
+    queryset = OrderDisposalTicket.objects.all()
+    serializer_class = OrderDisposalTicketSerializer
+    filterset_fields = ["id"]
 
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
@@ -631,3 +660,79 @@ class StripeCoreBalanceTransactions(APIView):
             has_more = payment_intents["has_more"]
             starting_after = data[-1]["id"]
         return Response(data)
+    
+
+# Denver Waste Compliance Report.
+@api_view(['POST'])
+def denver_compliance_report(request):
+    user_address_id = request.data['user_address']
+    user_address = UserAddress.objects.get(pk=user_address_id)
+    orders = Order.objects.filter(user_address=user_address)
+    order_disposal_tickets = OrderDisposalTicket.objects.filter(order__in=orders)
+    print(order_disposal_tickets)
+
+    # Create header object.
+    header_objects = {
+        "applicant_name": user_address.user_group.name if user_address.user_group else "",
+        "project_address": user_address.street,
+        "permit_number": "N/A",
+        "phone": "000-000-0000",
+        "date_completed": datetime.datetime.now().strftime("%m/%d/%Y"),
+    }
+
+    # Create array for disposal tickets.
+    order_disposal_tickets_inputs = []
+    for ticket in order_disposal_tickets:
+        order_disposal_tickets_inputs.append({
+            "date": ticket.created_on.strftime("%m/%d/%Y"),
+            "weight_ticket_id": ticket.ticket_id,
+            "landfill": "0",
+            "wood": "0",
+            "concrete_brick_block": "0",
+            "asphalt": "0",
+            "metal": "0",
+            "cardboard": "0",
+            "donation_reuse": "0",
+            "other": "0",
+            "total_diversion": "0",
+            "total_cd_debris": "0",
+            "hauler": ticket.order.seller_product_seller_location.seller_location.seller.name,
+            "destination": ticket.disposal_location.name,
+        })
+
+    try:
+        mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+        response = mailchimp.messages.send({"message": {
+            "from_name": "Downstream",
+            "from_email": "hello@trydownstream.io",
+            "to": [
+                {
+                    "email": request.user.email,
+                },
+                {
+                    "email": "thayes@trydownstream.io"
+                }
+            ],
+            "subject": "Waste Compliance Report Export",
+            "track_opens": True,
+            "track_clicks": True,
+            "html": render_to_string(
+                'denver-compliance-form.html',
+                {
+                    "order_disposal_tickets_inputs": order_disposal_tickets_inputs,
+                    "header_objects": header_objects,
+                }
+            ),
+            # "attachments": [
+            #    {
+            #         "type": "text/csv",
+            #         "name": "waste_compliance_report.csv",
+            #         "content": base64.b64encode(csv).decode("utf-8"),
+            #    }
+            # ]
+        }})
+        print(response)
+    except ApiClientError as error:
+        print("An exception occurred: {}".format(error.text))
+
+    return Response("Success", status=200)

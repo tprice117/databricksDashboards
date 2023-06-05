@@ -6,9 +6,12 @@ from rest_framework import routers
 from api import views
 
 router = routers.DefaultRouter()
+router.register(r'disposal-location-waste-types', views.DisposalLocationWasteTypeViewSet, 'api')
+router.register(r'disposal-locations', views.DisposalLocationViewSet, 'api')
 router.register(r'sellers', views.SellerViewSet, 'api')
 router.register(r'seller-locations', views.SellerLocationViewSet, 'api')
 router.register(r'users', views.UserViewSet, 'api')
+router.register(r'user-groups', views.UserGroupViewSet, 'api')
 router.register(r'user-user-addresses', views.UserUserAddressViewSet, 'api')
 router.register(r'user-seller-reviews', views.UserSellerReviewViewSet, 'api')
 router.register(r'user-seller-review-aggregates', views.UserSellerReviewAggregateViewSet, 'api')
@@ -24,6 +27,7 @@ router.register(r'main-products', views.MainProductViewSet, 'api')
 router.register(r'main-product-waste-types', views.MainProductWasteTypeViewSet, 'api')
 router.register(r'orders', views.OrderViewSet, 'api')
 router.register(r'order-groups', views.OrderGroupViewSet, 'api')
+router.register(r'order-disposal-tickets', views.OrderDisposalTicketViewSet, 'api')
 router.register(r'subscriptions', views.SubscriptionViewSet, 'api')
 router.register(r'product-add-on-choices', views.ProductAddOnChoiceViewSet, 'api')
 router.register(r'products', views.ProductViewSet, 'api')
@@ -55,7 +59,6 @@ urlpatterns = [
     # add user test
     path('add_user/', views.AddUser.as_view(), name='add_user'),
 
-
     # Stripe Dashboarding Endpoints
     path('api/stripe/connect/accounts', views.StripeConnectAccount.as_view()),
     path('api/stripe/connect/transfers', views.StripeConnectTransfer.as_view()),
@@ -64,4 +67,7 @@ urlpatterns = [
     path('api/stripe/core/payment-intents', views.StripeCorePaymentIntents.as_view()),
     path('api/stripe/core/balance', views.StripeCoreBalance.as_view()),
     path('api/stripe/core/balance-transactions', views.StripeCoreBalanceTransactions.as_view()),
+
+    # Denver Compliance Endpoint.
+    path('api/exports/denver-compliance/',  views.denver_compliance_report),
 ]
