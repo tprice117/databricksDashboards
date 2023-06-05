@@ -715,7 +715,7 @@ def denver_compliance_report(request):
         "other": "0",
         "total_diversion": total_diversion,
         "total_cd_debris": total_cd_debris,
-        "project_diversion_rate": round(total_diversion / total_cd_debris, 2) if total_cd_debris else 0,
+        "project_diversion_rate": round(float(total_diversion) / float(total_cd_debris), 2) if total_cd_debris else 0,
     }
 
     try:
