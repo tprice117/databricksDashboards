@@ -705,13 +705,13 @@ def denver_compliance_report(request):
     total_diversion = order_disposal_tickets.exclude(waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum']
     total_cd_debris = order_disposal_tickets.aggregate(Sum('weight'))['weight__sum']
     totals = {
-        "landfill": order_disposal_tickets.filter(waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum'],
-        "wood": order_disposal_tickets.filter(waste_type__name="Wood").aggregate(Sum('weight'))['weight__sum'],
-        "concrete_brick_block": order_disposal_tickets.filter(waste_type__name="Concrete (No metal)").aggregate(Sum('weight'))['weight__sum'],
-        "asphalt": order_disposal_tickets.filter(waste_type__name="Asphalt").aggregate(Sum('weight'))['weight__sum'],
-        "metal": order_disposal_tickets.filter(waste_type__name="Mixed Metal").aggregate(Sum('weight'))['weight__sum'],
-        "cardboard": order_disposal_tickets.filter(waste_type__name="Cardboard").aggregate(Sum('weight'))['weight__sum'],
-        "donation_reuse": order_disposal_tickets.filter(waste_type__name="Salvage for Donation/Reuse").aggregate(Sum('weight'))['weight__sum'],
+        "landfill": order_disposal_tickets.filter(waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum'] or "0",
+        "wood": order_disposal_tickets.filter(waste_type__name="Wood").aggregate(Sum('weight'))['weight__sum'] or "0",
+        "concrete_brick_block": order_disposal_tickets.filter(waste_type__name="Concrete (No metal)").aggregate(Sum('weight'))['weight__sum'] or "0",
+        "asphalt": order_disposal_tickets.filter(waste_type__name="Asphalt").aggregate(Sum('weight'))['weight__sum'] or "0",
+        "metal": order_disposal_tickets.filter(waste_type__name="Mixed Metal").aggregate(Sum('weight'))['weight__sum'] or "0",
+        "cardboard": order_disposal_tickets.filter(waste_type__name="Cardboard").aggregate(Sum('weight'))['weight__sum'] or "0",
+        "donation_reuse": order_disposal_tickets.filter(waste_type__name="Salvage for Donation/Reuse").aggregate(Sum('weight'))['weight__sum'] or "0",
         "other": "0",
         "total_diversion": total_diversion,
         "total_cd_debris": total_cd_debris,
