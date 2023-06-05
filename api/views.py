@@ -12,6 +12,7 @@ from .serializers import *
 from .models import *
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.db.models import Sum
 import stripe
 import requests
 from random import randint
@@ -694,11 +695,28 @@ def denver_compliance_report(request):
             "cardboard": str(ticket.weight) if ticket.waste_type.name == "Cardboard" else "",
             "donation_reuse": str(ticket.weight) if ticket.waste_type.name == "Salvage for Donation/Reuse" else "",
             "other": "",
-            "total_diversion": "0",
+            "total_diversion": str(ticket.weight) if ticket.waste_type.name != "Trash (Household Goods)"  else "0",
             "total_cd_debris": str(ticket.weight),
             "hauler": ticket.order.seller_product_seller_location.seller_location.seller.name,
             "destination": ticket.disposal_location.name,
         })
+
+    # Create object for totals.
+    total_diversion = order_disposal_tickets.exclude(waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum']
+    total_cd_debris = order_disposal_tickets.aggregate(Sum('weight'))['weight__sum']
+    totals = {
+        "landfill": order_disposal_tickets.filter(waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum'],
+        "wood": order_disposal_tickets.filter(waste_type__name="Wood").aggregate(Sum('weight'))['weight__sum'],
+        "concrete_brick_block": order_disposal_tickets.filter(waste_type__name="Concrete (No metal)").aggregate(Sum('weight'))['weight__sum'],
+        "asphalt": order_disposal_tickets.filter(waste_type__name="Asphalt").aggregate(Sum('weight'))['weight__sum'],
+        "metal": order_disposal_tickets.filter(waste_type__name="Mixed Metal").aggregate(Sum('weight'))['weight__sum'],
+        "cardboard": order_disposal_tickets.filter(waste_type__name="Cardboard").aggregate(Sum('weight'))['weight__sum'],
+        "donation_reuse": order_disposal_tickets.filter(waste_type__name="Salvage for Donation/Reuse").aggregate(Sum('weight'))['weight__sum'],
+        "other": "0",
+        "total_diversion": total_diversion,
+        "total_cd_debris": total_cd_debris,
+        "project_diversion_rate": round(total_diversion / total_cd_debris, 2) if total_cd_debris else 0,
+    }
 
     try:
         mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
@@ -721,6 +739,7 @@ def denver_compliance_report(request):
                 {
                     "order_disposal_tickets_inputs": order_disposal_tickets_inputs,
                     "header_objects": header_objects,
+                    "totals": totals,
                 }
             ),
             # "attachments": [
