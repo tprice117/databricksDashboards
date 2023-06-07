@@ -6,10 +6,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import render
 from rest_framework import viewsets
-from api.utils import get_distance, get_price_for_seller
+from api.utils import get_distance, get_price_for_seller, send_denver_compliance_report
 from rest_framework.decorators import permission_classes, authentication_classes
 
-from api.utils.denver_compliance_report import send_denver_compliance_report
+# from api.utils.denver_compliance_report import 
 from .serializers import *
 from .models import *
 from django.conf import settings
