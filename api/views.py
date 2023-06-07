@@ -154,7 +154,6 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
             query_set = queryset.filter(user__id=self.request.user.id)
             return query_set
         
-    
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -165,7 +164,7 @@ class OrderViewSet(viewsets.ModelViewSet):
            return self.queryset
         else:
             queryset = self.queryset
-            query_set = queryset.filter(user__id=self.request.user.id)
+            query_set = queryset.filter(user_group__user__id=self.request.user.id)
             return query_set
         
 class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
