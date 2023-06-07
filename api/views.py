@@ -57,6 +57,17 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     filterset_fields = ["id","user_id"]
 
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        elif self.request.user.is_admin:
+            queryset = self.queryset
+            user_ids = UserGroup.objects.get(user_group=self.request.user.user_group).values_list('user__id', flat=True)
+            query_set = queryset.filter(id__in=user_ids)
+            return query_set
+        else:
+            return self.queryset.filter(id=self.request.user.id)
+
 class UserGroupViewSet(viewsets.ModelViewSet):
     queryset = UserGroup.objects.all()
     serializer_class = UserGroupSerializer
