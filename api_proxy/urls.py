@@ -69,5 +69,5 @@ urlpatterns = [
     path('api/stripe/core/balance-transactions', views.StripeCoreBalanceTransactions.as_view()),
 
     # Denver Compliance Endpoint.
-    #path('api/exports/denver-compliance/',  views.denver_compliance_report),
+    path('api/exports/denver-compliance/',  views.denver_compliance_report),
 ]

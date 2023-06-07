@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'api.pricing_ml',
+    'api.utils',
     'django_filters',
     'drf_spectacular',
     ]

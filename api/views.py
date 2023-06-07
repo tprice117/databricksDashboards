@@ -4,11 +4,10 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import render
 from rest_framework import viewsets
-from api.utils import get_distance, get_price_for_seller
 from rest_framework.decorators import permission_classes, authentication_classes
-#from api.utils.denver_compliance_report import send_denver_compliance_report
+
+from api.utils.denver_compliance_report import send_denver_compliance_report
 from .serializers import *
 from .models import *
 from django.conf import settings
@@ -660,15 +659,14 @@ class StripeCoreBalanceTransactions(APIView):
             starting_after = data[-1]["id"]
         return Response(data)
     
-"""
+
 # Denver Waste Compliance Report.
 @api_view(['POST'])
 def denver_compliance_report(request):
     try:
         user_address_id = request.data['user_address']
         send_denver_compliance_report(user_address_id, request.user.id)
-    except ApiClientError as error:
+    except Exception as error:
        print("An exception occurred: {}".format(error.text))
 
     return Response("Success", status=200)
-    """

@@ -5,7 +5,6 @@ from django.db.models.signals import pre_save, post_save
 import uuid
 import stripe
 from simple_salesforce import Salesforce
-from api.utils import create_user, get_price_for_seller, get_user_from_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 

@@ -2,7 +2,7 @@ from rest_framework import authentication
 from rest_framework import exceptions
 import requests
 
-from api.utils import get_user_data
+from api.utils.auth0 import get_user_data
 from .models import User
 
 class CustomAuthentication(authentication.BaseAuthentication):
