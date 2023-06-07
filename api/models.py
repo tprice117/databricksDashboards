@@ -26,14 +26,22 @@ class BaseModel(models.Model):
        abstract = True
 
 class Seller(BaseModel):
+    MONDAY= 'Monday', 
+    TUESDAY = 'Tuesday', 
+    WEDNESDAY = 'Wednesday', 
+    THURSDAY = 'Thursday', 
+    FRIDAY = 'Friday', 
+    SATURDAY = 'Saturday', 
+    SUNDAY = 'Sunday'
+ 
     open_day_choices = (
-      [('Monday', 'Monday'), 
-       ('Tuesday', 'Tuesday'), 
-       ('Wednesday', 'Wednesday'), 
-       ('Thursday', 'Thursday'), 
-       ('Friday', 'Friday'), 
-       ('Saturday', 'Saturday'), 
-       ('Sunday', 'Sunday')]
+       ('MONDAY', 'Monday'), 
+       ('TUESDAY', 'Tuesday'), 
+       ('WEDNESDAY', 'Wednesday'), 
+       ('THURSDAY', 'Thursday'), 
+       ('FRIDAY', 'Friday'), 
+       ('SATURDAY', 'Saturday'), 
+       ('SUNDAY', 'Sunday')
     )
         
     name = models.CharField(max_length=255)
@@ -46,7 +54,7 @@ class Seller(BaseModel):
     type_display = models.CharField(max_length=255, choices=[('Landfill', 'Landfill'), ('MRF', 'MRF'), ('Industrial', 'Industrial'), ('Scrap yard', 'Scrap yard'), ('Compost facility', 'Compost facility'), ('Processor', 'Processor'), ('Paint recycler', 'Paint recycler'), ('Tires', 'Tires'), ('Other recycler', 'Other recycler'), ('Roll-off', 'Roll-off'), ('Mover', 'Mover'), ('Junk', 'Junk'), ('Delivery', 'Delivery'), ('Broker', 'Broker'), ('Equipment', 'Equipment')], blank=True, null=True)
     stripe_connect_id = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     marketplace_display_name = models.CharField(max_length=255, blank=True, null=True)
-    open_days = models.CharField(max_length=4099, choices = open_day_choices, blank=True, null=True)
+    open_days = models.CharField(choices = open_day_choices, blank=True, null=True)
     open_time = models.TimeField(blank=True, null=True)
     close_time = models.TimeField(blank=True, null=True)
     lead_time_hrs = models.DecimalField(max_digits=18, decimal_places=0)
@@ -81,6 +89,7 @@ class UserGroup(BaseModel):
     name = models.CharField(max_length=255)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     pay_later = models.BooleanField(default=False)
+    autopay= models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -100,7 +109,9 @@ class UserAddressType(BaseModel):
 class UserAddress(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
     user_address_type = models.ForeignKey(UserAddressType, models.CASCADE, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     name = models.CharField(max_length=255)
+    project_id = models.CharField(max_length=50, blank=True, null=True)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)
     state = models.CharField(max_length=80)
@@ -108,6 +119,8 @@ class UserAddress(BaseModel):
     country = models.CharField(max_length=80)
     latitude = models.DecimalField(max_digits=18, decimal_places=15)
     longitude = models.DecimalField(max_digits=18, decimal_places=15)
+    autopay = models.BooleanField(default=False)
+
 
     def __str__(self):
         return self.name
@@ -115,6 +128,8 @@ class UserAddress(BaseModel):
 class User(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
     user_id = models.CharField(max_length=255, blank=True)
+    mailchip_id = models.CharField(max_length=255, blank=True, null=True)
+    intercom_id = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255)
     photo_url = models.URLField(blank=True, null=True)
@@ -246,6 +261,7 @@ class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.CASCADE)
+    removal_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
         return f'{self.main_product.name} - {self.product_code}'
@@ -269,6 +285,9 @@ class SellerProductSellerLocation(BaseModel):
 class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
+    length_days = models.IntegerField(blank=True, null=True) #6.6.23
+    subscription_type = models.CharField(max_length=35, choices=[('On demand without subscription', 'On demand without subscription'), ('On demand with subscription', 'On demand with subscription'), ('Auto scheduled with subscription','Auto scheduled with subscription')], blank=True, null=True) #6.6.23
+
 
 class OrderGroup(BaseModel):
     def __str__(self):
@@ -320,12 +339,16 @@ class Order(BaseModel):
     PENDING = "PENDING"
     SCHEDULED = "SCHEDULED"
     INPROGRESS = "IN-PROGRESS"
+    AWAITINGREQUEST = "Awaiting Request"
+    CANCELLED = "CANCELLED"
     COMPLETE = "COMPLETE"
 
     STATUS_CHOICES = (
         (PENDING, "Pending"),
         (SCHEDULED, "Scheduled"),
         (INPROGRESS, "In-Progress"),
+        (AWAITINGREQUEST, "Awaiting Request"),
+        (CANCELLED, "Cancelled"),
         (COMPLETE, "Complete"),
     )
 
@@ -337,13 +360,26 @@ class Order(BaseModel):
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     salesforce_order_id = models.CharField(max_length=255, blank=True)
-    description = models.TextField(blank=True, null=True)
+    #description = models.TextField(blank=True, null=True) removed 6.6.23
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
-    additional_schedule_details = models.TextField(blank=True, null=True)
+    service_date = models.DateField(blank=True, null=True) #6.6.23
+    schedule_details = models.TextField(blank=True, null=True) #6.6.23 (Modified name to schedule_details from additional_schedule_details)
     access_details = models.TextField(blank=True, null=True)
+    placement_details = models.TextField(blank=True, null=True) #6.6.23
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+    order_type =  models.CharField(max_length=255, choices=[('Automatic Renewal', 'Automatic Renewal'), ('Swap', 'Swap'),('Empty and Return','Empty and Return'),('Trip Charge/Dry Run','Trip Charge/Dry Run'),('Removal','Removal'),('On Demand','On Demand'),('Other','Other')], blank=True, null=True) #6.6.23
+    included_weight_tons = models.DecimalField(max_digits=18, decimal_places=4, blank=True, null=True) #6.6.23
+    invoice_status = models.CharField(max_length=35, choices=[('Not yet invoiced', 'Not yet invoiced'), ('In draft', 'In draft'), ('Sent to customer','Sent to customer'),('Paid','Paid')], default=[0][0], blank=True, null=True) #6.6.23
+    billing_comments_internal_use = models.TextField(blank=True, null=True) #6.6.23
+    schedule_window = models.CharField(max_length=35, choices=[('Morning (7am-11am)','Morning (7am-11am)'),('Afternoon (12pm-4pm)','Afternoon (12pm-4pm)'),('Evening (5pm-8pm)','Evening (5pm-8pm)')], blank=True, null=True) #6.6.23
+    supplier_payout_status = models.CharField(max_length=35, choices=[('Not yet paid', 'Not yet paid'), ('Process Payment', 'Process Payment'), ('Payout Processing Error','Payout Processing Error'),('Payout Completed','Payout Completed')], default=[0][0], blank=True, null=True) #6.6.23
+    suppplier_payout_method = models.CharField(max_length=35, choices=[('Stripe Connect', 'Stripe Connect'), ('By Invoice', 'By Invoice'), ('Other','Other')], blank=True, null=True) #6.6.23
+    tax_rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
+    quantity = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
+    unit_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
+    payout_processing_error_comment = models.TextField(blank=True, null=True) #6.6.23
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
     def pre_create(sender, instance, *args, **kwargs):
