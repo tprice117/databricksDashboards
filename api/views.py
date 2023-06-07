@@ -46,6 +46,8 @@ class UserAddressViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user == "ALL":
            return self.queryset
+        elif self.request.user.is_admin:
+            return self.queryset.filter(user_group=self.request.user.user_group)
         else:
             queryset = self.queryset
             user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
