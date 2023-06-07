@@ -144,11 +144,12 @@ class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
 class OrderGroupViewSet(viewsets.ModelViewSet):
     queryset = OrderGroup.objects.all()
     serializer_class = OrderGroupSerializer
+    filterset_fields = ["id", "user_address", "user"]
     
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = ["id", "user_address", "user"]
+    filterset_fields = ["id", "user_group"]
 
     def get_queryset(self):
         if self.request.user == "ALL":
