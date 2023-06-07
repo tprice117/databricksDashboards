@@ -164,7 +164,7 @@ class OrderViewSet(viewsets.ModelViewSet):
            return self.queryset
         else:
             queryset = self.queryset
-            query_set = queryset.filter(user_group__user__id=self.request.user.id)
+            query_set = queryset.filter(order_group__user__id=self.request.user.id)
             return query_set
         
 class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
