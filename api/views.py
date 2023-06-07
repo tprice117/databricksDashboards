@@ -157,7 +157,7 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = ["id", "user_group"]
+    filterset_fields = ["id", "order_group"]
 
     def get_queryset(self):
         if self.request.user == "ALL":
