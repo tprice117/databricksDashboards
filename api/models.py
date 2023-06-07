@@ -393,7 +393,7 @@ class Order(BaseModel):
                 "Rental_End_Date__c": instance.end_date.strftime('%Y-%m-%d'),
                 "effectiveDate": instance.start_date.strftime('%Y-%m-%d'),
                 "Access_Details__c": instance.access_details,
-                "schedule_details__c": instance.additional_schedule_details,
+                "schedule_details__c": instance.schedule_details,
                 "description": "User: " + (instance.user.email if instance.user else "None") + " | User Address: " + (instance.user_address.name if instance.user_address else "None") + " " + (instance.user_address.street if instance.user_address else "None")  + " " + (instance.user_address.city if instance.user_address else "None")  + " " + (instance.user_address.state if instance.user_address else "None") + " " + (instance.user_address.postal_code if instance.user_address else "None") + " | Waste Type: " + (instance.waste_type.name if instance.waste_type else "None")  + " | Disposal Location: " + (instance.disposal_location.name if instance.disposal_location else "None")  + " | Price: " + (str(instance.price) if instance.price else "None") + " | Main Product: " + (instance.seller_product_seller_location.seller_product.product.main_product.name if instance.seller_product_seller_location else "None") + " - " + (instance.seller_product_seller_location.seller_location.name if instance.seller_product_seller_location else "None") + " | Seller: " + (instance.seller_product_seller_location.seller_location.seller.name if instance.seller_product_seller_location else "None") + " | Seller Location: " + (instance.seller_product_seller_location.seller_location.name if instance.seller_product_seller_location else "None"),
             })
             instance.salesforce_order_id = order['id']
@@ -404,7 +404,7 @@ class Order(BaseModel):
                 instance.salesforce_order_id,
                 {
                     "Access_Details__c": instance.access_details,
-                    "schedule_details__c": instance.additional_schedule_details,
+                    "schedule_details__c": instance.schedule_details,
                 }
             )
             instance.save()
