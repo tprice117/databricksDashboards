@@ -62,7 +62,7 @@ class UserViewSet(viewsets.ModelViewSet):
            return self.queryset
         elif self.request.user.is_admin:
             queryset = self.queryset
-            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('user__id', flat=True)
+            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
             query_set = queryset.filter(id__in=user_ids)
             return query_set
         else:
