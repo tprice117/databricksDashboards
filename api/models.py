@@ -411,7 +411,7 @@ class Order(BaseModel):
             instance.save()
 
     def __str__(self):
-        return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
+        return self.order_group.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.order_group.user_address.name
 
 class OrderDisposalTicket(BaseModel):
     order = models.ForeignKey(Order, models.PROTECT)
