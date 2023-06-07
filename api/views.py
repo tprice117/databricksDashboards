@@ -77,6 +77,17 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()
     serializer_class = UserUserAddressSerializer
     filterset_fields = ["id", "user", "user_address"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        elif self.request.user.is_admin:
+            queryset = self.queryset
+            users = UserGroup.objects.filter(user_group=self.request.user.user_group)
+            query_set = queryset.filter(user__in=users)
+            return query_set
+        else:
+            return self.queryset.filter(id=self.request.user.id)
   
 class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
     queryset = UserSellerReview.objects.all()
