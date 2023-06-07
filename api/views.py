@@ -87,7 +87,7 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
             query_set = queryset.filter(user__in=users)
             return query_set
         else:
-            return self.queryset.filter(id=self.request.user.id)
+            return self.queryset.filter(user=self.request.user)
   
 class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
     queryset = UserSellerReview.objects.all()
