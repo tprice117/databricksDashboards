@@ -6,6 +6,8 @@ import uuid
 import stripe
 from simple_salesforce import Salesforce
 
+from api.utils.auth0 import create_user, get_user_from_email
+
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 sf = Salesforce(
@@ -154,18 +156,17 @@ class User(BaseModel):
                 
             
             # Create or attach to Auth0 user (only on Stage).
-            # if settings.ENVIRONMENT == 'TEST':
-            #     print('creating or attaching to auth0 user')
-            #     user_id = get_user_from_email(instance.email)
-            #     if user_id:
-            #         print('auth0 user exists')
-            #         # User already exists in Auth0.
-            #         instance.user_id = user_id
-            #     else:
-            #         print('auth0 user does not exist')
-            #         # Create user in Auth0.
-            #         instance.user_id = create_user(instance.email)
-            #     instance.save()
+            print('creating or attaching to auth0 user')
+            user_id = get_user_from_email(instance.email)
+            if user_id:
+                print('auth0 user exists')
+                # User already exists in Auth0.
+                instance.user_id = user_id
+            else:
+                print('auth0 user does not exist')
+                # Create user in Auth0.
+                instance.user_id = create_user(instance.email)
+            instance.save()
 
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
