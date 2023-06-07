@@ -54,7 +54,7 @@ class Seller(BaseModel):
     type_display = models.CharField(max_length=255, choices=[('Landfill', 'Landfill'), ('MRF', 'MRF'), ('Industrial', 'Industrial'), ('Scrap yard', 'Scrap yard'), ('Compost facility', 'Compost facility'), ('Processor', 'Processor'), ('Paint recycler', 'Paint recycler'), ('Tires', 'Tires'), ('Other recycler', 'Other recycler'), ('Roll-off', 'Roll-off'), ('Mover', 'Mover'), ('Junk', 'Junk'), ('Delivery', 'Delivery'), ('Broker', 'Broker'), ('Equipment', 'Equipment')], blank=True, null=True)
     stripe_connect_id = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     marketplace_display_name = models.CharField(max_length=255, blank=True, null=True)
-    open_days = models.CharField(choices = open_day_choices, blank=True, null=True)
+    open_days = models.CharField(max_length=255, choices = open_day_choices, blank=True, null=True)
     open_time = models.TimeField(blank=True, null=True)
     close_time = models.TimeField(blank=True, null=True)
     lead_time_hrs = models.DecimalField(max_digits=18, decimal_places=0)

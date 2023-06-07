@@ -129,7 +129,7 @@ def delete_user(user_id):
         )
         return response.json()
     
-
+"""
 #### DENVER COMP REPORT ####
 import datetime
 # from api.models import Order, OrderDisposalTicket, UserAddress
@@ -221,3 +221,4 @@ def send_denver_compliance_report(user_address_id, user_email):
         # ]
     }})
     print(response)
+ """   
