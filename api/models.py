@@ -289,6 +289,11 @@ class Subscription(BaseModel): #Added 2/20/23
 
 
 class OrderGroup(BaseModel):
+    user = models.ForeignKey(User, models.PROTECT)
+    user_address = models.ForeignKey(UserAddress, models.PROTECT)
+    seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.PROTECT)
+    subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
+
     def __str__(self):
         return str(self.id)
 
@@ -351,15 +356,11 @@ class Order(BaseModel):
         (COMPLETE, "Complete"),
     )
 
-    user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
-    user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
-    subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True)
-    order_group = models.ForeignKey(OrderGroup, models.DO_NOTHING, blank=True, null=True)
+    order_group = models.ForeignKey(OrderGroup, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-    salesforce_order_id = models.CharField(max_length=255, blank=True)
-    #description = models.TextField(blank=True, null=True) removed 6.6.23
+    salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
     service_date = models.DateField(blank=True, null=True) #6.6.23
@@ -379,7 +380,6 @@ class Order(BaseModel):
     quantity = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     unit_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     payout_processing_error_comment = models.TextField(blank=True, null=True) #6.6.23
-    seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
 
     def pre_create(sender, instance, *args, **kwargs):
         if Order.objects.filter(pk=instance.pk).count() == 0: 

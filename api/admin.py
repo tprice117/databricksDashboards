@@ -161,19 +161,19 @@ class UserAdmin(admin.ModelAdmin):
         UserGroupUserInline,
     ]
 
-class UserGroupAdmin(admin.ModelAdmin):
-    model = UserGroup
-    search_fields = ["name",]
-    list_display = ('name',)
-    inlines = [
-        UserGroupUserInline,
-    ]
+# class UserGroupAdmin(admin.ModelAdmin):
+#     model = UserGroup
+#     autocomplete_fields = ["user_address", "user"]
+#     search_fields = ["user__email", 'user_address', 'seller_product_seller_location']
+#     list_display = ('user', 'user_address', 'seller_product_seller_location', 'start_date', 'end_date')
+#     inlines = [
+#         UserGroupUserInline,
+#     ]
 
 class OrderAdmin(admin.ModelAdmin):
     model = Order
-    autocomplete_fields = ["user_address", "user"]
-    search_fields = ["user__email", 'user_address', 'seller_product_seller_location']
-    list_display = ('user', 'user_address', 'seller_product_seller_location', 'start_date', 'end_date')
+    # search_fields = ["order_group__user__email",]
+    # list_display = ('order_group__user__email', 'order_group__user_address__street', 'order_group__seller_product_seller_location__seller_product__product__main_product__name', 'start_date', 'end_date')
     inlines = [
         OrderDisposalTicketInline,
     ]
@@ -188,7 +188,7 @@ admin.site.register(SellerLocation, SellerLocationAdmin)
 admin.site.register(SellerProduct, SellerProductAdmin)
 admin.site.register(SellerProductSellerLocation, SellerProductSellerLocationAdmin)
 admin.site.register(UserAddress, UserAddressAdmin)
-admin.site.register(UserGroup, UserGroupAdmin)
+admin.site.register(UserGroup)
 admin.site.register(User, UserAdmin)
 admin.site.register(UserUserAddress)
 admin.site.register(AddOnChoice, AddOnChoiceAdmin)
