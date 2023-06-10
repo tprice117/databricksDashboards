@@ -121,6 +121,7 @@ class UserAddress(BaseModel):
     latitude = models.DecimalField(max_digits=18, decimal_places=15)
     longitude = models.DecimalField(max_digits=18, decimal_places=15)
     autopay = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
 
 
     def __str__(self):
@@ -140,6 +141,7 @@ class User(BaseModel):
     last_name = models.CharField(max_length=255, blank=True, null=True)
     device_token= models.CharField(max_length=255, blank=True, null=True)
     is_admin = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
 
     def __str__(self):
         return self.email
