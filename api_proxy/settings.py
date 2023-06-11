@@ -77,40 +77,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'defaultdb',
-        'USER': 'doadmin',
-        'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
-        'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
-        'PORT': '25060',
-    }
-}
-
 #Database.
-# if ENVIRONMENT == 'TEST':
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'defaultdb',
-#             'USER': 'doadmin',
-#             'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
-#             'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
-#             'PORT': '25060',
-#         }
-#     }
-# elif ENVIRONMENT == 'DEV':
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'defaultdb',
-#             'USER': 'doadmin',
-#             'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
-#             'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
-#             'PORT': '25060',
-#         }
-#     }
+if ENVIRONMENT == 'TEST':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
+            'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
+    }
+else:
+    # elif ENVIRONMENT == 'DEV':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'defaultdb',
+            'USER': 'doadmin',
+            'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
+            'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
+            'PORT': '25060',
+        }
+    }
 # else:
 #     DATABASES = {
 #         'default': {
