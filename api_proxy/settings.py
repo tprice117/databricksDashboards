@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'api.pricing_ml',
+    'api.utils',
     'django_filters',
     'drf_spectacular',
     ]
@@ -88,7 +89,8 @@ if ENVIRONMENT == 'TEST':
             'PORT': '25060',
         }
     }
-elif ENVIRONMENT == 'DEV':
+else:
+    # elif ENVIRONMENT == 'DEV':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -99,13 +101,13 @@ elif ENVIRONMENT == 'DEV':
             'PORT': '25060',
         }
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'sqllite.db',
-        },
-    }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': 'sqllite.db',
+#         },
+#     }
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -155,10 +157,27 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        "api.authentication.CustomAuthentication",
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    # 'COERCE_DECIMAL_TO_STRING': False
+}
+
 if ENVIRONMENT == 'TEST':
     STRIPE_PUBLISHABLE_KEY = 'pk_live_H293e3qNvoJB8isKoALzyCFs00v6DmDPGg'
     STRIPE_SECRET_KEY = 'sk_live_wYw9ZQ4Gzp8V1n2EOVJ7ZRFW00DX5CyS6c'
+    AUTH0_CLIENT_ID = "zk3ULUpybm5gp0FyBcKE0k8WUPVdaDW3"
+    AUTH0_CLIENT_SECRET = "srBzQ02G9r4IVQ9F1S2P1yW_hYsS-ly-XI_DbMOeoqVGvdRea-hocCdYYOdaiFZv"
+    AUTH0_DOMAIN = "dev-jy1f5kgzroj4fcci.us.auth0.com"
 else:    
     STRIPE_PUBLISHABLE_KEY = 'pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf'
     STRIPE_SECRET_KEY = 'sk_test_k7kzz0R6mrRogFPs6OVrpgrB00UmEjcUtf' 
+    AUTH0_DOMAIN = 'dev-8q3q3q3q.us.auth0.com'
+    AUTH0_CLIENT_ID = "KduQpQUG12d7jS8wP6d6cof6o64BFHx2"
+    AUTH0_CLIENT_SECRET = "XGRLBdAQ0lV9Xm4Bh_nmT3Yxc8ohF1f_7XtDmKwxn4uR_RCXMGIFEpDHS2bYazKb"
+    AUTH0_DOMAIN = "downstream-dev.us.auth0.com"
 

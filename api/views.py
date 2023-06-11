@@ -1,15 +1,17 @@
+import base64
 import datetime
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import render
 from rest_framework import viewsets
-from api.utils import get_distance, get_price_for_seller
+from rest_framework.decorators import permission_classes, authentication_classes
+
+from api.utils.denver_compliance_report import send_denver_compliance_report
 from .serializers import *
 from .models import *
-# from .apps import MlConfig
 from django.conf import settings
+from django.db.models import Sum
 import stripe
 import requests
 from random import randint
@@ -31,20 +33,63 @@ class SellerLocationViewSet(viewsets.ModelViewSet):
     serializer_class = SellerLocationSerializer
     filterset_fields = ["id", "seller"]
 
+class UserAddressTypeViewSet(viewsets.ModelViewSet):
+    queryset = UserAddressType.objects.all()
+    serializer_class = UserAddressTypeSerializer
+    filterset_fields = ["id"]
+
 class UserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
     serializer_class = UserAddressSerializer
     filterset_fields = ["id"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        elif self.request.user.is_admin:
+            return self.queryset.filter(user_group=self.request.user.user_group)
+        else:
+            queryset = self.queryset
+            user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
+            query_set = queryset.filter(id__in=user_address_ids)
+            return query_set
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filterset_fields = ["id","user_id"]
 
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        elif self.request.user.is_admin:
+            queryset = self.queryset
+            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
+            query_set = queryset.filter(id__in=user_ids)
+            return query_set
+        else:
+            return self.queryset.filter(id=self.request.user.id)
+
+class UserGroupViewSet(viewsets.ModelViewSet):
+    queryset = UserGroup.objects.all()
+    serializer_class = UserGroupSerializer
+    filterset_fields = ["id"]
+
 class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()
     serializer_class = UserUserAddressSerializer
     filterset_fields = ["id", "user", "user_address"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        elif self.request.user.is_admin:
+            queryset = self.queryset
+            users = User.objects.filter(user_group=self.request.user.user_group)
+            query_set = queryset.filter(user__in=users)
+            return query_set
+        else:
+            return self.queryset.filter(user=self.request.user)
   
 class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
     queryset = UserSellerReview.objects.all()
@@ -77,6 +122,16 @@ class AddOnViewSet(viewsets.ModelViewSet):
     serializer_class = AddOnSerializer
     filterset_fields = ["main_product"] 
 
+class DisposalLocationViewSet(viewsets.ModelViewSet):
+    queryset = DisposalLocation.objects.all()
+    serializer_class = DisposalLocationSerializer
+    filterset_fields = ["id"]
+
+class DisposalLocationWasteTypeViewSet(viewsets.ModelViewSet):
+    queryset = DisposalLocationWasteType.objects.all()
+    serializer_class = DisposalLocationWasteTypeSerializer
+    filterset_fields = ["id"]
+
 class MainProductAddOnViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOn.objects.all()
     serializer_class = MainProductAddOnSerializer
@@ -87,6 +142,8 @@ class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductCategoryInfoSerializer
     filterset_fields = ["main_product_category"]
 
+@authentication_classes([])
+@permission_classes([])
 class MainProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
@@ -96,6 +153,8 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductInfoSerializer
     filterset_fields = ["main_product"]   
 
+@authentication_classes([])
+@permission_classes([])
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
@@ -109,11 +168,33 @@ class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
 class OrderGroupViewSet(viewsets.ModelViewSet):
     queryset = OrderGroup.objects.all()
     serializer_class = OrderGroupSerializer
-    
+    filterset_fields = ["id", "user_address"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(user__id=self.request.user.id)
+            return query_set
+        
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = ["id", "user_address", "user"]
+    filterset_fields = ["id", "order_group"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(order_group__user__id=self.request.user.id)
+            return query_set
+        
+class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
+    queryset = OrderDisposalTicket.objects.all()
+    serializer_class = OrderDisposalTicketSerializer
+    filterset_fields = ["id"]
 
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
@@ -610,3 +691,15 @@ class StripeCoreBalanceTransactions(APIView):
             has_more = payment_intents["has_more"]
             starting_after = data[-1]["id"]
         return Response(data)
+    
+
+# Denver Waste Compliance Report.
+@api_view(['POST'])
+def denver_compliance_report(request):
+    try:
+        user_address_id = request.data['user_address']
+        send_denver_compliance_report(user_address_id, request.user.id)
+    except Exception as error:
+       print("An exception occurred: {}".format(error.text))
+
+    return Response("Success", status=200)

@@ -1,3 +1,6 @@
+from uuid import uuid4
+from django.conf import settings
+import requests
 import api.models
 import math
  

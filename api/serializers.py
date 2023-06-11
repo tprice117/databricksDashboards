@@ -22,6 +22,12 @@ class SellerLocationSerializer(serializers.ModelSerializer):
         model = SellerLocation
         fields = "__all__"
 
+class UserAddressTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = UserAddressType
+        fields = "__all__"
+
 class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
@@ -35,6 +41,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
         validators = []
+
+class UserGroupSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = UserGroup
+        fields = "__all__"
 
 class UserUserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
@@ -63,6 +75,18 @@ class AddOnSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
         model = AddOn
+        fields = "__all__"
+
+class DisposalLocationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = DisposalLocation
+        fields = "__all__"
+
+class DisposalLocationWasteTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = DisposalLocationWasteType
         fields = "__all__"
         
 class MainProductAddOnSerializer(serializers.ModelSerializer):
@@ -109,7 +133,6 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
-    # status = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = Order
@@ -119,6 +142,12 @@ class OrderSerializer(serializers.ModelSerializer):
     #     return stripe.Invoice.retrieve(
     #     obj.stripe_invoice_id,
     #     ).status if obj.stripe_invoice_id and obj.stripe_invoice_id != "" else None
+
+class OrderDisposalTicketSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = OrderDisposalTicket
+        fields = "__all__"
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)

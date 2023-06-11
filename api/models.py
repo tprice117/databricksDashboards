@@ -1,12 +1,21 @@
+import datetime
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save, post_save
 import uuid
 import stripe
+from simple_salesforce import Salesforce
 
-from api.utils import get_price_for_seller
+from api.utils.auth0 import create_user, get_user_from_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+sf = Salesforce(
+    username='thayes@trydownstream.io.stage', 
+    password='LongLiveDownstream12!', 
+    security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
+    domain='test'
+)
 
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -18,14 +27,22 @@ class BaseModel(models.Model):
        abstract = True
 
 class Seller(BaseModel):
+    MONDAY= 'Monday', 
+    TUESDAY = 'Tuesday', 
+    WEDNESDAY = 'Wednesday', 
+    THURSDAY = 'Thursday', 
+    FRIDAY = 'Friday', 
+    SATURDAY = 'Saturday', 
+    SUNDAY = 'Sunday'
+ 
     open_day_choices = (
-      [('Monday', 'Monday'), 
-       ('Tuesday', 'Tuesday'), 
-       ('Wednesday', 'Wednesday'), 
-       ('Thursday', 'Thursday'), 
-       ('Friday', 'Friday'), 
-       ('Saturday', 'Saturday'), 
-       ('Sunday', 'Sunday')]
+       ('MONDAY', 'Monday'), 
+       ('TUESDAY', 'Tuesday'), 
+       ('WEDNESDAY', 'Wednesday'), 
+       ('THURSDAY', 'Thursday'), 
+       ('FRIDAY', 'Friday'), 
+       ('SATURDAY', 'Saturday'), 
+       ('SUNDAY', 'Sunday')
     )
         
     name = models.CharField(max_length=255)
@@ -38,7 +55,7 @@ class Seller(BaseModel):
     type_display = models.CharField(max_length=255, choices=[('Landfill', 'Landfill'), ('MRF', 'MRF'), ('Industrial', 'Industrial'), ('Scrap yard', 'Scrap yard'), ('Compost facility', 'Compost facility'), ('Processor', 'Processor'), ('Paint recycler', 'Paint recycler'), ('Tires', 'Tires'), ('Other recycler', 'Other recycler'), ('Roll-off', 'Roll-off'), ('Mover', 'Mover'), ('Junk', 'Junk'), ('Delivery', 'Delivery'), ('Broker', 'Broker'), ('Equipment', 'Equipment')], blank=True, null=True)
     stripe_connect_id = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     marketplace_display_name = models.CharField(max_length=255, blank=True, null=True)
-    open_days = models.CharField(max_length=4099, choices = open_day_choices, blank=True, null=True)
+    open_days = models.CharField(max_length=255, choices = open_day_choices, blank=True, null=True)
     open_time = models.TimeField(blank=True, null=True)
     close_time = models.TimeField(blank=True, null=True)
     lead_time_hrs = models.DecimalField(max_digits=18, decimal_places=0)
@@ -72,6 +89,8 @@ class SellerLocation(BaseModel):
 class UserGroup(BaseModel):
     name = models.CharField(max_length=255)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    pay_later = models.BooleanField(default=False)
+    autopay= models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -82,9 +101,18 @@ class UserGroup(BaseModel):
             instance.stripe_customer_id = customer.id
             instance.save()
 
+class UserAddressType(BaseModel):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 class UserAddress(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
+    user_address_type = models.ForeignKey(UserAddressType, models.CASCADE, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     name = models.CharField(max_length=255)
+    project_id = models.CharField(max_length=50, blank=True, null=True)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)
     state = models.CharField(max_length=80)
@@ -92,29 +120,54 @@ class UserAddress(BaseModel):
     country = models.CharField(max_length=80)
     latitude = models.DecimalField(max_digits=18, decimal_places=15)
     longitude = models.DecimalField(max_digits=18, decimal_places=15)
+    autopay = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
+
 
     def __str__(self):
         return self.name
 
 class User(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
-    user_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, blank=True)
+    mailchip_id = models.CharField(max_length=255, blank=True, null=True)
+    intercom_id = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
-    email = models.CharField(max_length=255, blank=True, null=True)
+    email = models.CharField(max_length=255)
     photo_url = models.URLField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     device_token= models.CharField(max_length=255, blank=True, null=True)
+    is_admin = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
 
     def __str__(self):
         return self.email
     
     def post_create(sender, instance, created, **kwargs):
         if created:
-            customer = stripe.Customer.create()
-            instance.stripe_customer_id = customer.id
+            # Create stripe customer.
+            try:
+                print('creating stripe customer')
+                customer = stripe.Customer.create()
+                instance.stripe_customer_id = customer.id
+            except Exception as e:
+                pass
+                
+            
+            # Create or attach to Auth0 user (only on Stage).
+            print('creating or attaching to auth0 user')
+            user_id = get_user_from_email(instance.email)
+            if user_id:
+                print('auth0 user exists')
+                # User already exists in Auth0.
+                instance.user_id = user_id
+            else:
+                print('auth0 user does not exist')
+                # Create user in Auth0.
+                instance.user_id = create_user(instance.email)
             instance.save()
 
 class UserGroupUser(BaseModel):
@@ -138,7 +191,7 @@ class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     comment = models.TextField(blank=True, null=True)
     
     def __str__(self):
-        return self.name
+        return f'{self.seller.name} - {self.rating if self.rating else ""}'
 
 class MainProductCategory(BaseModel):
     name = models.CharField(max_length=80)
@@ -211,6 +264,7 @@ class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     main_product = models.ForeignKey(MainProduct, models.CASCADE)
+    removal_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
         return f'{self.main_product.name} - {self.product_code}'
@@ -234,8 +288,16 @@ class SellerProductSellerLocation(BaseModel):
 class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
+    length_days = models.IntegerField(blank=True, null=True) #6.6.23
+    subscription_type = models.CharField(max_length=35, choices=[('On demand without subscription', 'On demand without subscription'), ('On demand with subscription', 'On demand with subscription'), ('Auto scheduled with subscription','Auto scheduled with subscription')], blank=True, null=True) #6.6.23
+
 
 class OrderGroup(BaseModel):
+    user = models.ForeignKey(User, models.PROTECT)
+    user_address = models.ForeignKey(UserAddress, models.PROTECT)
+    seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.PROTECT)
+    subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
+
     def __str__(self):
         return str(self.id)
 
@@ -281,49 +343,89 @@ class DisposalLocationWasteType(BaseModel):
     def __str__(self):
         return self.disposal_location.name + ' - ' + self.waste_type.name
 
-
 class Order(BaseModel):
-    user = models.ForeignKey(User, models.DO_NOTHING, blank=True, null=True)
-    user_address = models.ForeignKey(UserAddress, models.DO_NOTHING, blank=True, null=True)
-    subscription = models.ForeignKey(Subscription, models.DO_NOTHING, blank=True, null=True)
-    order_group = models.ForeignKey(OrderGroup, models.DO_NOTHING, blank=True, null=True)
+    PENDING = "PENDING"
+    SCHEDULED = "SCHEDULED"
+    INPROGRESS = "IN-PROGRESS"
+    AWAITINGREQUEST = "Awaiting Request"
+    CANCELLED = "CANCELLED"
+    COMPLETE = "COMPLETE"
+
+    STATUS_CHOICES = (
+        (PENDING, "Pending"),
+        (SCHEDULED, "Scheduled"),
+        (INPROGRESS, "In-Progress"),
+        (AWAITINGREQUEST, "Awaiting Request"),
+        (CANCELLED, "Cancelled"),
+        (COMPLETE, "Complete"),
+    )
+
+    order_group = models.ForeignKey(OrderGroup, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
+    salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
-    additional_schedule_details = models.TextField(blank=True, null=True)
+    service_date = models.DateField(blank=True, null=True) #6.6.23
+    schedule_details = models.TextField(blank=True, null=True) #6.6.23 (Modified name to schedule_details from additional_schedule_details)
     access_details = models.TextField(blank=True, null=True)
-    seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.DO_NOTHING, blank=True, null=True) #Added 2/25/2023 to create relationship between ordersdetail and sellerproductsellerlocation so that inventory can be removed from sellerproductsellerlocation inventory based on open orders.
+    placement_details = models.TextField(blank=True, null=True) #6.6.23
+    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+    order_type =  models.CharField(max_length=255, choices=[('Automatic Renewal', 'Automatic Renewal'), ('Swap', 'Swap'),('Empty and Return','Empty and Return'),('Trip Charge/Dry Run','Trip Charge/Dry Run'),('Removal','Removal'),('On Demand','On Demand'),('Other','Other')], blank=True, null=True) #6.6.23
+    included_weight_tons = models.DecimalField(max_digits=18, decimal_places=4, blank=True, null=True) #6.6.23
+    invoice_status = models.CharField(max_length=35, choices=[('Not yet invoiced', 'Not yet invoiced'), ('In draft', 'In draft'), ('Sent to customer','Sent to customer'),('Paid','Paid')], default=[0][0], blank=True, null=True) #6.6.23
+    billing_comments_internal_use = models.TextField(blank=True, null=True) #6.6.23
+    schedule_window = models.CharField(max_length=35, choices=[('Morning (7am-11am)','Morning (7am-11am)'),('Afternoon (12pm-4pm)','Afternoon (12pm-4pm)'),('Evening (5pm-8pm)','Evening (5pm-8pm)')], blank=True, null=True) #6.6.23
+    supplier_payout_status = models.CharField(max_length=35, choices=[('Not yet paid', 'Not yet paid'), ('Process Payment', 'Process Payment'), ('Payout Processing Error','Payout Processing Error'),('Payout Completed','Payout Completed')], default=[0][0], blank=True, null=True) #6.6.23
+    suppplier_payout_method = models.CharField(max_length=35, choices=[('Stripe Connect', 'Stripe Connect'), ('By Invoice', 'By Invoice'), ('Other','Other')], blank=True, null=True) #6.6.23
+    tax_rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
+    quantity = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
+    unit_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
+    payout_processing_error_comment = models.TextField(blank=True, null=True) #6.6.23
 
-    def post_create(sender, instance, created, **kwargs):
-        if created:
-            disposal_locations = DisposalLocation.objects.all()
-            price = get_price_for_seller(
-                instance.seller_product_seller_location, 
-                instance.user_address.latitude, 
-                instance.user_address.longitude,
-                instance.waste_type.id, 
-                instance.start_date, 
-                instance.end_date, 
-                disposal_locations
+    def pre_create(sender, instance, *args, **kwargs):
+        if Order.objects.filter(pk=instance.pk).count() == 0: 
+            order = sf.Order.create({
+                "order_type__c": "Delivery",
+                "accountId": "0014x00001RgLBMAA3",
+                "status": "Waiting for Request",
+                "Rental_Start_Date__c": instance.start_date.strftime('%Y-%m-%d'),
+                "Service_Date__c": instance.start_date.strftime('%Y-%m-%d'),
+                "Rental_End_Date__c": instance.end_date.strftime('%Y-%m-%d'),
+                "effectiveDate": instance.start_date.strftime('%Y-%m-%d'),
+                "Access_Details__c": instance.access_details,
+                "schedule_details__c": instance.schedule_details,
+                "description": "User: " + (instance.order_group.user.email if instance.order_group.user else "None") + " | User Address: " + (instance.order_group.user_address.name if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.street if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.city if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.state if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.postal_code if instance.order_group.user_address else "None") + " | Waste Type: " + (instance.waste_type.name if instance.waste_type else "None")  + " | Disposal Location: " + (instance.disposal_location.name if instance.disposal_location else "None")  + " | Price: " + (str(instance.price) if instance.price else "None") + " | Main Product: " + (instance.order_group.seller_product_seller_location.seller_product.product.main_product.name if instance.order_group.seller_product_seller_location else "None") + " - " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None") + " | Seller: " + (instance.order_group.seller_product_seller_location.seller_location.seller.name if instance.order_group.seller_product_seller_location else "None") + " | Seller Location: " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None"),
+            })
+            instance.salesforce_order_id = order['id']
+
+    def post_update(sender, instance, created, **kwargs):
+        if not created:
+            sf.Order.update(
+                instance.salesforce_order_id,
+                {
+                    "Access_Details__c": instance.access_details,
+                    "schedule_details__c": instance.schedule_details,
+                }
             )
-
-            for item in price['line_items']:
-                stripe.InvoiceItem.create(
-                    customer=instance.user.stripe_customer_id,
-                    amount=round(item['price']*100),
-                    description=item['name'],
-                    currency="usd",
-                )
-            invoice = stripe.Invoice.create(customer=instance.user.stripe_customer_id)
-            instance.stripe_invoice_id = invoice.id
             instance.save()
 
     def __str__(self):
-        return self.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.user_address.name
+        return self.order_group.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.order_group.user_address.name
 
+class OrderDisposalTicket(BaseModel):
+    order = models.ForeignKey(Order, models.PROTECT)
+    waste_type = models.ForeignKey(WasteType, models.PROTECT)
+    disposal_location = models.ForeignKey(DisposalLocation, models.PROTECT)
+    ticket_id = models.CharField(max_length=255)
+    weight = models.DecimalField(max_digits=18, decimal_places=2)
+
+    def __str__(self):
+        return self.ticket_id + ' - ' + self.order.order_group.user_address.name
+    
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
-post_save.connect(Order.post_create, sender=Order)
+pre_save.connect(Order.pre_create, sender=Order)
+# post_save.connect(Order.post_update, sender=Order)

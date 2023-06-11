@@ -138,17 +138,20 @@ class Price_Model:
 
         # Get SellerLocations that offer the product.
         seller_products = SellerProduct.objects.filter(product=self.product)
+        print(len(seller_products))
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
+        print(len(seller_product_seller_locations))
 
         # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
         seller_location_prices = []
         for seller_product_seller_location in seller_product_seller_locations:
             price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location.id, diesel_price)
-            if price_obj['distance_miles'] <= 40:
-                seller_location_prices.append(price_obj)
-            else:
-                print('Skipping seller_location: ', seller_product_seller_location.seller_location.id ,\
-                       ' distance: ', price_obj['distance_miles'])
+            seller_location_prices.append(price_obj)
+            # if price_obj['total_distance'] <= 40:
+            #     seller_location_prices.append(price_obj)
+            # else:
+            #     print('Skipping seller_location: ', seller_product_seller_location.seller_location.id ,\
+            #            ' distance: ', price_obj['total_distance'])
 
         print(seller_location_prices)    
 
