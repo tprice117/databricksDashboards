@@ -369,11 +369,12 @@ class Order(BaseModel):
     order_group = models.ForeignKey(OrderGroup, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
-    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-    salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
     service_date = models.DateField(blank=True, null=True) #6.6.23
+    submitted_on = models.DateTimeField(blank=True, null=True)
+    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
+    salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
     schedule_details = models.TextField(blank=True, null=True) #6.6.23 (Modified name to schedule_details from additional_schedule_details)
     access_details = models.TextField(blank=True, null=True)
     placement_details = models.TextField(blank=True, null=True) #6.6.23
