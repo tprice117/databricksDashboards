@@ -27,6 +27,7 @@ class BaseModel(models.Model):
        abstract = True
 
 class Seller(BaseModel):
+    """
     MONDAY= 'MONDAY', 
     TUESDAY = 'TUESDAY', 
     WEDNESDAY = 'WEDNESDAY', 
@@ -44,7 +45,7 @@ class Seller(BaseModel):
        ('SATURDAY', 'SATURDAY'), 
        ('SUNDAY', 'SUNDAY')
     )
-        
+    """  
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=40)
     website = models.URLField(blank=True, null=True)

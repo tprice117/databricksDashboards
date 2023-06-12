@@ -2,7 +2,7 @@ from django import forms
 from .models import *
 
 class OpenDaysAdminForm(forms.ModelForm):
-    open_days = forms.MultipleChoiceField(choices=Seller.open_day_choices, widget=forms.CheckboxSelectMultiple)
+    open_days = forms.MultipleChoiceField(choices=[('MONDAY','MONDAY'),('TUESDAY','TUESDAY'),('WEDNESDAY', 'WEDNESDAY'),('THURSDAY','THURSDAY'),('FRIDAY','FRIDAY'),('SATURDAY','SATURDAY'),('SUNDAY','SUNDAY')], widget=forms.CheckboxSelectMultiple)
 
     class Meta:
         model = Seller
