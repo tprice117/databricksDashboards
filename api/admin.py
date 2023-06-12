@@ -183,7 +183,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
 class OrderAdmin(admin.ModelAdmin):
     model = Order
     # search_fields = ["order_group__user__email",]
-    # list_display = ('order_group__user__email', 'order_group__user_address__street', 'order_group__seller_product_seller_location__seller_product__product__main_product__name', 'start_date', 'end_date')
+    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date')
     inlines = [
         OrderDisposalTicketInline,
     ]
