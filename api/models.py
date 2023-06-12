@@ -27,22 +27,22 @@ class BaseModel(models.Model):
        abstract = True
 
 class Seller(BaseModel):
-    MONDAY= 'Monday', 
-    TUESDAY = 'Tuesday', 
-    WEDNESDAY = 'Wednesday', 
-    THURSDAY = 'Thursday', 
-    FRIDAY = 'Friday', 
-    SATURDAY = 'Saturday', 
-    SUNDAY = 'Sunday'
+    MONDAY= 'MONDAY', 
+    TUESDAY = 'TUESDAY', 
+    WEDNESDAY = 'WEDNESDAY', 
+    THURSDAY = 'THURSDAY', 
+    FRIDAY = 'FRIDAY', 
+    SATURDAY = 'SATURDAY', 
+    SUNDAY = 'SUNDAY'
  
     open_day_choices = (
-       ('MONDAY', 'Monday'), 
-       ('TUESDAY', 'Tuesday'), 
-       ('WEDNESDAY', 'Wednesday'), 
-       ('THURSDAY', 'Thursday'), 
-       ('FRIDAY', 'Friday'), 
-       ('SATURDAY', 'Saturday'), 
-       ('SUNDAY', 'Sunday')
+       ('MONDAY', 'MONDAY'), 
+       ('TUESDAY', 'TUESDAY'), 
+       ('WEDNESDAY', 'WEDNESDAY'), 
+       ('THURSDAY', 'THURSDAY'), 
+       ('FRIDAY', 'FRIDAY'), 
+       ('SATURDAY', 'SATURDAY'), 
+       ('SUNDAY', 'SUNDAY')
     )
         
     name = models.CharField(max_length=255)
@@ -53,7 +53,7 @@ class Seller(BaseModel):
     status = models.CharField(max_length=255, choices=[('Inactive', 'Inactive'), ('Inactive - Onboarding', 'Inactive - Onboarding'), ('Inactive - Pending approval', 'Inactive - Pending approval'), ('Active - under review', 'Active - under review'), ('Active', 'Active')], blank=True, null=True)
     lead_time = models.CharField(max_length=255, blank=True, null=True)
     type_display = models.CharField(max_length=255, choices=[('Landfill', 'Landfill'), ('MRF', 'MRF'), ('Industrial', 'Industrial'), ('Scrap yard', 'Scrap yard'), ('Compost facility', 'Compost facility'), ('Processor', 'Processor'), ('Paint recycler', 'Paint recycler'), ('Tires', 'Tires'), ('Other recycler', 'Other recycler'), ('Roll-off', 'Roll-off'), ('Mover', 'Mover'), ('Junk', 'Junk'), ('Delivery', 'Delivery'), ('Broker', 'Broker'), ('Equipment', 'Equipment')], blank=True, null=True)
-    stripe_connect_id = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    stripe_connect_id = models.CharField(max_length=255, blank=True, null=True)
     marketplace_display_name = models.CharField(max_length=255, blank=True, null=True)
     open_days = models.CharField(max_length=255, choices = open_day_choices, blank=True, null=True)
     open_time = models.TimeField(blank=True, null=True)
@@ -64,10 +64,8 @@ class Seller(BaseModel):
     location_logo_url = models.URLField(blank=True, null=True)
     downstream_insurance_requirements_met = models.BooleanField(default=False)
     badge = models.CharField(max_length=255, choices=[('New', 'New'), ('Pro', 'Pro'), ('Platinum', 'Platinum')], blank=True, null=True)
-    tire_recycler_cert_registration_id_co = models.CharField(max_length=100, blank=True, null=True)
-    composting_classification = models.CharField(max_length=100, blank=True, null=True)
-    max_paint_gallons_accepted = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
-    recycling_disposal_classification = models.CharField(max_length=100, blank=True, null=True)
+    salesforce_seller_id = models.CharField(max_length=255, blank=True, null=True)
+    about_us = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -91,6 +89,7 @@ class UserGroup(BaseModel):
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     pay_later = models.BooleanField(default=False)
     autopay= models.BooleanField(default=False)
+    parent_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -122,6 +121,7 @@ class UserAddress(BaseModel):
     longitude = models.DecimalField(max_digits=18, decimal_places=15)
     autopay = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
+    child_account_id = models.CharField(max_length=255, blank=True, null=True)
 
 
     def __str__(self):
@@ -142,6 +142,8 @@ class User(BaseModel):
     device_token= models.CharField(max_length=255, blank=True, null=True)
     is_admin = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
+    salesforce_contact_id = models.CharField(max_length=255, blank=True, null=True)
+    salesforce_seller_location_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.email
@@ -280,6 +282,9 @@ class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
     seller_location = models.ForeignKey(SellerLocation, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
     rate = models.DecimalField(max_digits=18, decimal_places=2)
+    rate_per_day = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    rate_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    rate_per_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
 
     def __str__(self):

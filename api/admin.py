@@ -83,9 +83,6 @@ class OrderDisposalTicketInline(admin.TabularInline):
     extra=0
 
 
-
-
-
 class AddOnChoiceAdmin(admin.ModelAdmin):
     search_fields = ["name", "add_on__name"]
     list_display = ('name', 'add_on')
@@ -122,7 +119,7 @@ class MainProductInfoAdmin(admin.ModelAdmin):
     
 class SellerAdmin(admin.ModelAdmin):
     search_fields = ["name",]
-    form =  OpenDaysAdminForm
+    form =  OpenDaysAdminForm #OPENDAYS
     inlines = [
         SellerProductInline,
         SellerLocationInline,

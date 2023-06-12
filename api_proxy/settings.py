@@ -102,13 +102,15 @@ else:
         }
     }
 # else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': 'sqllite.db',
-#         },
-#     }
 
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'sqllite.db',
+        },
+    }
+"""
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
