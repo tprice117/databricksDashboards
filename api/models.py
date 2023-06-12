@@ -305,7 +305,7 @@ class OrderGroup(BaseModel):
     subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
 
     def __str__(self):
-        return str(self.id)
+        return f'{self.user.user_group.name} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
 
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80)

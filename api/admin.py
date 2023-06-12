@@ -29,6 +29,12 @@ class MainProductInfoInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class OrderInline(admin.TabularInline):
+    model = Order
+    fields = ('start_date', 'end_date', 'service_date', 'submitted_on')
+    show_change_link = True
+    extra=0
+
 class ProductInline(admin.TabularInline):
     model = Product
     fields = ('product_code', 'description')
@@ -167,6 +173,13 @@ class UserAdmin(admin.ModelAdmin):
 #         UserGroupUserInline,
 #     ]
 
+class OrderGroupAdmin(admin.ModelAdmin):
+    model = OrderGroup
+    list_display = ('user', 'user_address', 'seller_product_seller_location')
+    inlines = [
+        OrderInline,
+    ]
+
 class OrderAdmin(admin.ModelAdmin):
     model = Order
     # search_fields = ["order_group__user__email",]
@@ -197,7 +210,7 @@ admin.site.register(MainProduct, MainProductAdmin)
 admin.site.register(MainProductInfo, MainProductInfoAdmin)
 admin.site.register(MainProductWasteType, MainProductWasteTypeAdmin)
 admin.site.register(Product, ProductAdmin)
-admin.site.register(OrderGroup)
+admin.site.register(OrderGroup, OrderGroupAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(ProductAddOnChoice)
 admin.site.register(WasteType)
