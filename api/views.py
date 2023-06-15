@@ -163,7 +163,7 @@ class MainProductViewSet(viewsets.ModelViewSet):
 class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = MainProductWasteType.objects.all()
     serializer_class = MainProductWasteTypeSerializer
-    filterset_fields = ["main_product", "waste_type"]
+    filterset_fields = ["main_product"]
 
 class OrderGroupViewSet(viewsets.ModelViewSet):
     queryset = OrderGroup.objects.all()
