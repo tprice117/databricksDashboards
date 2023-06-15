@@ -1,12 +1,19 @@
 from django import forms
 from .models import *
 
-class OpenDaysAdminForm(forms.ModelForm):
-    open_days = forms.MultipleChoiceField(choices=[('MONDAY','MONDAY'),('TUESDAY','TUESDAY'),('WEDNESDAY', 'WEDNESDAY'),('THURSDAY','THURSDAY'),('FRIDAY','FRIDAY'),('SATURDAY','SATURDAY'),('SUNDAY','SUNDAY')], widget=forms.CheckboxSelectMultiple)
 
+class OpenDaysAdminForm(forms.ModelForm):
     class Meta:
         model = Seller
         fields = '__all__'
+
+    def clean_open_days(self):
+        open_days = self.cleaned_data.get('open_days')
+        available_choices = [choice[0] for choice in self.fields['open_days'].choices]
+        for selected_day in open_days:
+            if selected_day not in available_choices:
+                raise forms.ValidationError("Invalid choice selected for open_days.")
+        return open_days
 
 
 # create forms file and to allow api to create data to db
