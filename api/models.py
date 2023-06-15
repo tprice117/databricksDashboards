@@ -5,7 +5,7 @@ from django.db.models.signals import pre_save, post_save
 import uuid
 import stripe
 from simple_salesforce import Salesforce
-
+from multiselectfield import MultiSelectField
 from api.utils.auth0 import create_user, get_user_from_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -27,14 +27,7 @@ class BaseModel(models.Model):
        abstract = True
 
 class Seller(BaseModel):
-    """
-    MONDAY= 'MONDAY', 
-    TUESDAY = 'TUESDAY', 
-    WEDNESDAY = 'WEDNESDAY', 
-    THURSDAY = 'THURSDAY', 
-    FRIDAY = 'FRIDAY', 
-    SATURDAY = 'SATURDAY', 
-    SUNDAY = 'SUNDAY'
+   
  
     open_day_choices = (
        ('MONDAY', 'MONDAY'), 
@@ -45,7 +38,7 @@ class Seller(BaseModel):
        ('SATURDAY', 'SATURDAY'), 
        ('SUNDAY', 'SUNDAY')
     )
-    """  
+     
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=40)
     website = models.URLField(blank=True, null=True)
@@ -56,7 +49,7 @@ class Seller(BaseModel):
     type_display = models.CharField(max_length=255, choices=[('Landfill', 'Landfill'), ('MRF', 'MRF'), ('Industrial', 'Industrial'), ('Scrap yard', 'Scrap yard'), ('Compost facility', 'Compost facility'), ('Processor', 'Processor'), ('Paint recycler', 'Paint recycler'), ('Tires', 'Tires'), ('Other recycler', 'Other recycler'), ('Roll-off', 'Roll-off'), ('Mover', 'Mover'), ('Junk', 'Junk'), ('Delivery', 'Delivery'), ('Broker', 'Broker'), ('Equipment', 'Equipment')], blank=True, null=True)
     stripe_connect_id = models.CharField(max_length=255, blank=True, null=True)
     marketplace_display_name = models.CharField(max_length=255, blank=True, null=True)
-    open_days = models.CharField(max_length=255, choices = [('MONDAY','MONDAY'),('TUESDAY','TUESDAY'),('WEDNESDAY', 'WEDNESDAY'),('THURSDAY','THURSDAY'),('FRIDAY','FRIDAY'),('SATURDAY','SATURDAY'),('SUNDAY','SUNDAY')] , blank=True, null=True)
+    open_days = MultiSelectField(max_length=255, choices = open_day_choices, max_choices=7, blank=True, null=True)
     open_time = models.TimeField(blank=True, null=True)
     close_time = models.TimeField(blank=True, null=True)
     lead_time_hrs = models.DecimalField(max_digits=18, decimal_places=0)

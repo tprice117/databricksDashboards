@@ -125,7 +125,6 @@ class MainProductInfoAdmin(admin.ModelAdmin):
     
 class SellerAdmin(admin.ModelAdmin):
     search_fields = ["name",]
-    form =  OpenDaysAdminForm #OPENDAYS
     inlines = [
         SellerProductInline,
         SellerLocationInline,
