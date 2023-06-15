@@ -90,7 +90,6 @@ if ENVIRONMENT == 'TEST':
         }
     }
 else:
-    # elif ENVIRONMENT == 'DEV':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -101,16 +100,7 @@ else:
             'PORT': '25060',
         }
     }
-# else:
-
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'sqllite.db',
-        },
-    }
-"""
+    
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 

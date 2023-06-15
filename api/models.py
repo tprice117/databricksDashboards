@@ -290,11 +290,17 @@ class Subscription(BaseModel): #Added 2/20/23
     length_days = models.IntegerField(blank=True, null=True) #6.6.23
     subscription_type = models.CharField(max_length=35, choices=[('On demand without subscription', 'On demand without subscription'), ('On demand with subscription', 'On demand with subscription'), ('Auto scheduled with subscription','Auto scheduled with subscription')], blank=True, null=True) #6.6.23
 
+class WasteType(BaseModel):
+    name = models.CharField(max_length=80)
 
+    def __str__(self):
+        return self.name
+    
 class OrderGroup(BaseModel):
     user = models.ForeignKey(User, models.PROTECT)
     user_address = models.ForeignKey(UserAddress, models.PROTECT)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.PROTECT)
+    waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
 
     def __str__(self):
@@ -307,12 +313,6 @@ class ProductAddOnChoice(BaseModel):
 
     def __str__(self):
         return f'{self.product.main_product.name} - {self.add_on_choice.add_on.name} - {self.add_on_choice.name}'
-
-class WasteType(BaseModel):
-    name = models.CharField(max_length=80)
-
-    def __str__(self):
-        return self.name
 
 class MainProductWasteType(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.CASCADE)
@@ -360,7 +360,6 @@ class Order(BaseModel):
     )
 
     order_group = models.ForeignKey(OrderGroup, models.PROTECT)
-    waste_type = models.ForeignKey(WasteType, models.DO_NOTHING, blank=True, null=True)
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
