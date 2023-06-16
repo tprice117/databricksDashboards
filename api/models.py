@@ -384,21 +384,21 @@ class Order(BaseModel):
     unit_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     payout_processing_error_comment = models.TextField(blank=True, null=True) #6.6.23
 
-    def pre_create(sender, instance, *args, **kwargs):
-        if Order.objects.filter(pk=instance.pk).count() == 0: 
-            order = sf.Order.create({
-                "order_type__c": "Delivery",
-                "accountId": "0014x00001RgLBMAA3",
-                "status": "Waiting for Request",
-                "Rental_Start_Date__c": instance.start_date.strftime('%Y-%m-%d'),
-                "Service_Date__c": instance.start_date.strftime('%Y-%m-%d'),
-                "Rental_End_Date__c": instance.end_date.strftime('%Y-%m-%d'),
-                "effectiveDate": instance.start_date.strftime('%Y-%m-%d'),
-                "Access_Details__c": instance.access_details,
-                "schedule_details__c": instance.schedule_details,
-                "description": "User: " + (instance.order_group.user.email if instance.order_group.user else "None") + " | User Address: " + (instance.order_group.user_address.name if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.street if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.city if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.state if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.postal_code if instance.order_group.user_address else "None") + " | Waste Type: " + (instance.order_group.waste_type.name if instance.waste_type else "None")  + " | Disposal Location: " + (instance.disposal_location.name if instance.disposal_location else "None")  + " | Price: " + (str(instance.price) if instance.price else "None") + " | Main Product: " + (instance.order_group.seller_product_seller_location.seller_product.product.main_product.name if instance.order_group.seller_product_seller_location else "None") + " - " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None") + " | Seller: " + (instance.order_group.seller_product_seller_location.seller_location.seller.name if instance.order_group.seller_product_seller_location else "None") + " | Seller Location: " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None"),
-            })
-            instance.salesforce_order_id = order['id']
+    # def pre_create(sender, instance, *args, **kwargs):
+    #     if Order.objects.filter(pk=instance.pk).count() == 0: 
+    #         order = sf.Order.create({
+    #             "order_type__c": "Delivery",
+    #             "accountId": "0014x00001RgLBMAA3",
+    #             "status": "Waiting for Request",
+    #             "Rental_Start_Date__c": instance.start_date.strftime('%Y-%m-%d'),
+    #             "Service_Date__c": instance.start_date.strftime('%Y-%m-%d'),
+    #             "Rental_End_Date__c": instance.end_date.strftime('%Y-%m-%d'),
+    #             "effectiveDate": instance.start_date.strftime('%Y-%m-%d'),
+    #             "Access_Details__c": instance.access_details,
+    #             "schedule_details__c": instance.schedule_details,
+    #             "description": "User: " + (instance.order_group.user.email if instance.order_group.user else "None") + " | User Address: " + (instance.order_group.user_address.name if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.street if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.city if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.state if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.postal_code if instance.order_group.user_address else "None") + " | Waste Type: " + (instance.order_group.waste_type.name if instance.waste_type else "None")  + " | Disposal Location: " + (instance.disposal_location.name if instance.disposal_location else "None")  + " | Price: " + (str(instance.price) if instance.price else "None") + " | Main Product: " + (instance.order_group.seller_product_seller_location.seller_product.product.main_product.name if instance.order_group.seller_product_seller_location else "None") + " - " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None") + " | Seller: " + (instance.order_group.seller_product_seller_location.seller_location.seller.name if instance.order_group.seller_product_seller_location else "None") + " | Seller Location: " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None"),
+    #         })
+    #         instance.salesforce_order_id = order['id']
 
     def post_update(sender, instance, created, **kwargs):
         if not created:
@@ -426,5 +426,5 @@ class OrderDisposalTicket(BaseModel):
     
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
-pre_save.connect(Order.pre_create, sender=Order)
+# pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)
