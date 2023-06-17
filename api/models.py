@@ -10,6 +10,7 @@ from api.utils.auth0 import create_user, get_user_from_email, delete_user
 from api.utils.google_maps import geocode_address
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
+from intercom.client import Client
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -184,6 +185,18 @@ class User(BaseModel):
             except ApiClientError as error:
                 print('something went wrong with mailchimp')
                 print(error)
+
+            # Create Intercom user.
+            try:
+                intercom = Client(personal_access_token='dG9rOjVlZDVhNWRjXzZhOWNfNGYwYl9hN2MyX2MzZmYzNzBmZDhkNDoxOjA=')
+                contact = intercom.leads.create(
+                    email=instance.email,
+                    user_id=str(instance.id)
+                )
+                instance.intercom_id = contact.id
+            except Exception as e:
+                print('something went wrong with intercom')
+                print(e)
 
             instance.save()
 
