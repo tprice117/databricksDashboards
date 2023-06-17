@@ -1,12 +1,12 @@
 import datetime
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 import uuid
 import stripe
 from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
-from api.utils.auth0 import create_user, get_user_from_email
+from api.utils.auth0 import create_user, get_user_from_email, delete_user
 from api.utils.google_maps import geocode_address
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -28,8 +28,6 @@ class BaseModel(models.Model):
        abstract = True
 
 class Seller(BaseModel):
-   
- 
     open_day_choices = (
        ('MONDAY', 'MONDAY'), 
        ('TUESDAY', 'TUESDAY'), 
@@ -158,18 +156,24 @@ class User(BaseModel):
                 pass
                 
             
-            # Create or attach to Auth0 user (only on Stage).
-            print('creating or attaching to auth0 user')
+            # Create or attach to Auth0 user.
             user_id = get_user_from_email(instance.email)
             if user_id:
-                print('auth0 user exists')
                 # User already exists in Auth0.
                 instance.user_id = user_id
             else:
-                print('auth0 user does not exist')
                 # Create user in Auth0.
                 instance.user_id = create_user(instance.email)
             instance.save()
+
+    def post_delete(sender, instance, **kwargs):
+        # Delete auth0 user.
+        try:
+            delete_user(instance.user_id)
+        except Exception as e:
+            print("this didn't work")
+            print(e)
+            pass
 
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
@@ -431,6 +435,7 @@ class OrderDisposalTicket(BaseModel):
     
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
+post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 # pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)

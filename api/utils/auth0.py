@@ -57,9 +57,8 @@ def get_user_from_email(email):
 def delete_user(user_id):
     if user_id is not None:
         headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
-        response = requests.delete(
+        requests.delete(
             'https://' + settings.AUTH0_DOMAIN + '/api/v2/users/' + user_id,
             headers=headers,
             timeout=30,
         )
-        return response.json()
