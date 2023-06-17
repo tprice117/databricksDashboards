@@ -133,7 +133,7 @@ class User(BaseModel):
     mailchip_id = models.CharField(max_length=255, blank=True, null=True)
     intercom_id = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
-    email = models.CharField(max_length=255)
+    email = models.CharField(max_length=255, unique=True)
     photo_url = models.URLField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
@@ -148,57 +148,16 @@ class User(BaseModel):
     def __str__(self):
         return self.email
     
-    def post_create(sender, instance, created, **kwargs):
-        if created:
-            # Create stripe customer.
-            try:
-                print('creating stripe customer')
-                customer = stripe.Customer.create()
-                instance.stripe_customer_id = customer.id
-            except Exception as e:
-                pass
-                
-            # Create or attach to Auth0 user.
-            user_id = get_user_from_email(instance.email)
-            if user_id:
-                # User already exists in Auth0.
-                instance.user_id = user_id
-            else:
-                # Create user in Auth0.
-                instance.user_id = create_user(instance.email)
-
-            # Create Mailchimp user.
-            try:
-                client = MailchimpMarketing.Client()
-                client.set_config({
-                    "api_key": "815daa20438493b6e534bab797e4adce-us17",
-                    "server": "us17"
-                })
-                member = client.lists.add_list_member(
-                    "87f30f3976",
-                    {
-                        "email_address": instance.email,
-                        "status": "subscribed",
-                    }
-                )
-                instance.mailchip_id = member['contact_id']
-            except ApiClientError as error:
-                print('something went wrong with mailchimp')
-                print(error)
-
-            # Create Intercom user.
-            try:
-                intercom = Client(personal_access_token='dG9rOjVlZDVhNWRjXzZhOWNfNGYwYl9hN2MyX2MzZmYzNzBmZDhkNDoxOjA=')
-                contact = intercom.leads.create(
-                    email=instance.email,
-                    user_id=str(instance.id)
-                )
-                instance.intercom_id = contact.id
-            except Exception as e:
-                print('something went wrong with intercom')
-                print(e)
-
-            instance.save()
+    # def pre_create(sender, instance, *args, **kwargs):
+    #     if not instance.user_id:
+    #         # Create or attach to Auth0 user.
+    #         user_id = get_user_from_email(instance.email)
+    #         if user_id:
+    #             # User already exists in Auth0.
+    #             instance.user_id = user_id
+    #         else:
+    #             # Create user in Auth0.
+    #             instance.user_id = create_user(instance.email)
 
     def post_delete(sender, instance, **kwargs):
         # Delete auth0 user.
@@ -206,6 +165,18 @@ class User(BaseModel):
             delete_user(instance.user_id)
         except Exception as e:
             print("this didn't work")
+            print(e)
+            pass
+
+        # TODO: Delete mailchimp user.
+
+        # Delete intercom user.
+        try:
+            intercom = Client(personal_access_token='dG9rOjVlZDVhNWRjXzZhOWNfNGYwYl9hN2MyX2MzZmYzNzBmZDhkNDoxOjA=')
+            contact = intercom.leads.find(id=instance.intercom_id)
+            intercom.leads.delete(contact)
+        except Exception as e:
+            print('something went wrong with intercom')
             print(e)
             pass
 
@@ -468,8 +439,8 @@ class OrderDisposalTicket(BaseModel):
         return self.ticket_id + ' - ' + self.order.order_group.user_address.name
     
 post_save.connect(UserGroup.post_create, sender=UserGroup)
-post_save.connect(User.post_create, sender=User)  
-post_delete.connect(User.post_delete, sender=User)
+# pre_save.connect(User.pre_create, sender=User)  
+# post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 # pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)
