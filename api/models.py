@@ -8,6 +8,8 @@ from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
 from api.utils.auth0 import create_user, get_user_from_email, delete_user
 from api.utils.google_maps import geocode_address
+import mailchimp_marketing as MailchimpMarketing
+from mailchimp_marketing.api_client import ApiClientError
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -155,7 +157,6 @@ class User(BaseModel):
             except Exception as e:
                 pass
                 
-            
             # Create or attach to Auth0 user.
             user_id = get_user_from_email(instance.email)
             if user_id:
@@ -164,6 +165,26 @@ class User(BaseModel):
             else:
                 # Create user in Auth0.
                 instance.user_id = create_user(instance.email)
+
+            # Create Mailchimp user.
+            try:
+                client = MailchimpMarketing.Client()
+                client.set_config({
+                    "api_key": "815daa20438493b6e534bab797e4adce-us17",
+                    "server": "us17"
+                })
+                member = client.lists.add_list_member(
+                    "87f30f3976",
+                    {
+                        "email_address": instance.email,
+                        "status": "subscribed",
+                    }
+                )
+                instance.mailchip_id = member['contact_id']
+            except ApiClientError as error:
+                print('something went wrong with mailchimp')
+                print(error)
+
             instance.save()
 
     def post_delete(sender, instance, **kwargs):

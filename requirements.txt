@@ -41,6 +41,7 @@ inflection==0.5.1
 install==1.3.5
 jsonschema==4.17.0
 mailchimp_transactional==1.0.50
+mailchimp-marketing==3.0.80
 msgpack==1.0.4
 mysqlclient==2.1.1
 pkgutil_resolve_name==1.3.10
