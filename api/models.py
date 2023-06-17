@@ -148,16 +148,18 @@ class User(BaseModel):
     def __str__(self):
         return self.email
     
-    # def pre_create(sender, instance, *args, **kwargs):
-    #     if not instance.user_id:
-    #         # Create or attach to Auth0 user.
-    #         user_id = get_user_from_email(instance.email)
-    #         if user_id:
-    #             # User already exists in Auth0.
-    #             instance.user_id = user_id
-    #         else:
-    #             # Create user in Auth0.
-    #             instance.user_id = create_user(instance.email)
+    def save(self, *args, **kwargs):
+        if not self.user_id:
+            # Create or attach to Auth0 user.
+            user_id = get_user_from_email(self.email)
+            if user_id:
+                # User already exists in Auth0.
+                self.user_id = user_id
+            else:
+                # Create user in Auth0.
+                self.user_id = create_user(self.email)
+            
+        super(User, self).save(*args, **kwargs)  
 
     def post_delete(sender, instance, **kwargs):
         # Delete auth0 user.
