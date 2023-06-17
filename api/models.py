@@ -7,6 +7,7 @@ import stripe
 from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
 from api.utils.auth0 import create_user, get_user_from_email
+from api.utils.google_maps import geocode_address
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -111,15 +112,19 @@ class UserAddress(BaseModel):
     state = models.CharField(max_length=80)
     postal_code = models.CharField(max_length=20)
     country = models.CharField(max_length=80)
-    latitude = models.DecimalField(max_digits=18, decimal_places=15)
-    longitude = models.DecimalField(max_digits=18, decimal_places=15)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     autopay = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
     child_account_id = models.CharField(max_length=255, blank=True, null=True)
 
-
     def __str__(self):
         return self.name
+    
+    def pre_save(sender, instance, *args, **kwargs):
+        latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
+        instance.latitude = latitude or 0
+        instance.longitude = longitude or 0
 
 class User(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
@@ -426,5 +431,6 @@ class OrderDisposalTicket(BaseModel):
     
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_save.connect(User.post_create, sender=User)  
+pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 # pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)
