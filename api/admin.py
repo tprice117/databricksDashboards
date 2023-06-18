@@ -29,6 +29,12 @@ class MainProductInfoInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class OrderInline(admin.TabularInline):
+    model = Order
+    fields = ('start_date', 'end_date', 'service_date', 'submitted_on')
+    show_change_link = True
+    extra=0
+
 class ProductInline(admin.TabularInline):
     model = Product
     fields = ('product_code', 'description')
@@ -83,9 +89,6 @@ class OrderDisposalTicketInline(admin.TabularInline):
     extra=0
 
 
-
-
-
 class AddOnChoiceAdmin(admin.ModelAdmin):
     search_fields = ["name", "add_on__name"]
     list_display = ('name', 'add_on')
@@ -122,7 +125,6 @@ class MainProductInfoAdmin(admin.ModelAdmin):
     
 class SellerAdmin(admin.ModelAdmin):
     search_fields = ["name",]
-    form =  OpenDaysAdminForm
     inlines = [
         SellerProductInline,
         SellerLocationInline,
@@ -170,10 +172,17 @@ class UserAdmin(admin.ModelAdmin):
 #         UserGroupUserInline,
 #     ]
 
+class OrderGroupAdmin(admin.ModelAdmin):
+    model = OrderGroup
+    list_display = ('user', 'user_address', 'seller_product_seller_location')
+    inlines = [
+        OrderInline,
+    ]
+
 class OrderAdmin(admin.ModelAdmin):
     model = Order
     # search_fields = ["order_group__user__email",]
-    # list_display = ('order_group__user__email', 'order_group__user_address__street', 'order_group__seller_product_seller_location__seller_product__product__main_product__name', 'start_date', 'end_date')
+    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date')
     inlines = [
         OrderDisposalTicketInline,
     ]
@@ -200,7 +209,7 @@ admin.site.register(MainProduct, MainProductAdmin)
 admin.site.register(MainProductInfo, MainProductInfoAdmin)
 admin.site.register(MainProductWasteType, MainProductWasteTypeAdmin)
 admin.site.register(Product, ProductAdmin)
-admin.site.register(OrderGroup)
+admin.site.register(OrderGroup, OrderGroupAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(ProductAddOnChoice)
 admin.site.register(WasteType)
