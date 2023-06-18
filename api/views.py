@@ -137,6 +137,8 @@ class MainProductAddOnViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductAddOnSerializer
     filterset_fields = ["main_product", "add_on"] 
 
+@authentication_classes([])
+@permission_classes([])
 class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategoryInfo.objects.all()
     serializer_class = MainProductCategoryInfoSerializer
@@ -148,6 +150,8 @@ class MainProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
 
+@authentication_classes([])
+@permission_classes([])
 class MainProductInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductInfo.objects.all()
     serializer_class = MainProductInfoSerializer
