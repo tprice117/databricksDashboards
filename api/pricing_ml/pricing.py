@@ -242,11 +242,11 @@ class Price_Model:
                     'price': milage_cost,
                 },
                 {
-                    'name': 'Tip Fees',
+                    'name': 'Material Fees',
                     'price': tip_fees,
                 },
                 {
-                    'name': 'Base Cost',
+                    'name': 'Rental Cost',
                     'price': base_cost,
                 },
             ]

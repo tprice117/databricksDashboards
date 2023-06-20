@@ -82,6 +82,12 @@ class UserGroupUserInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class OrderLineItemInline(admin.TabularInline):
+    model = OrderLineItem
+    fields = ('order_line_item_type', 'price')
+    show_change_link = True
+    extra=0
+
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket
     fields = ('ticket_id', 'disposal_location', 'waste_type', 'weight')
@@ -184,6 +190,7 @@ class OrderAdmin(admin.ModelAdmin):
     # search_fields = ["order_group__user__email",]
     list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date')
     inlines = [
+        OrderLineItemInline,
         OrderDisposalTicketInline,
     ]
 
