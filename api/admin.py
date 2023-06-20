@@ -82,6 +82,12 @@ class UserGroupUserInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class OrderLineItemInline(admin.TabularInline):
+    model = OrderLineItem
+    fields = ('order_line_item_type', 'price')
+    show_change_link = True
+    extra=0
+
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket
     fields = ('ticket_id', 'disposal_location', 'waste_type', 'weight')
@@ -181,11 +187,17 @@ class OrderGroupAdmin(admin.ModelAdmin):
 
 class OrderAdmin(admin.ModelAdmin):
     model = Order
-    # search_fields = ["order_group__user__email",]
-    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date')
+    readonly_fields = ('total_price',)
+    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_price')
     inlines = [
+        OrderLineItemInline,
         OrderDisposalTicketInline,
     ]
+
+    def total_price(self, obj):
+        order_line_items = OrderLineItem.objects.filter(order=obj)
+        return sum([order_line_item.price for order_line_item in order_line_items])
+
 
 class MainProductWasteTypeAdmin(admin.ModelAdmin):
     model = UserAddress
@@ -211,6 +223,8 @@ admin.site.register(MainProductWasteType, MainProductWasteTypeAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(OrderGroup, OrderGroupAdmin)
 admin.site.register(Order, OrderAdmin)
+admin.site.register(OrderLineItemType)
+admin.site.register(OrderLineItem)
 admin.site.register(ProductAddOnChoice)
 admin.site.register(WasteType)
 admin.site.register(DisposalLocation)

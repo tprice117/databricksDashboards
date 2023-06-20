@@ -357,7 +357,7 @@ class DisposalLocationWasteType(BaseModel):
 
     def __str__(self):
         return self.disposal_location.name + ' - ' + self.waste_type.name
-
+    
 class Order(BaseModel):
     PENDING = "PENDING"
     SCHEDULED = "SCHEDULED"
@@ -429,7 +429,7 @@ class Order(BaseModel):
 
     def __str__(self):
         return self.order_group.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.order_group.user_address.name
-
+    
 class OrderDisposalTicket(BaseModel):
     order = models.ForeignKey(Order, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.PROTECT)
@@ -440,9 +440,24 @@ class OrderDisposalTicket(BaseModel):
     def __str__(self):
         return self.ticket_id + ' - ' + self.order.order_group.user_address.name
     
+
+class OrderLineItemType(BaseModel):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+    
+class OrderLineItem(BaseModel):
+    order = models.ForeignKey(Order, models.PROTECT)
+    order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
+    price = models.DecimalField(max_digits=18, decimal_places=2)
+
+    def __str__(self):
+        return str(self.order) + ' - ' + self.order_line_item_type.name
+    
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  
-# post_delete.connect(User.post_delete, sender=User)
+post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 # pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)
