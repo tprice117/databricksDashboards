@@ -9,6 +9,8 @@ paths:
       tags:
       - add_user
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -25,6 +27,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -52,6 +56,8 @@ paths:
               $ref: '#/components/schemas/AddOnChoice'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -74,6 +80,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -107,6 +115,8 @@ paths:
               $ref: '#/components/schemas/AddOnChoice'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -139,6 +149,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedAddOnChoice'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -160,6 +172,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -176,6 +190,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -203,6 +219,8 @@ paths:
               $ref: '#/components/schemas/AddOn'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -225,6 +243,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -258,6 +278,8 @@ paths:
               $ref: '#/components/schemas/AddOn'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -290,6 +312,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedAddOn'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -311,6 +335,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -327,6 +353,346 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/disposal-location-waste-types/:
+    get:
+      operationId: api_disposal_location_waste_types_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DisposalLocationWasteType'
+          description: ''
+    post:
+      operationId: api_disposal_location_waste_types_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisposalLocationWasteType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisposalLocationWasteType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisposalLocationWasteType'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocationWasteType'
+          description: ''
+  /api/disposal-location-waste-types/{id}/:
+    get:
+      operationId: api_disposal_location_waste_types_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location waste type.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocationWasteType'
+          description: ''
+    put:
+      operationId: api_disposal_location_waste_types_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location waste type.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisposalLocationWasteType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisposalLocationWasteType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisposalLocationWasteType'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocationWasteType'
+          description: ''
+    patch:
+      operationId: api_disposal_location_waste_types_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location waste type.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalLocationWasteType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalLocationWasteType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalLocationWasteType'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocationWasteType'
+          description: ''
+    delete:
+      operationId: api_disposal_location_waste_types_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location waste type.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/disposal-locations/:
+    get:
+      operationId: api_disposal_locations_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DisposalLocation'
+          description: ''
+    post:
+      operationId: api_disposal_locations_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisposalLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisposalLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisposalLocation'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocation'
+          description: ''
+  /api/disposal-locations/{id}/:
+    get:
+      operationId: api_disposal_locations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocation'
+          description: ''
+    put:
+      operationId: api_disposal_locations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisposalLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisposalLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisposalLocation'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocation'
+          description: ''
+    patch:
+      operationId: api_disposal_locations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalLocation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalLocation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDisposalLocation'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalLocation'
+          description: ''
+    delete:
+      operationId: api_disposal_locations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this disposal location.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/exports/denver-compliance/:
+    post:
+      operationId: api_exports_denver_compliance_create
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -348,6 +714,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -375,6 +743,8 @@ paths:
               $ref: '#/components/schemas/MainProductAddOn'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -397,6 +767,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -430,6 +802,8 @@ paths:
               $ref: '#/components/schemas/MainProductAddOn'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -462,6 +836,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedMainProductAddOn'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -483,6 +859,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -492,8 +870,6 @@ paths:
       operationId: api_main_product_categories_list
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -519,8 +895,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProductCategory'
         required: true
-      security:
-      - {}
       responses:
         '201':
           content:
@@ -541,8 +915,6 @@ paths:
         required: true
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -574,8 +946,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProductCategory'
         required: true
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -606,8 +976,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedMainProductCategory'
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -627,8 +995,6 @@ paths:
         required: true
       tags:
       - api
-      security:
-      - {}
       responses:
         '204':
           description: No response body
@@ -643,8 +1009,6 @@ paths:
           format: uuid
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -670,8 +1034,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProductCategoryInfo'
         required: true
-      security:
-      - {}
       responses:
         '201':
           content:
@@ -692,8 +1054,6 @@ paths:
         required: true
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -725,8 +1085,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProductCategoryInfo'
         required: true
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -757,8 +1115,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedMainProductCategoryInfo'
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -778,8 +1134,6 @@ paths:
         required: true
       tags:
       - api
-      security:
-      - {}
       responses:
         '204':
           description: No response body
@@ -794,8 +1148,6 @@ paths:
           format: uuid
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -821,8 +1173,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProductInfo'
         required: true
-      security:
-      - {}
       responses:
         '201':
           content:
@@ -843,8 +1193,6 @@ paths:
         required: true
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -876,8 +1224,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProductInfo'
         required: true
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -908,8 +1254,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedMainProductInfo'
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -929,7 +1273,166 @@ paths:
         required: true
       tags:
       - api
+      responses:
+        '204':
+          description: No response body
+  /api/main-product-seller-product-seller-location-service-recurring-frequencies/:
+    get:
+      operationId: api_main_product_seller_product_seller_location_service_recurring_frequencies_list
+      tags:
+      - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    post:
+      operationId: api_main_product_seller_product_seller_location_service_recurring_frequencies_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+  /api/main-product-seller-product-seller-location-service-recurring-frequencies/{id}/:
+    get:
+      operationId: api_main_product_seller_product_seller_location_service_recurring_frequencies_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product seller product seller
+          location service recurring frequency.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    put:
+      operationId: api_main_product_seller_product_seller_location_service_recurring_frequencies_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product seller product seller
+          location service recurring frequency.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    patch:
+      operationId: api_main_product_seller_product_seller_location_service_recurring_frequencies_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product seller product seller
+          location service recurring frequency.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMainProductSellerProductSellerLocationServiceRecurringFrequency'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMainProductSellerProductSellerLocationServiceRecurringFrequency'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMainProductSellerProductSellerLocationServiceRecurringFrequency'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MainProductSellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    delete:
+      operationId: api_main_product_seller_product_seller_location_service_recurring_frequencies_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this main product seller product seller
+          location service recurring frequency.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -943,14 +1446,11 @@ paths:
         schema:
           type: string
           format: uuid
-      - in: query
-        name: waste_type
-        schema:
-          type: string
-          format: uuid
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -978,6 +1478,8 @@ paths:
               $ref: '#/components/schemas/MainProductWasteType'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -1000,6 +1502,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1033,6 +1537,8 @@ paths:
               $ref: '#/components/schemas/MainProductWasteType'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1065,6 +1571,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedMainProductWasteType'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1086,6 +1594,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -1106,8 +1616,6 @@ paths:
           format: uuid
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -1133,8 +1641,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProduct'
         required: true
-      security:
-      - {}
       responses:
         '201':
           content:
@@ -1155,8 +1661,6 @@ paths:
         required: true
       tags:
       - api
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -1188,8 +1692,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MainProduct'
         required: true
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -1220,8 +1722,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedMainProduct'
-      security:
-      - {}
       responses:
         '200':
           content:
@@ -1241,7 +1741,168 @@ paths:
         required: true
       tags:
       - api
+      responses:
+        '204':
+          description: No response body
+  /api/order-disposal-tickets/:
+    get:
+      operationId: api_order_disposal_tickets_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderDisposalTicket'
+          description: ''
+    post:
+      operationId: api_order_disposal_tickets_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderDisposalTicket'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderDisposalTicket'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderDisposalTicket'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDisposalTicket'
+          description: ''
+  /api/order-disposal-tickets/{id}/:
+    get:
+      operationId: api_order_disposal_tickets_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order disposal ticket.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDisposalTicket'
+          description: ''
+    put:
+      operationId: api_order_disposal_tickets_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order disposal ticket.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderDisposalTicket'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderDisposalTicket'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderDisposalTicket'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDisposalTicket'
+          description: ''
+    patch:
+      operationId: api_order_disposal_tickets_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order disposal ticket.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderDisposalTicket'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderDisposalTicket'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderDisposalTicket'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDisposalTicket'
+          description: ''
+    delete:
+      operationId: api_order_disposal_tickets_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this order disposal ticket.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -1249,9 +1910,22 @@ paths:
   /api/order-groups/:
     get:
       operationId: api_order_groups_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user_address
+        schema:
+          type: string
+          format: uuid
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1277,7 +1951,10 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/OrderGroup'
+        required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -1300,6 +1977,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1331,7 +2010,10 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/OrderGroup'
+        required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1364,6 +2046,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedOrderGroup'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1385,6 +2069,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -1401,6 +2087,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1415,18 +2103,15 @@ paths:
           type: string
           format: uuid
       - in: query
-        name: user
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: user_address
+        name: order_group
         schema:
           type: string
           format: uuid
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1452,7 +2137,10 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
+        required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -1475,6 +2163,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1506,7 +2196,10 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
+        required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1539,6 +2232,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedOrder'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1560,6 +2255,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -1570,6 +2267,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1580,6 +2279,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1590,6 +2291,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1600,6 +2303,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1621,6 +2326,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1648,6 +2355,8 @@ paths:
               $ref: '#/components/schemas/ProductAddOnChoice'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -1670,6 +2379,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1703,6 +2414,8 @@ paths:
               $ref: '#/components/schemas/ProductAddOnChoice'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1735,6 +2448,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProductAddOnChoice'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1756,6 +2471,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -1772,6 +2489,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1799,6 +2518,8 @@ paths:
               $ref: '#/components/schemas/Product'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -1821,6 +2542,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1854,6 +2577,8 @@ paths:
               $ref: '#/components/schemas/Product'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1886,6 +2611,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProduct'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -1907,6 +2634,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -2032,6 +2761,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2070,6 +2801,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2097,6 +2830,8 @@ paths:
               $ref: '#/components/schemas/SellerLocation'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -2119,6 +2854,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2152,6 +2889,8 @@ paths:
               $ref: '#/components/schemas/SellerLocation'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2184,6 +2923,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSellerLocation'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2205,6 +2946,1001 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/seller-product-seller-location-material-waste-types/:
+    get:
+      operationId: api_seller_product_seller_location_material_waste_types_list
+      parameters:
+      - in: query
+        name: main_product_waste_type
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: seller_product_seller_location_material
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          description: ''
+    post:
+      operationId: api_seller_product_seller_location_material_waste_types_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          description: ''
+  /api/seller-product-seller-location-material-waste-types/{id}/:
+    get:
+      operationId: api_seller_product_seller_location_material_waste_types_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material waste type.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          description: ''
+    put:
+      operationId: api_seller_product_seller_location_material_waste_types_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material waste type.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          description: ''
+    patch:
+      operationId: api_seller_product_seller_location_material_waste_types_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material waste type.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationMaterialWasteType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationMaterialWasteType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationMaterialWasteType'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterialWasteType'
+          description: ''
+    delete:
+      operationId: api_seller_product_seller_location_material_waste_types_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material waste type.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/seller-product-seller-location-materials/:
+    get:
+      operationId: api_seller_product_seller_location_materials_list
+      parameters:
+      - in: query
+        name: seller_product_seller_location
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          description: ''
+    post:
+      operationId: api_seller_product_seller_location_materials_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          description: ''
+  /api/seller-product-seller-location-materials/{id}/:
+    get:
+      operationId: api_seller_product_seller_location_materials_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          description: ''
+    put:
+      operationId: api_seller_product_seller_location_materials_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          description: ''
+    patch:
+      operationId: api_seller_product_seller_location_materials_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationMaterial'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationMaterial'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationMaterial'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
+          description: ''
+    delete:
+      operationId: api_seller_product_seller_location_materials_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          material.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/seller-product-seller-location-rentals/:
+    get:
+      operationId: api_seller_product_seller_location_rentals_list
+      parameters:
+      - in: query
+        name: seller_product_seller_location
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          description: ''
+    post:
+      operationId: api_seller_product_seller_location_rentals_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationRental'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          description: ''
+  /api/seller-product-seller-location-rentals/{id}/:
+    get:
+      operationId: api_seller_product_seller_location_rentals_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          rental.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          description: ''
+    put:
+      operationId: api_seller_product_seller_location_rentals_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          rental.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationRental'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          description: ''
+    patch:
+      operationId: api_seller_product_seller_location_rentals_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          rental.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationRental'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationRental'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationRental'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          description: ''
+    delete:
+      operationId: api_seller_product_seller_location_rentals_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          rental.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/seller-product-seller-location-service-recurring-frequencies/:
+    get:
+      operationId: api_seller_product_seller_location_service_recurring_frequencies_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    post:
+      operationId: api_seller_product_seller_location_service_recurring_frequencies_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+  /api/seller-product-seller-location-service-recurring-frequencies/{id}/:
+    get:
+      operationId: api_seller_product_seller_location_service_recurring_frequencies_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring frequency.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    put:
+      operationId: api_seller_product_seller_location_service_recurring_frequencies_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring frequency.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    patch:
+      operationId: api_seller_product_seller_location_service_recurring_frequencies_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring frequency.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationServiceRecurringFrequency'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationServiceRecurringFrequency'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationServiceRecurringFrequency'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurringFrequency'
+          description: ''
+    delete:
+      operationId: api_seller_product_seller_location_service_recurring_frequencies_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring frequency.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/seller-product-seller-location-service-recurrings/:
+    get:
+      operationId: api_seller_product_seller_location_service_recurrings_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          description: ''
+    post:
+      operationId: api_seller_product_seller_location_service_recurrings_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          description: ''
+  /api/seller-product-seller-location-service-recurrings/{id}/:
+    get:
+      operationId: api_seller_product_seller_location_service_recurrings_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          description: ''
+    put:
+      operationId: api_seller_product_seller_location_service_recurrings_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          description: ''
+    patch:
+      operationId: api_seller_product_seller_location_service_recurrings_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationServiceRecurring'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationServiceRecurring'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationServiceRecurring'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationServiceRecurring'
+          description: ''
+    delete:
+      operationId: api_seller_product_seller_location_service_recurrings_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service recurring.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/seller-product-seller-location-services/:
+    get:
+      operationId: api_seller_product_seller_location_services_list
+      parameters:
+      - in: query
+        name: seller_product_seller_location
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocationService'
+          description: ''
+    post:
+      operationId: api_seller_product_seller_location_services_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationService'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationService'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationService'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationService'
+          description: ''
+  /api/seller-product-seller-location-services/{id}/:
+    get:
+      operationId: api_seller_product_seller_location_services_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationService'
+          description: ''
+    put:
+      operationId: api_seller_product_seller_location_services_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationService'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationService'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SellerProductSellerLocationService'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationService'
+          description: ''
+    patch:
+      operationId: api_seller_product_seller_location_services_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationService'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationService'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSellerProductSellerLocationService'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProductSellerLocationService'
+          description: ''
+    delete:
+      operationId: api_seller_product_seller_location_services_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this seller product seller location
+          service.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -2226,6 +3962,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2251,8 +3989,9 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProductSellerLocation'
-        required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -2275,6 +4014,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2306,8 +4047,9 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SellerProductSellerLocation'
-        required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2340,6 +4082,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSellerProductSellerLocation'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2361,6 +4105,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -2382,6 +4128,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2408,6 +4156,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SellerProduct'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -2430,6 +4180,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2462,6 +4214,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SellerProduct'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2494,6 +4248,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSellerProduct'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2515,6 +4271,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -2540,6 +4298,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2567,6 +4327,8 @@ paths:
               $ref: '#/components/schemas/Seller'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -2589,6 +4351,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2622,6 +4386,8 @@ paths:
               $ref: '#/components/schemas/Seller'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2654,6 +4420,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSeller'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2675,6 +4443,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -2691,6 +4461,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2701,6 +4473,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2711,6 +4485,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2721,6 +4497,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2731,6 +4509,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2741,6 +4521,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2751,6 +4533,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2761,6 +4545,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2771,6 +4557,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2781,6 +4569,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2797,6 +4587,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2824,6 +4616,8 @@ paths:
               $ref: '#/components/schemas/Subscription'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -2846,6 +4640,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2879,6 +4675,8 @@ paths:
               $ref: '#/components/schemas/Subscription'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2911,6 +4709,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSubscription'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2932,6 +4732,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -2948,6 +4750,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -2975,6 +4779,8 @@ paths:
               $ref: '#/components/schemas/UserAddressType'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -2997,6 +4803,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3030,6 +4838,8 @@ paths:
               $ref: '#/components/schemas/UserAddressType'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3062,6 +4872,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUserAddressType'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3083,6 +4895,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -3099,6 +4913,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3126,6 +4942,8 @@ paths:
               $ref: '#/components/schemas/UserAddress'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -3148,6 +4966,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3181,6 +5001,8 @@ paths:
               $ref: '#/components/schemas/UserAddress'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3213,6 +5035,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUserAddress'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3234,6 +5058,171 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/user-groups/:
+    get:
+      operationId: api_user_groups_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroup'
+          description: ''
+    post:
+      operationId: api_user_groups_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroup'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+          description: ''
+  /api/user-groups/{id}/:
+    get:
+      operationId: api_user_groups_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+          description: ''
+    put:
+      operationId: api_user_groups_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroup'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+          description: ''
+    patch:
+      operationId: api_user_groups_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroup'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+          description: ''
+    delete:
+      operationId: api_user_groups_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -3244,6 +5233,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3271,6 +5262,8 @@ paths:
               $ref: '#/components/schemas/UserSellerReviewAggregate'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -3291,6 +5284,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3322,6 +5317,8 @@ paths:
               $ref: '#/components/schemas/UserSellerReviewAggregate'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3352,6 +5349,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUserSellerReviewAggregate'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3371,6 +5370,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -3397,6 +5398,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3424,6 +5427,8 @@ paths:
               $ref: '#/components/schemas/UserSellerReview'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -3446,6 +5451,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3479,6 +5486,8 @@ paths:
               $ref: '#/components/schemas/UserSellerReview'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3511,6 +5520,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUserSellerReview'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3532,6 +5543,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -3558,6 +5571,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3585,6 +5600,8 @@ paths:
               $ref: '#/components/schemas/UserUserAddress'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -3607,6 +5624,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3640,6 +5659,8 @@ paths:
               $ref: '#/components/schemas/UserUserAddress'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3672,6 +5693,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUserUserAddress'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3693,6 +5716,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -3713,6 +5738,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3740,6 +5767,8 @@ paths:
               $ref: '#/components/schemas/User'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -3762,6 +5791,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3795,6 +5826,8 @@ paths:
               $ref: '#/components/schemas/User'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3827,6 +5860,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUser'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3848,6 +5883,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -3858,6 +5895,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3885,6 +5924,8 @@ paths:
               $ref: '#/components/schemas/WasteType'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '201':
@@ -3907,6 +5948,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3940,6 +5983,8 @@ paths:
               $ref: '#/components/schemas/WasteType'
         required: true
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3972,6 +6017,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedWasteType'
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '200':
@@ -3993,6 +6040,8 @@ paths:
       tags:
       - api
       security:
+      - cookieAuth: []
+      - basicAuth: []
       - {}
       responses:
         '204':
@@ -4065,6 +6114,96 @@ components:
     BlankEnum:
       enum:
       - ''
+    DisposalLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        street:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 40
+        state:
+          type: string
+          maxLength: 80
+        postal_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 80
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+      required:
+      - city
+      - country
+      - created_on
+      - latitude
+      - longitude
+      - name
+      - postal_code
+      - state
+      - street
+      - updated_on
+    DisposalLocationWasteType:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price_per_ton:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        disposal_location:
+          type: string
+          format: uuid
+        waste_type:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - disposal_location
+      - price_per_ton
+      - updated_on
+      - waste_type
+    InvoiceStatusEnum:
+      enum:
+      - Not yet invoiced
+      - In draft
+      - Sent to customer
+      - Paid
+      type: string
     LocationTypeEnum:
       enum:
       - Services
@@ -4274,6 +6413,32 @@ components:
       - name
       - sort
       - updated_on
+    MainProductSellerProductSellerLocationServiceRecurringFrequency:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        main_product:
+          type: string
+          format: uuid
+        seller_product_seller_location_service_recurring_frequency:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - main_product
+      - seller_product_seller_location_service_recurring_frequency
+      - updated_on
     MainProductWasteType:
       type: object
       properties:
@@ -4305,13 +6470,13 @@ components:
       - null
     OpenDaysEnum:
       enum:
-      - Monday
-      - Tuesday
-      - Wednesday
-      - Thursday
-      - Friday
-      - Saturday
-      - Sunday
+      - MONDAY
+      - TUESDAY
+      - WEDNESDAY
+      - THURSDAY
+      - FRIDAY
+      - SATURDAY
+      - SUNDAY
       type: string
     Order:
       type: object
@@ -4328,16 +6493,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_invoice_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        salesforce_order_id:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-          nullable: true
         start_date:
           type: string
           format: date
@@ -4346,10 +6501,29 @@ components:
           type: string
           format: date
           nullable: true
-        additional_schedule_details:
+        service_date:
+          type: string
+          format: date
+          nullable: true
+        submitted_on:
+          type: string
+          format: date-time
+          nullable: true
+        stripe_invoice_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        salesforce_order_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        schedule_details:
           type: string
           nullable: true
         access_details:
+          type: string
+          nullable: true
+        placement_details:
           type: string
           nullable: true
         price:
@@ -4359,37 +6533,112 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
-        user:
-          type: string
-          format: uuid
+        order_type:
           nullable: true
-        user_address:
+          oneOf:
+          - $ref: '#/components/schemas/OrderTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        included_weight_tons:
           type: string
-          format: uuid
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
           nullable: true
-        subscription:
+        invoice_status:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/InvoiceStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        billing_comments_internal_use:
           type: string
-          format: uuid
+          nullable: true
+        schedule_window:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ScheduleWindowEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        supplier_payout_status:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SupplierPayoutStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        suppplier_payout_method:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SuppplierPayoutMethodEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        tax_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        payout_processing_error_comment:
+          type: string
           nullable: true
         order_group:
           type: string
           format: uuid
-          nullable: true
-        waste_type:
-          type: string
-          format: uuid
-          nullable: true
         disposal_location:
-          type: string
-          format: uuid
-          nullable: true
-        seller_product_seller_location:
           type: string
           format: uuid
           nullable: true
       required:
       - created_on
+      - order_group
       - updated_on
+    OrderDisposalTicket:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        ticket_id:
+          type: string
+          maxLength: 255
+        weight:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        order:
+          type: string
+          format: uuid
+        waste_type:
+          type: string
+          format: uuid
+        disposal_location:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - disposal_location
+      - order
+      - ticket_id
+      - updated_on
+      - waste_type
+      - weight
     OrderGroup:
       type: object
       properties:
@@ -4405,15 +6654,47 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        user:
+          type: string
+          format: uuid
+        user_address:
+          type: string
+          format: uuid
+        seller_product_seller_location:
+          type: string
+          format: uuid
+        waste_type:
+          type: string
+          format: uuid
+          nullable: true
+        subscription:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - created_on
+      - seller_product_seller_location
       - updated_on
+      - user
+      - user_address
     OrderStatusEnum:
       enum:
       - PENDING
       - SCHEDULED
       - IN-PROGRESS
+      - Awaiting Request
+      - CANCELLED
       - COMPLETE
+      type: string
+    OrderTypeEnum:
+      enum:
+      - Automatic Renewal
+      - Swap
+      - Empty and Return
+      - Trip Charge/Dry Run
+      - Removal
+      - On Demand
+      - Other
       type: string
     PatchedAddOn:
       type: object
@@ -4459,6 +6740,72 @@ components:
           type: string
           maxLength: 80
         add_on:
+          type: string
+          format: uuid
+    PatchedDisposalLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        street:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 40
+        state:
+          type: string
+          maxLength: 80
+        postal_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 80
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+    PatchedDisposalLocationWasteType:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price_per_ton:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        disposal_location:
+          type: string
+          format: uuid
+        waste_type:
           type: string
           format: uuid
     PatchedMainProduct:
@@ -4637,6 +6984,27 @@ components:
         main_product:
           type: string
           format: uuid
+    PatchedMainProductSellerProductSellerLocationServiceRecurringFrequency:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        main_product:
+          type: string
+          format: uuid
+        seller_product_seller_location_service_recurring_frequency:
+          type: string
+          format: uuid
     PatchedMainProductWasteType:
       type: object
       properties:
@@ -4673,16 +7041,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_invoice_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        salesforce_order_id:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-          nullable: true
         start_date:
           type: string
           format: date
@@ -4691,10 +7049,29 @@ components:
           type: string
           format: date
           nullable: true
-        additional_schedule_details:
+        service_date:
+          type: string
+          format: date
+          nullable: true
+        submitted_on:
+          type: string
+          format: date-time
+          nullable: true
+        stripe_invoice_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        salesforce_order_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        schedule_details:
           type: string
           nullable: true
         access_details:
+          type: string
+          nullable: true
+        placement_details:
           type: string
           nullable: true
         price:
@@ -4704,34 +7081,100 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
-        user:
-          type: string
-          format: uuid
+        order_type:
           nullable: true
-        user_address:
+          oneOf:
+          - $ref: '#/components/schemas/OrderTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        included_weight_tons:
           type: string
-          format: uuid
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
           nullable: true
-        subscription:
+        invoice_status:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/InvoiceStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        billing_comments_internal_use:
           type: string
-          format: uuid
+          nullable: true
+        schedule_window:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ScheduleWindowEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        supplier_payout_status:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SupplierPayoutStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        suppplier_payout_method:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SuppplierPayoutMethodEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        tax_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        payout_processing_error_comment:
+          type: string
           nullable: true
         order_group:
           type: string
           format: uuid
-          nullable: true
-        waste_type:
-          type: string
-          format: uuid
-          nullable: true
         disposal_location:
           type: string
           format: uuid
           nullable: true
-        seller_product_seller_location:
+    PatchedOrderDisposalTicket:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        ticket_id:
+          type: string
+          maxLength: 255
+        weight:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        order:
           type: string
           format: uuid
-          nullable: true
+        waste_type:
+          type: string
+          format: uuid
+        disposal_location:
+          type: string
+          format: uuid
     PatchedOrderGroup:
       type: object
       properties:
@@ -4747,6 +7190,23 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        user:
+          type: string
+          format: uuid
+        user_address:
+          type: string
+          format: uuid
+        seller_product_seller_location:
+          type: string
+          format: uuid
+        waste_type:
+          type: string
+          format: uuid
+          nullable: true
+        subscription:
+          type: string
+          format: uuid
+          nullable: true
     PatchedProduct:
       type: object
       properties:
@@ -4768,6 +7228,11 @@ components:
           maxLength: 255
         description:
           type: string
+          nullable: true
+        removal_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
         main_product:
           type: string
@@ -4855,9 +7320,8 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         stripe_connect_id:
           type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+          maxLength: 255
         marketplace_display_name:
           type: string
           nullable: true
@@ -4898,23 +7362,13 @@ components:
           - $ref: '#/components/schemas/BadgeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        tire_recycler_cert_registration_id_co:
+        salesforce_seller_id:
           type: string
           nullable: true
-          maxLength: 100
-        composting_classification:
+          maxLength: 255
+        about_us:
           type: string
           nullable: true
-          maxLength: 100
-        max_paint_gallons_accepted:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        recycling_disposal_classification:
-          type: string
-          nullable: true
-          maxLength: 100
     PatchedSellerLocation:
       type: object
       properties:
@@ -5000,14 +7454,30 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        rate:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
         total_inventory:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        service_radius:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        delivery_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        removal_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        fuel_environmental_markup:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
         seller_product:
           type: string
@@ -5016,6 +7486,160 @@ components:
         seller_location:
           type: string
           format: uuid
+          nullable: true
+    PatchedSellerProductSellerLocationMaterial:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        tonnage_included:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        seller_product_seller_location:
+          type: string
+          format: uuid
+    PatchedSellerProductSellerLocationMaterialWasteType:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price_per_ton:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location_material:
+          type: string
+          format: uuid
+        main_product_waste_type:
+          type: string
+          format: uuid
+    PatchedSellerProductSellerLocationRental:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        included_days:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        price_per_day_included:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        price_per_day_additional:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+    PatchedSellerProductSellerLocationService:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price_per_mile:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        flat_rate_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+    PatchedSellerProductSellerLocationServiceRecurring:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location_service:
+          type: string
+          format: uuid
+        main_product_seller_product_seller_location_service_recurring_frequency:
+          type: string
+          format: uuid
+    PatchedSellerProductSellerLocationServiceRecurringFrequency:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
     PatchedSubscription:
       type: object
@@ -5042,6 +7666,17 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
+        length_days:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        subscription_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SubscriptionTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
     PatchedUser:
       type: object
       properties:
@@ -5059,6 +7694,14 @@ components:
           type: boolean
         user_id:
           type: string
+          maxLength: 255
+        mailchip_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        intercom_id:
+          type: string
+          nullable: true
           maxLength: 255
         phone:
           type: string
@@ -5088,6 +7731,18 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        is_admin:
+          type: boolean
+        is_archived:
+          type: boolean
+        salesforce_contact_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        salesforce_seller_location_id:
+          type: string
+          nullable: true
+          maxLength: 255
         user_group:
           type: string
           format: uuid
@@ -5111,9 +7766,17 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        stripe_customer_id:
+          type: string
+          nullable: true
+          maxLength: 255
         name:
           type: string
           maxLength: 255
+        project_id:
+          type: string
+          nullable: true
+          maxLength: 50
         street:
           type: string
           nullable: true
@@ -5137,6 +7800,14 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+        autopay:
+          type: boolean
+        is_archived:
+          type: boolean
+        child_account_id:
+          type: string
+          nullable: true
+          maxLength: 255
         user_group:
           type: string
           format: uuid
@@ -5162,6 +7833,36 @@ components:
           type: boolean
         name:
           type: string
+          maxLength: 255
+    PatchedUserGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        stripe_customer_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        pay_later:
+          type: boolean
+        autopay:
+          type: boolean
+        parent_account_id:
+          type: string
+          nullable: true
           maxLength: 255
     PatchedUserSellerReview:
       type: object
@@ -5263,6 +7964,11 @@ components:
         description:
           type: string
           nullable: true
+        removal_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
         main_product:
           type: string
           format: uuid
@@ -5300,6 +8006,12 @@ components:
       - name
       - product
       - updated_on
+    ScheduleWindowEnum:
+      enum:
+      - Morning (7am-11am)
+      - Afternoon (12pm-4pm)
+      - Evening (5pm-8pm)
+      type: string
     Seller:
       type: object
       properties:
@@ -5359,9 +8071,8 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         stripe_connect_id:
           type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
           nullable: true
+          maxLength: 255
         marketplace_display_name:
           type: string
           nullable: true
@@ -5402,23 +8113,13 @@ components:
           - $ref: '#/components/schemas/BadgeEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        tire_recycler_cert_registration_id_co:
+        salesforce_seller_id:
           type: string
           nullable: true
-          maxLength: 100
-        composting_classification:
+          maxLength: 255
+        about_us:
           type: string
           nullable: true
-          maxLength: 100
-        max_paint_gallons_accepted:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
-          nullable: true
-        recycling_disposal_classification:
-          type: string
-          nullable: true
-          maxLength: 100
       required:
       - created_on
       - has_listings
@@ -5525,14 +8226,30 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        rate:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
         total_inventory:
           type: string
           format: decimal
           pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        service_radius:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,0})?$
+          nullable: true
+        delivery_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        removal_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        fuel_environmental_markup:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
           nullable: true
         seller_product:
           type: string
@@ -5545,7 +8262,187 @@ components:
       required:
       - available_quantity
       - created_on
-      - rate
+      - updated_on
+    SellerProductSellerLocationMaterial:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        tonnage_included:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        seller_product_seller_location:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - seller_product_seller_location
+      - tonnage_included
+      - updated_on
+    SellerProductSellerLocationMaterialWasteType:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price_per_ton:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location_material:
+          type: string
+          format: uuid
+        main_product_waste_type:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - main_product_waste_type
+      - seller_product_seller_location_material
+      - updated_on
+    SellerProductSellerLocationRental:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        included_days:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        price_per_day_included:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        price_per_day_additional:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - included_days
+      - seller_product_seller_location
+      - updated_on
+    SellerProductSellerLocationService:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price_per_mile:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        flat_rate_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - seller_product_seller_location
+      - updated_on
+    SellerProductSellerLocationServiceRecurring:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        seller_product_seller_location_service:
+          type: string
+          format: uuid
+        main_product_seller_product_seller_location_service_recurring_frequency:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - main_product_seller_product_seller_location_service_recurring_frequency
+      - seller_product_seller_location_service
+      - updated_on
+    SellerProductSellerLocationServiceRecurringFrequency:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - created_on
       - updated_on
     SellerStatusEnum:
       enum:
@@ -5580,10 +8477,40 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
+        length_days:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        subscription_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SubscriptionTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
       required:
       - created_on
       - subscription_number
       - updated_on
+    SubscriptionTypeEnum:
+      enum:
+      - On demand without subscription
+      - On demand with subscription
+      - Auto scheduled with subscription
+      type: string
+    SupplierPayoutStatusEnum:
+      enum:
+      - Not yet paid
+      - Process Payment
+      - Payout Processing Error
+      - Payout Completed
+      type: string
+    SuppplierPayoutMethodEnum:
+      enum:
+      - Stripe Connect
+      - By Invoice
+      - Other
+      type: string
     TypeDisplayEnum:
       enum:
       - Landfill
@@ -5641,6 +8568,14 @@ components:
         user_id:
           type: string
           maxLength: 255
+        mailchip_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        intercom_id:
+          type: string
+          nullable: true
+          maxLength: 255
         phone:
           type: string
           nullable: true
@@ -5666,6 +8601,18 @@ components:
           nullable: true
           maxLength: 255
         device_token:
+          type: string
+          nullable: true
+          maxLength: 255
+        is_admin:
+          type: boolean
+        is_archived:
+          type: boolean
+        salesforce_contact_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        salesforce_seller_location_id:
           type: string
           nullable: true
           maxLength: 255
@@ -5696,9 +8643,17 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        stripe_customer_id:
+          type: string
+          nullable: true
+          maxLength: 255
         name:
           type: string
           maxLength: 255
+        project_id:
+          type: string
+          nullable: true
+          maxLength: 50
         street:
           type: string
           nullable: true
@@ -5722,6 +8677,14 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,3}(?:\.\d{0,15})?$
+        autopay:
+          type: boolean
+        is_archived:
+          type: boolean
+        child_account_id:
+          type: string
+          nullable: true
+          maxLength: 255
         user_group:
           type: string
           format: uuid
@@ -5734,8 +8697,6 @@ components:
       - city
       - country
       - created_on
-      - latitude
-      - longitude
       - name
       - postal_code
       - state
@@ -5757,6 +8718,40 @@ components:
           type: boolean
         name:
           type: string
+          maxLength: 255
+      required:
+      - created_on
+      - name
+      - updated_on
+    UserGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        stripe_customer_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        pay_later:
+          type: boolean
+        autopay:
+          type: boolean
+        parent_account_id:
+          type: string
+          nullable: true
           maxLength: 255
       required:
       - created_on
@@ -5858,3 +8853,11 @@ components:
       - created_on
       - name
       - updated_on
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

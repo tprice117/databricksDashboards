@@ -232,6 +232,13 @@ admin.site.register(DisposalLocationWasteType)
 admin.site.register(UserSellerReview)
 admin.site.register(UserAddressType)
 admin.site.register(OrderDisposalTicket)
+admin.site.register(SellerProductSellerLocationService)
+admin.site.register(SellerProductSellerLocationServiceRecurringFrequency)
+admin.site.register(MainProductSellerProductSellerLocationServiceRecurringFrequency)
+admin.site.register(SellerProductSellerLocationServiceRecurring)
+admin.site.register(SellerProductSellerLocationRental)
+admin.site.register(SellerProductSellerLocationMaterial)
+admin.site.register(SellerProductSellerLocationMaterialWasteType)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)

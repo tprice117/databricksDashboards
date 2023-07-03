@@ -225,6 +225,38 @@ class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
     serializer_class = SellerProductSellerLocationSerializer
     filterset_fields = ["seller_product", "seller_location"] 
 
+class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationService.objects.all()
+    serializer_class = SellerProductSellerLocationServiceSerializer
+    filterset_fields = ["seller_product_seller_location"]
+
+class SellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationServiceRecurringFrequency.objects.all()
+    serializer_class = SellerProductSellerLocationServiceRecurringFrequencySerializer
+   
+class MainProductSellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+    queryset = MainProductSellerProductSellerLocationServiceRecurringFrequency.objects.all()
+    serializer_class = MainProductSellerProductSellerLocationServiceRecurringFrequencySerializer
+
+class SellerProductSellerLocationServiceRecurringViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationServiceRecurring.objects.all()
+    serializer_class = SellerProductSellerLocationServiceRecurringSerializer
+
+class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationRental.objects.all()
+    serializer_class = SellerProductSellerLocationRentalSerializer
+    filterset_fields = ["seller_product_seller_location"]
+
+class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationMaterial.objects.all()
+    serializer_class = SellerProductSellerLocationMaterialSerializer
+    filterset_fields = ["seller_product_seller_location"]
+
+class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationMaterialWasteType.objects.all()
+    serializer_class = SellerProductSellerLocationMaterialWasteTypeSerializer
+    filterset_fields = ["seller_product_seller_location_material", "main_product_waste_type"]
+
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer

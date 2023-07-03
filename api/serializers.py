@@ -189,6 +189,48 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
         return 0
         #obj.total_inventory - order_detail_count
 
+class SellerProductSellerLocationServiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationService
+        fields = "__all__"
+
+class SellerProductSellerLocationServiceRecurringFrequencySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationServiceRecurringFrequency
+        fields = "__all__"
+
+class MainProductSellerProductSellerLocationServiceRecurringFrequencySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductSellerProductSellerLocationServiceRecurringFrequency
+        fields = "__all__"
+
+class SellerProductSellerLocationServiceRecurringSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationServiceRecurring
+        fields = "__all__"
+
+class SellerProductSellerLocationRentalSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationRental
+        fields = "__all__"
+
+class SellerProductSellerLocationMaterialSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationMaterial
+        fields = "__all__"
+
+class SellerProductSellerLocationMaterialWasteTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationMaterialWasteType
+        fields = "__all__"
+
 class WasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:

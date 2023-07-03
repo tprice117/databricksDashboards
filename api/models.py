@@ -271,6 +271,19 @@ class MainProductAddOn(BaseModel):
 
     def __str__(self):
         return f'{self.main_product.name} - {self.add_on.name}'
+    
+class WasteType(BaseModel):
+    name = models.CharField(max_length=80)
+
+    def __str__(self):
+        return self.name
+    
+class MainProductWasteType(BaseModel):
+    waste_type = models.ForeignKey(WasteType, models.CASCADE)
+    main_product = models.ForeignKey(MainProduct, models.CASCADE)
+
+    def __str__(self):
+        return f'{self.main_product.name} - {self.waste_type.name}'
 
 class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
@@ -291,26 +304,92 @@ class SellerProduct(BaseModel):
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
     seller_location = models.ForeignKey(SellerLocation, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
-    rate = models.DecimalField(max_digits=18, decimal_places=2)
-    rate_per_day = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    rate_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    rate_per_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
+    service_radius = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    delivery_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    removal_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    fuel_environmental_markup = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
         return f'{self.seller_location.seller.name} - {self.seller_location.name} - {self.seller_product.product.main_product.name}'
+   
+class SellerProductSellerLocationService(BaseModel):
+    seller_product_seller_location = models.OneToOneField(
+        SellerProductSellerLocation,
+        on_delete=models.CASCADE,
+    )
+    price_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    flat_rate_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+
+    def __str__(self):
+        return self.seller_product_seller_location
+
+class SellerProductSellerLocationServiceRecurringFrequency(BaseModel):
+    name = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+
+class MainProductSellerProductSellerLocationServiceRecurringFrequency(BaseModel):
+    main_product = models.ForeignKey(MainProduct, models.PROTECT)
+    seller_product_seller_location_service_recurring_frequency = models.ForeignKey(
+        SellerProductSellerLocationServiceRecurringFrequency,
+        models.PROTECT
+    )
+
+    def __str__(self):
+        return self.seller_product_seller_location_service_recurring_frequency.name
+
+class SellerProductSellerLocationServiceRecurring(BaseModel):
+    seller_product_seller_location_service = models.ForeignKey(
+        SellerProductSellerLocationService, 
+        models.PROTECT
+    )
+    main_product_seller_product_seller_location_service_recurring_frequency = models.ForeignKey(
+        MainProductSellerProductSellerLocationServiceRecurringFrequency, 
+        models.PROTECT,
+        db_column='main_product_seller_product_location_service_recurring_frequency_id'
+    )
+    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+
+    def __str__(self):
+        return f'${self.seller_product_seller_location_service} - ${self.main_product_seller_product_seller_location_service_recurring_frequency}'
     
+class SellerProductSellerLocationRental(BaseModel):
+    seller_product_seller_location = models.OneToOneField(
+        SellerProductSellerLocation,
+        on_delete=models.CASCADE,
+    )
+    included_days = models.IntegerField()
+    price_per_day_included = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    price_per_day_additional = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+
+    def __str__(self):
+        return self.seller_product_seller_location
+    
+class SellerProductSellerLocationMaterial(BaseModel):
+    seller_product_seller_location = models.OneToOneField(
+        SellerProductSellerLocation,
+        on_delete=models.CASCADE,
+    )
+    tonnage_included = models.IntegerField()
+
+    def __str__(self):
+        return self.seller_product_seller_location
+    
+class SellerProductSellerLocationMaterialWasteType(BaseModel):
+    seller_product_seller_location_material = models.ForeignKey(
+        SellerProductSellerLocationMaterial, 
+        models.PROTECT
+    )
+    main_product_waste_type = models.ForeignKey(
+        MainProductWasteType,
+        models.PROTECT
+    )
+    price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+
 class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
     length_days = models.IntegerField(blank=True, null=True) #6.6.23
     subscription_type = models.CharField(max_length=35, choices=[('On demand without subscription', 'On demand without subscription'), ('On demand with subscription', 'On demand with subscription'), ('Auto scheduled with subscription','Auto scheduled with subscription')], blank=True, null=True) #6.6.23
-
-class WasteType(BaseModel):
-    name = models.CharField(max_length=80)
-
-    def __str__(self):
-        return self.name
     
 class OrderGroup(BaseModel):
     user = models.ForeignKey(User, models.PROTECT)
@@ -329,13 +408,6 @@ class ProductAddOnChoice(BaseModel):
 
     def __str__(self):
         return f'{self.product.main_product.name} - {self.add_on_choice.add_on.name} - {self.add_on_choice.name}'
-
-class MainProductWasteType(BaseModel):
-    waste_type = models.ForeignKey(WasteType, models.CASCADE)
-    main_product = models.ForeignKey(MainProduct, models.CASCADE)
-
-    def __str__(self):
-        return f'{self.main_product.name} - {self.waste_type.name}'
 
 class DisposalLocation(BaseModel):
     name = models.CharField(max_length=255)

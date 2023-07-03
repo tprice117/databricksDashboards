@@ -33,6 +33,13 @@ router.register(r'product-add-on-choices', views.ProductAddOnChoiceViewSet, 'api
 router.register(r'products', views.ProductViewSet, 'api')
 router.register(r'seller-products', views.SellerProductViewSet, 'api')
 router.register(r'seller-product-seller-locations', views.SellerProductSellerLocationViewSet, 'api')
+router.register(r'seller-product-seller-location-services', views.SellerProductSellerLocationServiceViewSet, 'api')
+router.register(r'seller-product-seller-location-service-recurring-frequencies', views.SellerProductSellerLocationServiceRecurringFrequencyViewSet, 'api')
+router.register(r'main-product-seller-product-seller-location-service-recurring-frequencies', views.MainProductSellerProductSellerLocationServiceRecurringFrequencyViewSet, 'api')
+router.register(r'seller-product-seller-location-service-recurrings', views.SellerProductSellerLocationServiceRecurringViewSet, 'api')
+router.register(r'seller-product-seller-location-rentals', views.SellerProductSellerLocationRentalViewSet, 'api')
+router.register(r'seller-product-seller-location-materials', views.SellerProductSellerLocationMaterialViewSet, 'api')
+router.register(r'seller-product-seller-location-material-waste-types', views.SellerProductSellerLocationMaterialWasteTypeViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
 
 urlpatterns = [
