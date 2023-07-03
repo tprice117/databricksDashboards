@@ -322,7 +322,7 @@ class SellerProductSellerLocationService(BaseModel):
     flat_rate_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
-        return self.seller_product_seller_location
+        return self.seller_product_seller_location.seller_location.name
 
 class SellerProductSellerLocationServiceRecurringFrequency(BaseModel):
     name = models.CharField(max_length=255)
@@ -335,7 +335,7 @@ class MainProductSellerProductSellerLocationServiceRecurringFrequency(BaseModel)
     )
 
     def __str__(self):
-        return self.seller_product_seller_location_service_recurring_frequency.name
+        return f'${self.main_product.name} - ${self.seller_product_seller_location_service_recurring_frequency.name}'
 
 class SellerProductSellerLocationServiceRecurring(BaseModel):
     seller_product_seller_location_service = models.ForeignKey(
@@ -350,7 +350,7 @@ class SellerProductSellerLocationServiceRecurring(BaseModel):
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
-        return f'${self.seller_product_seller_location_service} - ${self.main_product_seller_product_seller_location_service_recurring_frequency}'
+        return f'${self.seller_product_seller_location_service.seller_product_seller_location.seller_location.name} - ${self.main_product_seller_product_seller_location_service_recurring_frequency.main_product.name}'
     
 class SellerProductSellerLocationRental(BaseModel):
     seller_product_seller_location = models.OneToOneField(
@@ -362,7 +362,7 @@ class SellerProductSellerLocationRental(BaseModel):
     price_per_day_additional = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
-        return self.seller_product_seller_location
+        return self.seller_product_seller_location.seller_location.name
     
 class SellerProductSellerLocationMaterial(BaseModel):
     seller_product_seller_location = models.OneToOneField(
@@ -372,7 +372,7 @@ class SellerProductSellerLocationMaterial(BaseModel):
     tonnage_included = models.IntegerField()
 
     def __str__(self):
-        return self.seller_product_seller_location
+        return self.seller_product_seller_location.seller_location.name
     
 class SellerProductSellerLocationMaterialWasteType(BaseModel):
     seller_product_seller_location_material = models.ForeignKey(
