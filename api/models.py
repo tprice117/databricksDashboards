@@ -325,7 +325,7 @@ class SellerProductSellerLocationService(BaseModel):
         return self.seller_product_seller_location
 
 class SellerProductSellerLocationServiceRecurringFrequency(BaseModel):
-    name = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    name = models.CharField(max_length=255)
 
 class MainProductSellerProductSellerLocationServiceRecurringFrequency(BaseModel):
     main_product = models.ForeignKey(MainProduct, models.PROTECT)

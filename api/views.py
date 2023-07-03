@@ -230,32 +230,88 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
     serializer_class = SellerProductSellerLocationServiceSerializer
     filterset_fields = ["seller_product_seller_location"]
 
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
 class SellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationServiceRecurringFrequency.objects.all()
     serializer_class = SellerProductSellerLocationServiceRecurringFrequencySerializer
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
    
 class MainProductSellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
     queryset = MainProductSellerProductSellerLocationServiceRecurringFrequency.objects.all()
     serializer_class = MainProductSellerProductSellerLocationServiceRecurringFrequencySerializer
 
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(main_product_seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
 class SellerProductSellerLocationServiceRecurringViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationServiceRecurring.objects.all()
     serializer_class = SellerProductSellerLocationServiceRecurringSerializer
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
 
 class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationRental.objects.all()
     serializer_class = SellerProductSellerLocationRentalSerializer
     filterset_fields = ["seller_product_seller_location"]
 
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
 class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationMaterial.objects.all()
     serializer_class = SellerProductSellerLocationMaterialSerializer
     filterset_fields = ["seller_product_seller_location"]
 
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
 class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationMaterialWasteType.objects.all()
     serializer_class = SellerProductSellerLocationMaterialWasteTypeSerializer
     filterset_fields = ["seller_product_seller_location_material", "main_product_waste_type"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
 
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
