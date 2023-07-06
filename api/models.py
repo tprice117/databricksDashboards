@@ -307,6 +307,7 @@ class SellerProduct(BaseModel):
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
     seller_location = models.ForeignKey(SellerLocation, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
+    active = models.BooleanField(default=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
     min_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     max_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
