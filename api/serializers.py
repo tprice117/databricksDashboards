@@ -207,10 +207,10 @@ class MainProductServiceRecurringFrequencySerializer(serializers.ModelSerializer
         model = MainProductServiceRecurringFrequency
         fields = "__all__"
 
-class SellerProductSellerLocationServiceRecurringSerializer(serializers.ModelSerializer):
+class SellerProductSellerLocationServiceRecurringFrequencySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = SellerProductSellerLocationServiceRecurring
+        model = SellerProductSellerLocationServiceRecurringFrequency
         fields = "__all__"
 
 class SellerProductSellerLocationRentalSerializer(serializers.ModelSerializer):

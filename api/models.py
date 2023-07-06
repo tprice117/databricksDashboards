@@ -337,19 +337,6 @@ class SellerProductSellerLocation(BaseModel):
             SellerProductSellerLocationMaterial.objects.create(seller_product_seller_location=instance)
         elif hasattr(instance, 'material') and not instance.seller_product.product.main_product.has_material:
             instance.material.delete()
-    
-   
-class SellerProductSellerLocationService(BaseModel):
-    seller_product_seller_location = models.OneToOneField(
-        SellerProductSellerLocation,
-        on_delete=models.CASCADE,
-        related_name='service'
-    )
-    price_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    flat_rate_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-
-    def __str__(self):
-        return self.seller_product_seller_location.seller_location.name
 
 class ServiceRecurringFrequency(BaseModel):
     name = models.CharField(max_length=255)
@@ -362,22 +349,55 @@ class MainProductServiceRecurringFrequency(BaseModel):
     )
 
     def __str__(self):
-        return f'${self.main_product.name} - ${self.service_recurring_frequency.name}'
+        return f'{self.main_product.name} - {self.service_recurring_frequency.name}'  
+   
+class SellerProductSellerLocationService(BaseModel):
+    seller_product_seller_location = models.OneToOneField(
+        SellerProductSellerLocation,
+        on_delete=models.CASCADE,
+        related_name='service'
+    )
+    price_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    flat_rate_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
-class SellerProductSellerLocationServiceRecurring(BaseModel):
+    def __str__(self):
+        return self.seller_product_seller_location.seller_location.name
+    
+    def post_save(sender, instance, created, **kwargs):
+        # Ensure all service recurring frequencies are created.
+        for service_recurring_frequency in MainProductServiceRecurringFrequency.objects.filter(main_product=instance.seller_product_seller_location.seller_product.product.main_product):
+            if not SellerProductSellerLocationServiceRecurringFrequency.objects.filter(
+                seller_product_seller_location_service=instance,
+                main_product_service_recurring_frequency=service_recurring_frequency
+            ).exists():
+                SellerProductSellerLocationServiceRecurringFrequency.objects.create(
+                    seller_product_seller_location_service=instance,
+                    main_product_service_recurring_frequency=service_recurring_frequency
+                )
+
+        # Ensure all "stale" service recurring frequencies are deleted.
+        for seller_product_seller_location_service_recurring in SellerProductSellerLocationServiceRecurringFrequency.objects.filter(
+            seller_product_seller_location_service=instance
+        ):
+            if not MainProductServiceRecurringFrequency.objects.filter(
+                main_product=instance.seller_product_seller_location.seller_product.product.main_product,
+                service_recurring_frequency=service_recurring_frequency.service_recurring_frequency
+            ).exists():
+                service_recurring_frequency.delete()
+
+class SellerProductSellerLocationServiceRecurringFrequency(BaseModel):
     seller_product_seller_location_service = models.ForeignKey(
         SellerProductSellerLocationService, 
         models.PROTECT
     )
-    main_product_seller_product_seller_location_service_recurring_frequency = models.ForeignKey(
+    main_product_service_recurring_frequency = models.ForeignKey(
         MainProductServiceRecurringFrequency, 
         models.PROTECT,
-        db_column='main_product_seller_product_location_service_recurring_frequency_id'
     )
     price = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
     def __str__(self):
-        return f'${self.seller_product_seller_location_service.seller_product_seller_location.seller_location.name} - ${self.main_product_seller_product_seller_location_service_recurring_frequency.main_product.name}'
+        return f'{self.seller_product_seller_location_service.seller_product_seller_location.seller_location.name} - {self.main_product_service_recurring_frequency.main_product.name}'
     
 class SellerProductSellerLocationRental(BaseModel):
     seller_product_seller_location = models.OneToOneField(
@@ -413,6 +433,26 @@ class SellerProductSellerLocationMaterialWasteType(BaseModel):
         models.PROTECT
     )
     price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+
+    def post_save(sender, instance, created, **kwargs):
+        # Ensure all material waste type recurring frequencies are created.
+        for material_waste_type_recurring_frequency in MainProductWasteType.objects.filter(main_product=instance.seller_product_seller_location_material.seller_product_seller_location.seller_product.product.main_product):
+            if not SellerProductSellerLocationMaterialWasteType.objects.filter(
+                seller_product_seller_location_material_waste_type=instance,
+                main_product_material_waste_type_recurring_frequency=material_waste_type_recurring_frequency
+            ).exists():
+                SellerProductSellerLocationMaterialWasteType.objects.create(
+                    seller_product_seller_location_material_waste_type=instance,
+                    main_product_material_waste_type_recurring_frequency=material_waste_type_recurring_frequency
+                )
+
+        # Ensure all "stale" material waste type recurring frequencies are deleted.
+        for material_waste_type_recurring_frequency in SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=instance.seller_product_seller_location_material):
+            if not MainProductWasteType.objects.filter(
+                main_product=instance.seller_product_seller_location_material.seller_product_seller_location.seller_product.product.main_product,
+                id=material_waste_type_recurring_frequency.main_product_material_waste_type_recurring_frequency.id
+            ).exists():
+                material_waste_type_recurring_frequency.delete()
 
 class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
@@ -563,3 +603,5 @@ pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 # pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)
 post_save.connect(SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation)
+post_save.connect(SellerProductSellerLocationService.post_save, sender=SellerProductSellerLocationService)
+post_save.connect(SellerProductSellerLocationMaterialWasteType.post_save, sender=SellerProductSellerLocationMaterialWasteType)

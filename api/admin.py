@@ -76,6 +76,15 @@ class SellerProductSellerLocationInline(admin.TabularInline):
                 field.queryset = field.queryset.none()
         return field
     
+class SellerProductSellerLocationServiceInline(admin.StackedInline):
+    model = SellerProductSellerLocationService
+
+class SellerProductSellerLocationRentalInline(admin.StackedInline):
+    model = SellerProductSellerLocationRental
+
+class SellerProductSellerLocationMaterialInline(admin.StackedInline):
+    model = SellerProductSellerLocationMaterial
+    
 class UserGroupUserInline(admin.TabularInline):
     model = UserGroupUser
     fields = ('user_group', 'user')
@@ -157,6 +166,11 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["seller_location__seller__name",]
     autocomplete_fields = ["seller_product", "seller_location"]
     list_filter = ('seller_product__product__main_product__main_product_category', 'seller_location__seller')
+    inlines = [
+        SellerProductSellerLocationServiceInline,
+        SellerProductSellerLocationRentalInline,
+        SellerProductSellerLocationMaterialInline,
+    ]
 
 class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
@@ -235,7 +249,7 @@ admin.site.register(OrderDisposalTicket)
 admin.site.register(SellerProductSellerLocationService)
 admin.site.register(ServiceRecurringFrequency)
 admin.site.register(MainProductServiceRecurringFrequency)
-admin.site.register(SellerProductSellerLocationServiceRecurring)
+admin.site.register(SellerProductSellerLocationServiceRecurringFrequency)
 admin.site.register(SellerProductSellerLocationRental)
 admin.site.register(SellerProductSellerLocationMaterial)
 admin.site.register(SellerProductSellerLocationMaterialWasteType)
