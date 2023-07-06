@@ -79,14 +79,27 @@ class SellerProductSellerLocationInline(admin.TabularInline):
 class SellerProductSellerLocationServiceInline(admin.StackedInline):
     model = SellerProductSellerLocationService
     show_change_link = True
+    extra=0
+
+class SellerProductSellerLocationServiceRecurringFrequencyInline(admin.StackedInline):
+    model = SellerProductSellerLocationServiceRecurringFrequency
+    show_change_link = True
+    extra=0
 
 class SellerProductSellerLocationRentalInline(admin.StackedInline):
     model = SellerProductSellerLocationRental
     show_change_link = True
+    extra=0
 
 class SellerProductSellerLocationMaterialInline(admin.StackedInline):
     model = SellerProductSellerLocationMaterial
     show_change_link = True
+    extra=0
+
+class SellerProductSellerLocationMaterialWasteTypeInline(admin.StackedInline):
+    model = SellerProductSellerLocationMaterialWasteType
+    show_change_link = True
+    extra=0
     
 class UserGroupUserInline(admin.TabularInline):
     model = UserGroupUser
@@ -175,6 +188,16 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
         SellerProductSellerLocationMaterialInline,
     ]
 
+class SellerProductSellerLocationServiceAdmin(admin.ModelAdmin):
+    inlines = [
+        SellerProductSellerLocationServiceRecurringFrequencyInline,
+    ]
+
+class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
+    inlines = [
+        SellerProductSellerLocationMaterialWasteTypeInline,
+    ]
+
 class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
     search_fields = ["name", "street"]
@@ -249,12 +272,12 @@ admin.site.register(DisposalLocationWasteType)
 admin.site.register(UserSellerReview)
 admin.site.register(UserAddressType)
 admin.site.register(OrderDisposalTicket)
-admin.site.register(SellerProductSellerLocationService)
 admin.site.register(ServiceRecurringFrequency)
 admin.site.register(MainProductServiceRecurringFrequency)
+admin.site.register(SellerProductSellerLocationService, SellerProductSellerLocationServiceAdmin)
 admin.site.register(SellerProductSellerLocationServiceRecurringFrequency)
 admin.site.register(SellerProductSellerLocationRental)
-admin.site.register(SellerProductSellerLocationMaterial)
+admin.site.register(SellerProductSellerLocationMaterial, SellerProductSellerLocationMaterialAdmin)
 admin.site.register(SellerProductSellerLocationMaterialWasteType)
 
 # Unregister auth models.
