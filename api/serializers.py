@@ -195,16 +195,16 @@ class SellerProductSellerLocationServiceSerializer(serializers.ModelSerializer):
         model = SellerProductSellerLocationService
         fields = "__all__"
 
-class SellerProductSellerLocationServiceRecurringFrequencySerializer(serializers.ModelSerializer):
+class ServiceRecurringFrequencySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = SellerProductSellerLocationServiceRecurringFrequency
+        model = ServiceRecurringFrequency
         fields = "__all__"
 
-class MainProductSellerProductSellerLocationServiceRecurringFrequencySerializer(serializers.ModelSerializer):
+class MainProductServiceRecurringFrequencySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:
-        model = MainProductSellerProductSellerLocationServiceRecurringFrequency
+        model = MainProductServiceRecurringFrequency
         fields = "__all__"
 
 class SellerProductSellerLocationServiceRecurringSerializer(serializers.ModelSerializer):

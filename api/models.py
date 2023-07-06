@@ -305,6 +305,8 @@ class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
     seller_location = models.ForeignKey(SellerLocation, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
+    min_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    max_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     service_radius = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     delivery_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     removal_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
@@ -324,18 +326,18 @@ class SellerProductSellerLocationService(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
-class SellerProductSellerLocationServiceRecurringFrequency(BaseModel):
+class ServiceRecurringFrequency(BaseModel):
     name = models.CharField(max_length=255)
 
-class MainProductSellerProductSellerLocationServiceRecurringFrequency(BaseModel):
+class MainProductServiceRecurringFrequency(BaseModel):
     main_product = models.ForeignKey(MainProduct, models.PROTECT)
-    seller_product_seller_location_service_recurring_frequency = models.ForeignKey(
-        SellerProductSellerLocationServiceRecurringFrequency,
+    service_recurring_frequency = models.ForeignKey(
+        ServiceRecurringFrequency,
         models.PROTECT
     )
 
     def __str__(self):
-        return f'${self.main_product.name} - ${self.seller_product_seller_location_service_recurring_frequency.name}'
+        return f'${self.main_product.name} - ${self.service_recurring_frequency.name}'
 
 class SellerProductSellerLocationServiceRecurring(BaseModel):
     seller_product_seller_location_service = models.ForeignKey(
@@ -343,7 +345,7 @@ class SellerProductSellerLocationServiceRecurring(BaseModel):
         models.PROTECT
     )
     main_product_seller_product_seller_location_service_recurring_frequency = models.ForeignKey(
-        MainProductSellerProductSellerLocationServiceRecurringFrequency, 
+        MainProductServiceRecurringFrequency, 
         models.PROTECT,
         db_column='main_product_seller_product_location_service_recurring_frequency_id'
     )
