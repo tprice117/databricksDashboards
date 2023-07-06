@@ -320,19 +320,19 @@ class SellerProductSellerLocation(BaseModel):
     
     def post_save(sender, instance, created, **kwargs):
         # Create/delete Service.
-        if not instance.service and instance.seller_product.product.main_product.has_service :
+        if not hasattr(instance, 'service') and instance.seller_product.product.main_product.has_service :
             SellerProductSellerLocationService.objects.create(seller_product_seller_location=instance)
         elif hasattr(instance, 'service') and not instance.seller_product.product.main_product.has_service:
             instance.service.delete()
         
         # Create/delete Rental.
-        if not instance.rental and instance.seller_product.product.main_product.has_rental:
+        if not hasattr(instance, 'rental') and instance.seller_product.product.main_product.has_rental:
             SellerProductSellerLocationRental.objects.create(seller_product_seller_location=instance)
         elif hasattr(instance, 'rental') and not instance.seller_product.product.main_product.has_rental:
             instance.rental.delete()
 
         # Create/delete Material.
-        if not instance.material and instance.seller_product.product.main_product.has_material:
+        if not hasattr(instance, 'material') and instance.seller_product.product.main_product.has_material:
             SellerProductSellerLocationMaterial.objects.create(seller_product_seller_location=instance)
         elif hasattr(instance, 'material') and not instance.seller_product.product.main_product.has_material:
             instance.material.delete()
