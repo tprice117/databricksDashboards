@@ -78,12 +78,15 @@ class SellerProductSellerLocationInline(admin.TabularInline):
     
 class SellerProductSellerLocationServiceInline(admin.StackedInline):
     model = SellerProductSellerLocationService
+    show_change_link = True
 
 class SellerProductSellerLocationRentalInline(admin.StackedInline):
     model = SellerProductSellerLocationRental
+    show_change_link = True
 
 class SellerProductSellerLocationMaterialInline(admin.StackedInline):
     model = SellerProductSellerLocationMaterial
+    show_change_link = True
     
 class UserGroupUserInline(admin.TabularInline):
     model = UserGroupUser
