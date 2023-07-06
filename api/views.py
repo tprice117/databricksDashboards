@@ -44,15 +44,19 @@ class UserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id"]
 
     def get_queryset(self):
+        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller).values_list('user_address__id', flat=True) if self.request.user.seller else []
+        seller_order_user_addresses = queryset.filter(id__in=seller_order_user_address_ids)
+
         if self.request.user == "ALL":
            return self.queryset
         elif self.request.user.is_admin:
-            return self.queryset.filter(user_group=self.request.user.user_group)
+            user_addresses = self.queryset.filter(user_group=self.request.user.user_group)
+            return user_addresses | seller_order_user_addresses
         else:
             queryset = self.queryset
             user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
-            query_set = queryset.filter(id__in=user_address_ids)
-            return query_set
+            user_addresses = queryset.filter(id__in=user_address_ids)
+            return user_addresses | seller_order_user_addresses
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
