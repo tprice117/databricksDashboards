@@ -317,11 +317,32 @@ class SellerProductSellerLocation(BaseModel):
 
     def __str__(self):
         return f'{self.seller_location.seller.name} - {self.seller_location.name} - {self.seller_product.product.main_product.name}'
+    
+    def post_save(sender, instance, created, **kwargs):
+        # Create/delete Service.
+        if not instance.service and instance.seller_product.product.main_product.has_service :
+            SellerProductSellerLocationService.objects.create(seller_product_seller_location=instance)
+        elif instance.service and not instance.seller_product.product.main_product.has_service:
+            instance.service.delete()
+        
+        # Create/delete Rental.
+        if not instance.rental and instance.seller_product.product.main_product.has_rental:
+            SellerProductSellerLocationRental.objects.create(seller_product_seller_location=instance)
+        elif instance.rental and not instance.seller_product.product.main_product.has_rental:
+            instance.rental.delete()
+
+        # Create/delete Material.
+        if not instance.material and instance.seller_product.product.main_product.has_material:
+            SellerProductSellerLocationMaterial.objects.create(seller_product_seller_location=instance)
+        elif instance.material and not instance.seller_product.product.main_product.has_material:
+            instance.material.delete()
+    
    
 class SellerProductSellerLocationService(BaseModel):
     seller_product_seller_location = models.OneToOneField(
         SellerProductSellerLocation,
         on_delete=models.CASCADE,
+        related_name='service'
     )
     price_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     flat_rate_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
@@ -361,6 +382,7 @@ class SellerProductSellerLocationRental(BaseModel):
     seller_product_seller_location = models.OneToOneField(
         SellerProductSellerLocation,
         on_delete=models.CASCADE,
+        related_name='rental'
     )
     included_days = models.IntegerField()
     price_per_day_included = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
@@ -373,6 +395,7 @@ class SellerProductSellerLocationMaterial(BaseModel):
     seller_product_seller_location = models.OneToOneField(
         SellerProductSellerLocation,
         on_delete=models.CASCADE,
+        related_name='material'
     )
     tonnage_included = models.IntegerField()
 
@@ -538,3 +561,4 @@ post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 # pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)
+post_save.connect(SellerProductSellerLocation.post_create, sender=SellerProductSellerLocation)
