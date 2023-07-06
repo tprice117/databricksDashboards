@@ -254,14 +254,6 @@ class MainProductServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
     queryset = MainProductServiceRecurringFrequency.objects.all()
     serializer_class = MainProductServiceRecurringFrequencySerializer
 
-    def get_queryset(self):
-        if self.request.user == "ALL":
-           return self.queryset
-        else:
-            queryset = self.queryset
-            query_set = queryset.filter(main_product_seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=self.request.user.seller)
-            return query_set
-
 class SellerProductSellerLocationServiceRecurringViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationServiceRecurring.objects.all()
     serializer_class = SellerProductSellerLocationServiceRecurringSerializer
