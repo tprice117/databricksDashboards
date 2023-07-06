@@ -182,9 +182,9 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
         if self.request.user == "ALL":
            return self.queryset
         else:
-            queryset = self.queryset
-            query_set = queryset.filter(user__id=self.request.user.id)
-            return query_set
+            seller_order_groups = self.queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
+            customer_order_groups = self.queryset.filter(user__id=self.request.user.id)
+            return seller_order_groups | customer_order_groups
         
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -195,9 +195,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.request.user == "ALL":
            return self.queryset
         else:
-            queryset = self.queryset
-            query_set = queryset.filter(order_group__user__id=self.request.user.id)
-            return query_set
+            seller_orders = self.queryset.filter(order_group__seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
+            customer_orders = self.queryset.filter(order_group__user__id=self.request.user.id)
+            return seller_orders | customer_orders
         
 class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
     queryset = OrderDisposalTicket.objects.all()
