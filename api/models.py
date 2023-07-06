@@ -322,19 +322,19 @@ class SellerProductSellerLocation(BaseModel):
         # Create/delete Service.
         if not instance.service and instance.seller_product.product.main_product.has_service :
             SellerProductSellerLocationService.objects.create(seller_product_seller_location=instance)
-        elif instance.service and not instance.seller_product.product.main_product.has_service:
+        elif hasattr(instance, 'service') and not instance.seller_product.product.main_product.has_service:
             instance.service.delete()
         
         # Create/delete Rental.
         if not instance.rental and instance.seller_product.product.main_product.has_rental:
             SellerProductSellerLocationRental.objects.create(seller_product_seller_location=instance)
-        elif instance.rental and not instance.seller_product.product.main_product.has_rental:
+        elif hasattr(instance, 'rental') and not instance.seller_product.product.main_product.has_rental:
             instance.rental.delete()
 
         # Create/delete Material.
         if not instance.material and instance.seller_product.product.main_product.has_material:
             SellerProductSellerLocationMaterial.objects.create(seller_product_seller_location=instance)
-        elif instance.material and not instance.seller_product.product.main_product.has_material:
+        elif hasattr(instance, 'material') and not instance.seller_product.product.main_product.has_material:
             instance.material.delete()
     
    
