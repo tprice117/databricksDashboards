@@ -45,7 +45,7 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller).values_list('user_address__id', flat=True) if self.request.user.seller else []
-        seller_order_user_addresses = queryset.filter(id__in=seller_order_user_address_ids)
+        seller_order_user_addresses = self.queryset.filter(id__in=seller_order_user_address_ids)
 
         if self.request.user == "ALL":
            return self.queryset
