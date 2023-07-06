@@ -373,7 +373,7 @@ class SellerProductSellerLocationServiceRecurring(BaseModel):
         models.PROTECT,
         db_column='main_product_seller_product_location_service_recurring_frequency_id'
     )
-    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    price = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
     def __str__(self):
         return f'${self.seller_product_seller_location_service.seller_product_seller_location.seller_location.name} - ${self.main_product_seller_product_seller_location_service_recurring_frequency.main_product.name}'
@@ -384,9 +384,9 @@ class SellerProductSellerLocationRental(BaseModel):
         on_delete=models.CASCADE,
         related_name='rental'
     )
-    included_days = models.IntegerField()
-    price_per_day_included = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    price_per_day_additional = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    included_days = models.IntegerField(default=0)
+    price_per_day_included = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    price_per_day_additional = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
@@ -411,7 +411,7 @@ class SellerProductSellerLocationMaterialWasteType(BaseModel):
         MainProductWasteType,
         models.PROTECT
     )
-    price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
 class Subscription(BaseModel): #Added 2/20/23
     subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
