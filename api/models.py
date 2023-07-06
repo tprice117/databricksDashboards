@@ -238,6 +238,9 @@ class MainProduct(BaseModel):
     max_rate = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     included_rate_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     main_product_code = models.CharField(max_length=255, blank=True, null=True) 
+    has_service = models.BooleanField(default=False)
+    has_rental = models.BooleanField(default=False)
+    has_material = models.BooleanField(default=False)
     
     def __str__(self):
         return f'{self.main_product_category.name} - {self.name}'
