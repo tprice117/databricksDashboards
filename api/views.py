@@ -44,19 +44,13 @@ class UserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id"]
 
     def get_queryset(self):
-        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller).values_list('user_address__id', flat=True) if self.request.user.seller else []
-        seller_order_user_addresses = self.queryset.filter(id__in=seller_order_user_address_ids)
-
         if self.request.user == "ALL":
            return self.queryset
         elif self.request.user.is_admin:
-            user_addresses = self.queryset.filter(user_group=self.request.user.user_group)
-            return user_addresses | seller_order_user_addresses
+            return self.queryset.filter(user_group=self.request.user.user_group)
         else:
-            queryset = self.queryset
             user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
-            user_addresses = queryset.filter(id__in=user_address_ids)
-            return user_addresses | seller_order_user_addresses
+            return self.queryset.filter(id__in=user_address_ids)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -181,10 +175,11 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user == "ALL":
            return self.queryset
+        elif self.request.user.is_admin:
+            user_address_ids = UserUserAddress.objects.filter(user__user_group=self.request.user.user_group).values_list('user_address__id', flat=True)
+            return self.queryset.filter(user_address__id__in=user_address_ids)
         else:
-            seller_order_groups = self.queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
-            customer_order_groups = self.queryset.filter(user__id=self.request.user.id)
-            return seller_order_groups | customer_order_groups
+            return self.queryset.filter(user__id=self.request.user.id)
         
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -194,10 +189,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user == "ALL":
            return self.queryset
+        elif self.request.user.is_admin:
+            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
+            return self.queryset.filter(order_group__user__id__in=user_ids)
         else:
-            seller_orders = self.queryset.filter(order_group__seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
-            customer_orders = self.queryset.filter(order_group__user__id=self.request.user.id)
-            return seller_orders | customer_orders
+            return self.queryset.filter(order_group__user__id=self.request.user.id)
         
 class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
     queryset = OrderDisposalTicket.objects.all()
@@ -304,6 +300,31 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet)
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
+
+
+# Use-case-specific model views.
+class UserAddressesForSellerViewSet(viewsets.ModelViewSet):
+    queryset = UserAddress.objects.all()
+    serializer_class = UserAddressSerializer
+
+    def get_queryset(self):
+        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller).values_list('user_address__id', flat=True) if self.request.user.seller else []
+        return self.queryset.filter(id__in=seller_order_user_address_ids)
+    
+class OrderGroupsForSellerViewSet(viewsets.ModelViewSet):
+    queryset = OrderGroup.objects.all()
+    serializer_class = OrderGroupSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
+
+class OrdersForSellerViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(order_group__seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
+
 
 
 

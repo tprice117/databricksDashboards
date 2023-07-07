@@ -42,6 +42,11 @@ router.register(r'seller-product-seller-location-materials', views.SellerProduct
 router.register(r'seller-product-seller-location-material-waste-types', views.SellerProductSellerLocationMaterialWasteTypeViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
 
+# Use-case-specific model endpoints.
+router.register(r'user-addresses-for-seller', views.UserAddressesForSellerViewSet, 'api')
+router.register(r'order-groups-for-seller', views.OrderGroupsForSellerViewSet, 'api')
+router.register(r'orders-for-seller', views.OrdersForSellerViewSet, 'api')
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Base API URL.
