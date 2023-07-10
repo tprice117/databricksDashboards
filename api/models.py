@@ -480,7 +480,7 @@ class OrderGroup(BaseModel):
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
-    # time_slot = models.ForeignKey(TimeSlot, models.PROTECT)
+    time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
     start_date = models.DateField()
     end_date = models.DateField()
 
