@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models.signals import pre_save, post_save, post_delete
 import uuid
 import stripe
-from simple_salesforce import Salesforce
+# from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
 from api.utils.auth0 import create_user, get_user_from_email, delete_user
 from api.utils.google_maps import geocode_address
@@ -14,12 +14,12 @@ from intercom.client import Client
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-sf = Salesforce(
-    username='thayes@trydownstream.io.stage', 
-    password='LongLiveDownstream12!', 
-    security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
-    domain='test'
-)
+# sf = Salesforce(
+#     username='thayes@trydownstream.io.stage', 
+#     password='LongLiveDownstream12!', 
+#     security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
+#     domain='test'
+# )
 
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -465,13 +465,24 @@ class Subscription(BaseModel): #Added 2/20/23
     interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
     length_days = models.IntegerField(blank=True, null=True) #6.6.23
     subscription_type = models.CharField(max_length=35, choices=[('On demand without subscription', 'On demand without subscription'), ('On demand with subscription', 'On demand with subscription'), ('Auto scheduled with subscription','Auto scheduled with subscription')], blank=True, null=True) #6.6.23
-    
+
+class TimeSlot(BaseModel):
+    name = models.CharField(max_length=80)
+    start = models.TimeField()
+    end = models.TimeField()
+
+    def __str__(self):
+        return self.name    
+
 class OrderGroup(BaseModel):
     user = models.ForeignKey(User, models.PROTECT)
     user_address = models.ForeignKey(UserAddress, models.PROTECT)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
+    # time_slot = models.ForeignKey(TimeSlot, models.PROTECT)
+    start_date = models.DateField()
+    end_date = models.DateField()
 
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
