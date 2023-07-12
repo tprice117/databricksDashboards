@@ -13,8 +13,7 @@ class CustomAuthentication(authentication.BaseAuthentication):
             if token == "addfe690-5b86-4671-a3bd-1764b32e20b0":
                 return ("ALL", None)
             else:
-                user_data = get_user_data(token)
-                user = User.objects.get(user_id=user_data['user_id'])
+                user = User.objects.get(user_id=token)
                 return (user, None)
         except Exception as ex:
             # Catch all other exceptions.
