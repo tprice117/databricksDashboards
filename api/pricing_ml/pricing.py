@@ -1,6 +1,6 @@
 import math
 import pandas as pd
-from api.models import DisposalLocation, DisposalLocationWasteType, Product, Seller, SellerLocation, SellerProduct, SellerProductSellerLocation
+from api.models import DisposalLocation, DisposalLocationWasteType, MainProductWasteType, Product, Seller, SellerLocation, SellerProduct, SellerProductSellerLocation, SellerProductSellerLocationMaterialWasteType, UserAddress, WasteType
 import googlemaps
 import numpy as np
 import json
@@ -15,11 +15,14 @@ class Price_Model:
         self.enc = enc
 
         # Product.
-        self.product = Product.objects.get(id=request.data['product_id'])
+        self.product = Product.objects.get(id=request.data['product'])
+
+        # User Address.
+        self.user_address = UserAddress.objects.get(id=request.data['user_address'])
         
-        # always need customer lat and long
-        self.customer_lat = float(request.data['customer_lat'])
-        self.customer_long = float(request.data['customer_long'])
+        # Start and End Date.
+        self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d') if 'start_date' in request.data else None
+        self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d') if 'end_date' in request.data else None
 
         # product characteristics required fields
         self.product_id = request.data['product_id']
@@ -110,7 +113,7 @@ class Price_Model:
         # concat the base price characteristics with the variable costs
         df = pd.concat([pd.DataFrame({'distance_miles': distance_miles, 'value': value, 'mpg': mpg}, index=[0]),\
                         cat_dat], axis=1)
-
+        
         return df
     
     def predict_price(self, input_data):
@@ -127,127 +130,130 @@ class Price_Model:
             return {"status": "Error", "message": str(e)}
         
     def get_prices(self):
-        """Calc static junk price with distance from hauler to seller and diesel price."""
-        try:
-            # get diesel price from FRED
-            fredid = 'GASDESW'
-            latest_diesel = self.getdatafred(fredid, self.fred_api)
-            diesel_price = latest_diesel.loc[:,'value'].iloc[-1]
-        except:
-            diesel_price = 5
-
         # Get SellerLocations that offer the product.
         seller_products = SellerProduct.objects.filter(product=self.product)
-        print(len(seller_products))
-        seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products)
-        print(len(seller_product_seller_locations))
+        seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products).filter(active=True)
 
         # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
         seller_location_prices = []
         for seller_product_seller_location in seller_product_seller_locations:
-            price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location.id, diesel_price)
+            price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
             seller_location_prices.append(price_obj)
-            # if price_obj['total_distance'] <= 40:
-            #     seller_location_prices.append(price_obj)
-            # else:
-            #     print('Skipping seller_location: ', seller_product_seller_location.seller_location.id ,\
-            #            ' distance: ', price_obj['total_distance'])
-
-        print(seller_location_prices)    
 
         return seller_location_prices
     
-    def get_price_for_seller_product_seller_location(self, seller_product_seller_location_id, diesel_price):
-        seller_product_seller_location = SellerProductSellerLocation.objects.get(id=seller_product_seller_location_id)
+    def get_price_for_seller_product_seller_location(self, seller_product_seller_location):
+        main_product = seller_product_seller_location.seller_product.product.main_product
 
-        # Get diesel_price if not provided.
-        if diesel_price is None:
-            try:
-                fredid = 'GASDESW'
-                latest_diesel = self.getdatafred(fredid, self.fred_api)
-                diesel_price = latest_diesel.loc[:,'value'].iloc[-1]
-            except:
-                diesel_price = 5
+        # if main_product.has_service or main_product.has_material:
+        #     disposal_location_waste_type = self.get_best_disposal_location(seller_product_seller_location)
 
-        # static value now, change in future
-        mpg = 6.5
+        # Service price.
+        if main_product.has_service and hasattr(seller_product_seller_location, 'service'):
+            service = self.get_service_price(seller_product_seller_location)
 
-        # Seller to Customer distance.
-        lat1, lon1 = self.customer_lat, self.customer_long
-        lat2, lon2 = seller_product_seller_location.seller_location.latitude, seller_product_seller_location.seller_location.longitude
-        seller_customer_distance = self.get_driving_distance(lat1, lon1, lat2, lon2)
+        # Rental
+        if main_product.has_rental and hasattr(seller_product_seller_location, 'rental'):
+            rental = self.get_rental_price(seller_product_seller_location)
 
-        # Find best disposal location.
-        disposal_locations = DisposalLocation.objects.all()
-        
-        best_disposal_location = None
-        best_total_distance = None
-        for disposal_location in disposal_locations:
-            customer_disposal_distance = self.get_euclidean_distance(self.customer_lat, self.customer_long, disposal_location.latitude, disposal_location.longitude)
-            disposal_seller_distance = self.get_euclidean_distance(disposal_location.latitude, disposal_location.longitude, seller_product_seller_location.seller_location.latitude, seller_product_seller_location.seller_location.longitude)
-            total_distance = seller_customer_distance + customer_disposal_distance #+ disposal_seller_distance
-
-            if best_disposal_location is None or best_total_distance is None or total_distance < best_total_distance:
-                best_disposal_location = disposal_location
-                best_total_distance = total_distance
-        
-        # Calculate milage cost.
-        milage_cost = (float(best_total_distance) / float(mpg)) * float(diesel_price)
-
-        # Add tip fees for waste type multiplied by tons.
-        disposal_location_waste_type = DisposalLocationWasteType.objects.get(disposal_location=best_disposal_location.id, waste_type=self.waste_type)
-        included_tons = 4
-        tip_fees = disposal_location_waste_type.price_per_ton * included_tons
-
-        # Add daily rate.
-        base_cost = None
-        if self.product.main_product.main_product_category.main_product_category_code == "RO":
-            base_cost =(self.end_date - self.start_date).days * 22 # assume $22 per day for roll off dumpsters
-        elif self.product.main_product.main_product_category.main_product_category_code == "JR":
-            # ascending order for junk removal, let's assume $100 for each CY, then discount for larger sizes
-            # 1200 for median pricing for a XL junk removal from other sellers historically
-            # XL = 16 CY, XXL = 20 CY
-            if self.product.product_code == "JR3CY":
-                base_cost = 113
-            elif self.product.product_code == "JR4CY":
-                base_cost = 249
-            elif self.product.product_code == "JR5CY":
-                base_cost = 349
-            elif self.product.product_code == "JR8CY":
-                base_cost = 379
-            elif self.product.product_code == "JR10CY":
-                base_cost = 479
-            elif self.product.product_code == "JR12CY":
-                base_cost = 509
-            elif self.product.product_code == "JR16CY":
-                base_cost = 639
-            elif self.product.product_code == "JR20CY":
-                base_cost = 699
-            else:
-                base_cost = 349 # assume $349 per CY for junk removal if no prod added
+        # Material.
+        if main_product.has_material and hasattr(seller_product_seller_location, 'material'):
+            material = self.get_material_price(seller_product_seller_location)
 
         return {
-            'seller': seller_product_seller_location.seller_location.seller.id,
-            'seller_location': seller_product_seller_location.seller_location.id,
             'seller_product_seller_location': seller_product_seller_location.id,
-            'disposal_location': best_disposal_location.id,
-            'milage_cost': milage_cost,
-            'tip_fees': tip_fees,
-            'rental_cost': base_cost,
-            'total_distance' : total_distance,
-            'price': float(milage_cost or 0.0) + float(tip_fees or 0.0) + float(base_cost or 0.0),
-            'line_items': [
-                {
-                    'name': 'Milage Cost',
-                    'price': milage_cost,
-                },
-                {
-                    'name': 'Material Fees',
-                    'price': tip_fees,
-                },
-                {
-                    'name': 'Rental Cost',
-                    'price': base_cost,
-                },
-            ]
+            'service': service,
+            "rental": rental,
+            "material": material,
         }
+
+    def get_service_price(self, seller_product_seller_location):
+        service = seller_product_seller_location.service
+
+        # Get pricing per mile.
+        if service.price_per_mile:
+            rate = service.price_per_mile
+            is_flat_rate = False
+            
+            # Seller to Customer distance.
+            total_distance = self.get_driving_distance(
+                seller_product_seller_location.seller_location.latitude, 
+                seller_product_seller_location.seller_location.longitude,
+                self.user_address.latitude, 
+                self.user_address.longitude
+            )
+
+            # Cusotomer to Disposal Location distance.
+            # disposal_location = DisposalLocation.objects.get(id=disposal_location_waste_type.id)
+            # customer_disposal_location_distance = self.get_driving_distance(
+            #     self.user_address.latitude, 
+            #     self.user_address.longitude, 
+            #     disposal_location.latitude, 
+            #     disposal_location.longitude
+            # )
+        elif service.flat_rate_price:
+            rate = service.flat_rate_price
+            is_flat_rate = True
+        
+        return {
+            "rate": rate,
+            "is_flat_rate": is_flat_rate,
+            "total_distance": total_distance if service.price_per_mile else None,
+            # "customer_to_disposal_location_distance": customer_disposal_location_distance
+        }
+    
+    def get_rental_price(self, seller_product_seller_location):
+        rental = seller_product_seller_location.rental
+        
+        return {
+            "included_days": rental.included_days,
+            "price_per_day_included": rental.price_per_day_included,
+            "price_per_day_additional": rental.price_per_day_additional
+        }
+    
+    def get_material_price(self, seller_product_seller_location, disposal_location_waste_type):
+        material = seller_product_seller_location.material
+
+        waste_type = WasteType.objects.get(id=disposal_location_waste_type.waste_type)
+
+        main_product_waste_type = MainProductWasteType.objects.get(
+            main_product = seller_product_seller_location.seller_product.product.main_product,
+            waste_type = waste_type
+        )
+
+        seller_product_seller_location_material_waste_type = SellerProductSellerLocationMaterialWasteType.objects.get(
+            seller_product_seller_location_material = material,
+            main_product_waste_type = main_product_waste_type
+        ) if SellerProductSellerLocationMaterialWasteType.objects.filter(
+            seller_product_seller_location_material = material,
+            main_product_waste_type = main_product_waste_type
+        ).exists() else None
+        
+        return {
+            "tonnage_included": material.tonnage_included,
+            "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton if seller_product_seller_location_material_waste_type else None
+        }
+
+    def get_best_disposal_location(self, seller_product_seller_location):
+        waste_type = WasteType.objects.get(id=self.waste_type)
+        disposal_location_waste_types = DisposalLocationWasteType.objects.all(waste_type=waste_type)
+
+        seller_customer_distance = self.get_driving_distance(
+            seller_product_seller_location.seller_location.latitude, 
+            seller_product_seller_location.seller_location.longitude,
+            self.user_address.latitude, 
+            self.user_address.longitude
+        )
+        
+        disposal_location_waste_type = None
+        best_total_distance = None
+        for disposal_location_waste_type in disposal_location_waste_types:
+            disposal_location = DisposalLocation.objects.get(id=disposal_location_waste_type.disposal_location)
+            customer_disposal_distance = self.get_euclidean_distance(self.user_address.latitude, self.user_address.longitude, disposal_location.latitude, disposal_location.longitude)
+            total_distance = seller_customer_distance + customer_disposal_distance
+
+            if disposal_location_waste_type is None or best_total_distance is None or total_distance < best_total_distance:
+                disposal_location_waste_type = disposal_location_waste_type
+                best_total_distance = total_distance
+
+        return disposal_location_waste_type
