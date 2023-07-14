@@ -21,16 +21,8 @@ class Price_Model:
         # User Address.
         self.user_address = UserAddress.objects.get(id=request.data['user_address'])
         
-        # Start and End Date.
-        self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d') if 'start_date' in request.data else None
-        self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d') if 'end_date' in request.data else None
-
-        # product characteristics required fields
+        # Waste Type.
         self.waste_type = WasteType.objects.get(id=request.data['waste_type']) if 'waste_type' in request.data else None
-
-        # Assign posted data to variables
-        self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d') if 'start_date' in request.data else None
-        self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d') if 'end_date' in request.data else None
 
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
         self.fred_api = r'fa4d32f5c98c51ccb516742cf566950f'
@@ -210,7 +202,7 @@ class Price_Model:
             "price_per_day_additional": rental.price_per_day_additional
         }
     
-    def get_material_price(self, seller_product_seller_location, disposal_location_waste_type):
+    def get_material_price(self, seller_product_seller_location):
         material = seller_product_seller_location.material
 
         main_product_waste_type = MainProductWasteType.objects.get(
