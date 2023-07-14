@@ -26,9 +26,7 @@ class Price_Model:
         self.end_date = datetime.datetime.strptime(request.data['end_date'], '%Y-%m-%d') if 'end_date' in request.data else None
 
         # product characteristics required fields
-        self.product_id = request.data['product_id']
-        self.waste_type = request.data['waste_type']
-
+        self.waste_type = WasteType.objects.get(id=request.data['waste_type']) if 'waste_type' in request.data else None
 
         # Assign posted data to variables
         self.start_date = datetime.datetime.strptime(request.data['start_date'], '%Y-%m-%d') if 'start_date' in request.data else None
@@ -215,11 +213,9 @@ class Price_Model:
     def get_material_price(self, seller_product_seller_location, disposal_location_waste_type):
         material = seller_product_seller_location.material
 
-        waste_type = WasteType.objects.get(id=disposal_location_waste_type.waste_type)
-
         main_product_waste_type = MainProductWasteType.objects.get(
             main_product = seller_product_seller_location.seller_product.product.main_product,
-            waste_type = waste_type
+            waste_type = self.waste_type
         )
 
         seller_product_seller_location_material_waste_type = SellerProductSellerLocationMaterialWasteType.objects.get(
@@ -236,8 +232,7 @@ class Price_Model:
         }
 
     def get_best_disposal_location(self, seller_product_seller_location):
-        waste_type = WasteType.objects.get(id=self.waste_type)
-        disposal_location_waste_types = DisposalLocationWasteType.objects.all(waste_type=waste_type)
+        disposal_location_waste_types = DisposalLocationWasteType.objects.all(waste_type=self.waste_type)
 
         seller_customer_distance = self.get_driving_distance(
             seller_product_seller_location.seller_location.latitude, 
