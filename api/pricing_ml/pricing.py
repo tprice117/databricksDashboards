@@ -15,6 +15,7 @@ class Price_Model:
         self.enc = enc
 
         # Product.
+        print(request.data)
         self.product = Product.objects.get(id=request.data['product'])
 
         # User Address.
