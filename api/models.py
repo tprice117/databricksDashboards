@@ -341,6 +341,9 @@ class SellerProductSellerLocation(BaseModel):
 class ServiceRecurringFrequency(BaseModel):
     name = models.CharField(max_length=255)
 
+    def __str__(self):
+        return self.name
+
 class MainProductServiceRecurringFrequency(BaseModel):
     main_product = models.ForeignKey(MainProduct, models.PROTECT)
     service_recurring_frequency = models.ForeignKey(
