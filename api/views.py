@@ -298,6 +298,8 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet)
             query_set = queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=self.request.user.seller)
             return query_set
 
+@authentication_classes([])
+@permission_classes([])
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
