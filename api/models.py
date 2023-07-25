@@ -317,7 +317,7 @@ class SellerProductSellerLocation(BaseModel):
     fuel_environmental_markup = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
-        return f'{self.seller_location.seller.name} - {self.seller_location.name} - {self.seller_product.product.main_product.name}'
+        return f'{self.seller_location.name} - {self.seller_product.product.main_product.name}'
     
     def post_save(sender, instance, created, **kwargs):
         # Create/delete Service.
