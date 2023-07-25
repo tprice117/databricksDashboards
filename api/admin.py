@@ -280,6 +280,7 @@ admin.site.register(SellerProductSellerLocationRental)
 admin.site.register(SellerProductSellerLocationMaterial, SellerProductSellerLocationMaterialAdmin)
 admin.site.register(SellerProductSellerLocationMaterialWasteType)
 admin.site.register(DayOfWeek)
+admin.site.register(TimeSlot)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)

@@ -42,6 +42,7 @@ router.register(r'seller-product-seller-location-materials', views.SellerProduct
 router.register(r'seller-product-seller-location-material-waste-types', views.SellerProductSellerLocationMaterialWasteTypeViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
 router.register(r'day-of-weeks', views.DayOfWeek, 'api')
+router.register(r'time-slots', views.TimeSlot, 'api')
 
 # Use-case-specific model endpoints.
 router.register(r'user-addresses-for-seller', views.UserAddressesForSellerViewSet, 'api')
