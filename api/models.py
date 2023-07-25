@@ -463,19 +463,26 @@ class SellerProductSellerLocationMaterialWasteType(BaseModel):
     class Meta:
         unique_together = ('seller_product_seller_location_material', 'main_product_waste_type',)
 
-class Subscription(BaseModel): #Added 2/20/23
-    subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
-    interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
-    length_days = models.IntegerField(blank=True, null=True) #6.6.23
-    subscription_type = models.CharField(max_length=35, choices=[('On demand without subscription', 'On demand without subscription'), ('On demand with subscription', 'On demand with subscription'), ('Auto scheduled with subscription','Auto scheduled with subscription')], blank=True, null=True) #6.6.23
-
+class DayOfWeek(BaseModel):
+    name = models.CharField(max_length=80)
+    number = models.IntegerField()
+    def __str__(self):
+        return self.name    
+    
 class TimeSlot(BaseModel):
     name = models.CharField(max_length=80)
     start = models.TimeField()
     end = models.TimeField()
 
     def __str__(self):
-        return self.name    
+        return self.name 
+    
+class Subscription(BaseModel): #Added 2/20/23
+    frequency = models.ForeignKey(ServiceRecurringFrequency, models.PROTECT, blank=True, null=True)
+    service_day = models.ForeignKey(DayOfWeek, models.PROTECT, blank=True, null=True)
+    subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
+    interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
+    length_days = models.IntegerField(blank=True, null=True) 
 
 class OrderGroup(BaseModel):
     user = models.ForeignKey(User, models.PROTECT)
@@ -484,6 +491,9 @@ class OrderGroup(BaseModel):
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
+    access_details = models.TextField(blank=True, null=True)
+    placement_details = models.TextField(blank=True, null=True)
+    preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
 
@@ -545,8 +555,6 @@ class Order(BaseModel):
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
     schedule_details = models.TextField(blank=True, null=True) #6.6.23 (Modified name to schedule_details from additional_schedule_details)
-    access_details = models.TextField(blank=True, null=True)
-    placement_details = models.TextField(blank=True, null=True) #6.6.23
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     order_type =  models.CharField(max_length=255, choices=[('Automatic Renewal', 'Automatic Renewal'), ('Swap', 'Swap'),('Empty and Return','Empty and Return'),('Trip Charge/Dry Run','Trip Charge/Dry Run'),('Removal','Removal'),('On Demand','On Demand'),('Other','Other')], blank=True, null=True) #6.6.23
