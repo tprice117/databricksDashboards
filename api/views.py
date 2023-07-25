@@ -201,6 +201,16 @@ class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
     serializer_class = OrderDisposalTicketSerializer
     filterset_fields = ["id"]
 
+class DayOfWeekViewSet(viewsets.ModelViewSet): #added 2/25/2021
+    queryset = DayOfWeek.objects.all()
+    serializer_class = DayOfWeekSerializer
+    filterset_fields = ["id"]
+
+class TimeSlotViewSet(viewsets.ModelViewSet): #added 2/25/2021
+    queryset = TimeSlot.objects.all()
+    serializer_class = TimeSlotSerializer
+    filterset_fields = ["id"]
+
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer

@@ -149,6 +149,18 @@ class OrderDisposalTicketSerializer(serializers.ModelSerializer):
         model = OrderDisposalTicket
         fields = "__all__"
 
+class DayOfWeekSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = DayOfWeek
+        fields = "__all__"
+
+class TimeSlotSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = TimeSlot
+        fields = "__all__"
+
 class SubscriptionSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     order_number = serializers.CharField(required=False)
