@@ -35,6 +35,12 @@ class OrderInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class SubscriptionInline(admin.TabularInline):
+    model = Subscription
+    fields = ('frequency', 'service_day')
+    show_change_link = True
+    extra=0
+
 class ProductInline(admin.TabularInline):
     model = Product
     fields = ('product_code', 'description')
@@ -222,6 +228,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
     list_display = ('user', 'user_address', 'seller_product_seller_location')
     inlines = [
+        SubscriptionInline,
         OrderInline,
     ]
 
