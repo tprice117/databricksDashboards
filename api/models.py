@@ -316,8 +316,8 @@ class SellerProductSellerLocation(BaseModel):
     removal_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     fuel_environmental_markup = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
-    def __str__(self):
-        return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""} - {self.seller_product.product.product_code if self.seller_product and self.seller_product.product and self.seller_product.product.product_code else ""} - {self.seller_product.seller.name if self.seller_product and self.seller_product.seller and self.seller_product.seller.name else ""}'
+    # def __str__(self):
+    #     return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
     
     def post_save(sender, instance, created, **kwargs):
         # Create/delete Service.
@@ -476,20 +476,12 @@ class TimeSlot(BaseModel):
 
     def __str__(self):
         return self.name 
-    
-class Subscription(BaseModel):
-    frequency = models.ForeignKey(ServiceRecurringFrequency, models.PROTECT, blank=True, null=True)
-    service_day = models.ForeignKey(DayOfWeek, models.PROTECT, blank=True, null=True)
-    subscription_number = models.CharField(max_length=255)
-    interval_days = models.IntegerField(blank=True, null=True)
-    length_days = models.IntegerField(blank=True, null=True) 
 
 class OrderGroup(BaseModel):
     user = models.ForeignKey(User, models.PROTECT)
     user_address = models.ForeignKey(UserAddress, models.PROTECT)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
-    subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     placement_details = models.TextField(blank=True, null=True)
@@ -500,6 +492,14 @@ class OrderGroup(BaseModel):
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
 
+class Subscription(BaseModel):
+    order_group = models.OneToOneField(OrderGroup, models.PROTECT)
+    frequency = models.ForeignKey(ServiceRecurringFrequency, models.PROTECT, blank=True, null=True)
+    service_day = models.ForeignKey(DayOfWeek, models.PROTECT, blank=True, null=True)
+    subscription_number = models.CharField(max_length=255)
+    interval_days = models.IntegerField(blank=True, null=True)
+    length_days = models.IntegerField(blank=True, null=True) 
+    
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
     product = models.ForeignKey(Product, models.CASCADE)

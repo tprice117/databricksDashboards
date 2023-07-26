@@ -35,7 +35,7 @@ class OrderInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
-class SubscriptionInline(admin.TabularInline):
+class SubscriptionInline(admin.StackedInline):
     model = Subscription
     fields = ('frequency', 'service_day')
     show_change_link = True
