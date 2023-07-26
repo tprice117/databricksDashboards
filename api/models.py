@@ -298,15 +298,15 @@ class Product(BaseModel):
         return f'{self.main_product.name} - {self.product_code}'
 
 class SellerProduct(BaseModel):
-    product = models.ForeignKey(Product, models.CASCADE, blank=True, null=True, related_name='seller_products')
-    seller = models.ForeignKey(Seller, models.CASCADE, blank=True, null=True, related_name='seller_products')
+    product = models.ForeignKey(Product, models.CASCADE, related_name='seller_products')
+    seller = models.ForeignKey(Seller, models.CASCADE, related_name='seller_products')
    
     def __str__(self):
         return self.product.main_product.name + ' - ' + (self.product.product_code or "") + ' - ' + self.seller.name
 
 class SellerProductSellerLocation(BaseModel):
-    seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
-    seller_location = models.ForeignKey(SellerLocation, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
+    seller_product = models.ForeignKey(SellerProduct, models.CASCADE, related_name='seller_location_seller_product')
+    seller_location = models.ForeignKey(SellerLocation, models.CASCADE, related_name='seller_location_seller_product')
     active = models.BooleanField(default=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
     min_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
@@ -496,6 +496,7 @@ class Subscription(BaseModel):
     order_group = models.OneToOneField(OrderGroup, models.PROTECT)
     frequency = models.ForeignKey(ServiceRecurringFrequency, models.PROTECT, blank=True, null=True)
     service_day = models.ForeignKey(DayOfWeek, models.PROTECT, blank=True, null=True)
+    length = models.IntegerField()
     subscription_number = models.CharField(max_length=255)
     interval_days = models.IntegerField(blank=True, null=True)
     length_days = models.IntegerField(blank=True, null=True) 
