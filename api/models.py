@@ -134,7 +134,7 @@ class User(BaseModel):
     intercom_id = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, unique=True)
-    photo_url = models.URLField(blank=True, null=True)
+    photo_url = models.TextField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
