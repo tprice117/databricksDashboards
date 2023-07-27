@@ -488,6 +488,7 @@ class OrderGroup(BaseModel):
     preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
+    tonnage_quantity = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
