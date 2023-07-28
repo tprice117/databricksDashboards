@@ -14,8 +14,10 @@ class Price_Model:
         self.model = model
         self.enc = enc
 
+        # Seller Location (if passed).
+        self.seller_location = SellerLocation.objects.get(id=request.data['seller_location']) if 'seller_location' in request.data else None
+
         # Product.
-        print(request.data)
         self.product = Product.objects.get(id=request.data['product'])
 
         # User Address.
@@ -124,14 +126,20 @@ class Price_Model:
         # Get SellerLocations that offer the product.
         seller_products = SellerProduct.objects.filter(product=self.product)
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products).filter(active=True)
+        
 
-        # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
-        seller_location_prices = []
-        for seller_product_seller_location in seller_product_seller_locations:
-            price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
-            seller_location_prices.append(price_obj)
+        if self.seller_location:
+            # If SellerLocation is passed, only return price for that SellerLocation.
+            seller_product_seller_location = seller_product_seller_locations.filter(seller_location=self.seller_location).first()
+            return self.get_price_for_seller_product_seller_location(seller_product_seller_location)
+        else:
+            # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
+            seller_location_prices = []
+            for seller_product_seller_location in seller_product_seller_locations:
+                price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
+                seller_location_prices.append(price_obj)
 
-        return seller_location_prices
+            return seller_location_prices
     
     def get_price_for_seller_product_seller_location(self, seller_product_seller_location):
         main_product = seller_product_seller_location.seller_product.product.main_product
