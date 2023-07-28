@@ -85,6 +85,7 @@ class UserGroup(BaseModel):
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     pay_later = models.BooleanField(default=False)
     autopay= models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
