@@ -35,6 +35,12 @@ class OrderInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class SubscriptionInline(admin.StackedInline):
+    model = Subscription
+    fields = ('frequency', 'service_day')
+    show_change_link = True
+    extra=0
+
 class ProductInline(admin.TabularInline):
     model = Product
     fields = ('product_code', 'description')
@@ -75,6 +81,31 @@ class SellerProductSellerLocationInline(admin.TabularInline):
             else:
                 field.queryset = field.queryset.none()
         return field
+    
+class SellerProductSellerLocationServiceInline(admin.StackedInline):
+    model = SellerProductSellerLocationService
+    show_change_link = True
+    extra=0
+
+class SellerProductSellerLocationServiceRecurringFrequencyInline(admin.StackedInline):
+    model = SellerProductSellerLocationServiceRecurringFrequency
+    show_change_link = True
+    extra=0
+
+class SellerProductSellerLocationRentalInline(admin.StackedInline):
+    model = SellerProductSellerLocationRental
+    show_change_link = True
+    extra=0
+
+class SellerProductSellerLocationMaterialInline(admin.StackedInline):
+    model = SellerProductSellerLocationMaterial
+    show_change_link = True
+    extra=0
+
+class SellerProductSellerLocationMaterialWasteTypeInline(admin.StackedInline):
+    model = SellerProductSellerLocationMaterialWasteType
+    show_change_link = True
+    extra=0
     
 class UserGroupUserInline(admin.TabularInline):
     model = UserGroupUser
@@ -157,9 +188,25 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["seller_location__seller__name",]
     autocomplete_fields = ["seller_product", "seller_location"]
     list_filter = ('seller_product__product__main_product__main_product_category', 'seller_location__seller')
+    inlines = [
+        SellerProductSellerLocationServiceInline,
+        SellerProductSellerLocationRentalInline,
+        SellerProductSellerLocationMaterialInline,
+    ]
+
+class SellerProductSellerLocationServiceAdmin(admin.ModelAdmin):
+    inlines = [
+        SellerProductSellerLocationServiceRecurringFrequencyInline,
+    ]
+
+class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
+    inlines = [
+        SellerProductSellerLocationMaterialWasteTypeInline,
+    ]
 
 class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
+    list_display = ('name', 'street', 'user_group')
     search_fields = ["name", "street"]
 
 class UserAdmin(admin.ModelAdmin):
@@ -182,6 +229,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
     list_display = ('user', 'user_address', 'seller_product_seller_location')
     inlines = [
+        SubscriptionInline,
         OrderInline,
     ]
 
@@ -232,6 +280,16 @@ admin.site.register(DisposalLocationWasteType)
 admin.site.register(UserSellerReview)
 admin.site.register(UserAddressType)
 admin.site.register(OrderDisposalTicket)
+admin.site.register(ServiceRecurringFrequency)
+admin.site.register(MainProductServiceRecurringFrequency)
+admin.site.register(SellerProductSellerLocationService, SellerProductSellerLocationServiceAdmin)
+admin.site.register(SellerProductSellerLocationServiceRecurringFrequency)
+admin.site.register(SellerProductSellerLocationRental)
+admin.site.register(SellerProductSellerLocationMaterial, SellerProductSellerLocationMaterialAdmin)
+admin.site.register(SellerProductSellerLocationMaterialWasteType)
+admin.site.register(DayOfWeek)
+admin.site.register(TimeSlot)
+admin.site.register(Subscription)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)

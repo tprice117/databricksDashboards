@@ -149,6 +149,18 @@ class OrderDisposalTicketSerializer(serializers.ModelSerializer):
         model = OrderDisposalTicket
         fields = "__all__"
 
+class DayOfWeekSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = DayOfWeek
+        fields = "__all__"
+
+class TimeSlotSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = TimeSlot
+        fields = "__all__"
+
 class SubscriptionSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     order_number = serializers.CharField(required=False)
@@ -188,6 +200,48 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
         #).count()
         return 0
         #obj.total_inventory - order_detail_count
+
+class SellerProductSellerLocationServiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationService
+        fields = "__all__"
+
+class ServiceRecurringFrequencySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = ServiceRecurringFrequency
+        fields = "__all__"
+
+class MainProductServiceRecurringFrequencySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = MainProductServiceRecurringFrequency
+        fields = "__all__"
+
+class SellerProductSellerLocationServiceRecurringFrequencySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationServiceRecurringFrequency
+        fields = "__all__"
+
+class SellerProductSellerLocationRentalSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationRental
+        fields = "__all__"
+
+class SellerProductSellerLocationMaterialSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationMaterial
+        fields = "__all__"
+
+class SellerProductSellerLocationMaterialWasteTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = SellerProductSellerLocationMaterialWasteType
+        fields = "__all__"
 
 class WasteTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)

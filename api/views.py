@@ -49,10 +49,8 @@ class UserAddressViewSet(viewsets.ModelViewSet):
         elif self.request.user.is_admin:
             return self.queryset.filter(user_group=self.request.user.user_group)
         else:
-            queryset = self.queryset
             user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
-            query_set = queryset.filter(id__in=user_address_ids)
-            return query_set
+            return self.queryset.filter(id__in=user_address_ids)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -164,6 +162,8 @@ class MainProductViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductSerializer
     filterset_fields = ["id", "main_product_category"]
 
+@authentication_classes([])
+@permission_classes([])
 class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = MainProductWasteType.objects.all()
     serializer_class = MainProductWasteTypeSerializer
@@ -177,10 +177,10 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user == "ALL":
            return self.queryset
+        elif self.request.user.is_admin:
+            return self.queryset.filter(user__user_group=self.request.user.user_group)
         else:
-            queryset = self.queryset
-            query_set = queryset.filter(user__id=self.request.user.id)
-            return query_set
+            return self.queryset.filter(user__id=self.request.user.id)
         
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -190,14 +190,25 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user == "ALL":
            return self.queryset
+        elif self.request.user.is_admin:
+            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
+            return self.queryset.filter(order_group__user__id__in=user_ids)
         else:
-            queryset = self.queryset
-            query_set = queryset.filter(order_group__user__id=self.request.user.id)
-            return query_set
+            return self.queryset.filter(order_group__user__id=self.request.user.id)
         
 class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
     queryset = OrderDisposalTicket.objects.all()
     serializer_class = OrderDisposalTicketSerializer
+    filterset_fields = ["id"]
+
+class DayOfWeekViewSet(viewsets.ModelViewSet): #added 2/25/2021
+    queryset = DayOfWeek.objects.all()
+    serializer_class = DayOfWeekSerializer
+    filterset_fields = ["id"]
+
+class TimeSlotViewSet(viewsets.ModelViewSet): #added 2/25/2021
+    queryset = TimeSlot.objects.all()
+    serializer_class = TimeSlotSerializer
     filterset_fields = ["id"]
 
 class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
@@ -225,9 +236,108 @@ class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
     serializer_class = SellerProductSellerLocationSerializer
     filterset_fields = ["seller_product", "seller_location"] 
 
+class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationService.objects.all()
+    serializer_class = SellerProductSellerLocationServiceSerializer
+    filterset_fields = ["seller_product_seller_location"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
+class ServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+    queryset = ServiceRecurringFrequency.objects.all()
+    serializer_class = ServiceRecurringFrequencySerializer
+   
+class MainProductServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+    queryset = MainProductServiceRecurringFrequency.objects.all()
+    serializer_class = MainProductServiceRecurringFrequencySerializer
+
+class SellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationServiceRecurringFrequency.objects.all()
+    serializer_class = SellerProductSellerLocationServiceRecurringFrequencySerializer
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
+class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationRental.objects.all()
+    serializer_class = SellerProductSellerLocationRentalSerializer
+    filterset_fields = ["seller_product_seller_location"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
+class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationMaterial.objects.all()
+    serializer_class = SellerProductSellerLocationMaterialSerializer
+    filterset_fields = ["seller_product_seller_location"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
+class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
+    queryset = SellerProductSellerLocationMaterialWasteType.objects.all()
+    serializer_class = SellerProductSellerLocationMaterialWasteTypeSerializer
+    filterset_fields = ["seller_product_seller_location_material", "main_product_waste_type"]
+
+    def get_queryset(self):
+        if self.request.user == "ALL":
+           return self.queryset
+        else:
+            queryset = self.queryset
+            query_set = queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=self.request.user.seller)
+            return query_set
+
+@authentication_classes([])
+@permission_classes([])
 class WasteTypeViewSet(viewsets.ModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
+
+
+# Use-case-specific model views.
+class UserAddressesForSellerViewSet(viewsets.ModelViewSet):
+    queryset = UserAddress.objects.all()
+    serializer_class = UserAddressSerializer
+
+    def get_queryset(self):
+        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller).values_list('user_address__id', flat=True) if self.request.user.seller else []
+        return self.queryset.filter(id__in=seller_order_user_address_ids)
+    
+class OrderGroupsForSellerViewSet(viewsets.ModelViewSet):
+    queryset = OrderGroup.objects.all()
+    serializer_class = OrderGroupSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
+
+class OrdersForSellerViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(order_group__seller_product_seller_location__seller_product__seller=self.request.user.seller) if self.request.user.seller else []
+
 
 
 

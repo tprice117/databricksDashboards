@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models.signals import pre_save, post_save, post_delete
 import uuid
 import stripe
-from simple_salesforce import Salesforce
+# from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
 from api.utils.auth0 import create_user, get_user_from_email, delete_user
 from api.utils.google_maps import geocode_address
@@ -14,12 +14,12 @@ from intercom.client import Client
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-sf = Salesforce(
-    username='thayes@trydownstream.io.stage', 
-    password='LongLiveDownstream12!', 
-    security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
-    domain='test'
-)
+# sf = Salesforce(
+#     username='thayes@trydownstream.io.stage', 
+#     password='LongLiveDownstream12!', 
+#     security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
+#     domain='test'
+# )
 
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -85,6 +85,7 @@ class UserGroup(BaseModel):
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     pay_later = models.BooleanField(default=False)
     autopay= models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -134,7 +135,7 @@ class User(BaseModel):
     intercom_id = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, unique=True)
-    photo_url = models.URLField(blank=True, null=True)
+    photo_url = models.TextField(blank=True, null=True)
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
@@ -238,6 +239,9 @@ class MainProduct(BaseModel):
     max_rate = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     included_rate_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     main_product_code = models.CharField(max_length=255, blank=True, null=True) 
+    has_service = models.BooleanField(default=False)
+    has_rental = models.BooleanField(default=False)
+    has_material = models.BooleanField(default=False)
     
     def __str__(self):
         return f'{self.main_product_category.name} - {self.name}'
@@ -271,6 +275,19 @@ class MainProductAddOn(BaseModel):
 
     def __str__(self):
         return f'{self.main_product.name} - {self.add_on.name}'
+    
+class WasteType(BaseModel):
+    name = models.CharField(max_length=80)
+
+    def __str__(self):
+        return self.name
+    
+class MainProductWasteType(BaseModel):
+    waste_type = models.ForeignKey(WasteType, models.CASCADE)
+    main_product = models.ForeignKey(MainProduct, models.CASCADE)
+
+    def __str__(self):
+        return f'{self.main_product.name} - {self.waste_type.name}'
 
 class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
@@ -282,46 +299,210 @@ class Product(BaseModel):
         return f'{self.main_product.name} - {self.product_code}'
 
 class SellerProduct(BaseModel):
-    product = models.ForeignKey(Product, models.CASCADE, blank=True, null=True, related_name='seller_products')
-    seller = models.ForeignKey(Seller, models.CASCADE, blank=True, null=True, related_name='seller_products')
+    product = models.ForeignKey(Product, models.CASCADE, related_name='seller_products')
+    seller = models.ForeignKey(Seller, models.CASCADE, related_name='seller_products')
    
     def __str__(self):
         return self.product.main_product.name + ' - ' + (self.product.product_code or "") + ' - ' + self.seller.name
 
 class SellerProductSellerLocation(BaseModel):
-    seller_product = models.ForeignKey(SellerProduct, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
-    seller_location = models.ForeignKey(SellerLocation, models.CASCADE, blank=True, null=True, related_name='seller_location_seller_product')
-    rate = models.DecimalField(max_digits=18, decimal_places=2)
-    rate_per_day = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    rate_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    rate_per_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    seller_product = models.ForeignKey(SellerProduct, models.CASCADE, related_name='seller_location_seller_product')
+    seller_location = models.ForeignKey(SellerLocation, models.CASCADE, related_name='seller_location_seller_product')
+    active = models.BooleanField(default=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
+    min_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    max_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    service_radius = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    delivery_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    removal_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    fuel_environmental_markup = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
-    def __str__(self):
-        return f'{self.seller_location.seller.name} - {self.seller_location.name} - {self.seller_product.product.main_product.name}'
+    # def __str__(self):
+    #     return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
     
-class Subscription(BaseModel): #Added 2/20/23
-    subscription_number = models.CharField(max_length=255) #Added 2/20/2023. May not need this, but thought this could be user facing if needed instead of a long UUID column so that the customer could reference this in communitcation with us if needed.
-    interval_days = models.IntegerField(blank=True, null=True) #Added 2/20/2023. Number of Days from dropoff to pickup for each subscription order.
-    length_days = models.IntegerField(blank=True, null=True) #6.6.23
-    subscription_type = models.CharField(max_length=35, choices=[('On demand without subscription', 'On demand without subscription'), ('On demand with subscription', 'On demand with subscription'), ('Auto scheduled with subscription','Auto scheduled with subscription')], blank=True, null=True) #6.6.23
+    def post_save(sender, instance, created, **kwargs):
+        # Create/delete Service.
+        if not hasattr(instance, 'service') and instance.seller_product.product.main_product.has_service :
+            SellerProductSellerLocationService.objects.create(seller_product_seller_location=instance)
+        elif hasattr(instance, 'service') and not instance.seller_product.product.main_product.has_service:
+            instance.service.delete()
+        
+        # Create/delete Rental.
+        if not hasattr(instance, 'rental') and instance.seller_product.product.main_product.has_rental:
+            SellerProductSellerLocationRental.objects.create(seller_product_seller_location=instance)
+        elif hasattr(instance, 'rental') and not instance.seller_product.product.main_product.has_rental:
+            instance.rental.delete()
 
-class WasteType(BaseModel):
-    name = models.CharField(max_length=80)
+        # Create/delete Material.
+        if not hasattr(instance, 'material') and instance.seller_product.product.main_product.has_material:
+            SellerProductSellerLocationMaterial.objects.create(seller_product_seller_location=instance)
+        elif hasattr(instance, 'material') and not instance.seller_product.product.main_product.has_material:
+            instance.material.delete()
+
+class ServiceRecurringFrequency(BaseModel):
+    name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
+
+class MainProductServiceRecurringFrequency(BaseModel):
+    main_product = models.ForeignKey(MainProduct, models.PROTECT)
+    service_recurring_frequency = models.ForeignKey(
+        ServiceRecurringFrequency,
+        models.PROTECT
+    )
+
+    def __str__(self):
+        return f'{self.main_product.name} - {self.service_recurring_frequency.name}'  
+   
+class SellerProductSellerLocationService(BaseModel):
+    seller_product_seller_location = models.OneToOneField(
+        SellerProductSellerLocation,
+        on_delete=models.CASCADE,
+        related_name='service'
+    )
+    price_per_mile = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    flat_rate_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+
+    def __str__(self):
+        return self.seller_product_seller_location.seller_location.name
     
+    def post_save(sender, instance, created, **kwargs):
+        # Ensure all service recurring frequencies are created.
+        for service_recurring_frequency in MainProductServiceRecurringFrequency.objects.filter(main_product=instance.seller_product_seller_location.seller_product.product.main_product):
+            if not SellerProductSellerLocationServiceRecurringFrequency.objects.filter(
+                seller_product_seller_location_service=instance,
+                main_product_service_recurring_frequency=service_recurring_frequency
+            ).exists():
+                SellerProductSellerLocationServiceRecurringFrequency.objects.create(
+                    seller_product_seller_location_service=instance,
+                    main_product_service_recurring_frequency=service_recurring_frequency
+                )
+
+        # Ensure all "stale" service recurring frequencies are deleted.
+        for seller_product_seller_location_service_recurring_frequency in SellerProductSellerLocationServiceRecurringFrequency.objects.filter(
+            seller_product_seller_location_service=instance
+        ):
+            if not MainProductServiceRecurringFrequency.objects.filter(
+                main_product=seller_product_seller_location_service_recurring_frequency.main_product_service_recurring_frequency.main_product,
+                service_recurring_frequency=seller_product_seller_location_service_recurring_frequency.main_product_service_recurring_frequency.service_recurring_frequency
+            ).exists():
+                seller_product_seller_location_service_recurring_frequency.delete()
+
+class SellerProductSellerLocationServiceRecurringFrequency(BaseModel):
+    seller_product_seller_location_service = models.ForeignKey(
+        SellerProductSellerLocationService, 
+        models.PROTECT
+    )
+    main_product_service_recurring_frequency = models.ForeignKey(
+        MainProductServiceRecurringFrequency, 
+        models.PROTECT,
+    )
+    price = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+
+    class Meta:
+        unique_together = ('seller_product_seller_location_service', 'main_product_service_recurring_frequency',)
+
+    def __str__(self):
+        return f'{self.seller_product_seller_location_service.seller_product_seller_location.seller_location.name} - {self.main_product_service_recurring_frequency.main_product.name}'
+    
+class SellerProductSellerLocationRental(BaseModel):
+    seller_product_seller_location = models.OneToOneField(
+        SellerProductSellerLocation,
+        on_delete=models.CASCADE,
+        related_name='rental'
+    )
+    included_days = models.IntegerField(default=0)
+    price_per_day_included = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    price_per_day_additional = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+
+    def __str__(self):
+        return self.seller_product_seller_location.seller_location.name
+    
+class SellerProductSellerLocationMaterial(BaseModel):
+    seller_product_seller_location = models.OneToOneField(
+        SellerProductSellerLocation,
+        on_delete=models.CASCADE,
+        related_name='material'
+    )
+    tonnage_included = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.seller_product_seller_location.seller_location.name
+    
+    def post_save(sender, instance, created, **kwargs):
+        # Ensure all material waste type recurring frequencies are created.
+        for main_product_waste_type in MainProductWasteType.objects.filter(main_product=instance.seller_product_seller_location.seller_product.product.main_product):
+            if not SellerProductSellerLocationMaterialWasteType.objects.filter(
+                seller_product_seller_location_material=instance.seller_product_seller_location.material,
+                main_product_waste_type=main_product_waste_type
+            ).exists():
+                SellerProductSellerLocationMaterialWasteType.objects.create(
+                    seller_product_seller_location_material=instance.seller_product_seller_location.material,
+                    main_product_waste_type=main_product_waste_type
+                )
+
+        # Ensure all "stale" material waste type recurring frequencies are deleted.
+        for seller_product_seller_location_material_waste_type in SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=instance):
+            if not MainProductWasteType.objects.filter(
+                main_product=instance.seller_product_seller_location.seller_product.product.main_product,
+                waste_type=seller_product_seller_location_material_waste_type.main_product_waste_type.waste_type
+            ).exists():
+                seller_product_seller_location_material_waste_type.delete()
+    
+class SellerProductSellerLocationMaterialWasteType(BaseModel):
+    seller_product_seller_location_material = models.ForeignKey(
+        SellerProductSellerLocationMaterial, 
+        models.PROTECT
+    )
+    main_product_waste_type = models.ForeignKey(
+        MainProductWasteType,
+        models.PROTECT
+    )
+    price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+
+    class Meta:
+        unique_together = ('seller_product_seller_location_material', 'main_product_waste_type',)
+
+class DayOfWeek(BaseModel):
+    name = models.CharField(max_length=80)
+    number = models.IntegerField()
+    def __str__(self):
+        return self.name    
+    
+class TimeSlot(BaseModel):
+    name = models.CharField(max_length=80)
+    start = models.TimeField()
+    end = models.TimeField()
+
+    def __str__(self):
+        return self.name 
+
 class OrderGroup(BaseModel):
     user = models.ForeignKey(User, models.PROTECT)
     user_address = models.ForeignKey(UserAddress, models.PROTECT)
     seller_product_seller_location = models.ForeignKey(SellerProductSellerLocation, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
-    subscription = models.ForeignKey(Subscription, models.PROTECT, blank=True, null=True)
+    time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
+    access_details = models.TextField(blank=True, null=True)
+    placement_details = models.TextField(blank=True, null=True)
+    preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    tonnage_quantity = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
 
+class Subscription(BaseModel):
+    order_group = models.OneToOneField(OrderGroup, models.PROTECT)
+    frequency = models.ForeignKey(ServiceRecurringFrequency, models.PROTECT, blank=True, null=True)
+    service_day = models.ForeignKey(DayOfWeek, models.PROTECT, blank=True, null=True)
+    length = models.IntegerField()
+    subscription_number = models.CharField(max_length=255)
+    interval_days = models.IntegerField(blank=True, null=True)
+    length_days = models.IntegerField(blank=True, null=True) 
+    
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
     product = models.ForeignKey(Product, models.CASCADE)
@@ -329,13 +510,6 @@ class ProductAddOnChoice(BaseModel):
 
     def __str__(self):
         return f'{self.product.main_product.name} - {self.add_on_choice.add_on.name} - {self.add_on_choice.name}'
-
-class MainProductWasteType(BaseModel):
-    waste_type = models.ForeignKey(WasteType, models.CASCADE)
-    main_product = models.ForeignKey(MainProduct, models.CASCADE)
-
-    def __str__(self):
-        return f'{self.main_product.name} - {self.waste_type.name}'
 
 class DisposalLocation(BaseModel):
     name = models.CharField(max_length=255)
@@ -384,8 +558,6 @@ class Order(BaseModel):
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
     schedule_details = models.TextField(blank=True, null=True) #6.6.23 (Modified name to schedule_details from additional_schedule_details)
-    access_details = models.TextField(blank=True, null=True)
-    placement_details = models.TextField(blank=True, null=True) #6.6.23
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     order_type =  models.CharField(max_length=255, choices=[('Automatic Renewal', 'Automatic Renewal'), ('Swap', 'Swap'),('Empty and Return','Empty and Return'),('Trip Charge/Dry Run','Trip Charge/Dry Run'),('Removal','Removal'),('On Demand','On Demand'),('Other','Other')], blank=True, null=True) #6.6.23
@@ -461,3 +633,6 @@ post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 # pre_save.connect(Order.pre_create, sender=Order)
 # post_save.connect(Order.post_update, sender=Order)
+post_save.connect(SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation)
+post_save.connect(SellerProductSellerLocationService.post_save, sender=SellerProductSellerLocationService)
+post_save.connect(SellerProductSellerLocationMaterial.post_save, sender=SellerProductSellerLocationMaterial)

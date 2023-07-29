@@ -33,7 +33,21 @@ router.register(r'product-add-on-choices', views.ProductAddOnChoiceViewSet, 'api
 router.register(r'products', views.ProductViewSet, 'api')
 router.register(r'seller-products', views.SellerProductViewSet, 'api')
 router.register(r'seller-product-seller-locations', views.SellerProductSellerLocationViewSet, 'api')
+router.register(r'seller-product-seller-location-services', views.SellerProductSellerLocationServiceViewSet, 'api')
+router.register(r'service-recurring-frequencies', views.ServiceRecurringFrequencyViewSet, 'api')
+router.register(r'main-product-service-recurring-frequencies', views.MainProductServiceRecurringFrequencyViewSet, 'api')
+router.register(r'seller-product-seller-location-service-recurring-frequencies', views.SellerProductSellerLocationServiceRecurringFrequencyViewSet, 'api')
+router.register(r'seller-product-seller-location-rentals', views.SellerProductSellerLocationRentalViewSet, 'api')
+router.register(r'seller-product-seller-location-materials', views.SellerProductSellerLocationMaterialViewSet, 'api')
+router.register(r'seller-product-seller-location-material-waste-types', views.SellerProductSellerLocationMaterialWasteTypeViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
+router.register(r'day-of-weeks', views.DayOfWeekViewSet, 'api')
+router.register(r'time-slots', views.TimeSlotViewSet, 'api')
+
+# Use-case-specific model endpoints.
+router.register(r'user-addresses-for-seller', views.UserAddressesForSellerViewSet, 'api')
+router.register(r'order-groups-for-seller', views.OrderGroupsForSellerViewSet, 'api')
+router.register(r'orders-for-seller', views.OrdersForSellerViewSet, 'api')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
