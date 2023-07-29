@@ -206,7 +206,7 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
 
 class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
-    list_display = ('name', 'street', 'user_group__name')
+    list_display = ('name', 'street', 'user_group')
     search_fields = ["name", "street"]
 
 class UserAdmin(admin.ModelAdmin):
