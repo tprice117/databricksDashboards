@@ -58,7 +58,7 @@ class UserViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id","user_id"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
+        if self.request.user == "ALL" or self.request.user.user_group.is_superuser:
            return self.queryset
         elif self.request.user.is_admin:
             queryset = self.queryset
@@ -79,7 +79,7 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "user", "user_address"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
+        if self.request.user == "ALL" or self.request.user.user_group.is_superuser:
            return self.queryset
         elif self.request.user.is_admin:
             queryset = self.queryset
