@@ -72,7 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class UserGroupViewSet(viewsets.ModelViewSet):
     queryset = UserGroup.objects.all()
     serializer_class = UserGroupSerializer
-    filterset_fields = ["id"]
+    filterset_fields = ["id", "share_code"]
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()
