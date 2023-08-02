@@ -228,6 +228,7 @@ class UserAdmin(admin.ModelAdmin):
 class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
     list_display = ('user', 'user_address', 'seller_product_seller_location')
+    search_fields = ["name"]
     inlines = [
         SubscriptionInline,
         OrderInline,
