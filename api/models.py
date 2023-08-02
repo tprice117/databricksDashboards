@@ -88,7 +88,7 @@ class UserGroup(BaseModel):
     pay_later = models.BooleanField(default=False)
     autopay= models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    share_code = models.CharField(max_length=6)
+    share_code = models.CharField(max_length=6, blank=True)
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
