@@ -58,7 +58,8 @@ class UserViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id","user_id"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
+        is_superuser = self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False
+        if self.request.user == "ALL" or is_superuser:
            return self.queryset
         elif self.request.user.is_admin:
             queryset = self.queryset
@@ -71,7 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class UserGroupViewSet(viewsets.ModelViewSet):
     queryset = UserGroup.objects.all()
     serializer_class = UserGroupSerializer
-    filterset_fields = ["id"]
+    filterset_fields = ["id", "share_code"]
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()
@@ -79,7 +80,8 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "user", "user_address"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
+        is_superuser = self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False
+        if self.request.user == "ALL" or is_superuser:
            return self.queryset
         elif self.request.user.is_admin:
             queryset = self.queryset

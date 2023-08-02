@@ -1,4 +1,6 @@
 import datetime
+import random
+import string
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_save, post_save, post_delete
@@ -86,6 +88,7 @@ class UserGroup(BaseModel):
     pay_later = models.BooleanField(default=False)
     autopay= models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    share_code = models.CharField(max_length=6, blank=True)
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -93,6 +96,13 @@ class UserGroup(BaseModel):
     
     def post_create(sender, instance, created, **kwargs):
         if created:
+            # Generate unique share code.
+            share_code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+            while share_code in UserGroup.objects.values_list('share_code', flat=True):
+                share_code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+            instance.share_code = share_code
+            
+            # Create stripe customer.
             customer = stripe.Customer.create()
             instance.stripe_customer_id = customer.id
             instance.save()
