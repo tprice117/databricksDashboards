@@ -13,13 +13,16 @@ class CustomAuthentication(authentication.BaseAuthentication):
             # Check if user is valid, confirm a DB user exists.
             # If not, create a new user.
             auth0_user = get_user_data(token)
-            if auth0_user and not User.objects.filter(user_id=token).exists():
+            user_exists = User.objects.filter(user_id=token).exists()
+            is_admin = token == "addfe690-5b86-4671-a3bd-1764b32e20b0"
+
+            if auth0_user and not user_exists and not is_admin:
                 User.objects.create(
                     user_id=token,
                     email=auth0_user['email']
                 )
             
-            if token == "addfe690-5b86-4671-a3bd-1764b32e20b0":
+            if is_admin:
                 return ("ALL", None)
             else:
                 user = User.objects.get(user_id=token)
