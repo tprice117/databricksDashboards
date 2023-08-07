@@ -207,6 +207,7 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
 class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
     list_display = ('name', 'user_group', 'project_id')
+    autocomplete_fields = ["user_group", "user"]
     search_fields = ["name", "street"]
 
 class UserAdmin(admin.ModelAdmin):
@@ -216,14 +217,9 @@ class UserAdmin(admin.ModelAdmin):
         UserGroupUserInline,
     ]
 
-# class UserGroupAdmin(admin.ModelAdmin):
-#     model = UserGroup
-#     autocomplete_fields = ["user_address", "user"]
-#     search_fields = ["user__email", 'user_address', 'seller_product_seller_location']
-#     list_display = ('user', 'user_address', 'seller_product_seller_location', 'start_date', 'end_date')
-#     inlines = [
-#         UserGroupUserInline,
-#     ]
+class UserGroupAdmin(admin.ModelAdmin):
+    model = UserGroup
+    search_fields = ["name"]
 
 class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
@@ -258,7 +254,7 @@ admin.site.register(SellerLocation, SellerLocationAdmin)
 admin.site.register(SellerProduct, SellerProductAdmin)
 admin.site.register(SellerProductSellerLocation, SellerProductSellerLocationAdmin)
 admin.site.register(UserAddress, UserAddressAdmin)
-admin.site.register(UserGroup)
+admin.site.register(UserGroup, UserGroupAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(UserUserAddress)
 admin.site.register(AddOnChoice, AddOnChoiceAdmin)
