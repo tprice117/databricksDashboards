@@ -113,31 +113,6 @@ class UserAddressType(BaseModel):
     def __str__(self):
         return self.name
 
-class UserAddress(BaseModel):
-    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
-    user_address_type = models.ForeignKey(UserAddressType, models.CASCADE, blank=True, null=True)
-    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
-    name = models.CharField(max_length=255)
-    project_id = models.CharField(max_length=50, blank=True, null=True)
-    street = models.TextField(blank=True, null=True)
-    city = models.CharField(max_length=40)
-    state = models.CharField(max_length=80)
-    postal_code = models.CharField(max_length=20)
-    country = models.CharField(max_length=80)
-    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
-    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
-    autopay = models.BooleanField(default=False)
-    is_archived = models.BooleanField(default=False)
-    child_account_id = models.CharField(max_length=255, blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-    
-    def pre_save(sender, instance, *args, **kwargs):
-        latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
-        instance.latitude = latitude or 0
-        instance.longitude = longitude or 0
-
 class User(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
     user_id = models.CharField(max_length=255, blank=True)
@@ -193,6 +168,32 @@ class User(BaseModel):
             print(e)
             pass
 
+class UserAddress(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(User, models.CASCADE, blank=True, null=True)
+    user_address_type = models.ForeignKey(UserAddressType, models.CASCADE, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    name = models.CharField(max_length=255)
+    project_id = models.CharField(max_length=50, blank=True, null=True)
+    street = models.TextField(blank=True, null=True)
+    city = models.CharField(max_length=40)
+    state = models.CharField(max_length=80)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=80)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    autopay = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
+    child_account_id = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+    
+    def pre_save(sender, instance, *args, **kwargs):
+        latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
+        instance.latitude = latitude or 0
+        instance.longitude = longitude or 0
+        
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
     user = models.ForeignKey(User, models.CASCADE)
