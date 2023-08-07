@@ -66,7 +66,7 @@ class UserViewSet(viewsets.ModelViewSet):
         is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
         if is_superuser:
            return self.queryset
-        elif self.request.user.is_admin:
+        elif self.request.user.user_group and self.request.user.is_admin:
             queryset = self.queryset
             user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
             query_set = queryset.filter(id__in=user_ids)
