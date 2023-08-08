@@ -67,7 +67,7 @@ class SellerProductInline(admin.TabularInline):
 
 class SellerProductSellerLocationInline(admin.TabularInline):
     model = SellerProductSellerLocation
-    fields = ('seller_product', 'rate', 'total_inventory')
+    fields = ('seller_product', 'total_inventory')
     show_change_link = True
     extra=0
 
