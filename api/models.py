@@ -104,8 +104,8 @@ class UserGroup(BaseModel):
             instance.share_code = share_code
             
             # Create stripe customer.
-            customer = stripe.Customer.create()
-            instance.stripe_customer_id = customer.id
+            # customer = stripe.Customer.create()
+            # instance.stripe_customer_id = customer.id
             instance.save()
 
 class UserAddressType(BaseModel):
