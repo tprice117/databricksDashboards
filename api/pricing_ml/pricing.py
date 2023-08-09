@@ -169,6 +169,7 @@ class Price_Model:
 
             # Get pricing per mile.
             rate = None
+            is_flat_rate = None
             if service.price_per_mile:
                 rate = service.price_per_mile
                 is_flat_rate = False
