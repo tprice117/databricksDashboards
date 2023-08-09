@@ -83,6 +83,7 @@ class SellerLocation(BaseModel):
         return self.name
 
 class UserGroup(BaseModel):
+    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     name = models.CharField(max_length=255)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     pay_later = models.BooleanField(default=False)
@@ -121,7 +122,6 @@ class User(BaseModel):
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, unique=True)
     photo_url = models.TextField(blank=True, null=True)
-    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
@@ -130,6 +130,7 @@ class User(BaseModel):
     is_archived = models.BooleanField(default=False)
     salesforce_contact_id = models.CharField(max_length=255, blank=True, null=True)
     salesforce_seller_location_id = models.CharField(max_length=255, blank=True, null=True)
+    terms_accepted = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.email
@@ -193,7 +194,7 @@ class UserAddress(BaseModel):
         latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
-        
+
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
     user = models.ForeignKey(User, models.CASCADE)
@@ -207,6 +208,13 @@ class UserUserAddress(BaseModel):
 
     def __str__(self):
         return f'{self.user.email} - {self.user_address.street}'
+    
+class UserSellerLocation(BaseModel):
+    user = models.ForeignKey(User, models.CASCADE)
+    seller_location = models.ForeignKey(SellerLocation, models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user.email} - {self.seller_location.name}'
     
 class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='user_seller_review')
