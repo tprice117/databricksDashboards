@@ -320,7 +320,7 @@ class UserAddressesForSellerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         seller = self.request.user.user_group.seller if self.request.user.user_group else None
-        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=seller).values_list('user_address__id', flat=True) if self.request.user.user_group.seller else []
+        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=seller).values_list('user_address__id', flat=True) if seller else []
         return self.queryset.filter(id__in=seller_order_user_address_ids)
     
 class OrderGroupsForSellerViewSet(viewsets.ModelViewSet):
