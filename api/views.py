@@ -253,7 +253,8 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
            return self.queryset
         else:
             queryset = self.queryset
-            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller)
+            seller = self.request.user.user_group.seller if self.request.user.user_group else None
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=seller)
             return query_set
 
 class ServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
@@ -273,7 +274,8 @@ class SellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.Model
            return self.queryset
         else:
             queryset = self.queryset
-            query_set = queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller)
+            seller = self.request.user.user_group.seller if self.request.user.user_group else None
+            query_set = queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=seller)
             return query_set
 
 class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
@@ -286,7 +288,8 @@ class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
            return self.queryset
         else:
             queryset = self.queryset
-            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller)
+            seller = self.request.user.user_group.seller if self.request.user.user_group else None
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=seller)
             return query_set
 
 class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
@@ -299,7 +302,8 @@ class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
            return self.queryset
         else:
             queryset = self.queryset
-            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller)
+            seller = self.request.user.user_group.seller if self.request.user.user_group else None
+            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=seller)
             return query_set
 
 class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
@@ -312,7 +316,8 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet)
            return self.queryset
         else:
             queryset = self.queryset
-            query_set = queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller)
+            seller = self.request.user.user_group.seller if self.request.user.user_group else None
+            query_set = queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=seller)
             return query_set
 
 @authentication_classes([])
@@ -328,7 +333,8 @@ class UserAddressesForSellerViewSet(viewsets.ModelViewSet):
     serializer_class = UserAddressSerializer
 
     def get_queryset(self):
-        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller).values_list('user_address__id', flat=True) if self.request.user.user_group.seller else []
+        seller = self.request.user.user_group.seller if self.request.user.user_group else None
+        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=seller).values_list('user_address__id', flat=True) if self.request.user.user_group.seller else []
         return self.queryset.filter(id__in=seller_order_user_address_ids)
     
 class OrderGroupsForSellerViewSet(viewsets.ModelViewSet):
@@ -336,14 +342,16 @@ class OrderGroupsForSellerViewSet(viewsets.ModelViewSet):
     serializer_class = OrderGroupSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller) if self.request.user.user_group.seller else []
+        seller = self.request.user.user_group.seller if self.request.user.user_group else None
+        return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller) if seller else []
 
 class OrdersForSellerViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(order_group__seller_product_seller_location__seller_product__seller=self.request.user.user_group.seller) if self.request.user.user_group.seller else []
+        seller = self.request.user.user_group.seller if self.request.user.user_group else None
+        return self.queryset.filter(order_group__seller_product_seller_location__seller_product__seller=seller) if seller else []
 
 
 
