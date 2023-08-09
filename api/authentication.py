@@ -19,7 +19,9 @@ class CustomAuthentication(authentication.BaseAuthentication):
             if auth0_user and not user_exists and not is_admin:
                 User.objects.create(
                     user_id=token,
-                    email=auth0_user['email']
+                    email=auth0_user['email'],
+                    first_name=auth0_user['given_name'] if 'given_name' in auth0_user else None,
+                    last_name=auth0_user['family_name'] if 'family_name' in auth0_user else None,
                 )
             
             if is_admin:
