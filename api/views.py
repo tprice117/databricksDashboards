@@ -26,7 +26,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class SellerViewSet(viewsets.ModelViewSet):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
-    filterset_fields = ["id", "user"]
+    filterset_fields = ["id"]
 
 class SellerLocationViewSet(viewsets.ModelViewSet):
     queryset = SellerLocation.objects.all()
