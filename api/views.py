@@ -67,10 +67,8 @@ class UserViewSet(viewsets.ModelViewSet):
         if is_superuser:
            return self.queryset
         elif self.request.user.user_group and self.request.user.is_admin:
-            queryset = self.queryset
             user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
-            query_set = queryset.filter(id__in=user_ids)
-            return query_set
+            return self.queryset.filter(id__in=user_ids)
         else:
             return self.queryset.filter(id=self.request.user.id)
 
@@ -89,10 +87,8 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
         if is_superuser:
            return self.queryset
         elif self.request.user.is_admin:
-            queryset = self.queryset
             users = User.objects.filter(user_group=self.request.user.user_group)
-            query_set = queryset.filter(user__in=users)
-            return query_set
+            return self.queryset.filter(user__in=users)
         else:
             return self.queryset.filter(user=self.request.user)
   
@@ -252,10 +248,8 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
         if self.request.user == "ALL":
            return self.queryset
         else:
-            queryset = self.queryset
             seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=seller)
-            return query_set
+            return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller)
 
 class ServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
     queryset = ServiceRecurringFrequency.objects.all()
@@ -273,10 +267,8 @@ class SellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.Model
         if self.request.user == "ALL":
            return self.queryset
         else:
-            queryset = self.queryset
             seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            query_set = queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=seller)
-            return query_set
+            return self.queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=seller)
 
 class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationRental.objects.all()
@@ -287,10 +279,8 @@ class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
         if self.request.user == "ALL":
            return self.queryset
         else:
-            queryset = self.queryset
             seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=seller)
-            return query_set
+            return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller)
 
 class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationMaterial.objects.all()
@@ -301,10 +291,8 @@ class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
         if self.request.user == "ALL":
            return self.queryset
         else:
-            queryset = self.queryset
             seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            query_set = queryset.filter(seller_product_seller_location__seller_product__seller=seller)
-            return query_set
+            return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller)
 
 class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationMaterialWasteType.objects.all()
@@ -315,10 +303,8 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet)
         if self.request.user == "ALL":
            return self.queryset
         else:
-            queryset = self.queryset
             seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            query_set = queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=seller)
-            return query_set
+            return self.queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=seller)
 
 @authentication_classes([])
 @permission_classes([])
