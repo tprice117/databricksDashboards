@@ -20,8 +20,8 @@ class CustomAuthentication(authentication.BaseAuthentication):
                 User.objects.create(
                     user_id=token,
                     email=auth0_user['email'],
-                    first_name=auth0_user['given_name'] if 'given_name' in auth0_user else None,
-                    last_name=auth0_user['family_name'] if 'family_name' in auth0_user else None,
+                    first_name=auth0_user['first_name'] if 'first_name' in auth0_user else None,
+                    last_name=auth0_user['last_name'] if 'last_name' in auth0_user else None,
                 )
             
             if is_admin:
