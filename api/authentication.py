@@ -17,6 +17,8 @@ class CustomAuthentication(authentication.BaseAuthentication):
             is_admin = token == "addfe690-5b86-4671-a3bd-1764b32e20b0"
 
             if auth0_user and not user_exists and not is_admin:
+                print("Creating new user.")
+                print(auth0_user)
                 User.objects.create(
                     user_id=token,
                     email=auth0_user['email'],
