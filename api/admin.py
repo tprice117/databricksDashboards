@@ -186,7 +186,7 @@ class SellerProductAdmin(admin.ModelAdmin):
 
 class SellerProductSellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["seller_location__seller__name",]
-    list_display = ('seller_product', 'seller_location', 'seller_location__seller',)
+    list_display = ('seller_product', 'seller_location',)
     autocomplete_fields = ["seller_product", "seller_location"]
     list_filter = ('seller_product__product__main_product__main_product_category', 'seller_location__seller')
     inlines = [
