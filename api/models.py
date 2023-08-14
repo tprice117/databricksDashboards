@@ -336,8 +336,11 @@ class SellerProductSellerLocation(BaseModel):
     removal_fee = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     fuel_environmental_markup = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
-    # def __str__(self):
-    #     return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
+    class Meta:
+        unique_together = ('seller_product', 'seller_location',)
+
+    def __str__(self):
+        return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
     
     def post_save(sender, instance, created, **kwargs):
         # Create/delete Service.
