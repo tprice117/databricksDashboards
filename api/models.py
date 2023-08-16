@@ -13,6 +13,7 @@ from api.utils.google_maps import geocode_address
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
 from intercom.client import Client
+import mailchimp_transactional as MailchimpTransactional
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -145,6 +146,25 @@ class User(BaseModel):
             else:
                 # Create user in Auth0.
                 self.user_id = create_user(self.email)
+
+            # Send email to internal team. Only on our PROD environment.
+            if settings.ENVIRONMENT == "TEST":
+                try:
+                    mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+                    mailchimp.messages.send({"message": {
+                        "headers": {
+                            "reply-to": self.email,
+                        },
+                        "from_name": "Downstream",
+                        "from_email": "noreply@trydownstream.io",
+                        "to": [{"email": "support@trydownstream.io"}],
+                        "subject": "New User App Signup",
+                        "track_opens": True,
+                        "track_clicks": True,
+                        "text": "Woohoo! A new user signed up for the app. The email on their account is:" + self.email,
+                    }})
+                except:
+                    print("An exception occurred.")
             
         super(User, self).save(*args, **kwargs)  
 
