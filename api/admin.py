@@ -1,8 +1,33 @@
 from django.contrib import admin
 from .models import *
+from django.contrib.admin import SimpleListFilter
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.auth.models import Group
 from .forms import *
+
+# Filters.
+class CreatedDateFilter(SimpleListFilter):
+    title = 'Creation Date' # or use _('country') for translated title
+    parameter_name = 'created_on'
+
+    def lookups(self, request, model_admin):
+        return [
+            ("today", "Today"),
+            ("yesterday", "Yesterday"),
+            ("7d", "Last 7 Days"),
+            ("1m", "This Month"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Today':
+            return queryset.filter(created_on__date=datetime.date.today())  
+        elif self.value() == 'Yesterday':
+            return queryset.filter(created_on__date=datetime.date.today() - datetime.timedelta(days=1))
+        elif self.value() == 'Last 7 Days':
+            return queryset.filter(created_on__date__gte=datetime.date.today() - datetime.timedelta(days=7))
+        elif self.value() == 'This Month':
+            return queryset.filter(created_on__date__gte=datetime.date.today().replace(day=1))
+
 
 # Inlines.
 class AddOnChoiceInline(admin.TabularInline):
@@ -218,9 +243,17 @@ class UserAddressAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
     model = User
     search_fields = ["email", "first_name", "last_name"]
+    list_display = ('email', 'first_name', 'last_name', 'cart_orders', 'active_orders')
+    list_filter = ('user_group', CreatedDateFilter)
     inlines = [
         UserGroupUserInline,
     ]
+
+    def cart_orders(self, obj):
+        return Order.objects.filter(order_group__user=obj, submitted_on=None).count()
+    
+    def active_orders(self, obj):
+        return Order.objects.filter(order_group__user=obj).exclude(submitted_on=None).count()
 
 class UserGroupAdmin(admin.ModelAdmin):
     model = UserGroup
@@ -229,6 +262,7 @@ class UserGroupAdmin(admin.ModelAdmin):
 class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
     list_display = ('user', 'user_address', 'seller_product_seller_location')
+    list_filter = (CreatedDateFilter,)
     search_fields = ["name"]
     inlines = [
         SubscriptionInline,
@@ -239,6 +273,7 @@ class OrderAdmin(admin.ModelAdmin):
     model = Order
     readonly_fields = ('total_price',)
     list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_price')
+    list_filter = ('status', CreatedDateFilter)
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
