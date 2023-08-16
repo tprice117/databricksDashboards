@@ -24,7 +24,7 @@ class Price_Model:
         self.user_address = UserAddress.objects.get(id=request.data['user_address'])
         
         # Waste Type.
-        self.waste_type = WasteType.objects.get(id=request.data['waste_type']) if 'waste_type' in request.data else None
+        self.waste_type = WasteType.objects.get(id=request.data['waste_type']) if 'waste_type' in request.data and request.data['waste_type'] else None
 
         self.google_maps_api = r'AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE'
         self.fred_api = r'fa4d32f5c98c51ccb516742cf566950f'

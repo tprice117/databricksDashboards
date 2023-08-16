@@ -315,7 +315,8 @@ class Product(BaseModel):
     removal_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
-        return f'{self.main_product.name} - {self.product_code}'
+        add_on_choices = ProductAddOnChoice.objects.filter(product=self)
+        return f'{self.main_product.name} {"-" if add_on_choices.count() > 0 else ""} {",".join(str(add_on_choice.name) for add_on_choice in add_on_choices)}'
 
 class SellerProduct(BaseModel):
     product = models.ForeignKey(Product, models.CASCADE, related_name='seller_products')
