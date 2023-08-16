@@ -20,7 +20,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-0+dmu6*lky0l74
 
 
 ENVIRONMENT = os.getenv('ENV')
-DEBUG = os.getenv('DEBUG', "False") == "True"
+DEBUG = os.getenv("ENV") == "TEST"
 DEBUG = True
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
