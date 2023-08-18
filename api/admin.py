@@ -244,7 +244,7 @@ class UserAdmin(admin.ModelAdmin):
     model = User
     search_fields = ["email", "first_name", "last_name"]
     list_display = ('email', 'first_name', 'last_name', 'cart_orders', 'active_orders')
-    list_filter = ('user_group', CreatedDateFilter)
+    list_filter = (CreatedDateFilter, 'user_group')
     inlines = [
         UserGroupUserInline,
     ]

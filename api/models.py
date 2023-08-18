@@ -194,7 +194,7 @@ class UserAddress(BaseModel):
     user = models.ForeignKey(User, models.CASCADE, blank=True, null=True)
     user_address_type = models.ForeignKey(UserAddressType, models.CASCADE, blank=True, null=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=True, null=True)
     project_id = models.CharField(max_length=50, blank=True, null=True)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)
@@ -239,8 +239,10 @@ class UserSellerLocation(BaseModel):
 class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     seller = models.ForeignKey(Seller, models.DO_NOTHING, related_name='user_seller_review')
     user = models.ForeignKey(User, models.DO_NOTHING, related_name='user_seller_review')
-    rating = models.IntegerField(blank=True, null=True)
+    title = models.CharField(max_length=255)
+    rating = models.IntegerField()
     comment = models.TextField(blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
     
     def __str__(self):
         return f'{self.seller.name} - {self.rating if self.rating else ""}'
