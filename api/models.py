@@ -242,6 +242,7 @@ class UserSellerReview(BaseModel): #added this model 2/25/2023 by Dylan
     title = models.CharField(max_length=255)
     rating = models.IntegerField()
     comment = models.TextField(blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
     
     def __str__(self):
         return f'{self.seller.name} - {self.rating if self.rating else ""}'
