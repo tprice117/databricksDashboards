@@ -224,6 +224,8 @@ class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     serializer_class = ProductAddOnChoiceSerializer
     filterset_fields = ["product", "add_on_choice"] 
 
+@authentication_classes([])
+@permission_classes([])
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
