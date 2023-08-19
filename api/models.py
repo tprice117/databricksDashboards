@@ -505,6 +505,7 @@ class SellerProductSellerLocationMaterialWasteType(BaseModel):
         models.PROTECT
     )
     price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    tonnage_included = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ('seller_product_seller_location_material', 'main_product_waste_type',)
