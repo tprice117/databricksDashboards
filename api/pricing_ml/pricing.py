@@ -125,7 +125,7 @@ class Price_Model:
     def get_prices(self):
         # Get SellerLocations that offer the product.
         seller_products = SellerProduct.objects.filter(product=self.product)
-        seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products).filter(active=True)
+        seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products, active=True)
         
 
         if self.seller_location:
@@ -136,8 +136,19 @@ class Price_Model:
             # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
             seller_location_prices = []
             for seller_product_seller_location in seller_product_seller_locations:
-                price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
-                seller_location_prices.append(price_obj)
+
+                # Get distance between seller and customer.
+                seller_customer_distance = self.get_driving_distance(
+                    seller_product_seller_location.seller_location.latitude, 
+                    seller_product_seller_location.seller_location.longitude,
+                    self.user_address.latitude, 
+                    self.user_address.longitude
+                )
+
+                # Only return Seller options within the service radius.
+                if seller_customer_distance < seller_product_seller_location.service_radius:
+                    price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
+                    seller_location_prices.append(price_obj)
 
             return seller_location_prices
     
