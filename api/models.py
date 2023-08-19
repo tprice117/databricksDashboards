@@ -476,16 +476,17 @@ class SellerProductSellerLocationMaterial(BaseModel):
         return self.seller_product_seller_location.seller_location.name
     
     def post_save(sender, instance, created, **kwargs):
-        # Ensure all material waste type recurring frequencies are created.
-        for main_product_waste_type in MainProductWasteType.objects.filter(main_product=instance.seller_product_seller_location.seller_product.product.main_product):
-            if not SellerProductSellerLocationMaterialWasteType.objects.filter(
-                seller_product_seller_location_material=instance.seller_product_seller_location.material,
-                main_product_waste_type=main_product_waste_type
-            ).exists():
-                SellerProductSellerLocationMaterialWasteType.objects.create(
+        # Ensure all material waste type recurring frequencies are created. Only execute on create.
+        if created:
+            for main_product_waste_type in MainProductWasteType.objects.filter(main_product=instance.seller_product_seller_location.seller_product.product.main_product):
+                if not SellerProductSellerLocationMaterialWasteType.objects.filter(
                     seller_product_seller_location_material=instance.seller_product_seller_location.material,
                     main_product_waste_type=main_product_waste_type
-                )
+                ).exists():
+                    SellerProductSellerLocationMaterialWasteType.objects.create(
+                        seller_product_seller_location_material=instance.seller_product_seller_location.material,
+                        main_product_waste_type=main_product_waste_type
+                    )
 
         # Ensure all "stale" material waste type recurring frequencies are deleted.
         for seller_product_seller_location_material_waste_type in SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=instance):
