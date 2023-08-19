@@ -233,7 +233,7 @@ class Price_Model:
             ).exists() else None
             
             return {
-                "tonnage_included": material.tonnage_included,
+                "tonnage_included": seller_product_seller_location_material_waste_type.tonnage_included if seller_product_seller_location_material_waste_type else None,
                 "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton if seller_product_seller_location_material_waste_type else None
             }
         else:

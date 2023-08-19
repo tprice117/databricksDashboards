@@ -470,7 +470,6 @@ class SellerProductSellerLocationMaterial(BaseModel):
         on_delete=models.CASCADE,
         related_name='material'
     )
-    tonnage_included = models.IntegerField(default=0)
 
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
