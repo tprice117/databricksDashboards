@@ -125,7 +125,7 @@ class Price_Model:
     def get_prices(self):
         # Get SellerLocations that offer the product.
         seller_products = SellerProduct.objects.filter(product=self.product)
-        seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products).filter(active=True)
+        seller_product_seller_locations = SellerProductSellerLocation.objects.filter(seller_product__in=seller_products, active=True)
         
 
         if self.seller_location:
@@ -135,9 +135,27 @@ class Price_Model:
         else:
             # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
             seller_location_prices = []
+            main_product_waste_types = MainProductWasteType.objects.filter(main_product=self.product.main_product)
+
             for seller_product_seller_location in seller_product_seller_locations:
-                price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
-                seller_location_prices.append(price_obj)
+                # Get distance between seller and customer.
+                seller_customer_distance = self.get_driving_distance(
+                    seller_product_seller_location.seller_location.latitude, 
+                    seller_product_seller_location.seller_location.longitude,
+                    self.user_address.latitude, 
+                    self.user_address.longitude
+                )
+
+                # Get Material Waste Types for the SellerProductSellerLocation.
+                material = self.get_material_price(seller_product_seller_location)
+                material_waste_types = SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=material)
+
+                # Only return Seller options within the service radius and that have the same waste type.
+                customer_within_seller_service_radius = seller_customer_distance < seller_product_seller_location.service_radius
+                waste_type_match = main_product_waste_types.count() == 0 or material_waste_types.filter(main_product_waste_type__waste_type=self.waste_type).exists()
+                if customer_within_seller_service_radius and waste_type_match:
+                    price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
+                    seller_location_prices.append(price_obj)
 
             return seller_location_prices
     
@@ -233,7 +251,7 @@ class Price_Model:
             ).exists() else None
             
             return {
-                "tonnage_included": material.tonnage_included,
+                "tonnage_included": seller_product_seller_location_material_waste_type.tonnage_included if seller_product_seller_location_material_waste_type else None,
                 "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton if seller_product_seller_location_material_waste_type else None
             }
         else:

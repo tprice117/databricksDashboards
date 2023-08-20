@@ -329,6 +329,9 @@ class MainProductWasteType(BaseModel):
 
     def __str__(self):
         return f'{self.main_product.name} - {self.waste_type.name}'
+    
+    class Meta:
+        unique_together = ('waste_type', 'main_product',)
 
 class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
@@ -343,9 +346,13 @@ class Product(BaseModel):
 class SellerProduct(BaseModel):
     product = models.ForeignKey(Product, models.CASCADE, related_name='seller_products')
     seller = models.ForeignKey(Seller, models.CASCADE, related_name='seller_products')
+    active = models.BooleanField(default=True)
    
     def __str__(self):
         return self.product.main_product.name + ' - ' + (self.product.product_code or "") + ' - ' + self.seller.name
+    
+    class Meta:
+        unique_together = ('product', 'seller',)
 
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(SellerProduct, models.CASCADE, related_name='seller_location_seller_product')
@@ -470,7 +477,6 @@ class SellerProductSellerLocationMaterial(BaseModel):
         on_delete=models.CASCADE,
         related_name='material'
     )
-    tonnage_included = models.IntegerField(default=0)
 
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
@@ -557,6 +563,9 @@ class ProductAddOnChoice(BaseModel):
 
     def __str__(self):
         return f'{self.product.main_product.name} - {self.add_on_choice.add_on.name} - {self.add_on_choice.name}'
+    
+    class Meta:
+        unique_together = ('product', 'add_on_choice',)
 
 class DisposalLocation(BaseModel):
     name = models.CharField(max_length=255)
