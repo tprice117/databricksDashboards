@@ -118,6 +118,8 @@ class AddOnChoiceViewSet(viewsets.ModelViewSet):
     serializer_class = AddOnChoiceSerializer
     filterset_fields = ["add_on"] 
 
+@authentication_classes([])
+@permission_classes([])
 class AddOnViewSet(viewsets.ModelViewSet):
     queryset = AddOn.objects.all()
     serializer_class = AddOnSerializer
