@@ -147,7 +147,7 @@ class Price_Model:
                 )
 
                 # Get Material Waste Types for the SellerProductSellerLocation.
-                if main_product_waste_types.count() > 0:
+                if main_product_waste_types.count() > 0 and hasattr(seller_product_seller_location, 'material'):
                     material_waste_types = SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=seller_product_seller_location.material)
 
                 # Only return Seller options within the service radius and that have the same waste type.
