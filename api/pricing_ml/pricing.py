@@ -147,8 +147,8 @@ class Price_Model:
                 )
 
                 # Get Material Waste Types for the SellerProductSellerLocation.
-                material = self.get_material_price(seller_product_seller_location)
-                material_waste_types = SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=material)
+                if main_product_waste_types.count() > 0:
+                    material_waste_types = SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=seller_product_seller_location.material)
 
                 # Only return Seller options within the service radius and that have the same waste type.
                 customer_within_seller_service_radius = seller_customer_distance < (seller_product_seller_location.service_radius or 0)
