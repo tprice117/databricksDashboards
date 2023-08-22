@@ -140,9 +140,12 @@ class UserGroupUserInline(admin.TabularInline):
 
 class OrderLineItemInline(admin.TabularInline):
     model = OrderLineItem
-    fields = ('order_line_item_type', 'price')
+    fields = ('order_line_item_type', 'rate', 'quantity', 'total_price')
     show_change_link = True
     extra=0
+
+    def total_price(self, obj):
+        return obj.rate * obj.quantity
 
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket
@@ -281,7 +284,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     def total_price(self, obj):
         order_line_items = OrderLineItem.objects.filter(order=obj)
-        return sum([order_line_item.price for order_line_item in order_line_items])
+        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
 
 class MainProductWasteTypeAdmin(admin.ModelAdmin):
