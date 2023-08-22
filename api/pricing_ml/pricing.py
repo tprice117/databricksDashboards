@@ -150,10 +150,12 @@ class Price_Model:
                 # Get Material Waste Types for the SellerProductSellerLocation.
                 if main_product_waste_types.count() > 0 and hasattr(seller_product_seller_location, 'material'):
                     material_waste_types = api.models.SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material=seller_product_seller_location.material)
+                else:
+                    material_waste_types = None
 
                 # Only return Seller options within the service radius and that have the same waste type.
                 customer_within_seller_service_radius = seller_customer_distance < (seller_product_seller_location.service_radius or 0)
-                waste_type_match = main_product_waste_types.count() == 0 or material_waste_types.filter(main_product_waste_type__waste_type=self.waste_type).exists()
+                waste_type_match = main_product_waste_types.count() == 0 or (material_waste_types and material_waste_types.filter(main_product_waste_type__waste_type=self.waste_type).exists())
                 if customer_within_seller_service_radius and waste_type_match:
                     price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
                     seller_location_prices.append(price_obj)
