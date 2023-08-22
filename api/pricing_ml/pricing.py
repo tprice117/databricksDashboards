@@ -16,7 +16,7 @@ class Price_Model:
         self.enc = enc
 
         # Seller Location (if passed).
-        self.seller_location = api.models.SellerLocation.objects.get(id=data['seller_location']) if 'seller_location' in data else None
+        self.seller_location = api.models.SellerLocation.objects.get(id=data['seller_location']) if 'seller_location' in data and data['seller_location'] else None
 
         # Product.
         self.product = api.models.Product.objects.get(id=data['product'])
