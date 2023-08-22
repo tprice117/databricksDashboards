@@ -712,6 +712,7 @@ class OrderDisposalTicket(BaseModel):
 class OrderLineItemType(BaseModel):
     name = models.CharField(max_length=255)
     units = models.CharField(max_length=255, blank=True, null=True)
+    code = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
