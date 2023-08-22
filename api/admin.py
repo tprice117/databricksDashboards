@@ -281,7 +281,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     def total_price(self, obj):
         order_line_items = OrderLineItem.objects.filter(order=obj)
-        return sum([order_line_item.price for order_line_item in order_line_items])
+        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
 
 class MainProductWasteTypeAdmin(admin.ModelAdmin):

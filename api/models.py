@@ -711,6 +711,7 @@ class OrderDisposalTicket(BaseModel):
 
 class OrderLineItemType(BaseModel):
     name = models.CharField(max_length=255)
+    units = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -718,10 +719,15 @@ class OrderLineItemType(BaseModel):
 class OrderLineItem(BaseModel):
     order = models.ForeignKey(Order, models.PROTECT)
     order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
-    price = models.DecimalField(max_digits=18, decimal_places=2)
+    rate = models.DecimalField(max_digits=18, decimal_places=2)
+    quantity = models.DecimalField(max_digits=18, decimal_places=2)
+    is_flat_rate = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.order) + ' - ' + self.order_line_item_type.name
+    
+    class Meta:
+        unique_together = ('order', 'order_line_item_type',)
     
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  

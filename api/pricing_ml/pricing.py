@@ -178,8 +178,8 @@ class Price_Model:
         return {
             'seller_product_seller_location': seller_product_seller_location.id,
             'service': service,
-            "rental": rental,
-            "material": material,
+            'rental': rental,
+            'material': material,
         }
 
     def get_service_price(self, seller_product_seller_location):
