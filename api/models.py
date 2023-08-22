@@ -663,7 +663,6 @@ class Order(BaseModel):
                     OrderLineItem.objects.create(
                         order = instance,
                         order_line_item_type = order_line_item_type,
-                        price = service_price,
                         rate = service["rate"],
                         quantity = 1 if service["is_flat_rate"] else service["total_distance"],
                         is_flat_rate = service["is_flat_rate"],
