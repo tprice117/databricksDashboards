@@ -8,12 +8,11 @@ import requests
 import datetime  
 
 class Price_Model:
-    def __init__(self, request, model = None, enc = None):
+    def __init__(self, data, model = None, enc = None):
 
         # Assign model and encoder
         self.model = model
         self.enc = enc
-        data = request["data"]
 
         # Seller Location (if passed).
         self.seller_location = api.models.SellerLocation.objects.get(id=data['seller_location']) if 'seller_location' in data else None

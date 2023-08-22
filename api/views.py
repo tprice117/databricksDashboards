@@ -398,8 +398,13 @@ def order_pricing(request, order_id):
 # Pricing Endpoint.
 @api_view(['POST'])
 def get_pricing(request):
-  price_mod = pricing.Price_Model(request=request)
-  return Response(price_mod.get_prices())
+    price_mod = pricing.Price_Model(data={
+        "seller_location": request.data['seller_location'] if 'seller_location' in request.data else None,
+        "product": request.data['product'],
+        "user_address": request.data['user_address'],
+        "waste_type": request.data['waste_type'],
+    })
+    return Response(price_mod.get_prices())
 
 class AddUser(APIView):
     # def get(self, request):

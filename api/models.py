@@ -644,14 +644,13 @@ class Order(BaseModel):
             try:
                 print("submitted_on_has_changed")
                 main_product = instance.order_group.seller_product_seller_location.seller_product.product.main_product
-                pricing = Price_Model(request={
-                    "data": {
-                        "seller_location": instance.order_group.seller_product_seller_location.seller_location.id,
-                        "product": instance.order_group.seller_product_seller_location.seller_product.product.id,
-                        "user_address": instance.order_group.user_address.id,
-                        "waste_type": instance.order_group.waste_type.id,
-                    }
-                }).get_prices()
+                pricing = Price_Model({
+                    "seller_location": instance.order_group.seller_product_seller_location.seller_location.id,
+                    "product": instance.order_group.seller_product_seller_location.seller_product.product.id,
+                    "user_address": instance.order_group.user_address.id,
+                    "waste_type": instance.order_group.waste_type.id,
+                }
+                ).get_prices()
 
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
