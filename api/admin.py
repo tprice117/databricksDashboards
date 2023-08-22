@@ -140,13 +140,12 @@ class UserGroupUserInline(admin.TabularInline):
 
 class OrderLineItemInline(admin.TabularInline):
     model = OrderLineItem
-    fields = ('order_line_item_type', 'rate', 'quantity', 'total_price')
-    readonly_fields = ('total_price',)
+    fields = ('order_line_item_type', 'rate', 'quantity',)
     show_change_link = True
     extra=0
 
-    def total_price(self, obj):
-        return obj.rate * obj.quantity
+    # def total_price(self, obj):
+    #     return (obj.rate or 0) * (obj.quantity or 0)
 
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket
