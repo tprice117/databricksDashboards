@@ -14,6 +14,8 @@ import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
 from intercom.client import Client
 import mailchimp_transactional as MailchimpTransactional
+# import pandas as pd
+from .pricing_ml.pricing import Price_Model
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -628,32 +630,70 @@ class Order(BaseModel):
     unit_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     payout_processing_error_comment = models.TextField(blank=True, null=True) #6.6.23
 
-    # def pre_create(sender, instance, *args, **kwargs):
-    #     if Order.objects.filter(pk=instance.pk).count() == 0: 
-    #         order = sf.Order.create({
-    #             "order_type__c": "Delivery",
-    #             "accountId": "0014x00001RgLBMAA3",
-    #             "status": "Waiting for Request",
-    #             "Rental_Start_Date__c": instance.start_date.strftime('%Y-%m-%d'),
-    #             "Service_Date__c": instance.start_date.strftime('%Y-%m-%d'),
-    #             "Rental_End_Date__c": instance.end_date.strftime('%Y-%m-%d'),
-    #             "effectiveDate": instance.start_date.strftime('%Y-%m-%d'),
-    #             "Access_Details__c": instance.access_details,
-    #             "schedule_details__c": instance.schedule_details,
-    #             "description": "User: " + (instance.order_group.user.email if instance.order_group.user else "None") + " | User Address: " + (instance.order_group.user_address.name if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.street if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.city if instance.order_group.user_address else "None")  + " " + (instance.order_group.user_address.state if instance.order_group.user_address else "None") + " " + (instance.order_group.user_address.postal_code if instance.order_group.user_address else "None") + " | Waste Type: " + (instance.order_group.waste_type.name if instance.waste_type else "None")  + " | Disposal Location: " + (instance.disposal_location.name if instance.disposal_location else "None")  + " | Price: " + (str(instance.price) if instance.price else "None") + " | Main Product: " + (instance.order_group.seller_product_seller_location.seller_product.product.main_product.name if instance.order_group.seller_product_seller_location else "None") + " - " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None") + " | Seller: " + (instance.order_group.seller_product_seller_location.seller_location.seller.name if instance.order_group.seller_product_seller_location else "None") + " | Seller Location: " + (instance.order_group.seller_product_seller_location.seller_location.name if instance.order_group.seller_product_seller_location else "None"),
-    #         })
-    #         instance.salesforce_order_id = order['id']
+    def pre_save(sender, instance, *args, **kwargs):
+        # Check if SubmittedOn has changed.
+        print(instance.pk)
+        old_submitted_on = Order.objects.get(pk=instance.pk).submitted_on if Order.objects.filter(pk=instance.pk).exists() else None
+        instance.submitted_on_has_changed = old_submitted_on != instance.submitted_on
 
-    def post_update(sender, instance, created, **kwargs):
-        if not created:
-            sf.Order.update(
-                instance.salesforce_order_id,
-                {
-                    "Access_Details__c": instance.access_details,
-                    "schedule_details__c": instance.schedule_details,
-                }
-            )
-            instance.save()
+    def post_save(sender, instance, created, **kwargs):
+        print("post_save")
+        print(instance.submitted_on_has_changed)
+        if instance.submitted_on_has_changed:
+            try:
+                print("submitted_on_has_changed")
+                main_product = instance.order_group.seller_product_seller_location.seller_product.product.main_product
+                pricing = Price_Model(request={
+                    "data": {
+                        "seller_location": instance.order_group.seller_product_seller_location.seller_location.id,
+                        "product": instance.order_group.seller_product_seller_location.seller_product.product.id,
+                        "user_address": instance.order_group.user_address.id,
+                        "waste_type": instance.order_group.waste_type.id,
+                    }
+                }).get_prices()
+
+                # Create OrderLineItems for newly "submitted" order.
+                # Service Price.
+                if main_product.has_service and 'service' in pricing:
+                    service = pricing["service"]
+                    service_price = service["rate"] if service["is_flat_rate"] else service["total_distance"] * service["rate"]
+                    
+                    order_line_item_type = OrderLineItemType.objects.get(name="Service Cost")
+                    OrderLineItem.objects.create(
+                        order=instance,
+                        order_line_item_type=order_line_item_type,
+                        price=service_price
+                    )
+                # Rental Price.
+                if main_product.has_rental and 'rental' in pricing:
+                    rental = pricing["rental"]
+                    days_over_included = instance.end_date - instance.start_date
+                    included_days_price = rental["price_per_day_included"] * rental["included_days"]
+                    additional_days_price = rental["price_per_day_additional"] * days_over_included.days if days_over_included.days > 0 else 0
+
+                    order_line_item_type = OrderLineItemType.objects.get(name="Rental Cost")
+                    OrderLineItem.objects.create(
+                        order=instance,
+                        order_line_item_type=order_line_item_type,
+                        price=included_days_price + additional_days_price
+                    )
+                # Material Price.
+                if main_product.has_material and 'material' in pricing:
+                    material = pricing["material"]
+                    tons_over_included = (instance.order_group.tonnage_quantity or 0) - material["tonnage_included"]
+                    included_tons_price = material["price_per_ton"] * material["tonnage_included"]
+                    additional_tons_price = material["price_per_additional_ton"] * tons_over_included if tons_over_included > 0 else 0
+
+                    order_line_item_type = OrderLineItemType.objects.get(name="Material Cost")     
+                    OrderLineItem.objects.create(
+                        order=instance,
+                        order_line_item_type=order_line_item_type,
+                        price=included_tons_price + additional_tons_price
+                    )
+            except Exception as e:
+                print(e)
+                pass
+
 
     def __str__(self):
         return self.order_group.seller_product_seller_location.seller_product.product.main_product.name + ' - ' + self.order_group.user_address.name
@@ -687,8 +727,8 @@ post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  
 post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
-# pre_save.connect(Order.pre_create, sender=Order)
-# post_save.connect(Order.post_update, sender=Order)
+pre_save.connect(Order.pre_save, sender=Order)
+post_save.connect(Order.post_save, sender=Order)
 post_save.connect(SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation)
 post_save.connect(SellerProductSellerLocationService.post_save, sender=SellerProductSellerLocationService)
 post_save.connect(SellerProductSellerLocationMaterial.post_save, sender=SellerProductSellerLocationMaterial)
