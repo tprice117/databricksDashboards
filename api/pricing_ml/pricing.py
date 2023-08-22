@@ -1,3 +1,4 @@
+import decimal
 import math
 import pandas as pd
 import api.models
@@ -213,7 +214,7 @@ class Price_Model:
                 is_flat_rate = True
             
             return {
-                "rate": rate * 1.2 if rate else None,
+                "rate": rate * decimal.Decimal(1.2) if rate else None,
                 "is_flat_rate": is_flat_rate,
                 "total_distance": total_distance if service.price_per_mile else None,
                 # "customer_to_disposal_location_distance": customer_disposal_location_distance
@@ -227,8 +228,8 @@ class Price_Model:
             
             return {
                 "included_days": rental.included_days,
-                "price_per_day_included": rental.price_per_day_included * 1.2 if rental.price_per_day_included else None,
-                "price_per_day_additional": rental.price_per_day_additional * 1.2 if rental.price_per_day_additional else None,
+                "price_per_day_included": rental.price_per_day_included * decimal.Decimal(1.2) if rental.price_per_day_included else None,
+                "price_per_day_additional": rental.price_per_day_additional * decimal.Decimal(1.2)  if rental.price_per_day_additional else None,
             }
         else:
             return None
@@ -252,7 +253,7 @@ class Price_Model:
             
             return {
                 "tonnage_included": seller_product_seller_location_material_waste_type.tonnage_included if seller_product_seller_location_material_waste_type else None,
-                "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton * 1.2 if seller_product_seller_location_material_waste_type else None
+                "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton * decimal.Decimal(1.2)  if seller_product_seller_location_material_waste_type else None
             }
         else:
             return None

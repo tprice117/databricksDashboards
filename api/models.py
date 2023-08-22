@@ -651,14 +651,13 @@ class Order(BaseModel):
                     "waste_type": instance.order_group.waste_type.id,
                 }
                 ).get_prices()
-
+                print(str(pricing))
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
                 if main_product.has_service and 'service' in pricing:
                     service = pricing["service"]
-                    service_price = service["rate"] if service["is_flat_rate"] else service["total_distance"] * service["rate"]
-                    
-                    order_line_item_type = OrderLineItemType.objects.get(name="SERVICE")
+
+                    order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
                     OrderLineItem.objects.create(
                         order = instance,
                         order_line_item_type = order_line_item_type,
@@ -670,7 +669,7 @@ class Order(BaseModel):
                 if main_product.has_rental and 'rental' in pricing:
                     rental = pricing["rental"]
                     days_over_included = instance.end_date - instance.start_date
-                    order_line_item_type = OrderLineItemType.objects.get(name="RENTAL")
+                    order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
 
                     # Create OrderLineItem for Included Days.
                     OrderLineItem.objects.create(
@@ -694,7 +693,7 @@ class Order(BaseModel):
                 if main_product.has_material and 'material' in pricing:
                     material = pricing["material"]
                     tons_over_included = (instance.order_group.tonnage_quantity or 0) - material["tonnage_included"]
-                    order_line_item_type = OrderLineItemType.objects.get(name="MATERIAL")  
+                    order_line_item_type = OrderLineItemType.objects.get(code="MATERIAL")  
 
                     # Create OrderLineItem for Included Tons.   
                     OrderLineItem.objects.create(
