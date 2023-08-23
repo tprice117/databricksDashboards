@@ -200,7 +200,17 @@ class OrderViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(order_group__user__id__in=user_ids)
         else:
             return self.queryset.filter(order_group__user__id=self.request.user.id)
-        
+
+class OrderLineItemViewSet(viewsets.ModelViewSet):
+    queryset = OrderLineItem.objects.all()
+    serializer_class = OrderLineItemSerializer
+    filterset_fields = ["id", "order"]
+
+class OrderLineItemTypeViewSet(viewsets.ModelViewSet):
+    queryset = OrderLineItemType.objects.all()
+    serializer_class = OrderLineItemTypeSerializer
+    filterset_fields = ["id"]
+
 class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
     queryset = OrderDisposalTicket.objects.all()
     serializer_class = OrderDisposalTicketSerializer
