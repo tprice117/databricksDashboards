@@ -19,13 +19,6 @@ from .pricing_ml.pricing import Price_Model
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-# sf = Salesforce(
-#     username='thayes@trydownstream.io.stage', 
-#     password='LongLiveDownstream12!', 
-#     security_token='DSwuelzBBaTVRXSdtQwC7IE8', 
-#     domain='test'
-# )
-
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -59,7 +52,7 @@ class Seller(BaseModel):
     open_days = MultiSelectField(max_length=255, choices = open_day_choices, max_choices=7, blank=True, null=True)
     open_time = models.TimeField(blank=True, null=True)
     close_time = models.TimeField(blank=True, null=True)
-    lead_time_hrs = models.DecimalField(max_digits=18, decimal_places=0)
+    lead_time_hrs = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     announcement = models.TextField(blank=True, null=True)
     live_menu_is_active = models.BooleanField(default=False)
     location_logo_url = models.URLField(blank=True, null=True)
