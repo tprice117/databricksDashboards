@@ -536,7 +536,7 @@ class OrderGroup(BaseModel):
     placement_details = models.TextField(blank=True, null=True)
     preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
     start_date = models.DateField()
-    end_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
     tonnage_quantity = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
