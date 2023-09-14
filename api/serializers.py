@@ -143,6 +143,18 @@ class OrderSerializer(serializers.ModelSerializer):
     #     obj.stripe_invoice_id,
     #     ).status if obj.stripe_invoice_id and obj.stripe_invoice_id != "" else None
 
+class OrderLineItemSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = OrderLineItem
+        fields = "__all__"
+
+class OrderLineItemTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False)
+    class Meta:
+        model = OrderLineItemType
+        fields = "__all__"
+    
 class OrderDisposalTicketSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     class Meta:

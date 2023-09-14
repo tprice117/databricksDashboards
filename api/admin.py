@@ -213,7 +213,7 @@ class SellerProductAdmin(admin.ModelAdmin):
     list_filter = ('product__main_product__main_product_category', 'seller')
 
 class SellerProductSellerLocationAdmin(admin.ModelAdmin):
-    search_fields = ["seller_location__seller__name",]
+    search_fields = ["seller_location__name", "seller_location__seller__name", "seller_product__product__main_product__name"]
     list_display = ('seller_product', 'seller_location', "get_seller")
     autocomplete_fields = ["seller_product", "seller_location"]
     list_filter = ('seller_product__product__main_product__main_product_category', 'seller_location__seller')
@@ -247,6 +247,7 @@ class UserAdmin(admin.ModelAdmin):
     model = User
     search_fields = ["email", "first_name", "last_name"]
     list_display = ('email', 'first_name', 'last_name', 'cart_orders', 'active_orders')
+    autocomplete_fields = ["user_group"]
     list_filter = (CreatedDateFilter, 'user_group')
     inlines = [
         UserGroupUserInline,
@@ -266,6 +267,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
     list_display = ('user', 'user_address', 'seller_product_seller_location')
     list_filter = (CreatedDateFilter,)
+    autocomplete_fields = ["seller_product_seller_location",]
     search_fields = ["name"]
     inlines = [
         SubscriptionInline,
