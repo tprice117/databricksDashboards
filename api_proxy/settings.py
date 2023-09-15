@@ -77,6 +77,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
+
 #Database.
 if ENVIRONMENT == 'TEST':
     DATABASES = {

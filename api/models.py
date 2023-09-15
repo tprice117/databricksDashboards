@@ -744,6 +744,25 @@ class OrderLineItem(BaseModel):
     def __str__(self):
         return str(self.order) + ' - ' + self.order_line_item_type.name
     
+class Payout(BaseModel):
+    STATUS_CHOICES = (
+        ("UNPAID", "Unpaid"),
+        ("ESCALATED", "Escalated"),
+        ("ERROR", "Error"),
+        ("READY_FOR_PAYOUT", "Ready for Payout"),
+        ("PAID", "Paid"),
+    )   
+
+    seller_location = models.ForeignKey(SellerLocation, models.PROTECT)
+    supplier_invoice_id = models.CharField(max_length=255)
+    supplier_invoice_total = models.DecimalField(max_digits=18, decimal_places=2)
+    orders = models.ManyToManyField(Order)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="UNPAID")
+    melio_payout_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_transaction_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_payout_id = models.CharField(max_length=255, blank=True, null=True)
+
+
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  
 post_delete.connect(User.post_delete, sender=User)
