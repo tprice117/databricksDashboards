@@ -332,6 +332,7 @@ admin.site.register(SellerProductSellerLocationMaterialWasteType)
 admin.site.register(DayOfWeek)
 admin.site.register(TimeSlot)
 admin.site.register(Subscription)
+admin.site.register(Payout)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)
