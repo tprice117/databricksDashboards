@@ -277,6 +277,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
 class OrderAdmin(admin.ModelAdmin):
     model = Order
     readonly_fields = ('total_price',)
+    search_fields = ("id",)
     list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_price')
     list_filter = ('status', CreatedDateFilter)
     inlines = [
@@ -292,6 +293,10 @@ class OrderAdmin(admin.ModelAdmin):
 class MainProductWasteTypeAdmin(admin.ModelAdmin):
     model = UserAddress
     search_fields = ["main_product__name", "waste_type__name"]
+
+class PayoutAdmin(admin.ModelAdmin):
+    model = Payout
+    filter_horizontal = ('orders',)
 
 # Register your models here.
 admin.site.register(Seller, SellerAdmin)
@@ -332,7 +337,7 @@ admin.site.register(SellerProductSellerLocationMaterialWasteType)
 admin.site.register(DayOfWeek)
 admin.site.register(TimeSlot)
 admin.site.register(Subscription)
-admin.site.register(Payout)
+admin.site.register(Payout, PayoutAdmin)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)
