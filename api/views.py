@@ -196,8 +196,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.request.user == "ALL":
            return self.queryset
         elif self.request.user.is_admin:
-            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
-            return self.queryset.filter(order_group__user__id__in=user_ids)
+            return self.queryset.filter(order_group__user__user_group=self.request.user.user_group)
         else:
             return self.queryset.filter(order_group__user__id=self.request.user.id)
 

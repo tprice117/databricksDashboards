@@ -139,6 +139,15 @@ CORS_ORIGIN_ALLOW_ALL = True
 #      'http://localhost:62964',
 # ]
 
+# Amazon Web Services S3 Configuration.
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = "AKIAYR4ELQCIAKOINOXF"
+AWS_SECRET_ACCESS_KEY = "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"
+if ENVIRONMENT == 'TEST':
+    DEFAULT_FILE_STORAGE = 'api.custom_storage.MediaStorage'
+else:
+    DEFAULT_FILE_STORAGE = 'api.custom_storage.MediaStorageDev'
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
