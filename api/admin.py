@@ -320,7 +320,6 @@ class OrderGroupAdmin(admin.ModelAdmin):
     list_display = ('user', 'user_address', 'seller_product_seller_location')
     list_filter = (CreatedDateFilter,)
     autocomplete_fields = ["seller_product_seller_location",]
-    search_fields = ["name"]
     inlines = [
         SubscriptionInline,
         OrderInline,
@@ -330,7 +329,7 @@ class OrderAdmin(admin.ModelAdmin):
     model = Order
     readonly_fields = ('total_downstream_price',)
     search_fields = ("id",)
-    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_downstream_price', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status')
+    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_downstream_price', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status', 'total_invoiced_from_seller', 'seller_invoice_status')
     list_filter = ('status', CreatedDateFilter)
     inlines = [
         OrderLineItemInline,
@@ -354,6 +353,20 @@ class OrderAdmin(admin.ModelAdmin):
         if payout_diff == 0:
             return format_html("<p>&#128994;</p>")
         elif payout_diff > 0:
+            return format_html("<p>&#128993;</p>")
+        else:
+            return format_html("<p>&#128308;</p>")
+        
+    def total_invoiced_from_seller(self, obj):
+        seller_invoice_payable_line_items = SellerInvoicePayableLineItem.objects.filter(order=obj)
+        return sum([seller_invoice_payable_line_items.amount  for seller_invoice_payable_line_items in seller_invoice_payable_line_items])
+    
+
+    def seller_invoice_status(self, obj):
+        payout_diff = self.total_invoiced_from_seller(obj) - self.total_paid_to_seller(obj)
+        if payout_diff == 0:
+            return format_html("<p>&#128994;</p>")
+        elif payout_diff >= 0:
             return format_html("<p>&#128993;</p>")
         else:
             return format_html("<p>&#128308;</p>")
