@@ -184,6 +184,7 @@ class PayoutLineItemInline(admin.TabularInline):
     model = PayoutLineItem
     form = PayoutLineItemInlineForm
     fields = ('order', 'amount', 'description')
+    autocomplete_fields = ["order",]
     show_change_link = True
     extra=0
     can_delete = False
@@ -416,10 +417,14 @@ class SellerInvoicePayableLineItemAdmin(admin.ModelAdmin):
 
 class PayoutLineItemAdmin(admin.ModelAdmin):
     model = PayoutLineItem
+    search_fields = ["id", "payout__id", "order__id"]
+    autocomplete_fields = ["order",]
     # filter_horizontal = ('orders',)
 
 class PayoutAdmin(admin.ModelAdmin):
     model = Payout
+    list_display = ('seller_location', 'total_amount',)
+    search_fields = ["id","melio_payout_id", "stripe_transfer_id", "total_amount"]
     readonly_fields = ('melio_payout_id', 'stripe_transfer_id', 'total_amount',)
     inlines = [
         PayoutLineItemInline,
@@ -461,9 +466,14 @@ class PayoutAdmin(admin.ModelAdmin):
             payout_line_item.save()
         formset.save_m2m()
 
+    def seller_location(self, obj):
+        payout_line_items = PayoutLineItem.objects.filter(payout=obj)
+        return payout_line_items[0].order.order_group.seller_product_seller_location.seller_location
+    
     def total_amount(self, obj):
         payout_line_items = PayoutLineItem.objects.filter(payout=obj)
         return round(sum([payout_line_items.amount  for payout_line_items in payout_line_items]), 2)
+        
     
 
 
