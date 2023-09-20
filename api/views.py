@@ -624,9 +624,10 @@ class ConvertSFOrderToScrapTask(APIView):
 ### Stripe Views
 
 @api_view(['GET'])
-def stripe_customer_portal_url(request, customer_id):
+def stripe_customer_portal_url(request, user_address_id):
+    user_address = UserAddress.objects.get(id=user_address_id)
     billing_portal_session = stripe.billing_portal.Session.create(
-        customer=customer_id,
+        customer=user_address.stripe_customer_id
     )
 
     return Response({
