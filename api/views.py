@@ -626,6 +626,19 @@ class ConvertSFOrderToScrapTask(APIView):
 @api_view(['GET'])
 def stripe_customer_portal_url(request, user_address_id):
     user_address = UserAddress.objects.get(id=user_address_id)
+
+    # If UserAddress does not have a stripe_customer_id, create one.
+    if not user_address.stripe_customer_id:
+        customer = stripe.Customer.create(
+            email=user_address.user.email,
+            name=(user_address.user.first_name or "") + " " + (user_address.user.last_name or ""),
+            metadata={
+                "user_address_id": user_address.id
+            }
+        )
+        user_address.stripe_customer_id = customer.id
+        user_address.save()
+
     billing_portal_session = stripe.billing_portal.Session.create(
         customer=user_address.stripe_customer_id
     )
