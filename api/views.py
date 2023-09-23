@@ -196,8 +196,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.request.user == "ALL":
            return self.queryset
         elif self.request.user.is_admin:
-            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
-            return self.queryset.filter(order_group__user__id__in=user_ids)
+            return self.queryset.filter(order_group__user__user_group=self.request.user.user_group)
         else:
             return self.queryset.filter(order_group__user__id=self.request.user.id)
 
@@ -625,9 +624,23 @@ class ConvertSFOrderToScrapTask(APIView):
 ### Stripe Views
 
 @api_view(['GET'])
-def stripe_customer_portal_url(request, customer_id):
+def stripe_customer_portal_url(request, user_address_id):
+    user_address = UserAddress.objects.get(id=user_address_id)
+
+    # If UserAddress does not have a stripe_customer_id, create one.
+    if not user_address.stripe_customer_id:
+        customer = stripe.Customer.create(
+            email=user_address.user.email,
+            name=(user_address.user.first_name or "") + " " + (user_address.user.last_name or ""),
+            metadata={
+                "user_address_id": user_address.id
+            }
+        )
+        user_address.stripe_customer_id = customer.id
+        user_address.save()
+
     billing_portal_session = stripe.billing_portal.Session.create(
-        customer=customer_id,
+        customer=user_address.stripe_customer_id
     )
 
     return Response({

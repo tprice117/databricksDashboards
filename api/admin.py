@@ -4,6 +4,10 @@ from django.contrib.admin import SimpleListFilter
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.auth.models import Group
 from .forms import *
+import stripe
+from django.utils.html import format_html
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Filters.
 class CreatedDateFilter(SimpleListFilter):
@@ -138,20 +142,66 @@ class UserGroupUserInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
-class OrderLineItemInline(admin.TabularInline):
-    model = OrderLineItem
-    fields = ('order_line_item_type', 'rate', 'quantity',)
+class UserInline(admin.TabularInline):
+    model = User
+    fields = ('is_admin', 'first_name', 'last_name', 'email', 'phone',)
+    readonly_fields = ('first_name', 'last_name', 'email', 'phone')
     show_change_link = True
     extra=0
 
-    # def total_price(self, obj):
-    #     return (obj.rate or 0) * (obj.quantity or 0)
+class OrderLineItemInline(admin.TabularInline):
+    model = OrderLineItem
+    fields = ('order_line_item_type', 'rate', 'quantity', 'downstream_price', 'platform_fee_percent', 'seller_payout_price')
+    readonly_fields = ('downstream_price', 'seller_payout_price')
+    show_change_link = True
+    extra=0
+
+    def downstream_price(self, obj):
+        return round((obj.rate or 0) * (obj.quantity or 0), 2)
+    
+    def seller_payout_price(self, obj):
+        total_price = self.downstream_price(obj)
+        application_fee = total_price * (obj.platform_fee_percent / 100)
+        return round(total_price - application_fee, 2)
 
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket
     fields = ('ticket_id', 'disposal_location', 'waste_type', 'weight')
     show_change_link = True
     extra=0
+
+class PayoutLineItemInlineForm(forms.ModelForm):
+    model = PayoutLineItem
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        print(self)
+        if self.instance and self.instance.amount:
+            for f in self.fields:
+                self.fields[f].disabled = True
+
+class PayoutLineItemInline(admin.TabularInline):
+    model = PayoutLineItem
+    form = PayoutLineItemInlineForm
+    fields = ('order', 'amount', 'description')
+    autocomplete_fields = ["order",]
+    show_change_link = True
+    extra=0
+    can_delete = False
+
+    def has_add_permission(self, request, obj):
+        # Only show add button if Payout is new.
+        return not obj
+
+class SellerInvoicePayableLineItemInline(admin.TabularInline):
+    model = SellerInvoicePayableLineItem
+    fields = ('order', 'amount', 'description')
+    show_change_link = True
+    extra=0
+
+
+
+
 
 
 class AddOnChoiceAdmin(admin.ModelAdmin):
@@ -197,7 +247,7 @@ class SellerAdmin(admin.ModelAdmin):
 
 class SellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["name", "seller__name"]
-    list_display = ('name', 'seller')
+    list_display = ('name', 'seller', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status', 'total_invoiced_from_seller', 'seller_invoice_status')
     inlines = [
         SellerProductSellerLocationInline,
     ]
@@ -206,6 +256,36 @@ class SellerLocationAdmin(admin.ModelAdmin):
         # just save obj reference for future processing in Inline
         request._obj_ = obj
         return super(SellerLocationAdmin, self).get_form(request, obj, **kwargs)
+    
+    def total_seller_payout_price(self, obj):
+        order_line_items = OrderLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
+        return round(sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items]), 2)
+
+    def total_paid_to_seller(self, obj):
+        payout_line_items = PayoutLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
+        return sum([payout_line_items.amount  for payout_line_items in payout_line_items])
+
+    def payout_status(self, obj):
+        payout_diff = self.total_seller_payout_price(obj) - self.total_paid_to_seller(obj)
+        if payout_diff == 0:
+            return format_html("<p>&#128994;</p>")
+        elif payout_diff > 0:
+            return format_html("<p>&#128993;</p>")
+        else:
+            return format_html("<p>&#128308;</p>")
+        
+    def total_invoiced_from_seller(self, obj):
+        seller_invoice_payable_line_items = SellerInvoicePayableLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
+        return sum([seller_invoice_payable_line_items.amount  for seller_invoice_payable_line_items in seller_invoice_payable_line_items])
+    
+    def seller_invoice_status(self, obj):
+        payout_diff = self.total_invoiced_from_seller(obj) - self.total_paid_to_seller(obj)
+        if payout_diff == 0:
+            return format_html("<p>&#128994;</p>")
+        elif payout_diff >= 0:
+            return format_html("<p>&#128993;</p>")
+        else:
+            return format_html("<p>&#128308;</p>")
     
 class SellerProductAdmin(admin.ModelAdmin):
     search_fields = ["product__product_code", "seller__name"]
@@ -262,13 +342,15 @@ class UserAdmin(admin.ModelAdmin):
 class UserGroupAdmin(admin.ModelAdmin):
     model = UserGroup
     search_fields = ["name"]
+    inlines = [
+        UserInline,
+    ]
 
 class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
     list_display = ('user', 'user_address', 'seller_product_seller_location')
     list_filter = (CreatedDateFilter,)
     autocomplete_fields = ["seller_product_seller_location",]
-    search_fields = ["name"]
     inlines = [
         SubscriptionInline,
         OrderInline,
@@ -276,27 +358,124 @@ class OrderGroupAdmin(admin.ModelAdmin):
 
 class OrderAdmin(admin.ModelAdmin):
     model = Order
-    readonly_fields = ('total_price',)
+    readonly_fields = ('total_downstream_price',)
     search_fields = ("id",)
-    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_price')
+    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_downstream_price', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status', 'total_invoiced_from_seller', 'seller_invoice_status')
     list_filter = ('status', CreatedDateFilter)
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
     ]
 
-    def total_price(self, obj):
+    def total_downstream_price(self, obj):
         order_line_items = OrderLineItem.objects.filter(order=obj)
-        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
+        return round(sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items]), 2)
 
+    def total_seller_payout_price(self, obj):
+        order_line_items = OrderLineItem.objects.filter(order=obj)
+        return round(sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items]), 2)
+
+    def total_paid_to_seller(self, obj):
+        payout_line_items = PayoutLineItem.objects.filter(order=obj)
+        return sum([payout_line_items.amount  for payout_line_items in payout_line_items])
+
+    def payout_status(self, obj):
+        payout_diff = self.total_seller_payout_price(obj) - self.total_paid_to_seller(obj)
+        if payout_diff == 0:
+            return format_html("<p>&#128994;</p>")
+        elif payout_diff > 0:
+            return format_html("<p>&#128993;</p>")
+        else:
+            return format_html("<p>&#128308;</p>")
+        
+    def total_invoiced_from_seller(self, obj):
+        seller_invoice_payable_line_items = SellerInvoicePayableLineItem.objects.filter(order=obj)
+        return sum([seller_invoice_payable_line_items.amount  for seller_invoice_payable_line_items in seller_invoice_payable_line_items])
+    
+    def seller_invoice_status(self, obj):
+        payout_diff = self.total_invoiced_from_seller(obj) - self.total_paid_to_seller(obj)
+        if payout_diff == 0:
+            return format_html("<p>&#128994;</p>")
+        elif payout_diff >= 0:
+            return format_html("<p>&#128993;</p>")
+        else:
+            return format_html("<p>&#128308;</p>")
 
 class MainProductWasteTypeAdmin(admin.ModelAdmin):
     model = UserAddress
     search_fields = ["main_product__name", "waste_type__name"]
 
+class SellerInvoicePayableAdmin(admin.ModelAdmin):
+    model = SellerInvoicePayable
+    list_display = ('seller_location', 'supplier_invoice_id', 'amount', 'status')
+    inlines = [
+        SellerInvoicePayableLineItemInline,
+    ]
+
+class SellerInvoicePayableLineItemAdmin(admin.ModelAdmin):
+    model = SellerInvoicePayableLineItem
+
+class PayoutLineItemAdmin(admin.ModelAdmin):
+    model = PayoutLineItem
+    search_fields = ["id", "payout__id", "order__id"]
+    autocomplete_fields = ["order",]
+    # filter_horizontal = ('orders',)
+
 class PayoutAdmin(admin.ModelAdmin):
     model = Payout
-    filter_horizontal = ('orders',)
+    list_display = ('seller_location', 'total_amount',)
+    search_fields = ["id","melio_payout_id", "stripe_transfer_id", "total_amount"]
+    readonly_fields = ('melio_payout_id', 'stripe_transfer_id', 'total_amount',)
+    inlines = [
+        PayoutLineItemInline,
+    ]
+
+    def save_formset(self, request, form, formset, change):
+        # Get payout model.
+        payout = form.save(commit=False)
+        
+        # Check that all PayoutLineItems are for the same SellerLocation.
+        payout_line_items = formset.save(commit=False)
+        seller_location = None
+        for payout_line_item in payout_line_items:
+            if seller_location is None:
+                seller_location = payout_line_item.order.order_group.seller_product_seller_location.seller_location
+            elif seller_location != payout_line_item.order.order_group.seller_product_seller_location.seller_location:
+                raise Exception('PayoutLineItems must be for the same Seller Location.')
+
+        # If all from same SellerLocation, compute total amount.
+        total_amount = sum([payout_line_item.amount for payout_line_item in payout_line_items])
+
+        # Payout via Melio or Stripe.
+        # if seller_location.seller.melio_account_id:
+        #     # Payout via Melio.
+        #     melio_payout_id = melio_payout(payout_line_items, seller_location.seller.melio_account_id, total_amount)
+        #     payout.melio_payout_id = melio_payout_id
+        # else:
+        # Payout via Stripe.
+        transfer = stripe.Transfer.create(
+            amount=round(total_amount * 100),
+            currency="usd",
+            destination=seller_location.stripe_connect_account_id,
+            transfer_group=payout.id,
+        )
+        payout.stripe_transfer_id = transfer.id
+
+        payout.save()
+        for payout_line_item in payout_line_items:
+            payout_line_item.save()
+        formset.save_m2m()
+
+    def seller_location(self, obj):
+        payout_line_items = PayoutLineItem.objects.filter(payout=obj)
+        return payout_line_items[0].order.order_group.seller_product_seller_location.seller_location
+    
+    def total_amount(self, obj):
+        payout_line_items = PayoutLineItem.objects.filter(payout=obj)
+        return round(sum([payout_line_items.amount  for payout_line_items in payout_line_items]), 2)
+        
+    
+
 
 # Register your models here.
 admin.site.register(Seller, SellerAdmin)
@@ -306,6 +485,7 @@ admin.site.register(SellerProductSellerLocation, SellerProductSellerLocationAdmi
 admin.site.register(UserAddress, UserAddressAdmin)
 admin.site.register(UserGroup, UserGroupAdmin)
 admin.site.register(User, UserAdmin)
+admin.site.register(UserGroupUser)
 admin.site.register(UserUserAddress)
 admin.site.register(AddOnChoice, AddOnChoiceAdmin)
 admin.site.register(AddOn, AddOnAdmin)
@@ -337,7 +517,10 @@ admin.site.register(SellerProductSellerLocationMaterialWasteType)
 admin.site.register(DayOfWeek)
 admin.site.register(TimeSlot)
 admin.site.register(Subscription)
+admin.site.register(PayoutLineItem, PayoutLineItemAdmin)
 admin.site.register(Payout, PayoutAdmin)
+admin.site.register(SellerInvoicePayable, SellerInvoicePayableAdmin)
+admin.site.register(SellerInvoicePayableLineItem, SellerInvoicePayableLineItemAdmin)
 
 # Unregister auth models.
 admin.site.unregister(DjangoUser)

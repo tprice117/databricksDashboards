@@ -1,4 +1,5 @@
 import datetime
+import os
 import random
 import string
 from django.conf import settings
@@ -16,6 +17,8 @@ from intercom.client import Client
 import mailchimp_transactional as MailchimpTransactional
 # import pandas as pd
 from .pricing_ml.pricing import Price_Model
+from django.core.files.storage import default_storage
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -74,6 +77,7 @@ class SellerLocation(BaseModel):
     country = models.CharField(max_length=80)
     latitude = models.DecimalField(max_digits=18, decimal_places=15)
     longitude = models.DecimalField(max_digits=18, decimal_places=15)
+    stripe_connect_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -645,6 +649,7 @@ class Order(BaseModel):
                 }
                 ).get_prices()
                 print(str(pricing))
+
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
                 if main_product.has_service and 'service' in pricing:
@@ -661,7 +666,7 @@ class Order(BaseModel):
                 # Rental Price.
                 if main_product.has_rental and 'rental' in pricing:
                     rental = pricing["rental"]
-                    days_over_included = instance.end_date - instance.start_date
+                    days_over_included = (instance.end_date or instance.start_date) - instance.start_date
                     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
 
                     # Create OrderLineItem for Included Days.
@@ -734,17 +739,20 @@ class OrderLineItemType(BaseModel):
         return self.name
     
 class OrderLineItem(BaseModel):
+    PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(100)]
+
     order = models.ForeignKey(Order, models.PROTECT)
     order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
     rate = models.DecimalField(max_digits=18, decimal_places=2)
     quantity = models.DecimalField(max_digits=18, decimal_places=2)
+    platform_fee_percent = models.DecimalField(max_digits=18, decimal_places=2, default=20, validators=PERCENTAGE_VALIDATOR)
     description = models.CharField(max_length=255, blank=True, null=True)
     is_flat_rate = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.order) + ' - ' + self.order_line_item_type.name
-    
-class Payout(BaseModel):
+
+class SellerInvoicePayable(BaseModel):
     STATUS_CHOICES = (
         ("UNPAID", "Unpaid"),
         ("ESCALATED", "Escalated"),
@@ -753,14 +761,59 @@ class Payout(BaseModel):
         ("PAID", "Paid"),
     )   
 
+    def get_file_path(instance, filename):
+        ext = filename.split('.')[-1]
+        filename = "%s.%s" % (uuid.uuid4(), ext)
+        return filename
+
     seller_location = models.ForeignKey(SellerLocation, models.PROTECT)
+    invoice_file = models.FileField(upload_to=get_file_path, blank=True, null=True)
     supplier_invoice_id = models.CharField(max_length=255)
-    supplier_invoice_total = models.DecimalField(max_digits=18, decimal_places=2)
-    orders = models.ManyToManyField(Order)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="UNPAID")
+
+    def auto_delete_file_on_delete(sender, instance, **kwargs):
+        """
+        Deletes file from filesystem
+        when corresponding `Payout` object is deleted.
+        """
+        if instance.invoice_file:
+            instance.invoice_file.delete(save=False)
+
+    def auto_delete_file_on_change(sender, instance, **kwargs):
+        """
+        Deletes old file from filesystem
+        when corresponding `Payout` object is updated
+        with new file.
+        """
+        if not instance.pk:
+            return False
+
+        try:
+            old_file = Payout.objects.get(pk=instance.pk).invoice_file
+            print(old_file)
+        except Payout.DoesNotExist:
+            return False
+
+        new_file = instance.invoice_file
+        if not old_file == new_file:
+            old_file.delete(save=False)
+
+class SellerInvoicePayableLineItem(BaseModel):
+    seller_invoice_payable = models.ForeignKey(SellerInvoicePayable, models.CASCADE, blank=True, null=True)
+    order = models.ForeignKey(Order, models.CASCADE)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    description = models.CharField(max_length=255, blank=True, null=True)
+
+class Payout(BaseModel):
     melio_payout_id = models.CharField(max_length=255, blank=True, null=True)
-    stripe_transaction_id = models.CharField(max_length=255, blank=True, null=True)
-    stripe_payout_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_transfer_id = models.CharField(max_length=255, blank=True, null=True)
+
+class PayoutLineItem(BaseModel):
+    payout = models.ForeignKey(Payout, models.CASCADE, related_name="payout_line_items")
+    order = models.ForeignKey(Order, models.CASCADE)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    description = models.CharField(max_length=255, blank=True, null=True)
 
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)
@@ -772,3 +825,5 @@ post_save.connect(Order.post_save, sender=Order)
 post_save.connect(SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation)
 post_save.connect(SellerProductSellerLocationService.post_save, sender=SellerProductSellerLocationService)
 post_save.connect(SellerProductSellerLocationMaterial.post_save, sender=SellerProductSellerLocationMaterial)
+pre_save.connect(SellerInvoicePayable.auto_delete_file_on_change, sender=SellerInvoicePayable)
+post_delete.connect(SellerInvoicePayable.auto_delete_file_on_delete, sender=SellerInvoicePayable)
