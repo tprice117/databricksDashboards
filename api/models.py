@@ -606,9 +606,9 @@ class Order(BaseModel):
 
     order_group = models.ForeignKey(OrderGroup, models.PROTECT)
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
-    service_date = models.DateField(blank=True, null=True) #6.6.23
+    start_date = models.DateField()
+    end_date = models.DateField()
+    service_date = models.DateField()
     submitted_on = models.DateTimeField(blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
@@ -626,6 +626,14 @@ class Order(BaseModel):
     quantity = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     unit_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     payout_processing_error_comment = models.TextField(blank=True, null=True) #6.6.23
+
+    def customer_price(self):
+        order_line_items = OrderLineItem.objects.filter(order=self)
+        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
+    
+    def seller_price(self):
+        order_line_items = OrderLineItem.objects.filter(order=self)
+        return sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items])
 
     def pre_save(sender, instance, *args, **kwargs):
         # Check if SubmittedOn has changed.
@@ -815,6 +823,32 @@ class PayoutLineItem(BaseModel):
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     description = models.CharField(max_length=255, blank=True, null=True)
 
+class Payment(BaseModel):
+    user_address = models.ForeignKey(UserAddress, models.PROTECT)
+    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
+
+    def total(self):
+        total_invoiced = 0
+        total_paid = 0
+        for payment_line_item in self.payment_line_items.all():
+            invoiced, paid = payment_line_item.amount()
+            total_invoiced += invoiced
+            total_paid += paid
+        return total_invoiced, total_paid
+
+class PaymentLineItem(BaseModel):
+    payment = models.ForeignKey(Payment, models.CASCADE, related_name="payment_line_items")
+    order = models.ForeignKey(Order, models.CASCADE)
+    stripe_invoice_line_item_id = models.CharField(max_length=255, blank=True, null=True)
+
+    def amount(self):
+        if self.stripe_invoice_line_item_id:
+            invoice = stripe.Invoice.retrieve(self.payment.stripe_invoice_id)
+            invoice_line_item = stripe.InvoiceItem.retrieve(self.stripe_invoice_line_item_id)
+            amount = invoice_line_item.amount / 100
+            return amount, amount if invoice.status == "paid" else 0
+        else:
+            return None, None
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'api.utils',
     'django_filters',
     'drf_spectacular',
+    'django_extensions',
     ]
 
 MIDDLEWARE = [
