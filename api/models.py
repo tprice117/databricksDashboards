@@ -19,6 +19,7 @@ import mailchimp_transactional as MailchimpTransactional
 from .pricing_ml.pricing import Price_Model
 from django.core.files.storage import default_storage
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -640,6 +641,32 @@ class Order(BaseModel):
         print(instance.pk)
         old_submitted_on = Order.objects.get(pk=instance.pk).submitted_on if Order.objects.filter(pk=instance.pk).exists() else None
         instance.submitted_on_has_changed = old_submitted_on != instance.submitted_on
+
+    def clean(self):
+        # Ensure end_date is on or after start_date.
+        if self.start_date > self.end_date:
+            raise ValidationError('Start date must be on or before end date')
+        # Ensure start_date is on or after OrderGroup start_date.
+        elif self.start_date < self.order_group.start_date:
+            raise ValidationError('Start date must be on or after OrderGroup start date')
+        # Ensure end_date is on or before OrderGroup end_date.
+        elif self.end_date > self.order_group.end_date:
+            raise ValidationError('End date must be on or before OrderGroup end date')
+        # Ensure service_date is between start_date and end_date.
+        elif self.service_date < self.start_date or self.service_date > self.end_date:
+            raise ValidationError('Service date must be between start date and end date')
+        # Ensure this Order doesn't overlap with any other Orders for this OrderGroup.
+        elif Order.objects.filter(
+            order_group=self.order_group,
+            start_date__lt=self.end_date, 
+            end_date__gt=self.start_date,
+        ).exclude(id=self.id).exists():
+            raise ValidationError('This Order overlaps with another Order for this OrderGroup')
+            
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super(Order, self).save(*args, **kwargs)
 
     def post_save(sender, instance, created, **kwargs):
         print("post_save")
