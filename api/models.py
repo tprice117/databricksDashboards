@@ -662,8 +662,14 @@ class Order(BaseModel):
             end_date__gt=self.start_date,
         ).exclude(id=self.id).exists():
             raise ValidationError('This Order overlaps with another Order for this OrderGroup')
+        # Only 1 Order from an OrderGroup can be in the cart 
+        # (Order.submittedDate == null) at a time.
+        elif Order.objects.filter(
+            order_group=self.order_group,
+            submitted_on__isnull=True,
+        ).exclude(id=self.id).exists():
+            raise ValidationError('Only 1 Order from an OrderGroup can be in the cart at a time')
             
-
     def save(self, *args, **kwargs):
         self.clean()
         return super(Order, self).save(*args, **kwargs)
