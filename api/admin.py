@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from .forms import *
 import stripe
 from django.utils.html import format_html
+from django.contrib import admin, messages
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -192,6 +193,20 @@ class PayoutLineItemInline(admin.TabularInline):
     def has_add_permission(self, request, obj):
         # Only show add button if Payout is new.
         return not obj
+    
+class PaymentLineItemInline(admin.TabularInline):
+    model = PaymentLineItem
+    readonly_fields = ('order', 'invoiced', 'paid', 'stripe_invoice_line_item_id',)
+    extra=0
+    can_delete = False
+
+    def invoiced(self, obj):
+        invoiced, _ = obj.amount()
+        return invoiced
+    
+    def paid(self, obj):
+        _, paid = obj.amount()
+        return paid
 
 class SellerInvoicePayableLineItemInline(admin.TabularInline):
     model = SellerInvoicePayableLineItem
@@ -322,6 +337,81 @@ class UserAddressAdmin(admin.ModelAdmin):
     list_display = ('name', 'user_group', 'project_id')
     autocomplete_fields = ["user_group", "user"]
     search_fields = ["name", "street"]
+    actions = ["create_draft_invoices"]
+                
+    @admin.action(description="Create Draft Invoices")
+    def create_draft_invoices(modeladmin, request, queryset):
+        for user_address in queryset:
+            # Get all completed orders for this user address.
+            completed_orders = Order.objects.filter(
+                order_group__user_address=user_address, 
+                status=Order.COMPLETE, 
+                submitted_on__isnull=False
+            )
+
+            # Create draft invoice for any orders that are "undercharged".
+            payment = None
+            for completed_order in completed_orders:
+                payment_line_items = PaymentLineItem.objects.filter(order=completed_order)
+
+                # Compute total amount already invoiced to customer.
+                total_invoiced = 0
+                for payment_line_item in payment_line_items:
+                    invoiced, _ = payment_line_item.amount()
+                    total_invoiced += invoiced
+
+                # Compute total amount to be invoiced to customer.
+                total_to_be_invoiced = float(completed_order.customer_price()) - float(total_invoiced)
+
+                # Create draft invoice if there is an amount to be invoiced.
+                if total_to_be_invoiced > 0:
+                    # Create Payment, if None.
+                    if not payment:
+                        payment = Payment.objects.create(
+                            user_address=user_address,
+                        )
+
+                    # Create Stripe Invoice Line Item.
+                    start_datetime = datetime.datetime.combine(
+                        completed_order.start_date, 
+                        datetime.datetime.min.time()
+                    )
+                    end_datetime = datetime.datetime.combine(
+                        completed_order.end_date, 
+                        datetime.datetime.min.time()
+                    )
+                    print(start_datetime.timestamp())
+                    print(end_datetime.timestamp())
+                    
+                    stripe_invoice_line_item = stripe.InvoiceItem.create(
+                        customer=user_address.stripe_customer_id,
+                        description=completed_order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " + completed_order.start_date.strftime("%m/%d/%Y") + " - " + completed_order.end_date.strftime("%m/%d/%Y"),
+                        amount=round(total_to_be_invoiced * 100),
+                        currency="usd",
+                        period={
+                            "start": round(start_datetime.timestamp()),
+                            "end": round(end_datetime.timestamp()),
+                        }
+                    )
+
+                    # Create PaymentLineItem.
+                    PaymentLineItem.objects.create(
+                        payment=payment,
+                        order=completed_order,
+                        stripe_invoice_line_item_id=stripe_invoice_line_item.id,
+                    )
+
+            # Create draft invoice for any orders that are "overcharged".
+            invoice = stripe.Invoice.create(
+                customer=user_address.stripe_customer_id,
+            )
+
+            # Update Payment.
+            if payment:
+                payment.stripe_invoice_id = invoice.id
+                payment.save()
+
+            messages.success(request, "Successfully created all needed invoices.")
 
 class UserAdmin(admin.ModelAdmin):
     model = User
@@ -358,29 +448,67 @@ class OrderGroupAdmin(admin.ModelAdmin):
 
 class OrderAdmin(admin.ModelAdmin):
     model = Order
-    readonly_fields = ('total_downstream_price',)
+    readonly_fields = ('customer_price', 'seller_price',)
     search_fields = ("id",)
-    list_display = ('order_group', 'start_date', 'end_date', 'status', 'service_date', 'total_downstream_price', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status', 'total_invoiced_from_seller', 'seller_invoice_status')
+    list_display = (
+        'order_group', 
+        'start_date', 
+        'end_date', 
+        'status', 
+        'service_date', 
+        'customer_price', 
+        'customer_invoiced',
+        'customer_paid',
+        'payment_status',
+        'seller_price', 
+        'total_paid_to_seller', 
+        'payout_status', 
+        'total_invoiced_from_seller', 
+        'seller_invoice_status'
+    )
     list_filter = ('status', CreatedDateFilter)
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
     ]
 
-    def total_downstream_price(self, obj):
-        order_line_items = OrderLineItem.objects.filter(order=obj)
-        return round(sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items]), 2)
-
-    def total_seller_payout_price(self, obj):
-        order_line_items = OrderLineItem.objects.filter(order=obj)
-        return round(sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items]), 2)
+    def customer_price(self, obj):
+        return round(obj.customer_price(), 2)
+    
+    def customer_invoiced(self, obj):
+        payment_line_items = PaymentLineItem.objects.filter(order=obj)
+        total_invoiced = 0
+        for payment_line_item in payment_line_items:
+            invoiced, paid = payment_line_item.amount()
+            total_invoiced += invoiced
+        return total_invoiced
+    
+    def customer_paid(self, obj):
+        payment_line_items = PaymentLineItem.objects.filter(order=obj)
+        total_paid = 0
+        for payment_line_item in payment_line_items:
+            invoiced, paid = payment_line_item.amount()
+            total_paid += paid
+        return total_paid
+    
+    def payment_status(self, obj):
+        payout_diff = self.customer_invoiced(obj) - self.customer_paid(obj)
+        if payout_diff == 0:
+            return format_html("<p>&#128994;</p>")
+        elif payout_diff > 0:
+            return format_html("<p>&#128308;</p>")
+        else:
+            return format_html("<p>&#128993;</p>")
+    
+    def seller_price(self, obj):
+        return round(obj.seller_price(), 2)
 
     def total_paid_to_seller(self, obj):
         payout_line_items = PayoutLineItem.objects.filter(order=obj)
         return sum([payout_line_items.amount  for payout_line_items in payout_line_items])
 
     def payout_status(self, obj):
-        payout_diff = self.total_seller_payout_price(obj) - self.total_paid_to_seller(obj)
+        payout_diff = self.seller_price(obj) - self.total_paid_to_seller(obj)
         if payout_diff == 0:
             return format_html("<p>&#128994;</p>")
         elif payout_diff > 0:
@@ -474,8 +602,21 @@ class PayoutAdmin(admin.ModelAdmin):
         payout_line_items = PayoutLineItem.objects.filter(payout=obj)
         return round(sum([payout_line_items.amount  for payout_line_items in payout_line_items]), 2)
         
-    
+class PaymentAdmin(admin.ModelAdmin):
+    model = Payment
+    list_display = ('user_address', 'total', 'stripe_invoice_id',)
+    readonly_fields = ('user_address', 'total', 'stripe_invoice_id',)
+    inlines = [
+        PaymentLineItemInline,
+    ]
 
+    def total(self, obj):
+        invoiced, _ = obj.total()
+        return invoiced
+
+class PaymentLineItemAdmin(admin.ModelAdmin):
+    model = PaymentLineItem
+    readonly_fields = ('stripe_invoice_line_item_id', 'payment', 'order')
 
 # Register your models here.
 admin.site.register(Seller, SellerAdmin)
@@ -519,6 +660,8 @@ admin.site.register(TimeSlot)
 admin.site.register(Subscription)
 admin.site.register(PayoutLineItem, PayoutLineItemAdmin)
 admin.site.register(Payout, PayoutAdmin)
+admin.site.register(Payment, PaymentAdmin)
+admin.site.register(PaymentLineItem, PaymentLineItemAdmin)
 admin.site.register(SellerInvoicePayable, SellerInvoicePayableAdmin)
 admin.site.register(SellerInvoicePayableLineItem, SellerInvoicePayableLineItemAdmin)
 
