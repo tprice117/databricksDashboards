@@ -616,7 +616,7 @@ class Order(BaseModel):
     schedule_details = models.TextField(blank=True, null=True) #6.6.23 (Modified name to schedule_details from additional_schedule_details)
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
-    order_type =  models.CharField(max_length=255, choices=[('Automatic Renewal', 'Automatic Renewal'), ('Swap', 'Swap'),('Empty and Return','Empty and Return'),('Trip Charge/Dry Run','Trip Charge/Dry Run'),('Removal','Removal'),('On Demand','On Demand'),('Other','Other')], blank=True, null=True) #6.6.23
+    order_type =  models.CharField(max_length=255, choices=[('Delivery', 'Delivery'), ('Automatic Renewal', 'Automatic Renewal'), ('Swap', 'Swap'),('Empty and Return','Empty and Return'),('Trip Charge/Dry Run','Trip Charge/Dry Run'),('Removal','Removal'),('On Demand','On Demand'),('Other','Other')], blank=True, null=True) #6.6.23
     included_weight_tons = models.DecimalField(max_digits=18, decimal_places=4, blank=True, null=True) #6.6.23
     invoice_status = models.CharField(max_length=35, choices=[('Not yet invoiced', 'Not yet invoiced'), ('In draft', 'In draft'), ('Sent to customer','Sent to customer'),('Paid','Paid')], default=[0][0], blank=True, null=True) #6.6.23
     billing_comments_internal_use = models.TextField(blank=True, null=True) #6.6.23
