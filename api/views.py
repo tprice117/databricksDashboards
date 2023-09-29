@@ -640,7 +640,7 @@ def stripe_customer_portal_url(request, user_address_id):
         user_address.save()
 
     billing_portal_session = stripe.billing_portal.Session.create(
-        configuration="bpc_1Nvkw9GVYGkmHIWnhHzyEsjn" if request.GET.get("only_payments", False) == "true" else "bpc_1MqjpaGVYGkmHIWnGRmlbTOk",
+        configuration=settings.STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG if request.GET.get("only_payments", False) == "true" else settings.STRIPE_FULL_CUSTOMER_PORTAL_CONFIG,
         customer=user_address.stripe_customer_id
     )
 
@@ -851,12 +851,3 @@ def denver_compliance_report(request):
        print("An exception occurred: {}".format(error.text))
 
     return Response("Success", status=200)
-
-# Denver Waste Compliance Report.
-# @api_view(['GET'])
-# @authentication_classes([])
-# @permission_classes([])
-# def stripe_test(request):
-#     print(stripe.billing_portal.Configuration.list(limit=3))
-
-#     return Response("Success", status=200)
