@@ -624,6 +624,8 @@ class ConvertSFOrderToScrapTask(APIView):
 ### Stripe Views
 
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
 def stripe_customer_portal_url(request, user_address_id):
     user_address = UserAddress.objects.get(id=user_address_id)
 
@@ -639,8 +641,9 @@ def stripe_customer_portal_url(request, user_address_id):
         user_address.stripe_customer_id = customer.id
         user_address.save()
 
+    print(request.GET.get("only_payments", False) == "true")
     billing_portal_session = stripe.billing_portal.Session.create(
-        configuration="bpc_1Nvkw9GVYGkmHIWnhHzyEsjn" if request.GET.get("only_payments", False) == "True" else "bpc_1MqjpaGVYGkmHIWnGRmlbTOk",
+        configuration="bpc_1Nvkw9GVYGkmHIWnhHzyEsjn" if request.GET.get("only_payments", False) == "true" else "bpc_1MqjpaGVYGkmHIWnGRmlbTOk",
         customer=user_address.stripe_customer_id
     )
 
