@@ -640,7 +640,7 @@ def stripe_customer_portal_url(request, user_address_id):
         user_address.save()
 
     billing_portal_session = stripe.billing_portal.Session.create(
-        configuration="bpc_1Nvkw9GVYGkmHIWnhHzyEsjn" if request.GET.get("only_payments", False) else "bpc_1MqjpaGVYGkmHIWnGRmlbTOk",
+        configuration="bpc_1Nvkw9GVYGkmHIWnhHzyEsjn" if request.GET.get("only_payments", False) == "True" else "bpc_1MqjpaGVYGkmHIWnGRmlbTOk",
         customer=user_address.stripe_customer_id
     )
 
