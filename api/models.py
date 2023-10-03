@@ -539,6 +539,7 @@ class OrderGroup(BaseModel):
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     placement_details = models.TextField(blank=True, null=True)
+    service_recurring_frequency = models.ForeignKey(ServiceRecurringFrequency, models.PROTECT, blank=True, null=True)
     preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
