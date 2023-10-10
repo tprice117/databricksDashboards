@@ -273,7 +273,7 @@ class MainProduct(BaseModel):
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
     main_product_category = models.ForeignKey(MainProductCategory, models.CASCADE)
-    sort = models.DecimalField(max_digits=18, decimal_places=0)
+    sort = models.IntegerField()
     included_tonnage_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     price_per_additional_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     max_tonnage_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
