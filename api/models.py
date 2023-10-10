@@ -252,7 +252,7 @@ class MainProductCategory(BaseModel):
     description = models.TextField(blank=True, null=True)
     image = models.TextField(blank=True, null=True)
     icon = models.TextField(blank=True, null=True)
-    sort = models.DecimalField(max_digits=18, decimal_places=0)
+    sort = models.IntegerField()
     main_product_category_code = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
