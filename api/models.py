@@ -268,7 +268,7 @@ class MainProductCategoryInfo(BaseModel):
 
 class MainProduct(BaseModel):
     name = models.CharField(max_length=80)
-    cubic_yards = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    cubic_yards = models.IntegerField(blank=True, null=True)
     ar_url = models.URLField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
