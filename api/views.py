@@ -116,7 +116,7 @@ class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
     serializer_class = AddOnChoiceSerializer
-    filterset_fields = ["add_on"] 
+    filterset_fields = ["add_on", "add_on__main_product"] 
 
 @authentication_classes([])
 @permission_classes([])
