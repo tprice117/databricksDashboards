@@ -190,7 +190,11 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = ["id", "order_group", "submitted_on"]
+    filterset_fields = {
+       "id": ["exact"], 
+       "order_group": ["exact"], 
+       'submitted_on': ['isnull'],
+    }
 
     def get_queryset(self):
         if self.request.user == "ALL":
