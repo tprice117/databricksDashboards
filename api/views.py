@@ -237,7 +237,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
 class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
     serializer_class = ProductAddOnChoiceSerializer
-    filterset_fields = ["product", "add_on_choice"] 
+    filterset_fields = ["product", "add_on_choice", "product__main_product"] 
 
 @authentication_classes([])
 @permission_classes([])
