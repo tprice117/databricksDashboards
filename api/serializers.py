@@ -125,12 +125,6 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
         model = MainProductWasteType
         fields = "__all__"
 
-class OrderGroupSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    class Meta:
-        model = OrderGroup
-        fields = "__all__"
-
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     
@@ -261,9 +255,18 @@ class WasteTypeSerializer(serializers.ModelSerializer):
         model = WasteType
         fields = "__all__"
 
+class OrderGroupSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    user_address = UserAddressSerializer()
+    seller_product_seller_location = SellerProductSellerLocationSerializer()  
+    waste_type = WasteTypeSerializer()
+    time_slot = TimeSlotSerializer()
+    service_recurring_frequency = ServiceRecurringFrequencySerializer()
+    preferred_service_days = DayOfWeekSerializer(many=True)
 
-
-
+    class Meta:
+        model = OrderGroup
+        fields = "__all__"
 
 
 
