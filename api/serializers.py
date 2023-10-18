@@ -264,10 +264,14 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     service_recurring_frequency = ServiceRecurringFrequencySerializer()
     preferred_service_days = DayOfWeekSerializer(many=True)
     orders = OrderSerializer(many=True, read_only=True)
+    active = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderGroup
         fields = "__all__"
+
+    def get_active(self, obj):
+        return obj.end_date is None or obj.end_date > datetime.datetime.now().date()
 
 
 

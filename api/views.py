@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import permission_classes, authentication_classes
-
+from api.filters import OrderGroupFilterset
+from django_filters import rest_framework as filters
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from .serializers import *
 from .models import *
@@ -177,7 +178,8 @@ class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
 class OrderGroupViewSet(viewsets.ModelViewSet):
     queryset = OrderGroup.objects.all()
     serializer_class = OrderGroupSerializer
-    filterset_fields = ["id", "user_address"]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = OrderGroupFilterset
 
     def get_queryset(self):
         if self.request.user == "ALL":
