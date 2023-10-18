@@ -606,7 +606,7 @@ class Order(BaseModel):
         (COMPLETE, "Complete"),
     )
 
-    order_group = models.ForeignKey(OrderGroup, models.PROTECT)
+    order_group = models.ForeignKey(OrderGroup, models.PROTECT, related_name='orders')
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     start_date = models.DateField()
     end_date = models.DateField()

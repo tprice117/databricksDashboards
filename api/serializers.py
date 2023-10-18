@@ -263,6 +263,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     time_slot = TimeSlotSerializer()
     service_recurring_frequency = ServiceRecurringFrequencySerializer()
     preferred_service_days = DayOfWeekSerializer(many=True)
+    orders = OrderSerializer(many=True, read_only=True)
 
     class Meta:
         model = OrderGroup
