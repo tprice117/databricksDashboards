@@ -252,7 +252,7 @@ class MainProductCategory(BaseModel):
     description = models.TextField(blank=True, null=True)
     image = models.TextField(blank=True, null=True)
     icon = models.TextField(blank=True, null=True)
-    sort = models.DecimalField(max_digits=18, decimal_places=0)
+    sort = models.IntegerField()
     main_product_category_code = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -268,12 +268,12 @@ class MainProductCategoryInfo(BaseModel):
 
 class MainProduct(BaseModel):
     name = models.CharField(max_length=80)
-    cubic_yards = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
+    cubic_yards = models.IntegerField(blank=True, null=True)
     ar_url = models.URLField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
     main_product_category = models.ForeignKey(MainProductCategory, models.CASCADE)
-    sort = models.DecimalField(max_digits=18, decimal_places=0)
+    sort = models.IntegerField()
     included_tonnage_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
     price_per_additional_ton = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     max_tonnage_quantity = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True)
@@ -539,6 +539,7 @@ class OrderGroup(BaseModel):
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     placement_details = models.TextField(blank=True, null=True)
+    service_recurring_frequency = models.ForeignKey(ServiceRecurringFrequency, models.PROTECT, blank=True, null=True)
     preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
@@ -605,7 +606,7 @@ class Order(BaseModel):
         (COMPLETE, "Complete"),
     )
 
-    order_group = models.ForeignKey(OrderGroup, models.PROTECT)
+    order_group = models.ForeignKey(OrderGroup, models.PROTECT, related_name='orders')
     disposal_location = models.ForeignKey(DisposalLocation, models.DO_NOTHING, blank=True, null=True)
     start_date = models.DateField()
     end_date = models.DateField()

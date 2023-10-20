@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import permission_classes, authentication_classes
-
+from api.filters import OrderGroupFilterset
+from django_filters import rest_framework as filters
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from .serializers import *
 from .models import *
@@ -116,7 +117,7 @@ class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
     serializer_class = AddOnChoiceSerializer
-    filterset_fields = ["add_on"] 
+    filterset_fields = ["add_on", "add_on__main_product"] 
 
 @authentication_classes([])
 @permission_classes([])
@@ -177,7 +178,8 @@ class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
 class OrderGroupViewSet(viewsets.ModelViewSet):
     queryset = OrderGroup.objects.all()
     serializer_class = OrderGroupSerializer
-    filterset_fields = ["id", "user_address"]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = OrderGroupFilterset
 
     def get_queryset(self):
         if self.request.user == "ALL":
@@ -190,7 +192,11 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = ["id", "order_group"]
+    filterset_fields = {
+       "id": ["exact"], 
+       "order_group": ["exact"], 
+       'submitted_on': ['isnull'],
+    }
 
     def get_queryset(self):
         if self.request.user == "ALL":
@@ -233,7 +239,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
 class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
     serializer_class = ProductAddOnChoiceSerializer
-    filterset_fields = ["product", "add_on_choice"] 
+    filterset_fields = ["product", "add_on_choice", "product__main_product"] 
 
 @authentication_classes([])
 @permission_classes([])
@@ -640,6 +646,7 @@ def stripe_customer_portal_url(request, user_address_id):
         user_address.save()
 
     billing_portal_session = stripe.billing_portal.Session.create(
+        configuration=settings.STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG if request.GET.get("only_payments", False) == "true" else settings.STRIPE_FULL_CUSTOMER_PORTAL_CONFIG,
         customer=user_address.stripe_customer_id
     )
 
