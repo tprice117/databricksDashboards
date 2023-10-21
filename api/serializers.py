@@ -50,8 +50,6 @@ class UserGroupSerializer(serializers.ModelSerializer):
 
 class UserUserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
-    user = UserSerializer()
-    user_address = UserAddressSerializer()
     
     class Meta:
         model = UserUserAddress
