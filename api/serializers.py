@@ -116,6 +116,8 @@ class MainProductInfoSerializer(serializers.ModelSerializer):
 
 class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    main_product_category = MainProductCategorySerializer(read_only=True)
+    
     class Meta:
         model = MainProduct
         fields = "__all__"
@@ -183,30 +185,33 @@ class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    main_product = MainProductSerializer(read_only=True)
+
     class Meta:
         model = Product
         fields = "__all__"
         
 class SellerProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    seller = SellerSerializer(read_only=True)
+    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True)
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), source='product', write_only=True)
+
     class Meta:
         model = SellerProduct
         fields = "__all__"
 
 class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
-    available_quantity = serializers.SerializerMethodField(read_only=True)
+    seller_product = SellerProductSerializer(read_only=True)
+    seller_product_id = serializers.PrimaryKeyRelatedField(queryset=SellerProduct.objects.all(), source='seller_product', write_only=True)
+    seller_location = SellerLocationSerializer(read_only=True)
+    seller_location_id = serializers.PrimaryKeyRelatedField(queryset=SellerLocation.objects.all(), source='seller_location', write_only=True)
+
     class Meta:
         model = SellerProductSellerLocation
         fields = "__all__"
-    
-    def get_available_quantity(self, obj):
-        #order_detail_count = Order.objects.filter(
-        #seller_product_seller_location=obj.id,
-        #invoice_status__in=["Paid", "Open"] TODO: need to grab these statuses from the Stripe API
-        #).count()
-        return 0
-        #obj.total_inventory - order_detail_count
 
 class SellerProductSellerLocationServiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
