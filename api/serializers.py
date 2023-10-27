@@ -47,6 +47,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    seller = SellerSerializer(read_only=True)
+    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True)
+    
     class Meta:
         model = UserGroup
         fields = "__all__"
