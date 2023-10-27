@@ -18,6 +18,9 @@ class SellerSerializer(serializers.ModelSerializer):
     
 class SellerLocationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    seller = SellerSerializer(read_only=True)
+    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True)
+
     class Meta:
         model = SellerLocation
         fields = "__all__"
@@ -117,7 +120,7 @@ class MainProductInfoSerializer(serializers.ModelSerializer):
 class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product_category = MainProductCategorySerializer(read_only=True)
-    
+
     class Meta:
         model = MainProduct
         fields = "__all__"
