@@ -136,6 +136,7 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    order_line_items = serializers.SerializerMethodField(many=True, read_only=True)
     
     class Meta:
         model = Order
