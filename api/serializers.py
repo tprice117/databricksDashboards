@@ -40,6 +40,8 @@ class UserAddressSerializer(serializers.ModelSerializer):
     
 class UserSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    user_id = serializers.CharField(required=False, allow_null=True)
+    
     class Meta:
         model = User
         fields = "__all__"
@@ -139,7 +141,7 @@ class OrderLineItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderLineItem
         fields = "__all__"
-        
+
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
