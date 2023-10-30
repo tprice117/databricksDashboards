@@ -216,7 +216,7 @@ class Price_Model:
                 is_flat_rate = True
             
             return {
-                "rate": rate * decimal.Decimal(1.2) if rate else None,
+                "rate": rate,
                 "is_flat_rate": is_flat_rate,
                 "total_distance": total_distance if service.price_per_mile else None,
                 # "customer_to_disposal_location_distance": customer_disposal_location_distance
