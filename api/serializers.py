@@ -134,9 +134,15 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
         model = MainProductWasteType
         fields = "__all__"
 
+class OrderLineItemSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderLineItem
+        fields = "__all__"
+        
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
-    order_line_items = serializers.SerializerMethodField(many=True, read_only=True)
+    order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     
     class Meta:
         model = Order
@@ -146,12 +152,6 @@ class OrderSerializer(serializers.ModelSerializer):
     #     return stripe.Invoice.retrieve(
     #     obj.stripe_invoice_id,
     #     ).status if obj.stripe_invoice_id and obj.stripe_invoice_id != "" else None
-
-class OrderLineItemSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    class Meta:
-        model = OrderLineItem
-        fields = "__all__"
 
 class OrderLineItemTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
