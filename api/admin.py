@@ -152,7 +152,7 @@ class UserInline(admin.TabularInline):
 
 class OrderLineItemInline(admin.TabularInline):
     model = OrderLineItem
-    fields = ('order_line_item_type', 'rate', 'quantity', 'downstream_price', 'platform_fee_percent', 'seller_payout_price')
+    fields = ('order_line_item_type', 'rate', 'quantity', 'seller_payout_price', 'platform_fee_percent','downstream_price',)
     readonly_fields = ('downstream_price', 'seller_payout_price')
     show_change_link = True
     extra=0
