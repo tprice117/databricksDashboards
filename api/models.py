@@ -784,7 +784,7 @@ class OrderLineItemType(BaseModel):
 class OrderLineItem(BaseModel):
     PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(100)]
 
-    order = models.ForeignKey(Order, models.CASCADE)
+    order = models.ForeignKey(Order, models.CASCADE, related_name='order_line_items')
     order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
     rate = models.DecimalField(max_digits=18, decimal_places=2)
     quantity = models.DecimalField(max_digits=18, decimal_places=2)
