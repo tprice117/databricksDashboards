@@ -679,7 +679,8 @@ class Order(BaseModel):
         print("post_save")
         print(instance.submitted_on_has_changed)
         order_line_items = OrderLineItem.objects.filter(order=instance)
-        if instance.submitted_on_has_changed and order_line_items.count() == 0:
+        # if instance.submitted_on_has_changed and order_line_items.count() == 0:
+        if created and order_line_items.count() == 0:
             try:
                 print("submitted_on_has_changed")
                 main_product = instance.order_group.seller_product_seller_location.seller_product.product.main_product
@@ -783,7 +784,7 @@ class OrderLineItemType(BaseModel):
 class OrderLineItem(BaseModel):
     PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(100)]
 
-    order = models.ForeignKey(Order, models.PROTECT)
+    order = models.ForeignKey(Order, models.CASCADE)
     order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
     rate = models.DecimalField(max_digits=18, decimal_places=2)
     quantity = models.DecimalField(max_digits=18, decimal_places=2)
