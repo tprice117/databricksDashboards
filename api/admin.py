@@ -211,6 +211,7 @@ class PaymentLineItemInline(admin.TabularInline):
 class SellerInvoicePayableLineItemInline(admin.TabularInline):
     model = SellerInvoicePayableLineItem
     fields = ('order', 'amount', 'description')
+    autocomplete_fields = ["order",]
     show_change_link = True
     extra=0
 
@@ -536,12 +537,14 @@ class MainProductWasteTypeAdmin(admin.ModelAdmin):
 class SellerInvoicePayableAdmin(admin.ModelAdmin):
     model = SellerInvoicePayable
     list_display = ('seller_location', 'supplier_invoice_id', 'amount', 'status')
+    search_fields = ["id", "seller_location__name", "supplier_invoice_id"]
     inlines = [
         SellerInvoicePayableLineItemInline,
     ]
 
 class SellerInvoicePayableLineItemAdmin(admin.ModelAdmin):
     model = SellerInvoicePayableLineItem
+    search_fields = ["id", "seller_invoice_payable__id", "order__id"]
 
 class PayoutLineItemAdmin(admin.ModelAdmin):
     model = PayoutLineItem
