@@ -41,7 +41,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user_id = serializers.CharField(required=False, allow_null=True)
-    
+
     class Meta:
         model = User
         fields = "__all__"
@@ -50,7 +50,8 @@ class UserSerializer(serializers.ModelSerializer):
 class UserGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     seller = SellerSerializer(read_only=True)
-    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True)
+    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True, allow_null=True)
+    share_code = serializers.CharField(required=False, allow_null=True)
     
     class Meta:
         model = UserGroup
