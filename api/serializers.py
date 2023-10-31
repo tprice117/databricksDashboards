@@ -324,6 +324,15 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         OrderGroupRental.objects.create(order_group=order_group, **rental_data)
         OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
         return order_group
+    
+    def update(self, instance, validated_data):
+        # Remove nested data.
+        validated_data.pop('service')
+        validated_data.pop('rental')
+        validated_data.pop('material')
+
+        instance.save()
+        return instance
 
     def get_active(self, obj):
         return obj.end_date is None or obj.end_date > datetime.datetime.now().date()
