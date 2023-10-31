@@ -713,7 +713,7 @@ class Order(BaseModel):
             try:
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
-                if instance.order_group.hasattr('service'):
+                if hasattr(instance.order_group, 'service'):
                     order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
                     OrderLineItem.objects.create(
                         order = instance,
@@ -724,7 +724,7 @@ class Order(BaseModel):
                         platform_fee_percent = instance.order_group.take_rate,
                     )
                 # Rental Price.
-                if instance.order_group.hasattr('rental'):
+                if hasattr(instance.order_group, 'rental'):
                     day_count = (instance.end_date - instance.start_date).days if instance.end_date else 0
                     days_over_included = day_count - instance.order_group.rental.included_days
                     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
@@ -750,7 +750,7 @@ class Order(BaseModel):
                             platform_fee_percent = instance.order_group.take_rate,
                         )
                 # Material Price.
-                if instance.order_group.hasattr('material'):
+                if hasattr(instance.order_group, 'material'):
                     tons_over_included = (instance.order_group.tonnage_quantity or 0) - instance.order_group.material.tonnage_included
                     order_line_item_type = OrderLineItemType.objects.get(code="MATERIAL")  
 
