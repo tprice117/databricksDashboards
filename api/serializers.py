@@ -337,7 +337,9 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         validated_data.pop('rental')
         validated_data.pop('material')
 
+        preferred_service_days = validated_data.pop('preferred_service_days')
         instance.save()
+        instance.preferred_service_days.set(preferred_service_days)
         return instance
 
     def get_active(self, obj):
