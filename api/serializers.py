@@ -319,10 +319,16 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         rental_data = validated_data.pop('rental')
         material_data = validated_data.pop('material')
 
+        # Create order group.
+        preferred_service_days = validated_data.pop('preferred_service_days')
         order_group = OrderGroup.objects.create(**validated_data)
+        order_group.preferred_service_days.set(preferred_service_days)
+
+        # Create service, rental, and material.
         OrderGroupService.objects.create(order_group=order_group, **service_data)
         OrderGroupRental.objects.create(order_group=order_group, **rental_data)
         OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
+
         return order_group
     
     def update(self, instance, validated_data):
