@@ -319,7 +319,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         rental_data = validated_data.pop('rental')
         material_data = validated_data.pop('material')
 
-        order_group = UserGroup.objects.create(**validated_data)
+        order_group = OrderGroup.objects.create(**validated_data)
         OrderGroupService.objects.create(order_group=order_group, **service_data)
         OrderGroupRental.objects.create(order_group=order_group, **rental_data)
         OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
