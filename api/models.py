@@ -713,64 +713,53 @@ class Order(BaseModel):
             try:
                 print("submitted_on_has_changed")
                 main_product = instance.order_group.seller_product_seller_location.seller_product.product.main_product
-                pricing = Price_Model({
-                    "seller_location": instance.order_group.seller_product_seller_location.seller_location.id,
-                    "product": instance.order_group.seller_product_seller_location.seller_product.product.id,
-                    "user_address": instance.order_group.user_address.id,
-                    "waste_type": instance.order_group.waste_type.id,
-                }
-                ).get_prices()
-                print(str(pricing))
 
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
-                if main_product.has_service and 'service' in pricing:
-                    service = pricing["service"]
-
+                if instance.order_group.hasattr('service'):
                     order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
                     OrderLineItem.objects.create(
                         order = instance,
                         order_line_item_type = order_line_item_type,
-                        rate = service["rate"],
-                        quantity = 1 if service["is_flat_rate"] else service["total_distance"],
-                        is_flat_rate = service["is_flat_rate"],
+                        rate = instance.order_group.service.rate,
+                        quantity = instance.order_group.service.miles or 0,
+                        is_flat_rate = instance.order_group.service.miles is None,
                     )
                 # Rental Price.
-                if main_product.has_rental and 'rental' in pricing:
-                    rental = pricing["rental"]
-                    days_over_included = (instance.end_date or instance.start_date) - instance.start_date
+                if instance.order_group.hasattr('rental'):
+                    day_count = (instance.end_date - instance.start_date).days if instance.end_date else 0
+                    days_over_included = day_count - instance.order_group.rental.included_days
                     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
 
                     # Create OrderLineItem for Included Days.
                     OrderLineItem.objects.create(
                         order = instance,
                         order_line_item_type = order_line_item_type,
-                        rate = rental["price_per_day_included"],
-                        quantity = rental["included_days"],
+                        rate = instance.order_group.rental.price_per_day_included,
+                        quantity = instance.order_group.rental.days_included,
                         description = "Included Days",
                     )
 
                     # Create OrderLineItem for Additional Days.
-                    if days_over_included.days > 0:
+                    if days_over_included > 0:
                         OrderLineItem.objects.create(
                             order = instance,
                             order_line_item_type = order_line_item_type,
-                            rate = rental["price_per_day_additional"],
-                            quantity = days_over_included.days,
+                            rate = instance.order_group.rental.price_per_day_additional,
+                            quantity = days_over_included,
                             description = "Additional Days",
                         )
                 # Material Price.
-                if main_product.has_material and 'material' in pricing:
-                    material = pricing["material"]
-                    tons_over_included = (instance.order_group.tonnage_quantity or 0) - material["tonnage_included"]
+                if instance.order_group.hasattr('material'):
+                    tons_over_included = (instance.order_group.tonnage_quantity or 0) - instance.order_group.material.tonnage_included
                     order_line_item_type = OrderLineItemType.objects.get(code="MATERIAL")  
 
                     # Create OrderLineItem for Included Tons.   
                     OrderLineItem.objects.create(
                         order=instance,
                         order_line_item_type=order_line_item_type,
-                        rate = material["price_per_ton"],
-                        quantity = material["tonnage_included"],
+                        rate = instance.order_group.material.price_per_ton,
+                        quantity = instance.order_group.material.tonnage_included,
                         description = "Included Tons",
                     )
 
@@ -779,7 +768,7 @@ class Order(BaseModel):
                         OrderLineItem.objects.create(
                             order=instance,
                             order_line_item_type=order_line_item_type,
-                            rate=material["price_per_additional_ton"],
+                            rate=instance.order_group.material.price_per_ton,
                             quantity=tons_over_included,
                             description="Additional Tons",
                         )
