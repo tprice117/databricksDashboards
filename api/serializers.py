@@ -270,6 +270,24 @@ class WasteTypeSerializer(serializers.ModelSerializer):
         model = WasteType
         fields = "__all__"
 
+class OrderGroupServiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderGroupService
+        fields = "__all__"
+
+class OrderGroupRentalSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderGroupRental
+        fields = "__all__"
+
+class OrderGroupMaterialSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderGroupMaterial
+        fields = "__all__"
+
 class OrderGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user = UserSerializer(read_only=True)
@@ -286,6 +304,9 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     service_recurring_frequency_id = serializers.PrimaryKeyRelatedField(queryset=ServiceRecurringFrequency.objects.all(), source='service_recurring_frequency', write_only=True, allow_null=True)
     preferred_service_days = DayOfWeekSerializer(many=True, read_only=True)
     preferred_service_day_ids = serializers.PrimaryKeyRelatedField(queryset=DayOfWeek.objects.all(), many=True, source='preferred_service_days', write_only=True)
+    service = OrderGroupServiceSerializer()
+    rental = OrderGroupRentalSerializer()
+    material = OrderGroupMaterialSerializer()
     orders = OrderSerializer(many=True, read_only=True)
     active = serializers.SerializerMethodField(read_only=True)
 

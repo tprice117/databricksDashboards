@@ -549,33 +549,33 @@ class OrderGroup(BaseModel):
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
 
-# class OrderGroupService(BaseModel):
-#     order_group = models.OneToOneField(
-#         OrderGroup,
-#         on_delete=models.CASCADE,
-#         related_name='service'
-#     )
-#     rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-#     miles = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+class OrderGroupService(BaseModel):
+    order_group = models.OneToOneField(
+        OrderGroup,
+        on_delete=models.CASCADE,
+        related_name='service'
+    )
+    rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    miles = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
-# class OrderGroupRental(BaseModel):
-#     order_group = models.OneToOneField(
-#         OrderGroup,
-#         on_delete=models.CASCADE,
-#         related_name='rental'
-#     )
-#     included_days = models.IntegerField(default=0)
-#     price_per_day_included = models.DecimalField(max_digits=18, decimal_places=2, default=0)
-#     price_per_day_additional = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+class OrderGroupRental(BaseModel):
+    order_group = models.OneToOneField(
+        OrderGroup,
+        on_delete=models.CASCADE,
+        related_name='rental'
+    )
+    included_days = models.IntegerField(default=0)
+    price_per_day_included = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    price_per_day_additional = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
-# class OrderGroupMaterial(BaseModel):
-#     order_group = models.OneToOneField(
-#         OrderGroup,
-#         on_delete=models.CASCADE,
-#         related_name='material'
-#     )
-#     price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, default=0)
-#     tonnage_included = models.IntegerField(default=0)
+class OrderGroupMaterial(BaseModel):
+    order_group = models.OneToOneField(
+        OrderGroup,
+        on_delete=models.CASCADE,
+        related_name='material'
+    )
+    price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    tonnage_included = models.IntegerField(default=0)
 
 class Subscription(BaseModel):
     order_group = models.OneToOneField(OrderGroup, models.PROTECT)
