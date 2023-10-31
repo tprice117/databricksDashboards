@@ -734,7 +734,7 @@ class Order(BaseModel):
                         order = instance,
                         order_line_item_type = order_line_item_type,
                         rate = instance.order_group.rental.price_per_day_included,
-                        quantity = instance.order_group.rental.days_included,
+                        quantity = instance.order_group.rental.included_days,
                         description = "Included Days",
                         platform_fee_percent = instance.order_group.take_rate,
                     )
