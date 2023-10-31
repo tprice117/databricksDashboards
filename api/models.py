@@ -711,9 +711,6 @@ class Order(BaseModel):
         # if instance.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
             try:
-                print("submitted_on_has_changed")
-                main_product = instance.order_group.seller_product_seller_location.seller_product.product.main_product
-
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
                 if instance.order_group.hasattr('service'):
@@ -724,6 +721,7 @@ class Order(BaseModel):
                         rate = instance.order_group.service.rate,
                         quantity = instance.order_group.service.miles or 0,
                         is_flat_rate = instance.order_group.service.miles is None,
+                        platform_fee_percent = instance.order_group.take_rate,
                     )
                 # Rental Price.
                 if instance.order_group.hasattr('rental'):
@@ -738,6 +736,7 @@ class Order(BaseModel):
                         rate = instance.order_group.rental.price_per_day_included,
                         quantity = instance.order_group.rental.days_included,
                         description = "Included Days",
+                        platform_fee_percent = instance.order_group.take_rate,
                     )
 
                     # Create OrderLineItem for Additional Days.
@@ -748,6 +747,7 @@ class Order(BaseModel):
                             rate = instance.order_group.rental.price_per_day_additional,
                             quantity = days_over_included,
                             description = "Additional Days",
+                            platform_fee_percent = instance.order_group.take_rate,
                         )
                 # Material Price.
                 if instance.order_group.hasattr('material'):
@@ -761,6 +761,7 @@ class Order(BaseModel):
                         rate = instance.order_group.material.price_per_ton,
                         quantity = instance.order_group.material.tonnage_included,
                         description = "Included Tons",
+                        platform_fee_percent = instance.order_group.take_rate,
                     )
 
                     # Create OrderLineItem for Additional Tons.
@@ -771,6 +772,7 @@ class Order(BaseModel):
                             rate=instance.order_group.material.price_per_ton,
                             quantity=tons_over_included,
                             description="Additional Tons",
+                            platform_fee_percent = instance.order_group.take_rate,
                         )
             except Exception as e:
                 print(e)
