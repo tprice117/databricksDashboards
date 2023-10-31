@@ -271,19 +271,19 @@ class WasteTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class OrderGroupServiceSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
+    order_group = serializers.CharField(required=False, allow_null=True)
     class Meta:
         model = OrderGroupService
         fields = "__all__"
 
 class OrderGroupRentalSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
+    order_group = serializers.CharField(required=False, allow_null=True)
     class Meta:
         model = OrderGroupRental
         fields = "__all__"
 
 class OrderGroupMaterialSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
+    order_group = serializers.CharField(required=False, allow_null=True)
     class Meta:
         model = OrderGroupMaterial
         fields = "__all__"
