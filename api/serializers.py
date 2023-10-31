@@ -314,6 +314,17 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         model = OrderGroup
         fields = "__all__"
 
+    def create(self, validated_data):
+        service_data = validated_data.pop('service')
+        rental_data = validated_data.pop('rental')
+        material_data = validated_data.pop('material')
+
+        order_group = UserGroup.objects.create(**validated_data)
+        OrderGroupService.objects.create(order_group=order_group, **service_data)
+        OrderGroupRental.objects.create(order_group=order_group, **rental_data)
+        OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
+        return order_group
+
     def get_active(self, obj):
         return obj.end_date is None or obj.end_date > datetime.datetime.now().date()
 
