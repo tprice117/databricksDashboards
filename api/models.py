@@ -218,7 +218,7 @@ class UserAddress(BaseModel):
     child_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.name or "[No name]"
     
     def pre_save(sender, instance, *args, **kwargs):
         latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
