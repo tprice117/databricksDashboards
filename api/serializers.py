@@ -40,6 +40,8 @@ class UserAddressSerializer(serializers.ModelSerializer):
     
 class UserSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    user_id = serializers.CharField(required=False, allow_null=True)
+
     class Meta:
         model = User
         fields = "__all__"
@@ -48,7 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     seller = SellerSerializer(read_only=True)
-    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True)
+    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True, allow_null=True)
     
     class Meta:
         model = UserGroup
@@ -134,8 +136,15 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
         model = MainProductWasteType
         fields = "__all__"
 
+class OrderLineItemSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderLineItem
+        fields = "__all__"
+
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     
     class Meta:
         model = Order
@@ -145,12 +154,6 @@ class OrderSerializer(serializers.ModelSerializer):
     #     return stripe.Invoice.retrieve(
     #     obj.stripe_invoice_id,
     #     ).status if obj.stripe_invoice_id and obj.stripe_invoice_id != "" else None
-
-class OrderLineItemSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    class Meta:
-        model = OrderLineItem
-        fields = "__all__"
 
 class OrderLineItemTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
@@ -267,6 +270,24 @@ class WasteTypeSerializer(serializers.ModelSerializer):
         model = WasteType
         fields = "__all__"
 
+class OrderGroupServiceSerializer(serializers.ModelSerializer):
+    order_group = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderGroupService
+        fields = "__all__"
+
+class OrderGroupRentalSerializer(serializers.ModelSerializer):
+    order_group = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderGroupRental
+        fields = "__all__"
+
+class OrderGroupMaterialSerializer(serializers.ModelSerializer):
+    order_group = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = OrderGroupMaterial
+        fields = "__all__"
+
 class OrderGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user = UserSerializer(read_only=True)
@@ -283,12 +304,43 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     service_recurring_frequency_id = serializers.PrimaryKeyRelatedField(queryset=ServiceRecurringFrequency.objects.all(), source='service_recurring_frequency', write_only=True, allow_null=True)
     preferred_service_days = DayOfWeekSerializer(many=True, read_only=True)
     preferred_service_day_ids = serializers.PrimaryKeyRelatedField(queryset=DayOfWeek.objects.all(), many=True, source='preferred_service_days', write_only=True)
+    service = OrderGroupServiceSerializer()
+    rental = OrderGroupRentalSerializer()
+    material = OrderGroupMaterialSerializer()
     orders = OrderSerializer(many=True, read_only=True)
     active = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderGroup
         fields = "__all__"
+
+    def create(self, validated_data):
+        service_data = validated_data.pop('service')
+        rental_data = validated_data.pop('rental')
+        material_data = validated_data.pop('material')
+
+        # Create order group.
+        preferred_service_days = validated_data.pop('preferred_service_days')
+        order_group = OrderGroup.objects.create(**validated_data)
+        order_group.preferred_service_days.set(preferred_service_days)
+
+        # Create service, rental, and material.
+        OrderGroupService.objects.create(order_group=order_group, **service_data)
+        OrderGroupRental.objects.create(order_group=order_group, **rental_data)
+        OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
+
+        return order_group
+    
+    def update(self, instance, validated_data):
+        # Remove nested data.
+        validated_data.pop('service')
+        validated_data.pop('rental')
+        validated_data.pop('material')
+
+        preferred_service_days = validated_data.pop('preferred_service_days')
+        instance.save()
+        instance.preferred_service_days.set(preferred_service_days)
+        return instance
 
     def get_active(self, obj):
         return obj.end_date is None or obj.end_date > datetime.datetime.now().date()
