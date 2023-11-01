@@ -84,6 +84,14 @@ class SellerLocation(BaseModel):
         return self.name
 
 class UserGroup(BaseModel):
+    COMPLIANCE_STATUS_CHOICES = (
+        ("NOT_REQUIRED", "Not Required"),
+        ("REQUESTED", "Requested"),
+        ("IN-PROGRESS", "In-Progress"),
+        ("NEEDS_REVIEW", "Needs Review"),
+        ("APPROVED", "Approved"),
+    )
+
     seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
     name = models.CharField(max_length=255)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
@@ -92,6 +100,8 @@ class UserGroup(BaseModel):
     is_superuser = models.BooleanField(default=False)
     share_code = models.CharField(max_length=6, blank=True)
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
+    credit_line_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    compliance_status = models.CharField(max_length=20, choices=COMPLIANCE_STATUS_CHOICES, default="NOT_REQUIRED")
 
     def __str__(self):
         return self.name
@@ -792,7 +802,6 @@ class OrderDisposalTicket(BaseModel):
     def __str__(self):
         return self.ticket_id + ' - ' + self.order.order_group.user_address.name
     
-
 class OrderLineItemType(BaseModel):
     name = models.CharField(max_length=255)
     units = models.CharField(max_length=255, blank=True, null=True)
