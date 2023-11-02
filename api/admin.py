@@ -157,13 +157,13 @@ class OrderLineItemInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
-    def downstream_price(self, obj):
+    def seller_payout_price(self, obj):
         return round((obj.rate or 0) * (obj.quantity or 0), 2)
     
-    def seller_payout_price(self, obj):
-        total_price = self.downstream_price(obj)
-        application_fee = total_price * (obj.platform_fee_percent / 100)
-        return round(total_price - application_fee, 2)
+    def downstream_price(self, obj):
+        seller_price = self.seller_payout_price(obj)
+        customer_price = seller_price * (1 + (obj.platform_fee_percent / 100))
+        return round(customer_price, 2)
 
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket

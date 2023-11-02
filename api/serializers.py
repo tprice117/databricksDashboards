@@ -220,6 +220,7 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     seller_location = SellerLocationSerializer(read_only=True)
     seller_location_id = serializers.PrimaryKeyRelatedField(queryset=SellerLocation.objects.all(), source='seller_location', write_only=True)
 
+
     class Meta:
         model = SellerProductSellerLocation
         fields = "__all__"
