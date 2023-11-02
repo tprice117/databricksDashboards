@@ -273,13 +273,13 @@ class SellerLocationAdmin(admin.ModelAdmin):
         request._obj_ = obj
         return super(SellerLocationAdmin, self).get_form(request, obj, **kwargs)
     
-    def total_seller_payout_price(self, obj):
-        order_line_items = OrderLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
-        return round(sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items]), 2)
-
     def total_paid_to_seller(self, obj):
         payout_line_items = PayoutLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
         return sum([payout_line_items.amount  for payout_line_items in payout_line_items])
+
+    def total_seller_payout_price(self, obj):
+        order_line_items = OrderLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
+        return round(sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items]), 2)
 
     def payout_status(self, obj):
         payout_diff = self.total_seller_payout_price(obj) - self.total_paid_to_seller(obj)
