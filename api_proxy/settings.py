@@ -80,28 +80,28 @@ WSGI_APPLICATION = 'api_proxy.wsgi.application'
 
 
 #Database.
-if ENVIRONMENT == 'TEST':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'defaultdb',
-            'USER': 'doadmin',
-            'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
-            'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
-            'PORT': '25060',
-        }
+# if ENVIRONMENT == 'TEST':
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'defaultdb',
+        'USER': 'doadmin',
+        'PASSWORD': 'AVNS_XEihnXpBlng33jia5Xq',
+        'HOST': 'db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com',
+        'PORT': '25060',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'defaultdb',
-            'USER': 'doadmin',
-            'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
-            'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
-            'PORT': '25060',
-        }
-    }
+}
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'defaultdb',
+#             'USER': 'doadmin',
+#             'PASSWORD': 'AVNS_BAJyvGbMyyQNzKfrP0S',
+#             'HOST': 'db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com',
+#             'PORT': '25060',
+#         }
+#     }
     
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -144,6 +144,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_ACCESS_KEY_ID = "AKIAYR4ELQCIAKOINOXF"
 AWS_SECRET_ACCESS_KEY = "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"
+AWS_S3_REGION_NAME = 'us-east-2'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
 if ENVIRONMENT == 'TEST':
     DEFAULT_FILE_STORAGE = 'api.custom_storage.MediaStorage'
 else:
