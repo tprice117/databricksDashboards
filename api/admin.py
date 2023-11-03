@@ -218,6 +218,15 @@ class SellerInvoicePayableLineItemInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class SellerInvoicePayableItemReadOnlyInline(admin.TabularInline):
+    model = SellerInvoicePayableLineItem
+    fields = ('amount', 'description')
+    readonly_fields = ('amount', 'description')
+    extra=0
+
+    def has_add_permission(self, request, obj):
+        return False
+
 
 
 
@@ -418,6 +427,57 @@ class SellerProductAdmin(admin.ModelAdmin):
     list_display = ('product', 'seller')
     list_filter = ('product__main_product__main_product_category', 'seller')
 
+    change_list_template = "admin/entities/seller_product_changelist.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+
+            # Do nothing if first row is not "name".
+            reader = csv.DictReader(decoded_file)
+            keys = ["seller_id", "product_id"]
+            for row in reader:
+                print(row.keys())
+                if not all(key in keys for key in list(row.keys())):
+                    self.message_user(request, "Your csv file must have a header rows with 'seller_id', 'product_id' as the first columns.")
+                    return redirect("..")
+                
+            # Create SellerProduct.
+            reader = csv.DictReader(decoded_file)
+            for row in reader:
+                print(row)
+                does_exist = SellerProduct.objects.filter(
+                    seller = Seller.objects.get(id=row['seller_id']),
+                    product = Product.objects.get(id=row['product_id']),
+                ).count() > 0
+
+                if not does_exist:
+                    test, test2 = SellerProduct.objects.get_or_create(
+                        seller = Seller.objects.get(id=row['seller_id']),
+                        product = Product.objects.get(id=row['product_id']),
+                    )
+                    print(test)
+                    print(test2)
+                else:
+                    print("SellerProduct ALREADY EXISITS")
+            
+            
+            self.message_user(request, "Your csv file has been imported")
+            return redirect("..")
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
+
 class SellerProductSellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["seller_location__name", "seller_location__seller__name", "seller_product__product__main_product__name"]
     list_display = ('seller_product', 'seller_location', "get_seller")
@@ -432,6 +492,57 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
     @admin.display(description='Seller')
     def get_seller(self, obj):
         return obj.seller_location.seller
+    
+    change_list_template = "admin/entities/seller_product_seller_location_changelist.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+
+            # Do nothing if first row is not "name".
+            reader = csv.DictReader(decoded_file)
+            keys = ["seller_product_id", "seller_location_id"]
+            for row in reader:
+                print(row.keys())
+                if not all(key in keys for key in list(row.keys())):
+                    self.message_user(request, "Your csv file must have a header rows with 'seller_product_id', 'seller_location_id' as the columns.")
+                    return redirect("..")
+                
+            # Create SellerProduct.
+            reader = csv.DictReader(decoded_file)
+            for row in reader:
+                print(row)
+                does_exist = SellerProductSellerLocation.objects.filter(
+                    seller_product = SellerProduct.objects.get(id=row['seller_product_id']),
+                    seller_location = SellerLocation.objects.get(id=row['seller_location_id']),
+                ).count() > 0
+
+                if not does_exist:
+                    test, test2 = SellerProductSellerLocation.objects.get_or_create(
+                        seller_product = SellerProduct.objects.get(id=row['seller_product_id']),
+                        seller_location = SellerLocation.objects.get(id=row['seller_location_id']),
+                    )
+                    print(test)
+                    print(test2)
+                else:
+                    print("SellerProductSellerLocation ALREADY EXISITS")
+            
+            
+            self.message_user(request, "Your csv file has been imported")
+            return redirect("..")
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
 
 class SellerProductSellerLocationServiceAdmin(admin.ModelAdmin):
     inlines = [
@@ -670,6 +781,8 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
+        PayoutLineItemInline,
+        SellerInvoicePayableItemReadOnlyInline,
     ]
 
     def customer_price(self, obj):
@@ -783,13 +896,13 @@ class PayoutAdmin(admin.ModelAdmin):
         #     payout.melio_payout_id = melio_payout_id
         # else:
         # Payout via Stripe.
-        transfer = stripe.Transfer.create(
-            amount=round(total_amount * 100),
-            currency="usd",
-            destination=seller_location.stripe_connect_account_id,
-            transfer_group=payout.id,
-        )
-        payout.stripe_transfer_id = transfer.id
+        # transfer = stripe.Transfer.create(
+        #     amount=round(total_amount * 100),
+        #     currency="usd",
+        #     destination=seller_location.stripe_connect_account_id,
+        #     transfer_group=payout.id,
+        # )
+        # payout.stripe_transfer_id = transfer.id
 
         payout.save()
         for payout_line_item in payout_line_items:
