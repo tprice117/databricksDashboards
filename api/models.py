@@ -76,12 +76,17 @@ class SellerLocation(BaseModel):
     state = models.CharField(max_length=80)
     postal_code = models.CharField(max_length=20)
     country = models.CharField(max_length=80)
-    latitude = models.DecimalField(max_digits=18, decimal_places=15)
-    longitude = models.DecimalField(max_digits=18, decimal_places=15)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     stripe_connect_account_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
+    
+    def pre_save(sender, instance, *args, **kwargs):
+        latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
+        instance.latitude = latitude or 0
+        instance.longitude = longitude or 0
 
 class UserGroup(BaseModel):
     COMPLIANCE_STATUS_CHOICES = (
@@ -920,6 +925,7 @@ post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 pre_save.connect(Order.pre_save, sender=Order)
 post_save.connect(Order.post_save, sender=Order)
+pre_save.connect(SellerLocation.pre_save, sender=SellerLocation)
 post_save.connect(SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation)
 post_save.connect(SellerProductSellerLocationService.post_save, sender=SellerProductSellerLocationService)
 post_save.connect(SellerProductSellerLocationMaterial.post_save, sender=SellerProductSellerLocationMaterial)

@@ -37,15 +37,6 @@ class UserAddressSerializer(serializers.ModelSerializer):
         model = UserAddress
         fields = "__all__"
         validators = []
-    
-class UserSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    user_id = serializers.CharField(required=False, allow_null=True)
-
-    class Meta:
-        model = User
-        fields = "__all__"
-        validators = []
 
 class UserGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
@@ -55,6 +46,17 @@ class UserGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserGroup
         fields = "__all__"
+
+class UserSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    user_id = serializers.CharField(required=False, allow_null=True)
+    user_group = UserGroupSerializer(read_only=True)
+    user_group_id = serializers.PrimaryKeyRelatedField(queryset=UserGroup.objects.all(), source='user_group', write_only=True, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = "__all__"
+        validators = []
 
 class UserUserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
@@ -217,6 +219,7 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     seller_product_id = serializers.PrimaryKeyRelatedField(queryset=SellerProduct.objects.all(), source='seller_product', write_only=True)
     seller_location = SellerLocationSerializer(read_only=True)
     seller_location_id = serializers.PrimaryKeyRelatedField(queryset=SellerLocation.objects.all(), source='seller_location', write_only=True)
+
 
     class Meta:
         model = SellerProductSellerLocation

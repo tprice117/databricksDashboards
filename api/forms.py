@@ -9,3 +9,6 @@ class UserForm(forms.ModelForm):
         # pwd later
         # widgets = {
         #    'password': forms.PasswordInput()}
+
+class CsvImportForm(forms.Form):
+    csv_file = forms.FileField()

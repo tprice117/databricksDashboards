@@ -1,4 +1,7 @@
+import csv
 from django.contrib import admin
+from django.shortcuts import redirect, render
+from django.urls import path
 from .models import *
 from django.contrib.admin import SimpleListFilter
 from django.contrib.auth.models import User as DjangoUser
@@ -157,13 +160,13 @@ class OrderLineItemInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
-    def downstream_price(self, obj):
+    def seller_payout_price(self, obj):
         return round((obj.rate or 0) * (obj.quantity or 0), 2)
     
-    def seller_payout_price(self, obj):
-        total_price = self.downstream_price(obj)
-        application_fee = total_price * (obj.platform_fee_percent / 100)
-        return round(total_price - application_fee, 2)
+    def downstream_price(self, obj):
+        seller_price = self.seller_payout_price(obj)
+        customer_price = seller_price * (1 + (obj.platform_fee_percent / 100))
+        return round(customer_price, 2)
 
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket
@@ -261,6 +264,61 @@ class SellerAdmin(admin.ModelAdmin):
         SellerLocationInline,
     ]
 
+    change_list_template = "admin/entities/seller_changelist.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+
+            # Do nothing if first row is not "name".
+            reader = csv.DictReader(decoded_file)
+            keys = ["name", "phone", "website", "type_display", "location_type", "status", "lead_time_hrs", "marketplace_display_name", "location_logo_url", "badge"]
+            for row in reader:
+                print(row.keys())
+                if not all(key in keys for key in list(row.keys())):
+                    self.message_user(request, "Your csv file must have a header rows with 'name', 'phone', 'website', 'type_display', 'location_type', 'status', 'lead_time_hrs', 'marketplace_display_name', 'location_logo_url', and 'badge' as the first columns.")
+                    return redirect("..")
+                
+            # Create User Groups.
+            reader = csv.DictReader(decoded_file)
+            for row in reader:
+                print(row)
+                if (Seller.objects.filter(name=row['name']).count() == 0):
+                    test, test2 = Seller.objects.get_or_create(
+                        name=row['name'],
+                        phone=row['phone'],
+                        website=row['website'],
+                        type_display=row['type_display'],
+                        location_type=row['location_type'],
+                        status=row['status'],
+                        lead_time_hrs=row['lead_time_hrs'],
+                        marketplace_display_name=row['marketplace_display_name'],
+                        location_logo_url=row['location_logo_url'],
+                        badge=row['badge'],
+                    )
+                    print(test)
+                    print(test2)
+                else:
+                    print("USER ALREADY EXISITS: " + row['name'])
+            
+            
+            self.message_user(request, "Your csv file has been imported")
+            return redirect("..")
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
+
+
 class SellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["name", "seller__name"]
     list_display = ('name', 'seller', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status', 'total_invoiced_from_seller', 'seller_invoice_status')
@@ -273,13 +331,13 @@ class SellerLocationAdmin(admin.ModelAdmin):
         request._obj_ = obj
         return super(SellerLocationAdmin, self).get_form(request, obj, **kwargs)
     
-    def total_seller_payout_price(self, obj):
-        order_line_items = OrderLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
-        return round(sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items]), 2)
-
     def total_paid_to_seller(self, obj):
         payout_line_items = PayoutLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
         return sum([payout_line_items.amount  for payout_line_items in payout_line_items])
+
+    def total_seller_payout_price(self, obj):
+        order_line_items = OrderLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
+        return round(sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items]), 2)
 
     def payout_status(self, obj):
         payout_diff = self.total_seller_payout_price(obj) - self.total_paid_to_seller(obj)
@@ -302,6 +360,58 @@ class SellerLocationAdmin(admin.ModelAdmin):
             return format_html("<p>&#128993;</p>")
         else:
             return format_html("<p>&#128308;</p>")
+        
+    change_list_template = "admin/entities/seller_location_changelist.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+
+            # Do nothing if first row is not "name".
+            reader = csv.DictReader(decoded_file)
+            keys = ["seller_id", "name", "street", "city", "state", "postal_code", "country", "stripe_connect_account_id"]
+            for row in reader:
+                print(row.keys())
+                if not all(key in keys for key in list(row.keys())):
+                    self.message_user(request, "Your csv file must have a header rows with 'seller_id', 'name', 'street', 'city', 'state', 'postal_code', 'country', and 'stripe_connect_account_id' as the first columns.")
+                    return redirect("..")
+                
+            # Create User Groups.
+            reader = csv.DictReader(decoded_file)
+            for row in reader:
+                print(row)
+                if (SellerLocation.objects.filter(name=row['name']).count() == 0):
+                    test, test2 = SellerLocation.objects.get_or_create(
+                        seller = Seller.objects.get(id=row['seller_id']),
+                        name = row['name'],
+                        street = row['street'],
+                        city = row['city'],
+                        state = row['state'],
+                        postal_code = row['postal_code'],
+                        country = row['country'],
+                        stripe_connect_account_id = row['stripe_connect_account_id'],
+                    )
+                    print(test)
+                    print(test2)
+                else:
+                    print("USER ALREADY EXISITS: " + row['name'])
+            
+            
+            self.message_user(request, "Your csv file has been imported")
+            return redirect("..")
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
     
 class SellerProductAdmin(admin.ModelAdmin):
     search_fields = ["product__product_code", "seller__name"]
@@ -430,12 +540,101 @@ class UserAdmin(admin.ModelAdmin):
     def active_orders(self, obj):
         return Order.objects.filter(order_group__user=obj).exclude(submitted_on=None).count()
 
+    change_list_template = "admin/entities/user_changelist.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+
+            # Do nothing if first row is not "name".
+            reader = csv.DictReader(decoded_file)
+            keys = ["user_group", "phone", "email", "first_name", "last_name"]
+            for row in reader:
+                if not all(key in keys for key in list(row.keys())):
+                    self.message_user(request, "Your csv file must have a header rows with 'user_group', 'phone', 'email', 'first_name', and 'last_name' as the first columns.")
+                    return redirect("..")
+                
+            # Create User Groups.
+            reader = csv.DictReader(decoded_file)
+            for row in reader:
+                print(row)
+                if (User.objects.filter(email=row['email']).count() == 0):
+                    test, test2 = User.objects.get_or_create(
+                        user_group=UserGroup.objects.get(id=row['user_group']),
+                        user_id="",
+                        phone = row['phone'],
+                        email = row['email'],
+                        first_name = row['first_name'],
+                        last_name = row['last_name'],
+                        is_admin=True,
+                    )
+                    print(test)
+                    print(test2)
+                else:
+                    print("USER ALREADY EXISITS: " + row['email'])
+            
+            
+            self.message_user(request, "Your csv file has been imported")
+            return redirect("..")
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
+
 class UserGroupAdmin(admin.ModelAdmin):
     model = UserGroup
     search_fields = ["name"]
     inlines = [
         UserInline,
     ]
+
+    change_list_template = "admin/entities/user_group_changelist.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('import-csv/', self.import_csv),
+        ]
+        return my_urls + urls
+
+    def import_csv(self, request):
+        if request.method == "POST":
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+
+            # Do nothing if first row is not "name".
+            reader = csv.DictReader(decoded_file)
+            for row in reader:
+                if not 'name' in row.keys():
+                    self.message_user(request, "Your csv file must have a header row with 'name' as the first column.")
+                    return redirect("..")
+                
+            # Create User Groups.
+            reader = csv.DictReader(decoded_file)
+            for row in reader:
+                print(row)
+                test, test2 = UserGroup.objects.get_or_create(
+                    name=row['name'],
+                )
+                print(test)
+                print(test2)
+            
+            self.message_user(request, "Your csv file has been imported")
+            return redirect("..")
+        form = CsvImportForm()
+        payload = {"form": form}
+        return render(
+            request, "admin/csv_form.html", payload
+        )
 
 class OrderGroupAdmin(admin.ModelAdmin):
     model = OrderGroup
