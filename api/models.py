@@ -97,7 +97,7 @@ class UserGroup(BaseModel):
         ("APPROVED", "Approved"),
     )
 
-    seller = models.ForeignKey(Seller, models.DO_NOTHING, blank=True, null=True)
+    seller = models.OneToOneField(Seller, models.DO_NOTHING, blank=True, null=True)
     name = models.CharField(max_length=255)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     pay_later = models.BooleanField(default=False)
