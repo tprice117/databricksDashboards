@@ -520,7 +520,8 @@ class SellerProductSellerLocationMaterial(BaseModel):
 class SellerProductSellerLocationMaterialWasteType(BaseModel):
     seller_product_seller_location_material = models.ForeignKey(
         SellerProductSellerLocationMaterial, 
-        models.PROTECT
+        models.PROTECT,
+        related_name='waste_types'
     )
     main_product_waste_type = models.ForeignKey(
         MainProductWasteType,
