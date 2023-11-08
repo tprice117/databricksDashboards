@@ -230,8 +230,8 @@ class Price_Model:
             
             return {
                 "included_days": rental.included_days,
-                "price_per_day_included": rental.price_per_day_included * decimal.Decimal(1.2) if rental.price_per_day_included else None,
-                "price_per_day_additional": rental.price_per_day_additional * decimal.Decimal(1.2)  if rental.price_per_day_additional else None,
+                "price_per_day_included": rental.price_per_day_included if rental.price_per_day_included else None,
+                "price_per_day_additional": rental.price_per_day_additional  if rental.price_per_day_additional else None,
             }
         else:
             return None
@@ -255,7 +255,7 @@ class Price_Model:
             
             return {
                 "tonnage_included": seller_product_seller_location_material_waste_type.tonnage_included if seller_product_seller_location_material_waste_type else None,
-                "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton * decimal.Decimal(1.2)  if seller_product_seller_location_material_waste_type else None
+                "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton if seller_product_seller_location_material_waste_type else None
             }
         else:
             return None
