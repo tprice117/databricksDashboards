@@ -857,3 +857,40 @@ def denver_compliance_report(request):
        print("An exception occurred: {}".format(error.text))
 
     return Response("Success", status=200)
+
+# Denver Waste Compliance Report.
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def move_all_to_high(request):
+    # Get L Products
+    low_products = []
+    for t in [10, 12, 15, 20, 30, 40]:
+        test = Product.objects.filter(product_code="RO" + str(t) + "L")
+        low_products.extend(test)
+
+    # Delete SellerProduct.
+    for p in low_products:
+        seller_products = SellerProduct.objects.filter(product=p)
+        for s in seller_products:
+            s.delete()
+        # seller_product_seller_location_material_waste_types = SellerProductSellerLocationMaterialWasteType.objects.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__product=p)
+        # for s in seller_product_seller_location_material_waste_types:
+        #     s.delete()
+    
+    # for t in test:
+    #     yd_order_groups = roll_off_order_groups.filter(seller_product_seller_location__seller_product__product__product_code="RO" + str(t) + "L")
+
+    #     print("ORDERS FOR " + str(t) + " YD")
+    #     print(yd_order_groups.count())
+        # for y in yd_order_groups:
+        #     # Find the high dumpster seller product seller location.
+        #     does_exist = SellerProductSellerLocation.objects.filter(seller_product__product__product_code="RO" + str(t) + "H", seller_product__seller=y.seller_product_seller_location.seller_product.seller).count() > 0
+            
+        #     if does_exist:
+        #         high_seller_product_seller_location = SellerProductSellerLocation.objects.get(seller_product__product__product_code="RO" + str(t) + "H", seller_product__seller=y.seller_product_seller_location.seller_product.seller)
+        #         y.seller_product_seller_location = high_seller_product_seller_location
+        #         y.save()
+        #         print(str(y.id) + " - " + str(high_seller_product_seller_location.id))
+        #     else: 
+        #         print("NO HIGH DUMPSTER FOR " + str(t) + " YD: " + str(y.id))

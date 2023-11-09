@@ -213,18 +213,6 @@ class SellerProductSerializer(serializers.ModelSerializer):
         model = SellerProduct
         fields = "__all__"
 
-class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    seller_product = SellerProductSerializer(read_only=True)
-    seller_product_id = serializers.PrimaryKeyRelatedField(queryset=SellerProduct.objects.all(), source='seller_product', write_only=True)
-    seller_location = SellerLocationSerializer(read_only=True)
-    seller_location_id = serializers.PrimaryKeyRelatedField(queryset=SellerLocation.objects.all(), source='seller_location', write_only=True)
-
-
-    class Meta:
-        model = SellerProductSellerLocation
-        fields = "__all__"
-
 class SellerProductSellerLocationServiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     class Meta:
@@ -255,16 +243,68 @@ class SellerProductSellerLocationRentalSerializer(serializers.ModelSerializer):
         model = SellerProductSellerLocationRental
         fields = "__all__"
 
+class SellerProductSellerLocationMaterialWasteTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = SellerProductSellerLocationMaterialWasteType
+        fields = "__all__"
+
 class SellerProductSellerLocationMaterialSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    waste_types = SellerProductSellerLocationMaterialWasteTypeSerializer(many=True, read_only=True)
+
     class Meta:
         model = SellerProductSellerLocationMaterial
         fields = "__all__"
 
-class SellerProductSellerLocationMaterialWasteTypeSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        waste_types = validated_data.pop('waste_types')
+
+        # Create SellerProductSellerLocation.
+        material = SellerProductSellerLocationMaterial.objects.create(
+            **validated_data
+        )
+
+        # Create waste types.
+        for waste_type in waste_types:
+            SellerProductSellerLocationMaterialWasteType.objects.create(
+                seller_product_seller_location_material=material,
+                **waste_type
+            )
+
+        return material
+    
+    def update(self, instance, validated_data):
+        waste_types = validated_data.pop('waste_types')
+
+        # Update SellerProductSellerLocation.
+        instance.save()
+
+        # Delete the old waste types.
+        for waste_type in instance.waste_types.all():
+            waste_type.delete()
+
+        # Update waste types.
+        for waste_type in waste_types:
+            SellerProductSellerLocationMaterialWasteType.objects.update_or_create(
+                **waste_type
+            )
+
+        return instance
+
+class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    seller_product = SellerProductSerializer(read_only=True)
+    seller_product_id = serializers.PrimaryKeyRelatedField(queryset=SellerProduct.objects.all(), source='seller_product', write_only=True)
+    seller_location = SellerLocationSerializer(read_only=True)
+    seller_location_id = serializers.PrimaryKeyRelatedField(queryset=SellerLocation.objects.all(), source='seller_location', write_only=True)
+    service = SellerProductSellerLocationServiceSerializer(read_only=True)
+    material = SellerProductSellerLocationMaterialSerializer(read_only=True)
+    rental = SellerProductSellerLocationRentalSerializer(read_only=True)
+
     class Meta:
-        model = SellerProductSellerLocationMaterialWasteType
+        model = SellerProductSellerLocation
         fields = "__all__"
 
 class WasteTypeSerializer(serializers.ModelSerializer):
