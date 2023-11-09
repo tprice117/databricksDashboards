@@ -676,11 +676,11 @@ class Order(BaseModel):
 
     def customer_price(self):
         order_line_items = OrderLineItem.objects.filter(order=self)
-        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
+        return sum([order_line_item.rate * order_line_item.quantity * (1 + (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items])
     
     def seller_price(self):
         order_line_items = OrderLineItem.objects.filter(order=self)
-        return sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items])
+        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
     def pre_save(sender, instance, *args, **kwargs):
         # Check if SubmittedOn has changed.

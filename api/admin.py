@@ -874,6 +874,9 @@ class OrderAdmin(admin.ModelAdmin):
     def customer_price(self, obj):
         return round(obj.customer_price(), 2)
     
+    def seller_price(self, obj):
+        return round(obj.seller_price(), 2)
+    
     def customer_invoiced(self, obj):
         payment_line_items = PaymentLineItem.objects.filter(order=obj)
         total_invoiced = 0
@@ -898,9 +901,6 @@ class OrderAdmin(admin.ModelAdmin):
             return format_html("<p>&#128308;</p>")
         else:
             return format_html("<p>&#128993;</p>")
-    
-    def seller_price(self, obj):
-        return round(obj.seller_price(), 2)
 
     def total_paid_to_seller(self, obj):
         payout_line_items = PayoutLineItem.objects.filter(order=obj)
