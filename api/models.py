@@ -737,7 +737,7 @@ class Order(BaseModel):
                         order = instance,
                         order_line_item_type = order_line_item_type,
                         rate = instance.order_group.service.rate,
-                        quantity = instance.order_group.service.miles or 0,
+                        quantity = instance.order_group.service.miles or 1,
                         is_flat_rate = instance.order_group.service.miles is None,
                         platform_fee_percent = instance.order_group.take_rate,
                     )
