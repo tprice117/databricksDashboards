@@ -604,7 +604,7 @@ class Subscription(BaseModel):
     
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
-    product = models.ForeignKey(Product, models.CASCADE)
+    product = models.ForeignKey(Product, models.CASCADE, related_name='product_add_on_choices')
     add_on_choice = models.ForeignKey(AddOnChoice, models.CASCADE)
 
     def __str__(self):
