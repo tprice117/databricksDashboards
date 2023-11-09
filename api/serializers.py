@@ -75,17 +75,19 @@ class UserSellerReviewAggregateSerializer(serializers.Serializer):
     seller_name = serializers.CharField()
     rating_avg = serializers.FloatField()
     review_count = serializers.IntegerField()
-       
-class AddOnChoiceSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    class Meta:
-        model = AddOnChoice
-        fields = "__all__"
         
 class AddOnSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     class Meta:
         model = AddOn
+        fields = "__all__"
+
+class AddOnChoiceSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    add_on = AddOnSerializer(read_only=True)
+    
+    class Meta:
+        model = AddOnChoice
         fields = "__all__"
 
 class DisposalLocationSerializer(serializers.ModelSerializer):
@@ -190,6 +192,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    add_on_choice = AddOnChoiceSerializer(read_only=True)
+
     class Meta:
         model = ProductAddOnChoice
         fields = "__all__"
@@ -197,6 +201,7 @@ class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product = MainProductSerializer(read_only=True)
+    product_add_on_choices = ProductAddOnChoiceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product

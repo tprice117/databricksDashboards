@@ -604,7 +604,7 @@ class Subscription(BaseModel):
     
 class ProductAddOnChoice(BaseModel):
     name = models.CharField(max_length=80)
-    product = models.ForeignKey(Product, models.CASCADE)
+    product = models.ForeignKey(Product, models.CASCADE, related_name='product_add_on_choices')
     add_on_choice = models.ForeignKey(AddOnChoice, models.CASCADE)
 
     def __str__(self):
@@ -676,11 +676,11 @@ class Order(BaseModel):
 
     def customer_price(self):
         order_line_items = OrderLineItem.objects.filter(order=self)
-        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
+        return sum([order_line_item.rate * order_line_item.quantity * (1 + (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items])
     
     def seller_price(self):
         order_line_items = OrderLineItem.objects.filter(order=self)
-        return sum([order_line_item.rate * order_line_item.quantity * (1 - (order_line_item.platform_fee_percent / 100)) for order_line_item in order_line_items])
+        return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
     def pre_save(sender, instance, *args, **kwargs):
         # Check if SubmittedOn has changed.
