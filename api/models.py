@@ -561,7 +561,9 @@ class OrderGroup(BaseModel):
     end_date = models.DateField(blank=True, null=True)
     take_rate = models.DecimalField(max_digits=18, decimal_places=2, default=30)
     tonnage_quantity = models.IntegerField(blank=True, null=True)
-
+    delivery_fee = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    removal_fee = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
 
