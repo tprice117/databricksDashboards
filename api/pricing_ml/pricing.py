@@ -128,7 +128,6 @@ class Price_Model:
         seller_products = api.models.SellerProduct.objects.filter(product=self.product)
         seller_product_seller_locations = api.models.SellerProductSellerLocation.objects.filter(seller_product__in=seller_products, active=True)
         
-
         if self.seller_location:
             # If SellerLocation is passed, only return price for that SellerLocation.
             seller_product_seller_location = seller_product_seller_locations.filter(seller_location=self.seller_location).first()
@@ -154,7 +153,7 @@ class Price_Model:
                     material_waste_types = None
 
                 # Only return Seller options within the service radius and that have the same waste type.
-                customer_within_seller_service_radius = seller_customer_distance < (seller_product_seller_location.service_radius or 0)
+                customer_within_seller_service_radius = decimal.Decimal(seller_customer_distance) < (seller_product_seller_location.service_radius or 0)
                 waste_type_match = main_product_waste_types.count() == 0 or (material_waste_types and material_waste_types.filter(main_product_waste_type__waste_type=self.waste_type).exists())
                 if customer_within_seller_service_radius and waste_type_match:
                     price_obj = self.get_price_for_seller_product_seller_location(seller_product_seller_location)
