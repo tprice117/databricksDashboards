@@ -304,9 +304,9 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     seller_product_id = serializers.PrimaryKeyRelatedField(queryset=SellerProduct.objects.all(), source='seller_product', write_only=True)
     seller_location = SellerLocationSerializer(read_only=True)
     seller_location_id = serializers.PrimaryKeyRelatedField(queryset=SellerLocation.objects.all(), source='seller_location', write_only=True)
-    service = SellerProductSellerLocationServiceSerializer(read_only=True, allow_null=True)
-    material = SellerProductSellerLocationMaterialSerializer(read_only=True, allow_null=True)
-    rental = SellerProductSellerLocationRentalSerializer(read_only=True, allow_null=True)
+    service = SellerProductSellerLocationServiceSerializer(read_only=True)
+    material = SellerProductSellerLocationMaterialSerializer(read_only=True)
+    rental = SellerProductSellerLocationRentalSerializer(read_only=True)
 
     class Meta:
         model = SellerProductSellerLocation
@@ -352,9 +352,9 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     service_recurring_frequency_id = serializers.PrimaryKeyRelatedField(queryset=ServiceRecurringFrequency.objects.all(), source='service_recurring_frequency', write_only=True, allow_null=True)
     preferred_service_days = DayOfWeekSerializer(many=True, read_only=True)
     preferred_service_day_ids = serializers.PrimaryKeyRelatedField(queryset=DayOfWeek.objects.all(), many=True, source='preferred_service_days', write_only=True)
-    service = OrderGroupServiceSerializer()
-    rental = OrderGroupRentalSerializer()
-    material = OrderGroupMaterialSerializer()
+    service = OrderGroupServiceSerializer(allow_null=True)
+    rental = OrderGroupRentalSerializer(allow_null=True)
+    material = OrderGroupMaterialSerializer(allow_null=True)
     orders = OrderSerializer(many=True, read_only=True)
     active = serializers.SerializerMethodField(read_only=True)
 
