@@ -304,9 +304,9 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     seller_product_id = serializers.PrimaryKeyRelatedField(queryset=SellerProduct.objects.all(), source='seller_product', write_only=True)
     seller_location = SellerLocationSerializer(read_only=True)
     seller_location_id = serializers.PrimaryKeyRelatedField(queryset=SellerLocation.objects.all(), source='seller_location', write_only=True)
-    service = SellerProductSellerLocationServiceSerializer(read_only=True)
-    material = SellerProductSellerLocationMaterialSerializer(read_only=True)
-    rental = SellerProductSellerLocationRentalSerializer(read_only=True)
+    service = SellerProductSellerLocationServiceSerializer(read_only=True, allow_null=True)
+    material = SellerProductSellerLocationMaterialSerializer(read_only=True, allow_null=True)
+    rental = SellerProductSellerLocationRentalSerializer(read_only=True, allow_null=True)
 
     class Meta:
         model = SellerProductSellerLocation
