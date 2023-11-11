@@ -729,6 +729,20 @@ class Order(BaseModel):
         # if instance.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
             try:
+                # Create Delivery Fee OrderLineItem.
+                order_group_orders = Order.objects.filter(order_group=instance.order_group)
+                if order_group_orders.count() == 0:
+                    OrderLineItem.objects.create(
+                        order = instance,
+                        order_line_item_type = OrderLineItemType.objects.get(code="DELIVERY"),
+                        rate = instance.order_group.seller_product_seller_location.delivery_fee,
+                        quantity = 1,
+                        description = "Delivery Fee",
+                        platform_fee_percent = instance.order_group.take_rate,
+                        is_flat_rate = True,
+                    )
+
+
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
                 if hasattr(instance.order_group, 'service'):
