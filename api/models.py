@@ -742,6 +742,19 @@ class Order(BaseModel):
                         is_flat_rate = True,
                     )
 
+                # Create Removal Fee OrderLineItem.
+                if instance.order_group.end_date == instance.end_date and order_group_orders.count() > 0:
+                    OrderLineItem.objects.create(
+                        order = instance,
+                        order_line_item_type = OrderLineItemType.objects.get(code="REMOVAL"),
+                        rate = instance.order_group.seller_product_seller_location.removal_fee,
+                        quantity = 1,
+                        description = "Removal Fee",
+                        platform_fee_percent = instance.order_group.take_rate,
+                        is_flat_rate = True,
+                    )
+                    # Don't add any other OrderLineItems if this is a removal.
+                    return
 
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
@@ -755,6 +768,7 @@ class Order(BaseModel):
                         is_flat_rate = instance.order_group.service.miles is None,
                         platform_fee_percent = instance.order_group.take_rate,
                     )
+
                 # Rental Price.
                 if hasattr(instance.order_group, 'rental'):
                     day_count = (instance.end_date - instance.start_date).days if instance.end_date else 0
@@ -781,6 +795,7 @@ class Order(BaseModel):
                             description = "Additional Days",
                             platform_fee_percent = instance.order_group.take_rate,
                         )
+
                 # Material Price.
                 if hasattr(instance.order_group, 'material'):
                     tons_over_included = (instance.order_group.tonnage_quantity or 0) - instance.order_group.material.tonnage_included

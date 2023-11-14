@@ -236,14 +236,14 @@ class SellerInvoicePayableLineItemInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
-class SellerInvoicePayableItemReadOnlyInline(admin.TabularInline):
-    model = SellerInvoicePayableLineItem
-    fields = ('amount', 'description')
-    readonly_fields = ('amount', 'description')
-    extra=0
+# class SellerInvoicePayableItemReadOnlyInline(admin.TabularInline):
+#     model = SellerInvoicePayableLineItem
+#     fields = ('amount', 'description')
+#     readonly_fields = ('amount', 'description')
+#     extra=0
 
-    def has_add_permission(self, request, obj):
-        return False
+#     def has_add_permission(self, request, obj):
+#         return False
 
 
 
@@ -868,7 +868,7 @@ class OrderAdmin(admin.ModelAdmin):
         OrderLineItemInline,
         OrderDisposalTicketInline,
         PayoutLineItemInline,
-        SellerInvoicePayableItemReadOnlyInline,
+        SellerInvoicePayableLineItemInline,
     ]
 
     def customer_price(self, obj):
