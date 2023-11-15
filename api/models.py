@@ -69,6 +69,11 @@ class Seller(BaseModel):
         return self.name
 
 class SellerLocation(BaseModel):
+    def get_file_path(instance, filename):
+        ext = filename.split('.')[-1]
+        filename = "%s.%s" % (uuid.uuid4(), ext)
+        return filename
+
     seller = models.ForeignKey(Seller, models.CASCADE)
     name = models.CharField(max_length=255)
     street = models.TextField(blank=True, null=True)
@@ -79,10 +84,21 @@ class SellerLocation(BaseModel):
     latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     stripe_connect_account_id = models.CharField(max_length=255, blank=True, null=True)
+    # Insurance and tax fields.
+    gl_coi = models.FileField(upload_to=get_file_path, blank=True, null=True)
+    gl_coi_expiration_date = models.DateField(blank=True, null=True)
+    gl_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    auto_coi = models.FileField(upload_to=get_file_path, blank=True, null=True)
+    auto_coi_expiration_date = models.DateField(blank=True, null=True)
+    auto_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    workers_comp_coi = models.FileField(upload_to=get_file_path, blank=True, null=True)
+    workers_comp_coi_expiration_date = models.DateField(blank=True, null=True)
+    workers_comp_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    w9 = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
     def __str__(self):
         return self.name
-    
+
     def pre_save(sender, instance, *args, **kwargs):
         latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
         instance.latitude = latitude or 0
