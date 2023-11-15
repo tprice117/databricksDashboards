@@ -915,12 +915,9 @@ class SellerInvoicePayableLineItem(BaseModel):
     description = models.CharField(max_length=255, blank=True, null=True)
 
 class Payout(BaseModel):
+    order = models.ForeignKey(Order, models.CASCADE)
     melio_payout_id = models.CharField(max_length=255, blank=True, null=True)
     stripe_transfer_id = models.CharField(max_length=255, blank=True, null=True)
-
-class PayoutLineItem(BaseModel):
-    payout = models.ForeignKey(Payout, models.CASCADE, related_name="payout_line_items")
-    order = models.ForeignKey(Order, models.CASCADE)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     description = models.CharField(max_length=255, blank=True, null=True)
 
