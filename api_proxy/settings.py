@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     'django_extensions',
-    ]
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -738,6 +738,15 @@ class Order(BaseModel):
         self.clean()
         return super(Order, self).save(*args, **kwargs)
 
+    def pre_save(sender, instance, *args, **kwargs):
+        order_group_orders = Order.objects.filter(order_group=instance.order_group)
+        if order_group_orders.count() == 0:
+            instance.order_type = 'Delivery'
+        elif instance.order_group.end_date == instance.end_date and order_group_orders.count() > 0:
+            instance.order_type = 'Removal'
+        else:
+            instance.order_type = 'Swap'
+
     def post_save(sender, instance, created, **kwargs):
         print("post_save")
         print(instance.submitted_on_has_changed)
