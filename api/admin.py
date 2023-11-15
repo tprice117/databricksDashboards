@@ -192,28 +192,12 @@ class OrderDisposalTicketInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
-class PayoutLineItemInlineForm(forms.ModelForm):
-    model = PayoutLineItem
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        print(self)
-        if self.instance and self.instance.amount:
-            for f in self.fields:
-                self.fields[f].disabled = True
-
-class PayoutLineItemInline(admin.TabularInline):
-    model = PayoutLineItem
-    form = PayoutLineItemInlineForm
-    fields = ('order', 'amount', 'description')
-    autocomplete_fields = ["order",]
+class PayoutInline(admin.TabularInline):
+    model = Payout
+    fields = ('amount', 'description')
     show_change_link = True
     extra=0
     can_delete = False
-
-    def has_add_permission(self, request, obj):
-        # Only show add button if Payout is new.
-        return not obj
     
 class PaymentLineItemInline(admin.TabularInline):
     model = PaymentLineItem
@@ -236,14 +220,14 @@ class SellerInvoicePayableLineItemInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
-class SellerInvoicePayableItemReadOnlyInline(admin.TabularInline):
-    model = SellerInvoicePayableLineItem
-    fields = ('amount', 'description')
-    readonly_fields = ('amount', 'description')
-    extra=0
+# class SellerInvoicePayableItemReadOnlyInline(admin.TabularInline):
+#     model = SellerInvoicePayableLineItem
+#     fields = ('amount', 'description')
+#     readonly_fields = ('amount', 'description')
+#     extra=0
 
-    def has_add_permission(self, request, obj):
-        return False
+#     def has_add_permission(self, request, obj):
+#         return False
 
 
 
@@ -359,7 +343,7 @@ class SellerLocationAdmin(admin.ModelAdmin):
         return super(SellerLocationAdmin, self).get_form(request, obj, **kwargs)
     
     def total_paid_to_seller(self, obj):
-        payout_line_items = PayoutLineItem.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
+        payout_line_items = Payout.objects.filter(order__order_group__seller_product_seller_location__seller_location=obj)
         return sum([payout_line_items.amount  for payout_line_items in payout_line_items])
 
     def total_seller_payout_price(self, obj):
@@ -867,8 +851,8 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
-        PayoutLineItemInline,
-        SellerInvoicePayableItemReadOnlyInline,
+        PayoutInline,
+        SellerInvoicePayableLineItemInline,
     ]
 
     def customer_price(self, obj):
@@ -903,8 +887,8 @@ class OrderAdmin(admin.ModelAdmin):
             return format_html("<p>&#128993;</p>")
 
     def total_paid_to_seller(self, obj):
-        payout_line_items = PayoutLineItem.objects.filter(order=obj)
-        return sum([payout_line_items.amount  for payout_line_items in payout_line_items])
+        payouts = Payout.objects.filter(order=obj)
+        return sum([payout.amount for payout in payouts])
 
     def payout_status(self, obj):
         payout_diff = self.seller_price(obj) - self.total_paid_to_seller(obj)
@@ -944,64 +928,9 @@ class SellerInvoicePayableLineItemAdmin(admin.ModelAdmin):
     model = SellerInvoicePayableLineItem
     search_fields = ["id", "seller_invoice_payable__id", "order__id"]
 
-class PayoutLineItemAdmin(admin.ModelAdmin):
-    model = PayoutLineItem
-    search_fields = ["id", "payout__id", "order__id"]
-    autocomplete_fields = ["order",]
-    # filter_horizontal = ('orders',)
-
 class PayoutAdmin(admin.ModelAdmin):
     model = Payout
-    list_display = ('seller_location', 'total_amount',)
-    search_fields = ["id","melio_payout_id", "stripe_transfer_id", "total_amount"]
-    readonly_fields = ('melio_payout_id', 'stripe_transfer_id', 'total_amount',)
-    inlines = [
-        PayoutLineItemInline,
-    ]
-
-    def save_formset(self, request, form, formset, change):
-        # Get payout model.
-        payout = form.save(commit=False)
-        
-        # Check that all PayoutLineItems are for the same SellerLocation.
-        payout_line_items = formset.save(commit=False)
-        seller_location = None
-        for payout_line_item in payout_line_items:
-            if seller_location is None:
-                seller_location = payout_line_item.order.order_group.seller_product_seller_location.seller_location
-            elif seller_location != payout_line_item.order.order_group.seller_product_seller_location.seller_location:
-                raise Exception('PayoutLineItems must be for the same Seller Location.')
-
-        # If all from same SellerLocation, compute total amount.
-        total_amount = sum([payout_line_item.amount for payout_line_item in payout_line_items])
-
-        # Payout via Melio or Stripe.
-        # if seller_location.seller.melio_account_id:
-        #     # Payout via Melio.
-        #     melio_payout_id = melio_payout(payout_line_items, seller_location.seller.melio_account_id, total_amount)
-        #     payout.melio_payout_id = melio_payout_id
-        # else:
-        # Payout via Stripe.
-        # transfer = stripe.Transfer.create(
-        #     amount=round(total_amount * 100),
-        #     currency="usd",
-        #     destination=seller_location.stripe_connect_account_id,
-        #     transfer_group=payout.id,
-        # )
-        # payout.stripe_transfer_id = transfer.id
-
-        payout.save()
-        for payout_line_item in payout_line_items:
-            payout_line_item.save()
-        formset.save_m2m()
-
-    def seller_location(self, obj):
-        payout_line_items = PayoutLineItem.objects.filter(payout=obj)
-        return payout_line_items[0].order.order_group.seller_product_seller_location.seller_location
-    
-    def total_amount(self, obj):
-        payout_line_items = PayoutLineItem.objects.filter(payout=obj)
-        return round(sum([payout_line_items.amount  for payout_line_items in payout_line_items]), 2)
+    search_fields = ["id","melio_payout_id", "stripe_transfer_id"]
         
 class PaymentAdmin(admin.ModelAdmin):
     model = Payment
@@ -1059,7 +988,6 @@ admin.site.register(SellerProductSellerLocationMaterialWasteType)
 admin.site.register(DayOfWeek)
 admin.site.register(TimeSlot)
 admin.site.register(Subscription)
-admin.site.register(PayoutLineItem, PayoutLineItemAdmin)
 admin.site.register(Payout, PayoutAdmin)
 admin.site.register(Payment, PaymentAdmin)
 admin.site.register(PaymentLineItem, PaymentLineItemAdmin)
