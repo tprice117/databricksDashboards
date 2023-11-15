@@ -194,7 +194,7 @@ class OrderDisposalTicketInline(admin.TabularInline):
 
 class PayoutInline(admin.TabularInline):
     model = Payout
-    fields = ('amount', 'description', 'stripe_transfer_id', 'melio_payout_id', 'status')
+    fields = ('amount', 'description', 'stripe_transfer_id', 'melio_payout_id')
     show_change_link = True
     extra=0
     can_delete = False
@@ -854,6 +854,28 @@ class OrderAdmin(admin.ModelAdmin):
         PayoutInline,
         SellerInvoicePayableLineItemInline,
     ]
+    actions = ["send_payouts"]
+                
+    @admin.action(description="Send payouts")
+    def send_payouts(self, request, queryset):
+        for order in queryset:
+            # Only send payout if seller has a Stripe Connect Account.
+            payout_diff = self.seller_price(order) - self.total_paid_to_seller(order)
+            if payout_diff > 0 and order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id:
+                # Payout via Stripe.
+                transfer = stripe.Transfer.create(
+                    amount=round(payout_diff * 100),
+                    currency="usd",
+                    destination=order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id,
+                )
+                
+                # Save Payout.
+                Payout.objects.create(
+                    order=order,
+                    amount=payout_diff,
+                    stripe_transfer_id=transfer.id,
+                )
+        messages.success(request, "Successfully paid out all connected sellers.")
 
     def customer_price(self, obj):
         return round(obj.customer_price(), 2)
@@ -905,7 +927,7 @@ class OrderAdmin(admin.ModelAdmin):
     
     def seller_invoice_status(self, obj):
         payout_diff = self.total_invoiced_from_seller(obj) - self.total_paid_to_seller(obj)
-        if payout_diff == 0:
+        if payout_diff == 0 or self.total_invoiced_from_seller(obj) == 0:
             return format_html("<p>&#128994;</p>")
         elif payout_diff >= 0:
             return format_html("<p>&#128993;</p>")
