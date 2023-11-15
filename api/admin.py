@@ -194,7 +194,7 @@ class OrderDisposalTicketInline(admin.TabularInline):
 
 class PayoutInline(admin.TabularInline):
     model = Payout
-    fields = ('amount', 'description')
+    fields = ('amount', 'description', 'stripe_transfer_id', 'melio_payout_id', 'status')
     show_change_link = True
     extra=0
     can_delete = False
