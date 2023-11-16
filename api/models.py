@@ -700,11 +700,11 @@ class Order(BaseModel):
         order_line_items = OrderLineItem.objects.filter(order=self)
         return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
-    def pre_save(sender, instance, *args, **kwargs):
-        # Check if SubmittedOn has changed.
-        print(instance.pk)
-        old_submitted_on = Order.objects.get(pk=instance.pk).submitted_on if Order.objects.filter(pk=instance.pk).exists() else None
-        instance.submitted_on_has_changed = old_submitted_on != instance.submitted_on
+    # def pre_save(sender, instance, *args, **kwargs):
+    #     # Check if SubmittedOn has changed.
+    #     print(instance.pk)
+    #     old_submitted_on = Order.objects.get(pk=instance.pk).submitted_on if Order.objects.filter(pk=instance.pk).exists() else None
+    #     instance.submitted_on_has_changed = old_submitted_on != instance.submitted_on
 
     def clean(self):
         # Ensure end_date is on or after start_date.
@@ -738,9 +738,16 @@ class Order(BaseModel):
         self.clean()
         return super(Order, self).save(*args, **kwargs)
 
+    def pre_save(sender, instance, *args, **kwargs):
+        order_group_orders = Order.objects.filter(order_group=instance.order_group)
+        if order_group_orders.count() == 0:
+            instance.order_type = 'Delivery'
+        elif instance.order_group.end_date == instance.end_date and order_group_orders.count() > 0:
+            instance.order_type = 'Removal'
+        else:
+            instance.order_type = 'Swap'
+
     def post_save(sender, instance, created, **kwargs):
-        print("post_save")
-        print(instance.submitted_on_has_changed)
         order_line_items = OrderLineItem.objects.filter(order=instance)
         # if instance.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
