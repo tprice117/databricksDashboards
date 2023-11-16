@@ -700,11 +700,11 @@ class Order(BaseModel):
         order_line_items = OrderLineItem.objects.filter(order=self)
         return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
-    def pre_save(sender, instance, *args, **kwargs):
-        # Check if SubmittedOn has changed.
-        print(instance.pk)
-        old_submitted_on = Order.objects.get(pk=instance.pk).submitted_on if Order.objects.filter(pk=instance.pk).exists() else None
-        instance.submitted_on_has_changed = old_submitted_on != instance.submitted_on
+    # def pre_save(sender, instance, *args, **kwargs):
+    #     # Check if SubmittedOn has changed.
+    #     print(instance.pk)
+    #     old_submitted_on = Order.objects.get(pk=instance.pk).submitted_on if Order.objects.filter(pk=instance.pk).exists() else None
+    #     instance.submitted_on_has_changed = old_submitted_on != instance.submitted_on
 
     def clean(self):
         # Ensure end_date is on or after start_date.
