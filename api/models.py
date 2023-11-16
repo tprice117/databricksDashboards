@@ -766,7 +766,7 @@ class Order(BaseModel):
                     )
 
                 # Create Removal Fee OrderLineItem.
-                if instance.order_group.end_date == instance.end_date and order_group_orders.count() > 0:
+                if instance.order_group.end_date == instance.end_date and order_group_orders.count() > 1:
                     OrderLineItem.objects.create(
                         order = instance,
                         order_line_item_type = OrderLineItemType.objects.get(code="REMOVAL"),
