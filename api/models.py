@@ -748,8 +748,6 @@ class Order(BaseModel):
             instance.order_type = 'Swap'
 
     def post_save(sender, instance, created, **kwargs):
-        print("post_save")
-        print(instance.submitted_on_has_changed)
         order_line_items = OrderLineItem.objects.filter(order=instance)
         # if instance.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
