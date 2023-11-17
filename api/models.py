@@ -871,7 +871,7 @@ class OrderLineItemType(BaseModel):
         return self.name
     
 class OrderLineItem(BaseModel):
-    PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(100)]
+    PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(1000)]
 
     order = models.ForeignKey(Order, models.CASCADE, related_name='order_line_items')
     order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
