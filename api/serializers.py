@@ -190,6 +190,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = Subscription
         fields = "__all__"
 
+class PayoutSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = Payout
+        fields = "__all__"
+
 class ProductAddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     add_on_choice = AddOnChoiceSerializer(read_only=True)
@@ -310,6 +316,18 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SellerProductSellerLocation
+        fields = "__all__"
+
+class SellerInvoicePayableSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = SellerInvoicePayable
+        fields = "__all__"
+
+class SellerInvoicePayableLineItemSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = SellerInvoicePayableLineItem
         fields = "__all__"
 
 class WasteTypeSerializer(serializers.ModelSerializer):

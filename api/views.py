@@ -236,6 +236,11 @@ class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     serializer_class = SubscriptionSerializer
     filterset_fields = ["id"]
 
+class PayoutViewSet(viewsets.ModelViewSet):
+    queryset = Payout.objects.all()
+    serializer_class = PayoutSerializer
+    filterset_fields = ["order"] 
+
 class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
     serializer_class = ProductAddOnChoiceSerializer
@@ -269,6 +274,15 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
         else:
             seller = self.request.user.user_group.seller if self.request.user.user_group else None
             return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller)
+
+class SellerInvoicePayableViewSet(viewsets.ModelViewSet):
+    queryset = SellerInvoicePayable.objects.all()
+    serializer_class = SellerInvoicePayableSerializer
+
+class SellerInvoicePayableLineItemViewSet(viewsets.ModelViewSet):
+    queryset = SellerInvoicePayableLineItem.objects.all()
+    serializer_class = SellerInvoicePayableLineItemSerializer
+    filterset_fields = ["order"] 
 
 class ServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
     queryset = ServiceRecurringFrequency.objects.all()

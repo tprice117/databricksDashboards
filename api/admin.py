@@ -2,6 +2,7 @@ import csv
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+import requests
 from .models import *
 from django.contrib.admin import SimpleListFilter
 from django.contrib.auth.models import User as DjangoUser
@@ -861,20 +862,32 @@ class OrderAdmin(admin.ModelAdmin):
         for order in queryset:
             # Only send payout if seller has a Stripe Connect Account.
             payout_diff = self.seller_price(order) - self.total_paid_to_seller(order)
-            if payout_diff > 0 and order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id:
-                # Payout via Stripe.
-                transfer = stripe.Transfer.create(
-                    amount=round(payout_diff * 100),
-                    currency="usd",
-                    destination=order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id,
-                )
-                
-                # Save Payout.
-                Payout.objects.create(
-                    order=order,
-                    amount=payout_diff,
-                    stripe_transfer_id=transfer.id,
-                )
+            if payout_diff > 0:
+                if order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id:
+                    # Payout via Stripe.
+                    transfer = stripe.Transfer.create(
+                        amount=round(payout_diff * 100),
+                        currency="usd",
+                        destination=order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id,
+                    )
+                    
+                    # Save Payout.
+                    Payout.objects.create(
+                        order=order,
+                        amount=payout_diff,
+                        stripe_transfer_id=transfer.id,
+                    )
+                else:
+                    # Payout via Checkbook.
+                    url = "https://demo.checkbook.io/v3/check/physical"
+
+                    headers = {
+                        "accept": "application/json",
+                        "content-type": "application/json"
+                    }
+
+                    response = requests.post(url, headers=headers)
+
         messages.success(request, "Successfully paid out all connected sellers.")
 
     def customer_price(self, obj):
