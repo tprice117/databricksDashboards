@@ -44,7 +44,7 @@ router.register(r'seller-product-seller-location-rentals', views.SellerProductSe
 router.register(r'seller-product-seller-location-materials', views.SellerProductSellerLocationMaterialViewSet, 'api')
 router.register(r'seller-product-seller-location-material-waste-types', views.SellerProductSellerLocationMaterialWasteTypeViewSet, 'api')
 router.register(r'seller-invoice-payables', views.SellerInvoicePayableViewSet, 'api')
-router.register(r'seller-invoices-payable-line-items', views.SellerInvoicePayableLineItemViewSet, 'api')
+router.register(r'seller-invoice-payable-line-items', views.SellerInvoicePayableLineItemViewSet, 'api')
 router.register(r'waste-types', views.WasteTypeViewSet, 'api')
 router.register(r'day-of-weeks', views.DayOfWeekViewSet, 'api')
 router.register(r'time-slots', views.TimeSlotViewSet, 'api')
