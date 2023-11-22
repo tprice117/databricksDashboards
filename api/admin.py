@@ -111,6 +111,12 @@ class SellerLocationInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class SellerLocationMailingAddressInline(admin.TabularInline):
+    model = SellerLocationMailingAddress
+    fields = ('street', 'city', 'state', 'postal_code', 'country')
+    show_change_link = True
+    extra=0
+
 class SellerProductInline(admin.TabularInline):
     model = SellerProduct
     fields = ('product',)
@@ -335,6 +341,7 @@ class SellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["name", "seller__name"]
     list_display = ('name', 'seller', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status', 'total_invoiced_from_seller', 'seller_invoice_status')
     inlines = [
+        SellerLocationMailingAddressInline,
         SellerProductSellerLocationInline,
     ]
 

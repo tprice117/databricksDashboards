@@ -6,9 +6,9 @@ import datetime
 from api.models import SellerLocation
 
 class CheckbookIO:
-  def __init__(self, source_token, run_id=None):
-    self.source_token = source_token
-    self.run_id = run_id
+  # def __init__(self):
+  #   self.source_token = source_token
+  #   self.run_id = run_id
 
   def sendPhysicalCheck(self, amount, seller_location:SellerLocation):
     requests.post("https://demo.checkbook.io/v3/check/physical", 
@@ -36,6 +36,7 @@ class CheckbookIO:
       }
       ), 
       headers={
+        "Authorization": "d6aa2703655f4ba2af2a56202961ca86:dXbCgzYBMibj8ZwuQMd2NXr6rtvjZ8",
         "accept": "application/json",
         "content-type": "application/json"
       }
