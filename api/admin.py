@@ -1,8 +1,11 @@
 import csv
+from typing import List
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 import requests
+
+from api.utils.checkbook_io import CheckbookIO
 from .models import *
 from django.contrib.admin import SimpleListFilter
 from django.contrib.auth.models import User as DjangoUser
@@ -111,6 +114,12 @@ class SellerLocationInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class SellerLocationMailingAddressInline(admin.StackedInline):
+    model = SellerLocationMailingAddress
+    fields = ('street', 'city', 'state', 'postal_code', 'country')
+    show_change_link = True
+    extra=0
+
 class SellerProductInline(admin.TabularInline):
     model = SellerProduct
     fields = ('product',)
@@ -195,7 +204,7 @@ class OrderDisposalTicketInline(admin.TabularInline):
 
 class PayoutInline(admin.TabularInline):
     model = Payout
-    fields = ('amount', 'description', 'stripe_transfer_id', 'melio_payout_id')
+    fields = ('amount', 'description', 'stripe_transfer_id', 'checkbook_payout_id',)
     show_change_link = True
     extra=0
     can_delete = False
@@ -335,6 +344,7 @@ class SellerLocationAdmin(admin.ModelAdmin):
     search_fields = ["name", "seller__name"]
     list_display = ('name', 'seller', 'total_seller_payout_price', 'total_paid_to_seller', 'payout_status', 'total_invoiced_from_seller', 'seller_invoice_status')
     inlines = [
+        SellerLocationMailingAddressInline,
         SellerProductSellerLocationInline,
     ]
 
@@ -859,34 +869,72 @@ class OrderAdmin(admin.ModelAdmin):
                 
     @admin.action(description="Send payouts")
     def send_payouts(self, request, queryset):
+        # Get distinct SellerLocations.
+        distinct_seller_locations:List[SellerLocation] = []
         for order in queryset:
-            # Only send payout if seller has a Stripe Connect Account.
-            payout_diff = self.seller_price(order) - self.total_paid_to_seller(order)
-            if payout_diff > 0:
-                if order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id:
-                    # Payout via Stripe.
-                    transfer = stripe.Transfer.create(
-                        amount=round(payout_diff * 100),
-                        currency="usd",
-                        destination=order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id,
-                    )
-                    
-                    # Save Payout.
-                    Payout.objects.create(
-                        order=order,
-                        amount=payout_diff,
-                        stripe_transfer_id=transfer.id,
-                    )
-                else:
-                    # Payout via Checkbook.
-                    url = "https://demo.checkbook.io/v3/check/physical"
+            seller_location = order.order_group.seller_product_seller_location.seller_location
+            current_seller_location_ids = [seller_location.id for seller_location in distinct_seller_locations]
+            if seller_location.id not in current_seller_location_ids:
+                distinct_seller_locations.append(seller_location)
 
-                    headers = {
-                        "accept": "application/json",
-                        "content-type": "application/json"
-                    }
+        # For each SellerLocation, send payouts for all orders.
+        for seller_location in distinct_seller_locations:
+            orders_for_seller_location = queryset.filter(
+                order_group__seller_product_seller_location__seller_location=seller_location
+            )
 
-                    response = requests.post(url, headers=headers)
+            if seller_location.stripe_connect_account_id:
+                print("Payout via Stripe")
+                # If connected with Stripe Connnect, payout via Stripe.
+                for order in orders_for_seller_location:
+                    # Only send payout if seller has a Stripe Connect Account.
+                    payout_diff = self.seller_price(order) - self.total_paid_to_seller(order)
+                    if payout_diff > 0:
+                        try:
+                            # Payout via Stripe.
+                            transfer = stripe.Transfer.create(
+                                amount=round(payout_diff * 100),
+                                currency="usd",
+                                destination=order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id,
+                            )
+                            
+                            # Save Payout.
+                            Payout.objects.create(
+                                order=order,
+                                amount=payout_diff,
+                                stripe_transfer_id=transfer.id,
+                            )
+                        except Exception as ex:
+                            print("Error: " + str(ex))
+            elif seller_location.payee_name and hasattr(seller_location, "mailing_address"):
+                print("Payout via Checkbook")
+                # If not connected with Stripe Connect, but [payee_name] and 
+                # [mailing_address] are set, payout via Checkbook.
+                amount_to_send = 0
+
+                # Compute total amount to be sent.
+                for order in orders_for_seller_location:
+                    payout_diff = self.seller_price(order) - self.total_paid_to_seller(order)
+                    if payout_diff > 0:
+                        amount_to_send += payout_diff
+
+                # Send payout via Checkbook.
+                if amount_to_send > 0:
+                    check_number = CheckbookIO().sendPhysicalCheck(
+                        seller_location=seller_location,
+                        amount=amount_to_send,
+                        orders=orders_for_seller_location,
+                    )
+
+                # Save Payout for each order.
+                for order in orders_for_seller_location:
+                    payout_diff = self.seller_price(order) - self.total_paid_to_seller(order)
+                    if payout_diff > 0:
+                        Payout.objects.create(
+                            order=order,
+                            amount=payout_diff,
+                            checkbook_payout_id=check_number,
+                        )
 
         messages.success(request, "Successfully paid out all connected sellers.")
 
