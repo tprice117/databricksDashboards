@@ -107,8 +107,12 @@ class SellerLocation(BaseModel):
         instance.longitude = longitude or 0
 
 class SellerLocationMailingAddress(BaseModel):
-    seller_location = models.OneToOneField(SellerLocation, models.CASCADE)
-    street = models.TextField(blank=True, null=True)
+    seller_location = models.OneToOneField(
+        SellerLocation, 
+        models.CASCADE,
+        related_name='mailing_address'
+    )
+    street = models.TextField()
     city = models.CharField(max_length=40)
     state = models.CharField(max_length=80)
     postal_code = models.CharField(max_length=20)
@@ -956,7 +960,7 @@ class SellerInvoicePayableLineItem(BaseModel):
 
 class Payout(BaseModel):
     order = models.ForeignKey(Order, models.CASCADE)
-    melio_payout_id = models.CharField(max_length=255, blank=True, null=True)
+    checkbook_payout_id = models.CharField(max_length=255, blank=True, null=True)
     stripe_transfer_id = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     description = models.CharField(max_length=255, blank=True, null=True)
