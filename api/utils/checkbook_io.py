@@ -57,4 +57,6 @@ class CheckbookIO:
       }
     )
 
+    print(response.json())
+
     return response.json()['number']
