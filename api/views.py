@@ -236,6 +236,14 @@ class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
     serializer_class = SubscriptionSerializer
     filterset_fields = ["id"]
 
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+
+class PaymentLineItemViewSet(viewsets.ModelViewSet):
+    queryset = PaymentLineItem.objects.all()
+    serializer_class = PaymentLineItemSerializer
+
 class PayoutViewSet(viewsets.ModelViewSet):
     queryset = Payout.objects.all()
     serializer_class = PayoutSerializer

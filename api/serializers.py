@@ -190,6 +190,18 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = Subscription
         fields = "__all__"
 
+class PaymentSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = Payment
+        fields = "__all__"
+
+class PaymentLineItemSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = PaymentLineItem
+        fields = "__all__"
+    
 class PayoutSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     class Meta:
