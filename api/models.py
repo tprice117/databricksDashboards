@@ -46,6 +46,10 @@ class Seller(BaseModel):
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=40)
     website = models.URLField(blank=True, null=True)
+    # START: Communicaton fields.
+    order_email = models.CharField(max_length=255, blank=True, null=True)
+    order_phone = models.CharField(max_length=10, blank=True, null=True)
+    # END: Communicaton fields.
     type = models.CharField(max_length=255, choices=[('Broker', 'Broker'), ('Compost facility', 'Compost facility'), ('Delivery', 'Delivery'), ('Equipment', 'Equipment'), ('Fencing', 'Fencing'), ('Industrial', 'Industrial'), ('Junk', 'Junk'), ('Landfill', 'Landfill'), ('Mover', 'Mover'), ('MRF', 'MRF'), ('Other recycler', 'Other recycler'), ('Paint recycler', 'Paint recycler'), ('Portable Storage', 'Portable Storage'), ('Portable Toilet', 'Portable Toilet'), ('Processor', 'Processor'), ('Roll-off', 'Roll-off'), ('Scrap yard', 'Scrap yard'), ('Tires', 'Tires')], blank=True, null=True)
     location_type = models.CharField(max_length=255, choices=[('Services', 'Services'), ('Disposal site', 'Disposal site')], blank=True, null=True)
     status = models.CharField(max_length=255, choices=[('Inactive', 'Inactive'), ('Inactive - Onboarding', 'Inactive - Onboarding'), ('Inactive - Pending approval', 'Inactive - Pending approval'), ('Active - under review', 'Active - under review'), ('Active', 'Active')], blank=True, null=True)
@@ -84,9 +88,14 @@ class SellerLocation(BaseModel):
     latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     stripe_connect_account_id = models.CharField(max_length=255, blank=True, null=True)
-    # Check info.
+    # START: Check fields.
     payee_name = models.CharField(max_length=255, blank=True, null=True)
-    # Insurance and tax fields.
+    # END: Check fields.
+    # START: Communicaton fields.
+    order_email = models.CharField(max_length=255, blank=True, null=True)
+    order_phone = models.CharField(max_length=10, blank=True, null=True)
+    # END: Communicaton fields.
+    # START: Insurance and tax fields.
     gl_coi = models.FileField(upload_to=get_file_path, blank=True, null=True)
     gl_coi_expiration_date = models.DateField(blank=True, null=True)
     gl_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
@@ -97,6 +106,7 @@ class SellerLocation(BaseModel):
     workers_comp_coi_expiration_date = models.DateField(blank=True, null=True)
     workers_comp_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     w9 = models.FileField(upload_to=get_file_path, blank=True, null=True)
+    # END: Insurance and tax fields.
 
     def __str__(self):
         return self.name
