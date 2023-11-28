@@ -775,12 +775,27 @@ class Order(BaseModel):
             raise ValidationError('Only 1 Order from an OrderGroup can be in the cart at a time')
             
     def save(self, *args, **kwargs):
+        self.clean()
         if self.submitted_on != self.__original_submitted_on and self.submitted_on is not None:
             # Send email to internal team. Only on our PROD environment.
-            print(render_to_string(
+            if settings.ENVIRONMENT == "TEST":
+                try:
+                    mailchimp.messages.send({"message": {
+                        "headers": {
+                            "reply-to": "dispatch@trydownstream.io",
+                        },
+                        "from_name": "Downstream",
+                        "from_email": "dispatch@trydownstream.io",
+                        "to": [{"email": "dispatch@trydownstream.io"}],
+                        "subject": "Order Confirmed",
+                        "track_opens": True,
+                        "track_clicks": True,
+                        "html": render_to_string(
                             'order-submission-email.html',
                             {
                                 "orderId": self.id,
+                                "seller": self.order_group.seller_product_seller_location.seller_location.seller.name,
+                                "sellerLocation": self.order_group.seller_product_seller_location.seller_location.name,
                                 "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                                 "bookingType": self.order_type,
                                 "wasteType": self.order_group.waste_type.name,
@@ -795,43 +810,11 @@ class Order(BaseModel):
                                 "locationDetails": self.order_group.access_details,
                                 "additionalDetails": self.order_group.placement_details,
                             }
-                        ))
-            # if settings.ENVIRONMENT == "TEST":
-            #     try:
-            #         mailchimp.messages.send({"message": {
-            #             "headers": {
-            #                 "reply-to": "dispatch@trydownstream.io",
-            #             },
-            #             "from_name": "Downstream",
-            #             "from_email": "dispatch@trydownstream.io",
-            #             "to": [{"email": "dispatch@trydownstream.io"}],
-            #             "subject": "Order Confirmed",
-            #             "track_opens": True,
-            #             "track_clicks": True,
-            #             "html": render_to_string(
-            #                 'order-submission-email.html',
-            #                 {
-            #                     "orderId": self.id,
-            #                     "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-            #                     "bookingType": self.order_type,
-            #                     "wasteType": self.order_group.waste_type.name,
-            #                     "supplierTonsIncluded": self.order_group.material.tonnage_included,
-            #                     "supplierRentalDaysIncluded": self.order_group.rental.included_days,
-            #                     "serviceDate": self.service_date,
-            #                     "timeWindow": self.schedule_window,
-            #                     "locationAddress": self.order_group.user_address.street,
-            #                     "locationCity": self.order_group.user_address.city,
-            #                     "locationState": self.order_group.user_address.state,
-            #                     "locationZip": self.order_group.user_address.postal_code,
-            #                     "locationDetails": self.order_group.access_details,
-            #                     "additionalDetails": self.order_group.placement_details,
-            #                 }
-            #             ),
-            #         }})
-            #     except:
-            #         print("An exception occurred.")
+                        ),
+                    }})
+                except:
+                    print("An exception occurred.")
 
-        self.clean()
         return super(Order, self).save(*args, **kwargs)
 
     def pre_save(sender, instance, *args, **kwargs):
