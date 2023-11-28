@@ -20,8 +20,10 @@ from .pricing_ml.pricing import Price_Model
 from django.core.files.storage import default_storage
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
 
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -202,28 +204,30 @@ class User(BaseModel):
         if not self.user_id:
             # Create or attach to Auth0 user.
             user_id = get_user_from_email(self.email)
+
             if user_id:
                 # User already exists in Auth0.
                 self.user_id = user_id
+                created_by_downstream_team = False
             else:
                 # Create user in Auth0.
                 self.user_id = create_user(self.email)
+                created_by_downstream_team = True
 
             # Send email to internal team. Only on our PROD environment.
             if settings.ENVIRONMENT == "TEST":
                 try:
-                    mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
                     mailchimp.messages.send({"message": {
                         "headers": {
                             "reply-to": self.email,
                         },
                         "from_name": "Downstream",
                         "from_email": "noreply@trydownstream.io",
-                        "to": [{"email": "support@trydownstream.io"}],
+                        "to": [{"email": "sales@trydownstream.io"}],
                         "subject": "New User App Signup",
                         "track_opens": True,
                         "track_clicks": True,
-                        "text": "Woohoo! A new user signed up for the app. The email on their account is:" + self.email,
+                        "text": "Woohoo! A new user signed up for the app. The email on their account is: [" + self.email + "]. This was created by: " + ("[DOWNSTREAM TEAM]" if created_by_downstream_team else "[]") + ".",
                     }})
                 except:
                     print("An exception occurred.")
@@ -722,6 +726,11 @@ class Order(BaseModel):
     quantity = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     unit_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True) #6.6.23
     payout_processing_error_comment = models.TextField(blank=True, null=True) #6.6.23
+    __original_submitted_on = None
+
+    def __init__(self, *args, **kwargs):
+        super(Order, self).__init__(*args, **kwargs)
+        self.__original_submitted_on = self.submitted_on
 
     def customer_price(self):
         order_line_items = OrderLineItem.objects.filter(order=self)
@@ -766,6 +775,62 @@ class Order(BaseModel):
             raise ValidationError('Only 1 Order from an OrderGroup can be in the cart at a time')
             
     def save(self, *args, **kwargs):
+        if self.submitted_on != self.__original_submitted_on and self.submitted_on is not None:
+            # Send email to internal team. Only on our PROD environment.
+            print(render_to_string(
+                            'order-submission-email.html',
+                            {
+                                "orderId": self.id,
+                                "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                                "bookingType": self.order_type,
+                                "wasteType": self.order_group.waste_type.name,
+                                "supplierTonsIncluded": self.order_group.material.tonnage_included,
+                                "supplierRentalDaysIncluded": self.order_group.rental.included_days,
+                                "serviceDate": self.service_date,
+                                "timeWindow": self.schedule_window,
+                                "locationAddress": self.order_group.user_address.street,
+                                "locationCity": self.order_group.user_address.city,
+                                "locationState": self.order_group.user_address.state,
+                                "locationZip": self.order_group.user_address.postal_code,
+                                "locationDetails": self.order_group.access_details,
+                                "additionalDetails": self.order_group.placement_details,
+                            }
+                        ))
+            # if settings.ENVIRONMENT == "TEST":
+            #     try:
+            #         mailchimp.messages.send({"message": {
+            #             "headers": {
+            #                 "reply-to": "dispatch@trydownstream.io",
+            #             },
+            #             "from_name": "Downstream",
+            #             "from_email": "dispatch@trydownstream.io",
+            #             "to": [{"email": "dispatch@trydownstream.io"}],
+            #             "subject": "Order Confirmed",
+            #             "track_opens": True,
+            #             "track_clicks": True,
+            #             "html": render_to_string(
+            #                 'order-submission-email.html',
+            #                 {
+            #                     "orderId": self.id,
+            #                     "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+            #                     "bookingType": self.order_type,
+            #                     "wasteType": self.order_group.waste_type.name,
+            #                     "supplierTonsIncluded": self.order_group.material.tonnage_included,
+            #                     "supplierRentalDaysIncluded": self.order_group.rental.included_days,
+            #                     "serviceDate": self.service_date,
+            #                     "timeWindow": self.schedule_window,
+            #                     "locationAddress": self.order_group.user_address.street,
+            #                     "locationCity": self.order_group.user_address.city,
+            #                     "locationState": self.order_group.user_address.state,
+            #                     "locationZip": self.order_group.user_address.postal_code,
+            #                     "locationDetails": self.order_group.access_details,
+            #                     "additionalDetails": self.order_group.placement_details,
+            #                 }
+            #             ),
+            #         }})
+            #     except:
+            #         print("An exception occurred.")
+
         self.clean()
         return super(Order, self).save(*args, **kwargs)
 

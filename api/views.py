@@ -166,7 +166,7 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
 class MainProductViewSet(viewsets.ModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
-    filterset_fields = ["id", "main_product_category"]
+    filterset_fields = ["id", "main_product_category__id"]
 
 @authentication_classes([])
 @permission_classes([])
