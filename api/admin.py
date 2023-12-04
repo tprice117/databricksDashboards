@@ -860,12 +860,20 @@ class OrderAdmin(admin.ModelAdmin):
                 query='customer:"' + user_address.stripe_customer_id + '" AND status:"draft"',
             )
             if len(draft_invoices) > 0:
-                stripe_invoice = draft_invoices[0]
+                stripe_invoice = draft_invoices['data'][0]
             else:
                 stripe_invoice = stripe.Invoice.create(
                     customer=user_address.stripe_customer_id,
                     auto_advance=False,
                 )
+
+            # Enable automatic taxes on the invoice.
+            stripe.Invoice.modify(
+                stripe_invoice.id,
+                automatic_tax={
+                    "enabled": True,
+                }
+            )
 
             # Loop through each order and add any OrderLineItems that don't have
             # a StripeInvoiceLineItemId on the OrderLineItem.
@@ -894,9 +902,9 @@ class OrderAdmin(admin.ModelAdmin):
                     stripe_invoice_line_item = stripe.InvoiceItem.create(
                         customer=order.order_group.user_address.stripe_customer_id,
                         invoice=stripe_invoice.id,
-                        description=order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " +  order_line_item.order_line_item_type.name + " | " + order.start_date.strftime("%m/%d/%Y") + " - " + order.end_date.strftime("%m/%d/%Y"),
-                        unit_amount=round(order_line_item.customer_price() * 100) / order_line_item.quantity,
-                        quantity=order_line_item.quantity,
+                        description=order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " +  order_line_item.order_line_item_type.name + " | " + order.start_date.strftime("%m/%d/%Y") + " - " + order.end_date.strftime("%m/%d/%Y") + " | Qty: " + str(order_line_item.quantity) + " @ $" + str(round(order_line_item.rate, 2)) + "/unit",
+                        amount=round(100 * order_line_item.customer_price()),
+                        tax_behavior="exclusive",
                         tax_code=order_line_item.order_line_item_type.stripe_tax_code_id,
                         currency="usd",
                         period={
