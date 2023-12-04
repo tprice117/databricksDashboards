@@ -1,6 +1,7 @@
 import csv
 from typing import List
 from django.contrib import admin
+from django.forms import HiddenInput
 from django.shortcuts import redirect, render
 from django.urls import path
 import requests
@@ -19,7 +20,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Filters.
 class CreatedDateFilter(SimpleListFilter):
-    title = 'Creation Date' # or use _('country') for translated title
+    title = 'Creation Date'
     parameter_name = 'created_on'
 
     def lookups(self, request, model_admin):
@@ -40,6 +41,21 @@ class CreatedDateFilter(SimpleListFilter):
         elif self.value() == 'This Month':
             return queryset.filter(created_on__date__gte=datetime.date.today().replace(day=1))
 
+class UserGroupTypeFilter(SimpleListFilter):
+    title = 'Type'
+    parameter_name = 'type'
+
+    def lookups(self, request, model_admin):
+        return [
+            ("seller", "Seller"),
+            ("customer", "Customer"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'seller':
+            return queryset.filter(seller__isnull=False)
+        elif self.value() == 'customer':
+            return queryset.filter(seller__isnull=True)
 
 # Inlines.
 class AddOnChoiceInline(admin.TabularInline):
@@ -181,20 +197,35 @@ class UserInline(admin.TabularInline):
     show_change_link = True
     extra=0
 
+class OrderLineItemInlineForm(forms.ModelForm):
+    seller_payout_price = forms.CharField(required=False, disabled=True)
+    customer_price = forms.CharField(required=False, disabled=True)
+    is_paid = forms.BooleanField(required=False, disabled=True)
+
+    class Meta:
+        model = OrderLineItem
+        fields = ('order_line_item_type', 'rate', 'quantity', 'seller_payout_price', 'platform_fee_percent','customer_price', 'is_paid', 'stripe_invoice_line_item_id')
+        readonly_fields = ('seller_payout_price', 'customer_price', 'is_paid', 'stripe_invoice_line_item_id')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        order_line_item: OrderLineItem = self.instance
+        if order_line_item and order_line_item.stripe_invoice_line_item_id:
+            # If the OrderLineItem has a Stripe Invoice Line Item ID, then make it read-only.
+            for f in self.fields:
+                  self.fields[f].disabled = True
+
+        # Set initial values for read-only fields.
+        self.initial['seller_payout_price'] = order_line_item.seller_payout_price()
+        self.initial['customer_price'] = order_line_item.customer_price()
+        self.initial['is_paid'] = order_line_item.is_paid()
+
 class OrderLineItemInline(admin.TabularInline):
     model = OrderLineItem
-    fields = ('order_line_item_type', 'rate', 'quantity', 'seller_payout_price', 'platform_fee_percent','downstream_price',)
-    readonly_fields = ('downstream_price', 'seller_payout_price')
+    # fields = ('order_line_item_type', 'rate', 'quantity', 'seller_payout_price', 'platform_fee_percent', 'customer_price', 'is_paid')
+    form = OrderLineItemInlineForm
     show_change_link = True
     extra=0
-
-    def seller_payout_price(self, obj):
-        return round((obj.rate or 0) * (obj.quantity or 0), 2)
-    
-    def downstream_price(self, obj):
-        seller_price = self.seller_payout_price(obj)
-        customer_price = seller_price * (1 + (obj.platform_fee_percent / 100))
-        return round(customer_price, 2)
 
 class OrderDisposalTicketInline(admin.TabularInline):
     model = OrderDisposalTicket
@@ -209,20 +240,6 @@ class PayoutInline(admin.TabularInline):
     extra=0
     can_delete = False
     
-class PaymentLineItemInline(admin.TabularInline):
-    model = PaymentLineItem
-    readonly_fields = ('order', 'invoiced', 'paid', 'stripe_invoice_line_item_id',)
-    extra=0
-    can_delete = False
-
-    def invoiced(self, obj):
-        invoiced, _ = obj.amount()
-        return invoiced
-    
-    def paid(self, obj):
-        _, paid = obj.amount()
-        return paid
-
 class SellerInvoicePayableLineItemInline(admin.TabularInline):
     model = SellerInvoicePayableLineItem
     fields = ('order', 'amount', 'description')
@@ -637,82 +654,7 @@ class UserAddressAdmin(admin.ModelAdmin):
     list_display = ('name', 'user_group', 'project_id')
     autocomplete_fields = ["user_group", "user"]
     search_fields = ["name", "street"]
-    actions = ["create_draft_invoices"]
                 
-    @admin.action(description="Create Draft Invoices")
-    def create_draft_invoices(modeladmin, request, queryset):
-        for user_address in queryset:
-            # Get all completed orders for this user address.
-            completed_orders = Order.objects.filter(
-                order_group__user_address=user_address, 
-                status=Order.COMPLETE, 
-                submitted_on__isnull=False
-            )
-
-            # Create draft invoice for any orders that are "undercharged".
-            payment = None
-            for completed_order in completed_orders:
-                payment_line_items = PaymentLineItem.objects.filter(order=completed_order)
-
-                # Compute total amount already invoiced to customer.
-                total_invoiced = 0
-                for payment_line_item in payment_line_items:
-                    invoiced, _ = payment_line_item.amount()
-                    total_invoiced += invoiced
-
-                # Compute total amount to be invoiced to customer.
-                total_to_be_invoiced = float(completed_order.customer_price()) - float(total_invoiced)
-
-                # Create draft invoice if there is an amount to be invoiced.
-                if total_to_be_invoiced > 0:
-                    # Create Payment, if None.
-                    if not payment:
-                        payment = Payment.objects.create(
-                            user_address=user_address,
-                        )
-
-                    # Create Stripe Invoice Line Item.
-                    start_datetime = datetime.datetime.combine(
-                        completed_order.start_date, 
-                        datetime.datetime.min.time()
-                    )
-                    end_datetime = datetime.datetime.combine(
-                        completed_order.end_date, 
-                        datetime.datetime.min.time()
-                    )
-                    print(start_datetime.timestamp())
-                    print(end_datetime.timestamp())
-                    
-                    stripe_invoice_line_item = stripe.InvoiceItem.create(
-                        customer=user_address.stripe_customer_id,
-                        description=completed_order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " + completed_order.start_date.strftime("%m/%d/%Y") + " - " + completed_order.end_date.strftime("%m/%d/%Y"),
-                        amount=round(total_to_be_invoiced * 100),
-                        currency="usd",
-                        period={
-                            "start": round(start_datetime.timestamp()),
-                            "end": round(end_datetime.timestamp()),
-                        }
-                    )
-
-                    # Create PaymentLineItem.
-                    PaymentLineItem.objects.create(
-                        payment=payment,
-                        order=completed_order,
-                        stripe_invoice_line_item_id=stripe_invoice_line_item.id,
-                    )
-
-            # Create draft invoice for any orders that are "overcharged".
-            invoice = stripe.Invoice.create(
-                customer=user_address.stripe_customer_id,
-            )
-
-            # Update Payment.
-            if payment:
-                payment.stripe_invoice_id = invoice.id
-                payment.save()
-
-            messages.success(request, "Successfully created all needed invoices.")
-
 class UserAdmin(admin.ModelAdmin):
     model = User
     search_fields = ["email", "first_name", "last_name"]
@@ -781,7 +723,15 @@ class UserAdmin(admin.ModelAdmin):
 
 class UserGroupAdmin(admin.ModelAdmin):
     model = UserGroup
+    list_display = (
+        'name',
+        'seller',
+        'user_count',
+        'seller_locations',
+        'seller_product_seller_locations'
+    )
     search_fields = ["name"]
+    list_filter = (UserGroupTypeFilter,)
     inlines = [
         UserInline,
     ]
@@ -794,6 +744,18 @@ class UserGroupAdmin(admin.ModelAdmin):
             path('import-csv/', self.import_csv),
         ]
         return my_urls + urls
+    
+    def user_count(self, obj):
+        return obj.user_set.count()
+    
+    def seller_locations(self, obj):
+        # Get all SellerLocations for this UserGroup.
+        return obj.seller.seller_locations.count() if obj.seller else None
+    
+    def seller_product_seller_locations(self, obj):
+        # Get all SellerProductSellerLocations for this UserGroup.
+        seller_locations = obj.seller.seller_locations.all() if obj.seller else None
+        return sum([seller_location.seller_location_seller_products.count() for seller_location in seller_locations]) if seller_locations else None
 
     def import_csv(self, request):
         if request.method == "POST":
@@ -865,8 +827,89 @@ class OrderAdmin(admin.ModelAdmin):
         PayoutInline,
         SellerInvoicePayableLineItemInline,
     ]
-    actions = ["send_payouts"]
-                
+    actions = ["send_payout", "create_draft_invoices"]
+
+    @admin.action(description="Create draft invoices")
+    def create_draft_invoices(self, request, queryset):
+        # Get distinct SellerLocations.
+        distinct_user_addresses:List[UserAddress] = []
+        for order in queryset:
+            user_address = order.order_group.user_address
+            current_user_address_ids = [user_address.id for user_address in distinct_user_addresses]
+            if user_address.id not in current_user_address_ids:
+                distinct_user_addresses.append(user_address)
+
+        # For each SellerLocation, create or update invoices for all orders.
+        for user_address in distinct_user_addresses:
+            # Check if user_address has a Stripe Customer ID.
+            # If not, create a Stripe Customer.
+            if not user_address.stripe_customer_id:
+                stripe_customer = stripe.Customer.create(
+                    email=user_address.user.email,
+                    name=user_address.name,
+                )
+                user_address.stripe_customer_id = stripe_customer.id
+                user_address.save()
+
+
+            orders_for_user_address = queryset.filter(
+                order_group__user_address=user_address
+            )
+
+            # Get the current draft invoice or create a new one.
+            draft_invoices = stripe.Invoice.search(
+                query='customer:"' + user_address.stripe_customer_id + '" AND status:"draft"',
+            )
+            if len(draft_invoices) > 0:
+                stripe_invoice = draft_invoices[0]
+            else:
+                stripe_invoice = stripe.Invoice.create(
+                    customer=user_address.stripe_customer_id,
+                    auto_advance=False,
+                )
+
+            # Loop through each order and add any OrderLineItems that don't have
+            # a StripeInvoiceLineItemId on the OrderLineItem.
+            order:Order
+            for order in orders_for_user_address:
+                # Get OrderLineItems that don't have a StripeInvoiceLineItemId.
+                order_line_items = OrderLineItem.objects.filter(
+                    order=order,
+                    stripe_invoice_line_item_id=None,
+                )
+
+                # Create Stripe Invoice Line Item for each OrderLineItem that
+                # doesn't have a StripeInvoiceLineItemId.
+                order_line_item:OrderLineItem
+                for order_line_item in order_line_items:
+                    # Create Stripe Invoice Line Item.
+                    start_datetime = datetime.datetime.combine(
+                        order.start_date, 
+                        datetime.datetime.min.time()
+                    )
+                    end_datetime = datetime.datetime.combine(
+                        order.end_date, 
+                        datetime.datetime.min.time()
+                    )
+                    
+                    stripe_invoice_line_item = stripe.InvoiceItem.create(
+                        customer=order.order_group.user_address.stripe_customer_id,
+                        invoice=stripe_invoice.id,
+                        description=order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " +  order_line_item.order_line_item_type.name + " | " + order.start_date.strftime("%m/%d/%Y") + " - " + order.end_date.strftime("%m/%d/%Y"),
+                        amount=round(order_line_item.rate * order_line_item.quantity * 100),
+                        currency="usd",
+                        period={
+                            "start": round(start_datetime.timestamp()),
+                            "end": round(end_datetime.timestamp()),
+                        }
+                    )
+
+                    # Update OrderLineItem with StripeInvoiceLineItemId.
+                    order_line_item.stripe_invoice_line_item_id = stripe_invoice_line_item.id
+                    order_line_item.save()
+
+        messages.success(request, "Successfully created/updated invoices for all selected orders.")
+         
     @admin.action(description="Send payouts")
     def send_payouts(self, request, queryset):
         # Get distinct SellerLocations.
@@ -936,7 +979,7 @@ class OrderAdmin(admin.ModelAdmin):
                             checkbook_payout_id=check_number,
                         )
 
-        messages.success(request, "Successfully paid out all connected sellers.")
+        messages.success(request, "Successfully paid out all selected orders.")
 
     def customer_price(self, obj):
         return round(obj.customer_price(), 2)
@@ -944,20 +987,25 @@ class OrderAdmin(admin.ModelAdmin):
     def seller_price(self, obj):
         return round(obj.seller_price(), 2)
     
-    def customer_invoiced(self, obj):
-        payment_line_items = PaymentLineItem.objects.filter(order=obj)
+    def customer_invoiced(self, obj:Order):
+        invoiced_order_line_items = obj.order_line_items.filter(
+            stripe_invoice_line_item_id__isnull=False
+        )
+                
         total_invoiced = 0
-        for payment_line_item in payment_line_items:
-            invoiced, paid = payment_line_item.amount()
-            total_invoiced += invoiced
+        for order_line_item in invoiced_order_line_items:
+            total_invoiced += order_line_item.rate * order_line_item.quantity
         return total_invoiced
     
     def customer_paid(self, obj):
-        payment_line_items = PaymentLineItem.objects.filter(order=obj)
+        invoiced_order_line_items = obj.order_line_items.filter(
+            stripe_invoice_line_item_id__isnull=False
+        )
+
         total_paid = 0
-        for payment_line_item in payment_line_items:
-            invoiced, paid = payment_line_item.amount()
-            total_paid += paid
+        order_line_item:OrderLineItem
+        for order_line_item in invoiced_order_line_items:
+            total_paid += order_line_item.rate * order_line_item.quantity if order_line_item.is_paid() else 0
         return total_paid
     
     def payment_status(self, obj):
@@ -1015,22 +1063,6 @@ class PayoutAdmin(admin.ModelAdmin):
     model = Payout
     search_fields = ["id","melio_payout_id", "stripe_transfer_id"]
         
-class PaymentAdmin(admin.ModelAdmin):
-    model = Payment
-    list_display = ('user_address', 'total', 'stripe_invoice_id',)
-    readonly_fields = ('user_address', 'total', 'stripe_invoice_id',)
-    inlines = [
-        PaymentLineItemInline,
-    ]
-
-    def total(self, obj):
-        invoiced, _ = obj.total()
-        return invoiced
-
-class PaymentLineItemAdmin(admin.ModelAdmin):
-    model = PaymentLineItem
-    readonly_fields = ('stripe_invoice_line_item_id', 'payment', 'order')
-
 # Register your models here.
 admin.site.register(Seller, SellerAdmin)
 admin.site.register(SellerLocation, SellerLocationAdmin)
@@ -1072,8 +1104,6 @@ admin.site.register(DayOfWeek)
 admin.site.register(TimeSlot)
 admin.site.register(Subscription)
 admin.site.register(Payout, PayoutAdmin)
-admin.site.register(Payment, PaymentAdmin)
-admin.site.register(PaymentLineItem, PaymentLineItemAdmin)
 admin.site.register(SellerInvoicePayable, SellerInvoicePayableAdmin)
 admin.site.register(SellerInvoicePayableLineItem, SellerInvoicePayableLineItemAdmin)
 
