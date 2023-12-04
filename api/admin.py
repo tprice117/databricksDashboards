@@ -895,7 +895,8 @@ class OrderAdmin(admin.ModelAdmin):
                         customer=order.order_group.user_address.stripe_customer_id,
                         invoice=stripe_invoice.id,
                         description=order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " +  order_line_item.order_line_item_type.name + " | " + order.start_date.strftime("%m/%d/%Y") + " - " + order.end_date.strftime("%m/%d/%Y"),
-                        amount=round(order_line_item.customer_price() * 100),
+                        amount=round(order_line_item.customer_price() * 100) / order_line_item.quantity,
+                        quantity=order_line_item.quantity,
                         currency="usd",
                         period={
                             "start": round(start_datetime.timestamp()),
@@ -992,8 +993,9 @@ class OrderAdmin(admin.ModelAdmin):
         )
                 
         total_invoiced = 0
+        order_line_item:OrderLineItem
         for order_line_item in invoiced_order_line_items:
-            total_invoiced += order_line_item.rate * order_line_item.quantity
+            total_invoiced += order_line_item.customer_price()
         return total_invoiced
     
     def customer_paid(self, obj):
