@@ -827,7 +827,7 @@ class OrderAdmin(admin.ModelAdmin):
         PayoutInline,
         SellerInvoicePayableLineItemInline,
     ]
-    actions = ["send_payout", "create_draft_invoices"]
+    actions = ["send_payouts", "create_draft_invoices"]
 
     @admin.action(description="Create draft invoices")
     def create_draft_invoices(self, request, queryset):
@@ -891,7 +891,7 @@ class OrderAdmin(admin.ModelAdmin):
                         order.end_date, 
                         datetime.datetime.min.time()
                     )
-                    
+
                     stripe_invoice_line_item = stripe.InvoiceItem.create(
                         customer=order.order_group.user_address.stripe_customer_id,
                         invoice=stripe_invoice.id,
