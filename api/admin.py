@@ -831,7 +831,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     @admin.action(description="Create draft invoices")
     def create_draft_invoices(self, request, queryset):
-        # Get distinct SellerLocations.
+        # Get distinct UserAddresses.
         distinct_user_addresses:List[UserAddress] = []
         for order in queryset:
             user_address = order.order_group.user_address
@@ -839,9 +839,9 @@ class OrderAdmin(admin.ModelAdmin):
             if user_address.id not in current_user_address_ids:
                 distinct_user_addresses.append(user_address)
 
-        # For each SellerLocation, create or update invoices for all orders.
+        # For each UserAddress, create or update invoices for all orders.
         for user_address in distinct_user_addresses:
-            # Check if user_address has a Stripe Customer ID.
+            # Check if UserAddress has a Stripe Customer ID.
             # If not, create a Stripe Customer.
             if not user_address.stripe_customer_id:
                 stripe_customer = stripe.Customer.create(
@@ -850,7 +850,6 @@ class OrderAdmin(admin.ModelAdmin):
                 )
                 user_address.stripe_customer_id = stripe_customer.id
                 user_address.save()
-
 
             orders_for_user_address = queryset.filter(
                 order_group__user_address=user_address
