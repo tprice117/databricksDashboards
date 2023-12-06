@@ -731,6 +731,7 @@ class Order(BaseModel):
     def __init__(self, *args, **kwargs):
         super(Order, self).__init__(*args, **kwargs)
         self.__original_submitted_on = self.submitted_on
+        self.__original_status = self.status
 
     def customer_price(self):
         order_line_items = OrderLineItem.objects.filter(order=self)
@@ -776,44 +777,14 @@ class Order(BaseModel):
             
     def save(self, *args, **kwargs):
         self.clean()
+
+        # Send email to internal team. Only on our PROD environment.
         if self.submitted_on != self.__original_submitted_on and self.submitted_on is not None:
-            # Send email to internal team. Only on our PROD environment.
-            if settings.ENVIRONMENT == "TEST":
-                try:
-                    mailchimp.messages.send({"message": {
-                        "headers": {
-                            "reply-to": "dispatch@trydownstream.io",
-                        },
-                        "from_name": "Downstream",
-                        "from_email": "dispatch@trydownstream.io",
-                        "to": [{"email": "dispatch@trydownstream.io"}],
-                        "subject": "Order Confirmed",
-                        "track_opens": True,
-                        "track_clicks": True,
-                        "html": render_to_string(
-                            'order-submission-email.html',
-                            {
-                                "orderId": self.id,
-                                "seller": self.order_group.seller_product_seller_location.seller_location.seller.name,
-                                "sellerLocation": self.order_group.seller_product_seller_location.seller_location.name,
-                                "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                                "bookingType": self.order_type,
-                                "wasteType": self.order_group.waste_type.name,
-                                "supplierTonsIncluded": self.order_group.material.tonnage_included,
-                                "supplierRentalDaysIncluded": self.order_group.rental.included_days,
-                                "serviceDate": self.service_date,
-                                "timeWindow": self.schedule_window,
-                                "locationAddress": self.order_group.user_address.street,
-                                "locationCity": self.order_group.user_address.city,
-                                "locationState": self.order_group.user_address.state,
-                                "locationZip": self.order_group.user_address.postal_code,
-                                "locationDetails": self.order_group.access_details,
-                                "additionalDetails": self.order_group.placement_details,
-                            }
-                        ),
-                    }})
-                except:
-                    print("An exception occurred.")
+            self.send_internal_order_confirmation_email()
+
+        # Send email to customer if status has changed to "Scheduled".
+        if self.status != self.__original_status and self.status == Order.SCHEDULED:
+            self.send_customer_email_when_order_scheduled()
 
         return super(Order, self).save(*args, **kwargs)
 
@@ -926,6 +897,85 @@ class Order(BaseModel):
             except Exception as e:
                 print(e)
                 pass
+
+    def send_internal_order_confirmation_email(self):
+        # Send email to internal team. Only on our PROD environment.
+        if settings.ENVIRONMENT == "TEST":
+            try:
+                mailchimp.messages.send({"message": {
+                    "headers": {
+                        "reply-to": "dispatch@trydownstream.io",
+                    },
+                    "from_name": "Downstream",
+                    "from_email": "dispatch@trydownstream.io",
+                    "to": [{"email": "dispatch@trydownstream.io"}],
+                    "subject": "Order Confirmed",
+                    "track_opens": True,
+                    "track_clicks": True,
+                    "html": render_to_string(
+                        'order-submission-email.html',
+                        {
+                            "orderId": self.id,
+                            "seller": self.order_group.seller_product_seller_location.seller_location.seller.name,
+                            "sellerLocation": self.order_group.seller_product_seller_location.seller_location.name,
+                            "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                            "bookingType": self.order_type,
+                            "wasteType": self.order_group.waste_type.name,
+                            "supplierTonsIncluded": self.order_group.material.tonnage_included,
+                            "supplierRentalDaysIncluded": self.order_group.rental.included_days,
+                            "serviceDate": self.service_date,
+                            "timeWindow": self.schedule_window,
+                            "locationAddress": self.order_group.user_address.street,
+                            "locationCity": self.order_group.user_address.city,
+                            "locationState": self.order_group.user_address.state,
+                            "locationZip": self.order_group.user_address.postal_code,
+                            "locationDetails": self.order_group.access_details,
+                            "additionalDetails": self.order_group.placement_details,
+                        }
+                    ),
+                }})
+            except Exception as e:
+                print("An exception occurred.")
+                print(e)
+
+    def send_customer_email_when_order_scheduled(self):
+        # Send email to customer when order is scheduled. Only on our PROD environment.
+        # if settings.ENVIRONMENT == "TEST":
+            try:
+                mailchimp.messages.send({"message": {
+                    "headers": {
+                        "reply-to": "dispatch@trydownstream.io",
+                    },
+                    "from_name": "Downstream",
+                    "from_email": "dispatch@trydownstream.io",
+                    "to": [
+                        {"email": self.order_group.user.email}, 
+                        {"email": "thayes@trydownstream.io"}
+                    ],
+                    "subject": "Order Confirmed",
+                    "track_opens": True,
+                    "track_clicks": True,
+                    "html": render_to_string(
+                        'order-confirmed-email.html',
+                        {
+                            "orderId": self.id,
+                            "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                            "waste_type": self.order_group.waste_type.name,
+                            "included_tons": self.order_group.material.tonnage_included,
+                            "included_rental_days": self.order_group.rental.included_days,
+                            "service_date": self.end_date,
+                            "location_address": self.order_group.user_address.street,
+                            "location_city": self.order_group.user_address.city,
+                            "location_state": self.order_group.user_address.state,
+                            "location_zip": self.order_group.user_address.postal_code,
+                            "location_details": self.order_group.access_details or "None",
+                            "additional_details": self.order_group.placement_details or "None",
+                        }
+                    ),
+                }})
+            except Exception as e:
+                print("An exception occurred.")
+                print(e)
 
 
     def __str__(self):
