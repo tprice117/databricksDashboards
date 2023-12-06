@@ -18,11 +18,12 @@ class CheckbookIO:
       # Get total already paid to seller for this order.
       payouts = Payout.objects.filter(order=order)
       total_paid_to_seller = sum([payout.amount for payout in payouts])
-    
+      description = order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " + order.order_group.user_address.street
+
       remittance_advice.append({
         "id": str(order.id).replace('-', ''),
         "amount": round(float(order.seller_price() - total_paid_to_seller), 2),
-        "description": order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " + order.order_group.user_address.street,
+        "description": description if len(description) < 64 else description[:64],
         "date": order.end_date.strftime("%Y-%m-%d")
       })
 
