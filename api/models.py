@@ -940,7 +940,7 @@ class Order(BaseModel):
 
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
-        # if settings.ENVIRONMENT == "TEST":
+        if settings.ENVIRONMENT == "TEST":
             try:
                 mailchimp.messages.send({"message": {
                     "headers": {
