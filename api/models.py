@@ -80,7 +80,7 @@ class SellerLocation(BaseModel):
         filename = "%s.%s" % (uuid.uuid4(), ext)
         return filename
 
-    seller = models.ForeignKey(Seller, models.CASCADE)
+    seller = models.ForeignKey(Seller, models.CASCADE, related_name='seller_locations')
     name = models.CharField(max_length=255)
     street = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)
@@ -421,8 +421,8 @@ class SellerProduct(BaseModel):
         unique_together = ('product', 'seller',)
 
 class SellerProductSellerLocation(BaseModel):
-    seller_product = models.ForeignKey(SellerProduct, models.CASCADE, related_name='seller_location_seller_product')
-    seller_location = models.ForeignKey(SellerLocation, models.CASCADE, related_name='seller_location_seller_product')
+    seller_product = models.ForeignKey(SellerProduct, models.CASCADE, related_name='seller_location_seller_products')
+    seller_location = models.ForeignKey(SellerLocation, models.CASCADE, related_name='seller_location_seller_products')
     active = models.BooleanField(default=True)
     total_inventory = models.DecimalField(max_digits=18, decimal_places=0, blank=True, null=True) # Added 2/20/2023 Total Quantity input by seller of product offered
     min_price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
@@ -943,8 +943,9 @@ class OrderDisposalTicket(BaseModel):
     
 class OrderLineItemType(BaseModel):
     name = models.CharField(max_length=255)
-    units = models.CharField(max_length=255, blank=True, null=True)
-    code = models.CharField(max_length=255, blank=True, null=True)
+    units = models.CharField(max_length=255)
+    code = models.CharField(max_length=255)
+    stripe_tax_code_id = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
@@ -959,9 +960,34 @@ class OrderLineItem(BaseModel):
     platform_fee_percent = models.DecimalField(max_digits=18, decimal_places=2, default=20, validators=PERCENTAGE_VALIDATOR)
     description = models.CharField(max_length=255, blank=True, null=True)
     is_flat_rate = models.BooleanField(default=False)
+    stripe_invoice_line_item_id = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return str(self.order) + ' - ' + self.order_line_item_type.name
+    
+    def get_invoice(self):
+        if self.stripe_invoice_line_item_id:
+            invoice_line_item = stripe.InvoiceItem.retrieve(self.stripe_invoice_line_item_id)
+            return stripe.Invoice.retrieve(invoice_line_item.invoice)
+        else:
+            return None
+
+    def is_paid(self):
+        invoice = self.get_invoice()
+        if invoice and invoice.status != "draft":
+            return invoice.status == "paid"
+        else:
+            # Return None if OrderLineItem is not associated with an Invoice or
+            # Invoice is in draft status.
+            return None
+        
+    def seller_payout_price(self):
+        return round((self.rate or 0) * (self.quantity or 0), 2)
+    
+    def customer_price(self):
+        seller_price = self.seller_payout_price()
+        customer_price = seller_price * (1 + (self.platform_fee_percent / 100))
+        return round(customer_price, 2)
 
 class SellerInvoicePayable(BaseModel):
     STATUS_CHOICES = (
@@ -1022,33 +1048,6 @@ class Payout(BaseModel):
     stripe_transfer_id = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     description = models.CharField(max_length=255, blank=True, null=True)
-
-class Payment(BaseModel):
-    user_address = models.ForeignKey(UserAddress, models.PROTECT)
-    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-
-    def total(self):
-        total_invoiced = 0
-        total_paid = 0
-        for payment_line_item in self.payment_line_items.all():
-            invoiced, paid = payment_line_item.amount()
-            total_invoiced += invoiced
-            total_paid += paid
-        return total_invoiced, total_paid
-
-class PaymentLineItem(BaseModel):
-    payment = models.ForeignKey(Payment, models.CASCADE, related_name="payment_line_items")
-    order = models.ForeignKey(Order, models.CASCADE)
-    stripe_invoice_line_item_id = models.CharField(max_length=255, blank=True, null=True)
-
-    def amount(self):
-        if self.stripe_invoice_line_item_id:
-            invoice = stripe.Invoice.retrieve(self.payment.stripe_invoice_id)
-            invoice_line_item = stripe.InvoiceItem.retrieve(self.stripe_invoice_line_item_id)
-            amount = invoice_line_item.amount / 100
-            return amount, amount if invoice.status == "paid" else 0
-        else:
-            return None, None
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  
