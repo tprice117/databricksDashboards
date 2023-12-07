@@ -67,6 +67,11 @@ class UserUserAddressSerializer(serializers.ModelSerializer):
 
 class UserSellerReviewSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    user = UserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='user', write_only=True)
+    seller = SellerSerializer(read_only=True)
+    seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True)
+    
     class Meta:
         model = UserSellerReview
         fields = "__all__"
