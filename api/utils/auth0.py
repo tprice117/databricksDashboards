@@ -83,6 +83,8 @@ def invite_user(user):
             timeout=30,
         )
 
+        print(response.json())
+
         # Send User Invite Email to user.
         try:
             mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
