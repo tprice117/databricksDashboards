@@ -29,6 +29,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
+    # START:  Django Admin Interface
+    'admin_interface',
+    'colorfield',
+    # END:  Django Admin Interface
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -193,3 +197,6 @@ else:
     CHECKBOOK_API_SECRET = "guqPM73fjlPNHddM8GjyVTdKWQIGXE"
     CHECKBOOK_WEBHOOK_KEY = "660813c1ab214bfa8458b81b983cf767"
 
+# Django Admin Interface settings.
+X_FRAME_OPTIONS = "SAMEORIGIN"
+SILENCED_SYSTEM_CHECKS = ["security.W019"]
