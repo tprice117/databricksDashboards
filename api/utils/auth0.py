@@ -84,27 +84,26 @@ def invite_user(user):
         )
 
         # Send User Invite Email to user.
-        if settings.ENVIRONMENT == "TEST":
-            try:
-                mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
-                mailchimp.messages.send({"message": {
-                    "headers": {
-                        "reply-to": "dispatch@trydownstream.io",
-                    },
-                    "from_name": "Downstream",
-                    "from_email": "dispatch@trydownstream.io",
-                    "to": [{"email": user.email},],
-                    "subject": "You've been invited to Downstream!",
-                    "track_opens": True,
-                    "track_clicks": True,
-                    "html": render_to_string(
-                        'user-invite-email.html',
-                        {
-                            "url": response.json()['ticket'],
-                        }
-                    ),
-                }})
-            except Exception as e:
-                print("An exception occurred.")
-                print(e)
+        try:
+            mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+            mailchimp.messages.send({"message": {
+                "headers": {
+                    "reply-to": "dispatch@trydownstream.io",
+                },
+                "from_name": "Downstream",
+                "from_email": "dispatch@trydownstream.io",
+                "to": [{"email": user.email},],
+                "subject": "You've been invited to Downstream!",
+                "track_opens": True,
+                "track_clicks": True,
+                "html": render_to_string(
+                    'user-invite-email.html',
+                    {
+                        "url": response.json()['ticket'],
+                    }
+                ),
+            }})
+        except Exception as e:
+            print("An exception occurred.")
+            print(e)
         
