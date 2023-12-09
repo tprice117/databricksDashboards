@@ -83,8 +83,6 @@ def invite_user(user):
             timeout=30,
         )
 
-        print(response.json())
-
         # Send User Invite Email to user.
         if settings.ENVIRONMENT == "TEST":
             try:
