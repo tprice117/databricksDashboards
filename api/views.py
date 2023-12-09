@@ -1,5 +1,6 @@
 import base64
 import datetime
+from api.utils.auth0 import invite_user
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response

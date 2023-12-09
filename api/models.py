@@ -9,7 +9,7 @@ import uuid
 import stripe
 # from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
-from api.utils.auth0 import create_user, get_user_from_email, delete_user
+from api.utils.auth0 import create_user, get_user_data, get_user_from_email, delete_user, invite_user
 from api.utils.google_maps import geocode_address
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
@@ -213,6 +213,10 @@ class User(BaseModel):
                 # Create user in Auth0.
                 self.user_id = create_user(self.email)
                 created_by_downstream_team = True
+
+            # Send invite email.
+            if created_by_downstream_team:
+                invite_user(self)
 
             # Send email to internal team. Only on our PROD environment.
             if settings.ENVIRONMENT == "TEST":
@@ -785,6 +789,11 @@ class Order(BaseModel):
         # Send email to customer if status has changed to "Scheduled".
         if self.status != self.__original_status and self.status == Order.SCHEDULED:
             self.send_customer_email_when_order_scheduled()
+
+            # If user has not verified their email, send them the invite email.
+            auth0_user = get_user_data(self.order_group.user.user_id)
+            if not auth0_user['email_verified']:
+                invite_user(self.order_group.user)
 
         return super(Order, self).save(*args, **kwargs)
 

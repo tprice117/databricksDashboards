@@ -164,6 +164,7 @@ REST_FRAMEWORK = {
 }
 
 if ENVIRONMENT == 'TEST':
+    BASE_URL = "https://app.trydownstream.io"
     STRIPE_PUBLISHABLE_KEY = 'pk_live_H293e3qNvoJB8isKoALzyCFs00v6DmDPGg'
     STRIPE_SECRET_KEY = 'sk_live_wYw9ZQ4Gzp8V1n2EOVJ7ZRFW00DX5CyS6c'
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = "bpc_1HJm0bGVYGkmHIWnUWCqt7sf"
@@ -177,6 +178,7 @@ if ENVIRONMENT == 'TEST':
     CHECKBOOK_API_SECRET = "LafhEmkgGIdiAZB5Tryz3XNh2rU7KK"
     CHECKBOOK_WEBHOOK_KEY = "65840ee7b90442559953a6d925bc53a5"
 else:    
+    BASE_URL = "https://downstream-customer-dev.web.app"
     STRIPE_PUBLISHABLE_KEY = 'pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf'
     STRIPE_SECRET_KEY = 'sk_test_k7kzz0R6mrRogFPs6OVrpgrB00UmEjcUtf' 
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = "bpc_1MqjpaGVYGkmHIWnGRmlbTOk"
