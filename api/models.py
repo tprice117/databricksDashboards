@@ -935,7 +935,7 @@ class Order(BaseModel):
                             "wasteType": self.order_group.waste_type.name,
                             "supplierTonsIncluded": self.order_group.material.tonnage_included,
                             "supplierRentalDaysIncluded": self.order_group.rental.included_days,
-                            "serviceDate": self.service_date,
+                            "serviceDate": self.end_date,
                             "timeWindow": self.schedule_window,
                             "locationAddress": self.order_group.user_address.street,
                             "locationCity": self.order_group.user_address.city,
