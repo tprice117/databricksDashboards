@@ -692,6 +692,13 @@ class DisposalLocationWasteType(BaseModel):
         return self.disposal_location.name + ' - ' + self.waste_type.name
     
 class Order(BaseModel):
+    class Type(models.TextChoices):
+        DELIVERY = 'DELIVERY'
+        SWAP = 'SWAP'
+        REMOVAL = 'REMOVAL'
+        AUTO_RENEWAL = 'AUTO_RENEWAL'
+        ONE_TIME = 'ONE_TIME'
+
     PENDING = "PENDING"
     SCHEDULED = "SCHEDULED"
     INPROGRESS = "IN-PROGRESS"
@@ -744,6 +751,47 @@ class Order(BaseModel):
     def seller_price(self):
         order_line_items = OrderLineItem.objects.filter(order=self)
         return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
+
+    def get_order_type(self):
+        # Assign variables comparing Order StartDate and EndDate to OrderGroup StartDate and EndDate.
+        order_order_group_start_date_equal = self.start_date == self.order_group.start_date
+        order_order_group_end_dates_equal = self.end_date == self.order_group.end_date
+
+        # Does the OrderGroup have a Subscription?
+        has_subscription = hasattr(self.order_group, 'subscription')
+
+        # Are Order.StartDate and Order.EndDate equal?
+        order_start_end_dates_equal = self.start_date == self.end_date
+
+        # Orders in OrderGroup.
+        order_count = Order.objects.filter(order_group=self.order_group).count() > 1
+
+        # Assign variables based on Order.Type.
+        # DELIVERY: Order.StartDate == OrderGroup.StartDate AND Order.StartDate == Order.EndDate 
+        # AND Order.EndDate != OrderGroup.EndDate.
+        order_type_delivery = order_order_group_start_date_equal and order_start_end_dates_equal and not order_order_group_end_dates_equal
+        # ONE TIME: Order.StartDate == OrderGroup.StartDate AND Order.EndDate == OrderGroup.EndDate
+        # AND OrderGroup has no Subscription.
+        order_type_one_time = order_order_group_start_date_equal and order_order_group_end_dates_equal and not has_subscription
+        # REMOVAL: Order.EndDate == OrderGroup.EndDate AND OrderGroup.Orders.Count > 1.
+        order_type_removal = order_order_group_end_dates_equal and order_count > 1
+        # SWAP: OrderGroup.Orders.Count > 1 AND Order.EndDate != OrderGroup.EndDate AND OrderGroup has no Subscription.
+        order_type_swap = order_count > 1 and not order_order_group_end_dates_equal and not has_subscription
+        # AUTO RENEWAL: OrderGroup has Subscription and does not meet any other criteria.
+        order_type_auto_renewal = has_subscription and not order_type_delivery and not order_type_one_time and not order_type_removal and not order_type_swap
+
+        if order_type_delivery:
+            return Order.Type.DELIVERY
+        elif order_type_one_time:
+            return Order.Type.ONE_TIME
+        elif order_type_removal:
+            return Order.Type.REMOVAL
+        elif order_type_swap:
+            return Order.Type.SWAP
+        elif order_type_auto_renewal:
+            return Order.Type.AUTO_RENEWAL
+        else:
+            return None
 
     # def pre_save(sender, instance, *args, **kwargs):
     #     # Check if SubmittedOn has changed.

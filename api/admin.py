@@ -802,12 +802,13 @@ class OrderGroupAdmin(admin.ModelAdmin):
 
 class OrderAdmin(admin.ModelAdmin):
     model = Order
-    readonly_fields = ('customer_price', 'seller_price',)
+    readonly_fields = ('order_type','customer_price', 'seller_price')
     search_fields = ("id",)
     list_display = (
         'order_group', 
         'start_date', 
         'end_date', 
+        'order_type',
         'status', 
         'service_date', 
         'customer_price', 
@@ -820,7 +821,7 @@ class OrderAdmin(admin.ModelAdmin):
         'total_invoiced_from_seller', 
         'seller_invoice_status'
     )
-    list_filter = ('status', CreatedDateFilter)
+    list_filter = ('status', 'order_type', CreatedDateFilter,)
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
@@ -828,6 +829,9 @@ class OrderAdmin(admin.ModelAdmin):
         SellerInvoicePayableLineItemInline,
     ]
     actions = ["send_payouts", "create_draft_invoices"]
+
+    def order_type(self, obj:Order):
+        return obj.get_order_type()
 
     @admin.action(description="Create draft invoices")
     def create_draft_invoices(self, request, queryset):
