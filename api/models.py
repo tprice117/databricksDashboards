@@ -281,9 +281,15 @@ class UserAddress(BaseModel):
         return self.name or "[No name]"
     
     def pre_save(sender, instance, *args, **kwargs):
+        # Populate latitude and longitude.
         latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
+
+        # Populate Stripe Customer ID.
+        if not instance.stripe_customer_id:
+            customer = stripe.Customer.create()
+            instance.stripe_customer_id = customer.id
 
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
