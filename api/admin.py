@@ -913,7 +913,7 @@ class OrderAdmin(admin.ModelAdmin):
                     stripe_invoice_line_item = stripe.InvoiceItem.create(
                         customer=order.order_group.user_address.stripe_customer_id,
                         invoice=stripe_invoice.id,
-                        description=order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " +  order_line_item.order_line_item_type.name + " | " + order.start_date.strftime("%m/%d/%Y") + " - " + order.end_date.strftime("%m/%d/%Y") + " | Qty: " + str(order_line_item.quantity) + " @ $" + str(round(order_line_item.rate, 2)) + "/unit",
+                        description=order.order_group.seller_product_seller_location.seller_product.product.main_product.name + " | " +  order_line_item.order_line_item_type.name + " | Qty: " + str(order_line_item.quantity) + " @ $" + str(round(order_line_item.rate, 2)) + "/unit",
                         amount=round(100 * order_line_item.customer_price()),
                         tax_behavior="exclusive",
                         tax_code=order_line_item.order_line_item_type.stripe_tax_code_id,
@@ -921,6 +921,11 @@ class OrderAdmin(admin.ModelAdmin):
                         period={
                             "start": round(start_datetime.timestamp()),
                             "end": round(end_datetime.timestamp()),
+                        },
+                        metadata = {
+                            'main_product_name': order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                            'order_start_date': order.start_date.strftime("%a, %-d %Y"),
+                            'order_end_date': order.end_date.strftime("%a, %-d %Y"),
                         }
                     )
 

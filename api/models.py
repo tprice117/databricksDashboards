@@ -354,7 +354,6 @@ class UserAddress(BaseModel):
             },
             tax_exempt = instance.user_group.tax_exempt_status if hasattr(instance.user_group, 'billing') else UserGroup.TaxExemptStatus.NONE,
         )
-        print(customer)
 
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
