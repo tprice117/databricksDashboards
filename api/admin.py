@@ -183,7 +183,13 @@ class SellerProductSellerLocationMaterialWasteTypeInline(admin.StackedInline):
     model = SellerProductSellerLocationMaterialWasteType
     show_change_link = True
     extra=0
-    
+
+class UserGroupBillingInline(admin.StackedInline):
+    model = UserGroupBilling
+    fields = ('email', 'street', 'city', 'state', 'postal_code', 'country')
+    show_change_link = True
+    extra=0
+
 class UserGroupUserInline(admin.TabularInline):
     model = UserGroupUser
     fields = ('user_group', 'user')
@@ -733,6 +739,7 @@ class UserGroupAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     list_filter = (UserGroupTypeFilter,)
     inlines = [
+        UserGroupBillingInline,
         UserInline,
     ]
 

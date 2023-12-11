@@ -138,6 +138,11 @@ class SellerLocationMailingAddress(BaseModel):
         instance.longitude = longitude or 0
 
 class UserGroup(BaseModel):
+    class TaxExemptStatus(models.TextChoices):
+        NONE = 'none'
+        EXEMPT = 'exempt'
+        REVERSE = 'reverse'
+
     COMPLIANCE_STATUS_CHOICES = (
         ("NOT_REQUIRED", "Not Required"),
         ("REQUESTED", "Requested"),
@@ -156,6 +161,7 @@ class UserGroup(BaseModel):
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
     credit_line_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     compliance_status = models.CharField(max_length=20, choices=COMPLIANCE_STATUS_CHOICES, default="NOT_REQUIRED")
+    tax_exempt_status = models.CharField(max_length=20, choices=TaxExemptStatus.choices, default=TaxExemptStatus.NONE)
 
     def __str__(self):
         return self.name
@@ -172,6 +178,28 @@ class UserGroup(BaseModel):
             # customer = stripe.Customer.create()
             # instance.stripe_customer_id = customer.id
             instance.save()
+
+class UserGroupBilling(BaseModel):
+    user_group = models.OneToOneField(
+        UserGroup, 
+        models.CASCADE,
+        related_name='billing'
+    )
+    email = models.EmailField()
+    # phone = models.CharField(max_length=40, blank=True, null=True)
+    tax_id = models.CharField(max_length=255, blank=True, null=True)
+    street = models.TextField()
+    city = models.CharField(max_length=40)
+    state = models.CharField(max_length=80)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=80)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True) 
+
+    def pre_save(sender, instance, *args, **kwargs):
+        latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
+        instance.latitude = latitude or 0
+        instance.longitude = longitude or 0
 
 class UserAddressType(BaseModel):
     name = models.CharField(max_length=255)
@@ -280,16 +308,53 @@ class UserAddress(BaseModel):
     def __str__(self):
         return self.name or "[No name]"
     
+    def formatted_address(self):
+        return f'{self.street} {self.city}, {self.state} {self.postal_code}'
+    
     def pre_save(sender, instance, *args, **kwargs):
         # Populate latitude and longitude.
         latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
 
-        # Populate Stripe Customer ID.
+        # Populate Stripe Customer ID, if not already populated.
         if not instance.stripe_customer_id:
             customer = stripe.Customer.create()
             instance.stripe_customer_id = customer.id
+        else:
+            customer = stripe.Customer.retrieve(instance.stripe_customer_id)
+
+        # Populate Stripe Customer ID.
+        customer = stripe.Customer.modify(
+            customer.id,
+            name = (instance.user_group.name) + " | " + instance.formatted_address(),
+            email = instance.user_group.billing.email if hasattr(instance.user_group, 'billing') else instance.user.email,
+            # phone = instance.user_group.billing.phone if hasattr(instance.user_group, 'billing') else instance.user.phone,
+            shipping = {
+                "name": (instance.user_group.name) + " | " + instance.formatted_address(),
+                "address": {
+                    "line1": instance.street,
+                    "city": instance.city,
+                    "state": instance.state,
+                    "postal_code": instance.postal_code,
+                    "country": instance.country,
+                },
+            },
+            address = {
+                "line1": instance.user_group.billing.street if hasattr(instance.user_group, 'billing') else instance.street,
+                "city": instance.user_group.billing.city if hasattr(instance.user_group, 'billing') else instance.city,
+                "state": instance.user_group.billing.state if hasattr(instance.user_group, 'billing') else instance.state,
+                "postal_code": instance.user_group.billing.postal_code if hasattr(instance.user_group, 'billing') else instance.postal_code,
+                "country": instance.user_group.billing.country if hasattr(instance.user_group, 'billing') else instance.country,
+            },
+            metadata={
+                'user_group_id': str(instance.user_group.id),
+                'user_address_id': str(instance.id),
+                'user_id': str(instance.user.id),
+            },
+            tax_exempt = instance.user_group.tax_exempt_status if hasattr(instance.user_group, 'billing') else UserGroup.TaxExemptStatus.NONE,
+        )
+        print(customer)
 
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
@@ -1169,6 +1234,7 @@ post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  
 post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
+pre_save.connect(UserGroupBilling.pre_save, sender=UserGroupBilling)
 pre_save.connect(Order.pre_save, sender=Order)
 post_save.connect(Order.post_save, sender=Order)
 pre_save.connect(SellerLocationMailingAddress.pre_save, sender=SellerLocationMailingAddress)
