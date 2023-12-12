@@ -5,7 +5,7 @@ from django.forms import HiddenInput
 from django.shortcuts import redirect, render
 from django.urls import path
 import requests
-
+import calendar
 from api.utils.checkbook_io import CheckbookIO
 from .models import *
 from django.contrib.admin import SimpleListFilter
@@ -901,15 +901,6 @@ class OrderAdmin(admin.ModelAdmin):
                 order_line_item:OrderLineItem
                 for order_line_item in order_line_items:
                     # Create Stripe Invoice Line Item.
-                    start_datetime = datetime.datetime.combine(
-                        order.start_date, 
-                        datetime.datetime.min.time()
-                    )
-                    end_datetime = datetime.datetime.combine(
-                        order.end_date, 
-                        datetime.datetime.min.time()
-                    )
-
                     stripe_invoice_line_item = stripe.InvoiceItem.create(
                         customer=order.order_group.user_address.stripe_customer_id,
                         invoice=stripe_invoice.id,
@@ -919,13 +910,13 @@ class OrderAdmin(admin.ModelAdmin):
                         tax_code=order_line_item.order_line_item_type.stripe_tax_code_id,
                         currency="usd",
                         period={
-                            "start": round(start_datetime.timestamp()),
-                            "end": round(end_datetime.timestamp()),
+                            "start": calendar.timegm(order.start_date.timetuple()),
+                            "end": calendar.timegm(order.end_date.timetuple()),
                         },
                         metadata = {
                             'main_product_name': order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                            'order_start_date': order.start_date.strftime("%a, %-d %Y"),
-                            'order_end_date': order.end_date.strftime("%a, %-d %Y"),
+                            'order_start_date': order.start_date.strftime("%a, %b %-d"),
+                            'order_end_date': order.end_date.strftime("%a, %b %-d"),
                         }
                     )
 
