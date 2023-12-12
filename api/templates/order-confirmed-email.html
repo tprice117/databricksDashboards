@@ -572,6 +572,11 @@
                                                     class="mceBlockContainer" valign="top">
                                                     <div data-block-id="15" class="mceText" id="dataBlockId-15"
                                                       style="width:100%">
+                                                      <p style="text-align: left;"><strong>Location:</strong>
+                                                        {{location_address}}, {{location_city}}, {{location_state}},
+                                                        {{location_zip}}</p>
+                                                      <p style="text-align: left;"><strong>Service Date:</strong>
+                                                        {{service_date}}</p>
                                                       <p style="text-align: left;"><strong>Product:</strong>
                                                         {{main_product}}</p>
                                                       <p style="text-align: left;"><strong>Waste Type:
@@ -580,11 +585,6 @@
                                                         </strong>{{included_tons}}</p>
                                                       <p style="text-align: left;" class="last-child"><strong>Rental
                                                           Days Included:</strong> {{included_rental_days}}</p>
-                                                      <p style="text-align: left;"><strong>Service Date:</strong>
-                                                        {{service_date}}</p>
-                                                      <p style="text-align: left;"><strong>Location:</strong>
-                                                        {{location_address}}, {{location_city}}, {{location_state}},
-                                                        {{location_zip}}</p>
                                                     </div>
                                                   </td>
                                                 </tr>
@@ -669,7 +669,9 @@
                                                         <tr class="mceStandardButton">
                                                           <td
                                                             style="background-color:#71982d;border-radius:8px;text-align:center"
-                                                            class="mceButton" valign="top"><a href="" target="_blank"
+                                                            class="mceButton" valign="top"><a 
+                                                              href="{{booking_url}}"
+                                                              target="_blank"
                                                               style="background-color:#71982d;border-radius:8px;border:2px solid #71982d;color:#ffffff;display:block;font-family:'Helvetica Neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;font-weight:bold;font-style:normal;padding:16px 28px;text-decoration:none;min-width:30px;text-align:center;direction:ltr;letter-spacing:0px">View
                                                               Bookings</a></td>
                                                         </tr>
@@ -880,9 +882,9 @@
                                                                                                                                     style="background-color:#ffffff;border-radius:8px;text-align:center"
                                                                                                                                     class="mceButton"
                                                                                                                                     valign="top">
-                                                                                                                                    <a href="mailto:dispatch@trydownstream.io"
+                                                                                                                                    <a href="https://help.trydownstream.io/"
                                                                                                                                       target="_blank"
-                                                                                                                                      style="background-color:#ffffff;border-radius:8px;border:2px solid #71982d;color:#000000;display:block;font-family:'Helvetica Neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;font-weight:bold;font-style:normal;padding:16px 28px;text-decoration:none;min-width:30px;text-align:center;direction:ltr;letter-spacing:0px">Email</a>
+                                                                                                                                      style="background-color:#ffffff;border-radius:8px;border:2px solid #71982d;color:#000000;display:block;font-family:'Helvetica Neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;font-weight:bold;font-style:normal;padding:16px 28px;text-decoration:none;min-width:30px;text-align:center;direction:ltr;letter-spacing:0px">Chat</a>
                                                                                                                                   </td>
                                                                                                                                 </tr>
                                                                                                                                 <tr>
@@ -959,9 +961,9 @@
                                                                                                                                     style="background-color:#ffffff;border-radius:8px;text-align:center"
                                                                                                                                     class="mceButton"
                                                                                                                                     valign="top">
-                                                                                                                                    <a href="https://help.trydownstream.io/"
+                                                                                                                                    <a href="sms:18335759184"
                                                                                                                                       target="_blank"
-                                                                                                                                      style="background-color:#ffffff;border-radius:8px;border:2px solid #71982d;color:#000000;display:block;font-family:'Helvetica Neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;font-weight:bold;font-style:normal;padding:16px 28px;text-decoration:none;min-width:30px;text-align:center;direction:ltr;letter-spacing:0px">Chat</a>
+                                                                                                                                      style="background-color:#ffffff;border-radius:8px;border:2px solid #71982d;color:#000000;display:block;font-family:'Helvetica Neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;font-weight:bold;font-style:normal;padding:16px 28px;text-decoration:none;min-width:30px;text-align:center;direction:ltr;letter-spacing:0px">Text</a>
                                                                                                                                   </td>
                                                                                                                                 </tr>
                                                                                                                                 <tr>

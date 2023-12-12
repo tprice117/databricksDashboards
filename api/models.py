@@ -9,7 +9,7 @@ import uuid
 import stripe
 # from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
-from api.utils.auth0 import create_user, get_user_data, get_user_from_email, delete_user, invite_user
+from api.utils.auth0 import create_user, get_password_change_url, get_user_data, get_user_from_email, delete_user, invite_user
 from api.utils.google_maps import geocode_address
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
@@ -908,11 +908,6 @@ class Order(BaseModel):
         if self.status != self.__original_status and self.status == Order.SCHEDULED:
             self.send_customer_email_when_order_scheduled()
 
-            # If user has not verified their email, send them the invite email.
-            auth0_user = get_user_data(self.order_group.user.user_id)
-            if not auth0_user['email_verified']:
-                invite_user(self.order_group.user)
-
         return super(Order, self).save(*args, **kwargs)
 
     def pre_save(sender, instance, *args, **kwargs):
@@ -1072,6 +1067,13 @@ class Order(BaseModel):
         # Send email to customer when order is scheduled. Only on our PROD environment.
         if settings.ENVIRONMENT == "TEST":
             try:
+                auth0_user = get_user_data(self.order_group.user.user_id)
+
+                try:
+                    call_to_action_url = get_password_change_url(self.order_group.user.user_id) if not auth0_user['email_verified'] else "https://app.trydownstream.io/orders"
+                except Exception as e:
+                    call_to_action_url = "https://app.trydownstream.io/orders"
+
                 mailchimp.messages.send({"message": {
                     "headers": {
                         "reply-to": "dispatch@trydownstream.io",
@@ -1082,13 +1084,14 @@ class Order(BaseModel):
                         {"email": self.order_group.user.email}, 
                         {"email": "thayes@trydownstream.io"}
                     ],
-                    "subject": "Order Confirmed",
+                    "subject": "Downstream | Order Confirmed | " + self.order_group.user_address.formatted_address(),
                     "track_opens": True,
                     "track_clicks": True,
                     "html": render_to_string(
                         'order-confirmed-email.html',
                         {
                             "orderId": self.id,
+                            "booking_url": call_to_action_url,
                             "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                             "waste_type": self.order_group.waste_type.name,
                             "included_tons": self.order_group.material.tonnage_included,
