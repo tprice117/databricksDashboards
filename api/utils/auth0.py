@@ -63,8 +63,8 @@ def delete_user(user_id:str):
             timeout=30,
         )
 
-def invite_user(user):
-    if user.user_id is not None:
+def get_password_change_url(user_id:str):
+    if user_id is not None:
         headers = { 
             'Authorization': "Bearer " +  get_auth0_access_token(),
             'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ def invite_user(user):
             'https://' + settings.AUTH0_DOMAIN + '/api/v2/tickets/password-change',
             json={
                 "result_url": "https://www.google.com",
-                "user_id": user.user_id,
+                "user_id": user_id,
                 "ttl_sec": 0,
                 "mark_email_as_verified": True,
                 "includeEmailInRedirect": True
@@ -83,7 +83,12 @@ def invite_user(user):
             timeout=30,
         )
 
-        print(response.json())
+        # Return ticket url.
+        response.json()['ticket']
+
+def invite_user(user):
+    if user.user_id is not None:
+        password_change_url = get_password_change_url(user.user_id)
 
         # Send User Invite Email to user.
         try:
@@ -101,7 +106,7 @@ def invite_user(user):
                 "html": render_to_string(
                     'user-invite-email.html',
                     {
-                        "url": response.json()['ticket'],
+                        "url": password_change_url,
                     }
                 ),
             }})

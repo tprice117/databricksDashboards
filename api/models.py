@@ -9,7 +9,7 @@ import uuid
 import stripe
 # from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
-from api.utils.auth0 import create_user, get_user_data, get_user_from_email, delete_user, invite_user
+from api.utils.auth0 import create_user, get_password_change_url, get_user_data, get_user_from_email, delete_user, invite_user
 from api.utils.google_maps import geocode_address
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
@@ -138,6 +138,11 @@ class SellerLocationMailingAddress(BaseModel):
         instance.longitude = longitude or 0
 
 class UserGroup(BaseModel):
+    class TaxExemptStatus(models.TextChoices):
+        NONE = 'none'
+        EXEMPT = 'exempt'
+        REVERSE = 'reverse'
+
     COMPLIANCE_STATUS_CHOICES = (
         ("NOT_REQUIRED", "Not Required"),
         ("REQUESTED", "Requested"),
@@ -156,6 +161,7 @@ class UserGroup(BaseModel):
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
     credit_line_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     compliance_status = models.CharField(max_length=20, choices=COMPLIANCE_STATUS_CHOICES, default="NOT_REQUIRED")
+    tax_exempt_status = models.CharField(max_length=20, choices=TaxExemptStatus.choices, default=TaxExemptStatus.NONE)
 
     def __str__(self):
         return self.name
@@ -172,6 +178,28 @@ class UserGroup(BaseModel):
             # customer = stripe.Customer.create()
             # instance.stripe_customer_id = customer.id
             instance.save()
+
+class UserGroupBilling(BaseModel):
+    user_group = models.OneToOneField(
+        UserGroup, 
+        models.CASCADE,
+        related_name='billing'
+    )
+    email = models.EmailField()
+    # phone = models.CharField(max_length=40, blank=True, null=True)
+    tax_id = models.CharField(max_length=255, blank=True, null=True)
+    street = models.TextField()
+    city = models.CharField(max_length=40)
+    state = models.CharField(max_length=80)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=80)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True) 
+
+    def pre_save(sender, instance, *args, **kwargs):
+        latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
+        instance.latitude = latitude or 0
+        instance.longitude = longitude or 0
 
 class UserAddressType(BaseModel):
     name = models.CharField(max_length=255)
@@ -280,10 +308,52 @@ class UserAddress(BaseModel):
     def __str__(self):
         return self.name or "[No name]"
     
+    def formatted_address(self):
+        return f'{self.street} {self.city}, {self.state} {self.postal_code}'
+    
     def pre_save(sender, instance, *args, **kwargs):
+        # Populate latitude and longitude.
         latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
+
+        # Populate Stripe Customer ID, if not already populated.
+        if not instance.stripe_customer_id:
+            customer = stripe.Customer.create()
+            instance.stripe_customer_id = customer.id
+        else:
+            customer = stripe.Customer.retrieve(instance.stripe_customer_id)
+
+        # Populate Stripe Customer ID.
+        customer = stripe.Customer.modify(
+            customer.id,
+            name = (instance.user_group.name) + " | " + instance.formatted_address(),
+            email = instance.user_group.billing.email if hasattr(instance.user_group, 'billing') else instance.user.email,
+            # phone = instance.user_group.billing.phone if hasattr(instance.user_group, 'billing') else instance.user.phone,
+            shipping = {
+                "name": (instance.user_group.name) + " | " + instance.formatted_address(),
+                "address": {
+                    "line1": instance.street,
+                    "city": instance.city,
+                    "state": instance.state,
+                    "postal_code": instance.postal_code,
+                    "country": instance.country,
+                },
+            },
+            address = {
+                "line1": instance.user_group.billing.street if hasattr(instance.user_group, 'billing') else instance.street,
+                "city": instance.user_group.billing.city if hasattr(instance.user_group, 'billing') else instance.city,
+                "state": instance.user_group.billing.state if hasattr(instance.user_group, 'billing') else instance.state,
+                "postal_code": instance.user_group.billing.postal_code if hasattr(instance.user_group, 'billing') else instance.postal_code,
+                "country": instance.user_group.billing.country if hasattr(instance.user_group, 'billing') else instance.country,
+            },
+            metadata={
+                'user_group_id': str(instance.user_group.id),
+                'user_address_id': str(instance.id),
+                'user_id': str(instance.user.id),
+            },
+            tax_exempt = instance.user_group.tax_exempt_status if hasattr(instance.user_group, 'billing') else UserGroup.TaxExemptStatus.NONE,
+        )
 
 class UserGroupUser(BaseModel):
     user_group = models.ForeignKey(UserGroup, models.CASCADE)
@@ -752,6 +822,9 @@ class Order(BaseModel):
         order_line_items = OrderLineItem.objects.filter(order=self)
         return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
+    def stripe_invoice_summary_item_description(self):
+        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")}'
+
     def get_order_type(self):
         # Assign variables comparing Order StartDate and EndDate to OrderGroup StartDate and EndDate.
         order_order_group_start_date_equal = self.start_date == self.order_group.start_date
@@ -764,7 +837,7 @@ class Order(BaseModel):
         order_start_end_dates_equal = self.start_date == self.end_date
 
         # Orders in OrderGroup.
-        order_count = Order.objects.filter(order_group=self.order_group).count() > 1
+        order_count = Order.objects.filter(order_group=self.order_group).count()
 
         # Assign variables based on Order.Type.
         # DELIVERY: Order.StartDate == OrderGroup.StartDate AND Order.StartDate == Order.EndDate 
@@ -779,7 +852,7 @@ class Order(BaseModel):
         order_type_swap = order_count > 1 and not order_order_group_end_dates_equal and not has_subscription
         # AUTO RENEWAL: OrderGroup has Subscription and does not meet any other criteria.
         order_type_auto_renewal = has_subscription and not order_type_delivery and not order_type_one_time and not order_type_removal and not order_type_swap
-
+ 
         if order_type_delivery:
             return Order.Type.DELIVERY
         elif order_type_one_time:
@@ -824,7 +897,7 @@ class Order(BaseModel):
         elif Order.objects.filter(
             order_group=self.order_group,
             submitted_on__isnull=True,
-        ).exclude(id=self.id).exists():
+        ).exclude(id=self.id).count() > 1:
             raise ValidationError('Only 1 Order from an OrderGroup can be in the cart at a time')
             
     def save(self, *args, **kwargs):
@@ -837,11 +910,6 @@ class Order(BaseModel):
         # Send email to customer if status has changed to "Scheduled".
         if self.status != self.__original_status and self.status == Order.SCHEDULED:
             self.send_customer_email_when_order_scheduled()
-
-            # If user has not verified their email, send them the invite email.
-            auth0_user = get_user_data(self.order_group.user.user_id)
-            if not auth0_user['email_verified']:
-                invite_user(self.order_group.user)
 
         return super(Order, self).save(*args, **kwargs)
 
@@ -1002,6 +1070,13 @@ class Order(BaseModel):
         # Send email to customer when order is scheduled. Only on our PROD environment.
         if settings.ENVIRONMENT == "TEST":
             try:
+                auth0_user = get_user_data(self.order_group.user.user_id)
+
+                try:
+                    call_to_action_url = get_password_change_url(self.order_group.user.user_id) if not auth0_user['email_verified'] else "https://app.trydownstream.io/orders"
+                except Exception as e:
+                    call_to_action_url = "https://app.trydownstream.io/orders"
+
                 mailchimp.messages.send({"message": {
                     "headers": {
                         "reply-to": "dispatch@trydownstream.io",
@@ -1012,13 +1087,14 @@ class Order(BaseModel):
                         {"email": self.order_group.user.email}, 
                         {"email": "thayes@trydownstream.io"}
                     ],
-                    "subject": "Order Confirmed",
+                    "subject": "Downstream | Order Confirmed | " + self.order_group.user_address.formatted_address(),
                     "track_opens": True,
                     "track_clicks": True,
                     "html": render_to_string(
                         'order-confirmed-email.html',
                         {
                             "orderId": self.id,
+                            "booking_url": call_to_action_url,
                             "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                             "waste_type": self.order_group.waste_type.name,
                             "included_tons": self.order_group.material.tonnage_included,
@@ -1163,6 +1239,7 @@ post_save.connect(UserGroup.post_create, sender=UserGroup)
 # pre_save.connect(User.pre_create, sender=User)  
 post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
+pre_save.connect(UserGroupBilling.pre_save, sender=UserGroupBilling)
 pre_save.connect(Order.pre_save, sender=Order)
 post_save.connect(Order.post_save, sender=Order)
 pre_save.connect(SellerLocationMailingAddress.pre_save, sender=SellerLocationMailingAddress)
