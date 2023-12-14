@@ -2,25 +2,36 @@ import datetime
 import os
 import random
 import string
-from django.conf import settings
-from django.db import models
-from django.db.models.signals import pre_save, post_save, post_delete
 import uuid
+
+import mailchimp_marketing as MailchimpMarketing
+import mailchimp_transactional as MailchimpTransactional
 import stripe
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.db.models.signals import post_delete, post_save, pre_save
+from django.template.loader import render_to_string
+from intercom.client import Client
+from mailchimp_marketing.api_client import ApiClientError
+
 # from simple_salesforce import Salesforce
 from multiselectfield import MultiSelectField
-from api.utils.auth0 import create_user, get_password_change_url, get_user_data, get_user_from_email, delete_user, invite_user
+
+from api.utils.auth0 import (
+    create_user,
+    delete_user,
+    get_password_change_url,
+    get_user_data,
+    get_user_from_email,
+    invite_user,
+)
 from api.utils.google_maps import geocode_address
-import mailchimp_marketing as MailchimpMarketing
-from mailchimp_marketing.api_client import ApiClientError
-from intercom.client import Client
-import mailchimp_transactional as MailchimpTransactional
+
 # import pandas as pd
 from .pricing_ml.pricing import Price_Model
-from django.core.files.storage import default_storage
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.core.exceptions import ValidationError
-from django.template.loader import render_to_string
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
@@ -200,6 +211,49 @@ class UserGroupBilling(BaseModel):
         latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
+
+class UserGroupLegal(BaseModel):
+    class BusinessStructure(models.TextChoices):
+        SOLE_PROPRIETORSHIP = 'sole_proprietorship'
+        LLC = 'llc'
+        S_CORP = 's_corp'
+        C_CORP = 'c_corp'
+        OTHER = 'other'
+
+    class Industry(models.TextChoices):
+        PROPERTY_MANAGEMENT = 'property_management'
+        CONSTRUCTION = 'construction'
+        MANUFACTURING = 'manufacturing'
+        WASTE_COLLECTION = 'waste_collection'
+        OTHER = 'other'
+
+    user_group = models.OneToOneField(
+        UserGroup, 
+        models.CASCADE,
+        related_name='legal'
+    )
+    name = models.CharField(max_length=255)
+    doing_business_as = models.CharField(max_length=255, blank=True, null=True)
+    structure = models.CharField(max_length=20, choices=BusinessStructure.choices)
+    industry = models.CharField(max_length=20, choices=Industry.choices)
+    year_founded = models.PositiveSmallIntegerField(blank=True, null=True)
+    street = models.TextField()
+    city = models.CharField(max_length=40)
+    state = models.CharField(max_length=80)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=80)
+    latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True) 
+
+    def pre_save(sender, instance, *args, **kwargs):
+        latitude, longitude = geocode_address(f"{instance.street} {instance.city} {instance.state} {instance.postal_code}")
+        instance.latitude = latitude or 0
+        instance.longitude = longitude or 0
+
+class UserGroupCreditApplication(BaseModel):
+    user_group = models.ForeignKey(UserGroup, models.CASCADE, related_name='credit_applications')
+    estimated_revenue = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    requested_credit_limit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
 
 class UserAddressType(BaseModel):
     name = models.CharField(max_length=255)
@@ -1240,6 +1294,7 @@ post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_delete.connect(User.post_delete, sender=User)
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
 pre_save.connect(UserGroupBilling.pre_save, sender=UserGroupBilling)
+pre_save.connect(UserGroupLegal.pre_save, sender=UserGroupLegal)
 pre_save.connect(Order.pre_save, sender=Order)
 post_save.connect(Order.post_save, sender=Order)
 pre_save.connect(SellerLocationMailingAddress.pre_save, sender=SellerLocationMailingAddress)

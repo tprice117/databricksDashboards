@@ -1,20 +1,22 @@
+import calendar
 import csv
 from typing import List
-from django.contrib import admin
+
+import requests
+import stripe
+from django.contrib import admin, messages
+from django.contrib.admin import SimpleListFilter
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import User as DjangoUser
 from django.forms import HiddenInput
 from django.shortcuts import redirect, render
 from django.urls import path
-import requests
-import calendar
-from api.utils.checkbook_io import CheckbookIO
-from .models import *
-from django.contrib.admin import SimpleListFilter
-from django.contrib.auth.models import User as DjangoUser
-from django.contrib.auth.models import Group
-from .forms import *
-import stripe
 from django.utils.html import format_html
-from django.contrib import admin, messages
+
+from api.utils.checkbook_io import CheckbookIO
+
+from .forms import *
+from .models import *
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -188,6 +190,19 @@ class UserGroupBillingInline(admin.StackedInline):
     model = UserGroupBilling
     fields = ('email', 'street', 'city', 'state', 'postal_code', 'country')
     show_change_link = True
+    extra=0
+
+class UserGroupLegalInline(admin.StackedInline):
+    model = UserGroupLegal
+    fields = ('name', 'doing_business_as', 'structure', 'industry', 'year_founded')
+    show_change_link = True
+    extra=0
+
+class UserGroupCreditApplicationInline(admin.TabularInline):
+    model = UserGroupCreditApplication
+    fields = ('estimated_revenue', 'requested_credit_limit', 'created_on')
+    readonly_fields = ('estimated_revenue', 'requested_credit_limit', 'created_on')
+    show_change_link = False
     extra=0
 
 class UserGroupUserInline(admin.TabularInline):
@@ -740,6 +755,8 @@ class UserGroupAdmin(admin.ModelAdmin):
     list_filter = (UserGroupTypeFilter,)
     inlines = [
         UserGroupBillingInline,
+        UserGroupLegalInline,
+        UserGroupCreditApplicationInline,
         UserInline,
     ]
 

@@ -10,11 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
-from django.core.management.utils import get_random_secret_key
-from pathlib import Path
 import os
 import sys
+from pathlib import Path
+
 import dj_database_url
+from django.core.management.utils import get_random_secret_key
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-0+dmu6*lky0l743o^27tn0)dzoi)6-lzb1i)egsso_84h')
 
