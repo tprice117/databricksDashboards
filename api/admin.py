@@ -809,13 +809,13 @@ class OrderGroupAdmin(admin.ModelAdmin):
 
 class OrderAdmin(admin.ModelAdmin):
     model = Order
-    readonly_fields = ('order_type','customer_price', 'seller_price')
+    readonly_fields = ('auto_order_type','customer_price', 'seller_price')
     search_fields = ("id",)
     list_display = (
         'order_group', 
         'start_date', 
         'end_date', 
-        'order_type',
+        'auto_order_type',
         'status', 
         'service_date', 
         'customer_price', 
@@ -828,7 +828,7 @@ class OrderAdmin(admin.ModelAdmin):
         'total_invoiced_from_seller', 
         'seller_invoice_status'
     )
-    list_filter = ('status', 'order_type', CreatedDateFilter,)
+    list_filter = ('status', CreatedDateFilter,)
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
@@ -837,7 +837,7 @@ class OrderAdmin(admin.ModelAdmin):
     ]
     actions = ["send_payouts", "create_draft_invoices"]
 
-    def order_type(self, obj:Order):
+    def auto_order_type(self, obj:Order):
         return obj.get_order_type()
 
     @admin.action(description="Create draft invoices")
@@ -890,6 +890,32 @@ class OrderAdmin(admin.ModelAdmin):
             # a StripeInvoiceLineItemId on the OrderLineItem.
             order:Order
             for order in orders_for_user_address:
+                # Get existing Stripe Invoice Summary Item(s) for this [Order].
+                stripe_invoice_summary_items_response = requests.get(
+                    "https://api.stripe.com/v1/invoices/" + stripe_invoice.id + "/summary_items",
+                    headers={
+                        "Authorization": "Bearer " + settings.STRIPE_SECRET_KEY,
+                    },
+                )
+                stripe_invoice_summary_items = stripe_invoice_summary_items_response.json()['data']
+
+                # Ensure we have a Stripe Invoice Summary Item for this [Order].
+                # If order.stripe_invoice_summary_item_id is None, then create a new one.
+                if any(x['description'] == order.stripe_invoice_summary_item_description() for x in stripe_invoice_summary_items):
+                    stripe_invoice_summary_item = next((item for item in stripe_invoice_summary_items if item["description"] == order.stripe_invoice_summary_item_description()), None)
+                else:
+                    new_summary_invoice_summary_item_response = requests.post(
+                        "https://api.stripe.com/v1/invoices/" + stripe_invoice.id + "/summary_items",
+                        headers={
+                            "Authorization": "Bearer " + settings.STRIPE_SECRET_KEY,
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        data={
+                            "description": order.stripe_invoice_summary_item_description(),
+                        }
+                    )
+                    stripe_invoice_summary_item = new_summary_invoice_summary_item_response.json()
+
                 # Get OrderLineItems that don't have a StripeInvoiceLineItemId.
                 order_line_items = OrderLineItem.objects.filter(
                     order=order,
@@ -914,6 +940,7 @@ class OrderAdmin(admin.ModelAdmin):
                             "end": calendar.timegm(order.end_date.timetuple()),
                         },
                         metadata = {
+                            'order_line_item_id': order_line_item.id,
                             'main_product_name': order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                             'order_start_date': order.start_date.strftime("%a, %b %-d"),
                             'order_end_date': order.end_date.strftime("%a, %b %-d"),
@@ -923,6 +950,34 @@ class OrderAdmin(admin.ModelAdmin):
                     # Update OrderLineItem with StripeInvoiceLineItemId.
                     order_line_item.stripe_invoice_line_item_id = stripe_invoice_line_item.id
                     order_line_item.save()
+
+                    # Get all Stripe Invoice Items for this Stripe Invoice.
+                    stripe_invoice_items_response = requests.get(
+                        f"https://api.stripe.com/v1/invoices/{stripe_invoice.id}/lines",
+                        headers={
+                            "Authorization": "Bearer " + settings.STRIPE_SECRET_KEY,
+                        },
+                    )
+
+                    # Get the Stripe Invoice Item for this OrderLineItem.
+                    stripe_invoice_items = stripe_invoice_items_response.json()['data']
+                    stripe_invoice_item = next((item for item in stripe_invoice_items if item["metadata"]["order_line_item_id"] and item["metadata"]["order_line_item_id"] == str(order_line_item.id)), None)
+
+                    # Add Stripe Invoice Line Item to Stripe Invoice Summary Item.
+                    if stripe_invoice_item:
+                        response = requests.post(
+                            f"https://api.stripe.com/v1/invoices/{stripe_invoice.id}/lines/{stripe_invoice_item['id']}",
+                            headers={
+                                "Authorization": "Bearer " + settings.STRIPE_SECRET_KEY,
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            data={
+                                "rendering[summary_item]": stripe_invoice_summary_item['id'],
+                            }
+                        )
+                        print(response.json())
+
+
 
         messages.success(request, "Successfully created/updated invoices for all selected orders.")
          

@@ -822,6 +822,9 @@ class Order(BaseModel):
         order_line_items = OrderLineItem.objects.filter(order=self)
         return sum([order_line_item.rate * order_line_item.quantity for order_line_item in order_line_items])
 
+    def stripe_invoice_summary_item_description(self):
+        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")}'
+
     def get_order_type(self):
         # Assign variables comparing Order StartDate and EndDate to OrderGroup StartDate and EndDate.
         order_order_group_start_date_equal = self.start_date == self.order_group.start_date
@@ -834,7 +837,7 @@ class Order(BaseModel):
         order_start_end_dates_equal = self.start_date == self.end_date
 
         # Orders in OrderGroup.
-        order_count = Order.objects.filter(order_group=self.order_group).count() > 1
+        order_count = Order.objects.filter(order_group=self.order_group).count()
 
         # Assign variables based on Order.Type.
         # DELIVERY: Order.StartDate == OrderGroup.StartDate AND Order.StartDate == Order.EndDate 
@@ -849,7 +852,7 @@ class Order(BaseModel):
         order_type_swap = order_count > 1 and not order_order_group_end_dates_equal and not has_subscription
         # AUTO RENEWAL: OrderGroup has Subscription and does not meet any other criteria.
         order_type_auto_renewal = has_subscription and not order_type_delivery and not order_type_one_time and not order_type_removal and not order_type_swap
-
+ 
         if order_type_delivery:
             return Order.Type.DELIVERY
         elif order_type_one_time:
@@ -894,7 +897,7 @@ class Order(BaseModel):
         elif Order.objects.filter(
             order_group=self.order_group,
             submitted_on__isnull=True,
-        ).exclude(id=self.id).exists():
+        ).exclude(id=self.id).count() > 1:
             raise ValidationError('Only 1 Order from an OrderGroup can be in the cart at a time')
             
     def save(self, *args, **kwargs):
