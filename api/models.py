@@ -500,10 +500,9 @@ class UserAddress(BaseModel):
         else:
             customer = stripe.Customer.retrieve(instance.stripe_customer_id)
 
-            # Populate Stripe Customer ID.
-            user_group_name = (
-                instance.user_group.name if instance.user_group else "[B2C]"
-            )
+        # Get "name" for UserGroup/B2C user.
+        user_group_name = instance.user_group.name if instance.user_group else "[B2C]"
+
         customer = stripe.Customer.modify(
             customer.id,
             name=user_group_name + " | " + instance.formatted_address(),
