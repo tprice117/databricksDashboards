@@ -1,8 +1,13 @@
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-from django.views.generic import TemplateView
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+from django.views.generic import TemplateView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from rest_framework import routers
+
 from api import views
 
 router = routers.DefaultRouter()
@@ -12,6 +17,8 @@ router.register(r'sellers', views.SellerViewSet, 'api')
 router.register(r'seller-locations', views.SellerLocationViewSet, 'api')
 router.register(r'users', views.UserViewSet, 'api')
 router.register(r'user-groups', views.UserGroupViewSet, 'api')
+router.register(r'user-group-legals', views.UserGroupLegalViewSet, 'api')
+router.register(r'user-group-credit-applications', views.UserGroupCreditApplicationViewSet, 'api')
 router.register(r'user-user-addresses', views.UserUserAddressViewSet, 'api')
 router.register(r'user-seller-reviews', views.UserSellerReviewViewSet, 'api')
 router.register(r'user-seller-review-aggregates', views.UserSellerReviewAggregateViewSet, 'api')
@@ -74,9 +81,6 @@ urlpatterns = [
     # prediction ML
     path('api/prediction', views.Prediction.as_view(), name="predictions"),
     path('api/pricing/', views.get_pricing),
-    
-    # add user test
-    path('add_user/', views.AddUser.as_view(), name='add_user'),
 
     # Stripe Dashboarding Endpoints
     path('api/stripe/connect/accounts', views.StripeConnectAccount.as_view()),

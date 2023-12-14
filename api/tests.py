@@ -1,13 +1,11 @@
-from django.test import TestCase, Client
+from django.contrib.admin.models import DELETION, LogEntry
+from django.contrib.contenttypes.models import ContentType
+from django.test import Client, TestCase
+
 # import json
 # test xgboost_pricing.py module
 # from pricing_ml import price_model_xgb
 from django.urls import reverse
-from rest_framework import status
-from django.contrib.admin.models import LogEntry, DELETION
-from django.contrib.contenttypes.models import ContentType
-
-
 
 # everything we need to test the api on the backend
 # from .models import Seller, Product, Order, User
@@ -38,49 +36,50 @@ class Pricetest(TestCase):
 
 ### TEST CRUD OPERATIONS ON ALL MODELS ###
 
-class TestAddUser(TestCase):
-    """ Test module for creating customers API """
+# class TestAddUser(TestCase):
+#     """ Test module for creating customers API """
 
-    def setUp(self):
-        self.client = Client()
-        self.add_user_url = reverse('add_user')
-        self.valid_data = {
-            'first_name' : 'John', 
-            'last_name':'Smith',
-            'user_id' : 'johnsmith1',
-            'phone' : '303-555-5555',
-            'email' : 'johnsmith@test.com',
-            'photo_url' : 'https://www.userimage.com/johnsmith1/home.jpg',
-            # 'seller' : "",
-            'stripe_customer_id' : '12345',
-            'device_token' : '12345',
-        }
-        self.invalid_data = {
-            'first_name' : 'John', 
-            'last_name':'Smith',
-            # 'user_id' : 'johnsmith1',
-            'phone' : '303-555-5555',
-            'email' : 'johnsmith@test.com',
-            'photo_url' : 'https://www.userimage.com/johnsmith1/home.jpg',
-            # 'seller' : None,
-            # 'stripe_customer_id' : '12345',
-            'device_token' : '12345',
-        }
+#     def setUp(self):
+#         self.client = Client()
+#         self.add_user_url = reverse('add_user')
+#         self.valid_data = {
+#             'first_name' : 'John', 
+#             'last_name':'Smith',
+#             'user_id' : 'johnsmith1',
+#             'phone' : '303-555-5555',
+#             'email' : 'johnsmith@test.com',
+#             'photo_url' : 'https://www.userimage.com/johnsmith1/home.jpg',
+#             # 'seller' : "",
+#             'stripe_customer_id' : '12345',
+#             'device_token' : '12345',
+#         }
+#         self.invalid_data = {
+#             'first_name' : 'John', 
+#             'last_name':'Smith',
+#             # 'user_id' : 'johnsmith1',
+#             'phone' : '303-555-5555',
+#             'email' : 'johnsmith@test.com',
+#             'photo_url' : 'https://www.userimage.com/johnsmith1/home.jpg',
+#             # 'seller' : None,
+#             # 'stripe_customer_id' : '12345',
+#             'device_token' : '12345',
+#         }
 
-    def test_add_user_successfully(self):
-        response = self.client.post(self.add_user_url, self.valid_data)
-        self.assertEqual(response.status_code, 201)
-        # Add additional assertions here
+#     def test_add_user_successfully(self):
+#         response = self.client.post(self.add_user_url, self.valid_data)
+#         self.assertEqual(response.status_code, 201)
+#         # Add additional assertions here
 
-    def test_add_user_with_invalid_data(self):
-        response = self.client.post(self.add_user_url, self.invalid_data)
-        self.assertEqual(response.status_code, 400)
-        # Add additional assertions here
+#     def test_add_user_with_invalid_data(self):
+#         response = self.client.post(self.add_user_url, self.invalid_data)
+#         self.assertEqual(response.status_code, 400)
+#         # Add additional assertions here
 
 from django.apps import apps
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
+
 
 class CrudTests(TestCase):
     def setUp(self):
