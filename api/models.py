@@ -326,7 +326,6 @@ class UserGroupLegal(BaseModel):
     doing_business_as = models.CharField(max_length=255, blank=True, null=True)
     structure = models.CharField(max_length=20, choices=BusinessStructure.choices)
     industry = models.CharField(max_length=20, choices=Industry.choices)
-    year_founded = models.PositiveSmallIntegerField(blank=True, null=True)
     street = models.TextField()
     city = models.CharField(max_length=40)
     state = models.CharField(max_length=80)
