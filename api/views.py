@@ -1,26 +1,32 @@
 import base64
 import datetime
-from api.utils.auth0 import invite_user
-from rest_framework.decorators import api_view
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework import viewsets
-from rest_framework.decorators import permission_classes, authentication_classes
-from api.filters import OrderGroupFilterset
-from django_filters import rest_framework as filters
-from api.utils.denver_compliance_report import send_denver_compliance_report
-from .serializers import *
-from .models import *
-from django.conf import settings
-from django.db.models import Sum
-import stripe
-import requests
-from random import randint
 import math
 import pickle
+from random import randint
+
+import requests
+import stripe
+from django.conf import settings
+from django.db.models import Sum
+from django_filters import rest_framework as filters
+from rest_framework import status, viewsets
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.filters import OrderGroupFilterset
+from api.utils.auth0 import invite_user
+from api.utils.denver_compliance_report import send_denver_compliance_report
+
+from .models import *
+
 # import pandas as pd
 from .pricing_ml import pricing
+from .serializers import *
 
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -78,6 +84,35 @@ class UserGroupViewSet(viewsets.ModelViewSet):
     queryset = UserGroup.objects.all()
     serializer_class = UserGroupSerializer
     filterset_fields = ["id", "share_code"]
+
+    def get_queryset(self):
+        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        if is_superuser:
+           return self.queryset
+        else:
+            return self.queryset.filter(id=self.request.user.user_group)
+
+class UserGroupLegalViewSet(viewsets.ModelViewSet):
+    queryset = UserGroupLegal.objects.all()
+    serializer_class = UserGroupLegalSerializer
+
+    def get_queryset(self):
+        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        if is_superuser:
+           return self.queryset
+        else:
+            return self.queryset.filter(user_group=self.request.user.user_group)
+
+class UserGroupCreditApplicationViewSet(viewsets.ModelViewSet):
+    queryset = UserGroupCreditApplication.objects.all()
+    serializer_class = UserGroupCreditApplicationSerializer
+
+    def get_queryset(self):
+        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        if is_superuser:
+           return self.queryset
+        else:
+            return self.queryset.filter(user_group=self.request.user.user_group)
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()
@@ -435,21 +470,6 @@ def get_pricing(request):
         "waste_type": request.data['waste_type'],
     })
     return Response(price_mod.get_prices())
-
-class AddUser(APIView):
-    # def get(self, request):
-    #     form = UserForm()
-    #    context = {'form': form}
-    #    return render(request, 'add_user.html', context)
-
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 # ml views for pricing
 class Prediction(APIView):

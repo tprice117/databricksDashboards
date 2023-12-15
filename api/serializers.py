@@ -1,7 +1,8 @@
+import stripe
 from django.conf import settings
 from rest_framework import serializers
+
 from .models import *
-import stripe
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -38,13 +39,26 @@ class UserAddressSerializer(serializers.ModelSerializer):
         fields = "__all__"
         validators = []
 
+class UserGroupLegalSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = UserGroupLegal
+        fields = "__all__"
+
 class UserGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     seller = SellerSerializer(read_only=True)
     seller_id = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all(), source='seller', write_only=True, allow_null=True)
-    
+    legal = UserGroupLegalSerializer(read_only=True)
+
     class Meta:
         model = UserGroup
+        fields = "__all__"
+
+class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    class Meta:
+        model = UserGroupCreditApplication
         fields = "__all__"
 
 class UserSerializer(serializers.ModelSerializer):
