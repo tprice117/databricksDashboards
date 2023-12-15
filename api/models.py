@@ -347,9 +347,6 @@ class UserGroupCreditApplication(BaseModel):
     user_group = models.ForeignKey(
         UserGroup, models.CASCADE, related_name="credit_applications"
     )
-    estimated_revenue = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
-    )
     requested_credit_limit = models.DecimalField(
         max_digits=18, decimal_places=2, blank=True, null=True
     )
