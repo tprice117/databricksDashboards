@@ -538,7 +538,9 @@ class UserAddress(BaseModel):
                 else instance.country,
             },
             metadata={
-                "user_group_id": str(instance.user_group.id),
+                "user_group_id": str(instance.user_group.id)
+                if instance.user_group
+                else None,
                 "user_address_id": str(instance.id),
                 "user_id": str(instance.user.id),
             },
