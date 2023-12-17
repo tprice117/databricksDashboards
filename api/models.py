@@ -326,7 +326,6 @@ class UserGroupLegal(BaseModel):
     doing_business_as = models.CharField(max_length=255, blank=True, null=True)
     structure = models.CharField(max_length=20, choices=BusinessStructure.choices)
     industry = models.CharField(max_length=20, choices=Industry.choices)
-    year_founded = models.PositiveSmallIntegerField(blank=True, null=True)
     street = models.TextField()
     city = models.CharField(max_length=40)
     state = models.CharField(max_length=80)
@@ -346,9 +345,6 @@ class UserGroupLegal(BaseModel):
 class UserGroupCreditApplication(BaseModel):
     user_group = models.ForeignKey(
         UserGroup, models.CASCADE, related_name="credit_applications"
-    )
-    estimated_revenue = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
     )
     requested_credit_limit = models.DecimalField(
         max_digits=18, decimal_places=2, blank=True, null=True
