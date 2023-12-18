@@ -892,3 +892,15 @@ def denver_compliance_report(request):
        print("An exception occurred: {}".format(error.text))
 
     return Response("Success", status=200)
+
+
+# Feature-based views.
+@api_view(['GET'])
+def get_user_group_credit_status(request):
+    user_group = request.user.user_group
+
+    # Compute credit status.
+    if user_group and user_group.credit_status:
+        return Response(user_group.credit_status, status=200)
+    else:
+        return Response("No credit status found.", status=200)

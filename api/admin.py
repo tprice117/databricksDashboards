@@ -231,7 +231,6 @@ class UserGroupLegalInline(admin.StackedInline):
         "doing_business_as",
         "structure",
         "industry",
-        "year_founded",
         "street",
         "city",
         "state",
@@ -244,8 +243,8 @@ class UserGroupLegalInline(admin.StackedInline):
 
 class UserGroupCreditApplicationInline(admin.TabularInline):
     model = UserGroupCreditApplication
-    fields = ("estimated_revenue", "requested_credit_limit", "created_on")
-    readonly_fields = ("estimated_revenue", "requested_credit_limit", "created_on")
+    fields = ("requested_credit_limit", "created_on")
+    readonly_fields = ("requested_credit_limit", "created_on")
     show_change_link = False
     extra = 0
 
@@ -306,12 +305,13 @@ class OrderLineItemInlineForm(forms.ModelForm):
         # Set initial values for read-only fields.
         self.initial["seller_payout_price"] = order_line_item.seller_payout_price()
         self.initial["customer_price"] = order_line_item.customer_price()
-        self.initial["is_paid"] = order_line_item.is_paid()
+        self.initial["is_paid"] = (
+            order_line_item.payment_status() == OrderLineItem.PaymentStatus.PAID
+        )
 
 
 class OrderLineItemInline(admin.TabularInline):
     model = OrderLineItem
-    # fields = ('order_line_item_type', 'rate', 'quantity', 'seller_payout_price', 'platform_fee_percent', 'customer_price', 'is_paid')
     form = OrderLineItemInlineForm
     show_change_link = True
     extra = 0
@@ -1375,7 +1375,7 @@ class OrderAdmin(admin.ModelAdmin):
         for order_line_item in invoiced_order_line_items:
             total_paid += (
                 order_line_item.rate * order_line_item.quantity
-                if order_line_item.is_paid()
+                if order_line_item.payment_status() == OrderLineItem.PaymentStatus.PAID
                 else 0
             )
         return total_paid

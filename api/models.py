@@ -284,6 +284,21 @@ class UserGroup(BaseModel):
             # instance.stripe_customer_id = customer.id
             instance.save()
 
+    def credit_limit_used(self):
+        orders = Order.objects.filter(order_group__user_address__user_group=self)
+        total_customer_price = 0
+        total_paid = 0
+
+        # Loop through orders to get total customer price and total paid.
+        for order in orders:
+            total_customer_price, _, total_paid = order.payment_status()
+            total_customer_price += total_customer_price
+            total_paid += total_paid
+
+        # Current credit utilization.
+        credit_used = total_customer_price - total_paid
+        return credit_used
+
 
 class UserGroupBilling(BaseModel):
     user_group = models.OneToOneField(UserGroup, models.CASCADE, related_name="billing")
@@ -1140,18 +1155,6 @@ class Order(BaseModel):
     included_weight_tons = models.DecimalField(
         max_digits=18, decimal_places=4, blank=True, null=True
     )  # 6.6.23
-    invoice_status = models.CharField(
-        max_length=35,
-        choices=[
-            ("Not yet invoiced", "Not yet invoiced"),
-            ("In draft", "In draft"),
-            ("Sent to customer", "Sent to customer"),
-            ("Paid", "Paid"),
-        ],
-        default=[0][0],
-        blank=True,
-        null=True,
-    )  # 6.6.23
     billing_comments_internal_use = models.TextField(blank=True, null=True)  # 6.6.23
     schedule_window = models.CharField(
         max_length=35,
@@ -1286,11 +1289,28 @@ class Order(BaseModel):
         else:
             return None
 
-    # def pre_save(sender, instance, *args, **kwargs):
-    #     # Check if SubmittedOn has changed.
-    #     print(instance.pk)
-    #     old_submitted_on = Order.objects.get(pk=instance.pk).submitted_on if Order.objects.filter(pk=instance.pk).exists() else None
-    #     instance.submitted_on_has_changed = old_submitted_on != instance.submitted_on
+    def payment_status(self):
+        total_customer_price = 0
+        total_invoiced = 0
+        total_paid = 0
+
+        order_line_item: OrderLineItem
+        for order_line_item in self.order_line_items:
+            payment_status = order_line_item.payment_status()
+
+            # Define variables for payment status.
+            is_invoiced = (
+                payment_status == OrderLineItem.PaymentStatus.INVOICED
+                or payment_status == OrderLineItem.PaymentStatus.PAID
+            )
+            is_paid = payment_status == OrderLineItem.PaymentStatus.PAID
+
+            total_customer_price += order_line_item.customer_price()
+            total_invoiced += order_line_item.customer_price() if is_invoiced else 0
+            total_paid += order_line_item.customer_price() if is_paid else 0
+
+        # Return (total_customer_price, total_invoiced, total_paid).
+        return total_customer_price, total_invoiced, total_paid
 
     def clean(self):
         # Ensure end_date is on or after start_date.
@@ -1622,6 +1642,11 @@ class OrderLineItemType(BaseModel):
 
 
 class OrderLineItem(BaseModel):
+    class PaymentStatus(models.TextChoices):
+        NOT_INVOICED = "not_invoiced"
+        INVOICED = "invoiced"
+        PAID = "paid"
+
     PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(1000)]
 
     order = models.ForeignKey(Order, models.CASCADE, related_name="order_line_items")
@@ -1642,21 +1667,35 @@ class OrderLineItem(BaseModel):
 
     def get_invoice(self):
         if self.stripe_invoice_line_item_id:
-            invoice_line_item = stripe.InvoiceItem.retrieve(
-                self.stripe_invoice_line_item_id
-            )
-            return stripe.Invoice.retrieve(invoice_line_item.invoice)
+            try:
+                invoice_line_item = stripe.InvoiceItem.retrieve(
+                    self.stripe_invoice_line_item_id
+                )
+                return stripe.Invoice.retrieve(invoice_line_item.invoice)
+            except:
+                # Return None if Stripe Invoice or Stripe Invoice Line Item does not exist.
+                return None
         else:
             return None
 
-    def is_paid(self):
-        invoice = self.get_invoice()
-        if invoice and invoice.status != "draft":
-            return invoice.status == "paid"
+    def payment_status(self):
+        if not self.stripe_invoice_line_item_id:
+            # Return None if OrderLineItem is not associated with an Invoice.
+            return self.PaymentStatus.NOT_INVOICED
+        elif self.stripe_invoice_line_item_id == "BYPASS":
+            # Return True if OrderLineItem.StripeInvoiceLineItemId == "BYPASS".
+            # BYPASS is used for OrderLineItems that are not associated with a
+            # Stripe Invoice, but have been paid for by the customer.
+            return self.PaymentStatus.INVOICED
         else:
-            # Return None if OrderLineItem is not associated with an Invoice or
-            # Invoice is in draft status.
-            return None
+            # If OrderLineItem.StripeInvoiceLineItemId is popualted and is not
+            # "BYPASS", check the status of the Stripe Invoice.
+            invoice = self.get_invoice()
+            return (
+                self.PaymentStatus.PAID
+                if (invoice and invoice.status == "paid")
+                else self.PaymentStatus.INVOICED
+            )
 
     def seller_payout_price(self):
         return round((self.rate or 0) * (self.quantity or 0), 2)
