@@ -957,6 +957,7 @@ class UserGroupAdmin(admin.ModelAdmin):
         "user_count",
         "seller_locations",
         "seller_product_seller_locations",
+        "credit_utilization",
     )
     search_fields = ["name"]
     list_filter = (UserGroupTypeFilter,)
@@ -996,6 +997,9 @@ class UserGroupAdmin(admin.ModelAdmin):
             if seller_locations
             else None
         )
+
+    def credit_utilization(self, obj: UserGroup):
+        return f"{float(obj.credit_limit_used()) / float((obj.credit_line_limit or 0.0) + 0.0000000001)}%"
 
     def import_csv(self, request):
         if request.method == "POST":
@@ -1374,7 +1378,7 @@ class OrderAdmin(admin.ModelAdmin):
         order_line_item: OrderLineItem
         for order_line_item in invoiced_order_line_items:
             total_paid += (
-                order_line_item.rate * order_line_item.quantity
+                order_line_item.customer_price()
                 if order_line_item.payment_status() == OrderLineItem.PaymentStatus.PAID
                 else 0
             )

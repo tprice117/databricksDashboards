@@ -286,8 +286,8 @@ class UserGroup(BaseModel):
 
     def credit_limit_used(self):
         orders = Order.objects.filter(order_group__user_address__user_group=self)
-        total_customer_price = 0
-        total_paid = 0
+        total_customer_price = 0.0
+        total_paid = 0.0
 
         # Loop through orders to get total customer price and total paid.
         for order in orders:
@@ -522,7 +522,7 @@ class UserAddress(BaseModel):
             else instance.user.email,
             # phone = instance.user_group.billing.phone if hasattr(instance.user_group, 'billing') else instance.user.phone,
             shipping={
-                "name": user_group_name + " | " + instance.formatted_address(),
+                "name": instance.name or instance.formatted_address(),
                 "address": {
                     "line1": instance.street,
                     "city": instance.city,
@@ -1295,7 +1295,7 @@ class Order(BaseModel):
         total_paid = 0
 
         order_line_item: OrderLineItem
-        for order_line_item in self.order_line_items:
+        for order_line_item in self.order_line_items.all():
             payment_status = order_line_item.payment_status()
 
             # Define variables for payment status.

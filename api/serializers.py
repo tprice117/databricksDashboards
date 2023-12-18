@@ -69,10 +69,14 @@ class UserGroupSerializer(serializers.ModelSerializer):
         queryset=Seller.objects.all(), source="seller", write_only=True, allow_null=True
     )
     legal = UserGroupLegalSerializer(read_only=True)
+    credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = UserGroup
         fields = "__all__"
+
+    def get_credit_limit_utilized(self, obj: UserGroup):
+        return obj.credit_limit_used()
 
 
 class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
