@@ -1661,6 +1661,7 @@ class OrderLineItem(BaseModel):
     stripe_invoice_line_item_id = models.CharField(
         max_length=255, blank=True, null=True
     )
+    paid = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.order) + " - " + self.order_line_item_type.name
@@ -1686,16 +1687,25 @@ class OrderLineItem(BaseModel):
             # Return True if OrderLineItem.StripeInvoiceLineItemId == "BYPASS".
             # BYPASS is used for OrderLineItems that are not associated with a
             # Stripe Invoice, but have been paid for by the customer.
-            return self.PaymentStatus.INVOICED
+            return self.PaymentStatus.PAID
+        elif self.paid:
+            # Return True if OrderLineItem.Paid == True. See below for how
+            # OrderLineItem.Paid is set.
+            return self.PaymentStatus.PAID
         else:
-            # If OrderLineItem.StripeInvoiceLineItemId is popualted and is not
-            # "BYPASS", check the status of the Stripe Invoice.
+            # If OrderLineItem.StripeInvoiceLineItemId is populated and is not
+            # "BYPASS" or OrderLineItem.Paid == False, check if the Stripe Invoice
+            # has been paid.
+            # If the Stripe Invoice has been paid, set OrderLineItem.Paid = True.
             invoice = self.get_invoice()
-            return (
-                self.PaymentStatus.PAID
-                if (invoice and invoice.status == "paid")
-                else self.PaymentStatus.INVOICED
-            )
+            is_paid = invoice and invoice.status == "paid"
+
+            if is_paid: 
+                self.paid = True
+                self.save()
+                return self.PaymentStatus.PAID
+            else: 
+                return self.PaymentStatus.INVOICED
 
     def seller_payout_price(self):
         return round((self.rate or 0) * (self.quantity or 0), 2)
