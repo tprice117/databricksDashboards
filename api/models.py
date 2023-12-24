@@ -1700,11 +1700,11 @@ class OrderLineItem(BaseModel):
             invoice = self.get_invoice()
             is_paid = invoice and invoice.status == "paid"
 
-            if is_paid: 
+            if is_paid:
                 self.paid = True
                 self.save()
                 return self.PaymentStatus.PAID
-            else: 
+            else:
                 return self.PaymentStatus.INVOICED
 
     def seller_payout_price(self):

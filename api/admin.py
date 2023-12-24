@@ -1198,9 +1198,7 @@ class OrderAdmin(admin.ModelAdmin):
                     stripe_invoice_line_item = stripe.InvoiceItem.create(
                         customer=order.order_group.user_address.stripe_customer_id,
                         invoice=stripe_invoice.id,
-                        description=order.order_group.seller_product_seller_location.seller_product.product.main_product.name
-                        + " | "
-                        + order_line_item.order_line_item_type.name
+                        description=order_line_item.order_line_item_type.name
                         + " | Qty: "
                         + str(order_line_item.quantity)
                         + " @ $"
