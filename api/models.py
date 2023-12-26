@@ -1669,7 +1669,6 @@ class OrderLineItem(BaseModel):
     def get_invoice(self):
         if self.stripe_invoice_line_item_id:
             try:
-                print("TEST")
                 invoice_line_item = stripe.InvoiceItem.retrieve(
                     self.stripe_invoice_line_item_id
                 )
@@ -1690,27 +1689,14 @@ class OrderLineItem(BaseModel):
             # Stripe Invoice, but have been paid for by the customer.
             return self.PaymentStatus.PAID
         elif self.paid:
-            print("paid")
             # Return True if OrderLineItem.Paid == True. See below for how
             # OrderLineItem.Paid is set.
             return self.PaymentStatus.PAID
         else:
-            print("checking for paid")
             # If OrderLineItem.StripeInvoiceLineItemId is populated and is not
-            # "BYPASS" or OrderLineItem.Paid == False, check if the Stripe Invoice
-            # has been paid.
-            # If the Stripe Invoice has been paid, set OrderLineItem.Paid = True.
-            invoice = self.get_invoice()
-            is_paid = invoice and invoice.status == "paid"
-
-            if is_paid:
-                print("setting paid")
-                self.paid = True
-                self.save()
-                return self.PaymentStatus.PAID
-            else:
-                print("not paid")
-                return self.PaymentStatus.INVOICED
+            # "BYPASS" or OrderLineItem.Paid == False, the Order Line Item is
+            # invoiced, but not paid.
+            return self.PaymentStatus.INVOICED
 
     def seller_payout_price(self):
         return round((self.rate or 0) * (self.quantity or 0), 2)
