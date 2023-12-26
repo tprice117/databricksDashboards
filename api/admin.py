@@ -1202,7 +1202,13 @@ class OrderAdmin(admin.ModelAdmin):
                         + " | Qty: "
                         + str(order_line_item.quantity)
                         + " @ $"
-                        + str(round(order_line_item.rate, 2))
+                        + str(
+                            round(
+                                order_line_item.customer_price()
+                                / order_line_item.quantity,
+                                2,
+                            )
+                        )
                         + "/unit",
                         amount=round(100 * order_line_item.customer_price()),
                         tax_behavior="exclusive",
