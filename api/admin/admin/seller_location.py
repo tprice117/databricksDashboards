@@ -5,6 +5,7 @@ from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils.html import format_html
 
+from api.admin.filters.seller_location.admin_tasks import SellerLocationAdminTasksFilter
 from api.admin.inlines import (
     SellerLocationMailingAddressInline,
     SellerProductSellerLocationInline,
@@ -34,6 +35,9 @@ class SellerLocationAdmin(admin.ModelAdmin):
     inlines = [
         SellerLocationMailingAddressInline,
         SellerProductSellerLocationInline,
+    ]
+    list_filter = [
+        SellerLocationAdminTasksFilter,
     ]
 
     def get_form(self, request, obj=None, **kwargs):

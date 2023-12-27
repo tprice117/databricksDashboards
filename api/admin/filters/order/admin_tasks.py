@@ -12,15 +12,15 @@ class OrderAdminTasksFilter(SimpleListFilter):
         return [
             (
                 "supplier_payout_invoice_reconciles",
-                "Supplier Price <> Payout <> Invoice Reconciles",
+                "Supplier Price =/= Payout =/= Invoice Reconciles",
             ),
             (
                 "customer_price_invoice_reconciles",
-                "Customer Price <> Invoice Reconciles",
+                "Customer Price =/= Invoice Reconciles",
             ),
             (
                 "customer_price_paid_reconciles",
-                "Customer Price <> Paid Reconciles",
+                "Customer Price =/= Paid Reconciles",
             ),
         ]
 

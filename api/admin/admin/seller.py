@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 
+from api.admin.filters.seller.admin_tasks import SellerAdminTasksFilter
 from api.admin.inlines import SellerLocationInline, SellerProductInline
 from api.forms import CsvImportForm
 from api.models import Seller
@@ -17,6 +18,9 @@ class SellerAdmin(admin.ModelAdmin):
     inlines = [
         SellerProductInline,
         SellerLocationInline,
+    ]
+    list_filter = [
+        SellerAdminTasksFilter,
     ]
 
     change_list_template = "admin/entities/seller_changelist.html"

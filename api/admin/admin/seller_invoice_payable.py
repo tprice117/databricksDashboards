@@ -1,5 +1,8 @@
 from django.contrib import admin
 
+from api.admin.filters.seller_invoice_payable.admin_tasks import (
+    SellerInvoicePayableAdminTasksFilter,
+)
 from api.admin.inlines.seller_invoice_payable_line_item import (
     SellerInvoicePayableLineItemInline,
 )
@@ -13,4 +16,7 @@ class SellerInvoicePayableAdmin(admin.ModelAdmin):
     search_fields = ["id", "seller_location__name", "supplier_invoice_id"]
     inlines = [
         SellerInvoicePayableLineItemInline,
+    ]
+    list_filter = [
+        SellerInvoicePayableAdminTasksFilter,
     ]
