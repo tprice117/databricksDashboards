@@ -286,8 +286,8 @@ class UserGroup(BaseModel):
 
     def credit_limit_used(self):
         orders = Order.objects.filter(order_group__user_address__user_group=self)
-        total_customer_price = 0
-        total_paid = 0
+        total_customer_price = 0.0
+        total_paid = 0.0
 
         # Loop through orders to get total customer price and total paid.
         for order in orders:
@@ -522,7 +522,7 @@ class UserAddress(BaseModel):
             else instance.user.email,
             # phone = instance.user_group.billing.phone if hasattr(instance.user_group, 'billing') else instance.user.phone,
             shipping={
-                "name": user_group_name + " | " + instance.formatted_address(),
+                "name": instance.name or instance.formatted_address(),
                 "address": {
                     "line1": instance.street,
                     "city": instance.city,
@@ -1295,7 +1295,7 @@ class Order(BaseModel):
         total_paid = 0
 
         order_line_item: OrderLineItem
-        for order_line_item in self.order_line_items:
+        for order_line_item in self.order_line_items.all():
             payment_status = order_line_item.payment_status()
 
             # Define variables for payment status.
@@ -1621,9 +1621,17 @@ class Order(BaseModel):
 
 
 class OrderDisposalTicket(BaseModel):
+    def get_file_path(instance, filename):
+        ext = filename.split(".")[-1]
+        filename = "%s.%s" % (uuid.uuid4(), ext)
+        return filename
+
     order = models.ForeignKey(Order, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.PROTECT)
-    disposal_location = models.ForeignKey(DisposalLocation, models.PROTECT)
+    disposal_location = models.ForeignKey(
+        DisposalLocation, models.PROTECT, blank=True, null=True
+    )
+    image = models.FileField(upload_to=get_file_path, blank=True, null=True)
     ticket_id = models.CharField(max_length=255)
     weight = models.DecimalField(max_digits=18, decimal_places=2)
 
@@ -1661,6 +1669,7 @@ class OrderLineItem(BaseModel):
     stripe_invoice_line_item_id = models.CharField(
         max_length=255, blank=True, null=True
     )
+    paid = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.order) + " - " + self.order_line_item_type.name
@@ -1686,16 +1695,16 @@ class OrderLineItem(BaseModel):
             # Return True if OrderLineItem.StripeInvoiceLineItemId == "BYPASS".
             # BYPASS is used for OrderLineItems that are not associated with a
             # Stripe Invoice, but have been paid for by the customer.
-            return self.PaymentStatus.INVOICED
+            return self.PaymentStatus.PAID
+        elif self.paid:
+            # Return True if OrderLineItem.Paid == True. See below for how
+            # OrderLineItem.Paid is set.
+            return self.PaymentStatus.PAID
         else:
-            # If OrderLineItem.StripeInvoiceLineItemId is popualted and is not
-            # "BYPASS", check the status of the Stripe Invoice.
-            invoice = self.get_invoice()
-            return (
-                self.PaymentStatus.PAID
-                if (invoice and invoice.status == "paid")
-                else self.PaymentStatus.INVOICED
-            )
+            # If OrderLineItem.StripeInvoiceLineItemId is populated and is not
+            # "BYPASS" or OrderLineItem.Paid == False, the Order Line Item is
+            # invoiced, but not paid.
+            return self.PaymentStatus.INVOICED
 
     def seller_payout_price(self):
         return round((self.rate or 0) * (self.quantity or 0), 2)
@@ -1758,13 +1767,17 @@ class SellerInvoicePayableLineItem(BaseModel):
     seller_invoice_payable = models.ForeignKey(
         SellerInvoicePayable, models.CASCADE, blank=True, null=True
     )
-    order = models.ForeignKey(Order, models.CASCADE)
+    order = models.ForeignKey(
+        Order,
+        models.CASCADE,
+        related_name="seller_invoice_payable_line_items",
+    )
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     description = models.CharField(max_length=255, blank=True, null=True)
 
 
 class Payout(BaseModel):
-    order = models.ForeignKey(Order, models.CASCADE)
+    order = models.ForeignKey(Order, models.CASCADE, related_name="payouts")
     checkbook_payout_id = models.CharField(max_length=255, blank=True, null=True)
     stripe_transfer_id = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
