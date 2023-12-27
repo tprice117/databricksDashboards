@@ -1621,9 +1621,17 @@ class Order(BaseModel):
 
 
 class OrderDisposalTicket(BaseModel):
+    def get_file_path(instance, filename):
+        ext = filename.split(".")[-1]
+        filename = "%s.%s" % (uuid.uuid4(), ext)
+        return filename
+
     order = models.ForeignKey(Order, models.PROTECT)
     waste_type = models.ForeignKey(WasteType, models.PROTECT)
-    disposal_location = models.ForeignKey(DisposalLocation, models.PROTECT)
+    disposal_location = models.ForeignKey(
+        DisposalLocation, models.PROTECT, blank=True, null=True
+    )
+    image = models.FileField(upload_to=get_file_path, blank=True, null=True)
     ticket_id = models.CharField(max_length=255)
     weight = models.DecimalField(max_digits=18, decimal_places=2)
 
@@ -1759,13 +1767,17 @@ class SellerInvoicePayableLineItem(BaseModel):
     seller_invoice_payable = models.ForeignKey(
         SellerInvoicePayable, models.CASCADE, blank=True, null=True
     )
-    order = models.ForeignKey(Order, models.CASCADE)
+    order = models.ForeignKey(
+        Order,
+        models.CASCADE,
+        related_name="seller_invoice_payable_line_items",
+    )
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     description = models.CharField(max_length=255, blank=True, null=True)
 
 
 class Payout(BaseModel):
-    order = models.ForeignKey(Order, models.CASCADE)
+    order = models.ForeignKey(Order, models.CASCADE, related_name="payouts")
     checkbook_payout_id = models.CharField(max_length=255, blank=True, null=True)
     stripe_transfer_id = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2)

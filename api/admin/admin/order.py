@@ -8,6 +8,7 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from api.admin.filters import CreatedDateFilter
+from api.admin.filters.order.admin_tasks import OrderAdminTasksFilter
 from api.admin.inlines import (
     OrderDisposalTicketInline,
     OrderLineItemInline,
@@ -52,6 +53,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = (
         "status",
         CreatedDateFilter,
+        OrderAdminTasksFilter,
     )
     inlines = [
         OrderLineItemInline,

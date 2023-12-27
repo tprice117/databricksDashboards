@@ -5,6 +5,7 @@ from .main_product_category import MainProductCategoryAdmin
 from .main_product_info import MainProductInfoAdmin
 from .main_product_waste_type import MainProductWasteTypeAdmin
 from .order import OrderAdmin
+from .order_disposal_ticket import OrderDisposalTicketAdmin
 from .order_group import OrderGroupAdmin
 from .payout import PayoutAdmin
 from .product import ProductAdmin
