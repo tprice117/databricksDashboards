@@ -19,6 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.filters import OrderGroupFilterset
+from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
 from api.utils.auth0 import invite_user
 from api.utils.denver_compliance_report import send_denver_compliance_report
 
@@ -31,20 +32,24 @@ from .serializers import *
 # To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+
 class SellerViewSet(viewsets.ModelViewSet):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
     filterset_fields = ["id"]
+
 
 class SellerLocationViewSet(viewsets.ModelViewSet):
     queryset = SellerLocation.objects.all()
     serializer_class = SellerLocationSerializer
     filterset_fields = ["id", "seller"]
 
+
 class UserAddressTypeViewSet(viewsets.ModelViewSet):
     queryset = UserAddressType.objects.all()
     serializer_class = UserAddressTypeSerializer
     filterset_fields = ["id"]
+
 
 class UserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
@@ -53,32 +58,42 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         elif self.request.user.user_group and self.request.user.is_admin:
             # If User is in a UserGroup and is Admin.
             return self.queryset.filter(user_group=self.request.user.user_group)
         elif self.request.user.user_group and not self.request.user.is_admin:
             # If User is in a UserGroup and is not Admin.
-            user_address_ids = UserUserAddress.objects.filter(user=self.request.user).values_list('user_address__id', flat=True)
+            user_address_ids = UserUserAddress.objects.filter(
+                user=self.request.user
+            ).values_list("user_address__id", flat=True)
             return self.queryset.filter(id__in=user_address_ids)
         else:
             # If User is not in a UserGroup.
             return self.queryset.filter(user=self.request.user)
 
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    filterset_fields = ["id","user_id"]
+    filterset_fields = ["id", "user_id"]
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        is_superuser = self.request.user == "ALL" or (
+            self.request.user.user_group.is_superuser
+            if self.request.user and self.request.user.user_group
+            else False
+        )
         if is_superuser:
-           return self.queryset
+            return self.queryset
         elif self.request.user.user_group and self.request.user.is_admin:
-            user_ids = User.objects.filter(user_group=self.request.user.user_group).values_list('id', flat=True)
+            user_ids = User.objects.filter(
+                user_group=self.request.user.user_group
+            ).values_list("id", flat=True)
             return self.queryset.filter(id__in=user_ids)
         else:
             return self.queryset.filter(id=self.request.user.id)
+
 
 class UserGroupViewSet(viewsets.ModelViewSet):
     queryset = UserGroup.objects.all()
@@ -86,33 +101,48 @@ class UserGroupViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "share_code"]
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        is_superuser = self.request.user == "ALL" or (
+            self.request.user.user_group.is_superuser
+            if self.request.user and self.request.user.user_group
+            else False
+        )
         if is_superuser:
-           return self.queryset
+            return self.queryset
         else:
             return self.queryset.filter(id=self.request.user.user_group)
+
 
 class UserGroupLegalViewSet(viewsets.ModelViewSet):
     queryset = UserGroupLegal.objects.all()
     serializer_class = UserGroupLegalSerializer
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        is_superuser = self.request.user == "ALL" or (
+            self.request.user.user_group.is_superuser
+            if self.request.user and self.request.user.user_group
+            else False
+        )
         if is_superuser:
-           return self.queryset
+            return self.queryset
         else:
             return self.queryset.filter(user_group=self.request.user.user_group)
+
 
 class UserGroupCreditApplicationViewSet(viewsets.ModelViewSet):
     queryset = UserGroupCreditApplication.objects.all()
     serializer_class = UserGroupCreditApplicationSerializer
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        is_superuser = self.request.user == "ALL" or (
+            self.request.user.user_group.is_superuser
+            if self.request.user and self.request.user.user_group
+            else False
+        )
         if is_superuser:
-           return self.queryset
+            return self.queryset
         else:
             return self.queryset.filter(user_group=self.request.user.user_group)
+
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserUserAddress.objects.all()
@@ -120,28 +150,38 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "user", "user_address"]
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (self.request.user.user_group.is_superuser if self.request.user and self.request.user.user_group else False)
+        is_superuser = self.request.user == "ALL" or (
+            self.request.user.user_group.is_superuser
+            if self.request.user and self.request.user.user_group
+            else False
+        )
         if is_superuser:
-           return self.queryset
+            return self.queryset
         elif self.request.user.is_admin:
             users = User.objects.filter(user_group=self.request.user.user_group)
             return self.queryset.filter(user__in=users)
         else:
             return self.queryset.filter(user=self.request.user)
-  
-class UserSellerReviewViewSet(viewsets.ModelViewSet): #Added 2/25/2023
+
+
+class UserSellerReviewViewSet(viewsets.ModelViewSet):  # Added 2/25/2023
     queryset = UserSellerReview.objects.all()
     serializer_class = UserSellerReviewSerializer
     filterset_fields = ["id", "user", "seller"]
+
 
 class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
     serializer_class = UserSellerReviewAggregateSerializer
 
     def get_queryset(self):
-        queryset = UserSellerReview.objects.values('seller').annotate(
-            rating_avg=Avg('rating'),
-            review_count=Count('seller_id'),
-        ).order_by('seller_id')
+        queryset = (
+            UserSellerReview.objects.values("seller")
+            .annotate(
+                rating_avg=Avg("rating"),
+                review_count=Count("seller_id"),
+            )
+            .order_by("seller_id")
+        )
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -153,29 +193,34 @@ class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
 class AddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = AddOnChoice.objects.all()
     serializer_class = AddOnChoiceSerializer
-    filterset_fields = ["add_on", "add_on__main_product"] 
+    filterset_fields = ["add_on", "add_on__main_product"]
+
 
 @authentication_classes([])
 @permission_classes([])
 class AddOnViewSet(viewsets.ModelViewSet):
     queryset = AddOn.objects.all()
     serializer_class = AddOnSerializer
-    filterset_fields = ["main_product"] 
+    filterset_fields = ["main_product"]
+
 
 class DisposalLocationViewSet(viewsets.ModelViewSet):
     queryset = DisposalLocation.objects.all()
     serializer_class = DisposalLocationSerializer
     filterset_fields = ["id"]
 
+
 class DisposalLocationWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = DisposalLocationWasteType.objects.all()
     serializer_class = DisposalLocationWasteTypeSerializer
     filterset_fields = ["id"]
 
+
 class MainProductAddOnViewSet(viewsets.ModelViewSet):
     queryset = MainProductAddOn.objects.all()
     serializer_class = MainProductAddOnSerializer
-    filterset_fields = ["main_product", "add_on"] 
+    filterset_fields = ["main_product", "add_on"]
+
 
 @authentication_classes([])
 @permission_classes([])
@@ -184,18 +229,21 @@ class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductCategoryInfoSerializer
     filterset_fields = ["main_product_category"]
 
+
 @authentication_classes([])
 @permission_classes([])
 class MainProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
 
+
 @authentication_classes([])
 @permission_classes([])
 class MainProductInfoViewSet(viewsets.ModelViewSet):
     queryset = MainProductInfo.objects.all()
     serializer_class = MainProductInfoSerializer
-    filterset_fields = ["main_product"]   
+    filterset_fields = ["main_product"]
+
 
 @authentication_classes([])
 @permission_classes([])
@@ -204,12 +252,14 @@ class MainProductViewSet(viewsets.ModelViewSet):
     serializer_class = MainProductSerializer
     filterset_fields = ["id", "main_product_category__id"]
 
+
 @authentication_classes([])
 @permission_classes([])
 class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = MainProductWasteType.objects.all()
     serializer_class = MainProductWasteTypeSerializer
     filterset_fields = ["main_product"]
+
 
 class OrderGroupViewSet(viewsets.ModelViewSet):
     queryset = OrderGroup.objects.all()
@@ -219,68 +269,80 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         elif self.request.user.is_admin:
             return self.queryset.filter(user__user_group=self.request.user.user_group)
         else:
             return self.queryset.filter(user__id=self.request.user.id)
-        
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     filterset_fields = {
-       "id": ["exact"], 
-       "order_group": ["exact"], 
-       'submitted_on': ['isnull'],
+        "id": ["exact"],
+        "order_group": ["exact"],
+        "submitted_on": ["isnull"],
     }
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         elif self.request.user.is_admin:
-            return self.queryset.filter(order_group__user__user_group=self.request.user.user_group)
+            return self.queryset.filter(
+                order_group__user__user_group=self.request.user.user_group
+            )
         else:
             return self.queryset.filter(order_group__user__id=self.request.user.id)
+
 
 class OrderLineItemViewSet(viewsets.ModelViewSet):
     queryset = OrderLineItem.objects.all()
     serializer_class = OrderLineItemSerializer
     filterset_fields = ["id", "order"]
 
+
 class OrderLineItemTypeViewSet(viewsets.ModelViewSet):
     queryset = OrderLineItemType.objects.all()
     serializer_class = OrderLineItemTypeSerializer
     filterset_fields = ["id"]
+
 
 class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
     queryset = OrderDisposalTicket.objects.all()
     serializer_class = OrderDisposalTicketSerializer
     filterset_fields = ["id"]
 
-class DayOfWeekViewSet(viewsets.ModelViewSet): #added 2/25/2021
+
+class DayOfWeekViewSet(viewsets.ModelViewSet):  # added 2/25/2021
     queryset = DayOfWeek.objects.all()
     serializer_class = DayOfWeekSerializer
     filterset_fields = ["id"]
 
-class TimeSlotViewSet(viewsets.ModelViewSet): #added 2/25/2021
+
+class TimeSlotViewSet(viewsets.ModelViewSet):  # added 2/25/2021
     queryset = TimeSlot.objects.all()
     serializer_class = TimeSlotSerializer
     filterset_fields = ["id"]
 
-class SubscriptionViewSet(viewsets.ModelViewSet): #added 2/25/2021
+
+class SubscriptionViewSet(viewsets.ModelViewSet):  # added 2/25/2021
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filterset_fields = ["id"]
 
+
 class PayoutViewSet(viewsets.ModelViewSet):
     queryset = Payout.objects.all()
     serializer_class = PayoutSerializer
-    filterset_fields = ["order"] 
+    filterset_fields = ["order"]
+
 
 class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
     serializer_class = ProductAddOnChoiceSerializer
-    filterset_fields = ["product", "add_on_choice", "product__main_product"] 
+    filterset_fields = ["product", "add_on_choice", "product__main_product"]
+
 
 @authentication_classes([])
 @permission_classes([])
@@ -289,15 +351,18 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     filterset_fields = ["main_product"]
 
+
 class SellerProductViewSet(viewsets.ModelViewSet):
     queryset = SellerProduct.objects.all()
     serializer_class = SellerProductSerializer
-    filterset_fields = ["seller", "product"] 
+    filterset_fields = ["seller", "product"]
+
 
 class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocation.objects.all()
     serializer_class = SellerProductSellerLocationSerializer
-    filterset_fields = ["seller_product", "seller_location"] 
+    filterset_fields = ["seller_product", "seller_location"]
+
 
 class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationService.objects.all()
@@ -306,38 +371,58 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         else:
-            seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller)
+            seller = (
+                self.request.user.user_group.seller
+                if self.request.user.user_group
+                else None
+            )
+            return self.queryset.filter(
+                seller_product_seller_location__seller_product__seller=seller
+            )
+
 
 class SellerInvoicePayableViewSet(viewsets.ModelViewSet):
     queryset = SellerInvoicePayable.objects.all()
     serializer_class = SellerInvoicePayableSerializer
 
+
 class SellerInvoicePayableLineItemViewSet(viewsets.ModelViewSet):
     queryset = SellerInvoicePayableLineItem.objects.all()
     serializer_class = SellerInvoicePayableLineItemSerializer
-    filterset_fields = ["order"] 
+    filterset_fields = ["order"]
+
 
 class ServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
     queryset = ServiceRecurringFrequency.objects.all()
     serializer_class = ServiceRecurringFrequencySerializer
-   
+
+
 class MainProductServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
     queryset = MainProductServiceRecurringFrequency.objects.all()
     serializer_class = MainProductServiceRecurringFrequencySerializer
 
-class SellerProductSellerLocationServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+
+class SellerProductSellerLocationServiceRecurringFrequencyViewSet(
+    viewsets.ModelViewSet
+):
     queryset = SellerProductSellerLocationServiceRecurringFrequency.objects.all()
     serializer_class = SellerProductSellerLocationServiceRecurringFrequencySerializer
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         else:
-            seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            return self.queryset.filter(seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=seller)
+            seller = (
+                self.request.user.user_group.seller
+                if self.request.user.user_group
+                else None
+            )
+            return self.queryset.filter(
+                seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=seller
+            )
+
 
 class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationRental.objects.all()
@@ -346,10 +431,17 @@ class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         else:
-            seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller)
+            seller = (
+                self.request.user.user_group.seller
+                if self.request.user.user_group
+                else None
+            )
+            return self.queryset.filter(
+                seller_product_seller_location__seller_product__seller=seller
+            )
+
 
 class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationMaterial.objects.all()
@@ -358,22 +450,39 @@ class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         else:
-            seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller)
+            seller = (
+                self.request.user.user_group.seller
+                if self.request.user.user_group
+                else None
+            )
+            return self.queryset.filter(
+                seller_product_seller_location__seller_product__seller=seller
+            )
+
 
 class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocationMaterialWasteType.objects.all()
     serializer_class = SellerProductSellerLocationMaterialWasteTypeSerializer
-    filterset_fields = ["seller_product_seller_location_material", "main_product_waste_type"]
+    filterset_fields = [
+        "seller_product_seller_location_material",
+        "main_product_waste_type",
+    ]
 
     def get_queryset(self):
         if self.request.user == "ALL":
-           return self.queryset
+            return self.queryset
         else:
-            seller = self.request.user.user_group.seller if self.request.user.user_group else None
-            return self.queryset.filter(seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=seller)
+            seller = (
+                self.request.user.user_group.seller
+                if self.request.user.user_group
+                else None
+            )
+            return self.queryset.filter(
+                seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=seller
+            )
+
 
 @authentication_classes([])
 @permission_classes([])
@@ -388,283 +497,361 @@ class UserAddressesForSellerViewSet(viewsets.ModelViewSet):
     serializer_class = UserAddressSerializer
 
     def get_queryset(self):
-        seller = self.request.user.user_group.seller if self.request.user.user_group else None
-        seller_order_user_address_ids = OrderGroup.objects.filter(seller_product_seller_location__seller_product__seller=seller).values_list('user_address__id', flat=True) if seller else []
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        seller_order_user_address_ids = (
+            OrderGroup.objects.filter(
+                seller_product_seller_location__seller_product__seller=seller
+            ).values_list("user_address__id", flat=True)
+            if seller
+            else []
+        )
         return self.queryset.filter(id__in=seller_order_user_address_ids)
-    
+
+
 class OrderGroupsForSellerViewSet(viewsets.ModelViewSet):
     queryset = OrderGroup.objects.all()
     serializer_class = OrderGroupSerializer
 
     def get_queryset(self):
-        seller = self.request.user.user_group.seller if self.request.user.user_group else None
-        return self.queryset.filter(seller_product_seller_location__seller_product__seller=seller) if seller else []
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        return (
+            self.queryset.filter(
+                seller_product_seller_location__seller_product__seller=seller
+            )
+            if seller
+            else []
+        )
+
 
 class OrdersForSellerViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        seller = self.request.user.user_group.seller if self.request.user.user_group else None
-        return self.queryset.filter(order_group__seller_product_seller_location__seller_product__seller=seller) if seller else []
-
-
-
-
-
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        return (
+            self.queryset.filter(
+                order_group__seller_product_seller_location__seller_product__seller=seller
+            )
+            if seller
+            else []
+        )
 
 
 baseUrl = "https://api.thetrashgurus.com/v2/"
 MAX_RETRIES = 5
-API_KEY = '556b608df74309034553676f5d4425401ae6c2fc29db793a5b1501'
+API_KEY = "556b608df74309034553676f5d4425401ae6c2fc29db793a5b1501"
+
 
 def call_TG_API(url, payload):
-  attempt_num = 0  # keep track of how many times we've retried
-  while attempt_num < MAX_RETRIES:
-      response = requests.post(url, json=payload)
-      if response.status_code == 200:
-          data = response.json()
-          return Response(data, status=status.HTTP_200_OK)
-      else:
-          attempt_num += 1
-          # You can probably use a logger to log the error here
-          time.sleep(5)  # Wait for 5 seconds before re-trying
-  return Response({"error": "Request failed"}, status=r.status_code)
+    attempt_num = 0  # keep track of how many times we've retried
+    while attempt_num < MAX_RETRIES:
+        response = requests.post(url, json=payload)
+        if response.status_code == 200:
+            data = response.json()
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+            attempt_num += 1
+            # You can probably use a logger to log the error here
+            time.sleep(5)  # Wait for 5 seconds before re-trying
+    return Response({"error": "Request failed"}, status=r.status_code)
+
 
 def get(endpoint, body):
-  url =  baseUrl + endpoint
-  # payload = {"api_key": API_KEY} | body
-  payload = dict({"api_key": API_KEY}.items() | body.items())
-  return call_TG_API(url, payload)
+    url = baseUrl + endpoint
+    # payload = {"api_key": API_KEY} | body
+    payload = dict({"api_key": API_KEY}.items() | body.items())
+    return call_TG_API(url, payload)
+
 
 def post(endpoint, body):
-  url =  baseUrl + endpoint
-  payload = {**{"api_key": API_KEY}, **body}
-  print(payload)
-  return call_TG_API(url, payload)
+    url = baseUrl + endpoint
+    payload = {**{"api_key": API_KEY}, **body}
+    print(payload)
+    return call_TG_API(url, payload)
+
 
 def put(endpoint, body):
-  url =  baseUrl + endpoint
-  payload = dict({"api_key": API_KEY}.items() | body.items())
-  return call_TG_API(url, payload)
+    url = baseUrl + endpoint
+    payload = dict({"api_key": API_KEY}.items() | body.items())
+    return call_TG_API(url, payload)
+
 
 def delete(endpoint, body):
-  url =  baseUrl + endpoint
-  payload = dict({"api_key": API_KEY}.items() | body.items())
-  return call_TG_API(url, payload)
+    url = baseUrl + endpoint
+    payload = dict({"api_key": API_KEY}.items() | body.items())
+    return call_TG_API(url, payload)
+
 
 # Non-ML Pricing Endpoint.
-@api_view(['GET'])
+@api_view(["GET"])
 def order_pricing(request, order_id):
-  order = Order.objects.get(id=order_id)
-  invoice = stripe.Invoice.retrieve(order.stripe_invoice_id)
-  return Response({"order_total": invoice.amount_due/100}, status=status.HTTP_200_OK)
+    order = Order.objects.get(id=order_id)
+    invoice = stripe.Invoice.retrieve(order.stripe_invoice_id)
+    return Response(
+        {"order_total": invoice.amount_due / 100}, status=status.HTTP_200_OK
+    )
+
 
 # Pricing Endpoint.
-@api_view(['POST'])
+@api_view(["POST"])
 def get_pricing(request):
-    price_mod = pricing.Price_Model(data={
-        "seller_location": request.data['seller_location'] if 'seller_location' in request.data else None,
-        "product": request.data['product'],
-        "user_address": request.data['user_address'],
-        "waste_type": request.data['waste_type'],
-    })
+    price_mod = pricing.Price_Model(
+        data={
+            "seller_location": request.data["seller_location"]
+            if "seller_location" in request.data
+            else None,
+            "product": request.data["product"],
+            "user_address": request.data["user_address"],
+            "waste_type": request.data["waste_type"],
+        }
+    )
     return Response(price_mod.get_prices())
+
 
 # ml views for pricing
 class Prediction(APIView):
-  def post(self, request):
-      # Load the model
-      price_mod = MlConfig.regressor
-      enc = MlConfig.encoder
-      # initialize the modeler
-      modeler = xgb.price_model_xgb(price_mod, enc)
-      # get the data from the request and predict
-      pred = modeler.predict_price(input_data = request.data)
-      response_dict = {"Price": pred}
-      return Response(response_dict)
+    def post(self, request):
+        # Load the model
+        price_mod = MlConfig.regressor
+        enc = MlConfig.encoder
+        # initialize the modeler
+        modeler = xgb.price_model_xgb(price_mod, enc)
+        # get the data from the request and predict
+        pred = modeler.predict_price(input_data=request.data)
+        response_dict = {"Price": pred}
+        return Response(response_dict)
+
 
 class TaskView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):  
-      if pk or request.query_params.get('job_id'):
-        ids = []
-        ids.append(int(pk or request.query_params.get('job_id')))
-        return post("get_job_details", {
-          "job_ids": ids,
-          "include_task_history": 0
-        })
-      if request.query_params.get('customer_id'):
-        return post("get_all_tasks", {"job_type": 3, "customer_id": int(request.query_params.get('customer_id'))})
-      else:
-        response = post("get_all_tasks", {"job_type": 3, "is_pagination": 0})
-        new_list = []
-        for data in response.data["data"]:
-          new_list.append({**data, **{"time_start": 0, "time_end": 0}})
-        response.data["data"] = new_list
-        return response
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk or request.query_params.get("job_id"):
+            ids = []
+            ids.append(int(pk or request.query_params.get("job_id")))
+            return post("get_job_details", {"job_ids": ids, "include_task_history": 0})
+        if request.query_params.get("customer_id"):
+            return post(
+                "get_all_tasks",
+                {
+                    "job_type": 3,
+                    "customer_id": int(request.query_params.get("customer_id")),
+                },
+            )
+        else:
+            response = post("get_all_tasks", {"job_type": 3, "is_pagination": 0})
+            new_list = []
+            for data in response.data["data"]:
+                new_list.append({**data, **{"time_start": 0, "time_end": 0}})
+            response.data["data"] = new_list
+            return response
 
     def post(self, request, *args, **kwargs):
-      # account = Account.objects.get(id=request.data["customer_comment"])
-      # job_delivery_datetime = parse_datetime(request.data["job_delivery_datetime"])
-      # job_pickup_datetime = parse_datetime(request.data["job_pickup_datetime"])
-      new_data = {
-          **request.data, 
-          # **{
-          #   "customer_username": account.name,
-          #   "customer_phone": account.phone or "1234567890",
-          #   "customer_address": account.shipping_street + ", " + account.shipping_city + ", " + account.shipping_state,
-          #   "latitude": str(account.shipping_latitude),
-          #   "longitude": str(account.shipping_longitude),
-          #   # "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
-          #   # "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
-          #    "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
-          #   "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
-          #   "has_pickup": "0",
-          #   "has_delivery": "0",
-          #   "layout_type": "1",
-          #   "tracking_link": 1,
-          #   "auto_assignment": "0",
-          #   "notify": 1,
-          #   "tags":"",
-          #   "geofence":0,
-          # } 
+        # account = Account.objects.get(id=request.data["customer_comment"])
+        # job_delivery_datetime = parse_datetime(request.data["job_delivery_datetime"])
+        # job_pickup_datetime = parse_datetime(request.data["job_pickup_datetime"])
+        new_data = {
+            **request.data,
+            # **{
+            #   "customer_username": account.name,
+            #   "customer_phone": account.phone or "1234567890",
+            #   "customer_address": account.shipping_street + ", " + account.shipping_city + ", " + account.shipping_state,
+            #   "latitude": str(account.shipping_latitude),
+            #   "longitude": str(account.shipping_longitude),
+            #   # "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
+            #   # "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
+            #    "job_pickup_datetime": job_pickup_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_start"]).zfill(2) + ":00:00",
+            #   "job_delivery_datetime": job_delivery_datetime.strftime("%Y-%m-%d") + " " + str(request.data["time_end"]).zfill(2) + ":00:00",
+            #   "has_pickup": "0",
+            #   "has_delivery": "0",
+            #   "layout_type": "1",
+            #   "tracking_link": 1,
+            #   "auto_assignment": "0",
+            #   "notify": 1,
+            #   "tags":"",
+            #   "geofence":0,
+            # }
         }
-      return post("create_task", new_data)
+        return post("create_task", new_data)
 
     def put(self, request, pk=None, *args, **kwargs):
-      player_object = self.get_object(pk or request.query_params.get('id'))
-      return put("edit_task", request.data)
-    
+        player_object = self.get_object(pk or request.query_params.get("id"))
+        return put("edit_task", request.data)
+
     def delete(self, request, pk=None, *args, **kwargs):
-      return delete("delete_task", {"job_id": pk or request.query_params.get('id')})
+        return delete("delete_task", {"job_id": pk or request.query_params.get("id")})
+
 
 class AgentView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):   
-      if pk or request.query_params.get('id'):   
-        return post("view_fleet_profile", {"fleet_id": pk or request.query_params.get('id')})
-      else:  
-        response = get("get_all_fleets", {})
-        new_list = []
-        for data in response.data["data"]:
-          new_list.append({**data, **{"team_id": 0, "first_name": ""}})
-        response.data["data"] = new_list
-        return response
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk or request.query_params.get("id"):
+            return post(
+                "view_fleet_profile", {"fleet_id": pk or request.query_params.get("id")}
+            )
+        else:
+            response = get("get_all_fleets", {})
+            new_list = []
+            for data in response.data["data"]:
+                new_list.append({**data, **{"team_id": 0, "first_name": ""}})
+            response.data["data"] = new_list
+            return response
 
     def post(self, request, *args, **kwargs):
-      return post("add_agent", request.data)
+        return post("add_agent", request.data)
 
     def put(self, request, pk=None, *args, **kwargs):
-      player_object = self.get_object(pk or request.query_params.get('id'))
-      return put("edit_agent", request.data)
-    
+        player_object = self.get_object(pk or request.query_params.get("id"))
+        return put("edit_agent", request.data)
+
     def delete(self, request, pk=None, *args, **kwargs):
-      return delete("delete_fleet_account", {"team_id": pk or request.query_params.get('id')})
+        return delete(
+            "delete_fleet_account", {"team_id": pk or request.query_params.get("id")}
+        )
+
 
 class TeamView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):     
-      if pk or request.query_params.get('id'):   
-        return post("view_teams", {"team_id": pk or request.query_params.get('id')})
-      else:  
-        return get("view_all_team_only", {})
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk or request.query_params.get("id"):
+            return post("view_teams", {"team_id": pk or request.query_params.get("id")})
+        else:
+            return get("view_all_team_only", {})
 
     def post(self, request, *args, **kwargs):
-      return post("create_team", request.data)
+        return post("create_team", request.data)
 
     def put(self, request, pk=None, *args, **kwargs):
-        player_object = self.get_object(pk or request.query_params.get('id'))
+        player_object = self.get_object(pk or request.query_params.get("id"))
         return put("update_team", request.data)
-    
+
     def delete(self, request, pk=None, *args, **kwargs):
-      return delete("delete_team", {"team_id": pk or request.query_params.get('id')})
+        return delete("delete_team", {"team_id": pk or request.query_params.get("id")})
+
 
 class ManagerView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):     
-      return get("view_all_manager")
+    def get(self, request, pk=None, *args, **kwargs):
+        return get("view_all_manager")
 
     def post(self, request, *args, **kwargs):
-      return post("add_manager", request.data)
-    
+        return post("add_manager", request.data)
+
     def delete(self, request, pk=None, *args, **kwargs):
-      return delete("delete_manager", {"dispatcher_id": pk or request.query_params.get('id')})
+        return delete(
+            "delete_manager", {"dispatcher_id": pk or request.query_params.get("id")}
+        )
+
 
 class CustomerView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):     
-      if pk or request.query_params.get('id'):   
-        return post("view_customer_profile", {"customer_id": pk or request.query_params.get('id')})
-      else:       
-        return get("get_all_customers", {})
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk or request.query_params.get("id"):
+            return post(
+                "view_customer_profile",
+                {"customer_id": pk or request.query_params.get("id")},
+            )
+        else:
+            return get("get_all_customers", {})
 
     def post(self, request, *args, **kwargs):
-      return post("customer/add",
-        {
-          "user_type": 0, 
-          "name": request.data["customer_email"], 
-          "email": request.data["customer_email"], 
-          "phone": randint(1000000000, 9999999999),
-        }
-    )
+        return post(
+            "customer/add",
+            {
+                "user_type": 0,
+                "name": request.data["customer_email"],
+                "email": request.data["customer_email"],
+                "phone": randint(1000000000, 9999999999),
+            },
+        )
 
     def put(self, request, pk=None, *args, **kwargs):
-        player_object = self.get_object(pk or request.query_params.get('id'))
+        player_object = self.get_object(pk or request.query_params.get("id"))
         return put("customer/edit", request.data)
-    
+
     def delete(self, request, pk=None, *args, **kwargs):
-      return delete("delete_customer", {"customer_id": pk or request.query_params.get('id')})
+        return delete(
+            "delete_customer", {"customer_id": pk or request.query_params.get("id")}
+        )
+
 
 class MerchantView(APIView):
     def post(self, request, *args, **kwargs):
-      return post("merchant/sign_up", request.data)
+        return post("merchant/sign_up", request.data)
 
     def put(self, request, pk=None, *args, **kwargs):
-        player_object = self.get_object(pk or request.query_params.get('id'))
+        player_object = self.get_object(pk or request.query_params.get("id"))
         return put("merchant/edit_merchant", request.data)
-    
+
     def delete(self, request, pk=None, *args, **kwargs):
-      return delete("merchant/delete", {"merchant_id": pk or request.query_params.get('id')})
+        return delete(
+            "merchant/delete", {"merchant_id": pk or request.query_params.get("id")}
+        )
+
 
 class MissionView(APIView):
-    def get(self, request, pk=None, *args, **kwargs):     
-      return get("get_mission_list")
+    def get(self, request, pk=None, *args, **kwargs):
+        return get("get_mission_list")
 
     def post(self, request, *args, **kwargs):
-      return post("create_mission_task", request.data)
-    
+        return post("create_mission_task", request.data)
+
     def delete(self, request, pk=None, *args, **kwargs):
-      return delete("delete_mission", {"mission_id": pk or request.query_params.get('id')})
+        return delete(
+            "delete_mission", {"mission_id": pk or request.query_params.get("id")}
+        )
+
 
 class ConvertSFOrderToScrapTask(APIView):
     def get(self, request, pk=None, *args, **kwargs):
         order = Order.objects.get(order_number=pk)
         account = Account.objects.get(id=order.account_id)
         service_provider = Order.objects.get(id=order.service_provider)
-        return post("create_task", {
-              "order_id": order.order_number,
-              "customer_username": account.name,
-              "customer_phone": account.phone or "1234567890",
-              "customer_address": account.shipping_street + ", " + account.shipping_city + ", " + account.shipping_state,
-              "latitude": str(account.shipping_latitude),
-              "longitude": str(account.shipping_longitude),
-              "job_pickup_datetime": order.start_date_time.strftime("%Y-%m-%d %H:%m:%s"), #add field to salesforce object
-              "job_delivery_datetime": order.start_date_time.strftime("%Y-%m-%d %H:%m:%s"), # add field to salesforce object
-              "has_pickup": "0",
-              "has_delivery": "0",
-              "layout_type": "1",
-              "tracking_link": 1,
-              "auto_assignment": "0",
-              "timezone": "-420",
-              "notify": 1,
-              "tags":"",
-              "geofence":0,
-              "team_id": service_provider.scrap_team_id,
-              "fleet_id": service_provider.scrap_fleet_id,
-            }
+        return post(
+            "create_task",
+            {
+                "order_id": order.order_number,
+                "customer_username": account.name,
+                "customer_phone": account.phone or "1234567890",
+                "customer_address": account.shipping_street
+                + ", "
+                + account.shipping_city
+                + ", "
+                + account.shipping_state,
+                "latitude": str(account.shipping_latitude),
+                "longitude": str(account.shipping_longitude),
+                "job_pickup_datetime": order.start_date_time.strftime(
+                    "%Y-%m-%d %H:%m:%s"
+                ),  # add field to salesforce object
+                "job_delivery_datetime": order.start_date_time.strftime(
+                    "%Y-%m-%d %H:%m:%s"
+                ),  # add field to salesforce object
+                "has_pickup": "0",
+                "has_delivery": "0",
+                "layout_type": "1",
+                "tracking_link": 1,
+                "auto_assignment": "0",
+                "timezone": "-420",
+                "notify": 1,
+                "tags": "",
+                "geofence": 0,
+                "team_id": service_provider.scrap_team_id,
+                "fleet_id": service_provider.scrap_fleet_id,
+            },
         )
-
 
 
 ### Stripe Views
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 def stripe_customer_portal_url(request, user_address_id):
     user_address = UserAddress.objects.get(id=user_address_id)
 
@@ -672,26 +859,27 @@ def stripe_customer_portal_url(request, user_address_id):
     if not user_address.stripe_customer_id:
         customer = stripe.Customer.create(
             email=user_address.user.email,
-            name=(user_address.user.first_name or "") + " " + (user_address.user.last_name or ""),
-            metadata={
-                "user_address_id": user_address.id
-            }
+            name=(user_address.user.first_name or "")
+            + " "
+            + (user_address.user.last_name or ""),
+            metadata={"user_address_id": user_address.id},
         )
         user_address.stripe_customer_id = customer.id
         user_address.save()
 
     billing_portal_session = stripe.billing_portal.Session.create(
-        configuration=settings.STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG if request.GET.get("only_payments", False) == "true" else settings.STRIPE_FULL_CUSTOMER_PORTAL_CONFIG,
-        customer=user_address.stripe_customer_id
+        configuration=settings.STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG
+        if request.GET.get("only_payments", False) == "true"
+        else settings.STRIPE_FULL_CUSTOMER_PORTAL_CONFIG,
+        customer=user_address.stripe_customer_id,
     )
 
-    return Response({
-        "url": billing_portal_session.url
-    })
+    return Response({"url": billing_portal_session.url})
+
 
 class StripePaymentMethods(APIView):
     def get(self, request, format=None):
-        stripe_customer_id = self.request.query_params.get('id')
+        stripe_customer_id = self.request.query_params.get("id")
         print(stripe_customer_id)
         payment_methods = stripe.Customer.list_payment_methods(
             stripe_customer_id,
@@ -699,10 +887,11 @@ class StripePaymentMethods(APIView):
         )
         return Response(payment_methods)
 
+
 class StripeSetupIntents(APIView):
     def get(self, request, format=None):
-        stripe_customer_id = self.request.query_params.get('id')
-  
+        stripe_customer_id = self.request.query_params.get("id")
+
         # Create Setup Intent.
         setup_intent = stripe.SetupIntent.create(
             customer=stripe_customer_id,
@@ -713,37 +902,39 @@ class StripeSetupIntents(APIView):
         # Create ephemeral key and add to reponse.
         ephemeralKey = stripe.EphemeralKey.create(
             customer=stripe_customer_id,
-            stripe_version='2020-08-27',
+            stripe_version="2020-08-27",
         )
         setup_intent["ephemeral_key"] = ephemeralKey.secret
         return Response(setup_intent)
 
+
 class StripePaymentIntents(APIView):
     def get(self, request, format=None):
-        stripe_customer_id = self.request.query_params.get('customer_id')
-        amount = self.request.query_params.get('amount')
-  
+        stripe_customer_id = self.request.query_params.get("customer_id")
+        amount = self.request.query_params.get("amount")
+
         # Create Setup Intent.
         payment_intent = stripe.PaymentIntent.create(
             customer=stripe_customer_id,
             payment_method_types=["card"],
             amount=amount,
-            currency='usd',
+            currency="usd",
         )
 
         # Create ephemeral key and add to reponse.
         ephemeralKey = stripe.EphemeralKey.create(
             customer=stripe_customer_id,
-            stripe_version='2020-08-27',
+            stripe_version="2020-08-27",
         )
         payment_intent["ephemeral_key"] = ephemeralKey.secret
         return Response(payment_intent)
 
+
 class StripeCreateCheckoutSession(APIView):
     def get(self, request, format=None):
-        customer_id = self.request.query_params.get('customer_id')
-        price_id = self.request.query_params.get('price_id')
-        mode = self.request.query_params.get('mode')
+        customer_id = self.request.query_params.get("customer_id")
+        price_id = self.request.query_params.get("price_id")
+        mode = self.request.query_params.get("mode")
 
         session = stripe.checkout.Session.create(
             customer=customer_id,
@@ -751,14 +942,14 @@ class StripeCreateCheckoutSession(APIView):
             cancel_url="https://cancel.com",
             line_items=[
                 {
-                "price": price_id,
-                "quantity": 1,
+                    "price": price_id,
+                    "quantity": 1,
                 },
             ],
             mode=mode,
         )
         return Response(session)
-        
+
 
 class StripeConnectPayoutForService(APIView):
     # Payout Accepted Vendor for Service Request.
@@ -772,8 +963,10 @@ class StripeConnectPayoutForService(APIView):
         payment_intents = stripe.PaymentIntent.search(
             query='metadata["service_request_id"]:"' + str(service_request.id) + '"'
         )
-        total_received = sum(payment_intent.amount_received for payment_intent in payment_intents)
-       
+        total_received = sum(
+            payment_intent.amount_received for payment_intent in payment_intents
+        )
+
         # Calculate the total amount payed out to the vendor.
         transfers = stripe.Transfer.list(transfer_group=str(service_request.id))
         total_transferred = sum(transfer.amount for transfer in transfers)
@@ -799,10 +992,10 @@ class StripeConnectPayoutForService(APIView):
             return Response(transfer)
         else:
             return Response()
-        
 
-        
+
 ## Stripe Dashboarding (GET only endpoints)
+
 
 class StripeConnectAccount(APIView):
     def get(self, request, format=None):
@@ -816,6 +1009,7 @@ class StripeConnectAccount(APIView):
             starting_after = data[-1]["id"]
         return Response(data)
 
+
 class StripeConnectTransfer(APIView):
     def get(self, request, format=None):
         has_more = True
@@ -827,6 +1021,7 @@ class StripeConnectTransfer(APIView):
             has_more = transfers["has_more"]
             starting_after = data[-1]["id"]
         return Response(data)
+
 
 class StripeBillingInvoice(APIView):
     def get(self, request, format=None):
@@ -840,17 +1035,21 @@ class StripeBillingInvoice(APIView):
             starting_after = data[-1]["id"]
         return Response(data)
 
+
 class StripeBillingSubscription(APIView):
     def get(self, request, format=None):
         has_more = True
         starting_after = None
         data = []
         while has_more:
-            subscriptions = stripe.Subscription.list(limit=100, starting_after=starting_after)
+            subscriptions = stripe.Subscription.list(
+                limit=100, starting_after=starting_after
+            )
             data = data + subscriptions["data"]
             has_more = subscriptions["has_more"]
             starting_after = data[-1]["id"]
         return Response(data)
+
 
 class StripeCorePaymentIntents(APIView):
     def get(self, request, format=None):
@@ -858,16 +1057,20 @@ class StripeCorePaymentIntents(APIView):
         starting_after = None
         data = []
         while has_more:
-            payment_intents = stripe.PaymentIntent.list(limit=100, starting_after=starting_after)
+            payment_intents = stripe.PaymentIntent.list(
+                limit=100, starting_after=starting_after
+            )
             data = data + payment_intents["data"]
             has_more = payment_intents["has_more"]
             starting_after = data[-1]["id"]
         return Response(data)
 
+
 class StripeCoreBalance(APIView):
     def get(self, request, format=None):
         balance = stripe.Balance.retrieve()
         return Response(balance)
+
 
 class StripeCoreBalanceTransactions(APIView):
     def get(self, request, format=None):
@@ -875,27 +1078,29 @@ class StripeCoreBalanceTransactions(APIView):
         starting_after = None
         data = []
         while has_more:
-            payment_intents = stripe.BalanceTransaction.list(limit=100, starting_after=starting_after)
+            payment_intents = stripe.BalanceTransaction.list(
+                limit=100, starting_after=starting_after
+            )
             data = data + payment_intents["data"]
             has_more = payment_intents["has_more"]
             starting_after = data[-1]["id"]
         return Response(data)
-    
+
 
 # Denver Waste Compliance Report.
-@api_view(['POST'])
+@api_view(["POST"])
 def denver_compliance_report(request):
     try:
-        user_address_id = request.data['user_address']
+        user_address_id = request.data["user_address"]
         send_denver_compliance_report(user_address_id, request.user.id)
     except Exception as error:
-       print("An exception occurred: {}".format(error.text))
+        print("An exception occurred: {}".format(error.text))
 
     return Response("Success", status=200)
 
 
 # Feature-based views.
-@api_view(['GET'])
+@api_view(["GET"])
 def get_user_group_credit_status(request):
     user_group = request.user.user_group
 
@@ -904,3 +1109,7 @@ def get_user_group_credit_status(request):
         return Response(user_group.credit_status, status=200)
     else:
         return Response("No credit status found.", status=200)
+
+
+def test(request):
+    create_stripe_invoices()
