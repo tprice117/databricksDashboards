@@ -66,7 +66,7 @@ class UserGroupAdmin(admin.ModelAdmin):
         )
 
     def credit_utilization(self, obj: UserGroup):
-        return f"{float(obj.credit_limit_used()) / float((obj.credit_line_limit or 0.0) + 0.0000000001)}%"
+        return f"{float(obj.credit_limit_used()) / float((obj.credit_line_limit or 0.0) + float(0.0000000001))}%"
 
     def import_csv(self, request):
         if request.method == "POST":
