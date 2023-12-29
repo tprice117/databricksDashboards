@@ -562,9 +562,12 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # Remove nested data.
-        validated_data.pop("service")
-        validated_data.pop("rental")
-        validated_data.pop("material")
+        if "service" in validated_data:
+            validated_data.pop("service")
+        if "rental" in validated_data:
+            validated_data.pop("rental")
+        if "material" in validated_data:
+            validated_data.pop("material")
 
         preferred_service_days = validated_data.pop("preferred_service_days")
         instance.save()
