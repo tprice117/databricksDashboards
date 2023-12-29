@@ -27,7 +27,7 @@ class Command(BaseCommand):
             trigger=CronTrigger(minute="*/5"),
             id="update_order_line_item_paid_status",
             max_instances=1,
-            replace_existing=False,
+            replace_existing=True,
         )
         logger.info("Added job 'update_order_line_item_paid_status'.")
 
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             trigger=CronTrigger(day="1-5", hour="4"),
             id="create_stripe_invoices",
             max_instances=1,
-            replace_existing=False,
+            replace_existing=True,
         )
         logger.info("Added job 'create_stripe_invoices'.")
 
