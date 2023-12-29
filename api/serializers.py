@@ -569,9 +569,12 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         if "material" in validated_data:
             validated_data.pop("material")
 
-        preferred_service_days = validated_data.pop("preferred_service_days")
-        instance.save()
-        instance.preferred_service_days.set(preferred_service_days)
+        if "preferred_service_days" in validated_data:
+            preferred_service_days = validated_data.pop("preferred_service_days")
+            instance.save()
+            instance.preferred_service_days.set(preferred_service_days)
+        else:
+            instance.save()
         return instance
 
     def get_active(self, obj):
