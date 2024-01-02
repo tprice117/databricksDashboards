@@ -18,3 +18,5 @@ def send_stripe_invoices():
         status="COMPLETE",
         end_date__lte=get_last_day_of_previous_month(),
     )
+
+    # 
