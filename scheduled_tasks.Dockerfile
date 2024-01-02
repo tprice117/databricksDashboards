@@ -18,8 +18,8 @@ COPY . .
 ARG ENV
 ARG DEBUG
 
-ENV ENV
-ENV DEBUG
+ENV ENV $ENV
+ENV DEBUG $DEBUG
 
 # Install Python dependencies.
 RUN pip install -r requirements.txt
