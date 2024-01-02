@@ -14,6 +14,13 @@ WORKDIR /app
 # Copy the project files to the working directory
 COPY . .
 
+# Add Environment variables.
+ARG ENV
+ARG DEBUG
+
+ENV ENV
+ENV DEBUG
+
 # Install Python dependencies.
 RUN pip install -r requirements.txt
 
