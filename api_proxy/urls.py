@@ -140,6 +140,7 @@ urlpatterns = [
     path("api/stripe/connect/accounts", views.StripeConnectAccount.as_view()),
     path("api/stripe/connect/transfers", views.StripeConnectTransfer.as_view()),
     path("api/stripe/billing/invoices", views.StripeBillingInvoice.as_view()),
+    path("api/stripe/billing/invoice-items", views.StripeBillingInvoiceItems.as_view()),
     path("api/stripe/billing/subscriptions", views.StripeBillingSubscription.as_view()),
     path("api/stripe/core/payment-intents", views.StripeCorePaymentIntents.as_view()),
     path("api/stripe/core/balance", views.StripeCoreBalance.as_view()),

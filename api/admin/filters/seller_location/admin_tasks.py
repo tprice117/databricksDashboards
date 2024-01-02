@@ -9,7 +9,7 @@ class SellerLocationAdminTasksFilter(SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return [
-            ("missing_payee_name", "Missing Payee Name"),
+            ("missing_payout_method", "Missing Payout Method"),
             ("missing_order_email", "Missing Order Email"),
             ("missing_order_phone", "Missing Order Phone"),
             ("missing_gi_coi", "Missing GI COI"),
@@ -30,7 +30,7 @@ class SellerLocationAdminTasksFilter(SimpleListFilter):
         ]
 
     def queryset(self, request, queryset):
-        if self.value() == "missing_payee_name":
+        if self.value() == "missing_payout_method":
             return queryset.filter(payee_name__isnull=True)
         elif self.value() == "missing_order_email":
             return queryset.filter(order_email__isnull=True)
