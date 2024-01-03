@@ -31,16 +31,6 @@ def create_stripe_invoices():
 
     # For each UserAddress, create or update invoices for all orders.
     for user_address in distinct_user_addresses:
-        # Check if UserAddress has a Stripe Customer ID.
-        # If not, create a Stripe Customer.
-        if not user_address.stripe_customer_id:
-            stripe_customer = stripe.Customer.create(
-                email=user_address.user.email,
-                name=user_address.name,
-            )
-            user_address.stripe_customer_id = stripe_customer.id
-            user_address.save()
-
         orders_for_user_address = orders.filter(order_group__user_address=user_address)
 
         # Get the current draft invoice or create a new one.
