@@ -470,7 +470,7 @@ class UserAddress(BaseModel):
     user_address_type = models.ForeignKey(
         UserAddressType, models.CASCADE, blank=True, null=True
     )
-    stripe_customer_id = models.CharField(max_length=255)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     project_id = models.CharField(max_length=50, blank=True, null=True)
     street = models.TextField(blank=True, null=True)

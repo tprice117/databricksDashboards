@@ -1115,57 +1115,127 @@ def get_user_group_credit_status(request):
 
 
 def test(request):
-    # Get Stripe Invoice Items.
-    has_more = True
-    starting_after = None
-    data = []
-    while has_more:
-        invoice_items = stripe.InvoiceItem.list(
-            limit=100, starting_after=starting_after
-        )
-        data = data + invoice_items["data"]
-        has_more = invoice_items["has_more"]
-        starting_after = data[-1]["id"]
+    create_stripe_invoices()
+    # # Get all OrderLineItems.
+    # order_line_items = OrderLineItem.objects.all()
 
-    # Get Django Order Line Items.
-    order_line_items = OrderLineItem.objects.all()
+    # # Get all OrderLineItems that are not "BYPASS" and are not part of the Downstream TEAM.
+    # filtered_order_line_items = order_line_items.filter(
+    #     stripe_invoice_line_item_id__isnull=False
+    # )
 
-    # Get Django Order Line Items that exist in Stripe.
-    order_line_items_in_stripe = []
+    # items = [
+    #     "ii_1OU00jGVYGkmHIWno9emQhwM",
+    #     "ii_1OU0DLGVYGkmHIWn3zUiMSYJ",
+    #     "ii_1OU0CBGVYGkmHIWn139pO7Ui",
+    #     "ii_1OU0NWGVYGkmHIWna6fz47PK",
+    #     "ii_1OTzkhGVYGkmHIWnM3BswnfV",
+    #     "ii_1OU0DQGVYGkmHIWnsp0rH27i",
+    #     "ii_1OU0CEGVYGkmHIWnvjtFZmiE",
+    #     "ii_1OU0Q3GVYGkmHIWnS5fzzCNA",
+    #     "ii_1OU0NbGVYGkmHIWnMLy6yHfX",
+    #     "ii_1OU0HLGVYGkmHIWnFyeH2F3n",
+    #     "ii_1OU0EJGVYGkmHIWn1rGKExLz",
+    #     "ii_1OU00mGVYGkmHIWnuhdt3OpD",
+    #     "ii_1OU0EaGVYGkmHIWn5A1wYBOF",
+    #     "ii_1OU0HOGVYGkmHIWneyTAaFS3",
+    #     "ii_1OU0PVGVYGkmHIWnWcAagOU3",
+    #     "ii_1OTzkfGVYGkmHIWnMhXDEwpd",
+    #     "ii_1OU0DFGVYGkmHIWnURrz9oxk",
+    #     "ii_1OU0DIGVYGkmHIWn9rI8IBft",
+    #     "ii_1OU0C8GVYGkmHIWnUbCgEvNa",
+    #     "ii_1OU00gGVYGkmHIWn2BUKBoTy",
+    #     "ii_1OU0PzGVYGkmHIWnuinY90jL",
+    #     "ii_1OU0HIGVYGkmHIWnAdndCJTX",
+    #     "ii_1OU0NfGVYGkmHIWnoLIzjyPB",
+    #     "ii_1OU0NRGVYGkmHIWnIssSDwUw",
+    #     "ii_1OU02uGVYGkmHIWnkpYfWJiF",
+    #     "ii_1OU0CIGVYGkmHIWnkfniaaiu",
+    # ]
 
-    order_line_item: OrderLineItem
-    for order_line_item in order_line_items:
-        for invoice_item in data:
-            if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
-                order_line_items_in_stripe.append(order_line_item)
+    # for item in items:
+    #     # test = stripe.InvoiceItem.retrieve(item)
+    #     # print(test)
+    #     test = OrderLineItem.objects.get(stripe_invoice_line_item_id=item)
+    #     test.stripe_invoice_line_item_id = None
+    #     test.save()
 
-    # Get Stripe Invoice Line Items that exist in Django.
-    invoice_items_in_django = []
-    for invoice_item in data:
-        for order_line_item in order_line_items:
-            if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
-                invoice_items_in_django.append(invoice_item)
+    #     print(test.order.id)
 
-    # Get Django Order Line Items that do not exist in Stripe.
-    order_line_items_not_in_stripe = []
-    for order_line_item in order_line_items:
-        if (
-            order_line_item not in order_line_items_in_stripe
-            and order_line_item.stripe_invoice_line_item_id != "BYPASS"
-            and not order_line_item.order.order_group.user_address.user_group.is_superuser
-        ):
-            order_line_items_not_in_stripe.append(order_line_item)
+    # test = []
+    # for order_line_item in filtered_order_line_items:
+    #     try:
+    #         stripe.InvoiceItem.retrieve(order_line_item.stripe_invoice_line_item_id)
+    #     except:
+    #         test.append(order_line_item.stripe_invoice_line_item_id)
 
-    # Get Stripe Invoice Line Items that do not exist in Django.
-    invoice_items_not_in_django = []
-    for invoice_item in data:
-        if invoice_item not in invoice_items_in_django:
-            invoice_items_not_in_django.append(invoice_item)
+    # print(test)
 
-    print(len(order_line_items_in_stripe))
-    print(len(invoice_items_in_django))
-    print("------------")
-    print(len(order_line_items_not_in_stripe))
-    print(len(invoice_items_not_in_django))
-    print("-----------------")
-    print(OrderLineItemSerializer(order_line_items_not_in_stripe, many=True).data)
+
+# def test(request):
+#     # Get Stripe Invoice Items.
+#     has_more = True
+#     starting_after = None
+#     data = []
+#     while has_more:
+#         print(len(data))
+#         invoice_items = stripe.InvoiceItem.list(
+#             limit=100, starting_after=starting_after
+#         )
+#         data = data + invoice_items["data"]
+#         has_more = invoice_items["has_more"]
+#         starting_after = data[-1]["id"]
+
+#     # Get Django Order Line Items.
+#     order_line_items = OrderLineItem.objects.all()
+
+#     # Get Django Order Line Items that exist in Stripe.
+#     order_line_items_in_stripe = []
+#     print("TEST1")
+#     order_line_item: OrderLineItem
+#     for order_line_item in order_line_items:
+#         for invoice_item in data:
+#             if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
+#                 order_line_items_in_stripe.append(order_line_item)
+
+#     # Get Stripe Invoice Line Items that exist in Django.
+#     print("TEST2")
+#     invoice_items_in_django = []
+#     for invoice_item in data:
+#         for order_line_item in order_line_items:
+#             if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
+#                 invoice_items_in_django.append(invoice_item)
+
+#     # Get Django Order Line Items that do not exist in Stripe.
+#     print("TEST3")
+#     order_line_items_not_in_stripe = []
+
+#     # Filter order line items for those that are not "BYPASS" and are not part of the Downstream TEAM.
+#     filtered_order_line_items = order_line_items.exclude(
+#         stripe_invoice_line_item_id="BYPASS"
+#     ).exclude(order__order_group__user_address__user_group__is_superuser=True)
+#     print(len(order_line_items))
+#     print(len(filtered_order_line_items))
+
+#     stripe_ids = [
+#         order_line_item.stripe_invoice_line_item_id for order_line_item in data
+#     ]
+
+#     for order_line_item in filtered_order_line_items:
+#         if order_line_item.stripe_invoice_line_item_id not in stripe_ids:
+#             order_line_items_not_in_stripe.append(order_line_item)
+
+#     # Get Stripe Invoice Line Items that do not exist in Django.
+#     print("TEST4")
+#     invoice_items_not_in_django = []
+#     for invoice_item in data:
+#         if invoice_item not in invoice_items_in_django:
+#             invoice_items_not_in_django.append(invoice_item)
+
+#     print(len(order_line_items_in_stripe))
+#     print(len(invoice_items_in_django))
+#     print("------------")
+#     print(len(order_line_items_not_in_stripe))
+#     print(len(invoice_items_not_in_django))
+#     print("-----------------")
+#     print(OrderLineItemSerializer(order_line_items_not_in_stripe, many=True).data)
