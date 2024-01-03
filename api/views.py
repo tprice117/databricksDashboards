@@ -1127,4 +1127,14 @@ def get_user_group_credit_status(request):
 
 
 def test(request):
-    create_stripe_invoices()
+    # test = UserAddress.objects.filter(stripe_customer_id__isnull=True)
+    # print(len(test))
+    user_addresses = UserAddress.objects.filter(stripe_customer_id__isnull=True)
+    print(len(user_addresses))
+    for user_address in user_addresses:
+        if not user_address.stripe_customer_id:
+            customer = stripe.Customer.create(
+                metadata={"user_address_id": user_address.id},
+            )
+            user_address.stripe_customer_id = customer.id
+            user_address.save()
