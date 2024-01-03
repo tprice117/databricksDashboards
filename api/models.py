@@ -500,9 +500,11 @@ class UserAddress(BaseModel):
 
         # Populate Stripe Customer ID, if not already populated.
         if not instance.stripe_customer_id:
+            print("TEST")
             customer = stripe.Customer.create()
             instance.stripe_customer_id = customer.id
         else:
+            print("TEST2")
             customer = stripe.Customer.retrieve(instance.stripe_customer_id)
 
         # Get "name" for UserGroup/B2C user.
