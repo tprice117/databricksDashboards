@@ -1081,11 +1081,11 @@ class StripeBillingInvoiceItems(APIView):
         starting_after = None
         data = []
         while has_more:
-            payment_intents = stripe.InvoiceItem.list(
+            invoice_items = stripe.InvoiceItem.list(
                 limit=100, starting_after=starting_after
             )
-            data = data + payment_intents["data"]
-            has_more = payment_intents["has_more"]
+            data = data + invoice_items["data"]
+            has_more = invoice_items["has_more"]
             starting_after = data[-1]["id"]
         return Response(data)
 
@@ -1115,14 +1115,57 @@ def get_user_group_credit_status(request):
 
 
 def test(request):
-    # test = UserAddress.objects.filter(stripe_customer_id__isnull=True)
-    # print(len(test))
-    user_addresses = UserAddress.objects.filter(stripe_customer_id__isnull=True)
-    print(len(user_addresses))
-    for user_address in user_addresses:
-        if not user_address.stripe_customer_id:
-            customer = stripe.Customer.create(
-                metadata={"user_address_id": user_address.id},
-            )
-            user_address.stripe_customer_id = customer.id
-            user_address.save()
+    # Get Stripe Invoice Items.
+    has_more = True
+    starting_after = None
+    data = []
+    while has_more:
+        invoice_items = stripe.InvoiceItem.list(
+            limit=100, starting_after=starting_after
+        )
+        data = data + invoice_items["data"]
+        has_more = invoice_items["has_more"]
+        starting_after = data[-1]["id"]
+
+    # Get Django Order Line Items.
+    order_line_items = OrderLineItem.objects.all()
+
+    # Get Django Order Line Items that exist in Stripe.
+    order_line_items_in_stripe = []
+
+    order_line_item: OrderLineItem
+    for order_line_item in order_line_items:
+        for invoice_item in data:
+            if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
+                order_line_items_in_stripe.append(order_line_item)
+
+    # Get Stripe Invoice Line Items that exist in Django.
+    invoice_items_in_django = []
+    for invoice_item in data:
+        for order_line_item in order_line_items:
+            if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
+                invoice_items_in_django.append(invoice_item)
+
+    # Get Django Order Line Items that do not exist in Stripe.
+    order_line_items_not_in_stripe = []
+    for order_line_item in order_line_items:
+        if (
+            order_line_item not in order_line_items_in_stripe
+            and order_line_item.stripe_invoice_line_item_id != "BYPASS"
+            and not order_line_item.order.order_group.user_address.user_group.is_superuser
+        ):
+            order_line_items_not_in_stripe.append(order_line_item)
+
+    # Get Stripe Invoice Line Items that do not exist in Django.
+    invoice_items_not_in_django = []
+    for invoice_item in data:
+        if invoice_item not in invoice_items_in_django:
+            invoice_items_not_in_django.append(invoice_item)
+
+    print(len(order_line_items_in_stripe))
+    print(len(invoice_items_in_django))
+    print("------------")
+    print(len(order_line_items_not_in_stripe))
+    print(len(invoice_items_not_in_django))
+    print("-----------------")
+    print(OrderLineItemSerializer(order_line_items_not_in_stripe, many=True).data)

@@ -247,7 +247,6 @@ class UserGroup(BaseModel):
 
     seller = models.OneToOneField(Seller, models.DO_NOTHING, blank=True, null=True)
     name = models.CharField(max_length=255)
-    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     pay_later = models.BooleanField(default=False)
     autopay = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -377,7 +376,6 @@ class User(BaseModel):
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, unique=True)
     photo_url = models.TextField(blank=True, null=True)
-    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     device_token = models.CharField(max_length=255, blank=True, null=True)
