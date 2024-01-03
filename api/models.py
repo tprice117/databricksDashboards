@@ -278,10 +278,6 @@ class UserGroup(BaseModel):
                     for _ in range(6)
                 )
             instance.share_code = share_code
-
-            # Create stripe customer.
-            # customer = stripe.Customer.create()
-            # instance.stripe_customer_id = customer.id
             instance.save()
 
     def credit_limit_used(self):
