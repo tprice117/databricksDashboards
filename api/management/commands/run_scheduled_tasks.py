@@ -33,14 +33,14 @@ class Command(BaseCommand):
 
         # Create Stripe invoices from last months orders. Run every day at 4am
         # on the 1st, 2nd, 3rd, 4th, and 5th of the month.
-        scheduler.add_job(
-            create_stripe_invoices,
-            trigger=CronTrigger(day="1-5", hour="*/4"),
-            id="create_stripe_invoices",
-            max_instances=1,
-            replace_existing=True,
-        )
-        logger.info("Added job 'create_stripe_invoices'.")
+        # scheduler.add_job(
+        #     create_stripe_invoices,
+        #     trigger=CronTrigger(day="1-5", hour="*/4"),
+        #     id="create_stripe_invoices",
+        #     max_instances=1,
+        #     replace_existing=True,
+        # )
+        # logger.info("Added job 'create_stripe_invoices'.")
 
         try:
             logger.info("Starting scheduler...")
