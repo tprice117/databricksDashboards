@@ -12,6 +12,9 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 def create_stripe_invoices():
+    print("create_stripe_invoices")
+    return 
+
     # Get all Orders that have been completed and have an end date on
     # or before the last day of the previous month.
     orders = Order.objects.filter(
