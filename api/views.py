@@ -1115,9 +1115,76 @@ def get_user_group_credit_status(request):
 
 
 def test(request):
-    create_stripe_invoices()
-    # # Get all OrderLineItems.
-    # order_line_items = OrderLineItem.objects.all()
+    # # # Get all OrderLineItems.
+    # order_line_items = OrderLineItem.objects.filter(
+    #     stripe_invoice_line_item_id__isnull=True,
+    #     order__end_date__lte=datetime.datetime(2023, 12, 31),
+    # )
+    # print(len(order_line_items))
+    # for order_line_item in order_line_items:
+    #     print(order_line_item.order.id)
+
+    # Get all invoices from Stripe.
+    invoices = stripe.Invoice.search(
+        query='created>1703906217 AND status:"draft" AND total>0', limit=100
+    )
+    print(len(invoices.data))
+
+    # Get all InvoiceItems from Stripe.
+    has_more = True
+    starting_after = None
+    data = []
+    while has_more:
+        invoice_items = stripe.InvoiceItem.list(
+            limit=100,
+            starting_after=starting_after,
+        )
+        data = data + invoice_items["data"]
+        has_more = invoice_items["has_more"]
+        starting_after = data[-1]["id"]
+    invoice_items = data
+
+    # Filter out invoice items that are not part of an invoice.
+    # Create a set of valid invoice IDs for faster lookup
+    valid_invoice_ids = set(invoice.id for invoice in invoices.data)
+
+    # Use list comprehension to filter invoice items directly based on valid invoice IDs
+    filtered_invoice_items = [
+        item for item in invoice_items if item.invoice in valid_invoice_ids
+    ]
+
+    # Extract the filtered invoice item IDs using another list comprehension
+    filtered_invoice_item_ids = [item.id for item in filtered_invoice_items]
+
+    # invoice_ids = [invoice.id for invoice in invoices.data]
+    # filtered_invoice_items = []
+    # for invoice_item in invoice_items:
+    #     if invoice_item.invoice in invoice_ids:
+    #         filtered_invoice_items.append(invoice_item)
+    # filtered_invoice_item_ids = [
+    #     invoice_item.id for invoice_item in filtered_invoice_items
+    # ]
+    print("TEST")
+
+    # Get all OrderLineItems.
+    order_line_items = OrderLineItem.objects.filter(
+        order__start_date__gte=datetime.datetime(2023, 12, 1),
+        order__end_date__lte=datetime.datetime(2023, 12, 31),
+    ).exclude(
+        stripe_invoice_line_item_id="BYPASS",
+    )
+
+    # Loop through line items and make sure they exist in one of the invoices.
+    for order_line_item in order_line_items:
+        exists = False
+        for line_item in filtered_invoice_item_ids:
+            if order_line_item.stripe_invoice_line_item_id == line_item:
+                exists = True
+        if not exists:
+            print("Does not exist")
+            print(order_line_item.order.id)
+        else:
+            print("Exists")
 
     # # Get all OrderLineItems that are not "BYPASS" and are not part of the Downstream TEAM.
     # filtered_order_line_items = order_line_items.filter(
