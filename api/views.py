@@ -1115,194 +1115,149 @@ def get_user_group_credit_status(request):
 
 
 def test(request):
-    # # # Get all OrderLineItems.
+    # Get all Stripe invoices that are "draft".
+    has_more = True
+    starting_after = None
+    next_page = None
+    data = []
+    while has_more:
+        if next_page:
+            invoices = stripe.Invoice.search(
+                query='status:"draft"', limit=100, page=next_page
+            )
+        else:
+            invoices = stripe.Invoice.search(query='status:"draft"', limit=100)
+        print(invoices)
+        data = data + invoices["data"]
+        has_more = invoices["has_more"]
+        next_page = invoices["next_page"]
+    print(len(data))
+
+    data = [invoice["id"] for invoice in data]
+    print(data)
+    print(len(data))
+
+    # Finalize all invoices.
+    for invoice_id in data:
+        try:
+            print("Finalizing invoice: {}".format(invoice_id))
+            stripe.Invoice.finalize_invoice(invoice_id, auto_advance=True)
+            print("Finalized invoice: {}".format(invoice_id))
+        except Exception as error:
+            print("An exception occurred: {}".format(str(error)))
+        print("------------------------------------")
+
+    # # Get all OrderLineItems that are not equal to "BYPASS".
     # order_line_items = OrderLineItem.objects.filter(
-    #     stripe_invoice_line_item_id__isnull=True,
-    #     order__end_date__lte=datetime.datetime(2023, 12, 31),
-    # )
-    # print(len(order_line_items))
+    #     stripe_invoice_line_item_id__isnull=False
+    # ).exclude(stripe_invoice_line_item_id="BYPASS")
+
     # for order_line_item in order_line_items:
-    #     print(order_line_item.order.id)
+    #     order_line_item.stripe_invoice_line_item_id = None
+    #     order_line_item.save()
+    #     print(
+    #         order_line_item.order.id,
+    #         " | ",
+    #         order_line_item.id,
+    #         " | ",
+    #         order_line_item.stripe_invoice_line_item_id,
+    # )
 
-    # Get all invoices from Stripe.
-    invoices = stripe.Invoice.search(
-        query='created>1703906217 AND status:"draft" AND total>0', limit=100
-    )
-    print(len(invoices.data))
+    # Get all order line items.
+    order_line_items = OrderLineItem.objects.filter(
+        stripe_invoice_line_item_id__isnull=False,
+        order__end_date__lte=datetime.datetime(2023, 12, 31),
+    ).exclude(stripe_invoice_line_item_id="BYPASS")
 
-    # Get all InvoiceItems from Stripe.
+    # Get all Invoice Items from Stripe.
+    print("Getting all invoice items from Stripe.")
     has_more = True
     starting_after = None
     data = []
     while has_more:
         invoice_items = stripe.InvoiceItem.list(
-            limit=100,
-            starting_after=starting_after,
+            limit=100, starting_after=starting_after
         )
         data = data + invoice_items["data"]
         has_more = invoice_items["has_more"]
         starting_after = data[-1]["id"]
     invoice_items = data
 
-    # Filter out invoice items that are not part of an invoice.
-    # Create a set of valid invoice IDs for faster lookup
-    valid_invoice_ids = set(invoice.id for invoice in invoices.data)
-
-    # Use list comprehension to filter invoice items directly based on valid invoice IDs
-    filtered_invoice_items = [
-        item for item in invoice_items if item.invoice in valid_invoice_ids
-    ]
-
-    # Extract the filtered invoice item IDs using another list comprehension
-    filtered_invoice_item_ids = [item.id for item in filtered_invoice_items]
-
-    # invoice_ids = [invoice.id for invoice in invoices.data]
-    # filtered_invoice_items = []
-    # for invoice_item in invoice_items:
-    #     if invoice_item.invoice in invoice_ids:
-    #         filtered_invoice_items.append(invoice_item)
-    # filtered_invoice_item_ids = [
-    #     invoice_item.id for invoice_item in filtered_invoice_items
+    # Get all invoice items created on or after 12/31/2023.
+    print("Getting all invoice items created on or after 12/31/2023.")
+    # invoice_items = [
+    #     invoice_item
+    #     for invoice_item in invoice_items
+    #     if datetime.datetime.fromtimestamp(invoice_item["date"])
+    #     >= datetime.datetime(2023, 12, 31)
     # ]
-    print("TEST")
+    print(len(order_line_items))
+    print(len(invoice_items))
 
-    # Get all OrderLineItems.
-    order_line_items = OrderLineItem.objects.filter(
-        order__start_date__gte=datetime.datetime(2023, 12, 1),
-        order__end_date__lte=datetime.datetime(2023, 12, 31),
-    ).exclude(
-        stripe_invoice_line_item_id="BYPASS",
-    )
-
-    # Loop through line items and make sure they exist in one of the invoices.
+    # Get all invoice ids for all OrderLineItems.
+    invoice_ids = []
     for order_line_item in order_line_items:
-        exists = False
-        for line_item in filtered_invoice_item_ids:
-            if order_line_item.stripe_invoice_line_item_id == line_item:
-                exists = True
-        if not exists:
-            print("Does not exist")
-            print(order_line_item.order.id)
-        else:
-            print("Exists")
+        invoice_line_items = [
+            invoice_item
+            for invoice_item in invoice_items
+            if "order_line_item_id" in invoice_item["metadata"]
+            and invoice_item["metadata"]["order_line_item_id"]
+            == str(order_line_item.id)
+        ]
 
-    # # Get all OrderLineItems that are not "BYPASS" and are not part of the Downstream TEAM.
-    # filtered_order_line_items = order_line_items.filter(
-    #     stripe_invoice_line_item_id__isnull=False
-    # )
+        if len(invoice_line_items) != 1:
+            invoice_line_items_to_delete = [
+                invoice_item
+                for invoice_item in invoice_line_items
+                if invoice_item["id"] != order_line_item.stripe_invoice_line_item_id
+            ]
+            for invoice_line_item_to_delete in invoice_line_items_to_delete:
+                if (
+                    invoice_line_item_to_delete["id"]
+                    != order_line_item.stripe_invoice_line_item_id
+                ):
+                    # stripe.InvoiceItem.delete(invoice_line_item_to_delete["id"])
+                    print(
+                        order_line_item.id,
+                        " | ",
+                        order_line_item.stripe_invoice_line_item_id,
+                        " | ",
+                        [
+                            invoice_line_item["id"]
+                            for invoice_line_item in invoice_line_items
+                        ],
+                        " | ",
+                        invoice_line_item_to_delete["id"],
+                        " | ",
+                        len(invoice_line_items),
+                    )
+        # invoice_item = next(
+        #     (
+        #         x
+        #         for x in invoice_items
+        #         if x["id"] == order_line_item.stripe_invoice_line_item_id
+        #     ),
+        #     None,
+        # )
 
-    # items = [
-    #     "ii_1OU00jGVYGkmHIWno9emQhwM",
-    #     "ii_1OU0DLGVYGkmHIWn3zUiMSYJ",
-    #     "ii_1OU0CBGVYGkmHIWn139pO7Ui",
-    #     "ii_1OU0NWGVYGkmHIWna6fz47PK",
-    #     "ii_1OTzkhGVYGkmHIWnM3BswnfV",
-    #     "ii_1OU0DQGVYGkmHIWnsp0rH27i",
-    #     "ii_1OU0CEGVYGkmHIWnvjtFZmiE",
-    #     "ii_1OU0Q3GVYGkmHIWnS5fzzCNA",
-    #     "ii_1OU0NbGVYGkmHIWnMLy6yHfX",
-    #     "ii_1OU0HLGVYGkmHIWnFyeH2F3n",
-    #     "ii_1OU0EJGVYGkmHIWn1rGKExLz",
-    #     "ii_1OU00mGVYGkmHIWnuhdt3OpD",
-    #     "ii_1OU0EaGVYGkmHIWn5A1wYBOF",
-    #     "ii_1OU0HOGVYGkmHIWneyTAaFS3",
-    #     "ii_1OU0PVGVYGkmHIWnWcAagOU3",
-    #     "ii_1OTzkfGVYGkmHIWnMhXDEwpd",
-    #     "ii_1OU0DFGVYGkmHIWnURrz9oxk",
-    #     "ii_1OU0DIGVYGkmHIWn9rI8IBft",
-    #     "ii_1OU0C8GVYGkmHIWnUbCgEvNa",
-    #     "ii_1OU00gGVYGkmHIWn2BUKBoTy",
-    #     "ii_1OU0PzGVYGkmHIWnuinY90jL",
-    #     "ii_1OU0HIGVYGkmHIWnAdndCJTX",
-    #     "ii_1OU0NfGVYGkmHIWnoLIzjyPB",
-    #     "ii_1OU0NRGVYGkmHIWnIssSDwUw",
-    #     "ii_1OU02uGVYGkmHIWnkpYfWJiF",
-    #     "ii_1OU0CIGVYGkmHIWnkfniaaiu",
-    # ]
+    #     # if invoice_item:
+    #     #     invoice_ids.append(invoice_item.invoice)
+    #     #     print(
+    #     #         order_line_item.order.id,
+    #     #         " | ",
+    #     #         order_line_item.id,
+    #     #         " | ",
+    #     #         invoice_item.invoice,
+    #     #     )
 
-    # for item in items:
-    #     # test = stripe.InvoiceItem.retrieve(item)
-    #     # print(test)
-    #     test = OrderLineItem.objects.get(stripe_invoice_line_item_id=item)
-    #     test.stripe_invoice_line_item_id = None
-    #     test.save()
+    # # Get all invoice items that are associated to an invoice.
+    # invoice_items_with_invoice = []
+    # invoice_ids = [invoice.id for invoice in invoices]
+    # print(invoice_ids)
+    # for invoice_item in invoice_items:
+    #     # Print the index of the invoice item.
+    #     # print()
+    #     if invoice_item["invoice"] in invoice_ids:
+    #         invoice_items_with_invoice.append(invoice_item)
 
-    #     print(test.order.id)
-
-    # test = []
-    # for order_line_item in filtered_order_line_items:
-    #     try:
-    #         stripe.InvoiceItem.retrieve(order_line_item.stripe_invoice_line_item_id)
-    #     except:
-    #         test.append(order_line_item.stripe_invoice_line_item_id)
-
-    # print(test)
-
-
-# def test(request):
-#     # Get Stripe Invoice Items.
-#     has_more = True
-#     starting_after = None
-#     data = []
-#     while has_more:
-#         print(len(data))
-#         invoice_items = stripe.InvoiceItem.list(
-#             limit=100, starting_after=starting_after
-#         )
-#         data = data + invoice_items["data"]
-#         has_more = invoice_items["has_more"]
-#         starting_after = data[-1]["id"]
-
-#     # Get Django Order Line Items.
-#     order_line_items = OrderLineItem.objects.all()
-
-#     # Get Django Order Line Items that exist in Stripe.
-#     order_line_items_in_stripe = []
-#     print("TEST1")
-#     order_line_item: OrderLineItem
-#     for order_line_item in order_line_items:
-#         for invoice_item in data:
-#             if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
-#                 order_line_items_in_stripe.append(order_line_item)
-
-#     # Get Stripe Invoice Line Items that exist in Django.
-#     print("TEST2")
-#     invoice_items_in_django = []
-#     for invoice_item in data:
-#         for order_line_item in order_line_items:
-#             if order_line_item.stripe_invoice_line_item_id == invoice_item["id"]:
-#                 invoice_items_in_django.append(invoice_item)
-
-#     # Get Django Order Line Items that do not exist in Stripe.
-#     print("TEST3")
-#     order_line_items_not_in_stripe = []
-
-#     # Filter order line items for those that are not "BYPASS" and are not part of the Downstream TEAM.
-#     filtered_order_line_items = order_line_items.exclude(
-#         stripe_invoice_line_item_id="BYPASS"
-#     ).exclude(order__order_group__user_address__user_group__is_superuser=True)
-#     print(len(order_line_items))
-#     print(len(filtered_order_line_items))
-
-#     stripe_ids = [
-#         order_line_item.stripe_invoice_line_item_id for order_line_item in data
-#     ]
-
-#     for order_line_item in filtered_order_line_items:
-#         if order_line_item.stripe_invoice_line_item_id not in stripe_ids:
-#             order_line_items_not_in_stripe.append(order_line_item)
-
-#     # Get Stripe Invoice Line Items that do not exist in Django.
-#     print("TEST4")
-#     invoice_items_not_in_django = []
-#     for invoice_item in data:
-#         if invoice_item not in invoice_items_in_django:
-#             invoice_items_not_in_django.append(invoice_item)
-
-#     print(len(order_line_items_in_stripe))
-#     print(len(invoice_items_in_django))
-#     print("------------")
-#     print(len(order_line_items_not_in_stripe))
-#     print(len(invoice_items_not_in_django))
-#     print("-----------------")
-#     print(OrderLineItemSerializer(order_line_items_not_in_stripe, many=True).data)
+    # print(invoice_items_with_invoice)
