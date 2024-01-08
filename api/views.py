@@ -111,6 +111,21 @@ class UserGroupViewSet(viewsets.ModelViewSet):
         else:
             return self.queryset.filter(id=self.request.user.user_group)
 
+class UserGroupBillingViewSet(viewsets.ModelViewSet):
+    queryset = UserGroupBilling.objects.all()
+    serializer_class = UserGroupBillingSerializer
+
+    def get_queryset(self):
+        is_superuser = self.request.user == "ALL" or (
+            self.request.user.user_group.is_superuser
+            if self.request.user and self.request.user.user_group
+            else False
+        )
+        if is_superuser:
+            return self.queryset
+        else:
+            return self.queryset.filter(user_group=self.request.user.user_group)
+
 
 class UserGroupLegalViewSet(viewsets.ModelViewSet):
     queryset = UserGroupLegal.objects.all()
