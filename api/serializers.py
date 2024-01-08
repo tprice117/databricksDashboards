@@ -49,6 +49,20 @@ class UserAddressSerializer(serializers.ModelSerializer):
         validators = []
 
 
+class UserGroupBillingSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    latitude = serializers.DecimalField(
+        max_digits=18, decimal_places=15, read_only=True
+    )
+    longitude = serializers.DecimalField(
+        max_digits=18, decimal_places=15, read_only=True
+    )
+
+    class Meta:
+        model = UserGroupBilling
+        fields = "__all__"
+
+
 class UserGroupLegalSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     latitude = serializers.DecimalField(
