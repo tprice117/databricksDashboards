@@ -11,6 +11,8 @@ class UserGroupAdminTasksFilter(SimpleListFilter):
         return [
             ("missing_credit_line_limit", "Missing Credit Line Limit"),
             ("compliance_status_needs_attention", "Compliance Status Needs Attention"),
+            ("missing_useer_group_billing", "Missing User Group Billing"),
+            ("missing_user_group_legal", "Missing User Group Legal"),
         ]
 
     def queryset(self, request, queryset):
@@ -21,3 +23,15 @@ class UserGroupAdminTasksFilter(SimpleListFilter):
             in_progress = queryset.filter(compliance_status="IN-PROGRESS")
             needs_reviewed = queryset.filter(compliance_status="NEEDS_REVIEW")
             return list(chain(requested, in_progress, needs_reviewed))
+        elif self.value() == "missing_useer_group_billing":
+            for user_group in queryset:
+                # Filter out user groups with user group billing model.
+                if not hasattr(user_group, "user_group_billing"):
+                    queryset = queryset.exclude(id=user_group.id)
+            return queryset
+        elif self.value() == "missing_user_group_legal":
+            for user_group in queryset:
+                # Filter out user groups with user group legal model.
+                if not hasattr(user_group, "user_group_legal"):
+                    queryset = queryset.exclude(id=user_group.id)
+            return queryset

@@ -196,5 +196,6 @@ def create_stripe_invoices():
                             },
                         )
                         print(response.json())
-            except:
+            except Exception as e:
+                print(e)
                 pass

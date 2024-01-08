@@ -1222,7 +1222,7 @@ class Order(BaseModel):
         )
 
     def stripe_invoice_summary_item_description(self):
-        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")}'
+        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {str(self.id)[:5]}'
 
     def get_order_type(self):
         # Assign variables comparing Order StartDate and EndDate to OrderGroup StartDate and EndDate.
