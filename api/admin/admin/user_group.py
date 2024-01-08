@@ -5,6 +5,7 @@ from django.shortcuts import redirect, render
 from django.urls import path
 
 from api.admin.filters import UserGroupTypeFilter
+from api.admin.filters.user_group.admin_tasks import UserGroupAdminTasksFilter
 from api.admin.inlines import (
     UserGroupBillingInline,
     UserGroupCreditApplicationInline,
@@ -27,7 +28,10 @@ class UserGroupAdmin(admin.ModelAdmin):
         "credit_utilization",
     )
     search_fields = ["name"]
-    list_filter = (UserGroupTypeFilter,)
+    list_filter = (
+        UserGroupTypeFilter,
+        UserGroupAdminTasksFilter,
+    )
     inlines = [
         UserGroupBillingInline,
         UserGroupLegalInline,
