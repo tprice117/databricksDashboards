@@ -1,7 +1,6 @@
 from typing import List
 
 from django.db import models
-from sendgrid.helpers.mail import Personalization, To
 
 from api.models import BaseModel
 
@@ -19,7 +18,5 @@ class EmailNotificationTo(BaseModel):
 
     def add_to(
         self,
-        personalization: Personalization,
     ):
-        personalization.add_to(To(self.email))
-        return personalization
+        return {"email": self.email}
