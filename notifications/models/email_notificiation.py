@@ -39,7 +39,7 @@ class EmailNotification(BaseModel):
 
     def add_tos(self: "EmailNotification"):
         to_emails = self.email_notification_tos.all()
-        return [{"email": to_email} for to_email in to_emails]
+        return [to_email.add_to() for to_email in to_emails]
 
     def add_ccs(self: "EmailNotification"):
         cc_emails = self.email_notification_ccs.all()

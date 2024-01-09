@@ -1,7 +1,6 @@
 from typing import List
 
 from django.db import models
-from sendgrid.helpers.mail import Bcc, Personalization
 
 from api.models import BaseModel
 
@@ -19,7 +18,5 @@ class EmailNotificationBcc(BaseModel):
 
     def add_bcc(
         self,
-        personalization: Personalization,
     ):
-        personalization.add_bcc(Bcc(self.email))
-        return personalization
+        return None
