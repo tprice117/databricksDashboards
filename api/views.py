@@ -29,7 +29,6 @@ from .models import *
 from .pricing_ml import pricing
 from .serializers import *
 
-# To DO: Create GET, POST, PUT general methods.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -110,6 +109,7 @@ class UserGroupViewSet(viewsets.ModelViewSet):
             return self.queryset
         else:
             return self.queryset.filter(id=self.request.user.user_group)
+
 
 class UserGroupBillingViewSet(viewsets.ModelViewSet):
     queryset = UserGroupBilling.objects.all()
@@ -1130,7 +1130,23 @@ def get_user_group_credit_status(request):
 
 
 def test(request):
-    # Get all Stripe invoices that are "draft".
+    user_addresses = UserAddress.objects.all()
+    for user_address in user_addresses:
+        if (
+            hasattr(user_address.user_group, "billing")
+            and user_address.user_group.billing.country == "United States"
+        ):
+            # user_address.country = "US"
+            # user_address.save()
+            print(user_address.id)
+    # for user_address in user_addresses:
+    #     user_address.country = "US"
+    #     user_address.save()
+    #     print(user_address.id)
+
+
+def test2(request):
+    # Get all Stripe invoices that are "open".
     has_more = True
     starting_after = None
     next_page = None
@@ -1138,30 +1154,65 @@ def test(request):
     while has_more:
         if next_page:
             invoices = stripe.Invoice.search(
-                query='status:"draft"', limit=100, page=next_page
+                query='status:"open"', limit=100, page=next_page
             )
         else:
-            invoices = stripe.Invoice.search(query='status:"draft"', limit=100)
-        print(invoices)
+            invoices = stripe.Invoice.search(query='status:"open"', limit=100)
+
         data = data + invoices["data"]
         has_more = invoices["has_more"]
         next_page = invoices["next_page"]
     print(len(data))
 
-    data = [invoice["id"] for invoice in data]
     print(data)
-    print(len(data))
 
-    # Finalize all invoices.
-    for invoice_id in data:
-        try:
-            print("Finalizing invoice: {}".format(invoice_id))
-            stripe.Invoice.finalize_invoice(invoice_id, auto_advance=True)
-            print("Finalized invoice: {}".format(invoice_id))
-        except Exception as error:
-            print("An exception occurred: {}".format(str(error)))
-        print("------------------------------------")
+    for invoice in data:
+        if (
+            not "user_group_id" in invoice["metadata"]
+            and UserGroupBilling.objects.filter(
+                email=invoice["customer_email"]
+            ).exists()
+        ):
+            print(
+                invoice["id"],
+                " | ",
+                invoice["customer_email"] + " | ",
+                UserGroupBilling.objects.filter(email=invoice["customer_email"])
+                .first()
+                .email,
+            )
 
+        # if (
+        #     not "user_group_id" in invoice["metadata"]
+        #     and UserAddress.objects.filter(
+        #         stripe_customer_id=invoice["customer"]
+        #     ).exists()
+        # ):
+        #     print(invoice["id"])
+        #     user_address = UserAddress.objects.filter(
+        #         stripe_customer_id=invoice["customer"]
+        #     ).first()
+        #     if user_address.user_group:
+        #         stripe.Invoice.modify(
+        #             invoice["id"],
+        #             metadata={
+        #                 "user_group_id": user_address.user_group.id,
+        #                 "user_address_id": user_address.id,
+        #             },
+        #         )
+
+    # # Finalize all invoices.
+    # for invoice_id in data:
+    #     try:
+    #         print("Finalizing invoice: {}".format(invoice_id))
+    #         stripe.Invoice.send_invoice(
+    #             invoice_id,
+    #         )
+    #         print("Finalized invoice: {}".format(invoice_id))
+    #     except Exception as error:
+    #         print("An exception occurred: {}".format(str(error)))
+    #     print("------------------------------------")
+    # return
     # # Get all OrderLineItems that are not equal to "BYPASS".
     # order_line_items = OrderLineItem.objects.filter(
     #     stripe_invoice_line_item_id__isnull=False

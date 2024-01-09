@@ -24,9 +24,9 @@ class Command(BaseCommand):
         # Sync OrderLineItem paid status from Stripe. Run every 5 minutes.
         scheduler.add_job(
             update_order_line_item_paid_status,
-            trigger=CronTrigger(minute="*/5"),
+            trigger=CronTrigger(minute="*/1"),
             id="update_order_line_item_paid_status",
-            max_instances=1,
+            max_instances=20,
             replace_existing=True,
         )
         logger.info("Added job 'update_order_line_item_paid_status'.")
