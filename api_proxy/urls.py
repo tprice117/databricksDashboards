@@ -152,5 +152,5 @@ urlpatterns = [
     # Denver Compliance Endpoint.
     path("api/exports/denver-compliance/", views.denver_compliance_report),
     # Test.
-    path("test/", views.test),
+    path("test/", views.test2),
 ]

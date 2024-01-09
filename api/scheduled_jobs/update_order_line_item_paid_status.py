@@ -9,6 +9,9 @@ def update_order_line_item_paid_status():
         paid=False,
     )
 
+    # Only process the first 10 order line items at a time.
+    order_line_items = order_line_items[:10]
+
     # Loop through order line items.
     for order_line_item in order_line_items:
         # Get the Stripe Invoice for the Order Line Item.

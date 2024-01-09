@@ -44,7 +44,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    # START: Django Apps.
     "api",
+    "notifications",
+    # END: Django Apps.
     "api.pricing_ml",
     "api.utils",
     "django_filters",

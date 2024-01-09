@@ -524,7 +524,7 @@ class UserAddress(BaseModel):
                     "city": instance.city,
                     "state": instance.state,
                     "postal_code": instance.postal_code,
-                    "country": instance.country,
+                    "country": "US",
                 },
             },
             address={
@@ -540,9 +540,10 @@ class UserAddress(BaseModel):
                 "postal_code": instance.user_group.billing.postal_code
                 if hasattr(instance.user_group, "billing")
                 else instance.postal_code,
-                "country": instance.user_group.billing.country
-                if hasattr(instance.user_group, "billing")
-                else instance.country,
+                "country": "US",
+                # "country": instance.user_group.billing.country
+                # if hasattr(instance.user_group, "billing")
+                # else instance.country,
             },
             metadata={
                 "user_group_id": str(instance.user_group.id)

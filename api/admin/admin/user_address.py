@@ -9,9 +9,9 @@ class UserAddressAdmin(admin.ModelAdmin):
     model = UserAddress
     list_display = ("name", "user_group", "project_id")
     autocomplete_fields = ["user_group", "user"]
-    readonly_fields = [
-        "stripe_customer_id",
-    ]
+    # readonly_fields = [
+    #     "stripe_customer_id",
+    # ]
     search_fields = ["name", "street"]
     list_filter = [
         UserAdddressAdminTasksFilter,
