@@ -50,7 +50,6 @@ def user_group_open_invoice_reminder():
 
             if user_address_filter.exists():
                 user_address = user_address_filter.first()
-                print(user_address.formatted_address())
                 invoice["formatted_address"] = user_address.formatted_address()
 
         # Convert invoice.amount_due to dollars (divde by 100).
@@ -124,31 +123,32 @@ def user_group_open_invoice_reminder():
         ]
 
         # Send emails.
-        mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
-        mailchimp.messages.send(
-            {
-                "message": {
-                    "headers": {
-                        "reply-to": "thayes@trydownstream.io",
-                    },
-                    "from_name": "Downstream",
-                    "from_email": "noreply@trydownstream.io",
-                    "to": [
-                        {
-                            "email": "thayes@trydownstream.io",
-                        }
-                    ],
-                    "subject": "REMINDER: You have unpaid Downstream Invoices",
-                    "track_opens": True,
-                    "track_clicks": True,
-                    "html": render_to_string(
-                        "emails/user-group-consolidated-invoice-reminder.html",
-                        {
-                            "user_group_name": user_group.name,
-                            "total_outstanding": total_amount_due,
-                            "invoice_aging_data": invoice_aging_data,
+        if hasattr(user_group, "billing") and user_group.billing.email is not None:
+            mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+            mailchimp.messages.send(
+                {
+                    "message": {
+                        "headers": {
+                            "reply-to": "thayes@trydownstream.io",
                         },
-                    ),
+                        "from_name": "Downstream",
+                        "from_email": "noreply@trydownstream.io",
+                        "to": [
+                            {
+                                "email": user_group.billing.email,
+                            },
+                        ],
+                        "subject": "REMINDER: You have unpaid Downstream Invoices",
+                        "track_opens": True,
+                        "track_clicks": True,
+                        "html": render_to_string(
+                            "emails/user-group-consolidated-invoice-reminder.html",
+                            {
+                                "user_group_name": user_group.name,
+                                "total_outstanding": total_amount_due,
+                                "invoice_aging_data": invoice_aging_data,
+                            },
+                        ),
+                    }
                 }
-            }
-        )
+            )

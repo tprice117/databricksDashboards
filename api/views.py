@@ -1133,10 +1133,6 @@ def get_user_group_credit_status(request):
 
 
 def test3(request):
-    user_group_open_invoice_reminder()
-
-
-def test(request):
     user_addresses = UserAddress.objects.all()
     for user_address in user_addresses:
         if (
