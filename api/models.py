@@ -1652,14 +1652,15 @@ class OrderLineItem(BaseModel):
         INVOICED = "invoiced"
         PAID = "paid"
 
-    PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(1000)]
-
     order = models.ForeignKey(Order, models.CASCADE, related_name="order_line_items")
     order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
     rate = models.DecimalField(max_digits=18, decimal_places=2)
     quantity = models.DecimalField(max_digits=18, decimal_places=2)
     platform_fee_percent = models.DecimalField(
-        max_digits=18, decimal_places=2, default=20, validators=PERCENTAGE_VALIDATOR
+        max_digits=18,
+        decimal_places=2,
+        default=20,
+        help_text="Enter as a percentage without the percent symbol (ex: 25.00)",
     )
     description = models.CharField(max_length=255, blank=True, null=True)
     is_flat_rate = models.BooleanField(default=False)
