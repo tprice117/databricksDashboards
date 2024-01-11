@@ -10,6 +10,9 @@ from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
 from api.scheduled_jobs.update_order_line_item_paid_status import (
     update_order_line_item_paid_status,
 )
+from api.scheduled_jobs.user_group_open_invoice_reminder import (
+    user_group_open_invoice_reminder,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +44,17 @@ class Command(BaseCommand):
         #     replace_existing=True,
         # )
         # logger.info("Added job 'create_stripe_invoices'.")
+        # scheduler.remove_job('create_stripe_invoices')
+
+        # Send outstanding invoice reminder email. Run every 5 days.
+        scheduler.add_job(
+            user_group_open_invoice_reminder,
+            trigger=CronTrigger(day="*/5"),
+            id="user_group_open_invoice_reminder",
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info("Added job 'user_group_open_invoice_reminder'.")
 
         try:
             logger.info("Starting scheduler...")

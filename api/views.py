@@ -20,6 +20,9 @@ from rest_framework.views import APIView
 
 from api.filters import OrderGroupFilterset
 from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
+from api.scheduled_jobs.user_group_open_invoice_reminder import (
+    user_group_open_invoice_reminder,
+)
 from api.utils.auth0 import invite_user
 from api.utils.denver_compliance_report import send_denver_compliance_report
 
@@ -1127,6 +1130,10 @@ def get_user_group_credit_status(request):
         return Response(user_group.credit_status, status=200)
     else:
         return Response("No credit status found.", status=200)
+
+
+def test3(request):
+    user_group_open_invoice_reminder()
 
 
 def test(request):

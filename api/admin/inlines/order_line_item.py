@@ -31,10 +31,10 @@ class OrderLineItemInlineForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         order_line_item: OrderLineItem = self.instance
-        if order_line_item and order_line_item.stripe_invoice_line_item_id:
-            # If the OrderLineItem has a Stripe Invoice Line Item ID, then make it read-only.
-            for f in self.fields:
-                self.fields[f].disabled = True
+        # if order_line_item and order_line_item.stripe_invoice_line_item_id:
+        #     # If the OrderLineItem has a Stripe Invoice Line Item ID, then make it read-only.
+        #     for f in self.fields:
+        #         self.fields[f].disabled = True
 
         # Set initial values for read-only fields.
         self.initial["seller_payout_price"] = order_line_item.seller_payout_price()

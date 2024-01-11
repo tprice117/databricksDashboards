@@ -54,6 +54,9 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_extensions",
     "django_apscheduler",
+    # START:  Django Humanize (for template number formatting).
+    "django.contrib.humanize"
+    # END:  Django Humanize (for template number formatting).
 ]
 
 MIDDLEWARE = [

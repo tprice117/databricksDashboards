@@ -1,0 +1,169 @@
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REMINDER: Unpaid Downstream Invoices</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h2, h3 {
+            color: #028482;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            color: #FFFFFF;
+            background-color: #054263;
+        }
+
+        a {
+            color: #054263;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Modern contact information styling */
+        .contact-container {
+            margin-top: 20px;
+            background-color: #f7f7f7;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .contact-heading {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .contact-item {
+            margin-bottom: 8px;
+        }
+
+        .contact-link a {
+            color: #028482;
+            text-decoration: none;
+        }
+
+        .contact-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header with Downstream Logo -->
+<header>
+  <img src="https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e48a5fa7bd074602c6206_Downstream%20D%20-%20Dark-p-500.png" width="50"/>
+    <img src="https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e4a33c78f6d7a5c711349_Downstream%20Full%20-%20Dark%20(2).png" alt="Downstream Logo" width="150">
+</header>
+
+<!-- Email Body -->
+<section>
+    <h2>REMINDER: You have unpaid Downstream invoices</h2>
+
+    <!-- Email Content -->
+    <p>{{user_group_name}},</p>
+
+    <p>Thanks for being a Downstream customer! We’d like to remind you of unpaid invoices. Please use the link on each invoice to complete payment.</p>
+
+        <!-- Total of All Open Invoices -->
+    <div style="margin-top: 20px;">
+        <p>Total of all open invoices: ${{total_outstanding|floatformat:"2g"}}</p> 
+    </div>
+
+    <!-- Invoice Sections Container -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+        <!-- Current Invoices -->
+        {% for invoice_data in invoice_aging_data %}
+        {% if invoice_data.invoices|length > 0 %}
+        <div>
+            <h3>{{invoice_data.title}}:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invoice ID</th>
+                        <th>Street Address</th>
+                        <th>Total ($)</th>
+                        <th>Invoice Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Add rows dynamically based on your data -->
+                    <!-- Example row -->
+                    {% for invoice in invoice_data.invoices %}
+                    <tr>
+                        <td>{{invoice.number}}</td>
+                        <td>{{invoice.formatted_address}}</td>
+                        <td>${{invoice.amount_due|floatformat:"2g"}}</td>
+                        <td><a href="{{invoice.hosted_invoice_url}}">Pay Now</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+    </div>
+
+    <!-- Additional Information -->
+    <p>The links provided will direct you to the respective invoices for your convenience. We kindly remind you that prompt payment is required to ensure there are no disruptions in service.</p>
+
+    <p>Additionally, for our business customers, we offer project-based consolidated invoicing with net terms. To inquire about net terms, please <a href="https://sign.zoho.com/signform?form_link=234b4d535f4956233ce28f0218f5730506eb32572c6b959fea76d0276776dd69b4f533cf53e110026be07ef2141a316184500555015819d242fc7143fb518ceaa0efecccd86f6be7#">click here</a> to access the application form.</p>
+
+    <p>If you have any questions or require further assistance regarding the mentioned changes or any specific invoice, please don’t hesitate to reach out to our team. We are committed to ensuring a seamless transition and assisting you with any concerns you might have.</p>
+
+    <p>We appreciate your continued partnership and cooperation during this period of adjustment. Thank you for your understanding.</p>
+
+    <p>Best regards,</p>
+    <p>The Downstream Team</p>
+
+    <!-- Modern Contact Information -->
+    <div class="contact-container">
+        <p class="contact-heading">Contact us:</p>
+        <div class="contact-item">
+            <p class="contact-link">Email: <a href="mailto:billing@trydownstream.com">billing@trydownstream.com</a></p>
+        </div>
+        <div class="contact-item">
+            <p class="contact-link">Phone: <a href="+17209285661">(720) 928-5661</a></p>
+        </div>
+        <div class="contact-item">
+            <p class="contact-link">Website: <a href="https://help.trydownstream.com" target="_blank">help.trydownstream.com</a></p>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
