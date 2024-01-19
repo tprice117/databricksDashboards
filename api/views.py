@@ -25,6 +25,8 @@ from api.scheduled_jobs.user_group_open_invoice_reminder import (
 )
 from api.utils.auth0 import invite_user
 from api.utils.denver_compliance_report import send_denver_compliance_report
+from api.utils.payouts import PayoutUtils
+from common.utils.stripe import StripeUtils
 
 from .models import *
 
@@ -1133,19 +1135,28 @@ def get_user_group_credit_status(request):
 
 
 def test3(request):
-    user_addresses = UserAddress.objects.all()
-    for user_address in user_addresses:
-        if (
-            hasattr(user_address.user_group, "billing")
-            and user_address.user_group.billing.country == "United States"
-        ):
-            # user_address.country = "US"
-            # user_address.save()
-            print(user_address.id)
-    # for user_address in user_addresses:
-    #     user_address.country = "US"
-    #     user_address.save()
-    #     print(user_address.id)
+    PayoutUtils.send_payouts()
+    return Response("Success", status=200)
+    # invoice_items = StripeUtils.InvoiceItem.get_all()
+
+    # # Filter for only items from invoices with id's in the list below.
+    # invoices = [
+    #     "in_1O4b5UGVYGkmHIWnjM5mQkP4",
+    #     "in_1OV5d1GVYGkmHIWnMFuZBiln",
+    # ]
+
+    # invoice_items = [
+    #     invoice_item
+    #     for invoice_item in invoice_items
+    #     if invoice_item["invoice"] in invoices
+    # ]
+
+    # for invoice_item in invoice_items:
+    #     if "order_line_item_id" in invoice_item["metadata"]:
+    #         order_line_item = OrderLineItem.objects.get(
+    #             id=invoice_item["metadata"]["order_line_item_id"]
+    #         )
+    #         print(order_line_item.order.id, " | ", order_line_item.id)
 
 
 def test2(request):

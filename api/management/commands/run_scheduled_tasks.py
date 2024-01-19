@@ -13,6 +13,7 @@ from api.scheduled_jobs.update_order_line_item_paid_status import (
 from api.scheduled_jobs.user_group_open_invoice_reminder import (
     user_group_open_invoice_reminder,
 )
+from notifications.scheduled_jobs.send_emails import send_emails
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,16 @@ class Command(BaseCommand):
             replace_existing=True,
         )
         logger.info("Added job 'user_group_open_invoice_reminder'.")
+
+        # Send Emails. Run every 5 minutes.
+        scheduler.add_job(
+            send_emails,
+            trigger=CronTrigger(minute="*/5"),
+            id="send_emails",
+            max_instances=20,
+            replace_existing=True,
+        )
+        logger.info("Added job 'send_emails'.")
 
         try:
             logger.info("Starting scheduler...")
