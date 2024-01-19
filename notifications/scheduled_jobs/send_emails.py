@@ -11,5 +11,5 @@ def send_emails():
             email.send_email()
             email.sent_at = datetime.datetime.now()
             email.save()
-        except:
-            print("Email could not be sent.")
+        except Exception as e:
+            print("Email could not be sent. " + str(e))

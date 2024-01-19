@@ -27,6 +27,9 @@ from api.utils.auth0 import invite_user
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.payouts import PayoutUtils
 from common.utils.stripe import StripeUtils
+from notifications.models.email_notification_to import EmailNotificationTo
+from notifications.models.email_notificiation import EmailNotification
+from notifications.scheduled_jobs.send_emails import send_emails
 
 from .models import *
 
@@ -1135,7 +1138,17 @@ def get_user_group_credit_status(request):
 
 
 def test3(request):
-    PayoutUtils.send_payouts()
+    email = EmailNotification.objects.create(
+        subject="Test Email",
+        html_content="<p>Test Email</p>",
+        from_email="noreply@trydownstream.io",
+        reply_to="noreply@trydownstream.io",
+    )
+    EmailNotificationTo.objects.create(
+        email_notification=email,
+        email="thayes@trydownstream.io",
+    )
+
     return Response("Success", status=200)
     # invoice_items = StripeUtils.InvoiceItem.get_all()
 
