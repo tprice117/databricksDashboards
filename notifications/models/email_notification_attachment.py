@@ -1,6 +1,6 @@
 from django.db import models
 
-from api.models import BaseModel
+from common.models import BaseModel
 
 
 class EmailNotificationAttachment(BaseModel):

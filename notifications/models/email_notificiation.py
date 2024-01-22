@@ -1,7 +1,7 @@
 import mailchimp_transactional as MailchimpTransactional
 from django.db import models
 
-from api.models import BaseModel
+from common.models import BaseModel
 from notifications.models import (
     EmailNotificationAttachment,
     EmailNotificationBcc,

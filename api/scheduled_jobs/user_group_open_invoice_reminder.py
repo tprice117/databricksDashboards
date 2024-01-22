@@ -12,7 +12,7 @@ def user_group_open_invoice_reminder():
     Send an email to the user group reminding them to pay their open invoices.
     """
     # Get all invoices from Stripe.
-    invoices = StripeUtils.get_invoices()
+    invoices = StripeUtils.Invoice.get_all()
 
     # Filter to only invoices that are open.
     open_invoices = list(filter(lambda invoice: invoice["status"] == "open", invoices))
