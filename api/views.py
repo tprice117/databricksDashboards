@@ -116,7 +116,7 @@ class UserGroupViewSet(viewsets.ModelViewSet):
         if is_superuser:
             return self.queryset
         else:
-            return self.queryset.filter(id=self.request.user.user_group)
+            return self.queryset.filter(id=self.request.user.user_group.id)
 
 
 class UserGroupBillingViewSet(viewsets.ModelViewSet):
