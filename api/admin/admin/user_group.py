@@ -14,6 +14,7 @@ from api.admin.inlines import (
 )
 from api.forms import CsvImportForm
 from api.models import UserGroup
+from api.utils.billing import BillingUtils
 
 
 @admin.register(UserGroup)
@@ -37,6 +38,9 @@ class UserGroupAdmin(admin.ModelAdmin):
         UserGroupLegalInline,
         UserGroupCreditApplicationInline,
         UserInline,
+    ]
+    actions = [
+        "create_invoices",
     ]
 
     change_list_template = "admin/entities/user_group_changelist.html"
@@ -102,3 +106,13 @@ class UserGroupAdmin(admin.ModelAdmin):
         form = CsvImportForm()
         payload = {"form": form}
         return render(request, "admin/csv_form.html", payload)
+
+    @admin.action(
+        description="Create invoices (all 'Complete' orders with end date on or before yesterday)"
+    )
+    def create_invoices(self, request, queryset):
+        for user_group in queryset:
+            print(user_group)
+            BillingUtils.create_stripe_invoices_for_user_group(
+                user_group=user_group,
+            )

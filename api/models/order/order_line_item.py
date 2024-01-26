@@ -2,7 +2,7 @@ from django.db import models
 
 from api.models.order.order_line_item_type import OrderLineItemType
 from common.models import BaseModel
-from common.utils.stripe import StripeUtils
+from common.utils.stripe.stripe_utils import StripeUtils
 
 
 class OrderLineItem(BaseModel):
