@@ -6,7 +6,7 @@ from api.models.user.user_address_type import UserAddressType
 from api.models.user.user_group import UserGroup
 from api.utils.google_maps import geocode_address
 from common.models import BaseModel
-from common.utils.stripe import StripeUtils
+from common.utils.stripe.stripe_utils import StripeUtils
 
 
 class UserAddress(BaseModel):

@@ -5,6 +5,7 @@ from typing import List
 import stripe
 from django.db.models import F, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Round
+from django.template.loader import render_to_string
 
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
@@ -14,42 +15,98 @@ from api.models.seller.seller_invoice_payable_line_item import (
 )
 from api.models.seller.seller_location import SellerLocation
 from api.utils.checkbook_io import CheckbookIO
-from common.utils.stripe import StripeUtils
+from common.utils.stripe.stripe_utils import StripeUtils
+from notifications.utils.add_email_to_queue import add_internal_email_to_queue
 
 
 class PayoutUtils:
     @staticmethod
     def send_payouts():
-        # Get all Orders that are ready for payout.
-        # Order.EndDate is 2 weeks ago or earlier.
-        # Order.Status is "Complete".
-        # orders = Order.objects.filter(
-        #     end_date__lte=datetime.date.today() - datetime.timedelta(days=14),
-        #     status=Order.COMPLETE,
-        # )
-        # print(len(orders))
+        orders = PayoutUtils.get_orders_that_need_to_be_paid_out()
 
-        # # Filter Orders to only include Orders that need to be paid out.
-        # order: Order
-        # orders = [order for order in orders if order.needed_payout_to_seller() > 0]
-        # print(len(orders))
+        # Filter Orders to only include Orders that need to be paid out.
+        # The query above should already filter out Orders that don't
+        # need to be paid out, but this is a "double check" to ensure
+        # that we don't send payouts for Orders that don't need to be
+        # paid out.
+        order: Order
+        orders = [order for order in orders if order.needed_payout_to_seller() > 0]
 
-        # # For Orders with SellerLocation.SendsInovices = True, filter out Orders
-        # # where the Order.SellerPrice is not equal to the sum SellerInvoicePayableLineItems.
-        # orders = [
-        #     order
-        #     for order in orders
-        #     if not order.order_group.seller_product_seller_location.seller_location.sends_invoices
-        #     or (
-        #         order.order_group.seller_product_seller_location.seller_location.sends_invoices
-        #         and SellerInvoicePayableLineItem.objects.filter(order=order).aggregate(
-        #             Sum("amount")
-        #         )["amount__sum"]
-        #         == order.seller_price()
-        #     )
-        # ]
+        # With the remaining Orders (that are ready for payout), create Payouts.
+        # Get distinct SellerLocations.
+        distinct_seller_location_ids: List[SellerLocation] = set(
+            [
+                order.order_group.seller_product_seller_location.seller_location.id
+                for order in orders
+            ]
+        )
+        distinct_seller_locations = SellerLocation.objects.filter(
+            id__in=distinct_seller_location_ids
+        )
 
-        orders = (
+        # Capture SellerLocation, Stripe or Checkbook, "Missing Payout Information" (only if applicable
+        # if we can't send a payout for a SellerLocation due to missing information), Payouts (if any),
+        # and Total Payout Amount.
+        email_report_datas = []
+
+        # For each SellerLocation, send payouts for all orders.
+        for seller_location in distinct_seller_locations:
+            orders_for_seller_location = [
+                order
+                for order in orders
+                if order.order_group.seller_product_seller_location.seller_location
+                == seller_location
+            ]
+
+            email_report_data = {
+                "seller_location": seller_location,
+                "payouts": [],
+            }
+
+            if PayoutUtils.can_send_stripe_payout(seller_location):
+                # Send Stripe Payouts.
+                for order in orders_for_seller_location:
+                    payout = PayoutUtils.send_stripe_payout(order)
+
+                    # Add Payout to email report data.
+                    if payout:
+                        email_report_data["payouts"].append(payout)
+
+            elif PayoutUtils.can_send_check_payout(seller_location):
+                # Send Check Payouts.
+                payouts = PayoutUtils.send_check_payout(
+                    seller_location,
+                    orders_for_seller_location,
+                )
+
+                # Add Payouts to email report data.
+                email_report_data["payouts"] = payouts
+            else:
+                # Print error message.
+                print("Cannot send payouts for SellerLocation: " + seller_location.name)
+
+                # Add error message to email report data.
+                email_report_data["missing_payout_information"] = True
+
+            # Add email report data to list of email report datas.
+            email_report_datas.append(email_report_data)
+
+        # Send email report.
+        PayoutUtils._send_email_report(email_report_datas)
+
+    @staticmethod
+    def get_orders_that_need_to_be_paid_out():
+        """
+        Gets all Orders that need to be paid out.
+        Filters:
+        - Order.EndDate is 2 weeks ago or earlier.
+        - Order.Status is "Complete".
+        - Order.TotalNeededPayoutToSeller is greater than 0.
+        - SellerLocation.SendsInvoices is False or
+          SellerLocation.SendsInvoices is True and
+          Order.TotalSellerPrice is equal to Order.TotalInvoicePayouts.
+        """
+        return (
             Order.objects.filter(
                 end_date__lte=datetime.date.today() - datetime.timedelta(days=14),
                 status=Order.COMPLETE,
@@ -97,68 +154,6 @@ class PayoutUtils:
             )
         )
 
-        # Filter Orders to only include Orders that need to be paid out.
-        order: Order
-        orders = [order for order in orders if order.needed_payout_to_seller() > 0]
-
-        # for order in orders:
-        #     print(
-        #         str(order.id)
-        #         + " | "
-        #         + str((order.total_payouts or 0.00) - order.total_paid_to_seller())
-        #         + " | "
-        #         + str(order.total_seller_price - order.seller_price())
-        #         + " | "
-        #         + str(
-        #             Decimal(order.total_needed_payout_to_seller or 0)
-        #             - order.needed_payout_to_seller()
-        #         )
-        #         + " | "
-        #         + str(order.needed_payout_to_seller())
-        #     )
-        print(len(orders))
-
-        total = 0
-        for order in orders:
-            # print("$" + str(order.needed_payout_to_seller()))
-            total += order.needed_payout_to_seller()
-        print("TOTAL NEEDS TO BE PAID OUT: " + str(total))
-
-        # With the remaining Orders (that are ready for payout), create Payouts.
-        # Get distinct SellerLocations.
-        distinct_seller_location_ids: List[SellerLocation] = set(
-            [
-                order.order_group.seller_product_seller_location.seller_location.id
-                for order in orders
-            ]
-        )
-        distinct_seller_locations = SellerLocation.objects.filter(
-            id__in=distinct_seller_location_ids
-        )
-
-        # For each SellerLocation, send payouts for all orders.
-        for seller_location in distinct_seller_locations:
-            orders_for_seller_location = [
-                order
-                for order in orders
-                if order.order_group.seller_product_seller_location.seller_location
-                == seller_location
-            ]
-
-            if PayoutUtils.can_send_stripe_payout(seller_location):
-                # Send Stripe Payouts.
-                for order in orders_for_seller_location:
-                    PayoutUtils.send_stripe_payout(order)
-            elif PayoutUtils.can_send_check_payout(seller_location):
-                # Send Check Payouts.
-                PayoutUtils.send_check_payout(
-                    seller_location,
-                    orders_for_seller_location,
-                )
-            else:
-                # Print error message.
-                print("Cannot send payouts for SellerLocation: " + seller_location.name)
-
     @staticmethod
     def can_send_stripe_payout(seller_location: SellerLocation) -> bool:
         return seller_location.stripe_connect_account_id
@@ -171,7 +166,7 @@ class PayoutUtils:
         )
 
     @staticmethod
-    def send_stripe_payout(order: Order):
+    def send_stripe_payout(order: Order) -> Payout:
         can_send_stripe_payout = PayoutUtils.can_send_stripe_payout(
             order.order_group.seller_product_seller_location.seller_location
         )
@@ -196,18 +191,18 @@ class PayoutUtils:
                     + order.order_group.seller_product_seller_location.seller_location.seller.name
                 )
                 # Payout via Stripe.
-                # transfer = StripeUtils.Transfer.create(
-                #     amount=round(order.needed_payout_to_seller() * 100),
-                #     currency="usd",
-                #     destination=order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id,
-                # )
+                transfer = StripeUtils.Transfer.create(
+                    amount=round(order.needed_payout_to_seller() * 100),
+                    currency="usd",
+                    destination=order.order_group.seller_product_seller_location.seller_location.stripe_connect_account_id,
+                )
 
-                # # Save Payout.
-                # return Payout.objects.create(
-                #     order=order,
-                #     amount=order.needed_payout_to_seller(),
-                #     stripe_transfer_id=transfer.id,
-                # )
+                # Save Payout.
+                return Payout.objects.create(
+                    order=order,
+                    amount=order.needed_payout_to_seller(),
+                    stripe_transfer_id=transfer.id,
+                )
             except stripe.error.StripeError as stripe_error:
                 print("Stripe error occurred:", stripe_error)
                 return None
@@ -219,7 +214,7 @@ class PayoutUtils:
     def send_check_payout(
         seller_location: SellerLocation,
         orders: List[Order],
-    ):
+    ) -> List[Payout]:
         # Check if SellerLocation has the information to send a check.
         can_send_check = PayoutUtils.can_send_check_payout(seller_location)
 
@@ -252,16 +247,81 @@ class PayoutUtils:
                     + " | "
                     + order.order_group.seller_product_seller_location.seller_location.seller.name
                 )
-            #     check_number = CheckbookIO().sendPhysicalCheck(
-            #         seller_location=seller_location,
-            #         amount=amount_to_send,
-            #         orders=orders,
-            #     )
+                check_number = CheckbookIO().sendPhysicalCheck(
+                    seller_location=seller_location,
+                    amount=amount_to_send,
+                    orders=orders,
+                )
 
-            # # Save Payout for each order.
-            # for order in orders:
-            #     Payout.objects.create(
-            #         order=order,
-            #         amount=order.needed_payout_to_seller(),
-            #         checkbook_payout_id=check_number,
-            #     )
+            # Save Payout for each order.
+            payouts = []
+            for order in orders:
+                payout = Payout.objects.create(
+                    order=order,
+                    amount=order.needed_payout_to_seller(),
+                    checkbook_payout_id=check_number,
+                )
+                payouts.append(payout)
+
+            return payouts
+
+    @staticmethod
+    def _send_email_report(email_report_datas):
+        print(email_report_datas)
+        # Total payout data.
+        total_paid = 0
+        total_count = 0
+
+        # Stripe payout data.
+        stripe_total_paid = 0
+        stripe_total_count = 0
+
+        # Checkbook payout data.
+        checkbook_total_paid = 0
+        checkbook_total_count = 0
+
+        # "Could not send payouts" data.
+        number_of_seller_locations_missing_payout_information = 0
+
+        for email_report_data in email_report_datas:
+            total_count += len(email_report_data["payouts"])
+
+            # Loop through Payouts and add to Stripe or Checkbook totals.
+            payout: Payout
+            for payout in email_report_data["payouts"]:
+                if payout.stripe_transfer_id:
+                    total_paid += payout.amount
+                    stripe_total_paid += payout.amount
+                    stripe_total_count += 1
+                elif payout.checkbook_payout_id:
+                    total_paid += payout.amount
+                    checkbook_total_paid += payout.amount
+                    checkbook_total_count += 1
+
+            # Add to "Could not send payouts" data.
+            if email_report_data.get("missing_payout_information"):
+                number_of_seller_locations_missing_payout_information += 1
+
+        # Send email report.
+        add_internal_email_to_queue(
+            from_email="system@trydownstream.io",
+            subject=f"Payout Batch Report: ${total_paid}",
+            html_content=render_to_string(
+                "emails/internal/payout_batch_report.html",
+                {
+                    "seller_locations": email_report_datas,
+                    "total": {
+                        "paid": total_paid,
+                        "count": total_count,
+                    },
+                    "stripe": {
+                        "paid": stripe_total_paid,
+                        "count": stripe_total_count,
+                    },
+                    "checkbook": {
+                        "paid": checkbook_total_paid,
+                        "count": checkbook_total_count,
+                    },
+                },
+            ),
+        )

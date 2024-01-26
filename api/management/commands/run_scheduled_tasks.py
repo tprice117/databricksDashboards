@@ -13,6 +13,7 @@ from api.scheduled_jobs.update_order_line_item_paid_status import (
 from api.scheduled_jobs.user_group_open_invoice_reminder import (
     user_group_open_invoice_reminder,
 )
+from api.utils.payouts import PayoutUtils
 from notifications.scheduled_jobs.send_emails import send_emails
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,20 @@ class Command(BaseCommand):
             trigger=CronTrigger(minute="*/5"),
             id="send_emails",
             max_instances=20,
+            replace_existing=True,
+        )
+        logger.info("Added job 'send_emails'.")
+
+        # Send Payouts. Run every Wednesday, Thusday, and Friday at 6am.
+        scheduler.add_job(
+            PayoutUtils.send_payouts,
+            trigger=CronTrigger(
+                day_of_week="wed,thu,fri",
+                hour="6",
+                jitter=360,
+            ),
+            id="send_payouts",
+            max_instances=1,
             replace_existing=True,
         )
         logger.info("Added job 'send_emails'.")

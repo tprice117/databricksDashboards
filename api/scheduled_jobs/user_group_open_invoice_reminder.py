@@ -4,7 +4,7 @@ import mailchimp_transactional as MailchimpTransactional
 from django.template.loader import render_to_string
 
 from api.models import UserAddress, UserGroup
-from common.utils.stripe import StripeUtils
+from common.utils.stripe.stripe_utils import StripeUtils
 
 
 def user_group_open_invoice_reminder():

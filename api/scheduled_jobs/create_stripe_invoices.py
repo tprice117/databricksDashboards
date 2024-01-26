@@ -13,7 +13,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def create_stripe_invoices():
     print("create_stripe_invoices")
-    return 
+    return
 
     # Get all Orders that have been completed and have an end date on
     # or before the last day of the previous month.
@@ -33,6 +33,7 @@ def create_stripe_invoices():
             distinct_user_addresses.append(user_address)
 
     # For each UserAddress, create or update invoices for all orders.
+    user_address: UserAddress
     for user_address in distinct_user_addresses:
         orders_for_user_address = orders.filter(order_group__user_address=user_address)
 
@@ -47,7 +48,7 @@ def create_stripe_invoices():
         else:
             stripe_invoice = stripe.Invoice.create(
                 customer=user_address.stripe_customer_id,
-                auto_advance=False,
+                auto_advance=user_address.autopay,
             )
 
         # Enable automatic taxes on the invoice.
