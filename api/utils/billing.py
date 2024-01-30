@@ -157,10 +157,13 @@ class BillingUtils:
             order_group__user_address__user_group=user_group,
         )
 
+        print(orders)
+
         # Get distinct UserAddresses.
         distinct_user_addresses = {order.order_group.user_address for order in orders}
 
         # For each UserAddress, create or update invoices for all orders.
+        user_address: UserAddress
         for user_address in distinct_user_addresses:
             orders_for_user_address = orders.filter(
                 order_group__user_address=user_address
@@ -175,6 +178,10 @@ class BillingUtils:
             # Finalize the invoice.
             StripeUtils.Invoice.finalize(invoice.id)
 
+            # If autopay is enabled, pay the invoice.
+            if user_address.user_group.autopay:
+                StripeUtils.Invoice.attempt_pay(invoice.id)
+
     @staticmethod
     def create_stripe_invoices_for_previous_month():
         # Get all Orders that have been completed and have an end date on
@@ -188,6 +195,7 @@ class BillingUtils:
         distinct_user_addresses = {order.order_group.user_address for order in orders}
 
         # For each UserAddress, create or update invoices for all orders.
+        user_address: UserAddress
         for user_address in distinct_user_addresses:
             orders_for_user_address = orders.filter(
                 order_group__user_address=user_address
@@ -201,6 +209,10 @@ class BillingUtils:
 
             # Finalize the invoice.
             StripeUtils.Invoice.finalize(invoice.id)
+
+            # If autopay is enabled, pay the invoice.
+            if user_address.user_group.autopay:
+                StripeUtils.Invoice.attempt_pay(invoice.id)
 
     @staticmethod
     def get_or_create_invoice_for_customer(user_address: UserAddress):

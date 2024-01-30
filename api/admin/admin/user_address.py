@@ -26,6 +26,7 @@ class UserAddressAdmin(admin.ModelAdmin):
         description="Create invoices (all 'Complete' orders with end date on or before yesterday)"
     )
     def create_invoices(self, request, queryset):
+        user_address: UserAddress
         for user_address in queryset:
             invoice = BillingUtils.create_stripe_invoice_for_user_address(
                 user_address=user_address
@@ -33,3 +34,7 @@ class UserAddressAdmin(admin.ModelAdmin):
 
             # Finalize the invoice.
             StripeUtils.Invoice.finalize(invoice.id)
+
+            # If autopay is enabled, pay the invoice.
+            if user_address.user_group.autopay:
+                StripeUtils.Invoice.attempt_pay(invoice.id)

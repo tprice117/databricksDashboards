@@ -80,7 +80,7 @@ class Command(BaseCommand):
             max_instances=1,
             replace_existing=True,
         )
-        logger.info("Added job 'send_emails'.")
+        logger.info("Added job 'send_payouts'.")
 
         try:
             logger.info("Starting scheduler...")
