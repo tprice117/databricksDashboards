@@ -244,10 +244,14 @@ class OrderLineItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
+    order_type = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
         fields = "__all__"
+
+    def get_order_type(self, obj: Order):
+        return obj.order_type
 
     # def get_status(self, obj):
     #     return stripe.Invoice.retrieve(
