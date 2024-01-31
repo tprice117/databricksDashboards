@@ -55,21 +55,6 @@ class Order(BaseModel):
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
     price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
-    order_type = models.CharField(
-        max_length=255,
-        choices=[
-            ("Delivery", "Delivery"),
-            ("Automatic Renewal", "Automatic Renewal"),
-            ("Swap", "Swap"),
-            ("Empty and Return", "Empty and Return"),
-            ("Trip Charge/Dry Run", "Trip Charge/Dry Run"),
-            ("Removal", "Removal"),
-            ("On Demand", "On Demand"),
-            ("Other", "Other"),
-        ],
-        blank=True,
-        null=True,
-    )  # 6.6.23
     included_weight_tons = models.DecimalField(
         max_digits=18, decimal_places=4, blank=True, null=True
     )  # 6.6.23
@@ -122,6 +107,10 @@ class Order(BaseModel):
         super(Order, self).__init__(*args, **kwargs)
         self.__original_submitted_on = self.submitted_on
         self.__original_status = self.status
+
+    @property
+    def order_type(self):
+        return self.get_order_type()
 
     def customer_price(self):
         return sum(

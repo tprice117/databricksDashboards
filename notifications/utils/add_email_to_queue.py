@@ -77,6 +77,7 @@ def add_email_to_queue(
 def add_internal_email_to_queue(
     from_email="noreply@trydownstream.io",
     subject=None,
+    additional_to_emails: List[str] = [],
     html_content=None,
     reply_to="noreply@trydownstream.io",
     cc_emails: List[str] = [],
@@ -89,7 +90,8 @@ def add_internal_email_to_queue(
             "thayes@trydownstream.io",
             "zirwin@trydownstream.io",
             "jbaird@trydownstream.io",
-        ],
+        ]
+        + additional_to_emails,
         subject=subject,
         html_content=html_content,
         reply_to=reply_to,

@@ -26,3 +26,7 @@ class Invoice:
     @staticmethod
     def finalize(invoice_id: str):
         return stripe.Invoice.finalize_invoice(invoice_id)
+
+    @staticmethod
+    def attempt_pay(invoice_id: str):
+        return stripe.Invoice.pay(invoice_id)
