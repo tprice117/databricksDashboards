@@ -288,21 +288,6 @@ class Order(BaseModel):
 
         return super(Order, self).save(*args, **kwargs)
 
-    def pre_save(sender, instance, *args, **kwargs):
-        # Check if "instance" is in the database yet.
-        db_instance = Order.objects.filter(pk=instance.pk).first()
-        if not db_instance:
-            order_group_orders = Order.objects.filter(order_group=instance.order_group)
-            if order_group_orders.count() == 0:
-                instance.order_type = "Delivery"
-            elif (
-                instance.order_group.end_date == instance.end_date
-                and order_group_orders.count() > 0
-            ):
-                instance.order_type = "Removal"
-            else:
-                instance.order_type = "Swap"
-
     def post_save(sender, instance, created, **kwargs):
         order_line_items = OrderLineItem.objects.filter(order=instance)
         # if instance.submitted_on_has_changed and order_line_items.count() == 0:
@@ -533,5 +518,4 @@ class Order(BaseModel):
         )
 
 
-pre_save.connect(Order.pre_save, sender=Order)
 post_save.connect(Order.post_save, sender=Order)
