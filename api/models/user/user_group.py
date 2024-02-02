@@ -1,6 +1,7 @@
 import random
 import string
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save
 
@@ -39,6 +40,7 @@ class UserGroup(BaseModel):
     seller = models.OneToOneField(Seller, models.DO_NOTHING, blank=True, null=True)
     name = models.CharField(max_length=255)
     pay_later = models.BooleanField(default=False)
+    # SECTION: Invoicing and Payment
     autopay = models.BooleanField(default=False)
     net_terms = models.IntegerField(
         choices=NetTerms.choices,
@@ -48,6 +50,8 @@ class UserGroup(BaseModel):
         choices=InvoiceFrequency.choices,
         default=InvoiceFrequency.IMMEDIATELY,
     )
+    invoice_day_of_month = models.IntegerField(blank=True, null=True)
+    # END SECTION: Invoicing and Payment
     is_superuser = models.BooleanField(default=False)
     share_code = models.CharField(max_length=6, blank=True)
     parent_account_id = models.CharField(max_length=255, blank=True, null=True)
@@ -63,6 +67,12 @@ class UserGroup(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        if self.invoice_frequency and self.invoice_day_of_month:
+            raise ValidationError(
+                "You cannot set both 'Invoice Frequency' and 'Invoice Day of Month'",
+            )
 
     def post_create(sender, instance, created, **kwargs):
         if created:
