@@ -125,7 +125,7 @@ class BillingUtils:
             raise Exception("All orders must be for the same user address.")
 
         # Get the current draft invoice or create a new one.
-        invoice = BillingUtils.get_or_create_invoice_for_customer(
+        invoice = BillingUtils.get_or_create_invoice_for_user_address(
             user_address,
         )
 
@@ -183,12 +183,16 @@ class BillingUtils:
                 StripeUtils.Invoice.attempt_pay(invoice.id)
 
     @staticmethod
-    def create_stripe_invoices_for_previous_month():
+    def create_stripe_invoices_for_previous_month(finalize_and_pay: bool = False):
         # Get all Orders that have been completed and have an end date on
-        # or before the last day of the previous month.
+        # or before the last day of the previous month. Also, exclude orders
+        # that have a UserGroup with an invoice_day_of_month set (means we
+        # will create invoices "off-cycle" for these orders later in the month when the
+        # invoice_day_of_month is reached).
         orders = Order.objects.filter(
             status="COMPLETE",
             end_date__lte=get_last_day_of_previous_month(),
+            order_group__user_address__user_group__invoice_day_of_month__isnull=True,
         )
 
         # Get distinct UserAddresses.
@@ -207,15 +211,18 @@ class BillingUtils:
                 user_address=user_address,
             )
 
-            # Finalize the invoice.
-            StripeUtils.Invoice.finalize(invoice.id)
+            # If finalize_and_pay is True, finalize the invoice and attempt
+            # to pay it.
+            if finalize_and_pay:
+                # Finalize the invoice.
+                StripeUtils.Invoice.finalize(invoice.id)
 
-            # If autopay is enabled, pay the invoice.
-            if user_address.user_group.autopay:
-                StripeUtils.Invoice.attempt_pay(invoice.id)
+                # If autopay is enabled, pay the invoice.
+                if user_address.user_group.autopay:
+                    StripeUtils.Invoice.attempt_pay(invoice.id)
 
     @staticmethod
-    def get_or_create_invoice_for_customer(user_address: UserAddress):
+    def get_or_create_invoice_for_user_address(user_address: UserAddress):
         """
         Get the current draft invoice or create a new one. Also,
         enable automatic taxes on the invoice (if not already enabled).
