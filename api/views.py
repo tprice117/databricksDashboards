@@ -1137,9 +1137,16 @@ def get_user_group_credit_status(request):
     else:
         return Response("No credit status found.", status=200)
 
+def finalize_and_pay_invoices(request):
+    BillingUtils.create_stripe_invoices_for_previous_month(finalize_and_pay=True)
+    return Response("Success", status=200)
+
+def send_monthly_invoices(request):
+    BillingUtils.create_stripe_invoices_for_previous_month(finalize_and_pay=False)
+    return Response("Success", status=200)
 
 def test3(request):
-    PayoutUtils.send_payouts()
+    return Response("Success", status=200)
     # email = EmailNotification.objects.create(
     #     subject="Test Email",
     #     html_content="<p>Test Email</p>",

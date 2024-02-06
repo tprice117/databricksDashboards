@@ -183,7 +183,7 @@ class BillingUtils:
                 StripeUtils.Invoice.attempt_pay(invoice.id)
 
     @staticmethod
-    def create_stripe_invoices_for_previous_month(finalize_and_pay: bool = False):
+    def create_stripe_invoices_for_previous_month(finalize_and_pay: bool):
         # Get all Orders that have been completed and have an end date on
         # or before the last day of the previous month. Also, exclude orders
         # that have a UserGroup with an invoice_day_of_month set (means we
