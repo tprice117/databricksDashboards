@@ -49,6 +49,8 @@ class UserGroup(BaseModel):
     invoice_frequency = models.IntegerField(
         choices=InvoiceFrequency.choices,
         default=InvoiceFrequency.IMMEDIATELY,
+        blank=True,
+        null=True,
     )
     invoice_day_of_month = models.IntegerField(blank=True, null=True)
     # END SECTION: Invoicing and Payment
