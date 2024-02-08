@@ -1,5 +1,6 @@
 asgiref==3.7.2
 attrs==23.1.0
+basistheory @ git+https://github.com/Basis-Theory/basistheory-python.git
 blinker==1.6.2
 boto3==1.28.49
 botocore==1.31.49

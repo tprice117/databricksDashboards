@@ -157,6 +157,11 @@ class BillingUtils:
             order_group__user_address__user_group=user_group,
         )
 
+        # Filter Orders. Only include Orders that have not been fully invoiced.
+        orders = [
+            order for order in orders if not order.all_order_line_items_invoiced()
+        ]
+
         print(orders)
 
         # Get distinct UserAddresses.
@@ -218,8 +223,11 @@ class BillingUtils:
                 StripeUtils.Invoice.finalize(invoice.id)
 
                 # If autopay is enabled, pay the invoice.
-                if user_address.user_group.autopay:
-                    StripeUtils.Invoice.attempt_pay(invoice.id)
+                if user_address.user_group.autopay if user_address.user_group else True:
+                    try:
+                        StripeUtils.Invoice.attempt_pay(invoice.id)
+                    except Exception as e:
+                        print("Attempt pay error: ", e)
 
     @staticmethod
     def get_or_create_invoice_for_user_address(user_address: UserAddress):
@@ -240,14 +248,22 @@ class BillingUtils:
                 customer=user_address.stripe_customer_id,
                 auto_advance=user_address.autopay,
                 collection_method="send_invoice",
-                days_until_due=user_address.user_group.net_terms,
+                days_until_due=(
+                    user_address.user_group.net_terms if user_address.user_group else 0
+                ),
             )
 
         # Enable automatic taxes on the invoice.
+        collect_tax = (
+            user_address.user_group.tax_exempt_status
+            != UserGroup.TaxExemptStatus.EXEMPT
+            if user_address.user_group
+            else True
+        )
         stripe.Invoice.modify(
             stripe_invoice.id,
             automatic_tax={
-                "enabled": True,
+                "enabled": collect_tax,
             },
         )
 

@@ -202,6 +202,18 @@ class Order(BaseModel):
         else:
             return None
 
+    def all_order_line_items_invoiced(self: "Order"):
+        return all(
+            [
+                order_line_item.payment_status()
+                in [
+                    OrderLineItem.PaymentStatus.INVOICED,
+                    OrderLineItem.PaymentStatus.PAID,
+                ]
+                for order_line_item in self.order_line_items.all()
+            ]
+        )
+
     def payment_status(self):
         total_customer_price = 0
         total_invoiced = 0

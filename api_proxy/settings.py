@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # START: Django Apps.
     "api",
+    "payment_methods",
     "notifications",
     # END: Django Apps.
     "api.pricing_ml",
@@ -55,7 +56,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "django_apscheduler",
     # START:  Django Humanize (for template number formatting).
-    "django.contrib.humanize"
+    "django.contrib.humanize",
     # END:  Django Humanize (for template number formatting).
 ]
 

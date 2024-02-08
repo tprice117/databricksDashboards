@@ -3037,7 +3037,7 @@ paths:
           description: No response body
   /api/payment-methods/:
     get:
-      operationId: payment_methods_retrieve
+      operationId: payment_methods_list
       tags:
       - payment-methods
       security:
@@ -3046,6 +3046,151 @@ paths:
       - {}
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+    post:
+      operationId: payment_methods_create
+      tags:
+      - payment-methods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethod'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentMethod'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethod'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+  /api/payment-methods/{id}/:
+    get:
+      operationId: payment_methods_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method.
+        required: true
+      tags:
+      - payment-methods
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+    put:
+      operationId: payment_methods_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method.
+        required: true
+      tags:
+      - payment-methods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethod'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentMethod'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethod'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+    patch:
+      operationId: payment_methods_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method.
+        required: true
+      tags:
+      - payment-methods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethod'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethod'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethod'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+    delete:
+      operationId: payment_methods_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method.
+        required: true
+      tags:
+      - payment-methods
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
           description: No response body
   /api/payouts/:
     get:
@@ -5707,6 +5852,18 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/stripe/billing/invoice-items:
+    get:
+      operationId: stripe_billing_invoice_items_retrieve
+      tags:
+      - stripe
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/stripe/billing/invoices:
     get:
       operationId: stripe_billing_invoices_retrieve
@@ -6593,6 +6750,163 @@ paths:
         required: true
       tags:
       - user-addresses
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/user-group-billings/:
+    get:
+      operationId: user_group_billings_list
+      tags:
+      - user-group-billings
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroupBilling'
+          description: ''
+    post:
+      operationId: user_group_billings_create
+      tags:
+      - user-group-billings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupBilling'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroupBilling'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroupBilling'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupBilling'
+          description: ''
+  /api/user-group-billings/{id}/:
+    get:
+      operationId: user_group_billings_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group billing.
+        required: true
+      tags:
+      - user-group-billings
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupBilling'
+          description: ''
+    put:
+      operationId: user_group_billings_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group billing.
+        required: true
+      tags:
+      - user-group-billings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupBilling'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroupBilling'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroupBilling'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupBilling'
+          description: ''
+    patch:
+      operationId: user_group_billings_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group billing.
+        required: true
+      tags:
+      - user-group-billings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupBilling'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupBilling'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupBilling'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupBilling'
+          description: ''
+    delete:
+      operationId: user_group_billings_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user group billing.
+        required: true
+      tags:
+      - user-group-billings
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -8104,18 +8418,18 @@ components:
         * `manufacturing` - Manufacturing
         * `waste_collection` - Waste Collection
         * `other` - Other
-    InvoiceStatusEnum:
+    InvoiceFrequencyEnum:
       enum:
-      - Not yet invoiced
-      - In draft
-      - Sent to customer
-      - Paid
-      type: string
+      - 0
+      - 7
+      - 14
+      - 30
+      type: integer
       description: |-
-        * `Not yet invoiced` - Not yet invoiced
-        * `In draft` - In draft
-        * `Sent to customer` - Sent to customer
-        * `Paid` - Paid
+        * `0` - Immediately
+        * `7` - Weekly
+        * `14` - Bi-Weekly
+        * `30` - Monthly
     LocationTypeEnum:
       enum:
       - Services
@@ -8409,6 +8723,20 @@ components:
       - main_product
       - updated_on
       - waste_type
+    NetTermsEnum:
+      enum:
+      - 0
+      - 14
+      - 30
+      - 45
+      - 60
+      type: integer
+      description: |-
+        * `0` - Immediately
+        * `14` - Net 14
+        * `30` - Net 30
+        * `45` - Net 45
+        * `60` - Net 60
     NullEnum:
       enum:
       - null
@@ -8440,6 +8768,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrderLineItem'
+          readOnly: true
+        order_type:
+          type: string
           readOnly: true
         created_on:
           type: string
@@ -8485,12 +8816,6 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
-        order_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/OrderTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
         included_weight_tons:
           type: number
           format: double
@@ -8499,12 +8824,6 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
-        invoice_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/InvoiceStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
         billing_comments_internal_use:
           type: string
           nullable: true
@@ -8565,6 +8884,7 @@ components:
       - end_date
       - order_group
       - order_line_items
+      - order_type
       - service_date
       - start_date
       - updated_on
@@ -8584,6 +8904,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        image:
+          type: string
+          format: uri
+          nullable: true
         ticket_id:
           type: string
           maxLength: 255
@@ -8603,9 +8927,9 @@ components:
         disposal_location:
           type: string
           format: uuid
+          nullable: true
       required:
       - created_on
-      - disposal_location
       - order
       - ticket_id
       - updated_on
@@ -8917,15 +9241,18 @@ components:
         quantity:
           type: number
           format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
+          maximum: 100000000000000
+          minimum: -100000000000000
           exclusiveMaximum: true
           exclusiveMinimum: true
         platform_fee_percent:
           type: number
           format: double
-          maximum: 1000
-          minimum: 0
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          description: 'Enter as a percentage without the percent symbol (ex: 25.00)'
         description:
           type: string
           nullable: true
@@ -8936,6 +9263,8 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        paid:
+          type: boolean
         order:
           type: string
           format: uuid
@@ -9000,26 +9329,6 @@ components:
         * `Awaiting Request` - Awaiting Request
         * `CANCELLED` - Cancelled
         * `COMPLETE` - Complete
-    OrderTypeEnum:
-      enum:
-      - Delivery
-      - Automatic Renewal
-      - Swap
-      - Empty and Return
-      - Trip Charge/Dry Run
-      - Removal
-      - On Demand
-      - Other
-      type: string
-      description: |-
-        * `Delivery` - Delivery
-        * `Automatic Renewal` - Automatic Renewal
-        * `Swap` - Swap
-        * `Empty and Return` - Empty and Return
-        * `Trip Charge/Dry Run` - Trip Charge/Dry Run
-        * `Removal` - Removal
-        * `On Demand` - On Demand
-        * `Other` - Other
     PatchedAddOn:
       type: object
       properties:
@@ -9430,6 +9739,9 @@ components:
           items:
             $ref: '#/components/schemas/OrderLineItem'
           readOnly: true
+        order_type:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -9474,12 +9786,6 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
-        order_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/OrderTypeEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
         included_weight_tons:
           type: number
           format: double
@@ -9488,12 +9794,6 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
-        invoice_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/InvoiceStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
         billing_comments_internal_use:
           type: string
           nullable: true
@@ -9565,6 +9865,10 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        image:
+          type: string
+          format: uri
+          nullable: true
         ticket_id:
           type: string
           maxLength: 255
@@ -9584,6 +9888,7 @@ components:
         disposal_location:
           type: string
           format: uuid
+          nullable: true
     PatchedOrderGroup:
       type: object
       properties:
@@ -9750,15 +10055,18 @@ components:
         quantity:
           type: number
           format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
+          maximum: 100000000000000
+          minimum: -100000000000000
           exclusiveMaximum: true
           exclusiveMinimum: true
         platform_fee_percent:
           type: number
           format: double
-          maximum: 1000
-          minimum: 0
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          description: 'Enter as a percentage without the percent symbol (ex: 25.00)'
         description:
           type: string
           nullable: true
@@ -9769,6 +10077,8 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        paid:
+          type: boolean
         order:
           type: string
           format: uuid
@@ -9803,6 +10113,25 @@ components:
         stripe_tax_code_id:
           type: string
           maxLength: 255
+    PatchedPaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        token:
+          type: string
+          writeOnly: true
+        user:
+          type: string
+          format: uuid
+        user_group:
+          type: string
+          format: uuid
+        card:
+          type: string
+          readOnly: true
     PatchedPayout:
       type: object
       properties:
@@ -10157,6 +10486,8 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        sends_invoices:
+          type: boolean
         payee_name:
           type: string
           nullable: true
@@ -10651,10 +10982,6 @@ components:
         photo_url:
           type: string
           nullable: true
-        stripe_customer_id:
-          type: string
-          nullable: true
-          maxLength: 255
         first_name:
           type: string
           nullable: true
@@ -10689,6 +11016,9 @@ components:
         id:
           type: string
           nullable: true
+        stripe_customer_id:
+          type: string
+          nullable: true
         created_on:
           type: string
           format: date-time
@@ -10699,10 +11029,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_customer_id:
-          type: string
-          nullable: true
-          maxLength: 255
         name:
           type: string
           nullable: true
@@ -10740,6 +11066,9 @@ components:
           minimum: -1000
           exclusiveMaximum: true
           exclusiveMinimum: true
+        access_details:
+          type: string
+          nullable: true
         autopay:
           type: boolean
         is_archived:
@@ -10798,6 +11127,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserGroupLegal'
           readOnly: true
+        credit_limit_utilized:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -10811,14 +11143,27 @@ components:
         name:
           type: string
           maxLength: 255
-        stripe_customer_id:
-          type: string
-          nullable: true
-          maxLength: 255
         pay_later:
           type: boolean
         autopay:
           type: boolean
+        net_terms:
+          allOf:
+          - $ref: '#/components/schemas/NetTermsEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        invoice_frequency:
+          nullable: true
+          minimum: -2147483648
+          maximum: 2147483647
+          oneOf:
+          - $ref: '#/components/schemas/InvoiceFrequencyEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        invoice_day_of_month:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
         is_superuser:
           type: boolean
         share_code:
@@ -10840,6 +11185,63 @@ components:
           $ref: '#/components/schemas/ComplianceStatusEnum'
         tax_exempt_status:
           $ref: '#/components/schemas/TaxExemptStatusEnum'
+    PatchedUserGroupBilling:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+        longitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        tax_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        street:
+          type: string
+        city:
+          type: string
+          maxLength: 40
+        state:
+          type: string
+          maxLength: 80
+        postal_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 80
+        user_group:
+          type: string
+          format: uuid
     PatchedUserGroupCreditApplication:
       type: object
       properties:
@@ -10856,14 +11258,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        estimated_revenue:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
         requested_credit_limit:
           type: number
           format: double
@@ -10881,6 +11275,22 @@ components:
         id:
           type: string
           nullable: true
+        latitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+        longitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -10902,11 +11312,6 @@ components:
           $ref: '#/components/schemas/StructureEnum'
         industry:
           $ref: '#/components/schemas/IndustryEnum'
-        year_founded:
-          type: integer
-          maximum: 32767
-          minimum: 0
-          nullable: true
         street:
           type: string
         city:
@@ -10921,20 +11326,6 @@ components:
         country:
           type: string
           maxLength: 80
-        latitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-        longitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
         user_group:
           type: string
           format: uuid
@@ -11033,6 +11424,31 @@ components:
         name:
           type: string
           maxLength: 80
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        token:
+          type: string
+          writeOnly: true
+        user:
+          type: string
+          format: uuid
+        user_group:
+          type: string
+          format: uuid
+        card:
+          type: string
+          readOnly: true
+      required:
+      - card
+      - id
+      - token
+      - user
+      - user_group
     Payout:
       type: object
       properties:
@@ -11444,6 +11860,8 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        sends_invoices:
+          type: boolean
         payee_name:
           type: string
           nullable: true
@@ -12138,10 +12556,6 @@ components:
         photo_url:
           type: string
           nullable: true
-        stripe_customer_id:
-          type: string
-          nullable: true
-          maxLength: 255
         first_name:
           type: string
           nullable: true
@@ -12182,6 +12596,9 @@ components:
         id:
           type: string
           nullable: true
+        stripe_customer_id:
+          type: string
+          nullable: true
         created_on:
           type: string
           format: date-time
@@ -12192,10 +12609,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        stripe_customer_id:
-          type: string
-          nullable: true
-          maxLength: 255
         name:
           type: string
           nullable: true
@@ -12233,6 +12646,9 @@ components:
           minimum: -1000
           exclusiveMaximum: true
           exclusiveMinimum: true
+        access_details:
+          type: string
+          nullable: true
         autopay:
           type: boolean
         is_archived:
@@ -12302,6 +12718,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserGroupLegal'
           readOnly: true
+        credit_limit_utilized:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -12315,14 +12734,27 @@ components:
         name:
           type: string
           maxLength: 255
-        stripe_customer_id:
-          type: string
-          nullable: true
-          maxLength: 255
         pay_later:
           type: boolean
         autopay:
           type: boolean
+        net_terms:
+          allOf:
+          - $ref: '#/components/schemas/NetTermsEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        invoice_frequency:
+          nullable: true
+          minimum: -2147483648
+          maximum: 2147483647
+          oneOf:
+          - $ref: '#/components/schemas/InvoiceFrequencyEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        invoice_day_of_month:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
         is_superuser:
           type: boolean
         share_code:
@@ -12346,11 +12778,81 @@ components:
           $ref: '#/components/schemas/TaxExemptStatusEnum'
       required:
       - created_on
+      - credit_limit_utilized
       - legal
       - name
       - seller
       - seller_id
       - updated_on
+    UserGroupBilling:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+        longitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        tax_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        street:
+          type: string
+        city:
+          type: string
+          maxLength: 40
+        state:
+          type: string
+          maxLength: 80
+        postal_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 80
+        user_group:
+          type: string
+          format: uuid
+      required:
+      - city
+      - country
+      - created_on
+      - email
+      - latitude
+      - longitude
+      - postal_code
+      - state
+      - street
+      - updated_on
+      - user_group
     UserGroupCreditApplication:
       type: object
       properties:
@@ -12367,14 +12869,6 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
-        estimated_revenue:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
         requested_credit_limit:
           type: number
           format: double
@@ -12396,6 +12890,22 @@ components:
         id:
           type: string
           nullable: true
+        latitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+        longitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -12417,11 +12927,6 @@ components:
           $ref: '#/components/schemas/StructureEnum'
         industry:
           $ref: '#/components/schemas/IndustryEnum'
-        year_founded:
-          type: integer
-          maximum: 32767
-          minimum: 0
-          nullable: true
         street:
           type: string
         city:
@@ -12436,20 +12941,6 @@ components:
         country:
           type: string
           maxLength: 80
-        latitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-        longitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
         user_group:
           type: string
           format: uuid
@@ -12458,6 +12949,8 @@ components:
       - country
       - created_on
       - industry
+      - latitude
+      - longitude
       - name
       - postal_code
       - state
