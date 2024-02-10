@@ -106,8 +106,10 @@ router.register(r"orders-for-seller", views.OrdersForSellerViewSet, "api")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # Base API URL.
+    # START: API URLs.
+    path("api/", include("api_proxy.api.v1.urls")),
     path("api/", include(router.urls)),
+    # END: API URLs.
     # Schema URLs.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
@@ -153,4 +155,6 @@ urlpatterns = [
     path("api/exports/denver-compliance/", views.denver_compliance_report),
     # Test.
     path("test/", views.test3),
+    path("re2ty/send/", views.finalize_and_pay_invoices),
+    path("fr39f/send2/", views.send_monthly_invoices),
 ]

@@ -168,7 +168,8 @@ class Order(BaseModel):
         # ONE TIME: Order.StartDate == OrderGroup.StartDate AND Order.EndDate == OrderGroup.EndDate
         # AND OrderGroup has no Subscription.
         order_type_one_time = (
-            order_order_group_start_date_equal
+            order_count == 1
+            and order_order_group_start_date_equal
             and order_order_group_end_dates_equal
             and not has_subscription
         )
@@ -201,6 +202,18 @@ class Order(BaseModel):
             return Order.Type.AUTO_RENEWAL
         else:
             return None
+
+    def all_order_line_items_invoiced(self: "Order"):
+        return all(
+            [
+                order_line_item.payment_status()
+                in [
+                    OrderLineItem.PaymentStatus.INVOICED,
+                    OrderLineItem.PaymentStatus.PAID,
+                ]
+                for order_line_item in self.order_line_items.all()
+            ]
+        )
 
     def payment_status(self):
         total_customer_price = 0
