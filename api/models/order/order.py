@@ -168,7 +168,8 @@ class Order(BaseModel):
         # ONE TIME: Order.StartDate == OrderGroup.StartDate AND Order.EndDate == OrderGroup.EndDate
         # AND OrderGroup has no Subscription.
         order_type_one_time = (
-            order_order_group_start_date_equal
+            order_count == 1
+            and order_order_group_start_date_equal
             and order_order_group_end_dates_equal
             and not has_subscription
         )
