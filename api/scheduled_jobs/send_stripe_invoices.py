@@ -1,11 +1,9 @@
-import calendar
-from typing import List
+import time
 
-import requests
 import stripe
 from django.conf import settings
 
-from api.models import Order, OrderLineItem, UserAddress
+from api.models import Order
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -19,4 +17,5 @@ def send_stripe_invoices():
         end_date__lte=get_last_day_of_previous_month(),
     )
 
-    # 
+    # Pause for 5 minutes.
+    time.sleep(400)

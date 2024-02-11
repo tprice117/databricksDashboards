@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from django_apscheduler.jobstores import DjangoJobStore
 
 from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
+from api.scheduled_jobs.send_stripe_invoices import send_stripe_invoices
 from api.scheduled_jobs.update_order_line_item_paid_status import (
     update_order_line_item_paid_status,
 )
@@ -26,7 +27,7 @@ class Command(BaseCommand):
         scheduler = BlockingScheduler(timezone=settings.TIME_ZONE)
         scheduler.add_jobstore(DjangoJobStore(), "default")
 
-        # Sync OrderLineItem paid status from Stripe. Run every 5 minutes.
+        # Sync OrderLineItem paid status from Stripe. Run every 1 minute.
         scheduler.add_job(
             update_order_line_item_paid_status,
             trigger=CronTrigger(minute="*/1"),
@@ -81,6 +82,20 @@ class Command(BaseCommand):
             replace_existing=True,
         )
         logger.info("Added job 'send_payouts'.")
+
+        # Send Invoices. Run every day at 2am.
+        scheduler.add_job(
+            send_stripe_invoices,
+            trigger=CronTrigger(
+                trigger=CronTrigger(minute="*/1"),
+                # hour="2",
+                # jitter=360,
+            ),
+            id="send_stripe_invoices",
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info("Added job 'send_stripe_invoices'.")
 
         try:
             logger.info("Starting scheduler...")
