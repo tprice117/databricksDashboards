@@ -17,5 +17,7 @@ def send_stripe_invoices():
         end_date__lte=get_last_day_of_previous_month(),
     )
 
-    # Pause for 5 minutes.
-    time.sleep(400)
+    # Print tick every second for 5 minutes.
+    for i in range(400):
+        print("Tick #", i)
+        time.sleep(400)
