@@ -37,7 +37,6 @@ class OrderAdmin(admin.ModelAdmin):
         "end_date",
         "auto_order_type",
         "status",
-        "service_date",
         "customer_price",
         "customer_invoiced",
         "customer_paid",

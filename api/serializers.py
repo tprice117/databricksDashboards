@@ -245,6 +245,7 @@ class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
+    service_date = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -252,6 +253,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_order_type(self, obj: Order):
         return obj.order_type
+
+    def get_service_date(self, obj: Order):
+        return obj.end_date
 
     # def get_status(self, obj):
     #     return stripe.Invoice.retrieve(

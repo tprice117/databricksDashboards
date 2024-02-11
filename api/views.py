@@ -634,9 +634,11 @@ def order_pricing(request, order_id):
 def get_pricing(request):
     price_mod = pricing.Price_Model(
         data={
-            "seller_location": request.data["seller_location"]
-            if "seller_location" in request.data
-            else None,
+            "seller_location": (
+                request.data["seller_location"]
+                if "seller_location" in request.data
+                else None
+            ),
             "product": request.data["product"],
             "user_address": request.data["user_address"],
             "waste_type": request.data["waste_type"],
@@ -880,9 +882,11 @@ def stripe_customer_portal_url(request, user_address_id):
     user_address = UserAddress.objects.get(id=user_address_id)
 
     billing_portal_session = stripe.billing_portal.Session.create(
-        configuration=settings.STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG
-        if request.GET.get("only_payments", False) == "true"
-        else settings.STRIPE_FULL_CUSTOMER_PORTAL_CONFIG,
+        configuration=(
+            settings.STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG
+            if request.GET.get("only_payments", False) == "true"
+            else settings.STRIPE_FULL_CUSTOMER_PORTAL_CONFIG
+        ),
         customer=user_address.stripe_customer_id,
     )
 
@@ -1137,16 +1141,22 @@ def get_user_group_credit_status(request):
     else:
         return Response("No credit status found.", status=200)
 
+
 def finalize_and_pay_invoices(request):
     BillingUtils.create_stripe_invoices_for_previous_month(finalize_and_pay=True)
     return Response("Success", status=200)
+
 
 def send_monthly_invoices(request):
     BillingUtils.create_stripe_invoices_for_previous_month(finalize_and_pay=False)
     return Response("Success", status=200)
 
+
 def test3(request):
-    return Response("Success", status=200)
+    invoices = SellerInvoicePayable.objects.all()
+    for invoice in invoices:
+        invoice.invoice_date = invoice.created_on.date()
+        invoice.save()
     # email = EmailNotification.objects.create(
     #     subject="Test Email",
     #     html_content="<p>Test Email</p>",

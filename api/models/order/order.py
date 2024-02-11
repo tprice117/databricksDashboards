@@ -46,7 +46,6 @@ class Order(BaseModel):
     )
     start_date = models.DateField()
     end_date = models.DateField()
-    service_date = models.DateField()
     submitted_on = models.DateTimeField(blank=True, null=True)
     stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
@@ -250,13 +249,6 @@ class Order(BaseModel):
         # Ensure end_date is on or before OrderGroup end_date.
         elif self.order_group.end_date and self.end_date > self.order_group.end_date:
             raise ValidationError("End date must be on or before OrderGroup end date")
-        # Ensure service_date is between start_date and end_date.
-        elif self.service_date < self.start_date or (
-            self.order_group.end_date and self.service_date > self.end_date
-        ):
-            raise ValidationError(
-                "Service date must be between start date and end date"
-            )
         # Ensure this Order doesn't overlap with any other Orders for this OrderGroup.
         elif (
             Order.objects.filter(
