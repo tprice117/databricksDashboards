@@ -1,0 +1,63 @@
+{% extends "admin/login.html" %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        {# Change Django default CSS behavior #}
+        .login #content {
+            padding: 20px 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login #content br.clear {
+            display: none;
+        }
+
+        {# Custom CSS #}
+        .alternative-login-section {
+            padding-top: 20px;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <!-- comment out this div to remove built-in Django login -->
+<!--     
+{{ block.super }}
+
+
+        <div id="content-main" style="margin-bottom: 10px;">
+            <form action="{% url 'oidc_authentication_init' %}" method="get" id="login-button">
+
+              <div class="submit-row">
+                <input type="submit" value="Log in to Pathminder Meetings">
+              </div>
+            </form>
+        </div> -->
+
+    <!-- uncomment this section to add a link to the Pathminder login page -->
+
+    <div id="content-main" style="margin-bottom: 10px;">
+        <form action="{% url 'oidc_authentication_init' %}" method="get" id="login-button">
+
+          <div class="submit-row">
+            <input type="submit" value="Login">
+          </div>
+        </form>
+        
+        {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+        <p class="errornote">
+            {{ error }}
+        </p>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- <section class="alternative-login-section">
+        <a href="{% url 'oidc_authentication_init' %}">Pathminder Account Login 🔐</a>
+    </section> -->
+{% endblock %}
