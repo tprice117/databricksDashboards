@@ -87,7 +87,7 @@ class Command(BaseCommand):
         scheduler.add_job(
             send_stripe_invoices,
             trigger=CronTrigger(
-                trigger=CronTrigger(minute="*/1"),
+                minute="*/1",
                 # hour="2",
                 # jitter=360,
             ),
