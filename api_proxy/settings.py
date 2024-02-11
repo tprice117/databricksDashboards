@@ -15,7 +15,15 @@ import sys
 from pathlib import Path
 
 import dj_database_url
+import environ
 from django.core.management.utils import get_random_secret_key
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load our environment variables from the .env file
+# env = environ.Env(DEBUG=(bool, False), USE_I18N=(bool, False))
+# environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY", "django-insecure-0+dmu6*lky0l743o^27tn0)dzoi)6-lzb1i)egsso_84h"
@@ -26,9 +34,6 @@ ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") == "TEST"
 DEBUG = True
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
@@ -38,6 +43,7 @@ INSTALLED_APPS = [
     # END:  Django Admin Interface
     "django.contrib.admin",
     "django.contrib.auth",
+    # "mozilla_django_oidc",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
@@ -93,6 +99,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api_proxy.wsgi.application"
 
+# Add 'mozilla_django_oidc' authentication backend
+# AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
+
+# LOGIN_REDIRECT_URL = "admin:index"
+# LOGOUT_REDIRECT_URL = "admin:index"
 
 # Database.
 if ENVIRONMENT == "TEST":
@@ -213,3 +224,17 @@ else:
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]
+
+# # OIDC settings
+# OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID")
+# OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
+# OIDC_OP_AUTHORIZATION_ENDPOINT = env("OIDC_OP_AUTHORIZATION_ENDPOINT")
+# OIDC_OP_TOKEN_ENDPOINT = env("OIDC_OP_TOKEN_ENDPOINT")
+# OIDC_OP_USER_ENDPOINT = env("OIDC_OP_USER_ENDPOINT")
+# OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO")
+# OIDC_OP_JWKS_ENDPOINT = env("OIDC_OP_JWKS_ENDPOINT")
+# OIDC_OP_LOGOUT_ENDPOINT = env("OIDC_OP_LOGOUT_ENDPOINT")
+# OIDC_OP_LOGOUT_METHOD = env("OIDC_OP_LOGOUT_METHOD")
+# ALLOW_LOGOUT_GET_METHOD = True
+# # We don't want automatic user creation
+# OIDC_CREATE_USER = False

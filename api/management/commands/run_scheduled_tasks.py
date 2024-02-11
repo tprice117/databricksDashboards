@@ -84,18 +84,17 @@ class Command(BaseCommand):
         logger.info("Added job 'send_payouts'.")
 
         # Send Invoices. Run every day at 2am.
-        scheduler.add_job(
-            send_stripe_invoices,
-            trigger=CronTrigger(
-                minute="*/1",
-                # hour="2",
-                # jitter=360,
-            ),
-            id="send_stripe_invoices",
-            max_instances=1,
-            replace_existing=True,
-        )
-        logger.info("Added job 'send_stripe_invoices'.")
+        # scheduler.add_job(
+        #     send_stripe_invoices,
+        #     trigger=CronTrigger(
+        #         # hour="2",
+        #         # jitter=360,
+        #     ),
+        #     id="send_stripe_invoices",
+        #     max_instances=1,
+        #     replace_existing=True,
+        # )
+        # logger.info("Added job 'send_stripe_invoices'.")
 
         try:
             logger.info("Starting scheduler...")

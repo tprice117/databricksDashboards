@@ -1,6 +1,7 @@
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, reverse_lazy
 from django.views.generic import TemplateView
+from django.views.generic.base import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -105,7 +106,9 @@ router.register(r"order-groups-for-seller", views.OrderGroupsForSellerViewSet, "
 router.register(r"orders-for-seller", views.OrdersForSellerViewSet, "api")
 
 urlpatterns = [
+    path("", RedirectView.as_view(url=reverse_lazy("admin:index"))),
     path("admin/", admin.site.urls),
+    path("oidc/", include("mozilla_django_oidc.urls")),
     # START: API URLs.
     path("api/", include("api_proxy.api.v1.urls")),
     path("api/", include(router.urls)),
