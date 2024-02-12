@@ -5,7 +5,7 @@ from payment_methods.models import PaymentMethod
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
     token = serializers.CharField(write_only=True)
-    card = serializers.SerializerMethodField()
+    card = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = PaymentMethod
