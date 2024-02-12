@@ -138,7 +138,6 @@ urlpatterns = [
         name="payout",
     ),
     path("api/sessions", views.StripeCreateCheckoutSession.as_view()),
-    path("api/order/pricing/<str:order_id>/", views.order_pricing),
     # prediction ML
     path("api/prediction", views.Prediction.as_view(), name="predictions"),
     path("api/pricing/", views.get_pricing),

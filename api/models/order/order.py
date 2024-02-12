@@ -47,16 +47,10 @@ class Order(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField()
     submitted_on = models.DateTimeField(blank=True, null=True)
-    stripe_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-    salesforce_order_id = models.CharField(max_length=255, blank=True, null=True)
     schedule_details = models.TextField(
         blank=True, null=True
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
-    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
-    included_weight_tons = models.DecimalField(
-        max_digits=18, decimal_places=4, blank=True, null=True
-    )  # 6.6.23
     billing_comments_internal_use = models.TextField(blank=True, null=True)  # 6.6.23
     schedule_window = models.CharField(
         max_length=35,
@@ -68,38 +62,6 @@ class Order(BaseModel):
         blank=True,
         null=True,
     )  # 6.6.23
-    supplier_payout_status = models.CharField(
-        max_length=35,
-        choices=[
-            ("Not yet paid", "Not yet paid"),
-            ("Process Payment", "Process Payment"),
-            ("Payout Processing Error", "Payout Processing Error"),
-            ("Payout Completed", "Payout Completed"),
-        ],
-        default=[0][0],
-        blank=True,
-        null=True,
-    )  # 6.6.23
-    suppplier_payout_method = models.CharField(
-        max_length=35,
-        choices=[
-            ("Stripe Connect", "Stripe Connect"),
-            ("By Invoice", "By Invoice"),
-            ("Other", "Other"),
-        ],
-        blank=True,
-        null=True,
-    )  # 6.6.23
-    tax_rate = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
-    )  # 6.6.23
-    quantity = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
-    )  # 6.6.23
-    unit_price = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
-    )  # 6.6.23
-    payout_processing_error_comment = models.TextField(blank=True, null=True)  # 6.6.23
     __original_submitted_on = None
 
     def __init__(self, *args, **kwargs):
