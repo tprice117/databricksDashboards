@@ -58,10 +58,10 @@
 
         {% comment %} {% if user.is_authenticated %} {% endcomment %}
         {% comment %} <p>Logged in as: {{ user.email }}</p> {% endcomment %}
-        <form action="{% url 'oidc_logout' %}" method="post">
+        {% comment %} <form action="{% url 'oidc_logout' %}" method="post">
             {% csrf_token %}
             <input type="submit" value="logout">
-        </form>
+        </form> {% endcomment %}
         {% comment %} {% endif %} {% endcomment %}
     </div>
 
