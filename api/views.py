@@ -619,16 +619,6 @@ def delete(endpoint, body):
     return call_TG_API(url, payload)
 
 
-# Non-ML Pricing Endpoint.
-@api_view(["GET"])
-def order_pricing(request, order_id):
-    order = Order.objects.get(id=order_id)
-    invoice = stripe.Invoice.retrieve(order.stripe_invoice_id)
-    return Response(
-        {"order_total": invoice.amount_due / 100}, status=status.HTTP_200_OK
-    )
-
-
 # Pricing Endpoint.
 @api_view(["POST"])
 def get_pricing(request):
