@@ -7,7 +7,9 @@ from random import randint
 import requests
 import stripe
 from django.conf import settings
-from django.db.models import Sum
+from django.db.models import F, OuterRef, Q, Subquery, Sum
+from django.db.models.functions import Round
+from django.http import HttpResponse
 from django_filters import rest_framework as filters
 from rest_framework import status, viewsets
 from rest_framework.decorators import (
@@ -1143,10 +1145,8 @@ def send_monthly_invoices(request):
 
 
 def test3(request):
-    invoices = SellerInvoicePayable.objects.all()
-    for invoice in invoices:
-        invoice.invoice_date = invoice.created_on.date()
-        invoice.save()
+    
+    return HttpResponse(status=200)
     # email = EmailNotification.objects.create(
     #     subject="Test Email",
     #     html_content="<p>Test Email</p>",

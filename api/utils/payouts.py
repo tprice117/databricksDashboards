@@ -121,9 +121,8 @@ class PayoutUtils:
                     ),
                     percision=2,
                 ),
-                total_seller_price=Round(
-                    Sum(F("order_line_items__rate") * F("order_line_items__quantity")),
-                    percision=2,
+                total_seller_price=Sum(
+                    F("order_line_items__rate") * F("order_line_items__quantity")
                 ),
                 seller_location_sends_invoices=F(
                     "order_group__seller_product_seller_location__seller_location__sends_invoices"
