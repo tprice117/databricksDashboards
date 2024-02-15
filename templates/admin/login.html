@@ -55,6 +55,14 @@
         </p>
         {% endfor %}
         {% endif %}
+
+        {% comment %} {% if user.is_authenticated %} {% endcomment %}
+        {% comment %} <p>Logged in as: {{ user.email }}</p> {% endcomment %}
+        {% comment %} <form action="{% url 'oidc_logout' %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="logout">
+        </form> {% endcomment %}
+        {% comment %} {% endif %} {% endcomment %}
     </div>
 
     <!-- <section class="alternative-login-section">
