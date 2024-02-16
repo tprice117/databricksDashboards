@@ -8,7 +8,11 @@ from common.models import BaseModel
 class Product(BaseModel):
     product_code = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    main_product = models.ForeignKey(MainProduct, models.CASCADE)
+    main_product = models.ForeignKey(
+        MainProduct,
+        models.CASCADE,
+        related_name="products",
+    )
     removal_price = models.DecimalField(
         max_digits=18, decimal_places=2, blank=True, null=True
     )

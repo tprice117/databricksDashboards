@@ -6,21 +6,25 @@ from api.models.seller.seller_product import SellerProduct
 from api.models.seller.seller_product_seller_location_material import (
     SellerProductSellerLocationMaterial,
 )
+from api.models.seller.seller_product_seller_location_material_waste_type import (
+    SellerProductSellerLocationMaterialWasteType,
+)
 from api.models.seller.seller_product_seller_location_rental import (
     SellerProductSellerLocationRental,
 )
 from api.models.seller.seller_product_seller_location_service import (
     SellerProductSellerLocationService,
 )
+from api.pricing_ml.pricing import Price_Model
 from common.models import BaseModel
 
 
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(
-        SellerProduct, models.CASCADE, related_name="seller_location_seller_products"
+        SellerProduct, models.CASCADE, related_name="seller_product_seller_locations"
     )
     seller_location = models.ForeignKey(
-        SellerLocation, models.CASCADE, related_name="seller_location_seller_products"
+        SellerLocation, models.CASCADE, related_name="seller_product_seller_locations"
     )
     active = models.BooleanField(default=True)
     total_inventory = models.DecimalField(
@@ -50,6 +54,54 @@ class SellerProductSellerLocation(BaseModel):
             "seller_product",
             "seller_location",
         )
+
+    @property
+    def price_from(self):
+        # Get lowest price WasteType for this SellerProductSellerLocation.
+        seller_product_seller_location_waste_type = (
+            SellerProductSellerLocationMaterialWasteType.objects.filter(
+                seller_product_seller_location_material__seller_product_seller_location=self
+            )
+            .order_by("price_per_ton")
+            .first()
+        )
+
+        # Get pricing information for the lowest price configuration.
+        pricing = Price_Model.get_price_for_seller_product_seller_location(
+            seller_product_seller_location=self,
+            customer_latitude=self.seller_location.latitude,
+            customer_longitude=self.seller_location.longitude,
+            waste_type=(
+                seller_product_seller_location_waste_type.main_product_waste_type.waste_type
+                if seller_product_seller_location_waste_type
+                else None
+            ),
+        )
+
+        # Compute the price.
+        service = (
+            pricing["service"]["rate"]
+            if "service" in pricing and pricing["service"]["is_flat_rate"]
+            else 0
+        )
+        rental = (
+            pricing["rental"]["included_days"]
+            * pricing["rental"]["price_per_day_included"]
+            if "rental" in pricing
+            and "price_per_day_included" in pricing["rental"]
+            and "included_days" in pricing["rental"]
+            else 0
+        )
+        material = (
+            pricing["material"]["price_per_ton"]
+            * pricing["material"]["tonnage_included"]
+            if "material" in pricing
+            and "price_per_ton" in pricing["material"]
+            and "tonnage_included" in pricing["material"]
+            else 0
+        )
+
+        return service + rental + material
 
     def __str__(self):
         return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
