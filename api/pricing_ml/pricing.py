@@ -234,7 +234,7 @@ class Price_Model:
         seller_product_seller_location,
         customer_latitude,
         customer_longitude,
-        waste_type: WasteType | None = None,
+        waste_type: WasteType = None,
         skip_distance=False,
     ):
         # main_product = (
