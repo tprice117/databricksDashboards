@@ -8,7 +8,21 @@ import numpy as np
 import pandas as pd
 import requests
 
-import api.models
+from api.models.disposal_location.disposal_location import DisposalLocation
+from api.models.disposal_location.disposal_location_waste_type import (
+    DisposalLocationWasteType,
+)
+from api.models.main_product.main_product_waste_type import MainProductWasteType
+from api.models.main_product.product import Product
+from api.models.seller.seller_location import SellerLocation
+from api.models.seller.seller_product_seller_location_material_waste_type import (
+    SellerProductSellerLocationMaterialWasteType,
+)
+from api.models.user.user_address import UserAddress
+from api.models.waste_type import WasteType
+
+GOOGLE_MAPS_API = r"AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE"
+FRED_API = r"fa4d32f5c98c51ccb516742cf566950f"
 
 
 class Price_Model:
@@ -19,30 +33,28 @@ class Price_Model:
 
         # Seller Location (if passed).
         self.seller_location = (
-            api.models.SellerLocation.objects.get(id=data["seller_location"])
+            SellerLocation.objects.get(id=data["seller_location"])
             if "seller_location" in data and data["seller_location"]
             else None
         )
 
         # Product.
-        self.product = api.models.Product.objects.get(id=data["product"])
+        self.product = Product.objects.get(id=data["product"])
 
         # User Address.
-        self.user_address = api.models.UserAddress.objects.get(id=data["user_address"])
+        self.user_address = UserAddress.objects.get(id=data["user_address"])
 
         # Waste Type.
         self.waste_type = (
-            api.models.WasteType.objects.get(id=data["waste_type"])
+            WasteType.objects.get(id=data["waste_type"])
             if "waste_type" in data and data["waste_type"]
             else None
         )
 
-        self.google_maps_api = r"AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE"
-        self.fred_api = r"fa4d32f5c98c51ccb516742cf566950f"
-
-    def get_driving_distance(self, lat1, lon1, lat2, lon2, unit="M"):
+    @staticmethod
+    def get_driving_distance(lat1, lon1, lat2, lon2, unit="M"):
         """Use google maps api to calculate the driving distance between two points."""
-        gmaps = googlemaps.Client(key=self.google_maps_api)
+        gmaps = googlemaps.Client(key=GOOGLE_MAPS_API)
         try:
             distance = gmaps.distance_matrix(
                 (lat1, lon1), (lat2, lon2), mode="driving"
@@ -96,10 +108,10 @@ class Price_Model:
             # seller to buyer distance
             lat1, lon1 = customer
             lat2, lon2 = hauler
-            distance_miles = self.get_driving_distance(lat1, lon1, lat2, lon2)
+            distance_miles = Price_Model.get_driving_distance(lat1, lon1, lat2, lon2)
             # buyer to dump distance
             lat3, lon3 = 39.856575, -104.762587  # tower disposal site
-            distance_miles += self.get_driving_distance(lat2, lon2, lat3, lon3)
+            distance_miles += Price_Model.get_driving_distance(lat2, lon2, lat3, lon3)
         except:
             distance_miles = 35  # assume 35 miles if no address is given
 
@@ -156,33 +168,28 @@ class Price_Model:
             print(e)
             return {"status": "Error", "message": str(e)}
 
-    def get_prices(self):
-        # Get SellerLocations that offer the product.
-        seller_products = api.models.SellerProduct.objects.filter(product=self.product)
-        seller_product_seller_locations = (
-            api.models.SellerProductSellerLocation.objects.filter(
-                seller_product__in=seller_products, active=True
-            )
-        )
-
+    def get_prices(self, seller_product_seller_locations):
         if self.seller_location:
             # If SellerLocation is passed, only return price for that SellerLocation.
             seller_product_seller_location = seller_product_seller_locations.filter(
                 seller_location=self.seller_location
             ).first()
-            return self.get_price_for_seller_product_seller_location(
-                seller_product_seller_location
+            return Price_Model.get_price_for_seller_product_seller_location(
+                seller_product_seller_location,
+                self.user_address.latitude,
+                self.user_address.longitude,
+                self.waste_type,
             )
         else:
             # Get prices for each SellerLocation. skip if distance is greater than 40 miles.
             seller_location_prices = []
-            main_product_waste_types = api.models.MainProductWasteType.objects.filter(
+            main_product_waste_types = MainProductWasteType.objects.filter(
                 main_product=self.product.main_product
             )
 
             for seller_product_seller_location in seller_product_seller_locations:
                 # Get distance between seller and customer.
-                seller_customer_distance = self.get_driving_distance(
+                seller_customer_distance = Price_Model.get_driving_distance(
                     seller_product_seller_location.seller_location.latitude,
                     seller_product_seller_location.seller_location.longitude,
                     self.user_address.latitude,
@@ -193,7 +200,7 @@ class Price_Model:
                 if main_product_waste_types.count() > 0 and hasattr(
                     seller_product_seller_location, "material"
                 ):
-                    material_waste_types = api.models.SellerProductSellerLocationMaterialWasteType.objects.filter(
+                    material_waste_types = SellerProductSellerLocationMaterialWasteType.objects.filter(
                         seller_product_seller_location_material=seller_product_seller_location.material
                     )
                 else:
@@ -210,31 +217,53 @@ class Price_Model:
                     ).exists()
                 )
                 if customer_within_seller_service_radius and waste_type_match:
-                    price_obj = self.get_price_for_seller_product_seller_location(
-                        seller_product_seller_location
+                    price_obj = (
+                        Price_Model.get_price_for_seller_product_seller_location(
+                            seller_product_seller_location,
+                            self.user_address.latitude,
+                            self.user_address.longitude,
+                            self.waste_type,
+                        )
                     )
                     seller_location_prices.append(price_obj)
 
             return seller_location_prices
 
+    @staticmethod
     def get_price_for_seller_product_seller_location(
-        self, seller_product_seller_location
+        seller_product_seller_location,
+        customer_latitude,
+        customer_longitude,
+        waste_type: WasteType | None = None,
+        skip_distance=False,
     ):
-        main_product = (
-            seller_product_seller_location.seller_product.product.main_product
-        )
+        # main_product = (
+        #     seller_product_seller_location.seller_product.product.main_product
+        # )
 
         # if main_product.has_service or main_product.has_material:
         #     disposal_location_waste_type = self.get_best_disposal_location(seller_product_seller_location)
 
         # Service price.
-        service = self.get_service_price(seller_product_seller_location)
+        service = Price_Model.get_service_price(
+            seller_product_seller_location,
+            customer_latitude,
+            customer_longitude,
+            skip_distance=skip_distance,
+        )
 
         # Rental
-        rental = self.get_rental_price(seller_product_seller_location)
+        rental = Price_Model.get_rental_price(seller_product_seller_location)
 
         # Material.
-        material = self.get_material_price(seller_product_seller_location)
+        material = (
+            Price_Model.get_material_price(
+                seller_product_seller_location,
+                waste_type=waste_type,
+            )
+            if waste_type
+            else None
+        )
 
         return {
             "seller_product_seller_location": seller_product_seller_location.id,
@@ -243,7 +272,13 @@ class Price_Model:
             "material": material,
         }
 
-    def get_service_price(self, seller_product_seller_location):
+    @staticmethod
+    def get_service_price(
+        seller_product_seller_location,
+        customer_latitude,
+        customer_longitude,
+        skip_distance=False,
+    ):
         if (
             seller_product_seller_location.seller_product.product.main_product.has_service
             and hasattr(seller_product_seller_location, "service")
@@ -258,11 +293,15 @@ class Price_Model:
                 is_flat_rate = False
 
                 # Seller to Customer distance.
-                total_distance = self.get_driving_distance(
-                    seller_product_seller_location.seller_location.latitude,
-                    seller_product_seller_location.seller_location.longitude,
-                    self.user_address.latitude,
-                    self.user_address.longitude,
+                total_distance = (
+                    Price_Model.get_driving_distance(
+                        seller_product_seller_location.seller_location.latitude,
+                        seller_product_seller_location.seller_location.longitude,
+                        customer_latitude,
+                        customer_longitude,
+                    )
+                    if not skip_distance
+                    else None
                 )
 
                 # Cusotomer to Disposal Location distance.
@@ -286,7 +325,10 @@ class Price_Model:
         else:
             return None
 
-    def get_rental_price(self, seller_product_seller_location):
+    @staticmethod
+    def get_rental_price(
+        seller_product_seller_location,
+    ):
         if (
             seller_product_seller_location.seller_product.product.main_product.has_rental
             and hasattr(seller_product_seller_location, "rental")
@@ -308,24 +350,28 @@ class Price_Model:
         else:
             return None
 
-    def get_material_price(self, seller_product_seller_location):
+    @staticmethod
+    def get_material_price(
+        seller_product_seller_location,
+        waste_type: WasteType,
+    ):
         if (
             seller_product_seller_location.seller_product.product.main_product.has_material
             and hasattr(seller_product_seller_location, "material")
         ):
             material = seller_product_seller_location.material
 
-            main_product_waste_type = api.models.MainProductWasteType.objects.get(
+            main_product_waste_type = MainProductWasteType.objects.get(
                 main_product=seller_product_seller_location.seller_product.product.main_product,
-                waste_type=self.waste_type,
+                waste_type=waste_type,
             )
 
             seller_product_seller_location_material_waste_type = (
-                api.models.SellerProductSellerLocationMaterialWasteType.objects.get(
+                SellerProductSellerLocationMaterialWasteType.objects.get(
                     seller_product_seller_location_material=material,
                     main_product_waste_type=main_product_waste_type,
                 )
-                if api.models.SellerProductSellerLocationMaterialWasteType.objects.filter(
+                if SellerProductSellerLocationMaterialWasteType.objects.filter(
                     seller_product_seller_location_material=material,
                     main_product_waste_type=main_product_waste_type,
                 ).exists()
@@ -333,22 +379,26 @@ class Price_Model:
             )
 
             return {
-                "tonnage_included": seller_product_seller_location_material_waste_type.tonnage_included
-                if seller_product_seller_location_material_waste_type
-                else None,
-                "price_per_ton": seller_product_seller_location_material_waste_type.price_per_ton
-                if seller_product_seller_location_material_waste_type
-                else None,
+                "tonnage_included": (
+                    seller_product_seller_location_material_waste_type.tonnage_included
+                    if seller_product_seller_location_material_waste_type
+                    else None
+                ),
+                "price_per_ton": (
+                    seller_product_seller_location_material_waste_type.price_per_ton
+                    if seller_product_seller_location_material_waste_type
+                    else None
+                ),
             }
         else:
             return None
 
     def get_best_disposal_location(self, seller_product_seller_location):
-        disposal_location_waste_types = (
-            api.models.DisposalLocationWasteType.objects.all(waste_type=self.waste_type)
+        disposal_location_waste_types = DisposalLocationWasteType.objects.all(
+            waste_type=self.waste_type
         )
 
-        seller_customer_distance = self.get_driving_distance(
+        seller_customer_distance = Price_Model.get_driving_distance(
             seller_product_seller_location.seller_location.latitude,
             seller_product_seller_location.seller_location.longitude,
             self.user_address.latitude,
@@ -358,7 +408,7 @@ class Price_Model:
         disposal_location_waste_type = None
         best_total_distance = None
         for disposal_location_waste_type in disposal_location_waste_types:
-            disposal_location = api.models.DisposalLocation.objects.get(
+            disposal_location = DisposalLocation.objects.get(
                 id=disposal_location_waste_type.disposal_location
             )
             customer_disposal_distance = self.get_euclidean_distance(

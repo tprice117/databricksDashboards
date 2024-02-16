@@ -65,7 +65,7 @@ class UserGroupAdmin(admin.ModelAdmin):
         return (
             sum(
                 [
-                    seller_location.seller_location_seller_products.count()
+                    seller_location.seller_product_seller_locations.count()
                     for seller_location in seller_locations
                 ]
             )

@@ -1012,29 +1012,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/MainProductCategory'
           description: ''
-    post:
-      operationId: main_product_categories_create
-      tags:
-      - main-product-categories
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductCategory'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductCategory'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductCategory'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductCategory'
-          description: ''
   /api/main-product-categories/{id}/:
     get:
       operationId: main_product_categories_retrieve
@@ -1055,82 +1032,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MainProductCategory'
           description: ''
-    put:
-      operationId: main_product_categories_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product category.
-        required: true
-      tags:
-      - main-product-categories
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductCategory'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductCategory'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductCategory'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductCategory'
-          description: ''
-    patch:
-      operationId: main_product_categories_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product category.
-        required: true
-      tags:
-      - main-product-categories
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductCategory'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductCategory'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductCategory'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductCategory'
-          description: ''
-    delete:
-      operationId: main_product_categories_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product category.
-        required: true
-      tags:
-      - main-product-categories
-      responses:
-        '204':
-          description: No response body
   /api/main-product-category-infos/:
     get:
       operationId: main_product_category_infos_list
@@ -1150,29 +1051,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MainProductCategoryInfo'
-          description: ''
-    post:
-      operationId: main_product_category_infos_create
-      tags:
-      - main-product-category-infos
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductCategoryInfo'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductCategoryInfo'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductCategoryInfo'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductCategoryInfo'
           description: ''
   /api/main-product-category-infos/{id}/:
     get:
@@ -1194,82 +1072,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MainProductCategoryInfo'
           description: ''
-    put:
-      operationId: main_product_category_infos_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product category info.
-        required: true
-      tags:
-      - main-product-category-infos
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductCategoryInfo'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductCategoryInfo'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductCategoryInfo'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductCategoryInfo'
-          description: ''
-    patch:
-      operationId: main_product_category_infos_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product category info.
-        required: true
-      tags:
-      - main-product-category-infos
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductCategoryInfo'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductCategoryInfo'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductCategoryInfo'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductCategoryInfo'
-          description: ''
-    delete:
-      operationId: main_product_category_infos_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product category info.
-        required: true
-      tags:
-      - main-product-category-infos
-      responses:
-        '204':
-          description: No response body
   /api/main-product-infos/:
     get:
       operationId: main_product_infos_list
@@ -1289,29 +1091,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MainProductInfo'
-          description: ''
-    post:
-      operationId: main_product_infos_create
-      tags:
-      - main-product-infos
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductInfo'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductInfo'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductInfo'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductInfo'
           description: ''
   /api/main-product-infos/{id}/:
     get:
@@ -1333,82 +1112,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MainProductInfo'
           description: ''
-    put:
-      operationId: main_product_infos_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product info.
-        required: true
-      tags:
-      - main-product-infos
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductInfo'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductInfo'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductInfo'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductInfo'
-          description: ''
-    patch:
-      operationId: main_product_infos_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product info.
-        required: true
-      tags:
-      - main-product-infos
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductInfo'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductInfo'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductInfo'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductInfo'
-          description: ''
-    delete:
-      operationId: main_product_infos_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product info.
-        required: true
-      tags:
-      - main-product-infos
-      responses:
-        '204':
-          description: No response body
   /api/main-product-service-recurring-frequencies/:
     get:
       operationId: main_product_service_recurring_frequencies_list
@@ -1590,29 +1293,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/MainProductWasteType'
           description: ''
-    post:
-      operationId: main_product_waste_types_create
-      tags:
-      - main-product-waste-types
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductWasteType'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductWasteType'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductWasteType'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductWasteType'
-          description: ''
   /api/main-product-waste-types/{id}/:
     get:
       operationId: main_product_waste_types_retrieve
@@ -1633,82 +1313,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MainProductWasteType'
           description: ''
-    put:
-      operationId: main_product_waste_types_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product waste type.
-        required: true
-      tags:
-      - main-product-waste-types
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProductWasteType'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProductWasteType'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProductWasteType'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductWasteType'
-          description: ''
-    patch:
-      operationId: main_product_waste_types_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product waste type.
-        required: true
-      tags:
-      - main-product-waste-types
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductWasteType'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductWasteType'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProductWasteType'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProductWasteType'
-          description: ''
-    delete:
-      operationId: main_product_waste_types_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product waste type.
-        required: true
-      tags:
-      - main-product-waste-types
-      responses:
-        '204':
-          description: No response body
   /api/main-products/:
     get:
       operationId: main_products_list
@@ -1734,29 +1338,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/MainProduct'
           description: ''
-    post:
-      operationId: main_products_create
-      tags:
-      - main-products
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProduct'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProduct'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProduct'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProduct'
-          description: ''
   /api/main-products/{id}/:
     get:
       operationId: main_products_retrieve
@@ -1777,82 +1358,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MainProduct'
           description: ''
-    put:
-      operationId: main_products_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product.
-        required: true
-      tags:
-      - main-products
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MainProduct'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MainProduct'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MainProduct'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProduct'
-          description: ''
-    patch:
-      operationId: main_products_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product.
-        required: true
-      tags:
-      - main-products
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProduct'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProduct'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedMainProduct'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MainProduct'
-          description: ''
-    delete:
-      operationId: main_products_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this main product.
-        required: true
-      tags:
-      - main-products
-      responses:
-        '204':
-          description: No response body
   /api/order-disposal-tickets/:
     get:
       operationId: order_disposal_tickets_list
@@ -2675,24 +2180,6 @@ paths:
       - {}
       responses:
         '204':
-          description: No response body
-  /api/order/pricing/{order_id}/:
-    get:
-      operationId: order_pricing_retrieve
-      parameters:
-      - in: path
-        name: order_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - order
-      security:
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '200':
           description: No response body
   /api/orders/:
     get:
@@ -3808,10 +3295,6 @@ paths:
           - zh-hant
       tags:
       - schema
-      security:
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -8448,6 +7931,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/MainProductCategory'
           readOnly: true
+        main_product_infos:
+          type: array
+          items:
+            $ref: '#/components/schemas/MainProductInfo'
+          readOnly: true
+        price_from:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -8534,7 +8025,9 @@ components:
       required:
       - created_on
       - main_product_category
+      - main_product_infos
       - name
+      - price_from
       - sort
       - updated_on
     MainProductAddOn:
@@ -8570,6 +8063,11 @@ components:
         id:
           type: string
           nullable: true
+        main_product_category_infos:
+          type: array
+          items:
+            $ref: '#/components/schemas/MainProductCategoryInfo'
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -8600,9 +8098,14 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        price_from:
+          type: string
+          readOnly: true
       required:
       - created_on
+      - main_product_category_infos
       - name
+      - price_from
       - sort
       - updated_on
     MainProductCategoryInfo:
@@ -8772,6 +8275,9 @@ components:
         order_type:
           type: string
           readOnly: true
+        service_date:
+          type: string
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -8788,42 +8294,15 @@ components:
         end_date:
           type: string
           format: date
-        service_date:
-          type: string
-          format: date
         submitted_on:
           type: string
           format: date-time
           nullable: true
-        stripe_invoice_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        salesforce_order_id:
-          type: string
-          nullable: true
-          maxLength: 255
         schedule_details:
           type: string
           nullable: true
-        price:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
-        included_weight_tons:
-          type: number
-          format: double
-          maximum: 100000000000000
-          minimum: -100000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
         billing_comments_internal_use:
           type: string
           nullable: true
@@ -8833,45 +8312,6 @@ components:
           - $ref: '#/components/schemas/ScheduleWindowEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        supplier_payout_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SupplierPayoutStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        suppplier_payout_method:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SuppplierPayoutMethodEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        tax_rate:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        quantity:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        unit_price:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        payout_processing_error_comment:
-          type: string
-          nullable: true
         order_group:
           type: string
           format: uuid
@@ -9481,99 +8921,6 @@ components:
         waste_type:
           type: string
           format: uuid
-    PatchedMainProduct:
-      type: object
-      properties:
-        id:
-          type: string
-          nullable: true
-        main_product_category:
-          allOf:
-          - $ref: '#/components/schemas/MainProductCategory'
-          readOnly: true
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        name:
-          type: string
-          maxLength: 80
-        cubic_yards:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
-        ar_url:
-          type: string
-          format: uri
-          nullable: true
-          maxLength: 200
-        description:
-          type: string
-          nullable: true
-        image_del:
-          type: string
-          nullable: true
-        sort:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        included_tonnage_quantity:
-          type: number
-          format: double
-          maximum: 1000000000000000000
-          minimum: -1000000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        price_per_additional_ton:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        max_tonnage_quantity:
-          type: number
-          format: double
-          maximum: 1000000000000000000
-          minimum: -1000000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        max_rate:
-          type: number
-          format: double
-          maximum: 1000000000000000000
-          minimum: -1000000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        included_rate_quantity:
-          type: number
-          format: double
-          maximum: 1000000000000000000
-          minimum: -1000000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        main_product_code:
-          type: string
-          nullable: true
-          maxLength: 255
-        has_service:
-          type: boolean
-        has_rental:
-          type: boolean
-        has_material:
-          type: boolean
     PatchedMainProductAddOn:
       type: object
       properties:
@@ -9594,94 +8941,6 @@ components:
           type: string
           format: uuid
         add_on:
-          type: string
-          format: uuid
-    PatchedMainProductCategory:
-      type: object
-      properties:
-        id:
-          type: string
-          nullable: true
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        name:
-          type: string
-          maxLength: 80
-        description:
-          type: string
-          nullable: true
-        image:
-          type: string
-          nullable: true
-        icon:
-          type: string
-          nullable: true
-        sort:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        main_product_category_code:
-          type: string
-          nullable: true
-          maxLength: 255
-    PatchedMainProductCategoryInfo:
-      type: object
-      properties:
-        id:
-          type: string
-          nullable: true
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        name:
-          type: string
-          maxLength: 80
-        sort:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        main_product_category:
-          type: string
-          format: uuid
-    PatchedMainProductInfo:
-      type: object
-      properties:
-        id:
-          type: string
-          nullable: true
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        name:
-          type: string
-          maxLength: 80
-        sort:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        main_product:
           type: string
           format: uuid
     PatchedMainProductServiceRecurringFrequency:
@@ -9706,28 +8965,6 @@ components:
         service_recurring_frequency:
           type: string
           format: uuid
-    PatchedMainProductWasteType:
-      type: object
-      properties:
-        id:
-          type: string
-          nullable: true
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        waste_type:
-          type: string
-          format: uuid
-        main_product:
-          type: string
-          format: uuid
     PatchedOrder:
       type: object
       properties:
@@ -9740,6 +8977,9 @@ components:
             $ref: '#/components/schemas/OrderLineItem'
           readOnly: true
         order_type:
+          type: string
+          readOnly: true
+        service_date:
           type: string
           readOnly: true
         created_on:
@@ -9758,42 +8998,15 @@ components:
         end_date:
           type: string
           format: date
-        service_date:
-          type: string
-          format: date
         submitted_on:
           type: string
           format: date-time
           nullable: true
-        stripe_invoice_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        salesforce_order_id:
-          type: string
-          nullable: true
-          maxLength: 255
         schedule_details:
           type: string
           nullable: true
-        price:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
-        included_weight_tons:
-          type: number
-          format: double
-          maximum: 100000000000000
-          minimum: -100000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
         billing_comments_internal_use:
           type: string
           nullable: true
@@ -9803,45 +9016,6 @@ components:
           - $ref: '#/components/schemas/ScheduleWindowEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        supplier_payout_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SupplierPayoutStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        suppplier_payout_method:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SuppplierPayoutMethodEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        tax_rate:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        quantity:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        unit_price:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        payout_processing_error_comment:
-          type: string
-          nullable: true
         order_group:
           type: string
           format: uuid
@@ -10380,6 +9554,9 @@ components:
         supplier_invoice_id:
           type: string
           maxLength: 255
+        invoice_date:
+          type: string
+          format: date
         amount:
           type: number
           format: double
@@ -11729,6 +10906,9 @@ components:
         supplier_invoice_id:
           type: string
           maxLength: 255
+        invoice_date:
+          type: string
+          format: date
         amount:
           type: number
           format: double
@@ -11744,6 +10924,7 @@ components:
       required:
       - amount
       - created_on
+      - invoice_date
       - seller_location
       - supplier_invoice_id
       - updated_on
@@ -12373,28 +11554,6 @@ components:
       - order_group
       - subscription_number
       - updated_on
-    SupplierPayoutStatusEnum:
-      enum:
-      - Not yet paid
-      - Process Payment
-      - Payout Processing Error
-      - Payout Completed
-      type: string
-      description: |-
-        * `Not yet paid` - Not yet paid
-        * `Process Payment` - Process Payment
-        * `Payout Processing Error` - Payout Processing Error
-        * `Payout Completed` - Payout Completed
-    SuppplierPayoutMethodEnum:
-      enum:
-      - Stripe Connect
-      - By Invoice
-      - Other
-      type: string
-      description: |-
-        * `Stripe Connect` - Stripe Connect
-        * `By Invoice` - By Invoice
-        * `Other` - Other
     TaxExemptStatusEnum:
       enum:
       - none

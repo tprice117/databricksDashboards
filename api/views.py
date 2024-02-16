@@ -11,6 +11,7 @@ from django.db.models import F, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Round
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 from rest_framework import status, viewsets
 from rest_framework.decorators import (
     api_view,
@@ -41,6 +42,16 @@ from .pricing_ml import pricing
 from .serializers import *
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+class SpectacularAPIViewNoAuth(SpectacularAPIView):
+    authentication_classes = []
+    permission_classes = []
+
+
+class SpectacularRedocViewNoAuth(SpectacularRedocView):
+    authentication_classes = []
+    permission_classes = []
 
 
 class SellerViewSet(viewsets.ModelViewSet):
@@ -250,7 +261,7 @@ class MainProductAddOnViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
+class MainProductCategoryInfoViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductCategoryInfo.objects.all()
     serializer_class = MainProductCategoryInfoSerializer
     filterset_fields = ["main_product_category"]
@@ -258,14 +269,14 @@ class MainProductCategoryInfoViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class MainProductCategoryViewSet(viewsets.ModelViewSet):
+class MainProductCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
 
 
 @authentication_classes([])
 @permission_classes([])
-class MainProductInfoViewSet(viewsets.ModelViewSet):
+class MainProductInfoViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductInfo.objects.all()
     serializer_class = MainProductInfoSerializer
     filterset_fields = ["main_product"]
@@ -273,7 +284,7 @@ class MainProductInfoViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class MainProductViewSet(viewsets.ModelViewSet):
+class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
     filterset_fields = ["id", "main_product_category__id"]
@@ -281,7 +292,7 @@ class MainProductViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class MainProductWasteTypeViewSet(viewsets.ModelViewSet):
+class MainProductWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductWasteType.objects.all()
     serializer_class = MainProductWasteTypeSerializer
     filterset_fields = ["main_product"]
@@ -636,7 +647,14 @@ def get_pricing(request):
             "waste_type": request.data["waste_type"],
         }
     )
-    return Response(price_mod.get_prices())
+
+    # Get SellerLocations that offer the product.
+    seller_products = SellerProduct.objects.filter(product=self.product)
+    seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
+        seller_product__in=seller_products, active=True
+    )
+
+    return Response(price_mod.get_prices(seller_product_seller_locations))
 
 
 # ml views for pricing
@@ -1145,7 +1163,7 @@ def send_monthly_invoices(request):
 
 
 def test3(request):
-    
+
     return HttpResponse(status=200)
     # email = EmailNotification.objects.create(
     #     subject="Test Email",

@@ -202,10 +202,24 @@ class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
 
 class MainProductCategorySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    main_product_category_infos = MainProductCategoryInfoSerializer(
+        many=True, read_only=True
+    )
 
     class Meta:
         model = MainProductCategory
         fields = "__all__"
+        extra_fields = ["main_product_category_infos"]
+
+    def get_field_names(self, declared_fields, info):
+        expanded_fields = super(MainProductCategorySerializer, self).get_field_names(
+            declared_fields, info
+        )
+
+        if getattr(self.Meta, "extra_fields", None):
+            return expanded_fields + self.Meta.extra_fields
+        else:
+            return expanded_fields
 
 
 class MainProductInfoSerializer(serializers.ModelSerializer):
@@ -219,10 +233,22 @@ class MainProductInfoSerializer(serializers.ModelSerializer):
 class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product_category = MainProductCategorySerializer(read_only=True)
+    main_product_infos = MainProductInfoSerializer(many=True, read_only=True)
 
     class Meta:
         model = MainProduct
         fields = "__all__"
+        extra_fields = ["main_product_infos"]
+
+    def get_field_names(self, declared_fields, info):
+        expanded_fields = super(MainProductSerializer, self).get_field_names(
+            declared_fields, info
+        )
+
+        if getattr(self.Meta, "extra_fields", None):
+            return expanded_fields + self.Meta.extra_fields
+        else:
+            return expanded_field
 
 
 class MainProductWasteTypeSerializer(serializers.ModelSerializer):

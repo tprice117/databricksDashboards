@@ -13,3 +13,17 @@ class MainProductCategory(BaseModel):
 
     def __str__(self):
         return self.name
+
+    @property
+    def price_from(self):
+        # Get all MainProducts for this MainProductCategory.
+        main_products = self.main_products.all()
+
+        # Get the lowest price from all MainProducts.
+        price = None
+        for main_product in main_products:
+            price_from = main_product.price_from
+            if price is None or price_from < price:
+                price = price_from
+
+        return price

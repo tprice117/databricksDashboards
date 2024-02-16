@@ -114,15 +114,10 @@ urlpatterns = [
     path("api/", include(router.urls)),
     # END: API URLs.
     # Schema URLs.
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path(
-        "api/schema/swagger-ui/",
-        SpectacularSwaggerView.as_view(url_name="schema"),
-        name="swagger-ui",
-    ),
+    path("api/schema/", views.SpectacularAPIViewNoAuth.as_view(), name="schema"),
     path(
         "api/schema/redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
+        views.SpectacularRedocViewNoAuth.as_view(url_name="schema"),
         name="redoc",
     ),
     ## Stripe.
