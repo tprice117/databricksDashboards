@@ -30,9 +30,9 @@ class CheckbookIO:
                     "amount": round(
                         float(order.seller_price() - total_paid_to_seller), 2
                     ),
-                    "description": description
-                    if len(description) < 64
-                    else description[:64],
+                    "description": (
+                        description if len(description) < 64 else description[:64]
+                    ),
                     "date": order.end_date.strftime("%Y-%m-%d"),
                 }
             )

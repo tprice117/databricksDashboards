@@ -649,7 +649,7 @@ def get_pricing(request):
     )
 
     # Get SellerLocations that offer the product.
-    seller_products = SellerProduct.objects.filter(product=self.product)
+    seller_products = SellerProduct.objects.filter(product=request.data["product"])
     seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
         seller_product__in=seller_products, active=True
     )
@@ -1163,40 +1163,9 @@ def send_monthly_invoices(request):
 
 
 def test3(request):
+    PayoutUtils.send_payouts()
 
     return HttpResponse(status=200)
-    # email = EmailNotification.objects.create(
-    #     subject="Test Email",
-    #     html_content="<p>Test Email</p>",
-    #     from_email="noreply@trydownstream.io",
-    #     reply_to="noreply@trydownstream.io",
-    # )
-    # EmailNotificationTo.objects.create(
-    #     email_notification=email,
-    #     email="thayes@trydownstream.io",
-    # )
-
-    # return Response("Success", status=200)
-    # invoice_items = StripeUtils.InvoiceItem.get_all()
-
-    # # Filter for only items from invoices with id's in the list below.
-    # invoices = [
-    #     "in_1O4b5UGVYGkmHIWnjM5mQkP4",
-    #     "in_1OV5d1GVYGkmHIWnMFuZBiln",
-    # ]
-
-    # invoice_items = [
-    #     invoice_item
-    #     for invoice_item in invoice_items
-    #     if invoice_item["invoice"] in invoices
-    # ]
-
-    # for invoice_item in invoice_items:
-    #     if "order_line_item_id" in invoice_item["metadata"]:
-    #         order_line_item = OrderLineItem.objects.get(
-    #             id=invoice_item["metadata"]["order_line_item_id"]
-    #         )
-    #         print(order_line_item.order.id, " | ", order_line_item.id)
 
 
 def test2(request):
