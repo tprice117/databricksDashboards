@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand
 from django_apscheduler.jobstores import DjangoJobStore
 
 from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
-from api.scheduled_jobs.send_stripe_invoices import send_stripe_invoices
 from api.scheduled_jobs.update_order_line_item_paid_status import (
     update_order_line_item_paid_status,
 )

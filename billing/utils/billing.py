@@ -305,7 +305,23 @@ class BillingUtils:
 
         for user_address in user_addresses:
             if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
+                # Get all Orders that have been completed and have an end date on
+                # or before the last day of the previous month.
+                orders = Order.objects.filter(
+                    status="COMPLETE",
+                    end_date__lte=datetime.date.today() - datetime.timedelta(days=3),
+                    order_group__user_address=user_address,
+                )
+
+                # Filter Orders. Only include Orders that have not been fully invoiced.
+                orders = [
+                    order
+                    for order in orders
+                    if not order.all_order_line_items_invoiced()
+                ]
+
                 invoice = BillingUtils.create_stripe_invoice_for_user_address(
+                    orders,
                     user_address,
                 )
 
