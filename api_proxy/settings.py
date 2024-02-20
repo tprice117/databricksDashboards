@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "api",
     "payment_methods",
     "notifications",
+    "billing",
     # END: Django Apps.
     "api.pricing_ml",
     "api.utils",

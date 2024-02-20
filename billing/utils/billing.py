@@ -9,6 +9,8 @@ from common.utils import get_last_day_of_previous_month
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
 from common.utils.stripe.stripe_utils import StripeUtils
 
+from .utils import Utils
+
 
 class BillingUtils:
     @staticmethod
@@ -143,7 +145,7 @@ class BillingUtils:
     @staticmethod
     def create_stripe_invoices_for_user_group(
         user_group: UserGroup,
-        end_date_lte: datetime = datetime.date.today() - datetime.timedelta(days=1),
+        end_date_lte: datetime = datetime.date.today() - datetime.timedelta(days=3),
     ):
         """
         Create Stripe Invoices for all Orders that have been completed and have an end date on
@@ -161,8 +163,6 @@ class BillingUtils:
         orders = [
             order for order in orders if not order.all_order_line_items_invoiced()
         ]
-
-        print(orders)
 
         # Get distinct UserAddresses.
         distinct_user_addresses = {order.order_group.user_address for order in orders}
@@ -268,3 +268,27 @@ class BillingUtils:
         )
 
         return stripe_invoice
+
+    def run_interval_based_invoicing():
+        """
+        Runs invoices for all UserGroups based on the UserGroup's invoice frequency.
+        """
+        # Get all UserGroups that need to be invoiced.
+        user_groups = UserGroup.objects.all()
+
+        for user_group in user_groups:
+            if Utils.is_user_groups_invoice_date(user_group):
+                BillingUtils.create_stripe_invoices_for_user_group(user_group)
+
+    def run_project_end_based_invoicing():
+        """
+        Runs invoices for all UserAddresses that have no active projects.
+        """
+        # Get all UserAddresses that need to be invoiced.
+        user_addresses = UserAddress.objects.filter(
+            user_group__invoice_at_project_completion=True,
+        )
+
+        for user_address in user_addresses:
+            if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
+                BillingUtils.create_stripe_invoices_for_user_group(user_address)

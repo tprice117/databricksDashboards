@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import List
 
 import stripe
+from django.conf import settings
 from django.db.models import F, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Round
 from django.template.loader import render_to_string
@@ -91,8 +92,9 @@ class PayoutUtils:
             # Add email report data to list of email report datas.
             email_report_datas.append(email_report_data)
 
-        # Send email report.
-        PayoutUtils._send_email_report(email_report_datas)
+        # Send email report (only in PROD environment, not in DEV).
+        if settings.ENVIRONMENT == "TEST":
+            PayoutUtils._send_email_report(email_report_datas)
 
     @staticmethod
     def get_orders_that_need_to_be_paid_out():

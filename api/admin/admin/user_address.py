@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from api.admin.filters.user_address.admin_tasks import UserAdddressAdminTasksFilter
 from api.models import UserAddress
-from api.utils.billing import BillingUtils
+from billing.utils.billing import BillingUtils
 from common.utils.stripe.stripe_utils import StripeUtils
 
 

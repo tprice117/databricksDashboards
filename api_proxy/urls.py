@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.urls import include, path, reverse_lazy
-from django.views.generic import TemplateView
 from django.views.generic.base import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,

@@ -6,7 +6,7 @@ import stripe
 from django.conf import settings
 
 from api.models import UserGroup
-from api.utils.billing import BillingUtils
+from billing.utils.billing import BillingUtils
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
 
 stripe.api_key = settings.STRIPE_SECRET_KEY

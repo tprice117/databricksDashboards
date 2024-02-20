@@ -11,7 +11,11 @@ from common.models import BaseModel
 
 class OrderGroup(BaseModel):
     user = models.ForeignKey("api.User", models.PROTECT)
-    user_address = models.ForeignKey(UserAddress, models.PROTECT)
+    user_address = models.ForeignKey(
+        UserAddress,
+        models.PROTECT,
+        related_name="order_groups",
+    )
     seller_product_seller_location = models.ForeignKey(
         SellerProductSellerLocation, models.PROTECT
     )
