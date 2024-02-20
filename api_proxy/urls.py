@@ -151,6 +151,4 @@ urlpatterns = [
     path("api/exports/denver-compliance/", views.denver_compliance_report),
     # Test.
     path("test/", views.test3),
-    path("re2ty/send/", views.finalize_and_pay_invoices),
-    path("fr39f/send2/", views.send_monthly_invoices),
 ]

@@ -27,13 +27,17 @@ from api.scheduled_jobs.user_group_open_invoice_reminder import (
     user_group_open_invoice_reminder,
 )
 from api.utils.auth0 import invite_user
-from api.utils.billing import BillingUtils
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.payouts import PayoutUtils
+from billing.utils.billing import BillingUtils
 from common.utils.stripe.stripe_utils import StripeUtils
 from notifications.models.email_notification_to import EmailNotificationTo
 from notifications.models.email_notificiation import EmailNotification
 from notifications.scheduled_jobs.send_emails import send_emails
+from payment_methods.scheduled_jobs.sync_stripe_payment_methods import (
+    sync_stripe_payment_methods,
+)
+from payment_methods.utils.payment_methods import DSPaymentMethods
 
 from .models import *
 
@@ -1152,19 +1156,19 @@ def get_user_group_credit_status(request):
         return Response("No credit status found.", status=200)
 
 
-def finalize_and_pay_invoices(request):
-    BillingUtils.create_stripe_invoices_for_previous_month(finalize_and_pay=True)
-    return Response("Success", status=200)
+@api_view(["POST"])
+def submit_order(request):
+    order = Order.objects.get(pk=request.data["order_id"])
+    order.submitted_on = datetime.datetime.now()
+    order.save()
 
-
-def send_monthly_invoices(request):
-    BillingUtils.create_stripe_invoices_for_previous_month(finalize_and_pay=False)
     return Response("Success", status=200)
 
 
 def test3(request):
-    PayoutUtils.send_payouts()
-
+    print("TEST")
+    sync_stripe_payment_methods()
+    # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
     return HttpResponse(status=200)
 
 
