@@ -181,11 +181,10 @@ class BillingUtils:
             )
 
             # Finalize the invoice.
-            StripeUtils.Invoice.finalize(invoice.id)
-
-            # If autopay is enabled, pay the invoice.
-            if user_address.user_group.autopay:
-                StripeUtils.Invoice.attempt_pay(invoice.id)
+            BillingUtils.finalize_and_pay_stripe_invoice(
+                invoice=invoice,
+                user_group=user_group,
+            )
 
     @staticmethod
     def create_stripe_invoices_for_previous_month(finalize_and_pay: bool):
@@ -219,15 +218,10 @@ class BillingUtils:
             # If finalize_and_pay is True, finalize the invoice and attempt
             # to pay it.
             if finalize_and_pay:
-                # Finalize the invoice.
-                StripeUtils.Invoice.finalize(invoice.id)
-
-                # If autopay is enabled, pay the invoice.
-                if user_address.user_group.autopay if user_address.user_group else True:
-                    try:
-                        StripeUtils.Invoice.attempt_pay(invoice.id)
-                    except Exception as e:
-                        print("Attempt pay error: ", e)
+                BillingUtils.finalize_and_pay_stripe_invoice(
+                    invoice=invoice,
+                    user_group=user_address.user_group,
+                )
 
     @staticmethod
     def get_or_create_invoice_for_user_address(user_address: UserAddress):
@@ -269,6 +263,25 @@ class BillingUtils:
 
         return stripe_invoice
 
+    @staticmethod
+    def finalize_and_pay_stripe_invoice(
+        invoice: stripe.Invoice,
+        user_group: UserGroup,
+    ):
+        """
+        Finalizes and pays a Stripe Invoice for a UserGroup.
+        """
+        # Finalize the invoice.
+        StripeUtils.Invoice.finalize(invoice.id)
+
+        # If autopay is enabled, pay the invoice.
+        if user_group.autopay:
+            try:
+                StripeUtils.Invoice.attempt_pay(invoice.id)
+            except Exception as e:
+                print("Attempt pay error: ", e)
+
+    @staticmethod
     def run_interval_based_invoicing():
         """
         Runs invoices for all UserGroups based on the UserGroup's invoice frequency.
@@ -280,6 +293,7 @@ class BillingUtils:
             if Utils.is_user_groups_invoice_date(user_group):
                 BillingUtils.create_stripe_invoices_for_user_group(user_group)
 
+    @staticmethod
     def run_project_end_based_invoicing():
         """
         Runs invoices for all UserAddresses that have no active projects.
@@ -291,4 +305,12 @@ class BillingUtils:
 
         for user_address in user_addresses:
             if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
-                BillingUtils.create_stripe_invoice_for_user_address(user_address)
+                invoice = BillingUtils.create_stripe_invoice_for_user_address(
+                    user_address,
+                )
+
+                # Finalize the invoice.
+                BillingUtils.finalize_and_pay_stripe_invoice(
+                    invoice=invoice,
+                    user_group=user_address.user_group,
+                )
