@@ -9,6 +9,8 @@ from common.utils import get_last_day_of_previous_month
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
 from common.utils.stripe.stripe_utils import StripeUtils
 
+from .utils import Utils
+
 
 class BillingUtils:
     @staticmethod
@@ -143,7 +145,7 @@ class BillingUtils:
     @staticmethod
     def create_stripe_invoices_for_user_group(
         user_group: UserGroup,
-        end_date_lte: datetime = datetime.date.today() - datetime.timedelta(days=1),
+        end_date_lte: datetime = datetime.date.today() - datetime.timedelta(days=3),
     ):
         """
         Create Stripe Invoices for all Orders that have been completed and have an end date on
@@ -162,8 +164,6 @@ class BillingUtils:
             order for order in orders if not order.all_order_line_items_invoiced()
         ]
 
-        print(orders)
-
         # Get distinct UserAddresses.
         distinct_user_addresses = {order.order_group.user_address for order in orders}
 
@@ -181,11 +181,10 @@ class BillingUtils:
             )
 
             # Finalize the invoice.
-            StripeUtils.Invoice.finalize(invoice.id)
-
-            # If autopay is enabled, pay the invoice.
-            if user_address.user_group.autopay:
-                StripeUtils.Invoice.attempt_pay(invoice.id)
+            BillingUtils.finalize_and_pay_stripe_invoice(
+                invoice=invoice,
+                user_group=user_group,
+            )
 
     @staticmethod
     def create_stripe_invoices_for_previous_month(finalize_and_pay: bool):
@@ -219,15 +218,10 @@ class BillingUtils:
             # If finalize_and_pay is True, finalize the invoice and attempt
             # to pay it.
             if finalize_and_pay:
-                # Finalize the invoice.
-                StripeUtils.Invoice.finalize(invoice.id)
-
-                # If autopay is enabled, pay the invoice.
-                if user_address.user_group.autopay if user_address.user_group else True:
-                    try:
-                        StripeUtils.Invoice.attempt_pay(invoice.id)
-                    except Exception as e:
-                        print("Attempt pay error: ", e)
+                BillingUtils.finalize_and_pay_stripe_invoice(
+                    invoice=invoice,
+                    user_group=user_address.user_group,
+                )
 
     @staticmethod
     def get_or_create_invoice_for_user_address(user_address: UserAddress):
@@ -268,3 +262,71 @@ class BillingUtils:
         )
 
         return stripe_invoice
+
+    @staticmethod
+    def finalize_and_pay_stripe_invoice(
+        invoice: stripe.Invoice,
+        user_group: UserGroup,
+    ):
+        """
+        Finalizes and pays a Stripe Invoice for a UserGroup.
+        """
+        # Finalize the invoice.
+        StripeUtils.Invoice.finalize(invoice.id)
+
+        # If autopay is enabled, pay the invoice.
+        if user_group.autopay:
+            try:
+                StripeUtils.Invoice.attempt_pay(invoice.id)
+            except Exception as e:
+                print("Attempt pay error: ", e)
+
+    @staticmethod
+    def run_interval_based_invoicing():
+        """
+        Runs invoices for all UserGroups based on the UserGroup's invoice frequency.
+        """
+        # Get all UserGroups that need to be invoiced.
+        user_groups = UserGroup.objects.all()
+
+        for user_group in user_groups:
+            if Utils.is_user_groups_invoice_date(user_group):
+                BillingUtils.create_stripe_invoices_for_user_group(user_group)
+
+    @staticmethod
+    def run_project_end_based_invoicing():
+        """
+        Runs invoices for all UserAddresses that have no active projects.
+        """
+        # Get all UserAddresses that need to be invoiced.
+        user_addresses = UserAddress.objects.filter(
+            user_group__invoice_at_project_completion=True,
+        )
+
+        for user_address in user_addresses:
+            if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
+                # Get all Orders that have been completed and have an end date on
+                # or before the last day of the previous month.
+                orders = Order.objects.filter(
+                    status="COMPLETE",
+                    end_date__lte=datetime.date.today() - datetime.timedelta(days=3),
+                    order_group__user_address=user_address,
+                )
+
+                # Filter Orders. Only include Orders that have not been fully invoiced.
+                orders = [
+                    order
+                    for order in orders
+                    if not order.all_order_line_items_invoiced()
+                ]
+
+                invoice = BillingUtils.create_stripe_invoice_for_user_address(
+                    orders,
+                    user_address,
+                )
+
+                # Finalize the invoice.
+                BillingUtils.finalize_and_pay_stripe_invoice(
+                    invoice=invoice,
+                    user_group=user_address.user_group,
+                )

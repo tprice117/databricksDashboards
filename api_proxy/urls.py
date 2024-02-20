@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.urls import include, path, reverse_lazy
-from django.views.generic import TemplateView
 from django.views.generic.base import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -152,6 +151,4 @@ urlpatterns = [
     path("api/exports/denver-compliance/", views.denver_compliance_report),
     # Test.
     path("test/", views.test3),
-    path("re2ty/send/", views.finalize_and_pay_invoices),
-    path("fr39f/send2/", views.send_monthly_invoices),
 ]

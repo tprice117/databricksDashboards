@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "api",
     "payment_methods",
     "notifications",
+    "billing",
     # END: Django Apps.
     "api.pricing_ml",
     "api.utils",
@@ -208,6 +209,9 @@ if ENVIRONMENT == "TEST":
     CHECKBOOK_API_KEY = "deb0f9a94051421fb128c9c6cea47c6d"
     CHECKBOOK_API_SECRET = "LafhEmkgGIdiAZB5Tryz3XNh2rU7KK"
     CHECKBOOK_WEBHOOK_KEY = "65840ee7b90442559953a6d925bc53a5"
+    BASIS_THEORY_USE_PCI_API_KEY = "---"
+    BASIS_THEORY_MANGEMENT_API_KEY = "---"
+    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = "---"
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     STRIPE_PUBLISHABLE_KEY = "pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf"
@@ -225,6 +229,11 @@ else:
     CHECKBOOK_API_KEY = "05658b72728c44c39b84ec174d70273a"
     CHECKBOOK_API_SECRET = "guqPM73fjlPNHddM8GjyVTdKWQIGXE"
     CHECKBOOK_WEBHOOK_KEY = "660813c1ab214bfa8458b81b983cf767"
+    BASIS_THEORY_USE_PCI_API_KEY = "key_us_pvt_2p4fThfGgWbXGDcu3o4Cx7"
+    BASIS_THEORY_MANGEMENT_API_KEY = "key_us_mgt_EnL3iUZoLVb4ucw6VxcHh3"
+    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
+        "7e66bdc8-9c6c-4cfa-8b2c-00bc8e1ec1d5"
+    )
 
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"

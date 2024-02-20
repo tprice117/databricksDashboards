@@ -10,7 +10,13 @@ from common.utils.stripe.stripe_utils import StripeUtils
 
 
 class UserAddress(BaseModel):
-    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
+    user_group = models.ForeignKey(
+        UserGroup,
+        models.CASCADE,
+        related_name="user_addresses",
+        blank=True,
+        null=True,
+    )
     user = models.ForeignKey(User, models.CASCADE, blank=True, null=True)
     user_address_type = models.ForeignKey(
         UserAddressType, models.CASCADE, blank=True, null=True
@@ -59,9 +65,11 @@ class UserAddress(BaseModel):
         customer = StripeUtils.Customer.update(
             customer.id,
             name=user_group_name + " | " + instance.formatted_address(),
-            email=instance.user_group.billing.email
-            if hasattr(instance.user_group, "billing")
-            else (instance.user.email if instance.user else None),
+            email=(
+                instance.user_group.billing.email
+                if hasattr(instance.user_group, "billing")
+                else (instance.user.email if instance.user else None)
+            ),
             # phone = instance.user_group.billing.phone if hasattr(instance.user_group, 'billing') else instance.user.phone,
             shipping={
                 "name": instance.name or instance.formatted_address(),
@@ -74,33 +82,43 @@ class UserAddress(BaseModel):
                 },
             },
             address={
-                "line1": instance.user_group.billing.street
-                if hasattr(instance.user_group, "billing")
-                else instance.street,
-                "city": instance.user_group.billing.city
-                if hasattr(instance.user_group, "billing")
-                else instance.city,
-                "state": instance.user_group.billing.state
-                if hasattr(instance.user_group, "billing")
-                else instance.state,
-                "postal_code": instance.user_group.billing.postal_code
-                if hasattr(instance.user_group, "billing")
-                else instance.postal_code,
+                "line1": (
+                    instance.user_group.billing.street
+                    if hasattr(instance.user_group, "billing")
+                    else instance.street
+                ),
+                "city": (
+                    instance.user_group.billing.city
+                    if hasattr(instance.user_group, "billing")
+                    else instance.city
+                ),
+                "state": (
+                    instance.user_group.billing.state
+                    if hasattr(instance.user_group, "billing")
+                    else instance.state
+                ),
+                "postal_code": (
+                    instance.user_group.billing.postal_code
+                    if hasattr(instance.user_group, "billing")
+                    else instance.postal_code
+                ),
                 "country": "US",
                 # "country": instance.user_group.billing.country
                 # if hasattr(instance.user_group, "billing")
                 # else instance.country,
             },
             metadata={
-                "user_group_id": str(instance.user_group.id)
-                if instance.user_group
-                else None,
+                "user_group_id": (
+                    str(instance.user_group.id) if instance.user_group else None
+                ),
                 "user_address_id": str(instance.id),
                 "user_id": str(instance.user.id) if instance.user else None,
             },
-            tax_exempt=instance.user_group.tax_exempt_status
-            if hasattr(instance.user_group, "billing")
-            else UserGroup.TaxExemptStatus.NONE,
+            tax_exempt=(
+                instance.user_group.tax_exempt_status
+                if hasattr(instance.user_group, "billing")
+                else UserGroup.TaxExemptStatus.NONE
+            ),
         )
 
 

@@ -53,6 +53,10 @@ class UserGroup(BaseModel):
         null=True,
     )
     invoice_day_of_month = models.IntegerField(blank=True, null=True)
+    invoice_at_project_completion = models.BooleanField(
+        default=False,
+        help_text="Send invoices when all OrderGroups in a project are completed.",
+    )
     # END SECTION: Invoicing and Payment
     is_superuser = models.BooleanField(default=False)
     share_code = models.CharField(max_length=6, blank=True)

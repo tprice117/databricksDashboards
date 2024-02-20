@@ -14,7 +14,7 @@ from api.admin.inlines import (
 )
 from api.forms import CsvImportForm
 from api.models import UserGroup
-from api.utils.billing import BillingUtils
+from billing.utils.billing import BillingUtils
 
 
 @admin.register(UserGroup)

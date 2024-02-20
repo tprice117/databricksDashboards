@@ -1,13 +1,8 @@
-import basistheory
-from basistheory.api import tokens_api
 from django.db import models
 
 from api.models import User, UserGroup
 from common.models import BaseModel
-
-configuration = basistheory.Configuration(
-    api_key="key_us_pvt_C2Q1Y1236YdqQDJwMkGqCc",
-)
+from payment_methods.utils import DSPaymentMethods
 
 
 class PaymentMethod(BaseModel):
@@ -60,11 +55,4 @@ class PaymentMethod(BaseModel):
         )
 
     def get_card(self):
-        with basistheory.ApiClient(configuration) as api_client:
-            # Create an instance of the token client
-            token_client = tokens_api.TokensApi(api_client)
-
-            try:
-                return token_client.get_by_id(id=self.token)
-            except basistheory.ApiException as e:
-                print("Exception when calling TokensApi->get_by_id: %s\n" % e)
+        return DSPaymentMethods.Tokens.get_card(self.token)

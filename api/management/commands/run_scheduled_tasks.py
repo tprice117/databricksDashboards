@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand
 from django_apscheduler.jobstores import DjangoJobStore
 
 from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
-from api.scheduled_jobs.send_stripe_invoices import send_stripe_invoices
 from api.scheduled_jobs.update_order_line_item_paid_status import (
     update_order_line_item_paid_status,
 )
@@ -15,6 +14,7 @@ from api.scheduled_jobs.user_group_open_invoice_reminder import (
     user_group_open_invoice_reminder,
 )
 from api.utils.payouts import PayoutUtils
+from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import send_emails
 
 logger = logging.getLogger(__name__)
@@ -36,18 +36,6 @@ class Command(BaseCommand):
             replace_existing=True,
         )
         logger.info("Added job 'update_order_line_item_paid_status'.")
-
-        # Create Stripe invoices from last months orders. Run every day at 4am
-        # on the 1st, 2nd, 3rd, 4th, and 5th of the month.
-        # scheduler.add_job(
-        #     create_stripe_invoices,
-        #     trigger=CronTrigger(day="1-5", hour="*/4"),
-        #     id="create_stripe_invoices",
-        #     max_instances=1,
-        #     replace_existing=True,
-        # )
-        # logger.info("Added job 'create_stripe_invoices'.")
-        # scheduler.remove_job('create_stripe_invoices')
 
         # Send outstanding invoice reminder email. Run every 5 days.
         scheduler.add_job(
@@ -83,18 +71,31 @@ class Command(BaseCommand):
         )
         logger.info("Added job 'send_payouts'.")
 
-        # Send Invoices. Run every day at 2am.
-        # scheduler.add_job(
-        #     send_stripe_invoices,
-        #     trigger=CronTrigger(
-        #         # hour="2",
-        #         # jitter=360,
-        #     ),
-        #     id="send_stripe_invoices",
-        #     max_instances=1,
-        #     replace_existing=True,
-        # )
-        # logger.info("Added job 'send_stripe_invoices'.")
+        # Send interval-based invoices. Run every day at 2am.
+        scheduler.add_job(
+            BillingUtils.run_interval_based_invoicing,
+            trigger=CronTrigger(
+                hour="2",
+                jitter=640,
+            ),
+            id="run_interval_based_invoicing",
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info("Added job 'run_interval_based_invoicing'.")
+
+        # Send project-end based invoices. Run every day at 3am.
+        scheduler.add_job(
+            BillingUtils.run_project_end_based_invoicing,
+            trigger=CronTrigger(
+                hour="3",
+                jitter=640,
+            ),
+            id="run_project_end_based_invoicing",
+            max_instances=1,
+            replace_existing=True,
+        )
+        logger.info("Added job 'run_project_end_based_invoicing'.")
 
         try:
             logger.info("Starting scheduler...")
