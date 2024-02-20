@@ -291,4 +291,4 @@ class BillingUtils:
 
         for user_address in user_addresses:
             if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
-                BillingUtils.create_stripe_invoices_for_user_group(user_address)
+                BillingUtils.create_stripe_invoice_for_user_address(user_address)
