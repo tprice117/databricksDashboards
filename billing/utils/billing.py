@@ -3,11 +3,13 @@ import datetime
 from typing import List
 
 import stripe
+from django.template.loader import render_to_string
 
 from api.models import Order, OrderLineItem, UserAddress, UserGroup
 from common.utils import get_last_day_of_previous_month
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
 from common.utils.stripe.stripe_utils import StripeUtils
+from notifications.utils.add_email_to_queue import add_internal_email_to_queue
 
 from .utils import Utils
 
@@ -286,47 +288,85 @@ class BillingUtils:
         """
         Runs invoices for all UserGroups based on the UserGroup's invoice frequency.
         """
-        # Get all UserGroups that need to be invoiced.
-        user_groups = UserGroup.objects.all()
+        # Capture if the task failed.
+        failed = False
 
-        for user_group in user_groups:
-            if Utils.is_user_groups_invoice_date(user_group):
-                BillingUtils.create_stripe_invoices_for_user_group(user_group)
+        try:
+            # Get all UserGroups that need to be invoiced.
+            user_groups = UserGroup.objects.all()
+
+            for user_group in user_groups:
+                if Utils.is_user_groups_invoice_date(user_group):
+                    BillingUtils.create_stripe_invoices_for_user_group(user_group)
+        except Exception as e:
+            failed = True
+
+        # If the task failed, send an email to the admin.
+        add_internal_email_to_queue(
+            from_email="system@trydownstream.io",
+            subject=f"Interval-based Invoicing {
+                'Failed' if failed else 'Succeeded'
+            }",
+            additional_to_emails=[
+                "lgeber@trydownstream.io",
+            ],
+            html_content="<p>Interval-based invoicing task has "
+            + f"{'failed' if failed else 'succeeded'}.</p>",
+        )
 
     @staticmethod
     def run_project_end_based_invoicing():
         """
         Runs invoices for all UserAddresses that have no active projects.
         """
+        # Capture if the task failed.
+        failed = False
+
         # Get all UserAddresses that need to be invoiced.
-        user_addresses = UserAddress.objects.filter(
-            user_group__invoice_at_project_completion=True,
+        try:
+          user_addresses = UserAddress.objects.filter(
+              user_group__invoice_at_project_completion=True,
+          )
+
+          for user_address in user_addresses:
+              if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
+                  # Get all Orders that have been completed and have an end date on
+                  # or before the last day of the previous month.
+                  orders = Order.objects.filter(
+                      status="COMPLETE",
+                      end_date__lte=datetime.date.today() - datetime.timedelta(days=3),
+                      order_group__user_address=user_address,
+                  )
+
+                  # Filter Orders. Only include Orders that have not been fully invoiced.
+                  orders = [
+                      order
+                      for order in orders
+                      if not order.all_order_line_items_invoiced()
+                  ]
+
+                  invoice = BillingUtils.create_stripe_invoice_for_user_address(
+                      orders,
+                      user_address,
+                  )
+
+                  # Finalize the invoice.
+                  BillingUtils.finalize_and_pay_stripe_invoice(
+                      invoice=invoice,
+                      user_group=user_address.user_group,
+                  )
+        except Exception as e:
+            failed=True
+
+        # If the task failed, send an email to the admin.
+        add_internal_email_to_queue(
+            from_email="system@trydownstream.io",
+            subject=f"Project-based Invoicing {
+                'Failed' if failed else 'Succeeded'
+            }",
+            additional_to_emails=[
+                "lgeber@trydownstream.io",
+            ],
+            html_content="<p>Project-based invoicing task has "
+            + f"{'failed' if failed else 'succeeded'}.</p>",
         )
-
-        for user_address in user_addresses:
-            if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
-                # Get all Orders that have been completed and have an end date on
-                # or before the last day of the previous month.
-                orders = Order.objects.filter(
-                    status="COMPLETE",
-                    end_date__lte=datetime.date.today() - datetime.timedelta(days=3),
-                    order_group__user_address=user_address,
-                )
-
-                # Filter Orders. Only include Orders that have not been fully invoiced.
-                orders = [
-                    order
-                    for order in orders
-                    if not order.all_order_line_items_invoiced()
-                ]
-
-                invoice = BillingUtils.create_stripe_invoice_for_user_address(
-                    orders,
-                    user_address,
-                )
-
-                # Finalize the invoice.
-                BillingUtils.finalize_and_pay_stripe_invoice(
-                    invoice=invoice,
-                    user_group=user_address.user_group,
-                )
