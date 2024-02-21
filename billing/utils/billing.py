@@ -172,9 +172,11 @@ class BillingUtils:
         # For each UserAddress, create or update invoices for all orders.
         user_address: UserAddress
         for user_address in distinct_user_addresses:
-            orders_for_user_address = orders.filter(
-                order_group__user_address=user_address
-            )
+            orders_for_user_address = [
+                order
+                for order in orders
+                if order.order_group.user_address == user_address
+            ]
 
             # Get the current draft invoice or create a new one.
             invoice = BillingUtils.create_stripe_invoice_for_user_address(
@@ -304,14 +306,13 @@ class BillingUtils:
         # If the task failed, send an email to the admin.
         add_internal_email_to_queue(
             from_email="system@trydownstream.io",
-            subject=f"Interval-based Invoicing {
-                'Failed' if failed else 'Succeeded'
-            }",
+            subject=(f"Interval-based Invoicing {'Failed' if failed else 'Succeeded'}"),
             additional_to_emails=[
                 "lgeber@trydownstream.io",
             ],
-            html_content="<p>Interval-based invoicing task has "
-            + f"{'failed' if failed else 'succeeded'}.</p>",
+            html_content=(
+                f"<p>Interval-based invoicing task has {'failed' if failed else 'succeeded'}.</p>"
+            ),
         )
 
     @staticmethod
@@ -324,49 +325,51 @@ class BillingUtils:
 
         # Get all UserAddresses that need to be invoiced.
         try:
-          user_addresses = UserAddress.objects.filter(
-              user_group__invoice_at_project_completion=True,
-          )
+            user_addresses = UserAddress.objects.filter(
+                user_group__invoice_at_project_completion=True,
+            )
 
-          for user_address in user_addresses:
-              if Utils.is_user_address_project_complete_and_needs_invoice(user_address):
-                  # Get all Orders that have been completed and have an end date on
-                  # or before the last day of the previous month.
-                  orders = Order.objects.filter(
-                      status="COMPLETE",
-                      end_date__lte=datetime.date.today() - datetime.timedelta(days=3),
-                      order_group__user_address=user_address,
-                  )
+            for user_address in user_addresses:
+                if Utils.is_user_address_project_complete_and_needs_invoice(
+                    user_address
+                ):
+                    # Get all Orders that have been completed and have an end date on
+                    # or before the last day of the previous month.
+                    orders = Order.objects.filter(
+                        status="COMPLETE",
+                        end_date__lte=datetime.date.today()
+                        - datetime.timedelta(days=3),
+                        order_group__user_address=user_address,
+                    )
 
-                  # Filter Orders. Only include Orders that have not been fully invoiced.
-                  orders = [
-                      order
-                      for order in orders
-                      if not order.all_order_line_items_invoiced()
-                  ]
+                    # Filter Orders. Only include Orders that have not been fully invoiced.
+                    orders = [
+                        order
+                        for order in orders
+                        if not order.all_order_line_items_invoiced()
+                    ]
 
-                  invoice = BillingUtils.create_stripe_invoice_for_user_address(
-                      orders,
-                      user_address,
-                  )
+                    invoice = BillingUtils.create_stripe_invoice_for_user_address(
+                        orders,
+                        user_address,
+                    )
 
-                  # Finalize the invoice.
-                  BillingUtils.finalize_and_pay_stripe_invoice(
-                      invoice=invoice,
-                      user_group=user_address.user_group,
-                  )
+                    # Finalize the invoice.
+                    BillingUtils.finalize_and_pay_stripe_invoice(
+                        invoice=invoice,
+                        user_group=user_address.user_group,
+                    )
         except Exception as e:
-            failed=True
+            failed = True
 
         # If the task failed, send an email to the admin.
         add_internal_email_to_queue(
             from_email="system@trydownstream.io",
-            subject=f"Project-based Invoicing {
-                'Failed' if failed else 'Succeeded'
-            }",
+            subject=(f"Project-based Invoicing {'Failed' if failed else 'Succeeded'}"),
             additional_to_emails=[
                 "lgeber@trydownstream.io",
             ],
-            html_content="<p>Project-based invoicing task has "
-            + f"{'failed' if failed else 'succeeded'}.</p>",
+            html_content=(
+                f"<p>Project-based invoicing task has {'failed' if failed else 'succeeded'}.</p>"
+            ),
         )

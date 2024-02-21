@@ -75,7 +75,7 @@ class Command(BaseCommand):
         scheduler.add_job(
             BillingUtils.run_interval_based_invoicing,
             trigger=CronTrigger(
-                hour="2",
+                hour="9",
                 jitter=640,
             ),
             id="run_interval_based_invoicing",
