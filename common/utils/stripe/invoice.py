@@ -8,15 +8,30 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class Invoice:
     @staticmethod
-    def get_all():
+    def get_all(customer_id: str = None):
         has_more = True
         starting_after = None
         data: List[stripe.Invoice] = []
         while has_more:
-            invoices = stripe.Invoice.list(limit=100, starting_after=starting_after)
-            data = data + invoices["data"]
+            invoices = (
+                stripe.Invoice.list(
+                    limit=100,
+                    starting_after=starting_after,
+                    customer=customer_id,
+                )
+                if customer_id
+                else stripe.Invoice.list(
+                    limit=100,
+                    starting_after=starting_after,
+                )
+            )
+
+            data = data + list(invoice.to_dict() for invoice in invoices["data"])
             has_more = invoices["has_more"]
-            starting_after = data[-1]["id"]
+            print(f"has_more: {has_more}")
+            print(f"len(data): {len(data)}")
+            print(f"starting_after: {data[-1]['id']}" if has_more else "No more")
+            starting_after = data[-1]["id"] if len(data) > 0 else None
         return data
 
     @staticmethod
