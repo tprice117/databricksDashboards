@@ -239,8 +239,25 @@ class BillingUtils:
             + user_address.stripe_customer_id
             + '" AND status:"draft"',
         )
+
+        # Should taxes be collected for this customer?
+        collect_tax = (
+            user_address.user_group.tax_exempt_status
+            != UserGroup.TaxExemptStatus.EXEMPT
+            if user_address.user_group
+            else True
+        )
+
         if len(draft_invoices) > 0:
             stripe_invoice = draft_invoices["data"][0]
+
+            # Ensure automatic taxes are set correctly.
+            stripe.Invoice.modify(
+                stripe_invoice.id,
+                automatic_tax={
+                    "enabled": collect_tax,
+                },
+            )
         else:
             stripe_invoice = stripe.Invoice.create(
                 customer=user_address.stripe_customer_id,
@@ -249,21 +266,10 @@ class BillingUtils:
                 days_until_due=(
                     user_address.user_group.net_terms if user_address.user_group else 0
                 ),
+                automatic_tax={
+                    "enabled": collect_tax,
+                },
             )
-
-        # Enable automatic taxes on the invoice.
-        collect_tax = (
-            user_address.user_group.tax_exempt_status
-            != UserGroup.TaxExemptStatus.EXEMPT
-            if user_address.user_group
-            else True
-        )
-        stripe.Invoice.modify(
-            stripe_invoice.id,
-            automatic_tax={
-                "enabled": collect_tax,
-            },
-        )
 
         return stripe_invoice
 
