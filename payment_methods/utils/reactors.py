@@ -98,7 +98,7 @@ module.exports = async function (req) {
                     "STRIPE_SECRET_KEY": settings.STRIPE_SECRET_KEY,
                 },
                 application=Application(
-                    id="a44b44d5-2cb8-4255-bbf6-dc5884bffdbf",
+                    id="63da13bb-3a2c-4bd5-b747-a5a4cc9f76e7",  # "a44b44d5-2cb8-4255-bbf6-dc5884bffdbf",
                 ),
             )
         )
