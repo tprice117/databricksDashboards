@@ -22,22 +22,28 @@ def sync_stripe_payment_methods():
         user_address: UserAddress
         for user_address in user_addresses:
             # Get all Payment Methods for the UserAddress.
-            stripe_payment_methods = StripeUtils.PaymentMethod.list(
+            stripe_customer_payment_methods = StripeUtils.PaymentMethod.list(
                 customer_id=user_address.stripe_customer_id,
             )
+            print("stripe_customer_payment_methods: ", stripe_customer_payment_methods)
 
             # Check if the Payment Method is already synced with Stripe
             # for the UserAddress.
+            print("------DONE")
             stripe_payment_method = next(
                 (
-                    stripe_payment_method
-                    for stripe_payment_method in stripe_payment_methods
-                    if "token" in stripe_payment_method.metadata
-                    and stripe_payment_method.metadata["token"]
-                    == payment_method.metadata["token"]
+                    method
+                    for method in stripe_customer_payment_methods
+                    if method.get("metadata", {}).get("token") == payment_method.token
                 ),
                 None,
             )
+            # print("stripe_payment_method": stripe_payment_method)
+
+            if stripe_payment_method:
+                print("stripe_payment_method already exists")
+            else:
+                print("stripe_payment_method DOES NOT exist")
 
             # If the Payment Method is not already synced with Stripe
             # for the UserAddress, create it.
@@ -46,11 +52,15 @@ def sync_stripe_payment_methods():
                     response = _create_stripe_payment_method(
                         payment_method=payment_method
                     )
-                    print(response)
-                    print("---------------YES----------------")
+
+                    # Add the Payment Method to the UserAddress/Stripe Customer.
+                    StripeUtils.PaymentMethod.attach(
+                        payment_method_id=response["raw"],
+                        customer_id=user_address.stripe_customer_id,
+                    )
+                    print("stripe_payment_method created")
                 except Exception as e:
                     print(e)
-                    print("---------------NO----------------")
 
 
 def _create_stripe_payment_method(
@@ -59,6 +69,7 @@ def _create_stripe_payment_method(
     return DSPaymentMethods.Reactors.invoke(
         reactor_id=settings.BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID,
         args={
-            "token": "1fe0d69a-3244-47d8-8463-d1171b134753",  # payment_method.token,
+            "token": payment_method.token,
+            "payment_method_id": str(payment_method.id),
         },
     )

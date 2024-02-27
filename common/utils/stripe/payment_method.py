@@ -12,3 +12,13 @@ class PaymentMethod:
             limit=100,
             type="card",
         )["data"]
+
+    @staticmethod
+    def attach(
+        payment_method_id: str,
+        customer_id: str,
+    ):
+        stripe.PaymentMethod.attach(
+            payment_method_id,
+            customer=customer_id,
+        )

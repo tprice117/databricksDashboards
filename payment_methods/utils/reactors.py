@@ -43,6 +43,7 @@ module.exports = async function (req) {
 
     const {
         token,
+        payment_method_id,
     } = req.args;
 
     // Get the raw payment method from the token.
@@ -56,22 +57,18 @@ module.exports = async function (req) {
     } = bt_response.data;
 
     try {
-        // Create a Stripe Token with the raw payment method.
-        const token = await stripe.tokens.create({
+        // Create a Stripe Payment Method with the token.
+        const paymentMethod = await stripe.paymentMethods.create({
+          type: 'card',
           card: {
             number,
             exp_month: expiration_month,
             exp_year: expiration_year,
             cvc,
           },
-        });
-
-        // Create a Stripe Payment Method with the token.
-        const paymentMethod = await stripe.paymentMethods.create({
-          type: 'card',
-          card: token,
           metadata: {
               token,
+              payment_method_id,
           },
         });
 
