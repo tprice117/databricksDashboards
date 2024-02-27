@@ -29,8 +29,12 @@ from api.scheduled_jobs.user_group_open_invoice_reminder import (
 from api.utils.auth0 import invite_user
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.payouts import PayoutUtils
+from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.utils.billing import BillingUtils
 from common.utils.stripe.stripe_utils import StripeUtils
+from communications.scheduled_jobs.sync_intercom_companies import (
+    sync_intercom_companies,
+)
 from notifications.models.email_notification_to import EmailNotificationTo
 from notifications.models.email_notificiation import EmailNotification
 from notifications.scheduled_jobs.send_emails import send_emails
@@ -1167,7 +1171,7 @@ def submit_order(request):
 
 def test3(request):
     print("TEST")
-    sync_stripe_payment_methods()
+    sync_invoices()
     # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
     return HttpResponse(status=200)
 

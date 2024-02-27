@@ -14,6 +14,7 @@ from api.scheduled_jobs.user_group_open_invoice_reminder import (
     user_group_open_invoice_reminder,
 )
 from api.utils.payouts import PayoutUtils
+from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import send_emails
 
@@ -35,7 +36,6 @@ class Command(BaseCommand):
             max_instances=20,
             replace_existing=True,
         )
-        logger.info("Added job 'update_order_line_item_paid_status'.")
 
         # Send outstanding invoice reminder email. Run every 5 days.
         scheduler.add_job(
@@ -45,7 +45,6 @@ class Command(BaseCommand):
             max_instances=1,
             replace_existing=True,
         )
-        logger.info("Added job 'user_group_open_invoice_reminder'.")
 
         # Send Emails. Run every 5 minutes.
         scheduler.add_job(
@@ -55,7 +54,15 @@ class Command(BaseCommand):
             max_instances=20,
             replace_existing=True,
         )
-        logger.info("Added job 'send_emails'.")
+
+        # Sync Stripe Invoices. Run every 1 hour.
+        scheduler.add_job(
+            sync_invoices,
+            trigger=CronTrigger(hour="*/1"),
+            id="sync_invoices",
+            max_instances=1,
+            replace_existing=True,
+        )
 
         # Send Payouts. Run every Wednesday, Thusday, and Friday at 6am.
         scheduler.add_job(
@@ -69,20 +76,18 @@ class Command(BaseCommand):
             max_instances=1,
             replace_existing=True,
         )
-        logger.info("Added job 'send_payouts'.")
 
         # Send interval-based invoices. Run every day at 2am.
         scheduler.add_job(
             BillingUtils.run_interval_based_invoicing,
             trigger=CronTrigger(
-                hour="21",
+                hour="2",
                 jitter=640,
             ),
             id="run_interval_based_invoicing",
             max_instances=1,
             replace_existing=True,
         )
-        logger.info("Added job 'run_interval_based_invoicing'.")
 
         # Send project-end based invoices. Run every day at 3am.
         scheduler.add_job(
@@ -95,7 +100,6 @@ class Command(BaseCommand):
             max_instances=1,
             replace_existing=True,
         )
-        logger.info("Added job 'run_project_end_based_invoicing'.")
 
         try:
             logger.info("Starting scheduler...")

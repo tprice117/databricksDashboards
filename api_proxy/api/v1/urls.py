@@ -1,9 +1,10 @@
 from django.conf.urls import *
 from rest_framework.routers import DefaultRouter
 
+import billing.api.v1.urls as billing
 import payment_methods.api.v1.urls as payment_methods
-import payments.api.v1.urls as payments
 
 router = DefaultRouter()
 router.registry.extend(payment_methods.router.registry)
-urlpatterns = router.urls + payments.urlpatterns
+router.registry.extend(billing.router.registry)
+urlpatterns = router.urls
