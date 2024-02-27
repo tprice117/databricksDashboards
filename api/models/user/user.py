@@ -12,7 +12,13 @@ mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
 
 
 class User(BaseModel):
-    user_group = models.ForeignKey(UserGroup, models.CASCADE, blank=True, null=True)
+    user_group = models.ForeignKey(
+        UserGroup,
+        models.CASCADE,
+        related_name="users",
+        blank=True,
+        null=True,
+    )
     user_id = models.CharField(max_length=255, blank=True)
     mailchip_id = models.CharField(max_length=255, blank=True, null=True)
     intercom_id = models.CharField(max_length=255, blank=True, null=True)

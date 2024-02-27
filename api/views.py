@@ -29,6 +29,9 @@ from api.scheduled_jobs.user_group_open_invoice_reminder import (
 from api.utils.auth0 import invite_user
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.payouts import PayoutUtils
+from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
+    attempt_charge_for_past_due_invoices,
+)
 from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.utils.billing import BillingUtils
 from common.utils.stripe.stripe_utils import StripeUtils
@@ -1171,7 +1174,7 @@ def submit_order(request):
 
 def test3(request):
     print("TEST")
-    sync_invoices()
+    attempt_charge_for_past_due_invoices()
     # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
     return HttpResponse(status=200)
 

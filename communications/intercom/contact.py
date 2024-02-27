@@ -4,28 +4,28 @@ from django.conf import settings
 from communications.intercom.utils.utils import IntercomUtils
 
 
-class Company:
+class Contact:
     @staticmethod
     def all():
         """
-        Get all Companies from Intercom.
+        Get all Contacts from Intercom.
         """
-        return IntercomUtils.get_all("companies")
+        return IntercomUtils.get_all("contacts")
 
     @staticmethod
     def get(company_id: str):
         """
-        Get a Company from Intercom by its ID.
+        Get a Contact from Intercom by its ID.
         """
-        return IntercomUtils.get("companies", company_id)
+        return IntercomUtils.get("contacts", company_id)
 
     @staticmethod
     def create(company_id: str, name: str):
         """
-        Create a Company in Intercom.
+        Create a Contact in Intercom.
         """
         return IntercomUtils.create(
-            "companies",
+            "contacts",
             {
                 "company_id": company_id,
                 "name": name,
@@ -35,10 +35,10 @@ class Company:
     @staticmethod
     def update(company_id: str, name: str):
         """
-        Update a Company in Intercom.
+        Update a Contact in Intercom.
         """
         return IntercomUtils.update(
-            "companies",
+            "contacts",
             company_id,
             {
                 "name": name,
@@ -48,9 +48,9 @@ class Company:
     @staticmethod
     def delete(company_id: str):
         """
-        Delete a Company from Intercom by its ID.
+        Delete a Contact from Intercom by its ID.
         """
-        return IntercomUtils.delete("companies", company_id)
+        return IntercomUtils.delete("contacts", company_id)
 
     @staticmethod
     def attach_user(
@@ -58,7 +58,7 @@ class Company:
         contact_id: str,
     ):
         """
-        Attach a User to a Company in Intercom.
+        Attach a User to a Contact in Intercom.
         """
         return requests.post(
             f"https://api.intercom.io/contacts/{contact_id}/companies",
@@ -67,3 +67,20 @@ class Company:
                 "id": company_id,
             },
         ).json()
+
+    @staticmethod
+    def search_by_user_id(user_id: str):
+        """
+        Search for a Contact in Intercom by its User ID.
+        """
+        return requests.post(
+            f"https://api.intercom.io/contacts/search",
+            headers=IntercomUtils.headers,
+            body={
+                "query": {
+                    "field": "custom_attributes.user_id",
+                    "operator": "=",
+                    "value": user_id,
+                },
+            },
+        ).json()["data"]

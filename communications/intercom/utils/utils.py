@@ -1,12 +1,11 @@
 import requests
 from django.conf import settings
 
-headers = {
-    "Authorization": f"Bearer {settings.INTERCOM_ACCESS_TOKEN}",
-}
-
 
 class IntercomUtils:
+    headers = {
+        "Authorization": f"Bearer {settings.INTERCOM_ACCESS_TOKEN}",
+    }
 
     @staticmethod
     def create(
@@ -18,7 +17,7 @@ class IntercomUtils:
         """
         return requests.post(
             f"https://api.intercom.io/{endpoint}",
-            headers=headers,
+            headers=IntercomUtils.headers,
             json=data,
         ).json()
 
@@ -53,7 +52,7 @@ class IntercomUtils:
         """
         return requests.get(
             f"https://api.intercom.io/{endpoint}?per_page=25&page={page}",
-            headers=headers,
+            headers=IntercomUtils.headers,
         ).json()
 
     @staticmethod
@@ -66,7 +65,7 @@ class IntercomUtils:
         """
         return requests.get(
             f"https://api.intercom.io/{endpoint}/{item_id}",
-            headers=headers,
+            headers=IntercomUtils.headers,
         ).json()
 
     @staticmethod
@@ -80,7 +79,7 @@ class IntercomUtils:
         """
         return requests.put(
             f"https://api.intercom.io/{endpoint}/{item_id}",
-            headers=headers,
+            headers=IntercomUtils.headers,
             json=data,
         ).json()
 
@@ -94,5 +93,5 @@ class IntercomUtils:
         """
         return requests.delete(
             f"https://api.intercom.io/{endpoint}/{item_id}",
-            headers=headers,
+            headers=IntercomUtils.headers,
         ).json()

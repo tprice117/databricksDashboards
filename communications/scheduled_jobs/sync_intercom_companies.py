@@ -12,40 +12,64 @@ def sync_intercom_companies():
     present in the database.
     """
     # Skip this if not in "TEST" mode.
-    if settings.ENVIRONMENT != "TEST":
-        return
+    # if settings.ENVIRONMENT != "TEST":
+    #     return
 
-    intercom = Client(
-        personal_access_token=settings.INTERCOM_ACCESS_TOKEN,
-    )
     print("Syncing Intercom Companies...")
 
-    # Get latest data from Intercom.
+    # # Get latest data from Intercom.
+    # companies = Intercom.Company.all()
+
+    # # Get latest list of UserGroups.
+    # user_groups = UserGroup.objects.all()
+
+    # # Delete Companies that are no longer present in the database.
+    # existing_ids = {company["company_id"] for company in companies}
+    # deleted_ids = existing_ids - {str(user_group.id) for user_group in user_groups}
+    # for deleted_id in deleted_ids:
+    #     Intercom.Company.delete(company_id=deleted_id)
+
+    # # Update or create Companies.
+    # for user_group in user_groups:
+    #     if str(user_group.id) in existing_ids:
+    #         # If the Company already exists, update it.
+    #         Intercom.Company.update(
+    #             company_id=str(user_group.id),
+    #             name=user_group.name,
+    #         )
+    #     else:
+    #         # If the Company does not exist, create it.
+    #         Intercom.Company.create(
+    #             company_id=str(user_group.id),
+    #             name=user_group.name,
+    #         )
+
+    # Sync Users to Companies.
+    # attach_users_to_companies()
+
+
+def attach_users_to_companies():
     companies = Intercom.Company.all()
-    print("Companies:", companies)
+
     for company in companies:
-        print(str(company))
+        try:
+            user_group = UserGroup.objects.get(id=company["company_id"])
+            users = user_group.users.all()
 
-    # Get latest list of UserGroups.
-    user_groups = UserGroup.objects.all()
+            for user in users:
+                # Get all Intercom Contacts with matching "custom_attributes.user_id".
+                contacts = Intercom.Contact.search_by_user_id(user.user_id)
 
-    # Delete Companies that are no longer present in the database.
-    existing_ids = {company["company_id"] for company in companies}
-    deleted_ids = existing_ids - {str(user_group.id) for user_group in user_groups}
-    for deleted_id in deleted_ids:
-        Intercom.Company.delete(company_id=deleted_id)
-
-    # Update or create Companies.
-    for user_group in user_groups:
-        if str(user_group.id) in existing_ids:
-            # If the Company already exists, update it.
-            Intercom.Company.update(
-                company["company_id"],
-                name=user_group.name,
-            )
-        else:
-            # If the Company does not exist, create it.
-            Intercom.Company.create(
-                company_id=str(user_group.id),
-                name=user_group.name,
-            )
+                # Loop through all matching Contacts and attach them to the Company.
+                for contact in contacts:
+                    try:
+                        Intercom.Company.attach_user(
+                            company_id=company["company_id"],
+                            contact_id=contact["id"],
+                        )
+                    except:
+                        print("Contact not found in Intercom")
+                        pass
+        except:
+            print("Company not found in UserGroup")
+            pass

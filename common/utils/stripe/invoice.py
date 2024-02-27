@@ -44,4 +44,8 @@ class Invoice:
 
     @staticmethod
     def attempt_pay(invoice_id: str):
-        return stripe.Invoice.pay(invoice_id)
+        try:
+            invoice = stripe.Invoice.pay(invoice_id)
+            return True if invoice.status == "paid" else False
+        except:
+            return False
