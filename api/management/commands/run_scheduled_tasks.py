@@ -14,6 +14,9 @@ from api.scheduled_jobs.user_group_open_invoice_reminder import (
     user_group_open_invoice_reminder,
 )
 from api.utils.payouts import PayoutUtils
+from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
+    attempt_charge_for_past_due_invoices,
+)
 from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import send_emails
@@ -34,6 +37,7 @@ class Command(BaseCommand):
             trigger=CronTrigger(minute="*/1"),
             id="update_order_line_item_paid_status",
             max_instances=20,
+            jitter=30,
             replace_existing=True,
         )
 
@@ -43,6 +47,7 @@ class Command(BaseCommand):
             trigger=CronTrigger(day="*/5"),
             id="user_group_open_invoice_reminder",
             max_instances=1,
+            jitter=1260,
             replace_existing=True,
         )
 
@@ -52,6 +57,7 @@ class Command(BaseCommand):
             trigger=CronTrigger(minute="*/5"),
             id="send_emails",
             max_instances=20,
+            jitter=120,
             replace_existing=True,
         )
 
@@ -61,6 +67,7 @@ class Command(BaseCommand):
             trigger=CronTrigger(hour="*/1"),
             id="sync_invoices",
             max_instances=1,
+            jitter=640,
             replace_existing=True,
         )
 
@@ -97,6 +104,19 @@ class Command(BaseCommand):
                 jitter=640,
             ),
             id="run_project_end_based_invoicing",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Attempt to charge a payment method on file for all past
+        # due invoices. Run every day at 5am.
+        scheduler.add_job(
+            attempt_charge_for_past_due_invoices,
+            trigger=CronTrigger(
+                hour="5",
+                jitter=640,
+            ),
+            id="attempt_charge_for_past_due_invoices",
             max_instances=1,
             replace_existing=True,
         )
