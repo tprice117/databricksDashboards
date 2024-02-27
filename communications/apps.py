@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class DsStripeConfig(AppConfig):
+class DsIntercomConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "payments"
+    name = "communications"

@@ -252,3 +252,6 @@ OIDC_OP_LOGOUT_METHOD = env("OIDC_OP_LOGOUT_METHOD")
 ALLOW_LOGOUT_GET_METHOD = True
 # We don't want automatic user creation
 OIDC_CREATE_USER = False
+
+# Intercom Access Token.
+INTERCOM_ACCESS_TOKEN = env("INTERCOM_ACCESS_TOKEN")
