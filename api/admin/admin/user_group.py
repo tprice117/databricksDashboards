@@ -53,7 +53,7 @@ class UserGroupAdmin(admin.ModelAdmin):
         return my_urls + urls
 
     def user_count(self, obj):
-        return obj.user_set.count()
+        return obj.users.count()
 
     def seller_locations(self, obj):
         # Get all SellerLocations for this UserGroup.

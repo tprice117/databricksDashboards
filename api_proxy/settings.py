@@ -232,7 +232,7 @@ else:
     BASIS_THEORY_USE_PCI_API_KEY = "key_us_pvt_2p4fThfGgWbXGDcu3o4Cx7"
     BASIS_THEORY_MANGEMENT_API_KEY = "key_us_mgt_EnL3iUZoLVb4ucw6VxcHh3"
     BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
-        "7e66bdc8-9c6c-4cfa-8b2c-00bc8e1ec1d5"
+        "24ddb645-b200-4032-af68-a5f09075d7a2"
     )
 
 # Django Admin Interface settings.

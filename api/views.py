@@ -1174,7 +1174,7 @@ def submit_order(request):
 
 def test3(request):
     print("TEST")
-    attempt_charge_for_past_due_invoices()
+    sync_stripe_payment_methods()
     # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
     return HttpResponse(status=200)
 
