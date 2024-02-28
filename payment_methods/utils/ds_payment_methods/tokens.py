@@ -1,7 +1,9 @@
 import basistheory
 from basistheory.api import tokens_api
 
-from payment_methods.utils.basistheory_config import api_client_use_pci
+from payment_methods.utils.ds_payment_methods.basistheory_config import (
+    api_client_use_pci,
+)
 
 
 class Tokens:

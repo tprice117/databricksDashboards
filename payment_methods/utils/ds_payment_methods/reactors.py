@@ -5,7 +5,7 @@ from basistheory.model.create_reactor_request import CreateReactorRequest
 from basistheory.model.react_request import ReactRequest
 from django.conf import settings
 
-from payment_methods.utils.basistheory_config import (
+from payment_methods.utils.ds_payment_methods.basistheory_config import (
     api_client_management,
     api_client_use_pci,
 )
@@ -43,6 +43,7 @@ module.exports = async function (req) {
 
     const {
         token,
+        payment_method_id,
     } = req.args;
 
     // Get the raw payment method from the token.
@@ -56,22 +57,18 @@ module.exports = async function (req) {
     } = bt_response.data;
 
     try {
-        // Create a Stripe Token with the raw payment method.
-        const token = await stripe.tokens.create({
+        // Create a Stripe Payment Method with the token.
+        const paymentMethod = await stripe.paymentMethods.create({
+          type: 'card',
           card: {
             number,
             exp_month: expiration_month,
             exp_year: expiration_year,
             cvc,
           },
-        });
-
-        // Create a Stripe Payment Method with the token.
-        const paymentMethod = await stripe.paymentMethods.create({
-          type: 'card',
-          card: token,
           metadata: {
               token,
+              payment_method_id,
           },
         });
 
@@ -101,7 +98,7 @@ module.exports = async function (req) {
                     "STRIPE_SECRET_KEY": settings.STRIPE_SECRET_KEY,
                 },
                 application=Application(
-                    id="a44b44d5-2cb8-4255-bbf6-dc5884bffdbf",
+                    id="63da13bb-3a2c-4bd5-b747-a5a4cc9f76e7",  # "a44b44d5-2cb8-4255-bbf6-dc5884bffdbf",
                 ),
             )
         )

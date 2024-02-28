@@ -277,6 +277,7 @@ class BillingUtils:
     def finalize_and_pay_stripe_invoice(
         invoice: stripe.Invoice,
         user_group: UserGroup,
+        send_invoice: bool = True,
     ):
         """
         Finalizes and pays a Stripe Invoice for a UserGroup.
@@ -290,6 +291,13 @@ class BillingUtils:
                 StripeUtils.Invoice.attempt_pay(invoice.id)
             except Exception as e:
                 print("Attempt pay error: ", e)
+
+        # Send the invoice.
+        if send_invoice:
+            try:
+                StripeUtils.Invoice.send_invoice(invoice.id)
+            except Exception as e:
+                print("Send invoice error: ", e)
 
     @staticmethod
     def run_interval_based_invoicing():

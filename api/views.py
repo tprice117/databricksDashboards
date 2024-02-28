@@ -44,7 +44,7 @@ from notifications.scheduled_jobs.send_emails import send_emails
 from payment_methods.scheduled_jobs.sync_stripe_payment_methods import (
     sync_stripe_payment_methods,
 )
-from payment_methods.utils.payment_methods import DSPaymentMethods
+from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 
 from .models import *
 
@@ -1174,8 +1174,8 @@ def submit_order(request):
 
 def test3(request):
     print("TEST")
-    sync_stripe_payment_methods()
-    # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
+    # sync_stripe_payment_methods()
+    DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
     return HttpResponse(status=200)
 
 

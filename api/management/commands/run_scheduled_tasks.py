@@ -20,6 +20,9 @@ from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
 from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import send_emails
+from payment_methods.scheduled_jobs.sync_stripe_payment_methods import (
+    sync_stripe_payment_methods,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +61,16 @@ class Command(BaseCommand):
             id="send_emails",
             max_instances=20,
             jitter=120,
+            replace_existing=True,
+        )
+
+        # Sync Stripe Payment Methods. Run every 5 minutes.
+        scheduler.add_job(
+            sync_stripe_payment_methods,
+            trigger=CronTrigger(minute="*/5"),
+            id="sync_stripe_payment_methods",
+            max_instances=2,
+            jitter=30,
             replace_existing=True,
         )
 

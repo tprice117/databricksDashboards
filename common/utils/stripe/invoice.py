@@ -49,3 +49,7 @@ class Invoice:
             return True if invoice.status == "paid" else False
         except:
             return False
+
+    @staticmethod
+    def send_invoice(invoice_id: str):
+        return stripe.Invoice.send_invoice(invoice_id)

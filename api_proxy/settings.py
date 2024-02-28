@@ -209,9 +209,11 @@ if ENVIRONMENT == "TEST":
     CHECKBOOK_API_KEY = "deb0f9a94051421fb128c9c6cea47c6d"
     CHECKBOOK_API_SECRET = "LafhEmkgGIdiAZB5Tryz3XNh2rU7KK"
     CHECKBOOK_WEBHOOK_KEY = "65840ee7b90442559953a6d925bc53a5"
-    BASIS_THEORY_USE_PCI_API_KEY = "---"
-    BASIS_THEORY_MANGEMENT_API_KEY = "---"
-    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = "---"
+    BASIS_THEORY_USE_PCI_API_KEY = "key_prod_us_pvt_KiJFSya9fsLwgt3Evp5D4H"
+    BASIS_THEORY_MANGEMENT_API_KEY = "key_prod_us_mgt_7SCsqjjKPxw59zfwpYXJUY"
+    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
+        "c726909d-9e0d-4c14-8f5a-b31731f50183"
+    )
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     STRIPE_PUBLISHABLE_KEY = "pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf"
@@ -232,7 +234,7 @@ else:
     BASIS_THEORY_USE_PCI_API_KEY = "key_us_pvt_2p4fThfGgWbXGDcu3o4Cx7"
     BASIS_THEORY_MANGEMENT_API_KEY = "key_us_mgt_EnL3iUZoLVb4ucw6VxcHh3"
     BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
-        "24ddb645-b200-4032-af68-a5f09075d7a2"
+        "bee3a192-1dc3-4073-9132-a48cbee97cb7"
     )
 
 # Django Admin Interface settings.
