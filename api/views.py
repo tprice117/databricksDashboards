@@ -44,7 +44,7 @@ from notifications.scheduled_jobs.send_emails import send_emails
 from payment_methods.scheduled_jobs.sync_stripe_payment_methods import (
     sync_stripe_payment_methods,
 )
-from payment_methods.utils.payment_methods import DSPaymentMethods
+from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 
 from .models import *
 

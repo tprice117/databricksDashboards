@@ -5,7 +5,7 @@ from basistheory.model.create_reactor_request import CreateReactorRequest
 from basistheory.model.react_request import ReactRequest
 from django.conf import settings
 
-from payment_methods.utils.basistheory_config import (
+from payment_methods.utils.ds_payment_methods.basistheory_config import (
     api_client_management,
     api_client_use_pci,
 )
