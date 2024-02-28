@@ -1,7 +1,12 @@
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 
 from api.models import User, UserGroup
 from common.models import BaseModel
+from payment_methods.scheduled_jobs.sync_stripe_payment_methods import (
+    sync_stripe_payment_method,
+)
 from payment_methods.utils import DSPaymentMethods
 
 
@@ -56,3 +61,15 @@ class PaymentMethod(BaseModel):
 
     def get_card(self):
         return DSPaymentMethods.Tokens.get_card(self.token)
+
+
+@receiver(post_save, sender=PaymentMethod)
+def save_payment_method(sender, instance, created, **kwargs):
+    sync_stripe_payment_method(instance)
+
+
+@receiver(post_delete, sender=PaymentMethod)
+def delete_payment_method(sender, instance, **kwargs):
+    sync_stripe_payment_method(instance)
+    # TODO: Delete the token from Basis Theory.
+    # DSPaymentMethods.Tokens.delete(instance.token)
