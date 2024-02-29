@@ -23,6 +23,7 @@ from rest_framework.views import APIView
 
 from api.filters import OrderGroupFilterset
 from api.utils.denver_compliance_report import send_denver_compliance_report
+from billing.utils.billing import BillingUtils
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 
 from .models import *
@@ -1153,8 +1154,9 @@ def submit_order(request):
 
 def test3(request):
     print("TEST")
+    BillingUtils.run_interval_based_invoicing()
     # sync_stripe_payment_methods()
-    DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
+    # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
     return HttpResponse(status=200)
 
 

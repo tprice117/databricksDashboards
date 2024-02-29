@@ -306,6 +306,7 @@ class BillingUtils:
         """
         # Capture if the task failed.
         failed = False
+        error_messages = []
 
         try:
             # Get all UserGroups that need to be invoiced.
@@ -315,7 +316,10 @@ class BillingUtils:
                 if Utils.is_user_groups_invoice_date(user_group):
                     BillingUtils.create_stripe_invoices_for_user_group(user_group)
         except Exception as e:
+            print(e)
             failed = True
+            error_messages.append(str(e))
+            error_messages.append("--------------")
 
         # If the task failed, send an email to the admin.
         add_internal_email_to_queue(
@@ -326,6 +330,10 @@ class BillingUtils:
             ],
             html_content=(
                 f"<p>Interval-based invoicing task has {'failed' if failed else 'succeeded'}.</p>"
+                + "<p>Error messages:</p>"
+                + "<p>"
+                + "<br>".join(error_messages)
+                + "</p>"
             ),
         )
 
