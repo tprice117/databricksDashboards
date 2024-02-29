@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 from api.models import User, UserGroup
@@ -130,8 +130,10 @@ def save_payment_method(sender, instance: PaymentMethod, created, **kwargs):
     instance.sync_stripe_payment_method()
 
 
-@receiver(post_delete, sender=PaymentMethod)
-def delete_payment_method(sender, instance: PaymentMethod, **kwargs):
+@receiver(pre_delete, sender=PaymentMethod)
+def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
+    # Delete the token from Basis Theory.
+    DSPaymentMethods.Tokens.delete(instance.token)
+
+    # Sync the Payment Method with Stripe.
     instance.sync_stripe_payment_method()
-    # TODO: Delete the token from Basis Theory.
-    # DSPaymentMethods.Tokens.delete(instance.token)
