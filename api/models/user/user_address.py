@@ -17,11 +17,23 @@ class UserAddress(BaseModel):
         blank=True,
         null=True,
     )
-    user = models.ForeignKey(User, models.CASCADE, blank=True, null=True)
-    user_address_type = models.ForeignKey(
-        UserAddressType, models.CASCADE, blank=True, null=True
+    user = models.ForeignKey(
+        User,
+        models.CASCADE,
+        blank=True,
+        null=True,
     )
-    stripe_customer_id = models.CharField(max_length=255, blank=True)
+    user_address_type = models.ForeignKey(
+        UserAddressType,
+        models.CASCADE,
+        blank=True,
+        null=True,
+    )
+    stripe_customer_id = models.CharField(
+        max_length=255,
+        blank=True,
+        unique=True,
+    )
     name = models.CharField(max_length=255, blank=True, null=True)
     project_id = models.CharField(max_length=50, blank=True, null=True)
     street = models.TextField(blank=True, null=True)
