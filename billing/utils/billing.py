@@ -3,6 +3,7 @@ import datetime
 from typing import List
 
 import stripe
+from django.conf import settings
 from django.template.loader import render_to_string
 
 from api.models import Order, OrderLineItem, UserAddress, UserGroup
@@ -322,20 +323,23 @@ class BillingUtils:
             error_messages.append("--------------")
 
         # If the task failed, send an email to the admin.
-        add_internal_email_to_queue(
-            from_email="system@trydownstream.io",
-            subject=(f"Interval-based Invoicing {'Failed' if failed else 'Succeeded'}"),
-            additional_to_emails=[
-                "lgeber@trydownstream.io",
-            ],
-            html_content=(
-                f"<p>Interval-based invoicing task has {'failed' if failed else 'succeeded'}.</p>"
-                + "<p>Error messages:</p>"
-                + "<p>"
-                + "<br>".join(error_messages)
-                + "</p>"
-            ),
-        )
+        if settings.ENVIROMENT == "TEST":
+            add_internal_email_to_queue(
+                from_email="system@trydownstream.io",
+                subject=(
+                    f"Interval-based Invoicing {'Failed' if failed else 'Succeeded'}"
+                ),
+                additional_to_emails=[
+                    "lgeber@trydownstream.io",
+                ],
+                html_content=(
+                    f"<p>Interval-based invoicing task has {'failed' if failed else 'succeeded'}.</p>"
+                    + "<p>Error messages:</p>"
+                    + "<p>"
+                    + "<br>".join(error_messages)
+                    + "</p>"
+                ),
+            )
 
     @staticmethod
     def run_project_end_based_invoicing():
