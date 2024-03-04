@@ -168,6 +168,9 @@ CORS_ORIGIN_ALLOW_ALL = True
 # DRF Spectacular settings.
 SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "TITLE": "Downstream API",
+    "DESCRIPTION": "Downstream API for the Downstream Market Network.",
+    "VERSION": "1.0.0",
 }
 
 # Amazon Web Services S3 Configuration.

@@ -32,6 +32,9 @@ class PaymentMethodUserAddress(BaseModel):
                 "with the payment method."
             )
 
+    def is_default_payment_method(self):
+        return self.user_address.default_payment_method == self.payment_method
+
 
 @receiver(post_save, sender=PaymentMethodUserAddress)
 def save_payment_method(sender, instance: PaymentMethodUserAddress, created, **kwargs):

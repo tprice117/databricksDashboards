@@ -1,7 +1,8 @@
 openapi: 3.0.3
 info:
-  title: ''
-  version: 0.0.0
+  title: Downstream API
+  version: 1.0.0
+  description: Downstream API for the Downstream Market Network.
 paths:
   /api/add-on-choices/:
     get:
@@ -9794,6 +9795,10 @@ components:
         id:
           type: string
           nullable: true
+        default:
+          type: boolean
+          readOnly: true
+          description: Indicates if this PaymentMethod is the default for the UserAddress.
         created_on:
           type: string
           format: date-time
@@ -11182,6 +11187,10 @@ components:
         id:
           type: string
           nullable: true
+        default:
+          type: boolean
+          readOnly: true
+          description: Indicates if this PaymentMethod is the default for the UserAddress.
         created_on:
           type: string
           format: date-time
@@ -11200,6 +11209,7 @@ components:
           format: uuid
       required:
       - created_on
+      - default
       - payment_method
       - updated_on
       - user_address
