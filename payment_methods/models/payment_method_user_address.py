@@ -12,6 +12,7 @@ class PaymentMethodUserAddress(BaseModel):
     payment_method = models.ForeignKey(
         PaymentMethod,
         on_delete=models.CASCADE,
+        related_name="payment_method_user_addresses",
     )
     user_address = models.ForeignKey(
         "api.UserAddress",

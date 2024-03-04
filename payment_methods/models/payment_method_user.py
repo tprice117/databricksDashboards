@@ -10,6 +10,7 @@ class PaymentMethodUser(BaseModel):
     payment_method = models.ForeignKey(
         PaymentMethod,
         on_delete=models.CASCADE,
+        related_name="payment_method_users",
     )
     user = models.ForeignKey(
         "api.User",
