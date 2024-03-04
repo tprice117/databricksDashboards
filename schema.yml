@@ -830,6 +830,48 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/invoices/:
+    get:
+      operationId: invoices_list
+      tags:
+      - invoices
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/invoices/{id}/:
+    get:
+      operationId: invoices_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this invoice.
+        required: true
+      tags:
+      - invoices
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
   /api/main-product-add-ons/:
     get:
       operationId: main_product_add_ons_list
@@ -2522,6 +2564,320 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/payment-method-user-addresses/:
+    get:
+      operationId: payment_method_user_addresses_list
+      tags:
+      - payment-method-user-addresses
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethodUserAddress'
+          description: ''
+    post:
+      operationId: payment_method_user_addresses_create
+      tags:
+      - payment-method-user-addresses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUserAddress'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUserAddress'
+          description: ''
+  /api/payment-method-user-addresses/{id}/:
+    get:
+      operationId: payment_method_user_addresses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user address.
+        required: true
+      tags:
+      - payment-method-user-addresses
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUserAddress'
+          description: ''
+    put:
+      operationId: payment_method_user_addresses_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user address.
+        required: true
+      tags:
+      - payment-method-user-addresses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUserAddress'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUserAddress'
+          description: ''
+    patch:
+      operationId: payment_method_user_addresses_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user address.
+        required: true
+      tags:
+      - payment-method-user-addresses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodUserAddress'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodUserAddress'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodUserAddress'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUserAddress'
+          description: ''
+    delete:
+      operationId: payment_method_user_addresses_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user address.
+        required: true
+      tags:
+      - payment-method-user-addresses
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/payment-method-users/:
+    get:
+      operationId: payment_method_users_list
+      tags:
+      - payment-method-users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethodUser'
+          description: ''
+    post:
+      operationId: payment_method_users_create
+      tags:
+      - payment-method-users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUser'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUser'
+          description: ''
+  /api/payment-method-users/{id}/:
+    get:
+      operationId: payment_method_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user.
+        required: true
+      tags:
+      - payment-method-users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUser'
+          description: ''
+    put:
+      operationId: payment_method_users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user.
+        required: true
+      tags:
+      - payment-method-users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUser'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUser'
+          description: ''
+    patch:
+      operationId: payment_method_users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user.
+        required: true
+      tags:
+      - payment-method-users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodUser'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodUser'
+          description: ''
+    delete:
+      operationId: payment_method_users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment method user.
+        required: true
+      tags:
+      - payment-method-users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/payment-methods/:
     get:
       operationId: payment_methods_list
@@ -3260,6 +3616,7 @@ paths:
           - ml
           - mn
           - mr
+          - ms
           - my
           - nb
           - ne
@@ -7901,6 +8258,93 @@ components:
         * `manufacturing` - Manufacturing
         * `waste_collection` - Waste Collection
         * `other` - Other
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user_address:
+          $ref: '#/components/schemas/UserAddress'
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        invoice_id:
+          type: string
+          description: Stripe Invoice ID
+          maxLength: 255
+        amount_due:
+          type: number
+          format: double
+          maximum: 100000000
+          minimum: -100000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        amount_paid:
+          type: number
+          format: double
+          maximum: 100000000
+          minimum: -100000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        amount_remaining:
+          type: number
+          format: double
+          maximum: 100000000
+          minimum: -100000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        hosted_invoice_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        invoice_pdf:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        metadata: {}
+        number:
+          type: string
+          nullable: true
+          maxLength: 255
+        paid:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/InvoiceStatusEnum'
+        total:
+          type: number
+          format: double
+          maximum: 100000000
+          minimum: -100000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+      required:
+      - amount_due
+      - amount_paid
+      - amount_remaining
+      - created_on
+      - id
+      - invoice_id
+      - metadata
+      - paid
+      - status
+      - total
+      - updated_on
+      - user_address
     InvoiceFrequencyEnum:
       enum:
       - 0
@@ -7913,6 +8357,20 @@ components:
         * `7` - Weekly
         * `14` - Bi-Weekly
         * `30` - Monthly
+    InvoiceStatusEnum:
+      enum:
+      - draft
+      - open
+      - paid
+      - void
+      - uncollectible
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `open` - Open
+        * `paid` - Paid
+        * `void` - Void
+        * `uncollectible` - Uncollectible
     LocationTypeEnum:
       enum:
       - Services
@@ -7935,9 +8393,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MainProductInfo'
-          readOnly: true
-        price_from:
-          type: string
           readOnly: true
         created_on:
           type: string
@@ -8027,7 +8482,6 @@ components:
       - main_product_category
       - main_product_infos
       - name
-      - price_from
       - sort
       - updated_on
     MainProductAddOn:
@@ -8098,14 +8552,10 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        price_from:
-          type: string
-          readOnly: true
       required:
       - created_on
       - main_product_category_infos
       - name
-      - price_from
       - sort
       - updated_on
     MainProductCategoryInfo:
@@ -9306,6 +9756,60 @@ components:
         card:
           type: string
           readOnly: true
+        payment_method_user_addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodUserAddress'
+          readOnly: true
+        payment_method_users:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodUser'
+          readOnly: true
+    PatchedPaymentMethodUser:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        payment_method:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
+    PatchedPaymentMethodUserAddress:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        payment_method:
+          type: string
+          format: uuid
+        user_address:
+          type: string
+          format: uuid
     PatchedPayout:
       type: object
       properties:
@@ -10266,6 +10770,10 @@ components:
           type: string
           format: uuid
           nullable: true
+        default_payment_method:
+          type: string
+          format: uuid
+          nullable: true
     PatchedUserAddressType:
       type: object
       properties:
@@ -10341,6 +10849,9 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
+        invoice_at_project_completion:
+          type: boolean
+          description: Send invoices when all OrderGroups in a project are completed.
         is_superuser:
           type: boolean
         share_code:
@@ -10620,12 +11131,78 @@ components:
         card:
           type: string
           readOnly: true
+        payment_method_user_addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodUserAddress'
+          readOnly: true
+        payment_method_users:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethodUser'
+          readOnly: true
       required:
       - card
       - id
+      - payment_method_user_addresses
+      - payment_method_users
       - token
       - user
       - user_group
+    PaymentMethodUser:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        payment_method:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - payment_method
+      - updated_on
+      - user
+    PaymentMethodUserAddress:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        payment_method:
+          type: string
+          format: uuid
+        user_address:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - payment_method
+      - updated_on
+      - user_address
     Payout:
       type: object
       properties:
@@ -11828,6 +12405,10 @@ components:
           type: string
           format: uuid
           nullable: true
+        default_payment_method:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - city
       - country
@@ -11914,6 +12495,9 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
+        invoice_at_project_completion:
+          type: boolean
+          description: Send invoices when all OrderGroups in a project are completed.
         is_superuser:
           type: boolean
         share_code:

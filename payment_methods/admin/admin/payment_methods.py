@@ -1,10 +1,18 @@
 from django.contrib import admin
 
+from payment_methods.admin.inlines import (
+    PaymentMethodUserAddressInline,
+    PaymentMethodUserInline,
+)
 from payment_methods.models import PaymentMethod
 
 
 @admin.register(PaymentMethod)
 class PaymentMethodAdmin(admin.ModelAdmin):
+    inlines = [
+        PaymentMethodUserInline,
+        PaymentMethodUserAddressInline,
+    ]
 
     def get_readonly_fields(self, request, obj=None):
         # If PaymentMethod is being edited,

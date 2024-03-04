@@ -75,6 +75,7 @@ class UserGroup(BaseModel):
         return self.name
 
     def clean(self):
+        super().clean()
         if self.invoice_frequency and self.invoice_day_of_month:
             raise ValidationError(
                 "You cannot set both 'Invoice Frequency' and 'Invoice Day of Month'",
