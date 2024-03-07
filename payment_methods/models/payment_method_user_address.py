@@ -32,6 +32,14 @@ class PaymentMethodUserAddress(BaseModel):
                 "User address is not part of the user group associated "
                 "with the payment method."
             )
+        # Ensure the user address is not already associated with the payment method.
+        if PaymentMethodUserAddress.objects.filter(
+            payment_method=self.payment_method,
+            user_address=self.user_address,
+        ).exists():
+            raise ValidationError(
+                "User address is already associated with the payment method."
+            )
 
     def is_default_payment_method(self):
         return self.user_address.default_payment_method == self.payment_method

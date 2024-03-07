@@ -29,3 +29,9 @@ class PaymentMethodUser(BaseModel):
                 "User is not part of the user group associated "
                 "with the payment method."
             )
+        # Ensure the user is not already associated with the payment method.
+        if PaymentMethodUser.objects.filter(
+            payment_method=self.payment_method,
+            user=self.user,
+        ).exists():
+            raise ValidationError("User is already associated with the payment method.")

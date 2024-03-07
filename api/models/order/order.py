@@ -200,6 +200,7 @@ class Order(BaseModel):
         return total_customer_price, total_invoiced, total_paid
 
     def clean(self):
+        super().clean()
         # Ensure end_date is on or after start_date.
         if self.start_date > self.end_date:
             raise ValidationError("Start date must be on or before end date")
