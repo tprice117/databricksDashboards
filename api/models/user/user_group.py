@@ -71,6 +71,9 @@ class UserGroup(BaseModel):
         max_length=20, choices=TaxExemptStatus.choices, default=TaxExemptStatus.NONE
     )
 
+    intercom_id = models.CharField(max_length=255, blank=True, null=True,
+                                   help_text="This is the company_id in Intercom.")
+
     def __str__(self):
         return self.name
 
