@@ -3,11 +3,13 @@ import string
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
+import threading
 
 from api.models.order.order import Order
 from api.models.seller.seller import Seller
 from common.models import BaseModel
+from communications.intercom.intercom import Intercom
 
 
 class UserGroup(BaseModel):
@@ -94,8 +96,25 @@ class UserGroup(BaseModel):
                     random.choice(string.ascii_uppercase + string.digits)
                     for _ in range(6)
                 )
-            instance.share_code = share_code
-            instance.save()
+            # Save via update so this post_create is not called a second time.
+            # instance.share_code = share_code
+            # instance.save()
+            UserGroup.objects.filter(id=instance.id).update(share_code=share_code)
+        # Update Intercom company asynchronously.
+        # Note: This is done asynchronously because it is not critical.
+        p = threading.Thread(target=instance.intercom_sync)
+        p.start()
+
+    def intercom_sync(self):
+        try:
+            # Update or create Company in Intercom
+            company = Intercom.Company.update_or_create(str(self.id), self.name)
+            if company and self.intercom_id != company["id"]:
+                UserGroup.objects.filter(id=self.id).update(intercom_id=company["id"])
+            return company
+        except Exception as e:
+            print(f"intercom_sync error: {e}")
+            # TODO: Log error or raise exception
 
     def credit_limit_used(self):
         orders = Order.objects.filter(order_group__user_address__user_group=self)
@@ -112,5 +131,14 @@ class UserGroup(BaseModel):
         credit_used = total_customer_price - total_paid
         return credit_used
 
+    def post_delete(sender, instance, **kwargs):
+        # Delete intercom Company.
+        try:
+            Intercom.Contact.delete(instance.intercom_id)
+        except Exception as e:
+            print(f"UserGroup.post_delete error: {e}")
+            # TODO: Log error or raise exception
+
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)
+post_delete.connect(UserGroup.post_delete, sender=UserGroup)
