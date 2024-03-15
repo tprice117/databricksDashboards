@@ -1,7 +1,5 @@
-from django.conf import settings
-from intercom.client import Client
-
 from api.models.user.user_group import UserGroup
+from api.models.user.user import User
 from communications.intercom.intercom import Intercom
 
 
@@ -48,28 +46,30 @@ def sync_intercom_companies():
     # attach_users_to_companies()
 
 
-def attach_users_to_companies():
+def attach_users_to_companies(_debug=False):
+    """
+    Attach Users to Companies in Intercom.
+    This will also delete companies in Intercom that are no longer present in the Downstream database.
+    """
+    # Get all UserGroups (UserGroups are called Companies in Intercom).
+    user_groups = UserGroup.objects.all()
+    # Get all Intercom Companies.
     companies = Intercom.Company.all()
 
-    for company in companies:
-        try:
-            user_group = UserGroup.objects.get(id=company["company_id"])
-            users = user_group.users.all()
+    # Loop all UserGroups and create or update Companies in Intercom.
+    for user_group in user_groups:
+        company = user_group.intercom_sync()
+        if company:
+            # Delete company from companies dictionary
+            if company["id"] in companies:
+                del companies[company["id"]]
 
-            for user in users:
-                # Get all Intercom Contacts with matching "custom_attributes.user_id".
-                contacts = Intercom.Contact.search_by_user_id(user.user_id)
+    # Delete companies in Intercom that are no longer present in the Downstream database.
+    for company in companies.values():
+        Intercom.Company.delete(company["id"])
 
-                # Loop through all matching Contacts and attach them to the Company.
-                for contact in contacts:
-                    try:
-                        Intercom.Company.attach_user(
-                            company_id=company["company_id"],
-                            contact_id=contact["id"],
-                        )
-                    except:
-                        print("Contact not found in Intercom")
-                        pass
-        except:
-            print("Company not found in UserGroup")
-            pass
+    # Get all users from the UserGroup.
+    # Loop all users and create/update info in Intercom
+    users = User.objects.all()
+    for user in users:
+        user.intercom_sync()

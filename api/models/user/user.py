@@ -2,7 +2,9 @@ import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_delete
+import threading
 from intercom.client import Client
+from communications.intercom.intercom import Intercom
 
 from api.models.user.user_group import UserGroup
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
@@ -38,6 +40,13 @@ class User(BaseModel):
 
     def __str__(self):
         return self.email
+
+    @property
+    def full_name(self):
+        name = self.first_name or self.last_name
+        if (self.first_name and self.last_name):
+            name = self.first_name + " " + self.last_name
+        return name
 
     def save(self, *args, **kwargs):
         if not self.user_id:
@@ -87,6 +96,23 @@ class User(BaseModel):
                 except:
                     print("An exception occurred.")
 
+        # Create new Intercom account if no intercom_id exists
+        if not self.intercom_id:
+            # Create Intercom contact synchronously, so that the user has a good intercom_id.
+            contact = self.intercom_sync(save_data=False, create_company=False)
+            if contact:
+                self.intercom_id = contact["id"]
+                if (self.user_group):
+                    # Update Intercom contact asynchronously to speed up save.
+                    # Note: This is done asynchronously because it is not critical.
+                    p = threading.Thread(target=self.intercom_sync)
+                    p.start()
+        else:
+            # Update Intercom contact asynchronously to speed up save.
+            # Note: This is done asynchronously because it is not critical.
+            p = threading.Thread(target=self.intercom_sync)
+            p.start()
+
         super(User, self).save(*args, **kwargs)
 
     def post_delete(sender, instance, **kwargs):
@@ -102,15 +128,44 @@ class User(BaseModel):
 
         # Delete intercom user.
         try:
-            intercom = Client(
-                personal_access_token="dG9rOjVlZDVhNWRjXzZhOWNfNGYwYl9hN2MyX2MzZmYzNzBmZDhkNDoxOjA="
-            )
-            contact = intercom.leads.find(id=instance.intercom_id)
-            intercom.leads.delete(contact)
+            Intercom.Contact.delete(instance.intercom_id)
         except Exception as e:
             print("something went wrong with intercom")
             print(e)
             pass
+
+    def intercom_sync(self, save_data=True, create_company=True):
+        """Synchronizes the user's data with Intercom.
+
+        Args:
+            create_company (bool, optional): Indicates whether to create a company in Intercom if it doesn't exist. Defaults to True.
+
+        Returns:
+            dict: The ContactType from Intercom.
+        """
+        if self.intercom_id:
+            contact = Intercom.Contact.get(self.intercom_id)
+            if contact:
+                if (contact["name"] != self.full_name or
+                    contact["email"] != self.email or
+                    contact["phone"] != self.phone or
+                        contact["avatar"] != self.photo_url):
+                    Intercom.Contact.update(self.intercom_id, str(self.id), self.email, name=self.full_name,
+                                            phone=self.phone, avatar=self.photo_url)
+        else:
+            contact = Intercom.Contact.create(str(self.id), self.email,
+                                              name=self.full_name, phone=self.phone, avatar=self.photo_url)
+            if contact and save_data:
+                User.objects.filter(id=self.id).update(intercom_id=contact["id"])
+        if create_company and self.user_group and contact:
+            # Update or create Company in Intercom
+            company = Intercom.Company.update_or_create(str(self.user_group.id), self.user_group.name)
+            if company:
+                # Attach user to company
+                Intercom.Contact.attach_user(company["id"], self.intercom_id)
+                if self.user_group.intercom_id != company["id"] and save_data:
+                    UserGroup.objects.filter(id=self.user_group.id).update(intercom_id=company["id"])
+        return contact
 
 
 post_delete.connect(User.post_delete, sender=User)
