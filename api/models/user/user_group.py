@@ -134,7 +134,7 @@ class UserGroup(BaseModel):
     def post_delete(sender, instance, **kwargs):
         # Delete intercom Company.
         try:
-            Intercom.Contact.delete(instance.intercom_id)
+            Intercom.Company.delete(instance.intercom_id)
         except Exception as e:
             print(f"UserGroup.post_delete error: {e}")
             # TODO: Log error or raise exception
