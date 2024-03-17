@@ -75,7 +75,7 @@ class PaymentMethod(BaseModel):
             },
         )
 
-    def sync_stripe_payment_method(self):
+    def sync_stripe_payment_method(self, user_address: UserAddress = None):
         """
         Sync the Payment Method with Stripe according to the
         UserGroup and associated UserAddresses.
@@ -83,7 +83,9 @@ class PaymentMethod(BaseModel):
         # For the Payment Method UserGroup, find any UserAddresses
         # (Stripe Customers) that don't have the Payment Method
         # (see the payment_method.metadata["token"]).
-        user_addresses = self.user_group.user_addresses.all()
+        user_addresses = (
+            self.user_group.user_addresses.all() if not user_address else [user_address]
+        )
 
         # Iterate over all UserAddresses and sync them with Stripe.
         user_address: UserAddress
