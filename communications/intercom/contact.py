@@ -1,9 +1,13 @@
 import requests
 from typing import Optional, Union
 import re
+import logging
 
 from communications.intercom.utils.utils import IntercomUtils
 from communications.intercom.typings import CompanyType, ContactType
+
+
+logger = logging.getLogger(__name__)
 
 
 def extract_id_from_error(err: str) -> Optional[str]:
@@ -41,7 +45,7 @@ class Contact:
         if resp.status_code < 400:
             return ContactType(resp.data)
         elif resp.status_code == 404:
-            pass  # TODO: Log error or raise exception
+            logger.error(f"Contact.get: [{resp.status_code}]-[NOT FOUND]")
         elif resp.status_code == 409:
             err_list = resp.data.get("errors", [])
             for err in err_list:
@@ -49,10 +53,9 @@ class Contact:
                     contact_id = extract_id_from_error(err["message"])
                     if contact_id:
                         return Contact.get(contact_id)
-            # TODO: Log error or raise exception
+            logger.error(f"Contact.get: [{resp.status_code}]-[{resp.data}]")
         else:
-            # TODO: Log error or raise exception
-            pass
+            logger.error(f"Contact.get: [{resp.status_code}]-[{resp.data}]")
 
     @staticmethod
     def create(
@@ -97,14 +100,13 @@ class Contact:
                     contact_id = extract_id_from_error(err["message"])
                     if contact_id:
                         if err["message"].find("archived") != -1:
-                            # TODO: Unarchive contact
+                            # Unarchive contact
                             return Contact.unarchive(contact_id)
                         else:
                             return Contact.get(contact_id)
-            # TODO: Log error or raise exception
+            logger.error(f"Contact.create: [{resp.status_code}]-[{resp.data}]")
         else:
-            # TODO: Log error or raise exception
-            pass
+            logger.error(f"Contact.create: [{resp.status_code}]-[{resp.data}]")
 
     @staticmethod
     def update(contact_id: str, external_id: str, email: str, name: str = None, phone: str = None, avatar: str = None,
@@ -141,10 +143,9 @@ class Contact:
         if resp.status_code < 400:
             return ContactType(resp.data)
         elif resp.status_code == 404:
-            pass  # User not found
+            logger.error(f"Contact.update: [{resp.status_code}]-[NOT FOUND]")  # User not found
         else:
-            # TODO: Log error or raise exception.
-            pass
+            logger.error(f"Contact.update: [{resp.status_code}]-[{resp.data}]")
 
     @staticmethod
     def delete(contact_id: str) -> Union[dict, None]:
@@ -162,9 +163,9 @@ class Contact:
         if resp.status_code < 400:
             return resp.data
         elif resp.status_code == 404:
-            pass  # Contact not found
+            logger.warning(f"Contact.delete: [{resp.status_code}]-[NOT FOUND]")  # Contact not found
         else:
-            # TODO: Log error or raise exception.
+            logger.error(f"Contact.update: [{resp.status_code}]-[{resp.data}]")
             pass
 
     @staticmethod
@@ -193,10 +194,9 @@ class Contact:
         if resp.status_code < 400:
             return CompanyType(resp.json())
         elif resp.status_code == 404:
-            pass  # Company not found
+            logger.error(f"Contact.attach_user: [{resp.status_code}]-[{resp.content}]")  # Company not found
         else:
-            # TODO: Log error or raise exception.
-            pass
+            logger.error(f"Contact.attach_user: [{resp.status_code}]-[{resp.content}]")
 
     @staticmethod
     def search_by_user_id(user_id: str):
@@ -259,5 +259,4 @@ class Contact:
         if resp.status_code < 400:
             return Contact.get(contact_id)
         else:
-            # TODO: Log error or raise exception
-            pass
+            logger.error(f"Contact.unarchive: [{resp.status_code}]-[{resp.content}]")
