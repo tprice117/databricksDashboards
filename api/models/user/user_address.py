@@ -29,6 +29,12 @@ class UserAddress(BaseModel):
         blank=True,
         null=True,
     )
+    default_payment_method = models.ForeignKey(
+        "payment_methods.PaymentMethod",
+        models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     stripe_customer_id = models.CharField(
         max_length=255,
         blank=True,

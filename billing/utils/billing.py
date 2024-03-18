@@ -325,12 +325,12 @@ class BillingUtils:
         # If the task failed, send an email to the admin.
         if settings.ENVIROMENT == "TEST":
             add_internal_email_to_queue(
-                from_email="system@trydownstream.io",
+                from_email="system@trydownstream.com",
                 subject=(
                     f"Interval-based Invoicing {'Failed' if failed else 'Succeeded'}"
                 ),
                 additional_to_emails=[
-                    "lgeber@trydownstream.io",
+                    "lgeber@trydownstream.com",
                 ],
                 html_content=(
                     f"<p>Interval-based invoicing task has {'failed' if failed else 'succeeded'}.</p>"
@@ -390,10 +390,10 @@ class BillingUtils:
 
         # If the task failed, send an email to the admin.
         add_internal_email_to_queue(
-            from_email="system@trydownstream.io",
+            from_email="system@trydownstream.com",
             subject=(f"Project-based Invoicing {'Failed' if failed else 'Succeeded'}"),
             additional_to_emails=[
-                "lgeber@trydownstream.io",
+                "lgeber@trydownstream.com",
             ],
             html_content=(
                 f"<p>Project-based invoicing task has {'failed' if failed else 'succeeded'}.</p>"

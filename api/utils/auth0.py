@@ -3,16 +3,17 @@ from django.conf import settings
 import requests
 import mailchimp_transactional as MailchimpTransactional
 from django.template.loader import render_to_string
- 
+
+
 def get_auth0_access_token():
     # Get access_token.
     payload = {
         "client_id": settings.AUTH0_CLIENT_ID,
         "client_secret": settings.AUTH0_CLIENT_SECRET,
-        "audience":"https://" + settings.AUTH0_DOMAIN + "/api/v2/",
-        "grant_type":"client_credentials"
+        "audience": "https://" + settings.AUTH0_DOMAIN + "/api/v2/",
+        "grant_type": "client_credentials"
     }
-    headers = { 'content-type': "application/json" }
+    headers = {'content-type': "application/json"}
     response = requests.post(
         'https://' + settings.AUTH0_DOMAIN + '/oauth/token',
         json=payload,
@@ -21,22 +22,24 @@ def get_auth0_access_token():
     )
     return response.json()["access_token"]
 
-def create_user(email:str):
-    headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+
+def create_user(email: str):
+    headers = {'authorization': "Bearer " + get_auth0_access_token()}
     response = requests.post(
         'https://' + settings.AUTH0_DOMAIN + '/api/v2/users',
         json={
-          "email": email,
-          "connection": "Username-Password-Authentication",
-          "password": str(uuid4())[:12],
+            "email": email,
+            "connection": "Username-Password-Authentication",
+            "password": str(uuid4())[:12],
         },
         headers=headers,
         timeout=30,
     )
     return response.json()['user_id'] if 'user_id' in response.json() else None
 
-def get_user_data(user_id:str):
-    headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+
+def get_user_data(user_id: str):
+    headers = {'authorization': "Bearer " + get_auth0_access_token()}
     response = requests.get(
         'https://' + settings.AUTH0_DOMAIN + '/api/v2/users/' + user_id,
         headers=headers,
@@ -44,8 +47,9 @@ def get_user_data(user_id:str):
     )
     return response.json()
 
-def get_user_from_email(email:str):
-    headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+
+def get_user_from_email(email: str):
+    headers = {'authorization': "Bearer " + get_auth0_access_token()}
     response = requests.get(
         'https://' + settings.AUTH0_DOMAIN + '/api/v2/users-by-email?email=' + email,
         headers=headers,
@@ -54,19 +58,21 @@ def get_user_from_email(email:str):
     json = response.json()
     return json[0]['user_id'] if len(json) > 0 and 'user_id' in json[0] else None
 
-def delete_user(user_id:str):
+
+def delete_user(user_id: str):
     if user_id is not None:
-        headers = { 'authorization': "Bearer " +  get_auth0_access_token() }
+        headers = {'authorization': "Bearer " + get_auth0_access_token()}
         requests.delete(
             'https://' + settings.AUTH0_DOMAIN + '/api/v2/users/' + user_id,
             headers=headers,
             timeout=30,
         )
 
-def get_password_change_url(user_id:str):
+
+def get_password_change_url(user_id: str):
     if user_id is not None:
-        headers = { 
-            'Authorization': "Bearer " +  get_auth0_access_token(),
+        headers = {
+            'Authorization': "Bearer " + get_auth0_access_token(),
             'Content-Type': 'application/json',
         }
 
@@ -86,6 +92,7 @@ def get_password_change_url(user_id:str):
         # Return ticket url.
         response.json()['ticket']
 
+
 def invite_user(user):
     if user.user_id is not None:
         password_change_url = get_password_change_url(user.user_id)
@@ -95,10 +102,10 @@ def invite_user(user):
             mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
             mailchimp.messages.send({"message": {
                 "headers": {
-                    "reply-to": "dispatch@trydownstream.io",
+                    "reply-to": "dispatch@trydownstream.com",
                 },
                 "from_name": "Downstream",
-                "from_email": "dispatch@trydownstream.io",
+                "from_email": "dispatch@trydownstream.com",
                 "to": [{"email": user.email},],
                 "subject": "You've been invited to Downstream!",
                 "track_opens": True,
@@ -113,4 +120,3 @@ def invite_user(user):
         except Exception as e:
             print("An exception occurred.")
             print(e)
-        

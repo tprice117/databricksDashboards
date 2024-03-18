@@ -23,11 +23,11 @@ class EmailAttachment:
 
 
 def add_email_to_queue(
-    from_email="noreply@trydownstream.io",
+    from_email="noreply@trydownstream.com",
     to_emails: List[str] = [],
     subject=None,
     html_content=None,
-    reply_to="noreply@trydownstream.io",
+    reply_to="noreply@trydownstream.com",
     cc_emails: List[str] = [],
     bcc_emails: List[str] = [],
     attachments: List[EmailAttachment] = [],
@@ -75,11 +75,11 @@ def add_email_to_queue(
 
 
 def add_internal_email_to_queue(
-    from_email="noreply@trydownstream.io",
+    from_email="noreply@trydownstream.com",
     subject=None,
     additional_to_emails: List[str] = [],
     html_content=None,
-    reply_to="noreply@trydownstream.io",
+    reply_to="noreply@trydownstream.com",
     cc_emails: List[str] = [],
     bcc_emails: List[str] = [],
     attachments: List[EmailAttachment] = [],
@@ -87,9 +87,9 @@ def add_internal_email_to_queue(
     add_email_to_queue(
         from_email=from_email,
         to_emails=[
-            "thayes@trydownstream.io",
-            "zirwin@trydownstream.io",
-            "jbaird@trydownstream.io",
+            "thayes@trydownstream.com",
+            "zirwin@trydownstream.com",
+            "jbaird@trydownstream.com",
         ]
         + additional_to_emails,
         subject=subject,
