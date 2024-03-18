@@ -384,11 +384,11 @@ class Order(BaseModel):
                     {
                         "message": {
                             "headers": {
-                                "reply-to": "dispatch@trydownstream.io",
+                                "reply-to": "dispatch@trydownstream.com",
                             },
                             "from_name": "Downstream",
-                            "from_email": "dispatch@trydownstream.io",
-                            "to": [{"email": "dispatch@trydownstream.io"}],
+                            "from_email": "dispatch@trydownstream.com",
+                            "to": [{"email": "dispatch@trydownstream.com"}],
                             "subject": "Order Confirmed",
                             "track_opens": True,
                             "track_clicks": True,
@@ -430,22 +430,22 @@ class Order(BaseModel):
                     call_to_action_url = (
                         get_password_change_url(self.order_group.user.user_id)
                         if not auth0_user["email_verified"]
-                        else "https://app.trydownstream.io/orders"
+                        else "https://app.trydownstream.com/orders"
                     )
                 except Exception as e:
-                    call_to_action_url = "https://app.trydownstream.io/orders"
+                    call_to_action_url = "https://app.trydownstream.com/orders"
 
                 mailchimp.messages.send(
                     {
                         "message": {
                             "headers": {
-                                "reply-to": "dispatch@trydownstream.io",
+                                "reply-to": "dispatch@trydownstream.com",
                             },
                             "from_name": "Downstream",
-                            "from_email": "dispatch@trydownstream.io",
+                            "from_email": "dispatch@trydownstream.com",
                             "to": [
                                 {"email": self.order_group.user.email},
-                                {"email": "thayes@trydownstream.io"},
+                                {"email": "thayes@trydownstream.com"},
                             ],
                             "subject": "Downstream | Order Confirmed | "
                             + self.order_group.user_address.formatted_address(),

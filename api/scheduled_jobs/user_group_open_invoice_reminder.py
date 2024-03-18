@@ -129,10 +129,10 @@ def user_group_open_invoice_reminder():
                 {
                     "message": {
                         "headers": {
-                            "reply-to": "thayes@trydownstream.io",
+                            "reply-to": "thayes@trydownstream.com",
                         },
                         "from_name": "Downstream",
-                        "from_email": "billing@trydownstream.io",
+                        "from_email": "billing@trydownstream.com",
                         "to": [
                             {
                                 "email": user_group.billing.email,

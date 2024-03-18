@@ -305,10 +305,10 @@ class PayoutUtils:
 
         # Send email report.
         add_internal_email_to_queue(
-            from_email="system@trydownstream.io",
+            from_email="system@trydownstream.com",
             subject=f"Payout Batch Report: ${total_paid}",
             additional_to_emails=[
-                "lgeber@trydownstream.io",
+                "lgeber@trydownstream.com",
             ],
             html_content=render_to_string(
                 "emails/internal/payout_batch_report.html",

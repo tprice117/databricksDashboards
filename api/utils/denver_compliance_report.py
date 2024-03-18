@@ -4,6 +4,7 @@ import mailchimp_transactional as MailchimpTransactional
 from mailchimp_transactional.api_client import ApiClientError
 from django.template.loader import render_to_string
 
+
 def send_denver_compliance_report(user_address_id, user_email):
     user_address = UserAddress.objects.get(pk=user_address_id)
     orders = Order.objects.filter(user_address=user_address)
@@ -33,14 +34,15 @@ def send_denver_compliance_report(user_address_id, user_email):
             "cardboard": str(ticket.weight) if ticket.waste_type.name == "Cardboard" else "",
             "donation_reuse": str(ticket.weight) if ticket.waste_type.name == "Salvage for Donation/Reuse" else "",
             "other": "",
-            "total_diversion": str(ticket.weight) if ticket.waste_type.name != "Trash (Household Goods)"  else "0",
+            "total_diversion": str(ticket.weight) if ticket.waste_type.name != "Trash (Household Goods)" else "0",
             "total_cd_debris": str(ticket.weight),
             "hauler": ticket.order.seller_product_seller_location.seller_location.seller.name,
             "destination": ticket.disposal_location.name,
         })
 
     # Create object for totals.
-    total_diversion = order_disposal_tickets.exclude(waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum']
+    total_diversion = order_disposal_tickets.exclude(
+        waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum']
     total_cd_debris = order_disposal_tickets.aggregate(Sum('weight'))['weight__sum']
     totals = {
         "landfill": order_disposal_tickets.filter(waste_type__name="Trash (Household Goods)").aggregate(Sum('weight'))['weight__sum'] or "0",
@@ -59,13 +61,13 @@ def send_denver_compliance_report(user_address_id, user_email):
     mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
     response = mailchimp.messages.send({"message": {
         "from_name": "Downstream",
-        "from_email": "hello@trydownstream.io",
+        "from_email": "hello@trydownstream.com",
         "to": [
             {
                 "email": user_email,
             },
             {
-                "email": "thayes@trydownstream.io"
+                "email": "thayes@trydownstream.com"
             }
         ],
         "subject": "Waste Compliance Report Export",

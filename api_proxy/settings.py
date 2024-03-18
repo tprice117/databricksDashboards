@@ -197,7 +197,7 @@ REST_FRAMEWORK = {
 }
 
 if ENVIRONMENT == "TEST":
-    BASE_URL = "https://app.trydownstream.io"
+    BASE_URL = "https://app.trydownstream.com"
     STRIPE_PUBLISHABLE_KEY = "pk_live_H293e3qNvoJB8isKoALzyCFs00v6DmDPGg"
     STRIPE_SECRET_KEY = "sk_live_wYw9ZQ4Gzp8V1n2EOVJ7ZRFW00DX5CyS6c"
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = "bpc_1HJm0bGVYGkmHIWnUWCqt7sf"
