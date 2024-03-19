@@ -22,13 +22,13 @@ from django.core.management.utils import get_random_secret_key
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load our environment variables from the .env file
-env = environ.Env(DEBUG=(bool, False), USE_I18N=(bool, False))
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
-
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY", "django-insecure-0+dmu6*lky0l743o^27tn0)dzoi)6-lzb1i)egsso_84h"
+env = environ.Env(
+    DEBUG=(bool, False),
+    USE_I18N=(bool, False),
 )
+environ.Env.read_env(BASE_DIR / ".env")
 
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") == "TEST"
@@ -113,7 +113,7 @@ if ENVIRONMENT == "TEST":
             "ENGINE": "django.db.backends.postgresql",
             "NAME": "defaultdb",
             "USER": "doadmin",
-            "PASSWORD": "AVNS_XEihnXpBlng33jia5Xq",
+            "PASSWORD": env("DB_PROD_PASSWORD"),
             "HOST": "db-postgresql-nyc1-05939-do-user-13480306-0.b.db.ondigitalocean.com",
             "PORT": "25060",
         }
@@ -124,7 +124,7 @@ else:
             "ENGINE": "django.db.backends.postgresql",
             "NAME": "defaultdb",
             "USER": "doadmin",
-            "PASSWORD": "AVNS_BAJyvGbMyyQNzKfrP0S",
+            "PASSWORD": env("DB_DEV_PASSWORD"),
             "HOST": "db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com",
             "PORT": "25060",
         }
@@ -175,8 +175,8 @@ SPECTACULAR_SETTINGS = {
 
 # Amazon Web Services S3 Configuration.
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-AWS_ACCESS_KEY_ID = "AKIAYR4ELQCIAKOINOXF"
-AWS_SECRET_ACCESS_KEY = "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"
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
 AWS_S3_REGION_NAME = "us-east-2"
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 if ENVIRONMENT == "TEST":
@@ -198,48 +198,40 @@ REST_FRAMEWORK = {
 
 if ENVIRONMENT == "TEST":
     BASE_URL = "https://app.trydownstream.com"
-    STRIPE_PUBLISHABLE_KEY = "pk_live_H293e3qNvoJB8isKoALzyCFs00v6DmDPGg"
-    STRIPE_SECRET_KEY = "sk_live_wYw9ZQ4Gzp8V1n2EOVJ7ZRFW00DX5CyS6c"
-    STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = "bpc_1HJm0bGVYGkmHIWnUWCqt7sf"
-    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = "bpc_1Nvm05GVYGkmHIWnZLJPQrcc"
-    AUTH0_CLIENT_ID = "zk3ULUpybm5gp0FyBcKE0k8WUPVdaDW3"
-    AUTH0_CLIENT_SECRET = (
-        "srBzQ02G9r4IVQ9F1S2P1yW_hYsS-ly-XI_DbMOeoqVGvdRea-hocCdYYOdaiFZv"
-    )
+    STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+    STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_FULL_CUSTOMER_PORTAL_CONFIG")
+    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = env("STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG")
+    AUTH0_CLIENT_ID = env("AUTH0_CLIENT_ID")
+    AUTH0_CLIENT_SECRET = env("AUTH0_CLIENT_SECRET")
     AUTH0_DOMAIN = "dev-jy1f5kgzroj4fcci.us.auth0.com"
     CHECKBOOK_ENDPOINT = "https://api.checkbook.io/v3/"
-    CHECKBOOK_CLIENT_ID = "09650b96495b4447b97f4ab89c58df37"
-    CHECKBOOK_API_KEY = "deb0f9a94051421fb128c9c6cea47c6d"
-    CHECKBOOK_API_SECRET = "LafhEmkgGIdiAZB5Tryz3XNh2rU7KK"
-    CHECKBOOK_WEBHOOK_KEY = "65840ee7b90442559953a6d925bc53a5"
-    BASIS_THEORY_READ_PCI_API_KEY = "key_prod_us_pvt_FbbWRhkjZomqvrmPmqgbdP"
-    BASIS_THEORY_MANGEMENT_API_KEY = "key_prod_us_mgt_7SCsqjjKPxw59zfwpYXJUY"
-    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
-        "c726909d-9e0d-4c14-8f5a-b31731f50183"
-    )
+    CHECKBOOK_CLIENT_ID = env("CHECKBOOK_CLIENT_ID")
+    CHECKBOOK_API_KEY = env("CHECKBOOK_API_KEY")
+    CHECKBOOK_API_SECRET = env("CHECKBOOK_API_SECRET")
+    CHECKBOOK_WEBHOOK_KEY = env("CHECKBOOK_WEBHOOK_KEY")
+    BASIS_THEORY_READ_PCI_API_KEY = env("BASIS_THEORY_READ_PCI_API_KEY")
+    BASIS_THEORY_MANGEMENT_API_KEY = env("BASIS_THEORY_MANGEMENT_API_KEY")
+    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env("BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID")
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_PROD_TOKEN")
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
-    STRIPE_PUBLISHABLE_KEY = "pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf"
-    STRIPE_SECRET_KEY = "sk_test_k7kzz0R6mrRogFPs6OVrpgrB00UmEjcUtf"
-    STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = "bpc_1MqjpaGVYGkmHIWnGRmlbTOk"
-    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = "bpc_1Nvkw9GVYGkmHIWnhHzyEsjn"
+    STRIPE_PUBLISHABLE_KEY = env("STRIPE_DEV_PUBLISHABLE_KEY")
+    STRIPE_SECRET_KEY = env("STRIPE_DEV_SECRET_KEY")
+    STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_DEV_FULL_CUSTOMER_PORTAL_CONFIG")
+    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = env("STRIPE_DEV_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG")
     AUTH0_DOMAIN = "dev-8q3q3q3q.us.auth0.com"
-    AUTH0_CLIENT_ID = "KduQpQUG12d7jS8wP6d6cof6o64BFHx2"
-    AUTH0_CLIENT_SECRET = (
-        "XGRLBdAQ0lV9Xm4Bh_nmT3Yxc8ohF1f_7XtDmKwxn4uR_RCXMGIFEpDHS2bYazKb"
-    )
     AUTH0_DOMAIN = "downstream-dev.us.auth0.com"
+    AUTH0_CLIENT_ID = env("AUTH0_DEV_CLIENT_ID")
+    AUTH0_CLIENT_SECRET = env("AUTH0_DEV_CLIENT_SECRET")
     CHECKBOOK_ENDPOINT = "https://api.sandbox.checkbook.io/v3/"
-    CHECKBOOK_CLIENT_ID = "e689af74d3164255a5c6b9711eb4a71e"
-    CHECKBOOK_API_KEY = "05658b72728c44c39b84ec174d70273a"
-    CHECKBOOK_API_SECRET = "guqPM73fjlPNHddM8GjyVTdKWQIGXE"
-    CHECKBOOK_WEBHOOK_KEY = "660813c1ab214bfa8458b81b983cf767"
-    BASIS_THEORY_READ_PCI_API_KEY = "key_prod_us_pvt_UepJoKHLDm4KhCujT7MBTx"
-    BASIS_THEORY_MANGEMENT_API_KEY = "key_us_mgt_EnL3iUZoLVb4ucw6VxcHh3"
-    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
-        "bee3a192-1dc3-4073-9132-a48cbee97cb7"
-    )
+    CHECKBOOK_CLIENT_ID = env("CHECKBOOK_DEV_CLIENT_ID")
+    CHECKBOOK_API_KEY = env("CHECKBOOK_DEV_API_KEY")
+    CHECKBOOK_API_SECRET = env("CHECKBOOK_DEV_API_SECRET")
+    CHECKBOOK_WEBHOOK_KEY = env("CHECKBOOK_DEV_WEBHOOK_KEY")
+    BASIS_THEORY_READ_PCI_API_KEY = env("BASIS_DEV_THEORY_READ_PCI_API_KEY")
+    BASIS_THEORY_MANGEMENT_API_KEY = env("BASIS_DEV_THEORY_MANGEMENT_API_KEY")
+    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env("BASIS_DEV_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID")
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_DEV_TOKEN")
 
 # Django Admin Interface settings.
@@ -262,6 +254,9 @@ OIDC_CREATE_USER = False
 
 # Intercom Access Token.
 INTERCOM_ACCESS_TOKEN = env("INTERCOM_ACCESS_TOKEN")
+
+# MailChimp Access Token
+MAILCHIMP_API_KEY = env("MAILCHIMP_API_KEY")
 
 
 # Python Logging

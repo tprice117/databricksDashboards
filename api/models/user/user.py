@@ -12,7 +12,7 @@ from common.models import BaseModel
 
 logger = logging.getLogger(__name__)
 
-mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
 class User(BaseModel):
