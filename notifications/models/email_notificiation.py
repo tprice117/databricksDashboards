@@ -1,3 +1,4 @@
+from django.conf import settings
 import mailchimp_transactional as MailchimpTransactional
 from django.db import models
 
@@ -21,7 +22,7 @@ class EmailNotification(BaseModel):
         return self.subject
 
     def send_email(self):
-        mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+        mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
         response = mailchimp.messages.send(
             {
                 "message": {
