@@ -4,7 +4,7 @@ from typing import List
 
 import stripe
 from django.conf import settings
-from django.db.models import F, OuterRef, Q, Subquery, Sum
+from django.db.models import DecimalField, F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Round
 from django.template.loader import render_to_string
 
@@ -124,7 +124,12 @@ class PayoutUtils:
                     percision=2,
                 ),
                 total_seller_price=Sum(
-                    F("order_line_items__rate") * F("order_line_items__quantity")
+                    Func(
+                        F("order_line_items__rate") * F("order_line_items__quantity"),
+                        2,
+                        function="ROUND",
+                        output_field=DecimalField(),
+                    )
                 ),
                 seller_location_sends_invoices=F(
                     "order_group__seller_product_seller_location__seller_location__sends_invoices"
