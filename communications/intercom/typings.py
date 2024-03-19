@@ -1,4 +1,32 @@
 from typing import TypedDict, Optional, Dict, List
+from decimal import Decimal
+
+
+CustomAttributesType = TypedDict(
+    "CustomAttributes",
+    {
+        # Seller ID = UserGroup.seller.id (String)
+        "Seller ID": str,
+        # Autopay = UserGroup.autopay (Boolean)
+        "Autopay": bool,
+        # Net Terms Days = UserGroup.net_terms (String) - (e.g., Net 14, Net 30)
+        "Net Terms Days": int,
+        # Invoice Frequency in Days = UserGroup.invoice_frequency (String) - (e.g., Weekly, Monthly)
+        "Invoice Frequency in Days": Optional[int],
+        # Credit Line Amount = UserGroup.credit_line_limit (Decimal)
+        "Credit Line Amount": Optional[Decimal],
+        # Insurance and Tax Request Status = UserGroup.compliance_status (String) - (e.g., Requested, In-progress)
+        "Insurance and Tax Request Status": str,
+        # Tax Exempt Status = UserGroup.tax_exempt_status (String) - (e.g., None, Exempt, Reverse)
+        "Tax Exempt Status": str,
+        # Invoice Day of Month = UserGroup.invoice_day_of_month (Integer) - (e.g., 1, 15)
+        "Invoice Day of Month": Optional[int],
+        # Project Based Billing = UserGroup.invoice_at_project_completion (Boolean)
+        "Project Based Billing": bool,
+        # Share Code = UserGroup.share_code (Text)
+        "Share Code": Optional[str],
+    },
+)
 
 
 class CompanyType(TypedDict):
@@ -18,7 +46,7 @@ class CompanyType(TypedDict):
     monthly_spend: float
     session_count: int
     user_count: int
-    custom_attributes: dict
+    custom_attributes: CustomAttributesType
     tags: Dict[str, List[Dict[str, str]]]  # Tags represented as a list of dictionaries
     segments: Dict[str, List[Dict[str, str]]]  # Segments represented as a list of dictionaries
 
