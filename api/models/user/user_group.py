@@ -5,11 +5,14 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 import threading
+import logging
 
 from api.models.order.order import Order
 from api.models.seller.seller import Seller
 from common.models import BaseModel
 from communications.intercom.intercom import Intercom
+
+logger = logging.getLogger(__name__)
 
 
 class UserGroup(BaseModel):
@@ -114,8 +117,7 @@ class UserGroup(BaseModel):
                 UserGroup.objects.filter(id=self.id).update(intercom_id=company["id"])
             return company
         except Exception as e:
-            print(f"intercom_sync error: {e}")
-            # TODO: Log error or raise exception
+            logger.error(f"UserGroup.intercom_sync: [{e}]", exc_info=e)
 
     def credit_limit_used(self):
         orders = Order.objects.filter(order_group__user_address__user_group=self)
@@ -137,8 +139,7 @@ class UserGroup(BaseModel):
         try:
             Intercom.Company.delete(instance.intercom_id)
         except Exception as e:
-            print(f"UserGroup.post_delete error: {e}")
-            # TODO: Log error or raise exception
+            logger.error(f"UserGroup.post_delete: [{e}]", exc_info=e)
 
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)

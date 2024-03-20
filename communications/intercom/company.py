@@ -1,8 +1,11 @@
 import requests
 from typing import Dict, Union
+import logging
 
 from communications.intercom.utils.utils import IntercomUtils
 from communications.intercom.typings import CompanyType
+
+logger = logging.getLogger(__name__)
 
 
 class Company:
@@ -46,10 +49,9 @@ class Company:
         if resp.status_code < 400:
             return resp.data
         elif resp.status_code == 404:
-            pass  # Company not found
+            logger.error(f"Company.get: [{resp.status_code}]-[NOT FOUND]")  # Company not found
         else:
-            # TODO: Log error or raise exception
-            pass
+            logger.error(f"Company.get: [{resp.status_code}]-[{resp.data}]")
 
     @staticmethod
     def update_or_create(company_id: str, name: str) -> Union[CompanyType, None]:
@@ -71,12 +73,12 @@ class Company:
                 "name": name
             },
         )
-
+        resp.content
         if resp.status_code < 400:
             return CompanyType(resp.json())
         else:
-            # TODO: Log error or raise exception.
-            pass
+            logger.error(
+                f"Company.update_or_create: company_id:[{company_id}], name:[{name}], response:{resp.status_code}-[{resp.content}]")
 
     @staticmethod
     def delete(intercom_id: str) -> Union[dict, None]:
@@ -94,7 +96,6 @@ class Company:
         if resp.status_code < 400:
             return resp.data
         elif resp.status_code == 404:
-            pass  # Company not found
+            logger.warning(f"Company.delete: [{resp.status_code}]-[NOT FOUND]")   # Company not found
         else:
-            # TODO: Log error or raise exception
-            pass
+            logger.error(f"Company.delete: [{resp.status_code}]-[{resp.data}]")

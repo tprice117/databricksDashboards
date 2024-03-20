@@ -3,12 +3,14 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_delete
 import threading
-from intercom.client import Client
+import logging
 from communications.intercom.intercom import Intercom
 
 from api.models.user.user_group import UserGroup
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
 from common.models import BaseModel
+
+logger = logging.getLogger(__name__)
 
 mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
 
@@ -93,8 +95,8 @@ class User(BaseModel):
                             }
                         }
                     )
-                except:
-                    print("An exception occurred.")
+                except Exception as e:
+                    logger.error(f"User.save: [{e}]", exc_info=e)
 
         # Create new Intercom account if no intercom_id exists
         if not self.intercom_id:
@@ -120,9 +122,7 @@ class User(BaseModel):
         try:
             delete_user(instance.user_id)
         except Exception as e:
-            print("this didn't work")
-            print(e)
-            pass
+            logger.error(f"User.post_delete: [{e}]", exc_info=e)
 
         # TODO: Delete mailchimp user.
 
@@ -130,9 +130,7 @@ class User(BaseModel):
         try:
             Intercom.Contact.delete(instance.intercom_id)
         except Exception as e:
-            print("something went wrong with intercom")
-            print(e)
-            pass
+            logger.error(f"User.post_delete: [{e}]", exc_info=e)
 
     def intercom_sync(self, save_data=True, create_company=True):
         """Synchronizes the user's data with Intercom.

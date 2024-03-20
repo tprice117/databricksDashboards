@@ -217,6 +217,7 @@ if ENVIRONMENT == "TEST":
     BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
         "c726909d-9e0d-4c14-8f5a-b31731f50183"
     )
+    BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_PROD_TOKEN")
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     STRIPE_PUBLISHABLE_KEY = "pk_test_xC1Nf1Djo2wx3DF72PmBiC5W00bBLUgjpf"
@@ -239,6 +240,7 @@ else:
     BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = (
         "bee3a192-1dc3-4073-9132-a48cbee97cb7"
     )
+    BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_DEV_TOKEN")
 
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
@@ -260,3 +262,27 @@ OIDC_CREATE_USER = False
 
 # Intercom Access Token.
 INTERCOM_ACCESS_TOKEN = env("INTERCOM_ACCESS_TOKEN")
+
+
+# Python Logging
+# Django help: https://docs.djangoproject.com/en/5.0/topics/logging/
+# BetterStack help: https://betterstack.com/docs/logs/python/
+# Differentiate uncaught exceptions: https://betterstack.com/community/questions/how-to-log-uncaught-exceptions-in-python/
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "logtail": {
+            "class": 'logtail.LogtailHandler',
+            "source_token": BETTERSTACK_TOKEN,
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": [
+                "logtail",
+            ],
+            "level": "INFO",
+        },
+    },
+}
