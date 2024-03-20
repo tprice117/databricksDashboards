@@ -1,5 +1,6 @@
 import datetime
 from django.conf import settings
+from django.db.models import Sum
 from api.models import Order, OrderDisposalTicket, UserAddress
 import mailchimp_transactional as MailchimpTransactional
 from mailchimp_transactional.api_client import ApiClientError
