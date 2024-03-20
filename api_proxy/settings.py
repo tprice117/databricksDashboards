@@ -273,6 +273,13 @@ LOGGING = {
         },
     },
     "loggers": {
+        "stripe": {
+            "handlers": [
+                "logtail",
+            ],
+            # Set to WARNING to limit logs from Stripe Cron job (cost savings: large data throughput)
+            "level": "WARNING",
+        },
         "": {
             "handlers": [
                 "logtail",
