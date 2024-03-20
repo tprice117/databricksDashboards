@@ -157,7 +157,10 @@ class User(BaseModel):
                 User.objects.filter(id=self.id).update(intercom_id=contact["id"])
         if create_company and self.user_group and contact:
             # Update or create Company in Intercom
-            company = Intercom.Company.update_or_create(str(self.user_group.id), self.user_group.name)
+            company = Intercom.Company.update_or_create(
+                str(self.user_group.id), self.user_group.name,
+                custom_attributes=self.user_group.intercom_custom_attributes
+            )
             if company:
                 # Attach user to company
                 Intercom.Contact.attach_user(company["id"], self.intercom_id)

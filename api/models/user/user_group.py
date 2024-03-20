@@ -11,6 +11,7 @@ from api.models.order.order import Order
 from api.models.seller.seller import Seller
 from common.models import BaseModel
 from communications.intercom.intercom import Intercom
+from communications.intercom.typings import CustomAttributesType
 
 logger = logging.getLogger(__name__)
 
@@ -109,10 +110,32 @@ class UserGroup(BaseModel):
         p = threading.Thread(target=instance.intercom_sync)
         p.start()
 
+    @property
+    def intercom_custom_attributes(self) -> CustomAttributesType:
+        """Return Custome Attributes to sync with Intercom
+        """
+        custom_attributes = CustomAttributesType({
+            "Seller ID": self.seller.id if self.seller else None,
+            "Autopay": self.autopay,
+            "Net Terms Days": self.net_terms,
+            "Invoice Frequency in Days": self.invoice_frequency,
+            "Credit Line Amount": float(self.credit_line_limit) if self.credit_line_limit else None,
+            "Insurance and Tax Request Status": self.compliance_status,
+            "Tax Exempt Status": self.tax_exempt_status,
+            "Invoice Day of Month": self.invoice_day_of_month,
+            "Project Based Billing": self.invoice_at_project_completion,
+            "Share Code": self.share_code,
+        })
+        return custom_attributes
+
     def intercom_sync(self):
+        """Create or Updates Intercom Company with UserGroup. 
+        """
         try:
             # Update or create Company in Intercom
-            company = Intercom.Company.update_or_create(str(self.id), self.name)
+            company = Intercom.Company.update_or_create(
+                str(self.id), self.name, custom_attributes=self.intercom_custom_attributes
+            )
             if company and self.intercom_id != company["id"]:
                 UserGroup.objects.filter(id=self.id).update(intercom_id=company["id"])
             return company

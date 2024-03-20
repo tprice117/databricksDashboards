@@ -3,7 +3,7 @@ from typing import Dict, Union
 import logging
 
 from communications.intercom.utils.utils import IntercomUtils
-from communications.intercom.typings import CompanyType
+from communications.intercom.typings import CompanyType, CustomAttributesType
 
 logger = logging.getLogger(__name__)
 
@@ -54,26 +54,33 @@ class Company:
             logger.error(f"Company.get: [{resp.status_code}]-[{resp.data}]")
 
     @staticmethod
-    def update_or_create(company_id: str, name: str) -> Union[CompanyType, None]:
+    def update_or_create(
+        company_id: str, name: str, custom_attributes: CustomAttributesType = None
+    ) -> Union[CompanyType, None]:
         """Updates or creates a Company in Intercom.
         API spec: https://developers.intercom.com/docs/references/rest-api/api.intercom.io/Companies/createOrUpdateCompany/
 
         Args:
             company_id (str): Id of the company in Downstream DB.
             name (str): Name of the company.
+            custom_attributes (CustomAttributesType, optional): Intercom company custom_attributes. Defaults to None.
+                                                                Note: New attributes need to be created in Intercom
+                                                                before use.
 
         Returns:
             Union[CompanyType, None]: Returns CompanyType if api completed successfully, else None.
         """
+        api_params = {
+            "id": company_id,
+            "name": name
+        }
+        if custom_attributes is not None:
+            api_params['custom_attributes'] = custom_attributes
         resp = requests.post(
             "https://api.intercom.io/companies",
             headers=IntercomUtils.headers,
-            json={
-                "id": company_id,
-                "name": name
-            },
+            json=api_params,
         )
-        resp.content
         if resp.status_code < 400:
             return CompanyType(resp.json())
         else:
