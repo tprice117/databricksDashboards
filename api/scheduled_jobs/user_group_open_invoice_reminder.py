@@ -1,5 +1,5 @@
 import datetime
-
+from django.conf import settings
 import mailchimp_transactional as MailchimpTransactional
 from django.template.loader import render_to_string
 
@@ -124,7 +124,7 @@ def user_group_open_invoice_reminder():
 
         # Send emails.
         if hasattr(user_group, "billing") and user_group.billing.email is not None:
-            mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+            mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
             mailchimp.messages.send(
                 {
                     "message": {

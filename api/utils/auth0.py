@@ -99,7 +99,7 @@ def invite_user(user):
 
         # Send User Invite Email to user.
         try:
-            mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+            mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
             mailchimp.messages.send({"message": {
                 "headers": {
                     "reply-to": "dispatch@trydownstream.com",

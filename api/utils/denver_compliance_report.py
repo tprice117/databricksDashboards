@@ -1,4 +1,5 @@
 import datetime
+from django.conf import settings
 from api.models import Order, OrderDisposalTicket, UserAddress
 import mailchimp_transactional as MailchimpTransactional
 from mailchimp_transactional.api_client import ApiClientError
@@ -58,7 +59,7 @@ def send_denver_compliance_report(user_address_id, user_email):
         "project_diversion_rate": round(100 * float(total_diversion) / float(total_cd_debris), 2) if total_cd_debris else 0,
     }
 
-    mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+    mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
     response = mailchimp.messages.send({"message": {
         "from_name": "Downstream",
         "from_email": "hello@trydownstream.com",

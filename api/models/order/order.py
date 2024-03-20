@@ -11,7 +11,7 @@ from api.models.order.order_line_item_type import OrderLineItemType
 from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
 
-mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
+mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
 class Order(BaseModel):
