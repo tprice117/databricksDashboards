@@ -1,8 +1,42 @@
 import requests
+import decimal
+import uuid
+from django.utils.timezone import is_aware
+from django.utils.duration import duration_iso_string
+import datetime
 from dataclasses import dataclass
 from django.conf import settings
 
-# Intercom API typings
+
+def get_json_safe_value(val):
+    """Returns a JSON serializable value.
+    Handles datetimes, decimals, and UUIDs (code is mostly from DjangoJSONEncoder).
+
+    Raises:
+        ValueError: Raises an error if a timezone aware time is passed in.
+    """
+    if isinstance(val, datetime.datetime):
+        r = val.isoformat()
+        if val.microsecond:
+            r = r[:23] + r[26:]
+        if r.endswith('+00:00'):
+            r = r[:-6] + 'Z'
+        return r
+    elif isinstance(val, datetime.date):
+        return val.isoformat()
+    elif isinstance(val, datetime.time):
+        if is_aware(val):
+            raise ValueError("JSON can't represent timezone-aware times.")
+        r = val.isoformat()
+        if val.microsecond:
+            r = r[:12]
+        return r
+    elif isinstance(val, datetime.timedelta):
+        return duration_iso_string(val)
+    elif isinstance(val, (decimal.Decimal, uuid.UUID)):
+        return str(val)
+    else:
+        return val
 
 
 @dataclass
@@ -16,6 +50,7 @@ class IntercomUtils:
     """Refer to REST api docs: https://developers.intercom.com/docs/references/introduction/
     """
     headers = {
+        "Content-Type": "application/json",
         "Authorization": f"Bearer {settings.INTERCOM_ACCESS_TOKEN}",
     }
 
