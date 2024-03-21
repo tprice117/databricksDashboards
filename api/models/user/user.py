@@ -5,6 +5,7 @@ from django.db.models.signals import post_delete
 import threading
 import logging
 from communications.intercom.intercom import Intercom
+from api.models.track_data import track_data
 
 from api.models.user.user_group import UserGroup
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
+@track_data('phone', 'email', 'first_name', 'last_name', 'is_archived', 'salesforce_contact_id', 'salesforce_seller_location_id', 'terms_accepted')
 class User(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
@@ -157,7 +159,10 @@ class User(BaseModel):
                 User.objects.filter(id=self.id).update(intercom_id=contact["id"])
         if create_company and self.user_group and contact:
             # Update or create Company in Intercom
-            company = Intercom.Company.update_or_create(str(self.user_group.id), self.user_group.name)
+            company = Intercom.Company.update_or_create(
+                str(self.user_group.id), self.user_group.name,
+                custom_attributes=self.user_group.intercom_custom_attributes
+            )
             if company:
                 # Attach user to company
                 Intercom.Contact.attach_user(company["id"], self.intercom_id)
