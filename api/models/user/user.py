@@ -5,6 +5,7 @@ from django.db.models.signals import post_delete
 import threading
 import logging
 from communications.intercom.intercom import Intercom
+from api.models.track_data import track_data
 
 from api.models.user.user_group import UserGroup
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
 
 
+@track_data('phone', 'email', 'first_name', 'last_name', 'is_archived', 'salesforce_contact_id', 'salesforce_seller_location_id', 'terms_accepted')
 class User(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,

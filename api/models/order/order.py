@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.template.loader import render_to_string
 
+from api.models.track_data import track_data
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
@@ -14,6 +15,7 @@ from common.models import BaseModel
 mailchimp = MailchimpTransactional.Client("md-U2XLzaCVVE24xw3tMYOw9w")
 
 
+@track_data('submitted_on', 'start_date', 'end_date', 'schedule_details', 'schedule_window')
 class Order(BaseModel):
     class Type(models.TextChoices):
         DELIVERY = "DELIVERY"
