@@ -3,6 +3,9 @@ from django.conf import settings
 import requests
 import mailchimp_transactional as MailchimpTransactional
 from django.template.loader import render_to_string
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_auth0_access_token():
@@ -120,3 +123,4 @@ def invite_user(user):
         except Exception as e:
             print("An exception occurred.")
             print(e)
+            logger.error(f"invite_user: [{e}]", exc_info=e)

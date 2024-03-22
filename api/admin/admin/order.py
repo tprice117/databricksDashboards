@@ -4,6 +4,7 @@ import stripe
 from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.html import format_html
+import logging
 
 from api.admin.filters import CreatedDateFilter
 from api.admin.filters.order.admin_tasks import OrderAdminTasksFilter
@@ -23,6 +24,7 @@ from api.models import (
 )
 from api.utils.checkbook_io import CheckbookIO
 
+logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -302,6 +304,7 @@ class OrderAdmin(admin.ModelAdmin):
                             )
                         except Exception as ex:
                             print("Error: " + str(ex))
+                            logger.error(f"OrderAdmin.send_payouts: [{ex}]", exc_info=ex)
             elif seller_location.payee_name and hasattr(
                 seller_location, "mailing_address"
             ):

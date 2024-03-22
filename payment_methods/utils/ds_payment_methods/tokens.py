@@ -1,9 +1,12 @@
 import basistheory
 from basistheory.api import tokens_api
+import logging
 
 from payment_methods.utils.ds_payment_methods.basistheory_config import (
     api_client_use_pci,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class Tokens:
@@ -16,6 +19,7 @@ class Tokens:
             return token_client.get_by_id(id=token)
         except basistheory.ApiException as e:
             print("Exception when calling TokensApi->get_by_id: %s\n" % e)
+            logger.error(f"Tokens.get_card: [{e}]", exc_info=e)
 
     @staticmethod
     def delete(token: str):
@@ -26,3 +30,4 @@ class Tokens:
             return token_client.delete(id=token)
         except basistheory.ApiException as e:
             print("Exception when calling TokensApi->delete: %s\n" % e)
+            logger.error(f"Tokens.delete: [{e}]", exc_info=e)

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db.models import DecimalField, F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Round
 from django.template.loader import render_to_string
+import logging
 
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
@@ -18,6 +19,8 @@ from api.models.seller.seller_location import SellerLocation
 from api.utils.checkbook_io import CheckbookIO
 from common.utils.stripe.stripe_utils import StripeUtils
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
+
+logger = logging.getLogger(__name__)
 
 
 class PayoutUtils:
@@ -211,9 +214,11 @@ class PayoutUtils:
                 )
             except stripe.error.StripeError as stripe_error:
                 print("Stripe error occurred:", stripe_error)
+                logger.error(f"Price_Model.predict_price: [Stripe]-[{stripe_error}]", exc_info=stripe_error)
                 return None
             except Exception as ex:
                 print("Unhandled (non-Stripe) error occurred: " + str(ex))
+                logger.error(f"Price_Model.predict_price: [Unhandled (non-Stripe)]-[{ex}]", exc_info=ex)
                 return None
 
     @staticmethod
