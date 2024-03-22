@@ -1,9 +1,10 @@
 from django.test import TestCase
-from api.models.user.user_group import UserGroup
-from api.models.user.user import User
-from communications.intercom.contact import Contact
-from communications.intercom.company import Company
+from api.models import User, UserGroup, UserAddress, Order
+from communications.intercom import Contact
+from communications.intercom import Company
 from communications.intercom.typings import CustomAttributesType
+from communications.intercom.data_event import signals
+import random
 import decimal
 import uuid
 import time
@@ -128,3 +129,41 @@ class IntercomTests(TestCase):
         del_company = Company.delete(company["id"])
         self.assertIsNotNone(del_company)
         self.assertTrue(del_company["deleted"])
+
+    def test_intercom_events(self):
+        """Check website for new events:
+        https://app.intercom.com/a/apps/d7p5ghkg/settings/events
+
+        Intercom Test Users:
+        https://app.intercom.com/a/apps/d7p5ghkg/users/65fc48f2931a420c641c3a37/all-conversations
+        https://app.intercom.com/a/apps/d7p5ghkg/users/65f499fc475dc3a05b389d20/all-conversations
+        """
+
+        test_id = str(uuid.uuid4())
+
+        # NOTE: Use test emails that actually work.
+        # https://yopmail.com/email-generator
+        # user = User.objects.create(email="padeveuyoibroi-6513@yopmail.com", first_name="Michael")
+
+        user = User.objects.get(email="mwickey@trydownstream.com")
+        user.last_name = f"{user.last_name} {random.randint(0, 10)}"
+        user.save()
+
+        useraddress = UserAddress.objects.get(user_id=user.id)
+        # Test UserAddress creation
+        signals.on_user_address_post_save(UserAddress, created=True, instance=useraddress)
+
+        # Test UserAddress update
+        useraddress.name = f"{test_id} Name"
+        useraddress.save()
+
+        # Get test order from dev database
+        order = Order.objects.get(id="01c3f60f-6389-4acc-b67a-591e8dac8e5d")
+        # Test Order creation
+        signals.on_order_post_save(Order, created=True, instance=order)
+
+        # Test Order submission
+        order.__data = {'submitted_on':  None}
+        signals.on_order_post_save(Order, instance=order)
+
+        print("Check website for new events: https://app.intercom.com/a/apps/d7p5ghkg/settings/events")
