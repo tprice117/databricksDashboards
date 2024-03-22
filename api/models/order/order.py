@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
-@track_data('submitted_on', 'start_date', 'end_date', 'schedule_details', 'schedule_window')
+@track_data('submitted_on', 'start_date', 'end_date', 'schedule_details', 'schedule_window', 'status')
 class Order(BaseModel):
     class Type(models.TextChoices):
         DELIVERY = "DELIVERY"
