@@ -1,6 +1,9 @@
 import datetime
+import logging
 
 from notifications.models import EmailNotification
+
+logger = logging.getLogger(__name__)
 
 
 def send_emails():
@@ -13,3 +16,4 @@ def send_emails():
             email.save()
         except Exception as e:
             print("Email could not be sent. " + str(e))
+            logger.error(f"scheduled_jobs.send_emails: [{e}]", exc_info=e)
