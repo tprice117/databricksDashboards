@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.signals import pre_save
 
+from api.models.track_data import track_data
 from api.models.user.user import User
 from api.models.user.user_address_type import UserAddressType
 from api.models.user.user_group import UserGroup
@@ -9,6 +10,7 @@ from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 
 
+@track_data('name', 'project_id', 'street', 'city', 'state', 'postal_code', 'country', 'access_details', 'autopay')
 class UserAddress(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
