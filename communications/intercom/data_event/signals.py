@@ -233,7 +233,7 @@ def on_order_post_save(sender, **kwargs):
         # Order updated
         try:
             changed = order.whats_changed()
-            if changed and order.old_value('submitted_on'):
+            if changed and order.submitted_on is not None and order.old_value('submitted_on') is None:
                 # Add Intercom Data Event
                 if order.order_group.user.intercom_id is None:
                     raise ValueError("intercom_id is None")

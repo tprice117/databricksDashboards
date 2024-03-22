@@ -323,7 +323,7 @@ class BillingUtils:
             error_messages.append("--------------")
 
         # If the task failed, send an email to the admin.
-        if settings.ENVIROMENT == "TEST":
+        if settings.ENVIRONMENT == "TEST":
             add_internal_email_to_queue(
                 from_email="system@trydownstream.com",
                 subject=(
