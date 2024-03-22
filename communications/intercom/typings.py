@@ -121,3 +121,21 @@ class ContactType(TypedDict):
     utm_source: Optional[str]
     utm_term: Optional[str]
     referrer: Optional[str]
+
+
+class DataEventType(TypedDict):
+    type: str = ""
+    event_name: str
+    created_at: int
+    user_id: str
+    id: str
+    intercom_user_id: str
+    email: str
+    metadata: Optional[dict]  # Can be missing
+
+
+class DataEventSummaryType(TypedDict):
+    event_name: str
+    count: int
+    first: int
+    last: int

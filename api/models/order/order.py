@@ -2,18 +2,23 @@ import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save
 from django.template.loader import render_to_string
+import logging
 
+from api.models.track_data import track_data
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
 from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
 
+logger = logging.getLogger(__name__)
+
 mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
+@track_data('submitted_on', 'start_date', 'end_date', 'schedule_details', 'schedule_window')
 class Order(BaseModel):
     class Type(models.TextChoices):
         DELIVERY = "DELIVERY"
@@ -373,8 +378,7 @@ class Order(BaseModel):
                             platform_fee_percent=instance.order_group.take_rate,
                         )
             except Exception as e:
-                print(e)
-                pass
+                logger.error(f"Order.post_save: [{e}]", exc_info=e)
 
     def send_internal_order_confirmation_email(self):
         # Send email to internal team. Only on our PROD environment.
@@ -417,8 +421,7 @@ class Order(BaseModel):
                     }
                 )
             except Exception as e:
-                print("An exception occurred.")
-                print(e)
+                logger.error(f"Order.send_internal_order_confirmation_email: [{e}]", exc_info=e)
 
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
@@ -434,6 +437,10 @@ class Order(BaseModel):
                     )
                 except Exception as e:
                     call_to_action_url = "https://app.trydownstream.com/orders"
+                    logger.warning(
+                        f"Order.send_customer_email_when_order_scheduled: [Use default: {call_to_action_url}]-[{e}]",
+                        exc_info=e
+                    )
 
                 mailchimp.messages.send(
                     {
@@ -475,8 +482,7 @@ class Order(BaseModel):
                     }
                 )
             except Exception as e:
-                print("An exception occurred.")
-                print(e)
+                logger.error(f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e)
 
     def __str__(self):
         return (
