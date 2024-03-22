@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Thanks for your order!</title>
+</head>
+
+<body>
+    <h1>Thanks for your order!</h1>
+    <p>We've received your order and are excited to get started.</p>
+    <p>Here are some details about your order:</p>
+    <ul>
+        <li>**Order Address:** {{ order.order_group.user_address.address }}</li>
+        <li>**Order Product:**
+            {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</li>
+        <li>**Start Date:** {{ order.start_date }}</li>
+        {% if order.end_date %}
+        <li>**End Date:** {{ order.end_date }}</li>
+        {% endif %}
+        <li>**Order Type:** {{ order.order_type }}</li>
+    </ul>
+    <p>You'll receive further updates about your order via email.</p>
+    <p>Thanks,</p>
+    <p>Downstream</p>
+</body>
+
+</html>
