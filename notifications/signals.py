@@ -68,10 +68,8 @@ def on_order_post_save(sender, **kwargs):
                         "notifications/emails/order_submitted.html",
                         {"order": order}
                     )
-                    # TODO: Send email
-                    print("SEND EMAIL")
                     add_email_to_queue(
-                        to_emails=["mwickey@trydownstream.com"],
+                        to_emails=[order.order_group.user.email],
                         subject=subject,
                         html_content=html_content
                     )
@@ -82,11 +80,8 @@ def on_order_post_save(sender, **kwargs):
                         "notifications/emails/order_status_change.html",
                         {"order": order}
                     )
-                    # TODO: Send email
-                    print("Send email")
-                    # [order.user.email]
                     add_email_to_queue(
-                        to_emails=["mwickey@trydownstream.com"],
+                        to_emails=[order.order_group.user.email],
                         subject=subject,
                         html_content=html_content
                     )
