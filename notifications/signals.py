@@ -71,7 +71,8 @@ def on_order_post_save(sender, **kwargs):
                         from_email="dispatch@trydownstream.com",
                         to_emails=[order.order_group.user.email],
                         subject=subject,
-                        html_content=html_content
+                        html_content=html_content,
+                        reply_to="dispatch@trydownstream.com"
                     )
                 elif order.old_value('status') != order.status:
                     # Order status changed
@@ -88,7 +89,8 @@ def on_order_post_save(sender, **kwargs):
                         from_email="dispatch@trydownstream.com",
                         to_emails=[order.order_group.user.email],
                         subject=subject,
-                        html_content=html_content
+                        html_content=html_content,
+                        reply_to="dispatch@trydownstream.com"
                     )
         except Exception as e:
             logger.exception(f"notification: [submitted-Order]-[{e}]")
