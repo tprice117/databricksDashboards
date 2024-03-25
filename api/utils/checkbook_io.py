@@ -5,7 +5,7 @@ from typing import List
 import requests
 from django.conf import settings
 
-from api.models import Order, Payout, SellerLocation
+from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
 
 
 class CheckbookIO:
@@ -13,27 +13,28 @@ class CheckbookIO:
         self, seller_location: SellerLocation, amount, orders: List[Order]
     ):
         # Build remittance advice object.
+        # Get SellerInvoicePayable
+        seller_invoice_payable = SellerInvoicePayable.objects.filter(seller_location_id=seller_location.id).first()
+        seller_invoice_str = "No Invoice Provided"
+        if seller_invoice_payable:
+            seller_invoice_str = seller_invoice_payable.supplier_invoice_id
         remittance_advice = []
         for order in orders:
             # Get total already paid to seller for this order.
             payouts = Payout.objects.filter(order=order)
             total_paid_to_seller = sum([payout.amount for payout in payouts])
             description = (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.name
+                order.order_group.user_address.street
                 + " | "
-                + order.order_group.user_address.street
+                + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
             )
 
             remittance_advice.append(
                 {
-                    "id": str(order.id).replace("-", ""),
-                    "amount": round(
-                        float(order.seller_price() - total_paid_to_seller), 2
-                    ),
-                    "description": (
-                        description if len(description) < 64 else description[:64]
-                    ),
-                    "date": order.end_date.strftime("%Y-%m-%d"),
+                    "id": seller_invoice_str,
+                    "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
+                    "description": description[:64],
+                    "date": order.end_date.strftime("%d/%m/%Y"),
                 }
             )
 
