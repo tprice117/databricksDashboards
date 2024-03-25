@@ -37,6 +37,18 @@ def track_data(*fields: Iterable[str]):
         # contains a local copy of the previous values of attributes
         cls.__data = {}
 
+        def set_tracked_data(self, data: dict):
+            """Set the data for the model instance.
+            Use this if you want to manually set some key, value original data.
+
+            Args:
+                data (dict): The data to set.
+            """
+            for k, v in data.items():
+                self.__data[k] = v
+            # self.__data = data
+        cls.set_tracked_data = set_tracked_data
+
         def has_changed(self, field: str):
             "Returns ``True`` if ``field`` has changed since initialization."
             if self.__data is UNSAVED:

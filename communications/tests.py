@@ -163,7 +163,7 @@ class IntercomTests(TestCase):
         signals.on_order_post_save(Order, created=True, instance=order)
 
         # Test Order submission
-        order.__data = {'submitted_on':  None}
+        order.set_tracked_data({'submitted_on': None})
         signals.on_order_post_save(Order, instance=order)
 
         print("Check website for new events: https://app.intercom.com/a/apps/d7p5ghkg/settings/events")
