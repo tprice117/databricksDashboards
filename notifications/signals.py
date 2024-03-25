@@ -8,7 +8,7 @@ from notifications.utils.add_email_to_queue import add_email_to_queue
 
 logger = logging.getLogger(__name__)
 
-"""Order track fields needed for sending email notifications.
+"""Order track fields needed for sending email notifications on Order submitted and Order status changed.
 If another field needs to be tracked, go to the model class and edit the
 track_data class decorator parameters.
 
@@ -41,6 +41,8 @@ def on_order_post_save(sender, **kwargs):
     order: Order = kwargs.get('instance', None)
     if 'created' not in kwargs:
         # Order updated
+        error_status = "created-Order"
+        order_id = get_json_safe_value(order.id)
         try:
             if order.submitted_on is not None:
                 if order.old_value('submitted_on') is None:
@@ -58,6 +60,7 @@ def on_order_post_save(sender, **kwargs):
                         reply_to="dispatch@trydownstream.com"
                     )
                 elif order.old_value('status') != order.status:
+                    error_status = "updated-Order"
                     # Order status changed
                     subject = "An update on your Downstream order"
                     html_content = render_to_string(
@@ -76,7 +79,7 @@ def on_order_post_save(sender, **kwargs):
                         reply_to="dispatch@trydownstream.com"
                     )
         except Exception as e:
-            logger.exception(f"notification: [submitted-Order]-[{e}]")
+            logger.exception(f"notification: [{order_id}]-[{error_status}]-[{e}]")
 
 
 post_save.connect(on_order_post_save, sender=Order)
