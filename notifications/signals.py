@@ -31,23 +31,6 @@ def get_order_status_from_choice(status: str) -> str:
     return "Unknown"
 
 
-def get_tracked_data(db_obj: Order) -> dict:
-    """Get tracked data as key:val dictionary. Only retrieve non None data.
-
-    Args:
-        db_obj (Order): The database object.
-
-    Returns:
-        dict: Non None data in key:val dict.
-    """
-    data = {}
-    for key, val in db_obj.__data.items():
-        dbval = get_json_safe_value(getattr(db_obj, key))
-        if dbval is not None:
-            data[key] = dbval
-    return data
-
-
 # ================================================#
 # Email on Order database actions
 # ================================================#
