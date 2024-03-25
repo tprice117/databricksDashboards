@@ -7,6 +7,7 @@ import googlemaps
 import numpy as np
 import pandas as pd
 import requests
+import logging
 
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.disposal_location.disposal_location_waste_type import (
@@ -20,6 +21,8 @@ from api.models.seller.seller_product_seller_location_material_waste_type import
 )
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
+
+logger = logging.getLogger(__name__)
 
 GOOGLE_MAPS_API = r"AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE"
 FRED_API = r"fa4d32f5c98c51ccb516742cf566950f"
@@ -166,6 +169,7 @@ class Price_Model:
 
         except Exception as e:
             print(e)
+            logger.error(f"Price_Model.predict_price: [{e}]", exc_info=e)
             return {"status": "Error", "message": str(e)}
 
     def get_prices(self, seller_product_seller_locations):

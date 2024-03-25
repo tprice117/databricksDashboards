@@ -5,6 +5,7 @@ from typing import List
 import stripe
 from django.conf import settings
 from django.template.loader import render_to_string
+import logging
 
 from api.models import Order, OrderLineItem, UserAddress, UserGroup
 from common.utils import get_last_day_of_previous_month
@@ -13,6 +14,8 @@ from common.utils.stripe.stripe_utils import StripeUtils
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
 
 from .utils import Utils
+
+logger = logging.getLogger(__name__)
 
 
 class BillingUtils:
@@ -118,7 +121,7 @@ class BillingUtils:
                     print(response)
         except Exception as e:
             print(e)
-            pass
+            logger.error(f"BillingUtils.create_invoice_items_for_order: [{e}]", exc_info=e)
 
     @staticmethod
     def create_stripe_invoice_for_user_address(
@@ -292,6 +295,7 @@ class BillingUtils:
                 StripeUtils.Invoice.attempt_pay(invoice.id)
             except Exception as e:
                 print("Attempt pay error: ", e)
+                logger.error(f"BillingUtils.finalize_and_pay_stripe_invoice: [Attempt Pay]-[{e}]", exc_info=e)
 
         # Send the invoice.
         if send_invoice:
@@ -299,6 +303,7 @@ class BillingUtils:
                 StripeUtils.Invoice.send_invoice(invoice.id)
             except Exception as e:
                 print("Send invoice error: ", e)
+                logger.error(f"BillingUtils.finalize_and_pay_stripe_invoice: [Send Invoice]-[{e}]", exc_info=e)
 
     @staticmethod
     def run_interval_based_invoicing():
@@ -318,6 +323,7 @@ class BillingUtils:
                     BillingUtils.create_stripe_invoices_for_user_group(user_group)
         except Exception as e:
             print(e)
+            logger.error(f"BillingUtils.run_interval_based_invoicing: [{e}]", exc_info=e)
             failed = True
             error_messages.append(str(e))
             error_messages.append("--------------")
@@ -386,6 +392,7 @@ class BillingUtils:
                         user_group=user_address.user_group,
                     )
         except Exception as e:
+            logger.error(f"BillingUtils.run_project_end_based_invoicing: [{e}]", exc_info=e)
             failed = True
 
         # If the task failed, send an email to the admin.

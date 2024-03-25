@@ -20,6 +20,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+import logging
 
 from api.filters import OrderGroupFilterset
 from api.utils.denver_compliance_report import send_denver_compliance_report
@@ -32,6 +33,8 @@ from .models import *
 from .pricing_ml import pricing
 from .serializers import *
 
+
+logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -875,7 +878,7 @@ class ConvertSFOrderToScrapTask(APIView):
         )
 
 
-### Stripe Views
+# Stripe Views
 
 
 @api_view(["GET"])
@@ -1011,7 +1014,7 @@ class StripeConnectPayoutForService(APIView):
             return Response()
 
 
-## Stripe Dashboarding (GET only endpoints)
+# Stripe Dashboarding (GET only endpoints)
 
 
 class StripeConnectAccount(APIView):
@@ -1127,6 +1130,7 @@ def denver_compliance_report(request):
         send_denver_compliance_report(user_address_id, request.user.id)
     except Exception as error:
         print("An exception occurred: {}".format(error.text))
+        logger.error(f"denver_compliance_report: [{error}]", exc_info=error)
 
     return Response("Success", status=200)
 

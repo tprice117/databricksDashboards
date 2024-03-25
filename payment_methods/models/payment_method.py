@@ -2,12 +2,15 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
+import logging
 
 from api.models import User, UserGroup
 from api.models.user.user_address import UserAddress
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 from payment_methods.utils import DSPaymentMethods
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentMethod(BaseModel):
@@ -125,6 +128,7 @@ class PaymentMethod(BaseModel):
                     print("stripe_payment_method created")
                 except Exception as e:
                     print(e)
+                    logger.error(f"PaymentMethod.sync_stripe_payment_method: [{e}]", exc_info=e)
 
 
 @receiver(post_save, sender=PaymentMethod)
