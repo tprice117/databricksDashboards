@@ -442,6 +442,9 @@ class Order(BaseModel):
                         exc_info=e
                     )
 
+                waste_type_str = "Not specified"
+                if self.order_group.waste_type:
+                    waste_type_str = self.order_group.waste_type.name
                 mailchimp.messages.send(
                     {
                         "message": {
@@ -464,7 +467,7 @@ class Order(BaseModel):
                                     "orderId": self.id,
                                     "booking_url": call_to_action_url,
                                     "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                                    "waste_type": self.order_group.waste_type.name,
+                                    "waste_type": waste_type_str,
                                     "included_tons": self.order_group.material.tonnage_included,
                                     "included_rental_days": self.order_group.rental.included_days,
                                     "service_date": self.end_date,
