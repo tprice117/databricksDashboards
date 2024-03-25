@@ -59,7 +59,6 @@ def on_order_post_save(sender, **kwargs):
     if 'created' not in kwargs:
         # Order updated
         try:
-            # changed = order.whats_changed()
             if order.submitted_on is not None:
                 if order.old_value('submitted_on') is None:
                     # Order submitted
@@ -69,6 +68,7 @@ def on_order_post_save(sender, **kwargs):
                         {"order": order}
                     )
                     add_email_to_queue(
+                        from_email="dispatch@trydownstream.com",
                         to_emails=[order.order_group.user.email],
                         subject=subject,
                         html_content=html_content
@@ -78,9 +78,14 @@ def on_order_post_save(sender, **kwargs):
                     subject = "An update on your Downstream order"
                     html_content = render_to_string(
                         "notifications/emails/order_status_change.html",
-                        {"order": order}
+                        {
+                            "order": order,
+                            "new_status": get_order_status_from_choice(order.status),
+                            "previous_status": get_order_status_from_choice(order.old_value('status'))
+                        }
                     )
                     add_email_to_queue(
+                        from_email="dispatch@trydownstream.com",
                         to_emails=[order.order_group.user.email],
                         subject=subject,
                         html_content=html_content
