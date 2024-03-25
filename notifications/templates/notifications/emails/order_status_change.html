@@ -8,18 +8,18 @@
 <body>
     <h1>An update about your Downstream Order</h1>
     <p>The status of your order has changed.</p>
-    <p>Previous Status: {{ previous_status }}</p>
-    <p>Current Status: {{ order.status }}</p>
+    <p><b>Previous Status:</b> {{ previous_status }}</p>
+    <p><b>Current Status:</b> {{ new_status }}</p>
     <p>Here are some details about your order for reference:</p>
     <ul>
-        <li>**Order Address:** {{ order.order_group.user_address.address }}</li>
-        <li>**Order Product:**
+        <li><b>Order Address</b> {{ order.order_group.user_address.formatted_address }}</li>
+        <li><b>Order Product</b>
             {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</li>
-        <li>**Start Date:** {{ order.start_date }}</li>
+        <li><b>Start Date</b> {{ order.start_date }}</li>
         {% if order.end_date %}
-        <li>**End Date:** {{ order.end_date }}</li>
+        <li><b>End Date</b> {{ order.end_date }}</li>
         {% endif %}
-        <li>**Order Type:** {{ order.order_type }}</li>
+        <li><b>Order Type</b> {{ order.order_type }}</li>
     </ul>
     <p>You can view the details of your order by logging into your account.</p>
     <p>Thanks,</p>

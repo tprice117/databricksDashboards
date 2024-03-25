@@ -10,14 +10,14 @@
     <p>We've received your order and are excited to get started.</p>
     <p>Here are some details about your order:</p>
     <ul>
-        <li>**Order Address:** {{ order.order_group.user_address.address }}</li>
-        <li>**Order Product:**
+        <li><b>Order Address:</b> {{ order.order_group.user_address.formatted_address }}</li>
+        <li><b>Order Product:</b>
             {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</li>
-        <li>**Start Date:** {{ order.start_date }}</li>
+        <li><b>Start Date:</b>{{ order.start_date }}</li>
         {% if order.end_date %}
-        <li>**End Date:** {{ order.end_date }}</li>
+        <li><b>End Date:</b> {{ order.end_date }}</li>
         {% endif %}
-        <li>**Order Type:** {{ order.order_type }}</li>
+        <li><b>Order Type:</b> {{ order.order_type }}</li>
     </ul>
     <p>You'll receive further updates about your order via email.</p>
     <p>Thanks,</p>
