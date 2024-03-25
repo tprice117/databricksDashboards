@@ -28,11 +28,12 @@ class NotificationTests(TestCase):
         else:
             test_email = order.order_group.user.email
 
-        order.__data = {'submitted_on': None, 'status': order.status}
+        # Test order submission
+        order.set_tracked_data({'submitted_on': None})
         notifications.signals.on_order_post_save(Order, instance=order)
 
         # Test order status change
-        order.__data = {'status': Order.STATUS_CHOICES[3][0], 'submitted_on': order.submitted_on}
+        order.set_tracked_data({'status': Order.STATUS_CHOICES[3][0], 'submitted_on': order.submitted_on})
         notifications.signals.on_order_post_save(Order, instance=order)
 
         print(f"Check your email at {test_email} for the test notifications.")
