@@ -3,7 +3,7 @@ from django.conf import settings
 
 api_client_use_pci = basistheory.ApiClient(
     basistheory.Configuration(
-        api_key=settings.BASIS_THEORY_READ_PCI_API_KEY,
+        api_key=settings.BASIS_THEORY_USE_PCI_API_KEY,
     )
 )
 
