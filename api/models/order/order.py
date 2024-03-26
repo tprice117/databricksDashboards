@@ -271,12 +271,15 @@ class Order(BaseModel):
                     order_group=instance.order_group
                 )
                 if order_group_orders.count() == 0:
+                    delivery_fee = 0
+                    if instance.order_group.seller_product_seller_location.delivery_fee:
+                        delivery_fee = instance.order_group.seller_product_seller_location.delivery_fee
                     OrderLineItem.objects.create(
                         order=instance,
                         order_line_item_type=OrderLineItemType.objects.get(
                             code="DELIVERY"
                         ),
-                        rate=instance.order_group.seller_product_seller_location.delivery_fee,
+                        rate=delivery_fee,
                         quantity=1,
                         description="Delivery Fee",
                         platform_fee_percent=instance.order_group.take_rate,
@@ -288,12 +291,15 @@ class Order(BaseModel):
                     instance.order_group.end_date == instance.end_date
                     and order_group_orders.count() > 1
                 ):
+                    removal_fee = 0
+                    if instance.order_group.seller_product_seller_location.removal_fee:
+                        removal_fee = instance.order_group.seller_product_seller_location.removal_fee
                     OrderLineItem.objects.create(
                         order=instance,
                         order_line_item_type=OrderLineItemType.objects.get(
                             code="REMOVAL"
                         ),
-                        rate=instance.order_group.seller_product_seller_location.removal_fee,
+                        rate=removal_fee,
                         quantity=1,
                         description="Removal Fee",
                         platform_fee_percent=instance.order_group.take_rate,
@@ -384,6 +390,9 @@ class Order(BaseModel):
         # Send email to internal team. Only on our PROD environment.
         if settings.ENVIRONMENT == "TEST":
             try:
+                waste_type_str = "Not specified"
+                if self.order_group.waste_type:
+                    waste_type_str = self.order_group.waste_type.name
                 mailchimp.messages.send(
                     {
                         "message": {
@@ -404,7 +413,7 @@ class Order(BaseModel):
                                     "sellerLocation": self.order_group.seller_product_seller_location.seller_location.name,
                                     "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                                     "bookingType": self.order_type,
-                                    "wasteType": self.order_group.waste_type.name,
+                                    "wasteType": waste_type_str,
                                     "supplierTonsIncluded": self.order_group.material.tonnage_included,
                                     "supplierRentalDaysIncluded": self.order_group.rental.included_days,
                                     "serviceDate": self.end_date,
@@ -442,6 +451,9 @@ class Order(BaseModel):
                         exc_info=e
                     )
 
+                waste_type_str = "Not specified"
+                if self.order_group.waste_type:
+                    waste_type_str = self.order_group.waste_type.name
                 mailchimp.messages.send(
                     {
                         "message": {
@@ -464,7 +476,7 @@ class Order(BaseModel):
                                     "orderId": self.id,
                                     "booking_url": call_to_action_url,
                                     "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                                    "waste_type": self.order_group.waste_type.name,
+                                    "waste_type": waste_type_str,
                                     "included_tons": self.order_group.material.tonnage_included,
                                     "included_rental_days": self.order_group.rental.included_days,
                                     "service_date": self.end_date,
