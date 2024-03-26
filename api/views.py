@@ -1158,10 +1158,10 @@ def submit_order(request):
 
 def test3(request):
     print("TEST")
-    BillingUtils.run_interval_based_invoicing()
+    # BillingUtils.run_interval_based_invoicing()
     # sync_stripe_payment_methods()
     # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
-    return HttpResponse(status=200)
+    return HttpResponse(status=200, content=settings.BASIS_THEORY_USE_PCI_API_KEY)
 
 
 def test2(request):
