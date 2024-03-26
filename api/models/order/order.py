@@ -390,6 +390,9 @@ class Order(BaseModel):
         # Send email to internal team. Only on our PROD environment.
         if settings.ENVIRONMENT == "TEST":
             try:
+                waste_type_str = "Not specified"
+                if self.order_group.waste_type:
+                    waste_type_str = self.order_group.waste_type.name
                 mailchimp.messages.send(
                     {
                         "message": {
@@ -410,7 +413,7 @@ class Order(BaseModel):
                                     "sellerLocation": self.order_group.seller_product_seller_location.seller_location.name,
                                     "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                                     "bookingType": self.order_type,
-                                    "wasteType": self.order_group.waste_type.name,
+                                    "wasteType": waste_type_str,
                                     "supplierTonsIncluded": self.order_group.material.tonnage_included,
                                     "supplierRentalDaysIncluded": self.order_group.rental.included_days,
                                     "serviceDate": self.end_date,
