@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 import logging
+from stripe.error import CardError
 
 from api.models import User, UserGroup
 from api.models.user.user_address import UserAddress
@@ -126,9 +127,17 @@ class PaymentMethod(BaseModel):
                         customer_id=user_address.stripe_customer_id,
                     )
                     print("stripe_payment_method created")
+                except CardError as e:
+                    logger.error(
+                        f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]",
+                        exc_info=e
+                    )
                 except Exception as e:
                     print(e)
-                    logger.error(f"PaymentMethod.sync_stripe_payment_method: [{e}]", exc_info=e)
+                    logger.error(
+                        f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]",
+                        exc_info=e
+                    )
 
 
 @receiver(post_save, sender=PaymentMethod)
