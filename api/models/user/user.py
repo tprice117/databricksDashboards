@@ -10,6 +10,7 @@ from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
 from common.models import BaseModel
+from notifications.utils.internal_email import send_email_on_new_signup
 
 logger = logging.getLogger(__name__)
 
@@ -72,33 +73,7 @@ class User(BaseModel):
 
             # Send email to internal team. Only on our PROD environment.
             if settings.ENVIRONMENT == "TEST":
-                try:
-                    mailchimp.messages.send(
-                        {
-                            "message": {
-                                "headers": {
-                                    "reply-to": self.email,
-                                },
-                                "from_name": "Downstream",
-                                "from_email": "noreply@trydownstream.com",
-                                "to": [{"email": "sales@trydownstream.com"}],
-                                "subject": "New User App Signup",
-                                "track_opens": True,
-                                "track_clicks": True,
-                                "text": "Woohoo! A new user signed up for the app. The email on their account is: ["
-                                + self.email
-                                + "]. This was created by: "
-                                + (
-                                    "[DOWNSTREAM TEAM]"
-                                    if created_by_downstream_team
-                                    else "[]"
-                                )
-                                + ".",
-                            }
-                        }
-                    )
-                except Exception as e:
-                    logger.error(f"User.save: [{e}]", exc_info=e)
+                send_email_on_new_signup(self.email, created_by_downstream_team=created_by_downstream_team)
 
         # Create new Intercom account if no intercom_id exists
         if not self.intercom_id:
