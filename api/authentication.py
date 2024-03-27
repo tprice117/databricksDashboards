@@ -4,6 +4,7 @@ from rest_framework import authentication, exceptions
 from api.utils.auth0 import get_user_data
 
 from .models import User
+from notifications.utils.internal_email import send_email_on_new_signup
 
 
 class CustomAuthentication(authentication.BaseAuthentication):
@@ -30,6 +31,8 @@ class CustomAuthentication(authentication.BaseAuthentication):
                         auth0_user["last_name"] if "last_name" in auth0_user else None
                     ),
                 )
+                # Send welcome email. Also send internal email to notify team.
+                send_email_on_new_signup(self.email, created_by_downstream_team=False)
 
             if is_admin:
                 return ("ALL", None)
