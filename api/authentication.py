@@ -31,7 +31,7 @@ class CustomAuthentication(authentication.BaseAuthentication):
                         auth0_user["last_name"] if "last_name" in auth0_user else None
                     ),
                 )
-                # Send welcome email. Also send internal email to notify team.
+                # Send internal email to notify team.
                 send_email_on_new_signup(self.email, created_by_downstream_team=False)
 
             if is_admin:
