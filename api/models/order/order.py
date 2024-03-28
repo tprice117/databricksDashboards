@@ -393,6 +393,13 @@ class Order(BaseModel):
                 waste_type_str = "Not specified"
                 if self.order_group.waste_type:
                     waste_type_str = self.order_group.waste_type.name
+                material_tonnage_str = "N/A"
+                if self.order_group.material:
+                    material_tonnage_str = self.order_group.material.tonnage_included
+                rental_included_days = 0
+                if self.order_group.rental:
+                    rental_included_days = self.order_group.rental.included_days
+
                 mailchimp.messages.send(
                     {
                         "message": {
@@ -414,8 +421,8 @@ class Order(BaseModel):
                                     "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                                     "bookingType": self.order_type,
                                     "wasteType": waste_type_str,
-                                    "supplierTonsIncluded": self.order_group.material.tonnage_included,
-                                    "supplierRentalDaysIncluded": self.order_group.rental.included_days,
+                                    "supplierTonsIncluded": material_tonnage_str,
+                                    "supplierRentalDaysIncluded": rental_included_days,
                                     "serviceDate": self.end_date,
                                     "timeWindow": self.schedule_window,
                                     "locationAddress": self.order_group.user_address.street,
@@ -454,6 +461,13 @@ class Order(BaseModel):
                 waste_type_str = "Not specified"
                 if self.order_group.waste_type:
                     waste_type_str = self.order_group.waste_type.name
+                material_tonnage_str = "N/A"
+                if self.order_group.material:
+                    material_tonnage_str = self.order_group.material.tonnage_included
+                rental_included_days = 0
+                if self.order_group.rental:
+                    rental_included_days = self.order_group.rental.included_days
+
                 mailchimp.messages.send(
                     {
                         "message": {
@@ -477,8 +491,8 @@ class Order(BaseModel):
                                     "booking_url": call_to_action_url,
                                     "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                                     "waste_type": waste_type_str,
-                                    "included_tons": self.order_group.material.tonnage_included,
-                                    "included_rental_days": self.order_group.rental.included_days,
+                                    "included_tons": material_tonnage_str,
+                                    "included_rental_days": rental_included_days,
                                     "service_date": self.end_date,
                                     "location_address": self.order_group.user_address.street,
                                     "location_city": self.order_group.user_address.city,

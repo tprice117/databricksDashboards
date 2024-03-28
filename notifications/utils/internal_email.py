@@ -49,5 +49,5 @@ def send_email_on_new_signup(email: str, created_by_downstream_team: bool = Fals
         )
         return response
     except Exception as e:
-        logger.error(f"User.save: [{e}]", exc_info=e)
+        logger.error(f"send_email_on_new_signup: [{e}]", exc_info=e)
         return None
