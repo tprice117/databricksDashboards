@@ -39,7 +39,7 @@ def on_order_post_save(sender, **kwargs):
     """Sends an email on Order database actions, such as Order submitted or Order status changed.
     """
     order: Order = kwargs.get('instance', None)
-    if 'created' not in kwargs:
+    if kwargs.get('created', False) is False:
         # Order updated
         error_status = "created-Order"
         order_id = get_json_safe_value(order.id)
