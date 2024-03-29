@@ -22,6 +22,12 @@ def extract_id_from_error(err: str) -> Optional[str]:
         return None
 
 
+def convert_phonenumber(_phonenumber: str) -> str:
+    """Remove spaces, dashes, and parenthesis from phone number.
+    """
+    return _phonenumber.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+
+
 class Contact:
     @staticmethod
     def all():
@@ -69,7 +75,7 @@ class Contact:
             external_id (str): The User.id UUIDField.
             email (str): The User.email
             name (str, optional): The name of the User, preferrably first_name + last_name. Defaults to None.
-            phone (str, optional): The User.phone. Defaults to None.
+            phone (str, optional): The User.phone. Removes dashes and parentheses. Defaults to None.
             avatar (str, optional): The User.photo_url. Defaults to None.
             custom_attributes (dict, optional): Pass in custom attributes in a dictionary to be added to Intercom
                                                 Contact. Defaults to None.
@@ -84,7 +90,7 @@ class Contact:
         if name:
             api_data["name"] = name
         if phone:
-            api_data["phone"] = phone
+            api_data["phone"] = convert_phonenumber(phone)
         if avatar:
             api_data["avatar"] = avatar
         if custom_attributes:
@@ -119,7 +125,7 @@ class Contact:
             external_id (str): User.id UUIDField.
             email (str): User.email
             name (str, optional): User.full_name. Defaults to None.
-            phone (str, optional): User.phone. Defaults to None.
+            phone (str, optional): User.phone. Removes dashes and parentheses. Defaults to None.
             avatar (str, optional): User.photo_url. Defaults to None.
             custom_attributes (dict, optional): Pass in custom attributes in a dictionary. Defaults to None.
 
@@ -133,7 +139,7 @@ class Contact:
         if name:
             api_data["name"] = name
         if phone:
-            api_data["phone"] = phone
+            api_data["phone"] = convert_phonenumber(phone)
         if avatar:
             api_data["avatar"] = avatar
         if custom_attributes:
