@@ -394,10 +394,10 @@ class Order(BaseModel):
                 if self.order_group.waste_type:
                     waste_type_str = self.order_group.waste_type.name
                 material_tonnage_str = "N/A"
-                if self.order_group.material:
+                if getattr(self.order_group, 'material', None):
                     material_tonnage_str = self.order_group.material.tonnage_included
                 rental_included_days = 0
-                if self.order_group.rental:
+                if getattr(self.order_group, 'rental', None):
                     rental_included_days = self.order_group.rental.included_days
 
                 mailchimp.messages.send(
@@ -462,10 +462,10 @@ class Order(BaseModel):
                 if self.order_group.waste_type:
                     waste_type_str = self.order_group.waste_type.name
                 material_tonnage_str = "N/A"
-                if self.order_group.material:
+                if getattr(self.order_group, 'material', None):
                     material_tonnage_str = self.order_group.material.tonnage_included
                 rental_included_days = 0
-                if self.order_group.rental:
+                if getattr(self.order_group, 'rental', None):
                     rental_included_days = self.order_group.rental.included_days
 
                 mailchimp.messages.send(
