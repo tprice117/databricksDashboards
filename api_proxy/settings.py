@@ -217,6 +217,10 @@ if ENVIRONMENT == "TEST":
     BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env("BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID")
     BASIS_THEORY_APPLICATION_ID = "63da13bb-3a2c-4bd5-b747-a5a4cc9f76e7"  # env("BASIS_THEORY_APPLICATION_ID")
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_PROD_TOKEN")
+    # https://docs.lob.com/#tag/Authentication/API-Keys
+    LOB_API_HOST = "https://api.lob.com/v1"
+    LOB_API_KEY = env("LOB_API_KEY")
+    LOB_PUB_API_KEY = env("LOB_DEV_PUB_API_KEY")
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_DEV_PUBLISHABLE_KEY")
@@ -238,6 +242,9 @@ else:
     BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env("BASIS_DEV_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID")
     BASIS_THEORY_APPLICATION_ID = "a44b44d5-2cb8-4255-bbf6-dc5884bffdbf"  # env("BASIS_DEV_THEORY_APPLICATION_ID")
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_DEV_TOKEN")
+    LOB_API_HOST = "https://api.lob.com/v1"
+    LOB_API_KEY = env("LOB_DEV_API_KEY")
+    LOB_PUB_API_KEY = env("LOB_DEV_PUB_API_KEY")
 
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
@@ -291,6 +298,12 @@ LOGGING = {
             ],
             # Set to WARNING to limit logs from Stripe Cron job (cost savings: large data throughput)
             "level": "WARNING",
+        },
+        "billing": {
+            "handlers": [
+                "logtail",
+            ],
+            "level": "INFO",
         },
         "": {
             "handlers": [
