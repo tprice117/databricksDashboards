@@ -1,11 +1,11 @@
 import calendar
 import datetime
+import logging
 from typing import List
 
 import stripe
 from django.conf import settings
 from django.template.loader import render_to_string
-import logging
 
 from api.models import Order, OrderLineItem, UserAddress, UserGroup
 from common.utils import get_last_day_of_previous_month
@@ -121,7 +121,9 @@ class BillingUtils:
                     print(response)
         except Exception as e:
             print(e)
-            logger.error(f"BillingUtils.create_invoice_items_for_order: [{e}]", exc_info=e)
+            logger.error(
+                f"BillingUtils.create_invoice_items_for_order: [{e}]", exc_info=e
+            )
 
     @staticmethod
     def create_stripe_invoice_for_user_address(
@@ -151,7 +153,7 @@ class BillingUtils:
     @staticmethod
     def create_stripe_invoices_for_user_group(
         user_group: UserGroup,
-        end_date_lte: datetime = datetime.date.today() - datetime.timedelta(days=3),
+        end_date_lte: datetime = datetime.date.today(),
     ):
         """
         Create Stripe Invoices for all Orders that have been completed and have an end date on
@@ -295,7 +297,10 @@ class BillingUtils:
                 StripeUtils.Invoice.attempt_pay(invoice.id)
             except Exception as e:
                 print("Attempt pay error: ", e)
-                logger.error(f"BillingUtils.finalize_and_pay_stripe_invoice: [Attempt Pay]-[{e}]", exc_info=e)
+                logger.error(
+                    f"BillingUtils.finalize_and_pay_stripe_invoice: [Attempt Pay]-[{e}]",
+                    exc_info=e,
+                )
 
         # Send the invoice.
         if send_invoice:
@@ -303,7 +308,10 @@ class BillingUtils:
                 StripeUtils.Invoice.send_invoice(invoice.id)
             except Exception as e:
                 print("Send invoice error: ", e)
-                logger.error(f"BillingUtils.finalize_and_pay_stripe_invoice: [Send Invoice]-[{e}]", exc_info=e)
+                logger.error(
+                    f"BillingUtils.finalize_and_pay_stripe_invoice: [Send Invoice]-[{e}]",
+                    exc_info=e,
+                )
 
     @staticmethod
     def run_interval_based_invoicing():
@@ -323,7 +331,9 @@ class BillingUtils:
                     BillingUtils.create_stripe_invoices_for_user_group(user_group)
         except Exception as e:
             print(e)
-            logger.error(f"BillingUtils.run_interval_based_invoicing: [{e}]", exc_info=e)
+            logger.error(
+                f"BillingUtils.run_interval_based_invoicing: [{e}]", exc_info=e
+            )
             failed = True
             error_messages.append(str(e))
             error_messages.append("--------------")
@@ -369,8 +379,7 @@ class BillingUtils:
                     # or before the last day of the previous month.
                     orders = Order.objects.filter(
                         status="COMPLETE",
-                        end_date__lte=datetime.date.today()
-                        - datetime.timedelta(days=3),
+                        end_date__lte=datetime.date.today(),
                         order_group__user_address=user_address,
                     )
 
@@ -392,7 +401,9 @@ class BillingUtils:
                         user_group=user_address.user_group,
                     )
         except Exception as e:
-            logger.error(f"BillingUtils.run_project_end_based_invoicing: [{e}]", exc_info=e)
+            logger.error(
+                f"BillingUtils.run_project_end_based_invoicing: [{e}]", exc_info=e
+            )
             failed = True
 
         # If the task failed, send an email to the admin.
