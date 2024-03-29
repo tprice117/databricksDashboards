@@ -9,11 +9,11 @@ class Utils:
     ):
         """
         Check if all OrderGroups for the UserAddress are complete (end date is on or
-        before the "buffer" window (currently 3 days)) and has line items that need
+        before the "buffer" window (currently same day)) and has line items that need
         to be invoiced.
         """
         completed_order_groups = user_address.order_groups.filter(
-            end_date__lte=datetime.date.today() - datetime.timedelta(days=3),
+            end_date__lte=datetime.date.today(),
         )
         line_items_needing_invoicing = OrderLineItem.objects.filter(
             order__order_group__in=completed_order_groups,
