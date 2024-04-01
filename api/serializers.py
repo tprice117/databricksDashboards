@@ -3,9 +3,12 @@ import datetime
 import stripe
 from django.conf import settings
 from rest_framework import serializers
+import logging
 from notifications.utils.internal_email import send_email_on_new_signup
 
 from .models import *
+
+logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -126,6 +129,10 @@ class UserSerializer(serializers.ModelSerializer):
             # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
             if validated_data.get("user_id", None) is not None:
                 send_email_on_new_signup(self.email, created_by_downstream_team=False)
+        else:
+            logger.info(
+                f"UserSerializer.create: [New User Signup]-[{validated_data}]",
+            )
         new_user = User.objects.create(**validated_data)
         return new_user
 
