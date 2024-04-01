@@ -110,6 +110,7 @@ class UserSerializer(serializers.ModelSerializer):
     user_group = UserGroupSerializer(read_only=True)
     user_group_id = serializers.PrimaryKeyRelatedField(
         queryset=UserGroup.objects.all(),
+        required=False,
         source="user_group",
         write_only=True,
         allow_null=True,
