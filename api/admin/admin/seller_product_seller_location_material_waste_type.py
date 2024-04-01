@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @admin.register(SellerProductSellerLocationMaterialWasteType)
-class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
+class SellerProductSellerLocationMaterialWasteTypeAdmin(admin.ModelAdmin):
     change_list_template = "admin/entities/seller_product_seller_location_material_waste_type_changelist.html"
 
     def get_urls(self):
