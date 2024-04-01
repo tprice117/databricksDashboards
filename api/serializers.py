@@ -3,6 +3,7 @@ import datetime
 import stripe
 from django.conf import settings
 from rest_framework import serializers
+from notifications.utils.internal_email import send_email_on_new_signup
 
 from .models import *
 
@@ -115,6 +116,18 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True,
         allow_null=True,
     )
+
+    def create(self, validated_data):
+        """
+        Create and return a new `User` instance, given the validated data.
+        """
+        # Send internal email to notify team.
+        if settings.ENVIRONMENT == "TEST":
+            # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
+            if validated_data.get("user_id", None) is not None:
+                send_email_on_new_signup(self.email, created_by_downstream_team=False)
+        new_user = User.objects.create(**validated_data)
+        return new_user
 
     class Meta:
         model = User
