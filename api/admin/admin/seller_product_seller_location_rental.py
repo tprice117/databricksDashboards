@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @admin.register(SellerProductSellerLocationMaterial)
-class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
+class SellerProductSellerLocationRentalAdmin(admin.ModelAdmin):
     pass
 
     change_list_template = (
