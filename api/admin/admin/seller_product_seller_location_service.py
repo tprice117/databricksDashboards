@@ -1,9 +1,9 @@
 import csv
+import logging
 
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
-import logging
 
 from api.admin.inlines import SellerProductSellerLocationServiceRecurringFrequencyInline
 from api.forms import CsvImportForm
@@ -66,7 +66,7 @@ class SellerProductSellerLocationServiceAdmin(admin.ModelAdmin):
                     )
 
                     if not does_exist:
-                        # Create SellerProductSellerLocation.
+                        # Create SellerProductSellerLocationService.
                         (
                             test,
                             test2,
@@ -86,7 +86,10 @@ class SellerProductSellerLocationServiceAdmin(admin.ModelAdmin):
                         service.save()
                 except Exception as ex:
                     print("Error: " + str(ex))
-                    logger.error(f"SellerProductSellerLocationServiceAdmin.import_csv: [{ex}]", exc_info=ex)
+                    logger.error(
+                        f"SellerProductSellerLocationServiceAdmin.import_csv: [{ex}]",
+                        exc_info=ex,
+                    )
 
             self.message_user(request, "Your csv file has been imported")
             return redirect("..")
