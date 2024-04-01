@@ -124,16 +124,16 @@ class UserSerializer(serializers.ModelSerializer):
         """
         Create and return a new `User` instance, given the validated data.
         """
+        new_user = User.objects.create(**validated_data)
         # Send internal email to notify team.
         if settings.ENVIRONMENT == "TEST":
             # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
             if validated_data.get("user_id", None) is not None:
-                send_email_on_new_signup(self.email, created_by_downstream_team=False)
+                send_email_on_new_signup(new_user.email, created_by_downstream_team=False)
         else:
             logger.info(
                 f"UserSerializer.create: [New User Signup]-[{validated_data}]",
             )
-        new_user = User.objects.create(**validated_data)
         return new_user
 
     class Meta:
