@@ -5,22 +5,22 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 
-from api.admin.inlines import SellerProductSellerLocationMaterialWasteTypeInline
 from api.forms import CsvImportForm
 from api.models import SellerProductSellerLocationMaterial
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
+from api.models.seller.seller_product_seller_location_rental import (
+    SellerProductSellerLocationRental,
+)
 
 logger = logging.getLogger(__name__)
 
 
 @admin.register(SellerProductSellerLocationMaterial)
 class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
-    inlines = [
-        SellerProductSellerLocationMaterialWasteTypeInline,
-    ]
+    pass
 
     change_list_template = (
-        "admin/entities/seller_product_seller_location_material_changelist.html"
+        "admin/entities/seller_product_seller_location_rental_changelist.html"
     )
 
     def get_urls(self):
@@ -39,12 +39,15 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
             reader = csv.DictReader(decoded_file)
             keys = [
                 "seller_product_seller_location_id",
+                "included_days",
+                "price_per_day_included",
+                "price_per_day_additional",
             ]
             for row in reader:
                 if not all(key in keys for key in list(row.keys())):
                     self.message_user(
                         request,
-                        "Your csv file must have a header rows with 'seller_product_seller_location_id' as the first column.",
+                        "Your csv file must have a header rows with 'seller_product_seller_location_id', 'included_days', 'price_per_day_included', and 'price_per_day_additional' as the first columns.",
                     )
                     return redirect("..")
 
@@ -58,7 +61,7 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
                         )
                     )
                     does_exist = (
-                        SellerProductSellerLocationMaterial.objects.filter(
+                        SellerProductSellerLocationRental.objects.filter(
                             seller_product_seller_location=seller_product_seller_location,
                         ).count()
                         > 0
@@ -69,20 +72,28 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
                         (
                             test,
                             test2,
-                        ) = SellerProductSellerLocationMaterial.objects.get_or_create(
+                        ) = SellerProductSellerLocationRental.objects.get_or_create(
                             seller_product_seller_location=SellerProductSellerLocation.objects.get(
                                 id=row["seller_product_seller_location_id"]
                             ),
+                            included_days=row["included_days"],
+                            price_per_day_included=row["price_per_day_included"],
+                            price_per_day_additional=row["price_per_day_additional"],
                         )
                     else:
-                        material = SellerProductSellerLocationMaterial.objects.get(
+                        service = SellerProductSellerLocationRental.objects.get(
                             seller_product_seller_location=seller_product_seller_location,
                         )
-                        material.save()
+                        service.included_days = row["included_days"]
+                        service.price_per_day_included = row["price_per_day_included"]
+                        service.price_per_day_additional = row[
+                            "price_per_day_additional"
+                        ]
+                        service.save()
                 except Exception as ex:
                     print("Error: " + str(ex))
                     logger.error(
-                        f"SellerProductSellerLocationMaterialAdmin.import_csv: [{ex}]",
+                        f"SellerProductSellerLocationRentalAdmin.import_csv: [{ex}]",
                         exc_info=ex,
                     )
 
