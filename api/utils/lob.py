@@ -25,6 +25,86 @@ from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
 logger = logging.getLogger("billing")
 
 
+def get_check_remittance_html(seller_location: SellerLocation, orders: List[Order]) -> str:
+    """Get the HTML for the remittance advice on the check.
+
+    Args:
+        orders (List[Order]): The orders to include in the remittance advice.
+
+    Returns:
+        str: The HTML for the remittance advice.
+    """
+
+    # Get SellerInvoicePayable
+    seller_invoice_payable = SellerInvoicePayable.objects.filter(seller_location_id=seller_location.id).first()
+    seller_invoice_str = "No Invoice Provided"
+    if seller_invoice_payable:
+        seller_invoice_str = seller_invoice_payable.supplier_invoice_id
+
+    remittance_advice = []
+    line_background = "#ffffff"
+    for order in orders:
+        # Get total already paid to seller for this order.
+        payouts = Payout.objects.filter(order=order)
+        total_paid_to_seller = sum([payout.amount for payout in payouts])
+        description = (
+            order.order_group.user_address.street
+            + " | "
+            + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
+        )
+
+        remittance_advice.append(
+            f'''<tr style="background-color: {line_background};">
+            <td style="border: 1px solid #ddd; padding: 5px;">{seller_invoice_str}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
+            </tr>'''
+        )
+        line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
+
+        remittance_advice.append(
+            f'''<tr style="background-color: {line_background};">
+            <td style="border: 1px solid #ddd; padding: 5px;">{seller_invoice_str}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
+            </tr>'''
+        )
+
+        line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
+
+        remittance_advice.append(
+            f'''<tr style="background-color: {line_background};">
+            <td style="border: 1px solid #ddd; padding: 5px;">{seller_invoice_str}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
+            <td style="border: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
+            </tr>'''
+        )
+
+        line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
+
+    remittance_html = f'''<div style="padding-top:3.65in; padding-left: .12in; padding-right: .12in; font-family: Thicccboi,Arial,sans-serif; font-size: 10pt;">
+    <h2 style="text-align: center; font-size: 1.8em;">Remittance Advice</h2>
+    <table style="border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr style="background-color: #038480; color: white;">
+                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Supplier ID</th>
+                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Amount</th>
+                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Description</th>
+                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {''.join(remittance_advice) if remittance_advice else '<td colspan="4">No orders found.</td>'}
+        </tbody>
+    </table>
+    </div>'''
+
+    return remittance_html
+
+
 class Lob:
 
     def __init__(self):
@@ -37,12 +117,22 @@ class Lob:
         )
         self.from_address_id = "adr_4f5ca93c6bf5896b"
         self.bank_id = "bank_e83bd02ceb15448"
+        self.check_logo = "https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e48a5fa7bd074602c6206_Downstream%20D%20-%20Dark-p-500.png"
+        self.default_download_app_qr = QrCode(
+            position="relative",
+            redirect_url="https://trydownstream.onelink.me/sqsQ/b07f65lo",
+            width="2.5",
+            top="2.5",
+            right="2.5",
+            pages="front,back"
+        )
 
     def sendPhysicalCheck(
-        self, seller_location: SellerLocation, amount, orders: List[Order], bank_id="bank_e83bd02ceb15448"
+        self, seller_location: SellerLocation, amount: float, orders: List[Order], bank_id="bank_e83bd02ceb15448"
     ) -> int:
         """Sends a physical check to a seller. Returns check number on success or None on failure.
         Checks can't be sent internationally, country must be US.
+        API Docs: https://docs.lob.com/#tag/Checks/operation/check_create
 
         Args:
             seller_location (SellerLocation): _description_
@@ -54,48 +144,24 @@ class Lob:
         """
         try:
             # Build remittance advice object.
-            # Get SellerInvoicePayable
-            seller_invoice_payable = SellerInvoicePayable.objects.filter(seller_location_id=seller_location.id).first()
-            seller_invoice_str = "No Invoice Provided"
-            if seller_invoice_payable:
-                seller_invoice_str = seller_invoice_payable.supplier_invoice_id
-            remittance_advice = []
+            check_bottom = get_check_remittance_html(seller_location, orders)
+
             for order in orders:
                 # Get total already paid to seller for this order.
-                payouts = Payout.objects.filter(order=order)
-                total_paid_to_seller = sum([payout.amount for payout in payouts])
                 description = (
                     order.order_group.user_address.street
                     + " | "
                     + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
                 )
 
-                remittance_advice.append(
-                    {
-                        "id": seller_invoice_str,
-                        "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
-                        "description": description[:64],
-                        "date": order.end_date.strftime("%d/%m/%Y"),
-                    }
-                )
-
-            # Convert date to datetime object.
-            send_date = datetime.datetime.combine(order.end_date, datetime.time())
-            now_date = timezone.now() + datetime.timedelta(hours=1)
-            # If date is in the past, send check now.
-            if send_date < datetime.datetime.now():
-                send_date = now_date
-
-            # https://docs.lob.com/#tag/Checks/operation/check_create
             check_editable = CheckEditable(
                 description=description[:64],
-                message=description[:64],
                 bank_account=bank_id,
-                amount=float(order.seller_price() - total_paid_to_seller),
-                memo="rent",
-                send_date=send_date,
-                # logo = "https://s3-us-west-2.amazonaws.com/public.lob.com/assets/check_logo.png",
-                # check_bottom = "<h1 style='padding-top:4in;'>Demo Check for {{name}}</h1>",
+                amount=float(amount),
+                memo="Marketplace Bookings Payout",
+                logo=self.check_logo,
+                # message="Downstream Marketplace Bookings Payout",  # Only message or check_bottom can be used
+                check_bottom=check_bottom,
                 # _from = "adr_210a8d4b0b76d77b",  # can use Lob address ID
                 # 3245 Main Street, #235-434, Frisco, TX 75034
                 _from=AddressDomestic(
@@ -206,6 +272,8 @@ class Lob:
                 postcard_editable.merge_variables = merge_variables
             if qr_code:
                 postcard_editable.qr_code = qr_code
+            else:
+                postcard_editable.qr_code = self.default_download_app_qr
 
             with lob_python.ApiClient(self.configuration) as api_client:
                 api = PostcardsApi(api_client)
