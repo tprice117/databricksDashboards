@@ -10,15 +10,14 @@ import lob_python
 from lob_python.api_client import ApiClient
 from lob_python.api.checks_api import ChecksApi
 from lob_python.api.bank_accounts_api import BankAccountsApi
+from lob_python.api.postcards_api import PostcardsApi
 from lob_python.model.bank_account_writable import BankAccountWritable, BankTypeEnum
 from lob_python.model.check_editable import CheckEditable, ChkUseType
 from lob_python.model.address_domestic import AddressDomestic
-from lob_python.exceptions import ApiException
-from lob_python.model.postcard_editable import PostcardEditable
+from lob_python.model.postcard_editable import PostcardEditable, PscUseType
 from lob_python.model.address_editable import AddressEditable
 from lob_python.model.merge_variables import MergeVariables
-from lob_python.model.country_extended import CountryExtended
-from lob_python.api.postcards_api import PostcardsApi
+from lob_python.model.qr_code import QrCode
 
 from django.conf import settings
 from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
@@ -36,6 +35,8 @@ class Lob:
             host=settings.LOB_API_HOST,
             username=settings.LOB_API_KEY,
         )
+        self.from_address_id = "adr_4f5ca93c6bf5896b"
+        self.bank_id = "bank_e83bd02ceb15448"
 
     def sendPhysicalCheck(
         self, seller_location: SellerLocation, amount, orders: List[Order], bank_id="bank_e83bd02ceb15448"
@@ -170,7 +171,9 @@ class Lob:
 
     def send_postcard(
         self, description: str, front: str, back: str, to: AddressEditable,
-        _from: AddressEditable, merge_variables: MergeVariables = None
+        merge_variables: MergeVariables = None,
+        use_type: Union[Literal['marketing'], Literal['operational']] = 'marketing',
+        qr_code: QrCode = None
     ):
         """Send a postcard to a recipient.
         API docs: https://docs.lob.com/#tag/Postcards/operation/postcard_create
@@ -185,30 +188,24 @@ class Lob:
         """
         try:
             postcard_editable = PostcardEditable(
-                description="First Postcard",
-                front="<html style='padding: 1in; font-size: 50;'>Front HTML for {{name}}</html>",
-                back="<html style='padding: 1in; font-size: 20;'>Back HTML for {{name}}</html>",
-                to=AddressEditable(
-                    name="Harry Zhang",
-                    address_line1="210 King Street",
-                    address_city="San Francisco",
-                    address_state="CA",
-                    address_zip="94107",
-                ),
+                description=description,
+                front=front,
+                back=back,
+                to=to,
                 _from=AddressEditable(
-                    name="Leore Avidar",
-                    address_line1="210 King Street",
-                    address_city="San Francisco",
-                    address_state="CA",
-                    address_zip="94107",
-                    address_country=CountryExtended("US")
+                    name="Downstream",
+                    address_line1="3245 Main Street",
+                    address_line2="#235-434",
+                    address_city="Frisco",
+                    address_state="TX",
+                    address_zip="75034",
                 ),
-                # merge_variables=MergeVariables(
-                #     name="Harry",
-                # ),
+                use_type=PscUseType(use_type),
             )
             if merge_variables:
                 postcard_editable.merge_variables = merge_variables
+            if qr_code:
+                postcard_editable.qr_code = qr_code
 
             with lob_python.ApiClient(self.configuration) as api_client:
                 api = PostcardsApi(api_client)
