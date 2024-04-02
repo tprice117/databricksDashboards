@@ -15,7 +15,7 @@ from api.models.seller.seller_product_seller_location_rental import (
 logger = logging.getLogger(__name__)
 
 
-@admin.register(SellerProductSellerLocationMaterial)
+@admin.register(SellerProductSellerLocationRental)
 class SellerProductSellerLocationRentalAdmin(admin.ModelAdmin):
     pass
 
