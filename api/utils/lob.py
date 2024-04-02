@@ -17,6 +17,7 @@ from lob_python.model.address_domestic import AddressDomestic
 from lob_python.model.postcard_editable import PostcardEditable, PscUseType
 from lob_python.model.address_editable import AddressEditable
 from lob_python.model.merge_variables import MergeVariables
+from lob_python.model.country_extended import CountryExtended
 from lob_python.model.qr_code import QrCode
 
 from django.conf import settings
