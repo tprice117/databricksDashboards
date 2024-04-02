@@ -13,6 +13,13 @@ from lob_python.api.bank_accounts_api import BankAccountsApi
 from lob_python.model.bank_account_writable import BankAccountWritable, BankTypeEnum
 from lob_python.model.check_editable import CheckEditable, ChkUseType
 from lob_python.model.address_domestic import AddressDomestic
+from lob_python.exceptions import ApiException
+from lob_python.model.postcard_editable import PostcardEditable
+from lob_python.model.address_editable import AddressEditable
+from lob_python.model.merge_variables import MergeVariables
+from lob_python.model.country_extended import CountryExtended
+from lob_python.api.postcards_api import PostcardsApi
+
 from django.conf import settings
 from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
 
@@ -159,4 +166,57 @@ class Lob:
             raise
         except Exception as e:
             logger.error(f"Lob.add_bank_account: [{e}]", exc_info=e)
+            raise
+
+    def send_postcard(
+        self, description: str, front: str, back: str, to: AddressEditable,
+        _from: AddressEditable, merge_variables: MergeVariables = None
+    ):
+        """Send a postcard to a recipient.
+        API docs: https://docs.lob.com/#tag/Postcards/operation/postcard_create
+
+        Args:
+            description (str): A description that identifies this resource. Max of 255 characters.
+            front (str): The front of the postcard.
+            back (str): The back of the postcard.
+            to (dict): The recipient's address.
+            _from (dict): The sender's address.
+            merge_variables (dict): The merge variables to be used in the postcard.
+        """
+        try:
+            postcard_editable = PostcardEditable(
+                description="First Postcard",
+                front="<html style='padding: 1in; font-size: 50;'>Front HTML for {{name}}</html>",
+                back="<html style='padding: 1in; font-size: 20;'>Back HTML for {{name}}</html>",
+                to=AddressEditable(
+                    name="Harry Zhang",
+                    address_line1="210 King Street",
+                    address_city="San Francisco",
+                    address_state="CA",
+                    address_zip="94107",
+                ),
+                _from=AddressEditable(
+                    name="Leore Avidar",
+                    address_line1="210 King Street",
+                    address_city="San Francisco",
+                    address_state="CA",
+                    address_zip="94107",
+                    address_country=CountryExtended("US")
+                ),
+                # merge_variables=MergeVariables(
+                #     name="Harry",
+                # ),
+            )
+            if merge_variables:
+                postcard_editable.merge_variables = merge_variables
+
+            with lob_python.ApiClient(self.configuration) as api_client:
+                api = PostcardsApi(api_client)
+                created_postcard = api.create(postcard_editable)
+                print(created_postcard)
+        except lob_python.ApiException as e:
+            logger.error(f"Lob.send_postcard.api: [{e}]", exc_info=e)
+            raise
+        except Exception as e:
+            logger.error(f"Lob.send_postcard: [{e}]", exc_info=e)
             raise
