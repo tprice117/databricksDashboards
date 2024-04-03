@@ -28,8 +28,11 @@ logger = logging.getLogger("billing")
 
 def get_check_remittance_html(seller_location: SellerLocation, orders: List[Order]) -> str:
     """Get the HTML for the remittance advice on the check.
+    check_bottom must conform to the size in this template:
+    https://s3-us-west-2.amazonaws.com/public.lob.com/assets/templates/check_bottom_template.pdf
 
     Args:
+        seller_location (SellerLocation): The seller location to include in the remittance advice.
         orders (List[Order]): The orders to include in the remittance advice.
 
     Returns:
@@ -56,20 +59,20 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
 
         remittance_advice.append(
             f'''<tr style="background-color: {line_background};">
-            <td style="border: 1px solid #ddd; padding: 5px;">{seller_invoice_str}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
+            <td style="border-left: none; padding: 5px;">{seller_invoice_str}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
             </tr>'''
         )
         line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
 
         remittance_advice.append(
             f'''<tr style="background-color: {line_background};">
-            <td style="border: 1px solid #ddd; padding: 5px;">{seller_invoice_str}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
+            <td style="border-left: none; padding: 5px;">{seller_invoice_str}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
             </tr>'''
         )
 
@@ -77,10 +80,10 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
 
         remittance_advice.append(
             f'''<tr style="background-color: {line_background};">
-            <td style="border: 1px solid #ddd; padding: 5px;">{seller_invoice_str}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
-            <td style="border: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
+            <td style="border-left: none; padding: 5px;">{seller_invoice_str}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
+            <td style="border-left: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
             </tr>'''
         )
 
@@ -88,13 +91,13 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
 
     remittance_html = f'''<div style="padding-top:3.65in; padding-left: .12in; padding-right: .12in; font-family: Thicccboi,Arial,sans-serif; font-size: 10pt;">
     <h2 style="text-align: center; font-size: 1.8em;">Remittance Advice</h2>
-    <table style="border-collapse: collapse; width: 100%;">
+    <table style="border-collapse: separate; width: 100%; border-radius: 10px; border: solid #ddd 1px; padding: 3px;">
         <thead>
             <tr style="background-color: #038480; color: white;">
-                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Supplier ID</th>
-                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Amount</th>
-                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Description</th>
-                <th style="text-align: left; border: 1px solid #ddd; padding: 5px;">Date</th>
+                <th style="text-align: left; border-left: none; padding: 5px;">Supplier ID</th>
+                <th style="text-align: left; border-left: 1px solid #ddd; padding: 5px;">Amount</th>
+                <th style="text-align: left; border-left: 1px solid #ddd; padding: 5px;">Description</th>
+                <th style="text-align: left; border-left: 1px solid #ddd; padding: 5px;">Date</th>
             </tr>
         </thead>
         <tbody>
@@ -108,7 +111,7 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
 
 class Lob:
 
-    def __init__(self):
+    def __init__(self, from_address_id: str = None, bank_id: str = None, check_logo: str = None, default_download_app_qr: QrCode = None):
         # Create check object.
         # Defining the host is optional and defaults to https://api.lob.com/v1
         # See configuration.py for a list of all supported configuration parameters.
@@ -116,17 +119,20 @@ class Lob:
             host=settings.LOB_API_HOST,
             username=settings.LOB_API_KEY,
         )
-        self.from_address_id = "adr_4f5ca93c6bf5896b"
-        self.bank_id = "bank_e83bd02ceb15448"
-        self.check_logo = "https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e48a5fa7bd074602c6206_Downstream%20D%20-%20Dark-p-500.png"
-        self.default_download_app_qr = QrCode(
-            position="relative",
-            redirect_url="https://trydownstream.onelink.me/sqsQ/b07f65lo",
-            width="1",
-            top=".12",
-            right=".12",
-            pages="back"  # pages="front,back" for both sides
-        )
+        self.from_address_id = from_address_id if from_address_id is not None else "adr_4f5ca93c6bf5896b"
+        self.bank_id = bank_id if bank_id is not None else "bank_e83bd02ceb15448"
+        self.check_logo = check_logo if check_logo is not None else "https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e48a5fa7bd074602c6206_Downstream%20D%20-%20Dark-p-500.png"
+        if default_download_app_qr is not None:
+            self.default_download_app_qr = default_download_app_qr
+        else:
+            self.default_download_app_qr = QrCode(
+                position="relative",
+                redirect_url="https://trydownstream.onelink.me/sqsQ/b07f65lo",
+                width="1",
+                top=".12",
+                right=".12",
+                pages="back"  # pages="front,back" for both sides
+            )
 
     def sendPhysicalCheck(
         self, seller_location: SellerLocation, amount: float, orders: List[Order], bank_id="bank_e83bd02ceb15448"
