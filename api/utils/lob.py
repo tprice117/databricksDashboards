@@ -236,7 +236,7 @@ class Lob:
             # Add Remittance Advice as an attachment if more than 6 orders.
             if check_remittance.is_attachment:
                 check_editable.attachment = check_remittance.html
-                check_editable.message = f'''Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice for {len(orders)} items.'''
+                check_editable.message = f'''Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice of {len(orders)} items.'''
             else:
                 # Only message or check_bottom can be used
                 if check_remittance.html:
