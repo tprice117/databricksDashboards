@@ -122,10 +122,10 @@ class Lob:
         self.default_download_app_qr = QrCode(
             position="relative",
             redirect_url="https://trydownstream.onelink.me/sqsQ/b07f65lo",
-            width="2.5",
-            top="2.5",
-            right="2.5",
-            pages="front,back"
+            width="1",
+            top=".12",
+            right=".12",
+            pages="back"  # pages="front,back" for both sides
         )
 
     def sendPhysicalCheck(
