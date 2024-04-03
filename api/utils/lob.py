@@ -5,6 +5,7 @@ Python lib: https://github.com/lob/lob-python
 import datetime
 from django.utils import timezone
 from typing import List, Union, Literal
+from dataclasses import dataclass
 import logging
 import lob_python
 from lob_python.api_client import ApiClient
@@ -26,8 +27,67 @@ from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
 logger = logging.getLogger("billing")
 
 
-def get_check_remittance_html(seller_location: SellerLocation, orders: List[Order]) -> str:
-    """Get the HTML for the remittance advice on the check.
+@dataclass
+class CheckRemittanceHTMLResponse():
+    html: str
+    description: str
+    is_attachment: bool
+
+
+def get_check_remittance_page_html(remittance_advice: List[str], top_padding="3.65") -> str:
+    """Get the HTML for a single remittance advice page.
+
+    Args:
+        remittance_advice (List[str]): Remittance advice items.
+        top_padding (str, optional): Padding to add to top of page. Defaults to "3.65".
+
+    Returns:
+        str: HTML for a single remittance advice page.
+    """
+    return f'''<div style="padding-top:{top_padding}in; padding-left: .12in; padding-right: .12in; font-family: Thicccboi,Arial,sans-serif; font-size: 11pt; width: 8.5in; height:11in;">
+    <h2 style="text-align: center; font-size: 1.8em;">Remittance Advice</h2>
+    <table style="border-collapse: separate; width: 100%; border-radius: 10px; border: solid #ddd 1px; padding: 3px;">
+        <thead>
+            <tr style="background-color: #038480; color: white;">
+                <th style="text-align: left; border-left: none; padding: 7px;">Supplier ID</th>
+                <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Amount</th>
+                <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Description</th>
+                <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {''.join(remittance_advice) if remittance_advice else '<td colspan="4">No orders found.</td>'}
+        </tbody>
+    </table>
+    '''
+
+
+def get_check_remittance_item_html(
+    seller_invoice_id: str, total: str, description: str, end_date: str, line_background="#ffffff"
+) -> str:
+    """Get the HTML for a single remittance advice item.
+
+    Args:
+        seller_invoice_id (str): Seller invoice ID.
+        total (str): Total amount to be paid to the seller.
+        description (str): Description of the order.
+        end_date (str): End date of the order.
+        line_background (str, optional): HTML row line background. Defaults to "#ffffff".
+
+    Returns:
+        str: Complete HTML for a single remittance advice item.
+    """
+    return f'''<tr style="background-color: {line_background};">
+            <td style="border-left: none; padding: 7px;">{seller_invoice_id}</td>
+            <td style="border-left: 1px solid #ddd; padding: 7px;">{total}</td>
+            <td style="border-left: 1px solid #ddd; padding: 7px;">{description[:64]} this is a long description</td>
+            <td style="border-left: 1px solid #ddd; padding: 7px;">{end_date}</td></tr>
+            '''
+
+
+def get_check_remittance_html(seller_location: SellerLocation, orders: List[Order]) -> CheckRemittanceHTMLResponse:
+    """Get the HTML for the remittance advice on the check. If there are more than 6 orders, the remittance advice
+    will be an attachment. If there are 6 or fewer orders, the remittance advice will be added to the check bottom.
     check_bottom must conform to the size in this template:
     https://s3-us-west-2.amazonaws.com/public.lob.com/assets/templates/check_bottom_template.pdf
 
@@ -36,7 +96,9 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
         orders (List[Order]): The orders to include in the remittance advice.
 
     Returns:
-        str: The HTML for the remittance advice.
+        CheckRemittanceHTMLResponse: The HTML for the remittance advice. Boolean denotes if the
+                                     remittance advice is an attachment or can be added to the check bottom.
+                                     Description is the description of the last order in the remittance advice.
     """
 
     # Get SellerInvoicePayable
@@ -47,7 +109,10 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
 
     remittance_advice = []
     line_background = "#ffffff"
-    for order in orders:
+    description = ""
+
+    remittance_advice_html = ""
+    for i, order in enumerate(orders):
         # Get total already paid to seller for this order.
         payouts = Payout.objects.filter(order=order)
         total_paid_to_seller = sum([payout.amount for payout in payouts])
@@ -58,60 +123,43 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
         )
 
         remittance_advice.append(
-            f'''<tr style="background-color: {line_background};">
-            <td style="border-left: none; padding: 5px;">{seller_invoice_str}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
-            </tr>'''
+            get_check_remittance_item_html(
+                seller_invoice_str,
+                f"${float(order.seller_price() - total_paid_to_seller):.2f}",
+                description, order.end_date.strftime("%d/%m/%Y"),
+                line_background=line_background
+            )
         )
         line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
 
-        remittance_advice.append(
-            f'''<tr style="background-color: {line_background};">
-            <td style="border-left: none; padding: 5px;">{seller_invoice_str}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
-            </tr>'''
-        )
+        if i % 13 == 0 and i != 0:
+            remittance_advice_html += get_check_remittance_page_html(remittance_advice, top_padding=".12")
+            remittance_advice = []
 
-        line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
+    if len(orders) > 6:
+        top_padding = ".12"
+        is_attachment = True
+    else:
+        top_padding = "3.65"
+        is_attachment = False
+    # Add any remaining remittance advice items.
+    if remittance_advice or remittance_advice_html == "":
+        # If there are less than 6 orders, add padding to the top of the remittance advice because this
+        # will be attached to the check bottom. If there are more than 6 orders, the remittance advice will
+        # be a separate attachment, so do not add the padding.
+        remittance_advice_html += get_check_remittance_page_html(remittance_advice, top_padding=top_padding)
 
-        remittance_advice.append(
-            f'''<tr style="background-color: {line_background};">
-            <td style="border-left: none; padding: 5px;">{seller_invoice_str}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">${float(order.seller_price() - total_paid_to_seller):.2f}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">{description[:64]}</td>
-            <td style="border-left: 1px solid #ddd; padding: 5px;">{order.end_date.strftime("%d/%m/%Y")}</td>
-            </tr>'''
-        )
-
-        line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
-
-    remittance_html = f'''<div style="padding-top:3.65in; padding-left: .12in; padding-right: .12in; font-family: Thicccboi,Arial,sans-serif; font-size: 10pt;">
-    <h2 style="text-align: center; font-size: 1.8em;">Remittance Advice</h2>
-    <table style="border-collapse: separate; width: 100%; border-radius: 10px; border: solid #ddd 1px; padding: 3px;">
-        <thead>
-            <tr style="background-color: #038480; color: white;">
-                <th style="text-align: left; border-left: none; padding: 5px;">Supplier ID</th>
-                <th style="text-align: left; border-left: 1px solid #ddd; padding: 5px;">Amount</th>
-                <th style="text-align: left; border-left: 1px solid #ddd; padding: 5px;">Description</th>
-                <th style="text-align: left; border-left: 1px solid #ddd; padding: 5px;">Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            {''.join(remittance_advice) if remittance_advice else '<td colspan="4">No orders found.</td>'}
-        </tbody>
-    </table>
-    </div>'''
-
-    return remittance_html
+    return CheckRemittanceHTMLResponse(
+        html=remittance_advice_html, is_attachment=is_attachment, description=description
+    )
 
 
 class Lob:
 
-    def __init__(self, from_address_id: str = None, bank_id: str = None, check_logo: str = None, default_download_app_qr: QrCode = None):
+    def __init__(
+        self, from_address_id: str = None, bank_id: str = None, check_logo: str = None,
+        default_download_app_qr: QrCode = None
+    ):
         # Create check object.
         # Defining the host is optional and defaults to https://api.lob.com/v1
         # See configuration.py for a list of all supported configuration parameters.
@@ -142,33 +190,26 @@ class Lob:
         API Docs: https://docs.lob.com/#tag/Checks/operation/check_create
 
         Args:
-            seller_location (SellerLocation): _description_
-            amount (_type_): _description_
-            orders (List[Order]): _description_
+            seller_location (SellerLocation): The seller location to send the check to.
+            amount (_type_): The amount to send to the seller.
+            orders (List[Order]): The orders to include in the remittance advice.
 
         Returns:
             int: The check number on success or error raised on failure.
         """
         try:
             # Build remittance advice object.
-            check_bottom = get_check_remittance_html(seller_location, orders)
+            check_remittance = get_check_remittance_html(seller_location, orders)
+            if len(check_remittance.html) > 10000:
+                raise ValueError("Check remittance advice html is too long.")
 
-            for order in orders:
-                # Get total already paid to seller for this order.
-                description = (
-                    order.order_group.user_address.street
-                    + " | "
-                    + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
-                )
-
+            description = f"{len(orders)} items - {check_remittance.description[:100]}"
             check_editable = CheckEditable(
-                description=description[:64],
+                description=description,
                 bank_account=bank_id,
                 amount=float(amount),
                 memo="Marketplace Bookings Payout",
                 logo=self.check_logo,
-                # message="Downstream Marketplace Bookings Payout",  # Only message or check_bottom can be used
-                check_bottom=check_bottom,
                 # _from = "adr_210a8d4b0b76d77b",  # can use Lob address ID
                 # 3245 Main Street, #235-434, Frisco, TX 75034
                 _from=AddressDomestic(
@@ -191,6 +232,17 @@ class Lob:
                 use_type=ChkUseType('operational'),
                 mail_type="usps_first_class"
             )
+
+            # Add Remittance Advice as an attachment if more than 6 orders.
+            if check_remittance.is_attachment:
+                check_editable.attachment = check_remittance.html
+                check_editable.message = f'''Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice for {len(orders)} items.'''
+            else:
+                # Only message or check_bottom can be used
+                if check_remittance.html:
+                    check_editable.check_bottom = check_remittance.html
+                else:
+                    check_editable.message = "Downstream Marketplace Bookings Payout"
 
             with ApiClient(self.configuration) as api_client:
                 api = ChecksApi(api_client)
@@ -285,7 +337,7 @@ class Lob:
             with lob_python.ApiClient(self.configuration) as api_client:
                 api = PostcardsApi(api_client)
                 created_postcard = api.create(postcard_editable)
-                print(created_postcard)
+                return created_postcard
         except lob_python.ApiException as e:
             logger.error(f"Lob.send_postcard.api: [{e}]", exc_info=e)
             raise
