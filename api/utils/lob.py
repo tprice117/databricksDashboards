@@ -49,7 +49,7 @@ def get_check_remittance_page_html(remittance_advice: List[str], top_padding="3.
     <table style="border-collapse: separate; width: 100%; border-radius: 10px; border: solid #ddd 1px; padding: 3px;">
         <thead>
             <tr style="background-color: #038480; color: white;">
-                <th style="text-align: left; border-left: none; padding: 7px;">Supplier ID</th>
+                <th style="text-align: left; border-left: none; padding: 7px;">Invoice ID</th>
                 <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Amount</th>
                 <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Description</th>
                 <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Date</th>
