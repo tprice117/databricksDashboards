@@ -65,6 +65,7 @@ class PayoutUtils:
             email_report_data = {
                 "seller_location": seller_location,
                 "payouts": [],
+                "error": None,
             }
 
             if PayoutUtils.can_send_stripe_payout(seller_location):
@@ -77,14 +78,19 @@ class PayoutUtils:
                         email_report_data["payouts"].append(payout)
 
             elif PayoutUtils.can_send_check_payout(seller_location):
-                # Send Check Payouts.
-                payouts = PayoutUtils.send_check_payout(
-                    seller_location,
-                    orders_for_seller_location,
-                )
+                try:
+                    # Send Check Payouts.
+                    payouts = PayoutUtils.send_check_payout(
+                        seller_location,
+                        orders_for_seller_location,
+                    )
 
-                # Add Payouts to email report data.
-                email_report_data["payouts"] = payouts
+                    # Add Payouts to email report data.
+                    email_report_data["payouts"] = payouts
+                except Exception as e:
+                    logger.error(f"PayoutUtils.send_payouts: [Unhandled (Checkbook)]-[{e}]", exc_info=e)
+                    email_report_data["error"] = f'''Unhandled (Checkbook) error occurred: {e} on
+                     seller_location id: {str(seller_location.id)}. Please check BetterStack logs.'''
             else:
                 # Print error message.
                 print("Cannot send payouts for SellerLocation: " + seller_location.name)
@@ -291,11 +297,16 @@ class PayoutUtils:
         checkbook_total_paid = 0
         checkbook_total_count = 0
 
+        # Errors encountered.
+        errors = []
+
         # "Could not send payouts" data.
         number_of_seller_locations_missing_payout_information = 0
 
         for email_report_data in email_report_datas:
             total_count += len(email_report_data["payouts"])
+            if email_report_data.get("error", None) is not None:
+                errors.append(email_report_data["error"])
 
             # Loop through Payouts and add to Stripe or Checkbook totals.
             payout: Payout
@@ -336,6 +347,7 @@ class PayoutUtils:
                         "paid": checkbook_total_paid,
                         "count": checkbook_total_count,
                     },
+                    "errors": errors,
                 },
             ),
         )

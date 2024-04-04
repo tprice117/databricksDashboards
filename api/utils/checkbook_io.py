@@ -32,9 +32,9 @@ class CheckbookIO:
             remittance_advice.append(
                 {
                     "id": seller_invoice_str,
-                    "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
+                    "amount": round(float(order.seller_price() - total_paid_to_seller), 2),
                     "description": description[:64],
-                    "date": order.end_date.strftime("%d/%m/%Y"),
+                    "date": order.end_date.strftime("%Y-%m-%d"),
                 }
             )
 
