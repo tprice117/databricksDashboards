@@ -1,6 +1,15 @@
-"""Lob API integration for sending physical checks to sellers. 
+"""Lob API integration for sending physical checks to sellers.
 Docs: https://docs.lob.com/
 Python lib: https://github.com/lob/lob-python
+
+Usage:
+```python
+import lob
+lob = lob.Lob()
+check = lob.sendPhysicalCheck(
+    seller_location, amount, orders
+)
+```
 """
 import datetime
 from django.utils import timezone
@@ -14,6 +23,7 @@ from lob_python.api.bank_accounts_api import BankAccountsApi
 from lob_python.api.postcards_api import PostcardsApi
 from lob_python.model.bank_account_writable import BankAccountWritable, BankTypeEnum
 from lob_python.model.check_editable import CheckEditable, ChkUseType
+from lob_python.model.check import Check
 from lob_python.model.address_domestic import AddressDomestic
 from lob_python.model.postcard_editable import PostcardEditable, PscUseType
 from lob_python.model.address_editable import AddressEditable
@@ -26,12 +36,34 @@ from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
 
 logger = logging.getLogger("billing")
 
+CHECK_BOTTOM_ITEM_LIMIT = 6
+CHECK_ATTACHMENT_PAGE_LIMIT = 16
+
+
+@dataclass
+class CheckResponse():
+    from dataclasses import dataclass
+    id: str  # Checkbook ID
+    check_number: int  # Check number
+
+
+@dataclass
+class CheckErrorResponse():
+    status_code: int
+    message: str
+
 
 @dataclass
 class CheckRemittanceHTMLResponse():
     html: str
     description: str
     is_attachment: bool
+
+
+@dataclass
+class CheckRemittanceVariableResponse():
+    merge_variables: MergeVariables
+    description: str
 
 
 def get_check_remittance_page_html(remittance_advice: List[str], top_padding="3.65") -> str:
@@ -85,14 +117,17 @@ def get_check_remittance_item_html(
             '''
 
 
-def get_check_remittance_html(seller_location: SellerLocation, orders: List[Order]) -> CheckRemittanceHTMLResponse:
+def get_check_remittance_html(seller_invoice_str: str, orders: List[Order]) -> CheckRemittanceHTMLResponse:
     """Get the HTML for the remittance advice on the check. If there are more than 6 orders, the remittance advice
     will be an attachment. If there are 6 or fewer orders, the remittance advice will be added to the check bottom.
     check_bottom must conform to the size in this template:
     https://s3-us-west-2.amazonaws.com/public.lob.com/assets/templates/check_bottom_template.pdf
+    I created this function before I noticed that Lob has a 10,000 character limit on the attachment field.
+    The solution is to create a template in Lob and use merge variables for the remittance advice.
+    So, that is why this function has the ability to create check_bottom HTML or an attachment HTML.
 
     Args:
-        seller_location (SellerLocation): The seller location to include in the remittance advice.
+        seller_location_str (str): The seller location to include in the remittance advice.
         orders (List[Order]): The orders to include in the remittance advice.
 
     Returns:
@@ -100,13 +135,6 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
                                      remittance advice is an attachment or can be added to the check bottom.
                                      Description is the description of the last order in the remittance advice.
     """
-
-    # Get SellerInvoicePayable
-    seller_invoice_payable = SellerInvoicePayable.objects.filter(seller_location_id=seller_location.id).first()
-    seller_invoice_str = "No Invoice Provided"
-    if seller_invoice_payable:
-        seller_invoice_str = seller_invoice_payable.supplier_invoice_id
-
     remittance_advice = []
     line_background = "#ffffff"
     description = ""
@@ -136,7 +164,7 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
             remittance_advice_html += get_check_remittance_page_html(remittance_advice, top_padding=".12")
             remittance_advice = []
 
-    if len(orders) > 6:
+    if len(orders) > CHECK_BOTTOM_ITEM_LIMIT:
         top_padding = ".12"
         is_attachment = True
     else:
@@ -151,6 +179,56 @@ def get_check_remittance_html(seller_location: SellerLocation, orders: List[Orde
 
     return CheckRemittanceHTMLResponse(
         html=remittance_advice_html, is_attachment=is_attachment, description=description
+    )
+
+
+def get_check_remittance_variable(seller_invoice_str: str, orders: List[Order]) -> CheckRemittanceHTMLResponse:
+    """Get merge variables for the remittance advice on the check. This assumes that the remittance advice will be
+    added as an attachment to the check and will use a template already in Lob.com.
+    API Docs on templates: https://help.lob.com/print-and-mail/designing-mail-creatives/dynamic-personalization
+
+    Args:
+        seller_location_str (str): The seller location to include in the remittance advice.
+        orders (List[Order]): The orders to include in the remittance advice.
+
+    Returns:
+        CheckRemittanceHTMLResponse: The merge variables for the remittance advice. Description is the description of
+                                     the last order in the remittance advice.
+    """
+    remittance_advice = {
+        "pages": []
+    }
+    page = {"invoices": []}
+    description = ""
+
+    for i, order in enumerate(orders):
+        # Get total already paid to seller for this order.
+        payouts = Payout.objects.filter(order=order)
+        total_paid_to_seller = sum([payout.amount for payout in payouts])
+        description = (
+            order.order_group.user_address.street
+            + " | "
+            + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
+        )
+        # Add invoice to remittance advice page.
+        page["invoices"].append({
+            "id": seller_invoice_str,
+            "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
+            "description": description,
+            "date": order.end_date.strftime("%d/%m/%Y"),
+        })
+        # Only add 16 invoices per page.
+        if i % CHECK_ATTACHMENT_PAGE_LIMIT == 0 and i != 0:
+            remittance_advice["pages"].append(page)
+            page = {"invoices": []}
+
+    # Add any remaining remittance advice items.
+    if page["invoices"]:
+        remittance_advice["pages"].append(page)
+
+    return CheckRemittanceVariableResponse(
+        merge_variables=MergeVariables(**remittance_advice),
+        description=description
     )
 
 
@@ -184,7 +262,7 @@ class Lob:
 
     def sendPhysicalCheck(
         self, seller_location: SellerLocation, amount: float, orders: List[Order], bank_id="bank_e83bd02ceb15448"
-    ) -> int:
+    ) -> Union[Check, CheckErrorResponse]:
         """Sends a physical check to a seller. Returns check number on success or None on failure.
         Checks can't be sent internationally, country must be US.
         API Docs: https://docs.lob.com/#tag/Checks/operation/check_create
@@ -195,23 +273,20 @@ class Lob:
             orders (List[Order]): The orders to include in the remittance advice.
 
         Returns:
-            int: The check number on success or error raised on failure.
+            Union[Check, CheckErrorResponse]: The check object on success or error object on failure.
         """
         try:
-            # Build remittance advice object.
-            check_remittance = get_check_remittance_html(seller_location, orders)
-            if len(check_remittance.html) > 10000:
-                raise ValueError("Check remittance advice html is too long.")
+            # Get SellerInvoicePayable
+            seller_invoice_payable = SellerInvoicePayable.objects.filter(seller_location_id=seller_location.id).first()
+            seller_invoice_str = "No Invoice Provided"
+            if seller_invoice_payable:
+                seller_invoice_str = seller_invoice_payable.supplier_invoice_id
 
-            description = f"{len(orders)} items - {check_remittance.description[:100]}"
             check_editable = CheckEditable(
-                description=description,
                 bank_account=bank_id,
                 amount=float(amount),
                 memo="Marketplace Bookings Payout",
                 logo=self.check_logo,
-                # _from = "adr_210a8d4b0b76d77b",  # can use Lob address ID
-                # 3245 Main Street, #235-434, Frisco, TX 75034
                 _from=AddressDomestic(
                     name="Downstream",
                     address_line1="3245 Main Street",
@@ -228,16 +303,24 @@ class Lob:
                     address_state=seller_location.mailing_address.state,
                     address_zip=seller_location.mailing_address.postal_code,
                 ),
-                # merge_variables = MergeVariables(name = "Harry",),
                 use_type=ChkUseType('operational'),
                 mail_type="usps_first_class"
             )
 
             # Add Remittance Advice as an attachment if more than 6 orders.
-            if check_remittance.is_attachment:
-                check_editable.attachment = check_remittance.html
+            if len(orders) > CHECK_BOTTOM_ITEM_LIMIT:
+                # Add merge variables for remittance advice, which will be an attachment using a template.
+                check_remittance_merge = get_check_remittance_variable(seller_invoice_str, orders)
+                check_editable.merge_variables = check_remittance_merge.merge_variables
+                check_editable.attachment = settings.LOB_CHECK_TEMPLATE_ID
                 check_editable.message = f'''Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice of {len(orders)} items.'''
+                check_editable.description = f"{len(orders)} items - {check_remittance_merge.description[:100]}"
             else:
+                # Add Remittance Advice to check bottom if 6 or fewer orders.
+                check_remittance = get_check_remittance_html(seller_invoice_str, orders)
+                check_editable.description = f"{len(orders)} items - {check_remittance.description[:100]}"
+                if len(check_remittance.html) > 10000:
+                    raise ValueError("Check remittance advice html is too long.")
                 # Only message or check_bottom can be used
                 if check_remittance.html:
                     check_editable.check_bottom = check_remittance.html
@@ -246,17 +329,17 @@ class Lob:
 
             with ApiClient(self.configuration) as api_client:
                 api = ChecksApi(api_client)
-                created_check = api.create(check_editable)
+                created_check: Check = api.create(check_editable)
                 return created_check  # ["check_number"]
         except lob_python.ApiException as e:
             # e.status = 400, reason, body
             # e.status 422, reason Unprocessable Entity
             print("Exception when calling ChecksApi->create: %s\n" % e)
             logger.error(f"Lob.sendPhysicalCheck.api: [{e}]", exc_info=e)
-            raise
+            return CheckErrorResponse(status_code=e.status, message=e.body)
         except Exception as e:
             logger.error(f"Lob.sendPhysicalCheck: [{e}]", exc_info=e)
-            raise
+            return CheckErrorResponse(status_code=e.status, message=e.reason)
 
     def add_bank_account(
         self, description: str, routing_number: str, account_number: str, signatory: str,

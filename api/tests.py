@@ -155,8 +155,8 @@ class LobTests(TestCase):
 
         # Compute total amount to be sent.
         amount_to_send = order.needed_payout_to_seller()
-        orders = [order, order, order, order, order, order, order, order, order,
-                  order, order, order, order]
+        orders = [order, order, order, order, order, order, order, order, order, order,
+                  order, order, order, order, order, order, order, order, order, order]
 
         print("Test attaching remittance advice to check bottom")
         check = lob.sendPhysicalCheck(
