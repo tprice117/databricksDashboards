@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,7 +51,8 @@
             color: #fff;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px;
             border-bottom: 1px solid #ddd;
             text-align: left;
@@ -70,6 +72,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Supplier Payouts Digest: What Went Out This Week</h1>
 
@@ -93,13 +96,22 @@
         <li class="data">
             Checkbook: ${{ checkbook.paid }} paid ({{ checkbook.count }} payouts).
         </li>
+        {% if errors %}
+        {% for error in errors %}
+        <li class="data">
+            Error: {{ error }}
+        </li>
+        {% endfor %}
+        {% endif %}
     </ul>
 
     <h2>Seller Location Payouts</h2>
 
     <ul>
         {% for location in seller_locations %}
-        <li class="location"><h3>{{ location.seller_location.name }}</h3></li>
+        <li class="location">
+            <h3>{{ location.seller_location.name }}</h3>
+        </li>
         <table>
             <thead>
                 <tr>
@@ -134,4 +146,5 @@
 
     <p>The Downstream System Robot</p>
 </body>
+
 </html>
