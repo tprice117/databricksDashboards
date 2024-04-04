@@ -221,6 +221,7 @@ if ENVIRONMENT == "TEST":
     LOB_API_HOST = "https://api.lob.com/v1"
     LOB_API_KEY = env("LOB_API_KEY")
     LOB_PUB_API_KEY = env("LOB_DEV_PUB_API_KEY")
+    LOB_CHECK_TEMPLATE_ID = "tmpl_e67263addbfe12c"
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_DEV_PUBLISHABLE_KEY")
@@ -245,6 +246,7 @@ else:
     LOB_API_HOST = "https://api.lob.com/v1"
     LOB_API_KEY = env("LOB_DEV_API_KEY")
     LOB_PUB_API_KEY = env("LOB_DEV_PUB_API_KEY")
+    LOB_CHECK_TEMPLATE_ID = "tmpl_72955c3cec0e752"
 
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
