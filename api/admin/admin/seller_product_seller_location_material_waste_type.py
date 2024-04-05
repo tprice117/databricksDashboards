@@ -43,7 +43,7 @@ class SellerProductSellerLocationMaterialWasteTypeAdmin(admin.ModelAdmin):
                 if not all(key in keys for key in list(row.keys())):
                     self.message_user(
                         request,
-                        "Your csv file must have a header rows with 'seller_product_seller_location_id', 'main_product_waste_type_id', 'price_per_ton', and 'tonnage_included' as the first column.",
+                        "Your csv file must have a header rows with 'seller_product_seller_location_material_id', 'main_product_waste_type_id', 'price_per_ton', and 'tonnage_included' as the first column.",
                     )
                     return redirect("..")
 
@@ -59,6 +59,9 @@ class SellerProductSellerLocationMaterialWasteTypeAdmin(admin.ModelAdmin):
                     does_exist = (
                         SellerProductSellerLocationMaterialWasteType.objects.filter(
                             seller_product_seller_location_material=seller_product_seller_location_material,
+                            main_product_waste_type=MainProductWasteType.objects.get(
+                                id=row["main_product_waste_type_id"],
+                            ),
                         ).count()
                         > 0
                     )
@@ -81,11 +84,9 @@ class SellerProductSellerLocationMaterialWasteTypeAdmin(admin.ModelAdmin):
                     else:
                         material_waste_type = SellerProductSellerLocationMaterialWasteType.objects.get(
                             seller_product_seller_location_material=seller_product_seller_location_material,
-                        )
-                        material_waste_type.main_product_waste_type = (
-                            MainProductWasteType.objects.get(
+                            main_product_waste_type=MainProductWasteType.objects.get(
                                 id=row["main_product_waste_type_id"],
-                            )
+                            ),
                         )
                         material_waste_type.price_per_ton = row["price_per_ton"]
                         material_waste_type.tonnage_included = row["tonnage_included"]
