@@ -36,6 +36,9 @@ logger = logging.getLogger("billing")
 
 CHECK_BOTTOM_ITEM_LIMIT = 6
 CHECK_ATTACHMENT_PAGE_LIMIT = 16
+DEFAULT_BANK_ID = "bank_e83bd02ceb15448"
+if settings.ENVIRONMENT == "TEST":
+    DEFAULT_BANK_ID = "bank_90cda7217d85b54"
 
 
 @dataclass
@@ -244,7 +247,7 @@ class Lob:
             username=settings.LOB_API_KEY,
         )
         self.from_address_id = from_address_id if from_address_id is not None else "adr_4f5ca93c6bf5896b"
-        self.bank_id = bank_id if bank_id is not None else "bank_e83bd02ceb15448"
+        self.bank_id = bank_id if bank_id is not None else DEFAULT_BANK_ID
         self.check_logo = check_logo if check_logo is not None else "https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e48a5fa7bd074602c6206_Downstream%20D%20-%20Dark-p-500.png"
         if default_download_app_qr is not None:
             self.default_download_app_qr = default_download_app_qr
@@ -259,7 +262,7 @@ class Lob:
             )
 
     def sendPhysicalCheck(
-        self, seller_location: SellerLocation, amount: float, orders: List[Order], bank_id="bank_e83bd02ceb15448"
+        self, seller_location: SellerLocation, amount: float, orders: List[Order], bank_id=DEFAULT_BANK_ID
     ) -> Union[Check, CheckErrorResponse]:
         """Sends a physical check to a seller. Returns check number on success or None on failure.
         Checks can't be sent internationally, country must be US.
