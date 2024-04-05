@@ -290,8 +290,8 @@ class Lob:
                 logo=self.check_logo,
                 _from=AddressDomestic(
                     name="Downstream",
-                    address_line1="3245 Main Street",
-                    address_line2="#235-434",
+                    address_line1="3245 Main Street, 235 434",
+                    address_line2="",
                     address_city="Frisco",
                     address_state="TX",
                     address_zip="75034",
