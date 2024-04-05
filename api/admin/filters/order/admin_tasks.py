@@ -35,7 +35,7 @@ class OrderAdminTasksFilter(SimpleListFilter):
             # Filter the queryset to only include orders where the seller does
             # not send invoices.
             queryset = queryset.filter(
-                order_group__seller_location__sends_invoices=False,
+                order_group__seller_product_seller_location__seller_location__sends_invoices=False,
             )
 
             for order in queryset:
@@ -56,7 +56,7 @@ class OrderAdminTasksFilter(SimpleListFilter):
             # Filter the queryset to only include orders where the seller sends
             # invoices.
             queryset = queryset.filter(
-                order_group__seller_location__sends_invoices=True,
+                order_group__seller_product_seller_location__seller_location__sends_invoices=True,
             )
 
             for order in queryset:
