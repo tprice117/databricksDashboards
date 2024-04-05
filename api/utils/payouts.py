@@ -1,6 +1,6 @@
 import datetime
 from decimal import Decimal
-from typing import List
+from typing import List, Union
 
 import stripe
 from django.conf import settings
@@ -16,7 +16,7 @@ from api.models.seller.seller_invoice_payable_line_item import (
     SellerInvoicePayableLineItem,
 )
 from api.models.seller.seller_location import SellerLocation
-from api.utils.checkbook_io import CheckbookIO
+from api.utils.lob import Lob, CheckErrorResponse
 from common.utils.stripe.stripe_utils import StripeUtils
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
 
@@ -80,13 +80,19 @@ class PayoutUtils:
             elif PayoutUtils.can_send_check_payout(seller_location):
                 try:
                     # Send Check Payouts.
-                    payouts = PayoutUtils.send_check_payout(
+                    payout_response = PayoutUtils.send_check_payout(
                         seller_location,
                         orders_for_seller_location,
                     )
-
-                    # Add Payouts to email report data.
-                    email_report_data["payouts"] = payouts
+                    if payout_response:
+                        if isinstance(payout_response, CheckErrorResponse):
+                            # If there was an error sending the check, add error message to email report data.
+                            email_report_data["error"] = f'''Checkbook error occurred:
+                             [{payout_response.status_code}]-{payout_response.message} on
+                             seller_location id: {str(seller_location.id)}. Please check BetterStack logs.'''
+                        else:
+                            # If the check was sent successfully, add payouts to email report data.
+                            email_report_data["payouts"] = payout_response
                 except Exception as e:
                     logger.error(f"PayoutUtils.send_payouts: [Unhandled (Checkbook)]-[{e}]", exc_info=e)
                     email_report_data["error"] = f'''Unhandled (Checkbook) error occurred: {e} on
@@ -231,7 +237,7 @@ class PayoutUtils:
     def send_check_payout(
         seller_location: SellerLocation,
         orders: List[Order],
-    ) -> List[Payout]:
+    ) -> Union[List[Payout], CheckErrorResponse, None]:
         # Check if SellerLocation has the information to send a check.
         can_send_check = PayoutUtils.can_send_check_payout(seller_location)
 
@@ -264,23 +270,30 @@ class PayoutUtils:
                     + " | "
                     + order.order_group.seller_product_seller_location.seller_location.seller.name
                 )
-                check_number = CheckbookIO().sendPhysicalCheck(
+                # Send one check for all orders.
+                check_response = Lob().sendPhysicalCheck(
                     seller_location=seller_location,
                     amount=amount_to_send,
                     orders=orders,
                 )
 
-            # Save Payout for each order.
-            payouts = []
-            for order in orders:
-                payout = Payout.objects.create(
-                    order=order,
-                    amount=order.needed_payout_to_seller(),
-                    checkbook_payout_id=check_number,
-                )
-                payouts.append(payout)
+                if isinstance(check_response, CheckErrorResponse):
+                    # If there was an error sending the check, return None.
+                    return check_response
+                else:
+                    # Save Payout for each order.
+                    payouts = []
+                    for order in orders:
+                        payout = Payout.objects.create(
+                            order=order,
+                            amount=order.needed_payout_to_seller(),
+                            lob_check_id=check_response.id,
+                        )
+                        payouts.append(payout)
 
-            return payouts
+                    return payouts
+            else:
+                return None
 
     @staticmethod
     def _send_email_report(email_report_datas):
@@ -315,7 +328,7 @@ class PayoutUtils:
                     total_paid += payout.amount
                     stripe_total_paid += payout.amount
                     stripe_total_count += 1
-                elif payout.checkbook_payout_id:
+                elif payout.is_check:
                     total_paid += payout.amount
                     checkbook_total_paid += payout.amount
                     checkbook_total_count += 1
