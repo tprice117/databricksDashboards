@@ -11,8 +11,12 @@ class OrderAdminTasksFilter(SimpleListFilter):
     def lookups(self, request, model_admin):
         return [
             (
+                "supplier_payout_no_invoice_reconciles",
+                "Payout Missing (Supplier does not send invoices)",
+            ),
+            (
                 "supplier_payout_invoice_reconciles",
-                "Supplier Price =/= Payout =/= Invoice Reconciles",
+                "Payout Missing (Supplier sends invoices)",
             ),
             (
                 "customer_price_invoice_reconciles",
@@ -25,7 +29,21 @@ class OrderAdminTasksFilter(SimpleListFilter):
         ]
 
     def queryset(self, request, queryset):
-        if self.value() == "supplier_payout_invoice_reconciles":
+        if self.value() == "supplier_payout_no_invoice_reconciles":
+            order: Order
+            for order in queryset:
+                # Calculate the total Downstream has paid out to the supplier
+                # for this order.
+                payout_total = order.payouts.aggregate(Sum("amount"))["amount__sum"]
+
+                # If the payout total and the seller price do not match, exclude
+                # the order from the queryset.
+                if order.seller_price() != payout_total:
+                    queryset = queryset.exclude(id=order.id)
+
+            # Return the filtered queryset.
+            return queryset
+        elif self.value() == "supplier_payout_invoice_reconciles":
             order: Order
             for order in queryset:
                 # Calculate the total Downstream has paid out to the supplier
