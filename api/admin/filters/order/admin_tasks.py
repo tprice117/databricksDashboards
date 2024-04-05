@@ -31,25 +31,33 @@ class OrderAdminTasksFilter(SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() == "supplier_payout_no_invoice_reconciles":
             order: Order
-            for order in queryset:
-                # Calculate the total Downstream has paid out to the supplier
-                # for this order.
-                payout_total = order.payouts.aggregate(Sum("amount"))["amount__sum"]
 
+            # Filter the queryset to only include orders where the seller does
+            # not send invoices.
+            queryset = queryset.filter(
+                order_group__seller_product_seller_location__seller_location__sends_invoices=False,
+                status="COMPLETE",
+            )
+
+            for order in queryset:
                 # If the payout total and the seller price do not match, exclude
                 # the order from the queryset.
-                if order.seller_price() != payout_total:
+                if order.seller_price() == order.total_paid_to_seller():
                     queryset = queryset.exclude(id=order.id)
 
             # Return the filtered queryset.
             return queryset
         elif self.value() == "supplier_payout_invoice_reconciles":
             order: Order
-            for order in queryset:
-                # Calculate the total Downstream has paid out to the supplier
-                # for this order.
-                payout_total = order.payouts.aggregate(Sum("amount"))["amount__sum"]
 
+            # Filter the queryset to only include orders where the seller sends
+            # invoices.
+            queryset = queryset.filter(
+                order_group__seller_product_seller_location__seller_location__sends_invoices=True,
+                status="COMPLETE",
+            )
+
+            for order in queryset:
                 # Calculate the total the supplier has invoiced Downstream for
                 # this order.
                 seller_invoice_total = (
@@ -61,7 +69,7 @@ class OrderAdminTasksFilter(SimpleListFilter):
                 # If the payout total and the seller invoice total do not match,
                 # exclude the order from the queryset.
                 if (
-                    order.seller_price() != payout_total
+                    order.seller_price() == order.total_paid_to_seller()
                     and order.seller_price() != seller_invoice_total
                 ):
                     queryset = queryset.exclude(id=order.id)
