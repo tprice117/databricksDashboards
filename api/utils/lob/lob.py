@@ -289,7 +289,7 @@ class Lob:
                 memo="Marketplace Bookings Payout",
                 logo=self.check_logo,
                 _from=AddressDomestic(
-                    name="Downstream",
+                    name="DOWNSTREAM SYSTEMS, INC",
                     address_line1="3245 Main Street, 235 434",
                     address_line2="",
                     address_city="Frisco",
