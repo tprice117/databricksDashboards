@@ -43,7 +43,7 @@ class SellerProductSellerLocationMaterialWasteTypeAdmin(admin.ModelAdmin):
                 if not all(key in keys for key in list(row.keys())):
                     self.message_user(
                         request,
-                        "Your csv file must have a header rows with 'seller_product_seller_location_id' as the first column.",
+                        "Your csv file must have a header rows with 'seller_product_seller_location_id', 'main_product_waste_type_id', 'price_per_ton', and 'tonnage_included' as the first column.",
                     )
                     return redirect("..")
 
