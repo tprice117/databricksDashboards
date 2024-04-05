@@ -31,6 +31,13 @@ class OrderAdminTasksFilter(SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() == "supplier_payout_no_invoice_reconciles":
             order: Order
+
+            # Filter the queryset to only include orders where the seller does
+            # not send invoices.
+            queryset = queryset.filter(
+                order_group__seller_location__sends_invoices=False,
+            )
+
             for order in queryset:
                 # Calculate the total Downstream has paid out to the supplier
                 # for this order.
@@ -45,6 +52,13 @@ class OrderAdminTasksFilter(SimpleListFilter):
             return queryset
         elif self.value() == "supplier_payout_invoice_reconciles":
             order: Order
+
+            # Filter the queryset to only include orders where the seller sends
+            # invoices.
+            queryset = queryset.filter(
+                order_group__seller_location__sends_invoices=True,
+            )
+
             for order in queryset:
                 # Calculate the total Downstream has paid out to the supplier
                 # for this order.
