@@ -11,8 +11,6 @@ check = lob.sendPhysicalCheck(
 )
 ```
 """
-import datetime
-from django.utils import timezone
 from typing import List, Union, Literal
 from dataclasses import dataclass
 import logging
