@@ -144,6 +144,8 @@ class UserGroup(BaseModel):
 
     def credit_limit_used(self):
         orders = Order.objects.filter(order_group__user_address__user_group=self)
+        # Prefetch order line items to reduce db queries.
+        orders = orders.prefetch_related("order_line_items")
         total_customer_price = 0.0
         total_paid = 0.0
 
