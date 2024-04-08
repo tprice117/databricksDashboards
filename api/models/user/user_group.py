@@ -7,7 +7,7 @@ from django.db.models.signals import post_save, post_delete
 import threading
 import logging
 
-from api.models.order.order import Order
+from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
 from common.models import BaseModel
 from communications.intercom.intercom import Intercom
@@ -143,18 +143,10 @@ class UserGroup(BaseModel):
             logger.error(f"UserGroup.intercom_sync: [{e}]", exc_info=e)
 
     def credit_limit_used(self):
-        orders = Order.objects.filter(order_group__user_address__user_group=self)
-        total_customer_price = 0.0
-        total_paid = 0.0
-
-        # Loop through orders to get total customer price and total paid.
-        for order in orders:
-            total_customer_price, _, total_paid = order.payment_status()
-            total_customer_price += total_customer_price
-            total_paid += total_paid
-
-        # Current credit utilization.
-        credit_used = total_customer_price - total_paid
+        order_line_items = OrderLineItem.objects.filter(order__order_group__user_address__user_group=self, paid=False)
+        credit_used = 0
+        for order_line_item in order_line_items:
+            credit_used += order_line_item.customer_price()
         return credit_used
 
     def post_delete(sender, instance, **kwargs):

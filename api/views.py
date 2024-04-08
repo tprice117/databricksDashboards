@@ -299,6 +299,13 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     filterset_class = OrderGroupFilterset
 
     def get_queryset(self):
+        self.queryset = self.queryset.prefetch_related("orders__order_line_items")
+        self.queryset = self.queryset.select_related(
+            "user", "user__user_group", "user_address",
+            "waste_type", "time_slot", "service_recurring_frequency",
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_location__seller"
+        )
         if self.request.user == "ALL":
             return self.queryset
         elif self.request.user.is_admin:
