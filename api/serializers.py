@@ -92,6 +92,18 @@ class UserGroupSerializer(serializers.ModelSerializer):
     )
     legal = UserGroupLegalSerializer(read_only=True)
     credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
+    net_terms = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+    )
+    invoice_at_project_completion = serializers.BooleanField(
+        required=False,
+        allow_null=True,
+    )
+    share_code = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = UserGroup
