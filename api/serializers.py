@@ -1,9 +1,10 @@
 import datetime
+import logging
 
 import stripe
 from django.conf import settings
 from rest_framework import serializers
-import logging
+
 from notifications.utils.internal_email import send_email_on_new_signup
 
 from .models import *
@@ -110,7 +111,7 @@ class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
-    user_id = serializers.CharField(required=False, allow_null=True)
+    user_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     user_group = UserGroupSerializer(read_only=True)
     user_group_id = serializers.PrimaryKeyRelatedField(
         queryset=UserGroup.objects.all(),
@@ -129,7 +130,9 @@ class UserSerializer(serializers.ModelSerializer):
         if settings.ENVIRONMENT == "TEST":
             # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
             if validated_data.get("user_id", None) is not None:
-                send_email_on_new_signup(new_user.email, created_by_downstream_team=False)
+                send_email_on_new_signup(
+                    new_user.email, created_by_downstream_team=False
+                )
         else:
             logger.info(
                 f"UserSerializer.create: [New User Signup]-[{validated_data}]",
