@@ -115,12 +115,16 @@ class UserGroupSerializer(serializers.ModelSerializer):
         # Check for null net_terms and set default if needed
         if validated_data.get("net_terms") is None:
             validated_data["net_terms"] = UserGroup.NetTerms.IMMEDIATELY
+        if validated_data.get("invoice_at_project_completion") is None:
+            validated_data["invoice_at_project_completion"] = False
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
         # Check for null net_terms and set default if needed
         if validated_data.get("net_terms") is None:
             validated_data["net_terms"] = UserGroup.NetTerms.IMMEDIATELY
+        if validated_data.get("invoice_at_project_completion") is None:
+            validated_data["invoice_at_project_completion"] = False
         return super().update(instance, validated_data)
 
     def get_credit_limit_utilized(self, obj: UserGroup):
