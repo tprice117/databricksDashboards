@@ -1,11 +1,11 @@
+import logging
 import random
 import string
+import threading
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_save, post_delete
-import threading
-import logging
+from django.db.models.signals import post_delete, post_save
 
 from api.models.order.order import Order
 from api.models.seller.seller import Seller
@@ -71,14 +71,30 @@ class UserGroup(BaseModel):
         max_digits=18, decimal_places=2, blank=True, null=True
     )
     compliance_status = models.CharField(
-        max_length=20, choices=COMPLIANCE_STATUS_CHOICES, default="NOT_REQUIRED"
+        max_length=20,
+        choices=COMPLIANCE_STATUS_CHOICES,
+        default="NOT_REQUIRED",
     )
     tax_exempt_status = models.CharField(
-        max_length=20, choices=TaxExemptStatus.choices, default=TaxExemptStatus.NONE
+        max_length=20,
+        choices=TaxExemptStatus.choices,
+        default=TaxExemptStatus.NONE,
     )
 
-    intercom_id = models.CharField(max_length=255, blank=True, null=True,
-                                   help_text="This is the company_id in Intercom.")
+    intercom_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="This is the company_id in Intercom.",
+    )
+
+    @property
+    def policy_monthly_limit(self):
+        return (
+            self.user_group_policy_monthly_limit
+            if hasattr(self, "user_group_policy_monthly_limit")
+            else None
+        )
 
     def __str__(self):
         return self.name
@@ -112,29 +128,33 @@ class UserGroup(BaseModel):
 
     @property
     def intercom_custom_attributes(self) -> CustomAttributesType:
-        """Return Custome Attributes to sync with Intercom
-        """
-        custom_attributes = CustomAttributesType({
-            "Seller ID": self.seller.id if self.seller else None,
-            "Autopay": self.autopay,
-            "Net Terms Days": self.net_terms,
-            "Invoice Frequency in Days": self.invoice_frequency,
-            "Credit Line Amount": float(self.credit_line_limit) if self.credit_line_limit else None,
-            "Insurance and Tax Request Status": self.compliance_status,
-            "Tax Exempt Status": self.tax_exempt_status,
-            "Invoice Day of Month": self.invoice_day_of_month,
-            "Project Based Billing": self.invoice_at_project_completion,
-            "Share Code": self.share_code,
-        })
+        """Return Custome Attributes to sync with Intercom"""
+        custom_attributes = CustomAttributesType(
+            {
+                "Seller ID": self.seller.id if self.seller else None,
+                "Autopay": self.autopay,
+                "Net Terms Days": self.net_terms,
+                "Invoice Frequency in Days": self.invoice_frequency,
+                "Credit Line Amount": (
+                    float(self.credit_line_limit) if self.credit_line_limit else None
+                ),
+                "Insurance and Tax Request Status": self.compliance_status,
+                "Tax Exempt Status": self.tax_exempt_status,
+                "Invoice Day of Month": self.invoice_day_of_month,
+                "Project Based Billing": self.invoice_at_project_completion,
+                "Share Code": self.share_code,
+            }
+        )
         return custom_attributes
 
     def intercom_sync(self):
-        """Create or Updates Intercom Company with UserGroup. 
-        """
+        """Create or Updates Intercom Company with UserGroup."""
         try:
             # Update or create Company in Intercom
             company = Intercom.Company.update_or_create(
-                str(self.id), self.name, custom_attributes=self.intercom_custom_attributes
+                str(self.id),
+                self.name,
+                custom_attributes=self.intercom_custom_attributes,
             )
             if company and self.intercom_id != company["id"]:
                 UserGroup.objects.filter(id=self.id).update(intercom_id=company["id"])

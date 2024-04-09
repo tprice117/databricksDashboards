@@ -7,9 +7,14 @@ from django.urls import path
 from api.admin.filters import UserGroupTypeFilter
 from api.admin.filters.user_group.admin_tasks import UserGroupAdminTasksFilter
 from api.admin.inlines import (
+    UserGroupAdminApprovalOrderInline,
+    UserGroupAdminApprovalUserInviteInline,
     UserGroupBillingInline,
     UserGroupCreditApplicationInline,
     UserGroupLegalInline,
+    UserGroupPolicyInvitationApprovalInline,
+    UserGroupPolicyMonthlyLimitInline,
+    UserGroupPolicyPurchaseApprovalInline,
     UserInline,
 )
 from api.forms import CsvImportForm
@@ -38,6 +43,11 @@ class UserGroupAdmin(admin.ModelAdmin):
         UserGroupLegalInline,
         UserGroupCreditApplicationInline,
         UserInline,
+        UserGroupPolicyMonthlyLimitInline,
+        UserGroupPolicyPurchaseApprovalInline,
+        UserGroupPolicyInvitationApprovalInline,
+        UserGroupAdminApprovalOrderInline,
+        UserGroupAdminApprovalUserInviteInline,
     ]
     actions = [
         "create_invoices",

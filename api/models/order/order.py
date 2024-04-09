@@ -1,15 +1,16 @@
+import logging
+
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save
 from django.template.loader import render_to_string
-import logging
 
-from api.models.track_data import track_data
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
+from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
 
@@ -18,7 +19,14 @@ logger = logging.getLogger(__name__)
 mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
-@track_data('submitted_on', 'start_date', 'end_date', 'schedule_details', 'schedule_window', 'status')
+@track_data(
+    "submitted_on",
+    "start_date",
+    "end_date",
+    "schedule_details",
+    "schedule_window",
+    "status",
+)
 class Order(BaseModel):
     class Type(models.TextChoices):
         DELIVERY = "DELIVERY"
@@ -206,6 +214,23 @@ class Order(BaseModel):
 
     def clean(self):
         super().clean()
+
+        order_total_this_month = Order.objects.filter(
+            submitted_on__gte=first_day_of_month
+        )
+
+        # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
+        # this Order.
+        if self.order_group.user_address.user_group.policy_monthly_limit and (
+            order_total_this_month + self.customer_price()
+            > self.order_group.user_address.user_group.policy_monthly_limit
+        ):
+            raise ValidationError(
+                "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
+            )
+        # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
+        # this Order.
+        if fixthis
         # Ensure end_date is on or after start_date.
         if self.start_date > self.end_date:
             raise ValidationError("Start date must be on or before end date")
@@ -273,7 +298,9 @@ class Order(BaseModel):
                 if order_group_orders.count() == 0:
                     delivery_fee = 0
                     if instance.order_group.seller_product_seller_location.delivery_fee:
-                        delivery_fee = instance.order_group.seller_product_seller_location.delivery_fee
+                        delivery_fee = (
+                            instance.order_group.seller_product_seller_location.delivery_fee
+                        )
                     OrderLineItem.objects.create(
                         order=instance,
                         order_line_item_type=OrderLineItemType.objects.get(
@@ -293,7 +320,9 @@ class Order(BaseModel):
                 ):
                     removal_fee = 0
                     if instance.order_group.seller_product_seller_location.removal_fee:
-                        removal_fee = instance.order_group.seller_product_seller_location.removal_fee
+                        removal_fee = (
+                            instance.order_group.seller_product_seller_location.removal_fee
+                        )
                     OrderLineItem.objects.create(
                         order=instance,
                         order_line_item_type=OrderLineItemType.objects.get(
@@ -394,10 +423,10 @@ class Order(BaseModel):
                 if self.order_group.waste_type:
                     waste_type_str = self.order_group.waste_type.name
                 material_tonnage_str = "N/A"
-                if getattr(self.order_group, 'material', None):
+                if getattr(self.order_group, "material", None):
                     material_tonnage_str = self.order_group.material.tonnage_included
                 rental_included_days = 0
-                if getattr(self.order_group, 'rental', None):
+                if getattr(self.order_group, "rental", None):
                     rental_included_days = self.order_group.rental.included_days
 
                 mailchimp.messages.send(
@@ -437,7 +466,9 @@ class Order(BaseModel):
                     }
                 )
             except Exception as e:
-                logger.error(f"Order.send_internal_order_confirmation_email: [{e}]", exc_info=e)
+                logger.error(
+                    f"Order.send_internal_order_confirmation_email: [{e}]", exc_info=e
+                )
 
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
@@ -455,17 +486,17 @@ class Order(BaseModel):
                     call_to_action_url = "https://app.trydownstream.com/orders"
                     logger.warning(
                         f"Order.send_customer_email_when_order_scheduled: [Use default: {call_to_action_url}]-[{e}]",
-                        exc_info=e
+                        exc_info=e,
                     )
 
                 waste_type_str = "Not specified"
                 if self.order_group.waste_type:
                     waste_type_str = self.order_group.waste_type.name
                 material_tonnage_str = "N/A"
-                if getattr(self.order_group, 'material', None):
+                if getattr(self.order_group, "material", None):
                     material_tonnage_str = self.order_group.material.tonnage_included
                 rental_included_days = 0
-                if getattr(self.order_group, 'rental', None):
+                if getattr(self.order_group, "rental", None):
                     rental_included_days = self.order_group.rental.included_days
 
                 mailchimp.messages.send(
@@ -508,7 +539,9 @@ class Order(BaseModel):
                     }
                 )
             except Exception as e:
-                logger.error(f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e)
+                logger.error(
+                    f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e
+                )
 
     def __str__(self):
         return (

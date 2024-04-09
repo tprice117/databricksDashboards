@@ -1,6 +1,6 @@
 from django.db import models
 
-from api.models.user.user import User
+from api.models.choices.user_type import UserType
 from api.models.user.user_group import UserGroup
 from common.models import BaseModel
 
@@ -14,8 +14,18 @@ class UserGroupPolicyInvitationApproval(BaseModel):
     The only UserTypes that can be set are Billing Manager and Member.
     """
 
-    user_group = models.OneToOneField(UserGroup, models.CASCADE)
-    amount = models.IntegerField()
+    user_group = models.ForeignKey(
+        UserGroup,
+        models.CASCADE,
+        related_name="user_group_policy_invitation_approvals",
+    )
+    user_type = models.CharField(
+        max_length=255,
+        choices=UserType.choices,
+    )
+
+    class Meta:
+        unique_together = ("user_group", "user_type")
 
     def __str__(self):
         return f"{self.user_group.name} - {self.amount}"
