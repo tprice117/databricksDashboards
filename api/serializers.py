@@ -94,11 +94,11 @@ class UserGroupSerializer(serializers.ModelSerializer):
     credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
     net_terms = serializers.IntegerField(
         required=False,
-        allow_null=True,
+        default=UserGroup.NetTerms.IMMEDIATELY,
     )
     invoice_at_project_completion = serializers.BooleanField(
         required=False,
-        allow_null=True,
+        default=False,
     )
     share_code = serializers.CharField(
         required=False,
