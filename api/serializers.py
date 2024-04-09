@@ -92,10 +92,40 @@ class UserGroupSerializer(serializers.ModelSerializer):
     )
     legal = UserGroupLegalSerializer(read_only=True)
     credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
+    net_terms = serializers.IntegerField(
+        required=False,
+        default=UserGroup.NetTerms.IMMEDIATELY,
+        allow_null=True,
+    )
+    invoice_at_project_completion = serializers.BooleanField(
+        required=False,
+        default=False,
+        allow_null=True,
+    )
+    share_code = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = UserGroup
         fields = "__all__"
+
+    def create(self, validated_data):
+        # Check for null net_terms and set default if needed
+        if validated_data.get("net_terms") is None:
+            validated_data["net_terms"] = UserGroup.NetTerms.IMMEDIATELY
+        if validated_data.get("invoice_at_project_completion") is None:
+            validated_data["invoice_at_project_completion"] = False
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Check for null net_terms and set default if needed
+        if validated_data.get("net_terms") is None:
+            validated_data["net_terms"] = UserGroup.NetTerms.IMMEDIATELY
+        if validated_data.get("invoice_at_project_completion") is None:
+            validated_data["invoice_at_project_completion"] = False
+        return super().update(instance, validated_data)
 
     def get_credit_limit_utilized(self, obj: UserGroup):
         return obj.credit_limit_used()
