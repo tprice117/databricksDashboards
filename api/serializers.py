@@ -95,10 +95,12 @@ class UserGroupSerializer(serializers.ModelSerializer):
     net_terms = serializers.IntegerField(
         required=False,
         default=UserGroup.NetTerms.IMMEDIATELY,
+        allow_null=True,
     )
     invoice_at_project_completion = serializers.BooleanField(
         required=False,
         default=False,
+        allow_null=True,
     )
     share_code = serializers.CharField(
         required=False,
