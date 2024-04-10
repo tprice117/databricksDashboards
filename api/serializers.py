@@ -1,3 +1,6 @@
+from drf_spectacular.utils import extend_schema_field, OpenApiTypes
+from typing import Union, Literal
+from .models import *
 import datetime
 import logging
 
@@ -7,7 +10,6 @@ from rest_framework import serializers
 
 from notifications.utils.internal_email import send_email_on_new_signup
 
-from .models import *
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ class SellerSerializer(serializers.ModelSerializer):
         model = Seller
         fields = "__all__"
 
-    def get_has_listings(self, obj):
+    def get_has_listings(self, obj) -> bool:
         return obj.seller_products.count() > 0
 
 
@@ -127,6 +129,7 @@ class UserGroupSerializer(serializers.ModelSerializer):
             validated_data["invoice_at_project_completion"] = False
         return super().update(instance, validated_data)
 
+    @extend_schema_field(OpenApiTypes.DECIMAL)
     def get_credit_limit_utilized(self, obj: UserGroup):
         return obj.credit_limit_used()
 
@@ -331,9 +334,11 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = "__all__"
 
+    @extend_schema_field(Union[Literal[Order.Type.DELIVERY, Order.Type.ONE_TIME, Order.Type.REMOVAL, Order.Type.SWAP, Order.Type.AUTO_RENEWAL], None])
     def get_order_type(self, obj: Order):
         return obj.order_type
 
+    @extend_schema_field(OpenApiTypes.DATE)
     def get_service_date(self, obj: Order):
         return obj.end_date
 
@@ -686,5 +691,5 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             super(OrderGroupSerializer, self).update(instance, validated_data)
         return instance
 
-    def get_active(self, obj):
+    def get_active(self, obj) -> bool:
         return obj.end_date is None or obj.end_date > datetime.datetime.now().date()
