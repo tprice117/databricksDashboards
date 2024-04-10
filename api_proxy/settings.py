@@ -31,8 +31,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 ENVIRONMENT = os.getenv("ENV")
-DEBUG = os.getenv("ENV") == "TEST"
-DEBUG = True
+DEBUG = os.getenv("ENV") != "TEST"
 
 ALLOWED_HOSTS = ["*"]
 
@@ -50,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "drf_standardized_errors",
     # START: Django Apps.
     "api",
     "payment_methods",
@@ -166,12 +166,130 @@ CORS_ORIGIN_ALLOW_ALL = True
 #      'http://localhost:62964',
 # ]
 
+SPECTACULAR_DESCRIPTION = '''# Introduction
+
+## Errors
+Here are the possible errors that could be returned on any api.
+Any api speciiic errors will be documented in the specific endpoint.
+The structure of the error response is as follows:
+
+### 401 Unauthorized
+These errors are returned with the status code 401 whenever the authentication fails or a request is made to an
+endpoint without providing the authentication information as part of the request. Here are the 2 possible errors
+that can be returned.
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "authentication_failed",
+            "detail": "Incorrect authentication credentials.",
+            "attr": null
+        }
+    ]
+}
+```
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "not_authenticated",
+            "detail": "Authentication credentials were not provided.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 405 Method Not Allowed
+This is returned when an endpoint is called with an unexpected http method. For example, if updating a user requires
+a POST request and a PATCH is issued instead, this error is returned. Here's how it looks like:
+
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "method_not_allowed",
+            "detail": "Method “patch” not allowed.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 406 Not Acceptable
+This is returned if the `Accept` header is submitted and contains a value other than `application/json`. Here's how the response would look:
+
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "not_acceptable",
+            "detail": "Could not satisfy the request Accept header.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 415 Unsupported Media Type
+This is returned when the request content type is not json. Here's how the response would look:
+
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "not_acceptable",
+            "detail": "Unsupported media type “application/xml” in request.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 500 Internal Server Error
+This is returned when the API server encounters an unexpected error. Here's how the response would look:
+
+```json
+{
+    "type": "server_error",
+    "errors": [
+        {
+            "code": "error",
+            "detail": "A server error occurred.",
+            "attr": null
+        }
+    ]
+}
+```'''
+
 # DRF Spectacular settings.
 SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
-    "TITLE": "Downstream API",
-    "DESCRIPTION": "Downstream API for the Downstream Market Network.",
+    "TITLE": "Downstream API for the Downstream Market Network.",
+    "DESCRIPTION": SPECTACULAR_DESCRIPTION,
     "VERSION": "1.0.0",
+    "ENUM_NAME_OVERRIDES": {
+        "ValidationErrorEnum": "drf_standardized_errors.openapi_serializers.ValidationErrorEnum.choices",
+        "ClientErrorEnum": "drf_standardized_errors.openapi_serializers.ClientErrorEnum.choices",
+        "ServerErrorEnum": "drf_standardized_errors.openapi_serializers.ServerErrorEnum.choices",
+        "ErrorCode401Enum": "drf_standardized_errors.openapi_serializers.ErrorCode401Enum.choices",
+        "ErrorCode403Enum": "drf_standardized_errors.openapi_serializers.ErrorCode403Enum.choices",
+        "ErrorCode404Enum": "drf_standardized_errors.openapi_serializers.ErrorCode404Enum.choices",
+        "ErrorCode405Enum": "drf_standardized_errors.openapi_serializers.ErrorCode405Enum.choices",
+        "ErrorCode406Enum": "drf_standardized_errors.openapi_serializers.ErrorCode406Enum.choices",
+        "ErrorCode415Enum": "drf_standardized_errors.openapi_serializers.ErrorCode415Enum.choices",
+        "ErrorCode429Enum": "drf_standardized_errors.openapi_serializers.ErrorCode429Enum.choices",
+        "ErrorCode500Enum": "drf_standardized_errors.openapi_serializers.ErrorCode500Enum.choices",
+    },
+    "POSTPROCESSING_HOOKS": ["drf_standardized_errors.openapi_hooks.postprocess_schema_enums"]
+}
+DRF_STANDARDIZED_ERRORS = {
+    "ALLOWED_ERROR_STATUS_CODES": ["400", "403", "404", "429"]
 }
 
 # Amazon Web Services S3 Configuration.
@@ -193,8 +311,11 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
     ),
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "drf_standardized_errors.openapi.AutoSchema",
     "COERCE_DECIMAL_TO_STRING": False,
+    # "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
 }
 
 if ENVIRONMENT == "TEST":
