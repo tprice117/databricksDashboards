@@ -72,10 +72,14 @@ class UserGroup(BaseModel):
         max_digits=18, decimal_places=2, blank=True, null=True
     )
     compliance_status = models.CharField(
-        max_length=20, choices=COMPLIANCE_STATUS_CHOICES, default="NOT_REQUIRED"
+        max_length=20,
+        choices=COMPLIANCE_STATUS_CHOICES,
+        default="NOT_REQUIRED",
     )
     tax_exempt_status = models.CharField(
-        max_length=20, choices=TaxExemptStatus.choices, default=TaxExemptStatus.NONE
+        max_length=20,
+        choices=TaxExemptStatus.choices,
+        default=TaxExemptStatus.NONE,
     )
 
     intercom_id = models.CharField(
@@ -84,6 +88,14 @@ class UserGroup(BaseModel):
         null=True,
         help_text="This is the company_id in Intercom.",
     )
+
+    @property
+    def policy_monthly_limit(self):
+        return (
+            self.user_group_policy_monthly_limit
+            if hasattr(self, "user_group_policy_monthly_limit")
+            else None
+        )
 
     def __str__(self):
         return self.name
