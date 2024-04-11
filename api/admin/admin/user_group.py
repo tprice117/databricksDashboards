@@ -4,6 +4,21 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 
+from admin_approvals.admin.inlines.user_group_admin_approval_order import (
+    UserGroupAdminApprovalOrderInline,
+)
+from admin_approvals.admin.inlines.user_group_admin_approval_user_invite import (
+    UserGroupAdminApprovalUserInviteInline,
+)
+from admin_policies.admin.inlines.user_group_policy_invitation_approval import (
+    UserGroupPolicyInvitationApprovalInline,
+)
+from admin_policies.admin.inlines.user_group_policy_monthly_limit import (
+    UserGroupPolicyMonthlyLimitInline,
+)
+from admin_policies.admin.inlines.user_group_policy_purchase_approval import (
+    UserGroupPolicyPurchaseApprovalInline,
+)
 from api.admin.filters import UserGroupTypeFilter
 from api.admin.filters.user_group.admin_tasks import UserGroupAdminTasksFilter
 from api.admin.inlines import (
@@ -38,6 +53,12 @@ class UserGroupAdmin(admin.ModelAdmin):
         UserGroupLegalInline,
         UserGroupCreditApplicationInline,
         UserInline,
+        UserGroupPolicyMonthlyLimitInline,
+        UserGroupPolicyPurchaseApprovalInline,
+        UserGroupPolicyInvitationApprovalInline,
+        # UserGroupAdminApprovalOrderInline, # Commented since there is not a direct relation between UserGroup and Order.
+        # TODO: Find a way to add the UserGroupAdminApprovalOrderInline (non-direct foreign key) to the UserGroup.
+        UserGroupAdminApprovalUserInviteInline,
     ]
     actions = [
         "create_invoices",

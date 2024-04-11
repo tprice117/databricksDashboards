@@ -7,11 +7,11 @@ from random import randint
 import requests
 import stripe
 from django.conf import settings
-from django.db.models import F, OuterRef, Q, Subquery, Sum
+from django.db.models import F, OuterRef, Q, Subquery, Sum, Avg, Count
 from django.db.models.functions import Round
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework import status, viewsets
 from rest_framework.decorators import (
     api_view,
@@ -44,6 +44,11 @@ class SpectacularAPIViewNoAuth(SpectacularAPIView):
 
 
 class SpectacularRedocViewNoAuth(SpectacularRedocView):
+    authentication_classes = []
+    permission_classes = []
+
+
+class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
     authentication_classes = []
     permission_classes = []
 
