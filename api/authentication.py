@@ -1,6 +1,4 @@
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
-from django.utils.translation import gettext_lazy as _
-import requests
 from rest_framework import authentication, exceptions
 
 from api.utils.auth0 import get_user_data
@@ -57,7 +55,5 @@ class CustomAuthenticationScheme(OpenApiAuthenticationExtension):
             'type': 'Auth0',
             'in': 'header',
             'name': 'Authorization',
-            'description': _(
-                'Token-based authentication with required prefix "%s". Token is obtained from Auth0.'
-            ) % "Bearer"
+            'description': 'Token-based authentication with required prefix "Bearer". Token is obtained from Auth0.'
         }
