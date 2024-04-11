@@ -1,11 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path, reverse_lazy
 from django.views.generic.base import RedirectView
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-    SpectacularSwaggerView,
-)
 from rest_framework import routers
 
 from api import views
@@ -119,7 +114,12 @@ urlpatterns = [
         views.SpectacularRedocViewNoAuth.as_view(url_name="schema"),
         name="redoc",
     ),
-    ## Stripe.
+    path(
+        "api/schema/swagger/",
+        views.SpectacularSwaggerViewNoAuth.as_view(url_name="schema"),
+        name="swagger",
+    ),
+    # Stripe.
     path("api/payment-methods/", views.StripePaymentMethods.as_view()),
     path("api/setup-intents/", views.StripeSetupIntents.as_view()),
     path("api/payment-intents/", views.StripePaymentIntents.as_view()),
