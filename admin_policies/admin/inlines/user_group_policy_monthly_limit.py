@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from api.models import UserGroupPolicyMonthlyLimit
+from admin_policies.models import UserGroupPolicyMonthlyLimit
 
 
 class UserGroupPolicyMonthlyLimitInline(admin.TabularInline):

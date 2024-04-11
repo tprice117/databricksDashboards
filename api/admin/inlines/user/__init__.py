@@ -1,5 +1,3 @@
-from .admin_approvals import *
-from .policies import *
 from .user import UserInline
 from .user_group_billing import UserGroupBillingInline
 from .user_group_credit_application import UserGroupCreditApplicationInline

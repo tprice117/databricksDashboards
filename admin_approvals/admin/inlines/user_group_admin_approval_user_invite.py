@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from api.models import UserGroupAdminApprovalUserInvite
+from admin_approvals.models import UserGroupAdminApprovalUserInvite
 
 
 class UserGroupAdminApprovalUserInviteInline(admin.TabularInline):

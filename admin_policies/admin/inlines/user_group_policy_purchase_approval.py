@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from api.models import UserGroupPolicyPurchaseApproval
+from admin_policies.models import UserGroupPolicyPurchaseApproval
 
 
 class UserGroupPolicyPurchaseApprovalInline(admin.TabularInline):

@@ -1,10 +1,12 @@
+import datetime
 import logging
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 
 from api.models.disposal_location.disposal_location import DisposalLocation
@@ -215,22 +217,6 @@ class Order(BaseModel):
     def clean(self):
         super().clean()
 
-        order_total_this_month = Order.objects.filter(
-            submitted_on__gte=first_day_of_month
-        )
-
-        # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
-        # this Order.
-        if self.order_group.user_address.user_group.policy_monthly_limit and (
-            order_total_this_month + self.customer_price()
-            > self.order_group.user_address.user_group.policy_monthly_limit
-        ):
-            raise ValidationError(
-                "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
-            )
-        # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
-        # this Order.
-        if fixthis
         # Ensure end_date is on or after start_date.
         if self.start_date > self.end_date:
             raise ValidationError("Start date must be on or before end date")
@@ -552,3 +538,39 @@ class Order(BaseModel):
 
 
 post_save.connect(Order.post_save, sender=Order)
+
+
+@receiver(pre_save, sender=Order)
+def pre_save_order(sender, instance: Order, **kwargs):
+    #  Check if Order is being created.
+    creating = not Order.objects.filter(id=instance.id).exists()
+
+    if creating:
+        # Get all Orders for this UserGroup this month.
+        orders_this_month = Order.objects.filter(
+            submitted_on__gte=datetime.datetime.now().replace(day=1),
+        )
+
+        # Calculate the total of all Orders for this UserGroup this month.
+        order_total_this_month = sum(
+            [order.customer_price() for order in orders_this_month]
+        )
+
+        # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
+        # this Order.
+        if instance.order_group.user_address.user_group.policy_monthly_limit and (
+            order_total_this_month + instance.customer_price()
+            > instance.order_group.user_address.user_group.policy_monthly_limit
+        ):
+            raise ValidationError(
+                "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
+            )
+        # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
+        # this Order.
+        elif instance.order_group.user_address.user_group.policy_purchase_approval and (
+            instance.customer_price()
+            > instance.order_group.user_address.user_group.policy_purchase_approval
+        ):
+            raise ValidationError(
+                "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
+            )
