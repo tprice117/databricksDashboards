@@ -35,13 +35,8 @@ class UserGroupPolicyPurchaseApproval(BaseModel):
     )
     amount = models.IntegerField()
 
-    unique_together = ("user_group", "user_type")
+    class Meta:
+        unique_together = ("user_group", "user_type")
 
     def __str__(self):
         return f"{self.user_group.name} - {self.user_type} - {self.amount}"
-
-    # Only allow the UserType to be set to Billing Manager or Member, not Admin.
-    def save(self, *args, **kwargs):
-        if self.user_type == UserType.ADMIN:
-            raise ValueError("UserType cannot be set to Admin.")
-        super().save(*args, **kwargs)
