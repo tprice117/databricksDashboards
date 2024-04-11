@@ -5,9 +5,10 @@ import threading
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
+from django.dispatch import receiver
 
-from api.models.order.order import Order
+from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
 from common.models import BaseModel
 from communications.intercom.intercom import Intercom
@@ -107,20 +108,6 @@ class UserGroup(BaseModel):
             )
 
     def post_create(sender, instance, created, **kwargs):
-        if created:
-            # Generate unique share code.
-            share_code = "".join(
-                random.choice(string.ascii_uppercase + string.digits) for _ in range(6)
-            )
-            while share_code in UserGroup.objects.values_list("share_code", flat=True):
-                share_code = "".join(
-                    random.choice(string.ascii_uppercase + string.digits)
-                    for _ in range(6)
-                )
-            # Save via update so this post_create is not called a second time.
-            # instance.share_code = share_code
-            # instance.save()
-            UserGroup.objects.filter(id=instance.id).update(share_code=share_code)
         # Update Intercom company asynchronously.
         # Note: This is done asynchronously because it is not critical.
         p = threading.Thread(target=instance.intercom_sync)
@@ -163,18 +150,12 @@ class UserGroup(BaseModel):
             logger.error(f"UserGroup.intercom_sync: [{e}]", exc_info=e)
 
     def credit_limit_used(self):
-        orders = Order.objects.filter(order_group__user_address__user_group=self)
-        total_customer_price = 0.0
-        total_paid = 0.0
-
-        # Loop through orders to get total customer price and total paid.
-        for order in orders:
-            total_customer_price, _, total_paid = order.payment_status()
-            total_customer_price += total_customer_price
-            total_paid += total_paid
-
-        # Current credit utilization.
-        credit_used = total_customer_price - total_paid
+        order_line_items = OrderLineItem.objects.filter(
+            order__order_group__user_address__user_group=self, paid=False
+        )
+        credit_used = 0
+        for order_line_item in order_line_items:
+            credit_used += order_line_item.customer_price()
         return credit_used
 
     def post_delete(sender, instance, **kwargs):
@@ -187,3 +168,20 @@ class UserGroup(BaseModel):
 
 post_save.connect(UserGroup.post_create, sender=UserGroup)
 post_delete.connect(UserGroup.post_delete, sender=UserGroup)
+
+
+@receiver(pre_save, sender=UserGroup)
+def status_changed(sender, instance: UserGroup, *args, **kwargs):
+    db_instance = UserGroup.objects.filter(id=instance.id).first()
+
+    if not db_instance:
+        # If the instance is being created, generate a share code.
+        instance.share_code = "".join(
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(6)
+        )
+        while instance.share_code in UserGroup.objects.values_list(
+            "share_code", flat=True
+        ):
+            instance.share_code = "".join(
+                random.choice(string.ascii_uppercase + string.digits) for _ in range(6)
+            )

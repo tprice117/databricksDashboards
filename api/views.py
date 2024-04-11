@@ -53,6 +53,9 @@ class SellerViewSet(viewsets.ModelViewSet):
     serializer_class = SellerSerializer
     filterset_fields = ["id"]
 
+    def get_queryset(self):
+        return self.queryset.prefetch_related("seller_products")
+
 
 class SellerLocationViewSet(viewsets.ModelViewSet):
     queryset = SellerLocation.objects.all()
@@ -94,6 +97,10 @@ class UserViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "user_id"]
 
     def get_queryset(self):
+        # user_group__seller__seller_products
+        self.queryset = self.queryset.select_related(
+            "user_group__seller", "user_group__legal"
+        )
         is_superuser = self.request.user == "ALL" or (
             self.request.user.user_group.is_superuser
             if self.request.user and self.request.user.user_group
@@ -299,6 +306,17 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     filterset_class = OrderGroupFilterset
 
     def get_queryset(self):
+        self.queryset = self.queryset.prefetch_related(
+            "orders__order_line_items",
+            "seller_product_seller_location__seller_product__product__product_add_on_choices"
+        )
+        self.queryset = self.queryset.select_related(
+            "user", "user__user_group", "user_address",
+            "waste_type", "time_slot", "service_recurring_frequency",
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product__main_product_category",
+            "seller_product_seller_location__seller_location__seller"
+        )
         if self.request.user == "ALL":
             return self.queryset
         elif self.request.user.is_admin:
@@ -317,6 +335,10 @@ class OrderViewSet(viewsets.ModelViewSet):
     }
 
     def get_queryset(self):
+        self.queryset = self.queryset.prefetch_related("order_line_items")
+        self.queryset = self.queryset.select_related(
+            "order_group__subscription",
+        )
         if self.request.user == "ALL":
             return self.queryset
         elif self.request.user.is_admin:
@@ -393,6 +415,20 @@ class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
     queryset = SellerProductSellerLocation.objects.all()
     serializer_class = SellerProductSellerLocationSerializer
     filterset_fields = ["seller_product", "seller_location"]
+
+    def get_queryset(self):
+        self.queryset = self.queryset.prefetch_related(
+            "seller_product__product__product_add_on_choices"
+        )
+        self.queryset = self.queryset.select_related(
+            "seller_product__seller",
+            "seller_product__product__main_product__main_product_category",
+            "seller_location__seller",
+            "service",
+            "material",
+            "rental"
+        )
+        return self.queryset
 
 
 class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
