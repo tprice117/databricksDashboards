@@ -21,7 +21,16 @@ class UserGroupPolicyInvitationApproval(BaseModel):
     )
     user_type = models.CharField(
         max_length=255,
-        choices=UserType.choices,
+        choices=[
+            (
+                UserType.BILLING.value,
+                UserType.BILLING.label,
+            ),
+            (
+                UserType.MEMBER.value,
+                UserType.MEMBER.label,
+            ),
+        ],
     )
 
     class Meta:
