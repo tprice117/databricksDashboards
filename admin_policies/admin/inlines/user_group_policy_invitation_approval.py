@@ -8,3 +8,4 @@ class UserGroupPolicyInvitationApprovalInline(admin.TabularInline):
     fields = ("user_group", "user_type")
     show_change_link = False
     extra = 0
+    max_num = 2

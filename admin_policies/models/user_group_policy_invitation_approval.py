@@ -28,4 +28,4 @@ class UserGroupPolicyInvitationApproval(BaseModel):
         unique_together = ("user_group", "user_type")
 
     def __str__(self):
-        return f"{self.user_group.name} - {self.amount}"
+        return f"{self.user_group.name} - {self.user_type}"
