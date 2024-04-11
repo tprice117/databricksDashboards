@@ -35,6 +35,11 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
         choices=ApprovalStatus.choices,
         default=ApprovalStatus.PENDING,
     )
+    created_by = models.ForeignKey(
+        User,
+        models.CASCADE,
+        related_name="user_group_admin_approval_user_invites",
+    )
 
     class Meta:
         unique_together = ("user_group", "email")
@@ -45,6 +50,5 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
     # Pre/post save, check Status.
     # 1. If Status changes from PENDING to APPROVED, create a new User (which should trigger an invite email),
     # save that user to the UserGroupApprovalUserInvite.User field.
-    # 2. If the Status changes from PENDING to DECLINED, update Status, then do nothing else.
-    # 3. Do not allow any changes to be made if either the Status == DECLINED or Status == APPROVED and
-    # UserGroupApprovalUserInvite.User != NULL.
+    # 2. If the Status changes from PENDING to DECLINED, update Status, then send email to "created_by" user with update.
+    # 3. Do not allow any changes to be made if either the Status == DECLINED or Status == APPROVED.
