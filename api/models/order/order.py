@@ -567,9 +567,8 @@ def pre_save_order(sender, instance: Order, **kwargs):
             )
         # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
         # this Order.
-        elif instance.order_group.user_address.user_group.policy_purchase_approval and (
-            instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_purchase_approval
+        elif hasattr(instance.order_group.user_address.user_group, "policy_purchase_approval") and (
+            instance.customer_price() > instance.order_group.user_address.user_group.policy_purchase_approval
         ):
             raise ValidationError(
                 "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
