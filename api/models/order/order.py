@@ -130,9 +130,6 @@ class Order(BaseModel):
         # Are Order.StartDate and Order.EndDate equal?
         order_start_end_dates_equal = self.start_date == self.end_date
 
-        # Orders in OrderGroup.
-        order_count = Order.objects.filter(order_group=self.order_group).count()
-
         # Assign variables based on Order.Type.
         # DELIVERY: Order.StartDate == OrderGroup.StartDate AND Order.StartDate == Order.EndDate
         # AND Order.EndDate != OrderGroup.EndDate.
@@ -141,6 +138,13 @@ class Order(BaseModel):
             and order_start_end_dates_equal
             and not order_order_group_end_dates_equal
         )
+        # Return directly is true so that total order lookup doesn't happen.
+        if order_type_delivery:
+            return Order.Type.DELIVERY
+
+        # Orders in OrderGroup.
+        order_count = Order.objects.filter(order_group=self.order_group).count()
+
         # ONE TIME: Order.StartDate == OrderGroup.StartDate AND Order.EndDate == OrderGroup.EndDate
         # AND OrderGroup has no Subscription.
         order_type_one_time = (
@@ -567,8 +571,11 @@ def pre_save_order(sender, instance: Order, **kwargs):
             )
         # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
         # this Order.
-        elif hasattr(instance.order_group.user_address.user_group, "policy_purchase_approval") and (
-            instance.customer_price() > instance.order_group.user_address.user_group.policy_purchase_approval
+        elif hasattr(
+            instance.order_group.user_address.user_group, "policy_purchase_approval"
+        ) and (
+            instance.customer_price()
+            > instance.order_group.user_address.user_group.policy_purchase_approval
         ):
             raise ValidationError(
                 "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
