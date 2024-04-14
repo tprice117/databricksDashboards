@@ -57,10 +57,11 @@ INSTALLED_APPS = [
     "admin_approvals",
     "admin_policies",
     "api",
-    "payment_methods",
-    "notifications",
     "billing",
     "communications",
+    "external_contracts",
+    "notifications",
+    "payment_methods",
     # END: Django Apps.
     "api.pricing_ml",
     "api.utils",
@@ -171,7 +172,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 #      'http://localhost:62964',
 # ]
 
-SPECTACULAR_DESCRIPTION = '''# Introduction
+SPECTACULAR_DESCRIPTION = """# Introduction
 
 ## Errors
 Here are the possible errors that could be returned on any api.
@@ -270,7 +271,7 @@ This is returned when the API server encounters an unexpected error. Here's how 
         }
     ]
 }
-```'''
+```"""
 
 # DRF Spectacular settings.
 SPECTACULAR_SETTINGS = {
@@ -291,11 +292,11 @@ SPECTACULAR_SETTINGS = {
         "ErrorCode429Enum": "drf_standardized_errors.openapi_serializers.ErrorCode429Enum.choices",
         "ErrorCode500Enum": "drf_standardized_errors.openapi_serializers.ErrorCode500Enum.choices",
     },
-    "POSTPROCESSING_HOOKS": ["drf_standardized_errors.openapi_hooks.postprocess_schema_enums"]
+    "POSTPROCESSING_HOOKS": [
+        "drf_standardized_errors.openapi_hooks.postprocess_schema_enums"
+    ],
 }
-DRF_STANDARDIZED_ERRORS = {
-    "ALLOWED_ERROR_STATUS_CODES": ["400", "403", "404", "429"]
-}
+DRF_STANDARDIZED_ERRORS = {"ALLOWED_ERROR_STATUS_CODES": ["400", "403", "404", "429"]}
 
 # Amazon Web Services S3 Configuration.
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
@@ -320,7 +321,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_standardized_errors.openapi.AutoSchema",
     "COERCE_DECIMAL_TO_STRING": False,
     # "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
-    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 }
 
 if ENVIRONMENT == "TEST":
