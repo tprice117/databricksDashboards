@@ -4,6 +4,7 @@ from api.admin.filters.user_address.admin_tasks import UserAdddressAdminTasksFil
 from api.models import UserAddress
 from billing.utils.billing import BillingUtils
 from common.utils.stripe.stripe_utils import StripeUtils
+from external_contracts.admin.inlines import ExternalContractInline
 
 
 @admin.register(UserAddress)
@@ -20,6 +21,9 @@ class UserAddressAdmin(admin.ModelAdmin):
     ]
     actions = [
         "create_invoices",
+    ]
+    inlines = [
+        ExternalContractInline,
     ]
 
     @admin.action(

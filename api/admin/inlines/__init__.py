@@ -32,8 +32,4 @@ from .seller_product_seller_location_service_recurring_frequency import (
     SellerProductSellerLocationServiceRecurringFrequencyInline,
 )
 from .subscription import SubscriptionInline
-from .user import UserInline
-from .user_group_billing import UserGroupBillingInline
-from .user_group_credit_application import UserGroupCreditApplicationInline
-from .user_group_legal import UserGroupLegalInline
-from .user_group_user import UserGroupUserInline
+from .user import *

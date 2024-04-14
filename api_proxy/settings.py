@@ -31,8 +31,10 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 ENVIRONMENT = os.getenv("ENV")
-DEBUG = os.getenv("ENV") == "TEST"
-DEBUG = True
+DEBUG = os.getenv("ENV") != "TEST"
+# NOTE: DRF Standardized Errors will handle uncaught exceptions if this is set to False.
+# Setting it to True will still show the Django error page on uncaught exceptions.
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -50,12 +52,16 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "drf_standardized_errors",
     # START: Django Apps.
+    "admin_approvals",
+    "admin_policies",
     "api",
-    "payment_methods",
-    "notifications",
     "billing",
     "communications",
+    "external_contracts",
+    "notifications",
+    "payment_methods",
     # END: Django Apps.
     "api.pricing_ml",
     "api.utils",
@@ -166,13 +172,131 @@ CORS_ORIGIN_ALLOW_ALL = True
 #      'http://localhost:62964',
 # ]
 
+SPECTACULAR_DESCRIPTION = """# Introduction
+
+## Errors
+Here are the possible errors that could be returned on any api.
+Any api speciiic errors will be documented in the specific endpoint.
+The structure of the error response is as follows:
+
+### 401 Unauthorized
+These errors are returned with the status code 401 whenever the authentication fails or a request is made to an
+endpoint without providing the authentication information as part of the request. Here are the 2 possible errors
+that can be returned.
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "authentication_failed",
+            "detail": "Incorrect authentication credentials.",
+            "attr": null
+        }
+    ]
+}
+```
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "not_authenticated",
+            "detail": "Authentication credentials were not provided.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 405 Method Not Allowed
+This is returned when an endpoint is called with an unexpected http method. For example, if updating a user requires
+a POST request and a PATCH is issued instead, this error is returned. Here's how it looks like:
+
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "method_not_allowed",
+            "detail": "Method “patch” not allowed.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 406 Not Acceptable
+This is returned if the `Accept` header is submitted and contains a value other than `application/json`. Here's how the response would look:
+
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "not_acceptable",
+            "detail": "Could not satisfy the request Accept header.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 415 Unsupported Media Type
+This is returned when the request content type is not json. Here's how the response would look:
+
+```json
+{
+    "type": "client_error",
+    "errors": [
+        {
+            "code": "not_acceptable",
+            "detail": "Unsupported media type “application/xml” in request.",
+            "attr": null
+        }
+    ]
+}
+```
+
+### 500 Internal Server Error
+This is returned when the API server encounters an unexpected error. Here's how the response would look:
+
+```json
+{
+    "type": "server_error",
+    "errors": [
+        {
+            "code": "error",
+            "detail": "A server error occurred.",
+            "attr": null
+        }
+    ]
+}
+```"""
+
 # DRF Spectacular settings.
 SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
-    "TITLE": "Downstream API",
-    "DESCRIPTION": "Downstream API for the Downstream Market Network.",
+    "TITLE": "Downstream API for the Downstream Market Network.",
+    "DESCRIPTION": SPECTACULAR_DESCRIPTION,
     "VERSION": "1.0.0",
+    "ENUM_NAME_OVERRIDES": {
+        "ValidationErrorEnum": "drf_standardized_errors.openapi_serializers.ValidationErrorEnum.choices",
+        "ClientErrorEnum": "drf_standardized_errors.openapi_serializers.ClientErrorEnum.choices",
+        "ServerErrorEnum": "drf_standardized_errors.openapi_serializers.ServerErrorEnum.choices",
+        "ErrorCode401Enum": "drf_standardized_errors.openapi_serializers.ErrorCode401Enum.choices",
+        "ErrorCode403Enum": "drf_standardized_errors.openapi_serializers.ErrorCode403Enum.choices",
+        "ErrorCode404Enum": "drf_standardized_errors.openapi_serializers.ErrorCode404Enum.choices",
+        "ErrorCode405Enum": "drf_standardized_errors.openapi_serializers.ErrorCode405Enum.choices",
+        "ErrorCode406Enum": "drf_standardized_errors.openapi_serializers.ErrorCode406Enum.choices",
+        "ErrorCode415Enum": "drf_standardized_errors.openapi_serializers.ErrorCode415Enum.choices",
+        "ErrorCode429Enum": "drf_standardized_errors.openapi_serializers.ErrorCode429Enum.choices",
+        "ErrorCode500Enum": "drf_standardized_errors.openapi_serializers.ErrorCode500Enum.choices",
+    },
+    "POSTPROCESSING_HOOKS": [
+        "drf_standardized_errors.openapi_hooks.postprocess_schema_enums"
+    ],
 }
+DRF_STANDARDIZED_ERRORS = {"ALLOWED_ERROR_STATUS_CODES": ["400", "403", "404", "429"]}
 
 # Amazon Web Services S3 Configuration.
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
@@ -193,8 +317,11 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
     ),
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "drf_standardized_errors.openapi.AutoSchema",
     "COERCE_DECIMAL_TO_STRING": False,
+    # "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 }
 
 if ENVIRONMENT == "TEST":
@@ -202,7 +329,9 @@ if ENVIRONMENT == "TEST":
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
     STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_FULL_CUSTOMER_PORTAL_CONFIG")
-    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = env("STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG")
+    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = env(
+        "STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG"
+    )
     AUTH0_CLIENT_ID = env("AUTH0_CLIENT_ID")
     AUTH0_CLIENT_SECRET = env("AUTH0_CLIENT_SECRET")
     AUTH0_DOMAIN = "dev-jy1f5kgzroj4fcci.us.auth0.com"
@@ -211,18 +340,26 @@ if ENVIRONMENT == "TEST":
     CHECKBOOK_API_KEY = env("CHECKBOOK_API_KEY")
     CHECKBOOK_API_SECRET = env("CHECKBOOK_API_SECRET")
     CHECKBOOK_WEBHOOK_KEY = env("CHECKBOOK_WEBHOOK_KEY")
-    BASIS_THEORY_USE_PCI_API_KEY = "key_prod_us_pvt_Ao9oRbvvTyT4d1Ew2M6Uxi"  # env("BASIS_THEORY_USE_PCI_API_KEY")
+    BASIS_THEORY_USE_PCI_API_KEY = (
+        "key_prod_us_pvt_Ao9oRbvvTyT4d1Ew2M6Uxi"  # env("BASIS_THEORY_USE_PCI_API_KEY")
+    )
     BASIS_THEORY_READ_PCI_API_KEY = env("BASIS_THEORY_READ_PCI_API_KEY")
     BASIS_THEORY_MANGEMENT_API_KEY = env("BASIS_THEORY_MANGEMENT_API_KEY")
-    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env("BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID")
-    BASIS_THEORY_APPLICATION_ID = "63da13bb-3a2c-4bd5-b747-a5a4cc9f76e7"  # env("BASIS_THEORY_APPLICATION_ID")
+    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env(
+        "BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID"
+    )
+    BASIS_THEORY_APPLICATION_ID = (
+        "63da13bb-3a2c-4bd5-b747-a5a4cc9f76e7"  # env("BASIS_THEORY_APPLICATION_ID")
+    )
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_PROD_TOKEN")
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_DEV_PUBLISHABLE_KEY")
     STRIPE_SECRET_KEY = env("STRIPE_DEV_SECRET_KEY")
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_DEV_FULL_CUSTOMER_PORTAL_CONFIG")
-    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = env("STRIPE_DEV_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG")
+    STRIPE_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG = env(
+        "STRIPE_DEV_PAYMENT_METHOD_CUSTOMER_PORTAL_CONFIG"
+    )
     AUTH0_DOMAIN = "dev-8q3q3q3q.us.auth0.com"
     AUTH0_DOMAIN = "downstream-dev.us.auth0.com"
     AUTH0_CLIENT_ID = env("AUTH0_DEV_CLIENT_ID")
@@ -235,8 +372,12 @@ else:
     BASIS_THEORY_USE_PCI_API_KEY = env("BASIS_DEV_THEORY_USE_PCI_API_KEY")
     BASIS_THEORY_READ_PCI_API_KEY = env("BASIS_DEV_THEORY_READ_PCI_API_KEY")
     BASIS_THEORY_MANGEMENT_API_KEY = env("BASIS_DEV_THEORY_MANGEMENT_API_KEY")
-    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env("BASIS_DEV_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID")
-    BASIS_THEORY_APPLICATION_ID = "a44b44d5-2cb8-4255-bbf6-dc5884bffdbf"  # env("BASIS_DEV_THEORY_APPLICATION_ID")
+    BASIS_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID = env(
+        "BASIS_DEV_THEORY_CREATE_PAYMENT_METHOD_REACTOR_ID"
+    )
+    BASIS_THEORY_APPLICATION_ID = (
+        "a44b44d5-2cb8-4255-bbf6-dc5884bffdbf"  # env("BASIS_DEV_THEORY_APPLICATION_ID")
+    )
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_DEV_TOKEN")
 
 # Django Admin Interface settings.
@@ -273,7 +414,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {
         "logtail": {
-            "class": 'logtail.LogtailHandler',
+            "class": "logtail.LogtailHandler",
             "source_token": BETTERSTACK_TOKEN,
         },
     },
