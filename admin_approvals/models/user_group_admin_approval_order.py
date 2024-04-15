@@ -1,10 +1,14 @@
+from django.utils import timezone
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+import logging
 
 from api.models.order.order import Order
 from api.models.track_data import track_data
 from common.models import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 @track_data("status")
@@ -40,25 +44,30 @@ class UserGroupAdminApprovalOrder(BaseModel):
         super().__init__(*args, **kwargs)
         self.__original_status = self.name
 
-    # Pre/post save, check Status.
-    # 1. If Status changes from PENDING to APPROVED, populate the Order.SubmittedOn field with the current date
-    # time. This indicates the Order is submitted.
-    # 2. If the Status changes from PENDING to DECLINED, update Status, then do nothing else. Question: do we delete Order?
-    # 3. Do not allow any changes to be made if either the Status == DECLINED or Status == APPROVED.
+    def save(self, *args, **kwargs):
+        # Only allow changes to be made if the Status == PENDING.
+        if self.old_value("status") == self.ApprovalStatus.PENDING:
+            super().save(*args, **kwargs)
 
-
-# Pre_save reciever. If Status changes from PENDING to APPROVED, populate the Order.SubmittedOn field with the current date
-# time. This indicates the Order is submitted.
+    class Meta:
+        verbose_name = "Order Approval"
+        verbose_name_plural = "Order Approvals"
 
 
 @receiver(pre_save, sender=UserGroupAdminApprovalOrder)
 def pre_save_user_group_admin_approval_order(
     sender, instance: UserGroupAdminApprovalOrder, **kwargs
 ):
-    old_status: UserGroupAdminApprovalOrder.ApprovalStatus
     old_status = instance.old_value("status")
 
-    if old_status == UserGroupAdminApprovalOrder.ApprovalStatus.ACCEPTED:
-        djksld
-        jakld
-        ajs
+    if old_status == UserGroupAdminApprovalOrder.ApprovalStatus.PENDING:
+        if instance.status == UserGroupAdminApprovalOrder.ApprovalStatus.ACCEPTED:
+            # If Status changes from PENDING to APPROVED, populate the Order.SubmittedOn
+            # field with the current date time. This indicates the Order is submitted.
+            instance.order.submitted_on = timezone.now()
+            instance.order.save()
+        elif old_status == UserGroupAdminApprovalOrder.ApprovalStatus.DECLINED:
+            # If the Status changes from PENDING to DECLINED, update Status, then do nothing else.
+            logger.warning(
+                f"Approval for order {instance.order.id} has been declined. No further action will be taken."
+            )
