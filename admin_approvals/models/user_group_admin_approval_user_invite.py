@@ -42,6 +42,8 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
     )
 
     class Meta:
+        verbose_name = "User Invite Approval"
+        verbose_name_plural = "User Invite Approvals"
         unique_together = ("user_group", "email")
 
     def __str__(self):
