@@ -564,7 +564,7 @@ def pre_save_order(sender, instance: Order, **kwargs):
         # this Order.
         if instance.order_group.user_address.user_group.policy_monthly_limit and (
             order_total_this_month + instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_monthly_limit
+            > instance.order_group.user_address.user_group.policy_monthly_limit.amount
         ):
             raise ValidationError(
                 "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
