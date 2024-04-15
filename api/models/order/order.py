@@ -15,6 +15,7 @@ from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
+from api.models.choices.user_type import UserType
 
 logger = logging.getLogger(__name__)
 
@@ -564,19 +565,26 @@ def pre_save_order(sender, instance: Order, **kwargs):
         # this Order.
         if instance.order_group.user_address.user_group.policy_monthly_limit and (
             order_total_this_month + instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_monthly_limit
+            > instance.order_group.user_address.user_group.policy_monthly_limit.amount
         ):
             raise ValidationError(
                 "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
             )
-        # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
-        # this Order.
+        # Check that UserGroupPolicyPurchaseApproval will not be exceeded with this Order.
         elif hasattr(
-            instance.order_group.user_address.user_group, "policy_purchase_approval"
-        ) and (
-            instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_purchase_approval
+            instance.order_group.user_address.user_group,
+            "user_group_policy_purchase_approvals",
         ):
-            raise ValidationError(
-                "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
-            )
+            user = instance.order_group.user
+            # Admins are not subject to Purchase Approvals.
+            if user.type != UserType.ADMIN:
+                user_group_purchase_approval = instance.order_group.user_address.user_group.user_group_policy_purchase_approvals.filter(
+                    user_type=user.type
+                ).first()
+                if (
+                    user_group_purchase_approval
+                    and instance.customer_price() > user_group_purchase_approval.amount
+                ):
+                    raise ValidationError(
+                        "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
+                    )
