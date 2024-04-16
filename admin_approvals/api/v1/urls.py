@@ -5,8 +5,8 @@ from .views import UserGroupAdminApprovalOrderViewSet
 from .views import UserGroupAdminApprovalUserInviteViewSet
 
 router = DefaultRouter()
-router.register(r"usergroup-admin-approval-order", UserGroupAdminApprovalOrderViewSet)
+router.register(r"user-group-admin-approval-order", UserGroupAdminApprovalOrderViewSet)
 router.register(
-    r"usergroup-admin-approval-user-invite", UserGroupAdminApprovalUserInviteViewSet
+    r"user-group-admin-approval-user-invite", UserGroupAdminApprovalUserInviteViewSet
 )
 urlpatterns = router.urls

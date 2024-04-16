@@ -7,10 +7,10 @@ from .views import UserGroupPolicyInvitationApprovalViewSet
 
 router = DefaultRouter()
 router.register(
-    r"usergroup-policy-purchase-approval", UserGroupPolicyPurchaseApprovalViewSet
+    r"user-group-policy-purchase-approval", UserGroupPolicyPurchaseApprovalViewSet
 )
-router.register(r"usergroup-policy-monthly-limit", UserGroupPolicyMonthlyLimitViewSet)
+router.register(r"user-group-policy-monthly-limit", UserGroupPolicyMonthlyLimitViewSet)
 router.register(
-    r"usergroup-policy-invitation-approval", UserGroupPolicyInvitationApprovalViewSet
+    r"user-group-policy-invitation-approval", UserGroupPolicyInvitationApprovalViewSet
 )
 urlpatterns = router.urls
