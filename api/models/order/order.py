@@ -423,49 +423,49 @@ class Order(BaseModel):
         try:
             from admin_approvals.models import UserGroupAdminApprovalOrder
 
-            orders = (
-                Order.objects.filter(order_group=self.order_group)
-                if orders is None
-                else orders
-            )
-            # Add policy checks for UserGroupPolicyMonthlyLimit and UserGroupPolicyPurchaseApproval.
-            # TODO: Could add policy reason field to Order (this could simply be the db model and/or name of the policy).
-            # Get all Orders for this UserGroup this month.
-            first_day_of_current_month = timezone.now().replace(day=1)
-            orders_this_month = []
-            for order in orders:
-                if (
-                    order.submitted_on
-                    and order.submitted_on >= first_day_of_current_month
+            user = self.order_group.user
+            # Admins are not subject to Order Approvals.
+            if user.type != UserType.ADMIN:
+                orders = (
+                    Order.objects.filter(order_group=self.order_group)
+                    if orders is None
+                    else orders
+                )
+                # Add policy checks for UserGroupPolicyMonthlyLimit and UserGroupPolicyPurchaseApproval.
+                # TODO: Could add policy reason field to Order (this could simply be the db model and/or name of the policy).
+                # Get all Orders for this UserGroup this month.
+                first_day_of_current_month = timezone.now().replace(day=1)
+                orders_this_month = []
+                for order in orders:
+                    if (
+                        order.submitted_on
+                        and order.submitted_on >= first_day_of_current_month
+                    ):
+                        orders_this_month.append(order)
+
+                # Calculate the total of all Orders for this UserGroup this month.
+                order_total_this_month = sum(
+                    [order.customer_price() for order in orders_this_month]
+                )
+
+                # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
+                # this Order.
+                if self.order_group.user_address.user_group.policy_monthly_limit and (
+                    order_total_this_month + self.customer_price()
+                    > self.order_group.user_address.user_group.policy_monthly_limit.amount
                 ):
-                    orders_this_month.append(order)
-
-            # Calculate the total of all Orders for this UserGroup this month.
-            order_total_this_month = sum(
-                [order.customer_price() for order in orders_this_month]
-            )
-
-            # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
-            # this Order.
-            if self.order_group.user_address.user_group.policy_monthly_limit and (
-                order_total_this_month + self.customer_price()
-                > self.order_group.user_address.user_group.policy_monthly_limit.amount
-            ):
-                # Set Order status to Approval so that it is returned in api.
-                self.status = Order.APPROVAL
-                Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
-                UserGroupAdminApprovalOrder.objects.create(order=self)
-                # raise ValidationError(
-                #     "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
-                # )
-            # Check that UserGroupPolicyPurchaseApproval will not be exceeded with this Order.
-            elif hasattr(
-                self.order_group.user_address.user_group,
-                "user_group_policy_purchase_approvals",
-            ):
-                user = self.order_group.user
-                # Admins are not subject to Purchase Approvals.
-                if user.type != UserType.ADMIN:
+                    # Set Order status to Approval so that it is returned in api.
+                    self.status = Order.APPROVAL
+                    Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
+                    UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
+                    # raise ValidationError(
+                    #     "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
+                    # )
+                # Check that UserGroupPolicyPurchaseApproval will not be exceeded with this Order.
+                elif hasattr(
+                    self.order_group.user_address.user_group,
+                    "user_group_policy_purchase_approvals",
+                ):
                     user_group_purchase_approval = self.order_group.user_address.user_group.user_group_policy_purchase_approvals.filter(
                         user_type=user.type
                     ).first()
@@ -476,7 +476,7 @@ class Order(BaseModel):
                         # Set Order status to Approval so that it is returned in api.
                         self.status = Order.APPROVAL
                         Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
-                        UserGroupAdminApprovalOrder.objects.create(order=self)
+                        UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
                         # raise ValidationError(
                         #     "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
                         # )
