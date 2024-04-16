@@ -1,17 +1,19 @@
-import base64
 import datetime
-import math
-import pickle
 from random import randint
+import time
 
 import requests
 import stripe
 from django.conf import settings
-from django.db.models import F, OuterRef, Q, Subquery, Sum, Avg, Count
+from django.db.models import Avg, Count  # F, OuterRef, Q, Subquery, Sum,
 from django.db.models.functions import Round
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from rest_framework import status, viewsets
 from rest_framework.decorators import (
     api_view,
@@ -27,11 +29,102 @@ from api.utils.denver_compliance_report import send_denver_compliance_report
 from billing.utils.billing import BillingUtils
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 
-from .models import *
+from .models import (
+    DayOfWeek,
+    DisposalLocation,
+    DisposalLocationWasteType,
+    AddOn,
+    AddOnChoice,
+    MainProduct,
+    MainProductAddOn,
+    MainProductCategory,
+    MainProductCategoryInfo,
+    MainProductInfo,
+    MainProductServiceRecurringFrequency,
+    MainProductWasteType,
+    Product,
+    ProductAddOnChoice,
+    Order,
+    OrderDisposalTicket,
+    OrderGroup,
+    OrderLineItem,
+    OrderLineItemType,
+    Subscription,
+    Payout,
+    Seller,
+    SellerInvoicePayable,
+    SellerInvoicePayableLineItem,
+    SellerLocation,
+    SellerProduct,
+    SellerProductSellerLocation,
+    SellerProductSellerLocationMaterial,
+    SellerProductSellerLocationMaterialWasteType,
+    SellerProductSellerLocationRental,
+    SellerProductSellerLocationService,
+    SellerProductSellerLocationServiceRecurringFrequency,
+    ServiceRecurringFrequency,
+    TimeSlot,
+    User,
+    UserAddress,
+    UserAddressType,
+    UserGroup,
+    UserGroupBilling,
+    UserGroupCreditApplication,
+    UserGroupLegal,
+    UserSellerReview,
+    UserUserAddress,
+    WasteType,
+)
 
 # import pandas as pd
 from .pricing_ml import pricing
-from .serializers import *
+from .serializers import (
+    SellerSerializer,
+    SellerLocationSerializer,
+    UserAddressTypeSerializer,
+    UserAddressSerializer,
+    UserSerializer,
+    UserGroupSerializer,
+    UserGroupBillingSerializer,
+    UserGroupLegalSerializer,
+    UserGroupCreditApplicationSerializer,
+    UserUserAddressSerializer,
+    UserSellerReviewSerializer,
+    UserSellerReviewAggregateSerializer,
+    AddOnChoiceSerializer,
+    AddOnSerializer,
+    DisposalLocationSerializer,
+    DisposalLocationWasteTypeSerializer,
+    MainProductAddOnSerializer,
+    MainProductCategoryInfoSerializer,
+    MainProductCategorySerializer,
+    MainProductInfoSerializer,
+    MainProductSerializer,
+    MainProductWasteTypeSerializer,
+    OrderGroupSerializer,
+    OrderSerializer,
+    OrderLineItemSerializer,
+    OrderLineItemTypeSerializer,
+    OrderDisposalTicketSerializer,
+    DayOfWeekSerializer,
+    TimeSlotSerializer,
+    SubscriptionSerializer,
+    PayoutSerializer,
+    ProductAddOnChoiceSerializer,
+    ProductSerializer,
+    SellerProductSerializer,
+    SellerProductSellerLocationSerializer,
+    SellerProductSellerLocationServiceSerializer,
+    SellerInvoicePayableSerializer,
+    SellerInvoicePayableLineItemSerializer,
+    ServiceRecurringFrequencySerializer,
+    MainProductServiceRecurringFrequencySerializer,
+    SellerProductSellerLocationServiceRecurringFrequencySerializer,
+    SellerProductSellerLocationRentalSerializer,
+    SellerProductSellerLocationMaterialSerializer,
+    SellerProductSellerLocationMaterialWasteTypeSerializer,
+    WasteTypeSerializer,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -313,14 +406,18 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         self.queryset = self.queryset.prefetch_related(
             "orders__order_line_items",
-            "seller_product_seller_location__seller_product__product__product_add_on_choices"
+            "seller_product_seller_location__seller_product__product__product_add_on_choices",
         )
         self.queryset = self.queryset.select_related(
-            "user", "user__user_group", "user_address",
-            "waste_type", "time_slot", "service_recurring_frequency",
+            "user",
+            "user__user_group",
+            "user_address",
+            "waste_type",
+            "time_slot",
+            "service_recurring_frequency",
             "seller_product_seller_location__seller_product__seller",
             "seller_product_seller_location__seller_product__product__main_product__main_product_category",
-            "seller_product_seller_location__seller_location__seller"
+            "seller_product_seller_location__seller_location__seller",
         )
         if self.request.user == "ALL":
             return self.queryset
@@ -431,7 +528,7 @@ class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
             "seller_location__seller",
             "service",
             "material",
-            "rental"
+            "rental",
         )
         return self.queryset
 
@@ -638,7 +735,7 @@ def call_TG_API(url, payload):
             attempt_num += 1
             # You can probably use a logger to log the error here
             time.sleep(5)  # Wait for 5 seconds before re-trying
-    return Response({"error": "Request failed"}, status=r.status_code)
+    return Response({"error": "Request failed"}, status=response.status_code)
 
 
 def get(endpoint, body):
