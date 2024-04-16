@@ -1,6 +1,54 @@
 from drf_spectacular.utils import extend_schema_field, OpenApiTypes
 from typing import Union, Literal
-from .models import *
+from .models import (
+    DayOfWeek,
+    DisposalLocation,
+    DisposalLocationWasteType,
+    AddOn,
+    AddOnChoice,
+    MainProduct,
+    MainProductAddOn,
+    MainProductCategory,
+    MainProductCategoryInfo,
+    MainProductInfo,
+    MainProductServiceRecurringFrequency,
+    MainProductWasteType,
+    Product,
+    ProductAddOnChoice,
+    Order,
+    OrderDisposalTicket,
+    OrderGroup,
+    OrderGroupMaterial,
+    OrderGroupRental,
+    OrderGroupService,
+    OrderLineItem,
+    OrderLineItemType,
+    Subscription,
+    Payout,
+    Seller,
+    SellerInvoicePayable,
+    SellerInvoicePayableLineItem,
+    SellerLocation,
+    SellerProduct,
+    SellerProductSellerLocation,
+    SellerProductSellerLocationMaterial,
+    SellerProductSellerLocationMaterialWasteType,
+    SellerProductSellerLocationRental,
+    SellerProductSellerLocationService,
+    SellerProductSellerLocationServiceRecurringFrequency,
+    ServiceRecurringFrequency,
+    TimeSlot,
+    User,
+    UserAddress,
+    UserAddressType,
+    UserGroup,
+    UserGroupBilling,
+    UserGroupCreditApplication,
+    UserGroupLegal,
+    UserSellerReview,
+    UserUserAddress,
+    WasteType,
+)
 import datetime
 import logging
 
@@ -305,7 +353,7 @@ class MainProductSerializer(serializers.ModelSerializer):
         if getattr(self.Meta, "extra_fields", None):
             return expanded_fields + self.Meta.extra_fields
         else:
-            return expanded_field
+            return expanded_fields
 
 
 class MainProductWasteTypeSerializer(serializers.ModelSerializer):
@@ -334,7 +382,18 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = "__all__"
 
-    @extend_schema_field(Union[Literal[Order.Type.DELIVERY, Order.Type.ONE_TIME, Order.Type.REMOVAL, Order.Type.SWAP, Order.Type.AUTO_RENEWAL], None])
+    @extend_schema_field(
+        Union[
+            Literal[
+                Order.Type.DELIVERY,
+                Order.Type.ONE_TIME,
+                Order.Type.REMOVAL,
+                Order.Type.SWAP,
+                Order.Type.AUTO_RENEWAL,
+            ],
+            None,
+        ]
+    )
     def get_order_type(self, obj: Order):
         return obj.order_type
 
