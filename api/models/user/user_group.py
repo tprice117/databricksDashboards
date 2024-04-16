@@ -118,7 +118,7 @@ class UserGroup(BaseModel):
         """Return Custome Attributes to sync with Intercom"""
         custom_attributes = CustomAttributesType(
             {
-                "Seller ID": self.seller.id if self.seller else None,
+                "Seller ID": str(self.seller.id) if self.seller else None,
                 "Autopay": self.autopay,
                 "Net Terms Days": self.net_terms,
                 "Invoice Frequency in Days": self.invoice_frequency,
