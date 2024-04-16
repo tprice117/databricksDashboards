@@ -42,7 +42,6 @@ class UserGroupAdminApprovalOrder(BaseModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__original_status = self.name
 
     def save(self, *args, **kwargs):
         # Only allow changes to be made if the Status == PENDING.
