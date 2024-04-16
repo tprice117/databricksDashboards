@@ -17,4 +17,6 @@ class UserGroupAdminApprovalOrderViewSet(viewsets.ModelViewSet):
         if is_superuser:
             return self.queryset
         else:
-            return self.queryset.filter(user_group_id=self.request.user.user_group_id)
+            return self.queryset.filter(
+                order__order_group__user__user_group_id=self.request.user.user_group_id
+            )
