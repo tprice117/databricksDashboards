@@ -34,13 +34,20 @@ def send_seller_order_emails():
     if 5 < now_dt_central.hour < 23:
         for order in orders:
             try:
-                # Check last time this order email was sent
+                # Check if last email still hasn't been sent
                 email_notification = (
-                    EmailNotification.objects.exclude(sent_at__isnull=True)
-                    .filter(sent_at__gt=now_minus_hour)
+                    EmailNotification.objects.filter(sent_at__isnull=True)
                     .filter(subject__icontains=order.id)
                     .first()
                 )
+                if not email_notification:
+                    # Check last time this order email was sent
+                    email_notification = (
+                        EmailNotification.objects.exclude(sent_at__isnull=True)
+                        .filter(sent_at__gt=now_minus_hour)
+                        .filter(subject__icontains=order.id)
+                        .first()
+                    )
                 if not email_notification:
                     order.send_supplier_approval_email()
             except Exception as e:
