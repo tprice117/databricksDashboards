@@ -41,9 +41,8 @@ def send_seller_order_emails():
                     .filter(subject__icontains=order.id)
                     .first()
                 )
-                if email_notification:
-                    continue
-                order.send_supplier_approval_email()
+                if not email_notification:
+                    order.send_supplier_approval_email()
             except Exception as e:
                 print("send_seller_order_emails could not be sent. " + str(e))
                 logger.error(
