@@ -1333,7 +1333,11 @@ def update_order_status(request, order_id):
                 order.save()
         else:
             raise ValueError("Invalid Token")
-        return Response("Success", status=200)
+        return render(
+            request,
+            "notifications/emails/supplier_order_updated.html",
+            {"order_id": order_id},
+        )
     except Exception as e:
         logger.error(f"order_status_view: [{e}]", exc_info=e)
         return render(
