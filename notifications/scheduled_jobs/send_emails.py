@@ -31,7 +31,7 @@ def send_seller_order_emails():
     now_dt = timezone.now()
     now_dt_central = now_dt.astimezone(pytz.timezone("US/Central"))
     now_minus_hour = now_dt - datetime.timedelta(minutes=90)
-    if 7 < now_dt_central.hour < 9:
+    if 7 < now_dt_central.hour < 21:
         for order in orders:
             try:
                 # Check if last email still hasn't been sent
