@@ -16,6 +16,7 @@ from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
 from notifications.utils.add_email_to_queue import add_email_to_queue
+from api.utils.utils import encrypt_string
 
 logger = logging.getLogger(__name__)
 
@@ -541,9 +542,17 @@ class Order(BaseModel):
             bcc_emails.append("dispatch@trydownstream.com")
 
         try:
+            # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
+            # then it opens the order html to allow them to select order status.
+            # if settings.DEBUG:
+            #     base_url = "http://127.0.0.1:8000"
+            # else:
+            base_url = settings.API_URL
+            accept_url = f"{base_url}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
             subject_supplier = f"🚀 Yippee! Downstream Booking Landed! [{str(self.id)}]"
             html_content_supplier = render_to_string(
-                "notifications/emails/supplier_email.html", {"order": self}
+                "notifications/emails/supplier_email.html",
+                {"order": self, "accept_url": accept_url},
             )
             add_email_to_queue(
                 from_email="dispatch@trydownstream.com",

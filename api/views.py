@@ -8,6 +8,7 @@ from django.conf import settings
 from django.db.models import Avg, Count  # F, OuterRef, Q, Subquery, Sum,
 from django.db.models.functions import Round
 from django.http import HttpResponse
+from django.shortcuts import render
 from django_filters import rest_framework as filters
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -28,6 +29,7 @@ from api.filters import OrderGroupFilterset
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from billing.utils.billing import BillingUtils
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
+from api.utils.utils import decrypt_string
 
 from .models import (
     DayOfWeek,
@@ -1292,6 +1294,53 @@ def submit_order(request):
     order.save()
 
     return Response("Success", status=200)
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([])
+def order_status_view(request, order_id):
+    key = request.query_params.get("key", "")
+    try:
+        params = decrypt_string(key)
+    except Exception as e:
+        params = ""
+        logger.error(f"order_status_view: [{e}]", exc_info=e)
+    if str(params) == str(order_id):
+        order = Order.objects.get(id=order_id)
+        accept_url = f"/api/order/{order_id}/accept/?key={key}"
+        payload = {"order": order, "accept_url": accept_url}
+        return render(request, "notifications/emails/supplier_email.html", payload)
+    else:
+        return render(
+            request,
+            "notifications/emails/failover_email_us.html",
+            {"order_id": order_id},
+        )
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([])
+def update_order_status(request, order_id):
+    key = request.query_params.get("key", "")
+    try:
+        params = decrypt_string(key)
+        if str(params) == str(order_id):
+            order = Order.objects.get(id=order_id)
+            if order.status == Order.PENDING:
+                order.status = Order.SCHEDULED
+                order.save()
+        else:
+            raise ValueError("Invalid Token")
+        return Response("Success", status=200)
+    except Exception as e:
+        logger.error(f"order_status_view: [{e}]", exc_info=e)
+        return render(
+            request,
+            "notifications/emails/failover_email_us.html",
+            {"order_id": order_id},
+        )
 
 
 def test3(request):

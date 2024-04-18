@@ -3,6 +3,33 @@ from django.conf import settings
 import requests
 import api.models
 import math
+from cryptography.fernet import Fernet
+import base64
+import hashlib
+
+
+def get_fernet():
+    # Create a key from the SECRET_KEY
+    key = base64.urlsafe_b64encode(
+        hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+    )
+    return Fernet(key)
+
+
+def encrypt_string(s):
+    f = get_fernet()
+    # Convert the string to bytes and encrypt it
+    encrypted = f.encrypt(s.encode())
+    # Convert the encrypted bytes back into a string
+    return encrypted.decode()
+
+
+def decrypt_string(s):
+    f = get_fernet()
+    # Convert the string back into bytes and decrypt it
+    decrypted = f.decrypt(s.encode())
+    # Convert the decrypted bytes back into a string
+    return decrypted.decode()
 
 
 def get_distance(lat1, lon1, lat2, lon2):

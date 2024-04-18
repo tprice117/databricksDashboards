@@ -148,6 +148,8 @@ urlpatterns = [
     ),
     # Denver Compliance Endpoint.
     path("api/exports/denver-compliance/", views.denver_compliance_report),
+    path("api/order/<uuid:order_id>/view/", views.order_status_view),
+    path("api/order/<uuid:order_id>/accept/", views.update_order_status),
     # Test.
     path("test/", views.test3),
 ]
