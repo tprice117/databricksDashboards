@@ -1,6 +1,5 @@
 from django.db.models.signals import post_save
 from django.template.loader import render_to_string
-# import threading
 import logging
 from api.models import Order
 from communications.intercom.utils.utils import get_json_safe_value
@@ -35,31 +34,30 @@ def get_order_status_from_choice(status: str) -> str:
 # Email on Order database actions
 # ================================================#
 
+
 def on_order_post_save(sender, **kwargs):
-    """Sends an email on Order database actions, such as Order submitted or Order status changed.
-    """
-    order: Order = kwargs.get('instance', None)
-    if kwargs.get('created', False) is False:
+    """Sends an email on Order database actions, such as Order created, submitted or status changed."""
+    order: Order = kwargs.get("instance", None)
+    if kwargs.get("created", False) is False:
         # Order updated
         error_status = "created-Order"
         order_id = get_json_safe_value(order.id)
         try:
             if order.submitted_on is not None:
-                if order.old_value('submitted_on') is None:
+                if order.old_value("submitted_on") is None:
                     # Order submitted
                     subject = "Thanks for your order!"
                     html_content = render_to_string(
-                        "notifications/emails/order_submitted.html",
-                        {"order": order}
+                        "notifications/emails/order_submitted.html", {"order": order}
                     )
                     add_email_to_queue(
                         from_email="dispatch@trydownstream.com",
                         to_emails=[order.order_group.user.email],
                         subject=subject,
                         html_content=html_content,
-                        reply_to="dispatch@trydownstream.com"
+                        reply_to="dispatch@trydownstream.com",
                     )
-                elif order.old_value('status') != order.status:
+                elif order.old_value("status") != order.status:
                     error_status = "updated-Order"
                     # Order status changed
                     subject = "An update on your Downstream order"
@@ -68,16 +66,24 @@ def on_order_post_save(sender, **kwargs):
                         {
                             "order": order,
                             "new_status": get_order_status_from_choice(order.status),
-                            "previous_status": get_order_status_from_choice(order.old_value('status'))
-                        }
+                            "previous_status": get_order_status_from_choice(
+                                order.old_value("status")
+                            ),
+                        },
                     )
                     add_email_to_queue(
                         from_email="dispatch@trydownstream.com",
                         to_emails=[order.order_group.user.email],
                         subject=subject,
                         html_content=html_content,
-                        reply_to="dispatch@trydownstream.com"
+                        reply_to="dispatch@trydownstream.com",
                     )
+        except Exception as e:
+            logger.exception(f"notification: [{order_id}]-[{error_status}]-[{e}]")
+    else:
+        try:
+            if order.status == Order.PENDING:
+                order.send_supplier_approval_email()
         except Exception as e:
             logger.exception(f"notification: [{order_id}]-[{error_status}]-[{e}]")
 

@@ -326,6 +326,7 @@ REST_FRAMEWORK = {
 
 if ENVIRONMENT == "TEST":
     BASE_URL = "https://app.trydownstream.com"
+    API_URL = "https://monkfish-app-donig.ondigitalocean.app"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
     STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_FULL_CUSTOMER_PORTAL_CONFIG")
@@ -354,6 +355,7 @@ if ENVIRONMENT == "TEST":
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_PROD_TOKEN")
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
+    API_URL = "https://sea-lion-app-iewsn.ondigitalocean.app"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_DEV_PUBLISHABLE_KEY")
     STRIPE_SECRET_KEY = env("STRIPE_DEV_SECRET_KEY")
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_DEV_FULL_CUSTOMER_PORTAL_CONFIG")

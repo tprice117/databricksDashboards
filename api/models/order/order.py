@@ -15,6 +15,8 @@ from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
+from notifications.utils.add_email_to_queue import add_email_to_queue
+from api.utils.utils import encrypt_string
 
 logger = logging.getLogger(__name__)
 
@@ -532,6 +534,38 @@ class Order(BaseModel):
                 logger.error(
                     f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e
                 )
+
+    def send_supplier_approval_email(self):
+        # Send email to supplier. Only CC on our PROD environment.
+        bcc_emails = []
+        if settings.ENVIRONMENT == "TEST":
+            bcc_emails.append("dispatch@trydownstream.com")
+
+        try:
+            # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
+            # then it opens the order html to allow them to select order status.
+            # if settings.DEBUG:
+            #     base_url = "http://127.0.0.1:8000"
+            # else:
+            base_url = settings.API_URL
+            accept_url = f"{base_url}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
+            subject_supplier = f"🚀 Yippee! Downstream Booking Landed! [{str(self.id)}]"
+            html_content_supplier = render_to_string(
+                "notifications/emails/supplier_email.html",
+                {"order": self, "accept_url": accept_url},
+            )
+            add_email_to_queue(
+                from_email="dispatch@trydownstream.com",
+                to_emails=[
+                    self.order_group.seller_product_seller_location.seller_location.order_email
+                ],
+                bcc_emails=bcc_emails,
+                subject=subject_supplier,
+                html_content=html_content_supplier,
+                reply_to="dispatch@trydownstream.com",
+            )
+        except Exception as e:
+            logger.error(f"Order.send_supplier_approval_email: [{e}]", exc_info=e)
 
     def __str__(self):
         return (
