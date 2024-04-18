@@ -24,14 +24,14 @@ def send_emails():
 
 def send_seller_order_emails():
     """Send emails to suppliers for pending orders.
-    Run every 5 minutes, but only between 6am and 11pm (US/Central timezone).
-    Only send one email per order per hour max.
+    Run every 5 minutes, but only between 8am and 8pm (US/Central timezone).
+    Send emails every 90 minutes.
     """
     orders = Order.objects.filter(status="PENDING")
     now_dt = timezone.now()
     now_dt_central = now_dt.astimezone(pytz.timezone("US/Central"))
-    now_minus_hour = now_dt - datetime.timedelta(hours=1)
-    if 5 < now_dt_central.hour < 23:
+    now_minus_hour = now_dt - datetime.timedelta(minutes=90)
+    if 7 < now_dt_central.hour < 9:
         for order in orders:
             try:
                 # Check if last email still hasn't been sent
