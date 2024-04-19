@@ -22,13 +22,17 @@ class EmailNotification(BaseModel):
         return self.subject
 
     def send_email(self):
+        """Send email using Mailchimp Transactional API with track_opens and track_clicks enabled.
+        API Docs: https://mailchimp.com/developer/transactional/api/messages/send-new-message/
+        """
         mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
-        response = mailchimp.messages.send(
+        to_addresses = self.add_tos() + self.add_ccs() + self.add_bccs()
+        return mailchimp.messages.send(
             {
                 "message": {
                     "from_name": "Downstream",
                     "from_email": self.from_email,
-                    "to": self.add_tos(),
+                    "to": to_addresses,
                     "subject": self.subject,
                     "track_opens": True,
                     "track_clicks": True,
@@ -39,16 +43,16 @@ class EmailNotification(BaseModel):
         )
 
     def add_tos(self: "EmailNotification"):
-        to_emails = self.email_notification_tos.all()
-        return [to_email.add_to() for to_email in to_emails]
+        emails = self.email_notification_tos.all()
+        return [email.add_email() for email in emails]
 
     def add_ccs(self: "EmailNotification"):
-        cc_emails = self.email_notification_ccs.all()
-        return []
+        emails = self.email_notification_ccs.all()
+        return [email.add_email() for email in emails]
 
     def add_bccs(self: "EmailNotification"):
-        bcc_emails = self.email_notification_bccs.all()
-        return []
+        emails = self.email_notification_bccs.all()
+        return [email.add_email() for email in emails]
 
     def add_attachments(self: "EmailNotification"):
         email_notification_attachments = self.email_notification_attachments.all()

@@ -14,7 +14,7 @@ class EmailNotificationBcc(BaseModel):
     def __str__(self):
         return self.email
 
-    def add_bcc(
+    def add_email(
         self,
     ):
-        return None
+        return {"email": self.email, "type": "bcc"}
