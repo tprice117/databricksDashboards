@@ -262,22 +262,6 @@ class Order(BaseModel):
                 "Only 1 Order from an OrderGroup can be in the cart at a time"
             )
 
-    def save(self, *args, **kwargs):
-        self.clean()
-
-        # Send email to internal team. Only on our PROD environment.
-        if (
-            self.submitted_on != self.__original_submitted_on
-            and self.submitted_on is not None
-        ):
-            self.send_internal_order_confirmation_email()
-
-        # Send email to customer if status has changed to "Scheduled".
-        if self.status != self.__original_status and self.status == Order.SCHEDULED:
-            self.send_customer_email_when_order_scheduled()
-
-        return super(Order, self).save(*args, **kwargs)
-
     def post_save(sender, instance, created, **kwargs):
         order_line_items = OrderLineItem.objects.filter(order=instance)
         # if instance.submitted_on_has_changed and order_line_items.count() == 0:
@@ -407,61 +391,6 @@ class Order(BaseModel):
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
 
-    def send_internal_order_confirmation_email(self):
-        # Send email to internal team. Only on our PROD environment.
-        if settings.ENVIRONMENT == "TEST":
-            try:
-                waste_type_str = "Not specified"
-                if self.order_group.waste_type:
-                    waste_type_str = self.order_group.waste_type.name
-                material_tonnage_str = "N/A"
-                if getattr(self.order_group, "material", None):
-                    material_tonnage_str = self.order_group.material.tonnage_included
-                rental_included_days = 0
-                if getattr(self.order_group, "rental", None):
-                    rental_included_days = self.order_group.rental.included_days
-
-                mailchimp.messages.send(
-                    {
-                        "message": {
-                            "headers": {
-                                "reply-to": "dispatch@trydownstream.com",
-                            },
-                            "from_name": "Downstream",
-                            "from_email": "dispatch@trydownstream.com",
-                            "to": [{"email": "dispatch@trydownstream.com"}],
-                            "subject": "Order Confirmed",
-                            "track_opens": True,
-                            "track_clicks": True,
-                            "html": render_to_string(
-                                "order-submission-email.html",
-                                {
-                                    "orderId": self.id,
-                                    "seller": self.order_group.seller_product_seller_location.seller_location.seller.name,
-                                    "sellerLocation": self.order_group.seller_product_seller_location.seller_location.name,
-                                    "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                                    "bookingType": self.order_type,
-                                    "wasteType": waste_type_str,
-                                    "supplierTonsIncluded": material_tonnage_str,
-                                    "supplierRentalDaysIncluded": rental_included_days,
-                                    "serviceDate": self.end_date,
-                                    "timeWindow": self.schedule_window,
-                                    "locationAddress": self.order_group.user_address.street,
-                                    "locationCity": self.order_group.user_address.city,
-                                    "locationState": self.order_group.user_address.state,
-                                    "locationZip": self.order_group.user_address.postal_code,
-                                    "locationDetails": self.order_group.access_details,
-                                    "additionalDetails": self.order_group.placement_details,
-                                },
-                            ),
-                        }
-                    }
-                )
-            except Exception as e:
-                logger.error(
-                    f"Order.send_internal_order_confirmation_email: [{e}]", exc_info=e
-                )
-
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
         if settings.ENVIRONMENT == "TEST":
@@ -491,44 +420,37 @@ class Order(BaseModel):
                 if getattr(self.order_group, "rental", None):
                     rental_included_days = self.order_group.rental.included_days
 
-                mailchimp.messages.send(
+                # Order status changed
+                subject = (
+                    "Downstream | Order Confirmed | "
+                    + self.order_group.user_address.formatted_address()
+                )
+                # TODO: Update to new supplier style template
+                html_content = render_to_string(
+                    "order-confirmed-email.html",
                     {
-                        "message": {
-                            "headers": {
-                                "reply-to": "dispatch@trydownstream.com",
-                            },
-                            "from_name": "Downstream",
-                            "from_email": "dispatch@trydownstream.com",
-                            "to": [
-                                {"email": self.order_group.user.email},
-                                {"email": "thayes@trydownstream.com"},
-                            ],
-                            "subject": "Downstream | Order Confirmed | "
-                            + self.order_group.user_address.formatted_address(),
-                            "track_opens": True,
-                            "track_clicks": True,
-                            "html": render_to_string(
-                                "order-confirmed-email.html",
-                                {
-                                    "orderId": self.id,
-                                    "booking_url": call_to_action_url,
-                                    "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                                    "waste_type": waste_type_str,
-                                    "included_tons": material_tonnage_str,
-                                    "included_rental_days": rental_included_days,
-                                    "service_date": self.end_date,
-                                    "location_address": self.order_group.user_address.street,
-                                    "location_city": self.order_group.user_address.city,
-                                    "location_state": self.order_group.user_address.state,
-                                    "location_zip": self.order_group.user_address.postal_code,
-                                    "location_details": self.order_group.access_details
-                                    or "None",
-                                    "additional_details": self.order_group.placement_details
-                                    or "None",
-                                },
-                            ),
-                        }
-                    }
+                        "orderId": self.id,
+                        "booking_url": call_to_action_url,
+                        "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                        "waste_type": waste_type_str,
+                        "included_tons": material_tonnage_str,
+                        "included_rental_days": rental_included_days,
+                        "service_date": self.end_date,
+                        "location_address": self.order_group.user_address.street,
+                        "location_city": self.order_group.user_address.city,
+                        "location_state": self.order_group.user_address.state,
+                        "location_zip": self.order_group.user_address.postal_code,
+                        "location_details": self.order_group.access_details or "None",
+                        "additional_details": self.order_group.placement_details
+                        or "None",
+                    },
+                )
+                add_email_to_queue(
+                    from_email="dispatch@trydownstream.com",
+                    to_emails=[self.order_group.user.email],
+                    subject=subject,
+                    html_content=html_content,
+                    reply_to="dispatch@trydownstream.com",
                 )
             except Exception as e:
                 logger.error(
