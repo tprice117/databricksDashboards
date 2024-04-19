@@ -14,7 +14,7 @@ class EmailNotificationTo(BaseModel):
     def __str__(self):
         return self.email
 
-    def add_to(
+    def add_email(
         self,
     ):
         return {"email": self.email}
