@@ -3,6 +3,7 @@ from django.db import models
 from api.models.user.user import User
 from api.models.user.user_group import UserGroup
 from common.models import BaseModel
+from common.models.choices.approval_status import ApprovalStatus
 
 
 class UserGroupAdminApprovalUserInvite(BaseModel):
@@ -12,11 +13,6 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
     object. After Admin approval, a User will be created and invited to the
     UserGroup.
     """
-
-    class ApprovalStatus(models.TextChoices):
-        PENDING = "PENDING", "Pending"
-        ACCEPTED = "ACCEPTED", "Accepted"
-        DECLINED = "DECLINED", "Declined"
 
     user_group = models.ForeignKey(
         UserGroup,
