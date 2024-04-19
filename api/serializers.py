@@ -135,6 +135,14 @@ class UserGroupLegalSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = UserGroupCreditApplication
+        fields = "__all__"
+
+
 class UserGroupSerializer(WritableNestedModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     seller = SellerSerializer(read_only=True)
@@ -142,6 +150,9 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         queryset=Seller.objects.all(), source="seller", write_only=True, allow_null=True
     )
     legal = UserGroupLegalSerializer()
+    credit_applications = UserGroupCreditApplicationSerializer(
+        many=True,
+    )
     credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
     net_terms = serializers.IntegerField(
         required=False,
@@ -181,14 +192,6 @@ class UserGroupSerializer(WritableNestedModelSerializer):
     @extend_schema_field(OpenApiTypes.DECIMAL)
     def get_credit_limit_utilized(self, obj: UserGroup):
         return obj.credit_limit_used()
-
-
-class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-
-    class Meta:
-        model = UserGroupCreditApplication
-        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):
