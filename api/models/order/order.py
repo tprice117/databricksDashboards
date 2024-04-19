@@ -544,12 +544,9 @@ class Order(BaseModel):
         try:
             # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
             # then it opens the order html to allow them to select order status.
-            # if settings.DEBUG:
-            #     base_url = "http://127.0.0.1:8000"
-            # else:
             base_url = settings.API_URL
             accept_url = f"{base_url}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
-            subject_supplier = f"🚀 Yippee! Downstream Booking Landed! [{str(self.id)}]"
+            subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{str(self.id)}]"
             html_content_supplier = render_to_string(
                 "notifications/emails/supplier_email.html",
                 {"order": self, "accept_url": accept_url},
