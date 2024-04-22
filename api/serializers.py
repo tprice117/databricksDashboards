@@ -132,7 +132,20 @@ class UserGroupLegalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserGroupLegal
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "doing_business_as",
+            "structure",
+            "industry",
+            "street",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "latitude",
+            "longitude",
+        ]
 
 
 class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):

@@ -28,6 +28,10 @@ class UserGroupCreditApplication(BaseModel):
         default=ApprovalStatus.PENDING,
     )
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
     def clean(self):
         self.clean_fields()
 
