@@ -471,8 +471,8 @@ class Order(BaseModel):
                 accept_url = f"{base_url}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
                 subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{str(self.id)}]"
                 html_content_supplier = render_to_string(
-                    "notifications/emails/supplier_email.html",
-                    {"order": self, "accept_url": accept_url},
+                    "notifications/emails/supplier_email.min.html",
+                    {"order": self, "accept_url": accept_url, "is_email": True},
                 )
                 add_email_to_queue(
                     from_email="dispatch@trydownstream.com",
