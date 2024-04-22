@@ -165,6 +165,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
     legal = UserGroupLegalSerializer()
     credit_applications = UserGroupCreditApplicationSerializer(
         many=True,
+        read_only=True,
     )
     credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
     net_terms = serializers.IntegerField(
