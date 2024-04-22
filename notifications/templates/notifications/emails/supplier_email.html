@@ -403,6 +403,7 @@
                                                                                                                         border="0"
                                                                                                                         cellpadding="0"
                                                                                                                         cellspacing="0">
+                                                                                                                        {% if order.order_group.waste_type %}
                                                                                                                         <tr>
                                                                                                                             <td width="100%"
                                                                                                                                 style="vertical-align:middle;border-width:0px 0px 1px 0px;border-color:#020f16;border-style:solid;">
@@ -451,6 +452,8 @@
                                                                                                                                 </table>
                                                                                                                             </td>
                                                                                                                         </tr>
+                                                                                                                        {% endif %}
+                                                                                                                        {% if order.order_group.material %}
                                                                                                                         <tr>
                                                                                                                             <td width="100%"
                                                                                                                                 style="vertical-align:middle;border-width:0px 0px 1px 0px;border-color:#020f16;border-style:solid;">
@@ -499,6 +502,8 @@
                                                                                                                                 </table>
                                                                                                                             </td>
                                                                                                                         </tr>
+                                                                                                                        {% endif %}
+                                                                                                                        {% if order.order_group.rental.included_days %}
                                                                                                                         <tr>
                                                                                                                             <td width="100%"
                                                                                                                                 style="vertical-align:middle;border-width:0px 0px 1px 0px;border-color:#020f16;border-style:solid;">
@@ -548,6 +553,7 @@
                                                                                                                                 </table>
                                                                                                                             </td>
                                                                                                                         </tr>
+                                                                                                                        {% endif %}
                                                                                                                     </table>
                                                                                                                 </td>
                                                                                                             </tr>
