@@ -393,7 +393,10 @@ class Order(BaseModel):
 
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
-        if settings.ENVIRONMENT == "TEST":
+        if (
+            settings.ENVIRONMENT == "TEST"
+            and self.order_type != Order.Type.AUTO_RENEWAL
+        ):
             try:
                 auth0_user = get_user_data(self.order_group.user.user_id)
 
@@ -410,40 +413,14 @@ class Order(BaseModel):
                         exc_info=e,
                     )
 
-                waste_type_str = "Not specified"
-                if self.order_group.waste_type:
-                    waste_type_str = self.order_group.waste_type.name
-                material_tonnage_str = "N/A"
-                if getattr(self.order_group, "material", None):
-                    material_tonnage_str = self.order_group.material.tonnage_included
-                rental_included_days = 0
-                if getattr(self.order_group, "rental", None):
-                    rental_included_days = self.order_group.rental.included_days
-
                 # Order status changed
                 subject = (
                     "Downstream | Order Confirmed | "
                     + self.order_group.user_address.formatted_address()
                 )
-                # TODO: Update to new supplier style template
+                payload = {"order": self, "accept_url": call_to_action_url}
                 html_content = render_to_string(
-                    "order-confirmed-email.html",
-                    {
-                        "orderId": self.id,
-                        "booking_url": call_to_action_url,
-                        "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                        "waste_type": waste_type_str,
-                        "included_tons": material_tonnage_str,
-                        "included_rental_days": rental_included_days,
-                        "service_date": self.end_date,
-                        "location_address": self.order_group.user_address.street,
-                        "location_city": self.order_group.user_address.city,
-                        "location_state": self.order_group.user_address.state,
-                        "location_zip": self.order_group.user_address.postal_code,
-                        "location_details": self.order_group.access_details or "None",
-                        "additional_details": self.order_group.placement_details
-                        or "None",
-                    },
+                    "notifications/emails/order-confirmed-email.min.html", payload
                 )
                 add_email_to_queue(
                     from_email="dispatch@trydownstream.com",
