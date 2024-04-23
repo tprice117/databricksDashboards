@@ -60,6 +60,7 @@ def pre_save_user_group_admin_approval_order(
             # If Status changes from PENDING to APPROVED, populate the Order.SubmittedOn
             # field with the current date time. This indicates the Order is submitted.
             instance.order.submitted_on = timezone.now()
+            instance.order.status = Order.PENDING
             instance.order.save()
         elif old_status == ApprovalStatus.DECLINED:
             # If the Status changes from PENDING to DECLINED, update Status, then do nothing else.
