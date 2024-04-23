@@ -41,7 +41,7 @@ class UserGroupAdminApprovalOrder(BaseModel):
 
     def save(self, *args, **kwargs):
         # Only allow changes to be made if the Status == PENDING.
-        if self.old_value("status") == self.ApprovalStatus.PENDING:
+        if self.old_value("status") == ApprovalStatus.PENDING:
             super().save(*args, **kwargs)
 
     class Meta:
