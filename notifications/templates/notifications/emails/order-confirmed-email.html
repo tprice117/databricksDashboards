@@ -45,6 +45,65 @@
             -ms-interpolation-mode: bicubic;
         }
 
+        .mceBlockContainer {
+            padding-right: 16px !important;
+            padding-left: 16px !important;
+        }
+
+        .mceText p {
+            color: rgb(0, 0, 0);
+            font-family: "Helvetica Neue", Helvetica, Arial, Verdana, sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            line-height: 1.5;
+            text-align: center;
+            letter-spacing: 0px;
+            direction: ltr;
+        }
+
+        .mceText a {
+            color: rgb(0, 0, 0);
+            font-style: normal;
+            font-weight: normal;
+            text-decoration: underline;
+            direction: ltr;
+        }
+
+        @media only screen and (max-width: 480px) {
+            .mceText p {
+                font-size: 12px !important;
+                line-height: 1.5 !important;
+            }
+        }
+
+        @media only screen and (max-width: 480px) {
+            .mceText h1 {
+                font-size: 26px !important;
+                line-height: 1.5 !important;
+            }
+        }
+
+        @media only screen and (max-width: 480px) {
+            .mceText h2 {
+                font-size: 22px !important;
+                line-height: 1.5 !important;
+            }
+        }
+
+        @media only screen and (max-width: 480px) {
+            .mceText h3 {
+                font-size: 21px !important;
+                line-height: 1.5 !important;
+            }
+        }
+
+        @media only screen and (max-width: 480px) {
+            .mceBlockContainer {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+        }
+
         @media only screen and (min-device-width:320px) and (max-device-width:374px) {
             u~div .email-container {
                 min-width: 320px !important;
@@ -200,19 +259,18 @@
                                                                                                 style="line-height:26px;text-align:center;">
                                                                                                 <span
                                                                                                     style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:24px;line-height:26px;text-align:center;">
-                                                                                                    {% if supplier_denied %}
-                                                                                                    <span
-                                                                                                        style="color:#e12424">
-                                                                                                        Supplier Denied
-                                                                                                        Booking<br>
-                                                                                                    </span>
-                                                                                                    {% endif %}
-                                                                                                    {{ order.order_group.seller_product_seller_location.seller_product.seller.name }},
-                                                                                                    <br>you have a new
+                                                                                                    Booking
+                                                                                                    Confirmation!<br>
+                                                                                                </span>
+                                                                                                <span
+                                                                                                    style="color:#020f16;font-weight:500;font-family:Outfit,Arial,sans-serif;font-size:20px;line-height:24px;text-align:center;">
+                                                                                                    {{ order.order_group.user_address.user.full_name }},
+                                                                                                    <br>your
                                                                                                     {{ order.order_type }}
-                                                                                                    booking request
-                                                                                                    through Downstream
-                                                                                                    Marketplace! </span>
+                                                                                                    booking has been
+                                                                                                    accepted by the
+                                                                                                    supplier!
+                                                                                                </span>
                                                                                             </div>
                                                                                         </td>
                                                                                     </tr>
@@ -973,12 +1031,8 @@
                                                                                                 style="line-height:24px;text-align:center;">
                                                                                                 <span
                                                                                                     style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:18px;line-height:24px;text-align:center;">
-                                                                                                    {% if order.status == "PENDING" %}
-                                                                                                    Are you able to
-                                                                                                    fulfill this
-                                                                                                    booking?
-                                                                                                    {% else %} Order
-                                                                                                    Status {% endif %}
+                                                                                                    Order Status <span
+                                                                                                        style="font-style:italic;">{{order.status}}</span>
                                                                                                 </span>
                                                                                             </div>
                                                                                         </td>
@@ -994,78 +1048,15 @@
                                                                                                 border="0"
                                                                                                 cellpadding="0"
                                                                                                 cellspacing="0">
-                                                                                                <tr> {% if order.status == "PENDING" %}
-                                                                                                    {% if deny_url %}
-                                                                                                    <td width="47.73%"
-                                                                                                        align="center"
-                                                                                                        style="vertical-align:middle;height:48px;border-radius:8px;border:2px solid #018381;padding-left:16px;padding-right:16px;">
-                                                                                                        <a
-                                                                                                            href="{{deny_url}}">
-                                                                                                            <div>
-                                                                                                                <table
-                                                                                                                    border="0"
-                                                                                                                    cellpadding="0"
-                                                                                                                    cellspacing="0">
-                                                                                                                    <tr>
-                                                                                                                        <td height="4"
-                                                                                                                            style="height:4px;min-height:4px;line-height:4px;">
-                                                                                                                        </td>
-                                                                                                                    </tr>
-                                                                                                                    <tr>
-                                                                                                                        <td
-                                                                                                                            style="vertical-align:middle;">
-                                                                                                                            <table
-                                                                                                                                cellspacing="0"
-                                                                                                                                cellpadding="0"
-                                                                                                                                border="0">
-                                                                                                                                <tr>
-                                                                                                                                    <td align="center"
-                                                                                                                                        style="vertical-align:middle;">
-                                                                                                                                        <table
-                                                                                                                                            width="100%"
-                                                                                                                                            border="0"
-                                                                                                                                            cellpadding="0"
-                                                                                                                                            cellspacing="0">
-                                                                                                                                            <tr>
-                                                                                                                                                <td style="vertical-align:middle;"
-                                                                                                                                                    align="center">
-                                                                                                                                                    <div
-                                                                                                                                                        style="line-height:16px;text-align:center;">
-                                                                                                                                                        <span
-                                                                                                                                                            style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
-                                                                                                                                                            Deny
-                                                                                                                                                        </span>
-                                                                                                                                                    </div>
-                                                                                                                                                </td>
-                                                                                                                                            </tr>
-                                                                                                                                        </table>
-                                                                                                                                    </td>
-                                                                                                                                </tr>
-                                                                                                                            </table>
-                                                                                                                        </td>
-                                                                                                                    </tr>
-                                                                                                                    <tr>
-                                                                                                                        <td height="4"
-                                                                                                                            style="height:4px;min-height:4px;line-height:4px;">
-                                                                                                                        </td>
-                                                                                                                    </tr>
-                                                                                                                </table>
-                                                                                                            </div>
-                                                                                                        </a>
-                                                                                                    </td>
-                                                                                                    <td style="width:16px;min-width:16px;"
-                                                                                                        width="16">
-                                                                                                    </td>
-                                                                                                    {% endif %}
-                                                                                                    <td
-                                                                                                        width="{% if deny_url %}47.73%{%endif%}">
+                                                                                                <tr>
+                                                                                                    <td width="100%">
                                                                                                         <table
                                                                                                             width="100%"
                                                                                                             cellspacing="0"
                                                                                                             cellpadding="0"
                                                                                                             border="0">
                                                                                                             <tr>
-                                                                                                                <td width="47.73%"
+                                                                                                                <td width="100%"
                                                                                                                     align="center"
                                                                                                                     style="vertical-align:middle;height:48px;background-color:#018381;border-radius:8px;padding-left:16px;padding-right:16px;"
                                                                                                                     bgcolor="#018381">
@@ -1103,13 +1094,8 @@
                                                                                                                                                                     style="line-height:16px;text-align:center;">
                                                                                                                                                                     <span
                                                                                                                                                                         style="color:#ffffff;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
-                                                                                                                                                                        {% if is_email %}
-                                                                                                                                                                        Open
-                                                                                                                                                                        Confirmation
-                                                                                                                                                                        Form
-                                                                                                                                                                        {% else %}
-                                                                                                                                                                        Accept
-                                                                                                                                                                        {% endif %}
+                                                                                                                                                                        View
+                                                                                                                                                                        Bookings
                                                                                                                                                                     </span>
                                                                                                                                                                 </div>
                                                                                                                                                             </td>
@@ -1131,18 +1117,37 @@
                                                                                                                 </td>
                                                                                                             </tr>
                                                                                                         </table>
-                                                                                                    </td> {% else %} <td
-                                                                                                        width="100%"
-                                                                                                        align="center">
-                                                                                                        <span
-                                                                                                            style="color:#018381;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:center;">
-                                                                                                            {{ order.status }}
-                                                                                                        </span>
-                                                                                                    </td> {% endif %}
+                                                                                                    </td>
                                                                                                 </tr>
                                                                                             </table>
                                                                                         </td>
                                                                                     </tr>
+                                                                                    <tr>
+                                                                                        <td height="24"
+                                                                                            style="height:24px;min-height:24px;line-height:24px;">
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </table>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td height="8"
+                                                                    style="height:8px;min-height:8px;line-height:8px;">
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td width="100%">
+                                                                    <table width="100%" cellspacing="0" cellpadding="0"
+                                                                        border="0">
+                                                                        <tr>
+                                                                            <td width="100%" align="center"
+                                                                                style="background-color:#ffffff;border-radius:16px;box-shadow:0px 16px 24px 0px rgba(2,15,22,0.10000000149011612);padding-left:24px;padding-right:24px;"
+                                                                                bgcolor="#ffffff">
+                                                                                <table width="100%" border="0"
+                                                                                    cellpadding="0" cellspacing="0">
                                                                                     <tr>
                                                                                         <td height="24"
                                                                                             style="height:24px;min-height:24px;line-height:24px;">
@@ -1153,11 +1158,65 @@
                                                                                             <div
                                                                                                 style="line-height:24px;text-align:center;">
                                                                                                 <span
-                                                                                                    style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:right;">
-                                                                                                    *Please respond to
-                                                                                                    this email to
-                                                                                                    request a change.
+                                                                                                    style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:18px;line-height:24px;text-align:center;">
+                                                                                                    FAQ
                                                                                                 </span>
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td style="padding-top:0px;padding-bottom:0px;padding-right:24px;padding-left:24px"
+                                                                                            class="mceBlockContainer"
+                                                                                            valign="top">
+                                                                                            <div data-block-id="55"
+                                                                                                class="mceText"
+                                                                                                id="dataBlockId-55"
+                                                                                                style="width:100%">
+                                                                                                <p style="text-align: left;"
+                                                                                                    class="last-child">
+                                                                                                    <a href="https://help.trydownstream.com/en/articles/8342240-prohibited-items-in-dumpster-rentals"
+                                                                                                        target="_blank">What
+                                                                                                        can't go in my
+                                                                                                        dumpster?</a>
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td style="padding-top:0px;padding-bottom:0px;padding-right:24px;padding-left:24px"
+                                                                                            class="mceBlockContainer"
+                                                                                            valign="top">
+                                                                                            <div data-block-id="55"
+                                                                                                class="mceText"
+                                                                                                id="dataBlockId-55"
+                                                                                                style="width:100%">
+                                                                                                <p style="text-align: left;"
+                                                                                                    class="last-child">
+                                                                                                    <a href="https://help.trydownstream.com/en/articles/7002407-why-does-my-bill-include-service-charges"
+                                                                                                        target="_blank">What
+                                                                                                        fees are
+                                                                                                        included in my
+                                                                                                        rental?</a>
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td style="padding-top:0px;padding-bottom:0px;padding-right:24px;padding-left:24px"
+                                                                                            class="mceBlockContainer"
+                                                                                            valign="top">
+                                                                                            <div data-block-id="55"
+                                                                                                class="mceText"
+                                                                                                id="dataBlockId-55"
+                                                                                                style="width:100%">
+                                                                                                <p style="text-align: left;"
+                                                                                                    class="last-child">
+                                                                                                    <a href="https://help.trydownstream.com/en/articles/8342225-common-issues-and-solutions-for-dumpster-rentals"
+                                                                                                        target="_blank">How
+                                                                                                        do I avoid
+                                                                                                        additional
+                                                                                                        fees?</a>
+                                                                                                </p>
                                                                                             </div>
                                                                                         </td>
                                                                                     </tr>
@@ -1188,7 +1247,7 @@
                                                                     <div style="line-height:26px;text-align:center;">
                                                                         <span
                                                                             style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:24px;line-height:26px;text-align:center;">We
-                                                                            appreciate your partnership!</span>
+                                                                            appreciate your business!</span>
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -1386,6 +1445,24 @@
                                                                                 </table>
                                                                             </td>
                                                                         </tr>
+                                                                        <tr>
+                                                                            <td height="16"
+                                                                                style="height:16px;min-height:16px;line-height:16px;">
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td align="center">
+                                                                                <div
+                                                                                    style="line-height:24px;text-align:center;">
+                                                                                    <span
+                                                                                        style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:right;">
+                                                                                        *You can also directly respond
+                                                                                        to
+                                                                                        this email.
+                                                                                    </span>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
                                                                     </table>
                                                                 </td>
                                                             </tr>
@@ -1449,8 +1526,27 @@
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td height="64"
-                                                        style="height:64px;min-height:64px;line-height:64px;">
+                                                    <td height="16"
+                                                        style="height:16px;min-height:16px;line-height:16px;">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-top:12px;padding-bottom:12px;padding-right:16px;padding-left:16px"
+                                                        class="mceBlockContainer" align="center" valign="top">
+                                                        <div data-block-id="9" class="mceText" id="dataBlockId-9"
+                                                            style="display:inline-block;width:100%">
+                                                            <p class="last-child"><em><span
+                                                                        style="font-size: 12px">Copyright
+                                                                        (C) 2023 Downstream Systems, Inc.
+                                                                        All rights
+                                                                        reserved.</span></em><br /><strong><span
+                                                                        style="font-size: 12px">Our mailing
+                                                                        address
+                                                                        is:</span></strong><br /><span
+                                                                    style="font-size: 12px">3245 Main
+                                                                    Street #235-434 Frisco, TX
+                                                                    75034</span></p>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             </table>

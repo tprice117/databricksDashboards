@@ -30,6 +30,7 @@ from api.utils.denver_compliance_report import send_denver_compliance_report
 from billing.utils.billing import BillingUtils
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 from api.utils.utils import decrypt_string
+from notifications.utils import internal_email
 
 from .models import (
     DayOfWeek,
@@ -1309,8 +1310,9 @@ def order_status_view(request, order_id):
     if str(params) == str(order_id):
         order = Order.objects.get(id=order_id)
         accept_url = f"/api/order/{order_id}/accept/?key={key}"
-        payload = {"order": order, "accept_url": accept_url}
-        return render(request, "notifications/emails/supplier_email.html", payload)
+        # deny_url = f"/api/order/{order_id}/deny/?key={key}"
+        payload = {"order": order, "accept_url": accept_url}  # "deny_url": deny_url
+        return render(request, "notifications/emails/supplier_email.min.html", payload)
     else:
         return render(
             request,
@@ -1322,15 +1324,19 @@ def order_status_view(request, order_id):
 @api_view(["GET"])
 @authentication_classes([])
 @permission_classes([])
-def update_order_status(request, order_id):
+def update_order_status(request, order_id, accept=True):
     key = request.query_params.get("key", "")
     try:
         params = decrypt_string(key)
         if str(params) == str(order_id):
             order = Order.objects.get(id=order_id)
             if order.status == Order.PENDING:
-                order.status = Order.SCHEDULED
-                order.save()
+                if accept:
+                    order.status = Order.SCHEDULED
+                    order.save()
+                else:
+                    # Send internal email to notify of denial.
+                    internal_email.supplier_denied_order(order)
         else:
             raise ValueError("Invalid Token")
         return render(
@@ -1339,7 +1345,7 @@ def update_order_status(request, order_id):
             {"order_id": order_id},
         )
     except Exception as e:
-        logger.error(f"order_status_view: [{e}]", exc_info=e)
+        logger.error(f"update_order_status: [{e}]", exc_info=e)
         return render(
             request,
             "notifications/emails/failover_email_us.html",
