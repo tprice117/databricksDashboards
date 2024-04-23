@@ -26,3 +26,10 @@ class OrderGroupAdmin(admin.ModelAdmin):
         OrderGroupRentalInline,
         OrderGroupMaterialInline,
     ]
+    search_fields = [
+        "user__email",
+        "user_address__street",
+        "user_address__city",
+        "user_address__state",
+        "user_address__postal_code",
+    ]
