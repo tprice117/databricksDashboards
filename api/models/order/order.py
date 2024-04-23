@@ -16,6 +16,8 @@ from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
+from notifications.utils.add_email_to_queue import add_email_to_queue
+from api.utils.utils import encrypt_string
 from api.models.choices.user_type import UserType
 
 logger = logging.getLogger(__name__)
@@ -263,22 +265,6 @@ class Order(BaseModel):
             raise ValidationError(
                 "Only 1 Order from an OrderGroup can be in the cart at a time"
             )
-
-    def save(self, *args, **kwargs):
-        self.clean()
-
-        # Send email to internal team. Only on our PROD environment.
-        if (
-            self.submitted_on != self.__original_submitted_on
-            and self.submitted_on is not None
-        ):
-            self.send_internal_order_confirmation_email()
-
-        # Send email to customer if status has changed to "Scheduled".
-        if self.status != self.__original_status and self.status == Order.SCHEDULED:
-            self.send_customer_email_when_order_scheduled()
-
-        return super(Order, self).save(*args, **kwargs)
 
     def post_save(sender, instance, created, **kwargs):
         order_line_items = OrderLineItem.objects.filter(order=instance)
@@ -540,7 +526,10 @@ class Order(BaseModel):
 
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
-        if settings.ENVIRONMENT == "TEST":
+        if (
+            settings.ENVIRONMENT == "TEST"
+            and self.order_type != Order.Type.AUTO_RENEWAL
+        ):
             try:
                 auth0_user = get_user_data(self.order_group.user.user_id)
 
@@ -557,59 +546,56 @@ class Order(BaseModel):
                         exc_info=e,
                     )
 
-                waste_type_str = "Not specified"
-                if self.order_group.waste_type:
-                    waste_type_str = self.order_group.waste_type.name
-                material_tonnage_str = "N/A"
-                if getattr(self.order_group, "material", None):
-                    material_tonnage_str = self.order_group.material.tonnage_included
-                rental_included_days = 0
-                if getattr(self.order_group, "rental", None):
-                    rental_included_days = self.order_group.rental.included_days
-
-                mailchimp.messages.send(
-                    {
-                        "message": {
-                            "headers": {
-                                "reply-to": "dispatch@trydownstream.com",
-                            },
-                            "from_name": "Downstream",
-                            "from_email": "dispatch@trydownstream.com",
-                            "to": [
-                                {"email": self.order_group.user.email},
-                                {"email": "thayes@trydownstream.com"},
-                            ],
-                            "subject": "Downstream | Order Confirmed | "
-                            + self.order_group.user_address.formatted_address(),
-                            "track_opens": True,
-                            "track_clicks": True,
-                            "html": render_to_string(
-                                "order-confirmed-email.html",
-                                {
-                                    "orderId": self.id,
-                                    "booking_url": call_to_action_url,
-                                    "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                                    "waste_type": waste_type_str,
-                                    "included_tons": material_tonnage_str,
-                                    "included_rental_days": rental_included_days,
-                                    "service_date": self.end_date,
-                                    "location_address": self.order_group.user_address.street,
-                                    "location_city": self.order_group.user_address.city,
-                                    "location_state": self.order_group.user_address.state,
-                                    "location_zip": self.order_group.user_address.postal_code,
-                                    "location_details": self.order_group.access_details
-                                    or "None",
-                                    "additional_details": self.order_group.placement_details
-                                    or "None",
-                                },
-                            ),
-                        }
-                    }
+                # Order status changed
+                subject = (
+                    "Downstream | Order Confirmed | "
+                    + self.order_group.user_address.formatted_address()
+                )
+                payload = {"order": self, "accept_url": call_to_action_url}
+                html_content = render_to_string(
+                    "notifications/emails/order-confirmed-email.min.html", payload
+                )
+                add_email_to_queue(
+                    from_email="dispatch@trydownstream.com",
+                    to_emails=[self.order_group.user.email],
+                    subject=subject,
+                    html_content=html_content,
+                    reply_to="dispatch@trydownstream.com",
                 )
             except Exception as e:
                 logger.error(
                     f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e
                 )
+
+    def send_supplier_approval_email(self):
+        # Send email to supplier. Only CC on our PROD environment.
+        bcc_emails = []
+        if settings.ENVIRONMENT == "TEST":
+            bcc_emails.append("dispatch@trydownstream.com")
+
+        try:
+            if self.order_type != Order.Type.AUTO_RENEWAL:
+                # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
+                # then it opens the order html to allow them to select order status.
+                base_url = settings.API_URL
+                accept_url = f"{base_url}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
+                subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{str(self.id)}]"
+                html_content_supplier = render_to_string(
+                    "notifications/emails/supplier_email.min.html",
+                    {"order": self, "accept_url": accept_url, "is_email": True},
+                )
+                add_email_to_queue(
+                    from_email="dispatch@trydownstream.com",
+                    to_emails=[
+                        self.order_group.seller_product_seller_location.seller_location.order_email
+                    ],
+                    bcc_emails=bcc_emails,
+                    subject=subject_supplier,
+                    html_content=html_content_supplier,
+                    reply_to="dispatch@trydownstream.com",
+                )
+        except Exception as e:
+            logger.error(f"Order.send_supplier_approval_email: [{e}]", exc_info=e)
 
     def __str__(self):
         return (

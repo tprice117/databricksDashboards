@@ -30,3 +30,4 @@ from .seller_product_seller_location_service import (
 from .user import UserAdmin
 from .user_address import UserAddressAdmin
 from .user_group import UserGroupAdmin
+from .user_group_credit_application import UserGroupCreditApplicationAdmin

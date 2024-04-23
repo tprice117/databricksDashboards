@@ -14,7 +14,7 @@ class EmailNotificationCc(BaseModel):
     def __str__(self):
         return self.email
 
-    def add_cc(
+    def add_email(
         self,
     ):
-        return None
+        return {"email": self.email, "type": "cc"}

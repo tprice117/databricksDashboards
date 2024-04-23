@@ -11135,261 +11135,6 @@ paths:
           description: ''
         '204':
           description: No response body
-  /api/user-group-legals/:
-    get:
-      operationId: user_group_legals_list
-      tags:
-      - user-group-legals
-      security:
-      - CustomAuthentication: []
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegalsListErrorResponse400'
-          description: ''
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserGroupLegal'
-          description: ''
-    post:
-      operationId: user_group_legals_create
-      tags:
-      - user-group-legals
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserGroupLegal'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/UserGroupLegal'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/UserGroupLegal'
-        required: true
-      security:
-      - CustomAuthentication: []
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegalsCreateErrorResponse400'
-          description: ''
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegal'
-          description: ''
-  /api/user-group-legals/{id}/:
-    get:
-      operationId: user_group_legals_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this user group legal.
-        required: true
-      tags:
-      - user-group-legals
-      security:
-      - CustomAuthentication: []
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegalsRetrieveErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
-          description: ''
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegal'
-          description: ''
-    put:
-      operationId: user_group_legals_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this user group legal.
-        required: true
-      tags:
-      - user-group-legals
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserGroupLegal'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/UserGroupLegal'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/UserGroupLegal'
-        required: true
-      security:
-      - CustomAuthentication: []
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegalsUpdateErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
-          description: ''
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegal'
-          description: ''
-    patch:
-      operationId: user_group_legals_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this user group legal.
-        required: true
-      tags:
-      - user-group-legals
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedUserGroupLegal'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedUserGroupLegal'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedUserGroupLegal'
-      security:
-      - CustomAuthentication: []
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegalsPartialUpdateErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
-          description: ''
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegal'
-          description: ''
-    delete:
-      operationId: user_group_legals_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this user group legal.
-        required: true
-      tags:
-      - user-group-legals
-      security:
-      - CustomAuthentication: []
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupLegalsDestroyErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
-          description: ''
-        '204':
-          description: No response body
   /api/user-groups/:
     get:
       operationId: user_groups_list
@@ -31388,6 +31133,7 @@ components:
           maxLength: 255
     PatchedUserGroup:
       type: object
+      description: Adds nested create feature
       properties:
         id:
           type: string
@@ -31402,9 +31148,7 @@ components:
           writeOnly: true
           nullable: true
         legal:
-          allOf:
-          - $ref: '#/components/schemas/UserGroupLegal'
-          readOnly: true
+          $ref: '#/components/schemas/UserGroupLegal'
         credit_limit_utilized:
           type: number
           format: double
@@ -31553,66 +31297,6 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
-        user_group:
-          type: string
-          format: uuid
-    PatchedUserGroupLegal:
-      type: object
-      properties:
-        id:
-          type: string
-          nullable: true
-        latitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          readOnly: true
-        longitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          readOnly: true
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
-        name:
-          type: string
-          maxLength: 255
-        doing_business_as:
-          type: string
-          nullable: true
-          maxLength: 255
-        structure:
-          $ref: '#/components/schemas/StructureEnum'
-        industry:
-          $ref: '#/components/schemas/IndustryEnum'
-        street:
-          type: string
-        city:
-          type: string
-          maxLength: 40
-        state:
-          type: string
-          maxLength: 80
-        postal_code:
-          type: string
-          maxLength: 20
-        country:
-          type: string
-          maxLength: 80
         user_group:
           type: string
           format: uuid
@@ -54035,6 +53719,7 @@ components:
       - type
     UserGroup:
       type: object
+      description: Adds nested create feature
       properties:
         id:
           type: string
@@ -54049,9 +53734,7 @@ components:
           writeOnly: true
           nullable: true
         legal:
-          allOf:
-          - $ref: '#/components/schemas/UserGroupLegal'
-          readOnly: true
+          $ref: '#/components/schemas/UserGroupLegal'
         credit_limit_utilized:
           type: number
           format: double
@@ -55891,1260 +55574,6 @@ components:
       - structure
       - updated_on
       - user_group
-    UserGroupLegalsCreateCityErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - city
-          type: string
-          description: '* `city` - city'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateCountryErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - country
-          type: string
-          description: '* `country` - country'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateDoingBusinessAsErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - doing_business_as
-          type: string
-          description: '* `doing_business_as` - doing_business_as'
-        code:
-          enum:
-          - invalid
-          - max_length
-          - null_characters_not_allowed
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateError:
-      oneOf:
-      - $ref: '#/components/schemas/UserGroupLegalsCreateNonFieldErrorsErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateIdErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateIsDeletedErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateNameErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateDoingBusinessAsErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateStructureErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateIndustryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateStreetErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateCityErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateStateErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreatePostalCodeErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateCountryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsCreateUserGroupErrorComponent'
-      discriminator:
-        propertyName: attr
-        mapping:
-          non_field_errors: '#/components/schemas/UserGroupLegalsCreateNonFieldErrorsErrorComponent'
-          id: '#/components/schemas/UserGroupLegalsCreateIdErrorComponent'
-          is_deleted: '#/components/schemas/UserGroupLegalsCreateIsDeletedErrorComponent'
-          name: '#/components/schemas/UserGroupLegalsCreateNameErrorComponent'
-          doing_business_as: '#/components/schemas/UserGroupLegalsCreateDoingBusinessAsErrorComponent'
-          structure: '#/components/schemas/UserGroupLegalsCreateStructureErrorComponent'
-          industry: '#/components/schemas/UserGroupLegalsCreateIndustryErrorComponent'
-          street: '#/components/schemas/UserGroupLegalsCreateStreetErrorComponent'
-          city: '#/components/schemas/UserGroupLegalsCreateCityErrorComponent'
-          state: '#/components/schemas/UserGroupLegalsCreateStateErrorComponent'
-          postal_code: '#/components/schemas/UserGroupLegalsCreatePostalCodeErrorComponent'
-          country: '#/components/schemas/UserGroupLegalsCreateCountryErrorComponent'
-          user_group: '#/components/schemas/UserGroupLegalsCreateUserGroupErrorComponent'
-    UserGroupLegalsCreateErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/UserGroupLegalsCreateValidationError'
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          validation_error: '#/components/schemas/UserGroupLegalsCreateValidationError'
-          client_error: '#/components/schemas/ParseErrorResponse'
-    UserGroupLegalsCreateIdErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - id
-          type: string
-          description: '* `id` - id'
-        code:
-          enum:
-          - blank
-          - invalid
-          - null_characters_not_allowed
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateIndustryErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - industry
-          type: string
-          description: '* `industry` - industry'
-        code:
-          enum:
-          - invalid_choice
-          - 'null'
-          - required
-          type: string
-          description: |-
-            * `invalid_choice` - invalid_choice
-            * `null` - null
-            * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateNameErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - name
-          type: string
-          description: '* `name` - name'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateNonFieldErrorsErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - non_field_errors
-          type: string
-          description: '* `non_field_errors` - non_field_errors'
-        code:
-          enum:
-          - invalid
-          type: string
-          description: '* `invalid` - invalid'
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreatePostalCodeErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - postal_code
-          type: string
-          description: '* `postal_code` - postal_code'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateStateErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - state
-          type: string
-          description: '* `state` - state'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateStreetErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - street
-          type: string
-          description: '* `street` - street'
-        code:
-          enum:
-          - blank
-          - invalid
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateStructureErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - structure
-          type: string
-          description: '* `structure` - structure'
-        code:
-          enum:
-          - invalid_choice
-          - 'null'
-          - required
-          type: string
-          description: |-
-            * `invalid_choice` - invalid_choice
-            * `null` - null
-            * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateUserGroupErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - user_group
-          type: string
-          description: '* `user_group` - user_group'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          - 'null'
-          - required
-          - unique
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
-            * `unique` - unique
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsCreateValidationError:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/ValidationErrorEnum'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserGroupLegalsCreateError'
-      required:
-      - errors
-      - type
-    UserGroupLegalsDestroyErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          client_error: '#/components/schemas/ParseErrorResponse'
-    UserGroupLegalsListErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          client_error: '#/components/schemas/ParseErrorResponse'
-    UserGroupLegalsPartialUpdateCityErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - city
-          type: string
-          description: '* `city` - city'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateCountryErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - country
-          type: string
-          description: '* `country` - country'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateDoingBusinessAsErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - doing_business_as
-          type: string
-          description: '* `doing_business_as` - doing_business_as'
-        code:
-          enum:
-          - invalid
-          - max_length
-          - null_characters_not_allowed
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateError:
-      oneOf:
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateNonFieldErrorsErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateIdErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateIsDeletedErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateNameErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateDoingBusinessAsErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateStructureErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateIndustryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateStreetErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateCityErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateStateErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdatePostalCodeErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateCountryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateUserGroupErrorComponent'
-      discriminator:
-        propertyName: attr
-        mapping:
-          non_field_errors: '#/components/schemas/UserGroupLegalsPartialUpdateNonFieldErrorsErrorComponent'
-          id: '#/components/schemas/UserGroupLegalsPartialUpdateIdErrorComponent'
-          is_deleted: '#/components/schemas/UserGroupLegalsPartialUpdateIsDeletedErrorComponent'
-          name: '#/components/schemas/UserGroupLegalsPartialUpdateNameErrorComponent'
-          doing_business_as: '#/components/schemas/UserGroupLegalsPartialUpdateDoingBusinessAsErrorComponent'
-          structure: '#/components/schemas/UserGroupLegalsPartialUpdateStructureErrorComponent'
-          industry: '#/components/schemas/UserGroupLegalsPartialUpdateIndustryErrorComponent'
-          street: '#/components/schemas/UserGroupLegalsPartialUpdateStreetErrorComponent'
-          city: '#/components/schemas/UserGroupLegalsPartialUpdateCityErrorComponent'
-          state: '#/components/schemas/UserGroupLegalsPartialUpdateStateErrorComponent'
-          postal_code: '#/components/schemas/UserGroupLegalsPartialUpdatePostalCodeErrorComponent'
-          country: '#/components/schemas/UserGroupLegalsPartialUpdateCountryErrorComponent'
-          user_group: '#/components/schemas/UserGroupLegalsPartialUpdateUserGroupErrorComponent'
-    UserGroupLegalsPartialUpdateErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/UserGroupLegalsPartialUpdateValidationError'
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          validation_error: '#/components/schemas/UserGroupLegalsPartialUpdateValidationError'
-          client_error: '#/components/schemas/ParseErrorResponse'
-    UserGroupLegalsPartialUpdateIdErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - id
-          type: string
-          description: '* `id` - id'
-        code:
-          enum:
-          - blank
-          - invalid
-          - null_characters_not_allowed
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateIndustryErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - industry
-          type: string
-          description: '* `industry` - industry'
-        code:
-          enum:
-          - invalid_choice
-          - 'null'
-          - required
-          type: string
-          description: |-
-            * `invalid_choice` - invalid_choice
-            * `null` - null
-            * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateNameErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - name
-          type: string
-          description: '* `name` - name'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateNonFieldErrorsErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - non_field_errors
-          type: string
-          description: '* `non_field_errors` - non_field_errors'
-        code:
-          enum:
-          - invalid
-          type: string
-          description: '* `invalid` - invalid'
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdatePostalCodeErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - postal_code
-          type: string
-          description: '* `postal_code` - postal_code'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateStateErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - state
-          type: string
-          description: '* `state` - state'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateStreetErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - street
-          type: string
-          description: '* `street` - street'
-        code:
-          enum:
-          - blank
-          - invalid
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateStructureErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - structure
-          type: string
-          description: '* `structure` - structure'
-        code:
-          enum:
-          - invalid_choice
-          - 'null'
-          - required
-          type: string
-          description: |-
-            * `invalid_choice` - invalid_choice
-            * `null` - null
-            * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateUserGroupErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - user_group
-          type: string
-          description: '* `user_group` - user_group'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          - 'null'
-          - required
-          - unique
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
-            * `unique` - unique
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsPartialUpdateValidationError:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/ValidationErrorEnum'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserGroupLegalsPartialUpdateError'
-      required:
-      - errors
-      - type
-    UserGroupLegalsRetrieveErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          client_error: '#/components/schemas/ParseErrorResponse'
-    UserGroupLegalsUpdateCityErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - city
-          type: string
-          description: '* `city` - city'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateCountryErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - country
-          type: string
-          description: '* `country` - country'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateDoingBusinessAsErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - doing_business_as
-          type: string
-          description: '* `doing_business_as` - doing_business_as'
-        code:
-          enum:
-          - invalid
-          - max_length
-          - null_characters_not_allowed
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateError:
-      oneOf:
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateNonFieldErrorsErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateIdErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateIsDeletedErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateNameErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateDoingBusinessAsErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateStructureErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateIndustryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateStreetErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateCityErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateStateErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdatePostalCodeErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateCountryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateUserGroupErrorComponent'
-      discriminator:
-        propertyName: attr
-        mapping:
-          non_field_errors: '#/components/schemas/UserGroupLegalsUpdateNonFieldErrorsErrorComponent'
-          id: '#/components/schemas/UserGroupLegalsUpdateIdErrorComponent'
-          is_deleted: '#/components/schemas/UserGroupLegalsUpdateIsDeletedErrorComponent'
-          name: '#/components/schemas/UserGroupLegalsUpdateNameErrorComponent'
-          doing_business_as: '#/components/schemas/UserGroupLegalsUpdateDoingBusinessAsErrorComponent'
-          structure: '#/components/schemas/UserGroupLegalsUpdateStructureErrorComponent'
-          industry: '#/components/schemas/UserGroupLegalsUpdateIndustryErrorComponent'
-          street: '#/components/schemas/UserGroupLegalsUpdateStreetErrorComponent'
-          city: '#/components/schemas/UserGroupLegalsUpdateCityErrorComponent'
-          state: '#/components/schemas/UserGroupLegalsUpdateStateErrorComponent'
-          postal_code: '#/components/schemas/UserGroupLegalsUpdatePostalCodeErrorComponent'
-          country: '#/components/schemas/UserGroupLegalsUpdateCountryErrorComponent'
-          user_group: '#/components/schemas/UserGroupLegalsUpdateUserGroupErrorComponent'
-    UserGroupLegalsUpdateErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/UserGroupLegalsUpdateValidationError'
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          validation_error: '#/components/schemas/UserGroupLegalsUpdateValidationError'
-          client_error: '#/components/schemas/ParseErrorResponse'
-    UserGroupLegalsUpdateIdErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - id
-          type: string
-          description: '* `id` - id'
-        code:
-          enum:
-          - blank
-          - invalid
-          - null_characters_not_allowed
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateIndustryErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - industry
-          type: string
-          description: '* `industry` - industry'
-        code:
-          enum:
-          - invalid_choice
-          - 'null'
-          - required
-          type: string
-          description: |-
-            * `invalid_choice` - invalid_choice
-            * `null` - null
-            * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateNameErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - name
-          type: string
-          description: '* `name` - name'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateNonFieldErrorsErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - non_field_errors
-          type: string
-          description: '* `non_field_errors` - non_field_errors'
-        code:
-          enum:
-          - invalid
-          type: string
-          description: '* `invalid` - invalid'
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdatePostalCodeErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - postal_code
-          type: string
-          description: '* `postal_code` - postal_code'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateStateErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - state
-          type: string
-          description: '* `state` - state'
-        code:
-          enum:
-          - blank
-          - invalid
-          - max_length
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `max_length` - max_length
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateStreetErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - street
-          type: string
-          description: '* `street` - street'
-        code:
-          enum:
-          - blank
-          - invalid
-          - 'null'
-          - null_characters_not_allowed
-          - required
-          - surrogate_characters_not_allowed
-          type: string
-          description: |-
-            * `blank` - blank
-            * `invalid` - invalid
-            * `null` - null
-            * `null_characters_not_allowed` - null_characters_not_allowed
-            * `required` - required
-            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateStructureErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - structure
-          type: string
-          description: '* `structure` - structure'
-        code:
-          enum:
-          - invalid_choice
-          - 'null'
-          - required
-          type: string
-          description: |-
-            * `invalid_choice` - invalid_choice
-            * `null` - null
-            * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateUserGroupErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - user_group
-          type: string
-          description: '* `user_group` - user_group'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          - 'null'
-          - required
-          - unique
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
-            * `unique` - unique
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupLegalsUpdateValidationError:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/ValidationErrorEnum'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserGroupLegalsUpdateError'
-      required:
-      - errors
-      - type
     UserGroupsCreateAutopayErrorComponent:
       type: object
       properties:
@@ -57222,6 +55651,19 @@ components:
       - $ref: '#/components/schemas/UserGroupsCreateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateIdErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateSellerIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalNameErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalDoingBusinessAsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalStructureErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalIndustryErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalStreetErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalCityErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalStateErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalPostalCodeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalCountryErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreateLegalUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateNetTermsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateInvoiceAtProjectCompletionErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateShareCodeErrorComponent'
@@ -57243,6 +55685,19 @@ components:
           non_field_errors: '#/components/schemas/UserGroupsCreateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/UserGroupsCreateIdErrorComponent'
           seller_id: '#/components/schemas/UserGroupsCreateSellerIdErrorComponent'
+          legal.non_field_errors: '#/components/schemas/UserGroupsCreateLegalNonFieldErrorsErrorComponent'
+          legal.id: '#/components/schemas/UserGroupsCreateLegalIdErrorComponent'
+          legal.is_deleted: '#/components/schemas/UserGroupsCreateLegalIsDeletedErrorComponent'
+          legal.name: '#/components/schemas/UserGroupsCreateLegalNameErrorComponent'
+          legal.doing_business_as: '#/components/schemas/UserGroupsCreateLegalDoingBusinessAsErrorComponent'
+          legal.structure: '#/components/schemas/UserGroupsCreateLegalStructureErrorComponent'
+          legal.industry: '#/components/schemas/UserGroupsCreateLegalIndustryErrorComponent'
+          legal.street: '#/components/schemas/UserGroupsCreateLegalStreetErrorComponent'
+          legal.city: '#/components/schemas/UserGroupsCreateLegalCityErrorComponent'
+          legal.state: '#/components/schemas/UserGroupsCreateLegalStateErrorComponent'
+          legal.postal_code: '#/components/schemas/UserGroupsCreateLegalPostalCodeErrorComponent'
+          legal.country: '#/components/schemas/UserGroupsCreateLegalCountryErrorComponent'
+          legal.user_group: '#/components/schemas/UserGroupsCreateLegalUserGroupErrorComponent'
           net_terms: '#/components/schemas/UserGroupsCreateNetTermsErrorComponent'
           invoice_at_project_completion: '#/components/schemas/UserGroupsCreateInvoiceAtProjectCompletionErrorComponent'
           share_code: '#/components/schemas/UserGroupsCreateShareCodeErrorComponent'
@@ -57432,6 +55887,370 @@ components:
       - attr
       - code
       - detail
+    UserGroupsCreateLegalCityErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.city
+          type: string
+          description: '* `legal.city` - legal.city'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalCountryErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.country
+          type: string
+          description: '* `legal.country` - legal.country'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalDoingBusinessAsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.doing_business_as
+          type: string
+          description: '* `legal.doing_business_as` - legal.doing_business_as'
+        code:
+          enum:
+          - invalid
+          - max_length
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.id
+          type: string
+          description: '* `legal.id` - legal.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalIndustryErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.industry
+          type: string
+          description: '* `legal.industry` - legal.industry'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.is_deleted
+          type: string
+          description: '* `legal.is_deleted` - legal.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalNameErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.name
+          type: string
+          description: '* `legal.name` - legal.name'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.non_field_errors
+          type: string
+          description: '* `legal.non_field_errors` - legal.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalPostalCodeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.postal_code
+          type: string
+          description: '* `legal.postal_code` - legal.postal_code'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalStateErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.state
+          type: string
+          description: '* `legal.state` - legal.state'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalStreetErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.street
+          type: string
+          description: '* `legal.street` - legal.street'
+        code:
+          enum:
+          - blank
+          - invalid
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalStructureErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.structure
+          type: string
+          description: '* `legal.structure` - legal.structure'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreateLegalUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.user_group
+          type: string
+          description: '* `legal.user_group` - legal.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     UserGroupsCreateNameErrorComponent:
       type: object
       properties:
@@ -57496,9 +56315,12 @@ components:
           description: '* `non_field_errors` - non_field_errors'
         code:
           enum:
+          - cannot_delete_protected
           - invalid
           type: string
-          description: '* `invalid` - invalid'
+          description: |-
+            * `cannot_delete_protected` - cannot_delete_protected
+            * `invalid` - invalid
         detail:
           type: string
       required:
@@ -57792,6 +56614,19 @@ components:
       - $ref: '#/components/schemas/UserGroupsPartialUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateIdErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateSellerIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalNameErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalDoingBusinessAsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalStructureErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalIndustryErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalStreetErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalCityErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalStateErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalPostalCodeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalCountryErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateNetTermsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateInvoiceAtProjectCompletionErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateShareCodeErrorComponent'
@@ -57813,6 +56648,19 @@ components:
           non_field_errors: '#/components/schemas/UserGroupsPartialUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/UserGroupsPartialUpdateIdErrorComponent'
           seller_id: '#/components/schemas/UserGroupsPartialUpdateSellerIdErrorComponent'
+          legal.non_field_errors: '#/components/schemas/UserGroupsPartialUpdateLegalNonFieldErrorsErrorComponent'
+          legal.id: '#/components/schemas/UserGroupsPartialUpdateLegalIdErrorComponent'
+          legal.is_deleted: '#/components/schemas/UserGroupsPartialUpdateLegalIsDeletedErrorComponent'
+          legal.name: '#/components/schemas/UserGroupsPartialUpdateLegalNameErrorComponent'
+          legal.doing_business_as: '#/components/schemas/UserGroupsPartialUpdateLegalDoingBusinessAsErrorComponent'
+          legal.structure: '#/components/schemas/UserGroupsPartialUpdateLegalStructureErrorComponent'
+          legal.industry: '#/components/schemas/UserGroupsPartialUpdateLegalIndustryErrorComponent'
+          legal.street: '#/components/schemas/UserGroupsPartialUpdateLegalStreetErrorComponent'
+          legal.city: '#/components/schemas/UserGroupsPartialUpdateLegalCityErrorComponent'
+          legal.state: '#/components/schemas/UserGroupsPartialUpdateLegalStateErrorComponent'
+          legal.postal_code: '#/components/schemas/UserGroupsPartialUpdateLegalPostalCodeErrorComponent'
+          legal.country: '#/components/schemas/UserGroupsPartialUpdateLegalCountryErrorComponent'
+          legal.user_group: '#/components/schemas/UserGroupsPartialUpdateLegalUserGroupErrorComponent'
           net_terms: '#/components/schemas/UserGroupsPartialUpdateNetTermsErrorComponent'
           invoice_at_project_completion: '#/components/schemas/UserGroupsPartialUpdateInvoiceAtProjectCompletionErrorComponent'
           share_code: '#/components/schemas/UserGroupsPartialUpdateShareCodeErrorComponent'
@@ -58002,6 +56850,370 @@ components:
       - attr
       - code
       - detail
+    UserGroupsPartialUpdateLegalCityErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.city
+          type: string
+          description: '* `legal.city` - legal.city'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalCountryErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.country
+          type: string
+          description: '* `legal.country` - legal.country'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalDoingBusinessAsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.doing_business_as
+          type: string
+          description: '* `legal.doing_business_as` - legal.doing_business_as'
+        code:
+          enum:
+          - invalid
+          - max_length
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.id
+          type: string
+          description: '* `legal.id` - legal.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalIndustryErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.industry
+          type: string
+          description: '* `legal.industry` - legal.industry'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.is_deleted
+          type: string
+          description: '* `legal.is_deleted` - legal.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalNameErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.name
+          type: string
+          description: '* `legal.name` - legal.name'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.non_field_errors
+          type: string
+          description: '* `legal.non_field_errors` - legal.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalPostalCodeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.postal_code
+          type: string
+          description: '* `legal.postal_code` - legal.postal_code'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalStateErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.state
+          type: string
+          description: '* `legal.state` - legal.state'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalStreetErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.street
+          type: string
+          description: '* `legal.street` - legal.street'
+        code:
+          enum:
+          - blank
+          - invalid
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalStructureErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.structure
+          type: string
+          description: '* `legal.structure` - legal.structure'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdateLegalUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.user_group
+          type: string
+          description: '* `legal.user_group` - legal.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     UserGroupsPartialUpdateNameErrorComponent:
       type: object
       properties:
@@ -58066,9 +57278,12 @@ components:
           description: '* `non_field_errors` - non_field_errors'
         code:
           enum:
+          - cannot_delete_protected
           - invalid
           type: string
-          description: '* `invalid` - invalid'
+          description: |-
+            * `cannot_delete_protected` - cannot_delete_protected
+            * `invalid` - invalid
         detail:
           type: string
       required:
@@ -58291,6 +57506,19 @@ components:
       - $ref: '#/components/schemas/UserGroupsUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateIdErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateSellerIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalNameErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalDoingBusinessAsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalStructureErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalIndustryErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalStreetErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalCityErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalStateErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalPostalCodeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalCountryErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdateLegalUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateNetTermsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateInvoiceAtProjectCompletionErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateShareCodeErrorComponent'
@@ -58312,6 +57540,19 @@ components:
           non_field_errors: '#/components/schemas/UserGroupsUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/UserGroupsUpdateIdErrorComponent'
           seller_id: '#/components/schemas/UserGroupsUpdateSellerIdErrorComponent'
+          legal.non_field_errors: '#/components/schemas/UserGroupsUpdateLegalNonFieldErrorsErrorComponent'
+          legal.id: '#/components/schemas/UserGroupsUpdateLegalIdErrorComponent'
+          legal.is_deleted: '#/components/schemas/UserGroupsUpdateLegalIsDeletedErrorComponent'
+          legal.name: '#/components/schemas/UserGroupsUpdateLegalNameErrorComponent'
+          legal.doing_business_as: '#/components/schemas/UserGroupsUpdateLegalDoingBusinessAsErrorComponent'
+          legal.structure: '#/components/schemas/UserGroupsUpdateLegalStructureErrorComponent'
+          legal.industry: '#/components/schemas/UserGroupsUpdateLegalIndustryErrorComponent'
+          legal.street: '#/components/schemas/UserGroupsUpdateLegalStreetErrorComponent'
+          legal.city: '#/components/schemas/UserGroupsUpdateLegalCityErrorComponent'
+          legal.state: '#/components/schemas/UserGroupsUpdateLegalStateErrorComponent'
+          legal.postal_code: '#/components/schemas/UserGroupsUpdateLegalPostalCodeErrorComponent'
+          legal.country: '#/components/schemas/UserGroupsUpdateLegalCountryErrorComponent'
+          legal.user_group: '#/components/schemas/UserGroupsUpdateLegalUserGroupErrorComponent'
           net_terms: '#/components/schemas/UserGroupsUpdateNetTermsErrorComponent'
           invoice_at_project_completion: '#/components/schemas/UserGroupsUpdateInvoiceAtProjectCompletionErrorComponent'
           share_code: '#/components/schemas/UserGroupsUpdateShareCodeErrorComponent'
@@ -58501,6 +57742,370 @@ components:
       - attr
       - code
       - detail
+    UserGroupsUpdateLegalCityErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.city
+          type: string
+          description: '* `legal.city` - legal.city'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalCountryErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.country
+          type: string
+          description: '* `legal.country` - legal.country'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalDoingBusinessAsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.doing_business_as
+          type: string
+          description: '* `legal.doing_business_as` - legal.doing_business_as'
+        code:
+          enum:
+          - invalid
+          - max_length
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.id
+          type: string
+          description: '* `legal.id` - legal.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalIndustryErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.industry
+          type: string
+          description: '* `legal.industry` - legal.industry'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.is_deleted
+          type: string
+          description: '* `legal.is_deleted` - legal.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalNameErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.name
+          type: string
+          description: '* `legal.name` - legal.name'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.non_field_errors
+          type: string
+          description: '* `legal.non_field_errors` - legal.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalPostalCodeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.postal_code
+          type: string
+          description: '* `legal.postal_code` - legal.postal_code'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalStateErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.state
+          type: string
+          description: '* `legal.state` - legal.state'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalStreetErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.street
+          type: string
+          description: '* `legal.street` - legal.street'
+        code:
+          enum:
+          - blank
+          - invalid
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalStructureErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.structure
+          type: string
+          description: '* `legal.structure` - legal.structure'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdateLegalUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - legal.user_group
+          type: string
+          description: '* `legal.user_group` - legal.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     UserGroupsUpdateNameErrorComponent:
       type: object
       properties:
@@ -58565,9 +58170,12 @@ components:
           description: '* `non_field_errors` - non_field_errors'
         code:
           enum:
+          - cannot_delete_protected
           - invalid
           type: string
-          description: '* `invalid` - invalid'
+          description: |-
+            * `cannot_delete_protected` - cannot_delete_protected
+            * `invalid` - invalid
         detail:
           type: string
       required:

@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.template.loader import render_to_string
-# import threading
+from django.conf import settings
 import logging
 from api.models import Order
 from communications.intercom.utils.utils import get_json_safe_value
@@ -35,49 +35,74 @@ def get_order_status_from_choice(status: str) -> str:
 # Email on Order database actions
 # ================================================#
 
+
 def on_order_post_save(sender, **kwargs):
-    """Sends an email on Order database actions, such as Order submitted or Order status changed.
-    """
-    order: Order = kwargs.get('instance', None)
-    if kwargs.get('created', False) is False:
+    """Sends an email on Order database actions, such as Order created, submitted or status changed
+    to SCHEDULED, CANCELLED, OR COMPLETE."""
+    order: Order = kwargs.get("instance", None)
+    bcc_emails = []
+    if settings.ENVIRONMENT == "TEST":
+        bcc_emails.append("dispatch@trydownstream.com")
+    if kwargs.get("created", False) is False:
         # Order updated
         error_status = "created-Order"
         order_id = get_json_safe_value(order.id)
         try:
             if order.submitted_on is not None:
-                if order.old_value('submitted_on') is None:
-                    # Order submitted
-                    subject = "Thanks for your order!"
-                    html_content = render_to_string(
-                        "notifications/emails/order_submitted.html",
-                        {"order": order}
-                    )
-                    add_email_to_queue(
-                        from_email="dispatch@trydownstream.com",
-                        to_emails=[order.order_group.user.email],
-                        subject=subject,
-                        html_content=html_content,
-                        reply_to="dispatch@trydownstream.com"
-                    )
-                elif order.old_value('status') != order.status:
-                    error_status = "updated-Order"
-                    # Order status changed
-                    subject = "An update on your Downstream order"
-                    html_content = render_to_string(
-                        "notifications/emails/order_status_change.html",
-                        {
-                            "order": order,
-                            "new_status": get_order_status_from_choice(order.status),
-                            "previous_status": get_order_status_from_choice(order.old_value('status'))
-                        }
-                    )
-                    add_email_to_queue(
-                        from_email="dispatch@trydownstream.com",
-                        to_emails=[order.order_group.user.email],
-                        subject=subject,
-                        html_content=html_content,
-                        reply_to="dispatch@trydownstream.com"
-                    )
+                if order.old_value("submitted_on") is None:
+                    order.send_supplier_approval_email()
+
+                    # TODO: Switch this to the new template that is similar to the supplier approval email, do not cc dispatch.
+                    # # Order submitted
+                    # subject = "Thanks for your order!"
+                    # html_content = render_to_string(
+                    #     "notifications/emails/order_submitted.html", {"order": order}
+                    # )
+                    # add_email_to_queue(
+                    #     from_email="dispatch@trydownstream.com",
+                    #     to_emails=[order.order_group.user.email],
+                    #     bcc_emails=bcc_emails,
+                    #     subject=subject,
+                    #     html_content=html_content,
+                    #     reply_to="dispatch@trydownstream.com",
+                    # )
+                elif order.old_value("status") != order.status:
+                    if order.status == Order.SCHEDULED:
+                        order.send_customer_email_when_order_scheduled()
+                    elif (
+                        order.status == Order.CANCELLED
+                        or order.status == Order.COMPLETE
+                    ):
+                        subject = "Your Downstream order has been completed!"
+                        if order.status == Order.CANCELLED:
+                            subject = "Your Downstream order has been cancelled"
+                        error_status = "updated-Order"
+                        # Order status changed
+                        html_content = render_to_string(
+                            "notifications/emails/order_status_change.html",
+                            {
+                                "order": order,
+                                "new_status": get_order_status_from_choice(
+                                    order.status
+                                ),
+                                "previous_status": get_order_status_from_choice(
+                                    order.old_value("status")
+                                ),
+                            },
+                        )
+                        add_email_to_queue(
+                            from_email="dispatch@trydownstream.com",
+                            to_emails=[order.order_group.user.email],
+                            subject=subject,
+                            html_content=html_content,
+                            reply_to="dispatch@trydownstream.com",
+                        )
+        except Exception as e:
+            logger.exception(f"notification: [{order_id}]-[{error_status}]-[{e}]")
+    else:
+        try:
+            if order.submitted_on is not None:
+                order.send_supplier_approval_email()
         except Exception as e:
             logger.exception(f"notification: [{order_id}]-[{error_status}]-[{e}]")
 

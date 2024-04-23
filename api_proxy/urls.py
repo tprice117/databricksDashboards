@@ -15,7 +15,6 @@ router.register(r"seller-locations", views.SellerLocationViewSet, "api")
 router.register(r"users", views.UserViewSet, "api")
 router.register(r"user-groups", views.UserGroupViewSet, "api")
 router.register(r"user-group-billings", views.UserGroupBillingViewSet, "api")
-router.register(r"user-group-legals", views.UserGroupLegalViewSet, "api")
 router.register(
     r"user-group-credit-applications", views.UserGroupCreditApplicationViewSet, "api"
 )
@@ -149,6 +148,13 @@ urlpatterns = [
     ),
     # Denver Compliance Endpoint.
     path("api/exports/denver-compliance/", views.denver_compliance_report),
+    path("api/order/<uuid:order_id>/view/", views.order_status_view),
+    path(
+        "api/order/<uuid:order_id>/accept/", views.update_order_status, {"accept": True}
+    ),
+    path(
+        "api/order/<uuid:order_id>/deny/", views.update_order_status, {"accept": False}
+    ),
     # Test.
     path("test/", views.test3),
 ]

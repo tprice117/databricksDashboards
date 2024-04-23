@@ -1,11 +1,21 @@
-from drf_spectacular.utils import extend_schema_field, OpenApiTypes
-from typing import Union, Literal
+import datetime
+import logging
+from typing import Literal, Union
+
+import stripe
+from django.conf import settings
+from drf_spectacular.utils import OpenApiTypes, extend_schema_field
+from drf_writable_nested.serializers import WritableNestedModelSerializer
+from rest_framework import serializers
+
+from notifications.utils.internal_email import send_email_on_new_signup
+
 from .models import (
+    AddOn,
+    AddOnChoice,
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
-    AddOn,
-    AddOnChoice,
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
@@ -13,8 +23,6 @@ from .models import (
     MainProductInfo,
     MainProductServiceRecurringFrequency,
     MainProductWasteType,
-    Product,
-    ProductAddOnChoice,
     Order,
     OrderDisposalTicket,
     OrderGroup,
@@ -23,8 +31,9 @@ from .models import (
     OrderGroupService,
     OrderLineItem,
     OrderLineItemType,
-    Subscription,
     Payout,
+    Product,
+    ProductAddOnChoice,
     Seller,
     SellerInvoicePayable,
     SellerInvoicePayableLineItem,
@@ -37,6 +46,7 @@ from .models import (
     SellerProductSellerLocationService,
     SellerProductSellerLocationServiceRecurringFrequency,
     ServiceRecurringFrequency,
+    Subscription,
     TimeSlot,
     User,
     UserAddress,
@@ -49,15 +59,6 @@ from .models import (
     UserUserAddress,
     WasteType,
 )
-import datetime
-import logging
-
-import stripe
-from django.conf import settings
-from rest_framework import serializers
-
-from notifications.utils.internal_email import send_email_on_new_signup
-
 
 logger = logging.getLogger(__name__)
 
@@ -131,16 +132,42 @@ class UserGroupLegalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserGroupLegal
+        fields = [
+            "id",
+            "name",
+            "doing_business_as",
+            "structure",
+            "industry",
+            "street",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "latitude",
+            "longitude",
+        ]
+
+
+class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = UserGroupCreditApplication
         fields = "__all__"
+        read_only_fields = ["status"]
 
 
-class UserGroupSerializer(serializers.ModelSerializer):
+class UserGroupSerializer(WritableNestedModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     seller = SellerSerializer(read_only=True)
     seller_id = serializers.PrimaryKeyRelatedField(
         queryset=Seller.objects.all(), source="seller", write_only=True, allow_null=True
     )
-    legal = UserGroupLegalSerializer(read_only=True)
+    legal = UserGroupLegalSerializer()
+    credit_applications = UserGroupCreditApplicationSerializer(
+        many=True,
+        read_only=True,
+    )
     credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
     net_terms = serializers.IntegerField(
         required=False,
@@ -180,14 +207,6 @@ class UserGroupSerializer(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.DECIMAL)
     def get_credit_limit_utilized(self, obj: UserGroup):
         return obj.credit_limit_used()
-
-
-class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-
-    class Meta:
-        model = UserGroupCreditApplication
-        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):

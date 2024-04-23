@@ -7,6 +7,7 @@ import logging
 from api.models.order.order import Order
 from api.models.track_data import track_data
 from common.models import BaseModel
+from common.models.choices.approval_status import ApprovalStatus
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +21,6 @@ class UserGroupAdminApprovalOrder(BaseModel):
     BillingManager or Member users will create an instance of this object. After Admin approval,
     the Order will be submitted.
     """
-
-    class ApprovalStatus(models.TextChoices):
-        PENDING = "PENDING", "Pending"
-        ACCEPTED = "ACCEPTED", "Accepted"
-        DECLINED = "DECLINED", "Declined"
 
     order = models.OneToOneField(
         Order,

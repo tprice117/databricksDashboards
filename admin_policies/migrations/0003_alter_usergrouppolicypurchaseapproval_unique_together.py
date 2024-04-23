@@ -6,13 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0123_user_type'),
-        ('admin_policies', '0002_alter_usergrouppolicyinvitationapproval_user_type_and_more'),
+        ("api", "0123_user_type"),
+        (
+            "admin_policies",
+            "0002_alter_usergrouppolicyinvitationapproval_user_type_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='usergrouppolicypurchaseapproval',
-            unique_together={('user_group', 'user_type')},
+            name="usergrouppolicypurchaseapproval",
+            unique_together={("user_group", "user_type")},
         ),
     ]
