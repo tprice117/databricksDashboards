@@ -18,6 +18,9 @@ class EmailNotification(BaseModel):
     reply_to = models.CharField(max_length=255)
     sent_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        ordering = ["-sent_at"]
+
     def __str__(self):
         return self.subject
 
