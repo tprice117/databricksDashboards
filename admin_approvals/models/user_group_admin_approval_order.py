@@ -55,13 +55,13 @@ def pre_save_user_group_admin_approval_order(
 ):
     old_status = instance.old_value("status")
 
-    if old_status == UserGroupAdminApprovalOrder.ApprovalStatus.PENDING:
-        if instance.status == UserGroupAdminApprovalOrder.ApprovalStatus.ACCEPTED:
+    if old_status == ApprovalStatus.PENDING:
+        if instance.status == ApprovalStatus.APPROVED:
             # If Status changes from PENDING to APPROVED, populate the Order.SubmittedOn
             # field with the current date time. This indicates the Order is submitted.
             instance.order.submitted_on = timezone.now()
             instance.order.save()
-        elif old_status == UserGroupAdminApprovalOrder.ApprovalStatus.DECLINED:
+        elif old_status == ApprovalStatus.DECLINED:
             # If the Status changes from PENDING to DECLINED, update Status, then do nothing else.
             logger.warning(
                 f"Approval for order {instance.order.id} has been declined. No further action will be taken."
