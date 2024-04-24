@@ -31,13 +31,15 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
         choices=ApprovalStatus.choices,
         default=ApprovalStatus.PENDING,
     )
-    # created_by = models.ForeignKey(
-    #     User,
-    #     models.CASCADE,
-    #     related_name="user_group_admin_approval_user_invites",
-    # )
+    created_by = models.ForeignKey(
+        User,
+        models.CASCADE,
+        related_name="user_group_admin_approval_user_invites",
+    )
 
     class Meta:
+        verbose_name = "User Invite Approval"
+        verbose_name_plural = "User Invite Approvals"
         unique_together = ("user_group", "email")
 
     def __str__(self):

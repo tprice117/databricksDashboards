@@ -3,6 +3,7 @@ import logging
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save, pre_save
@@ -17,6 +18,7 @@ from api.utils.auth0 import get_password_change_url, get_user_data
 from common.models import BaseModel
 from notifications.utils.add_email_to_queue import add_email_to_queue
 from api.utils.utils import encrypt_string
+from api.models.choices.user_type import UserType
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,7 @@ class Order(BaseModel):
         AUTO_RENEWAL = "AUTO_RENEWAL"
         ONE_TIME = "ONE_TIME"
 
+    APPROVAL = "APPROVAL"
     PENDING = "PENDING"
     SCHEDULED = "SCHEDULED"
     INPROGRESS = "IN-PROGRESS"
@@ -47,6 +50,7 @@ class Order(BaseModel):
     COMPLETE = "COMPLETE"
 
     STATUS_CHOICES = (
+        (APPROVAL, "Approval"),
         (PENDING, "Pending"),
         (SCHEDULED, "Scheduled"),
         (INPROGRESS, "In-Progress"),
@@ -388,8 +392,137 @@ class Order(BaseModel):
                             description="Additional Tons",
                             platform_fee_percent=instance.order_group.take_rate,
                         )
+
+                # Check for any Admin Policy checks.
+                instance.admin_policy_checks(orders=order_group_orders)
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
+
+    def admin_policy_checks(self, orders=None):
+        """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
+
+        Args:
+            orders (Iterable, Orders): An iterable of Orders to use for policy time period.
+                                       Defaults to all orders in order group since the first day of current month.
+        """
+        # Add policy checks for UserGroupPolicyMonthlyLimit and UserGroupPolicyPurchaseApproval.
+        try:
+            from admin_approvals.models import UserGroupAdminApprovalOrder
+
+            user = self.order_group.user
+            # Admins are not subject to Order Approvals.
+            if user.type != UserType.ADMIN:
+                orders = (
+                    Order.objects.filter(order_group=self.order_group)
+                    if orders is None
+                    else orders
+                )
+                # Add policy checks for UserGroupPolicyMonthlyLimit and UserGroupPolicyPurchaseApproval.
+                # TODO: Could add policy reason field to Order (this could simply be the db model and/or name of the policy).
+                # Get all Orders for this UserGroup this month.
+                first_day_of_current_month = timezone.now().replace(day=1)
+                orders_this_month = []
+                for order in orders:
+                    if (
+                        order.submitted_on
+                        and order.submitted_on >= first_day_of_current_month
+                    ):
+                        orders_this_month.append(order)
+
+                # Calculate the total of all Orders for this UserGroup this month.
+                order_total_this_month = sum(
+                    [order.customer_price() for order in orders_this_month]
+                )
+
+                # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
+                # this Order.
+                if self.order_group.user_address.user_group.policy_monthly_limit and (
+                    order_total_this_month + self.customer_price()
+                    > self.order_group.user_address.user_group.policy_monthly_limit.amount
+                ):
+                    # Set Order status to Approval so that it is returned in api.
+                    self.status = Order.APPROVAL
+                    Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
+                    UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
+                    # raise ValidationError(
+                    #     "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
+                    # )
+                # Check that UserGroupPolicyPurchaseApproval will not be exceeded with this Order.
+                elif hasattr(
+                    self.order_group.user_address.user_group,
+                    "user_group_policy_purchase_approvals",
+                ):
+                    user_group_purchase_approval = self.order_group.user_address.user_group.user_group_policy_purchase_approvals.filter(
+                        user_type=user.type
+                    ).first()
+                    if (
+                        user_group_purchase_approval
+                        and self.customer_price() > user_group_purchase_approval.amount
+                    ):
+                        # Set Order status to Approval so that it is returned in api.
+                        self.status = Order.APPROVAL
+                        Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
+                        UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
+                        # raise ValidationError(
+                        #     "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
+                        # )
+        except Exception as e:
+            logger.error(f"Order.admin_policy_checks: [{e}]", exc_info=e)
+
+    def send_internal_order_confirmation_email(self):
+        # Send email to internal team. Only on our PROD environment.
+        if settings.ENVIRONMENT == "TEST":
+            try:
+                waste_type_str = "Not specified"
+                if self.order_group.waste_type:
+                    waste_type_str = self.order_group.waste_type.name
+                material_tonnage_str = "N/A"
+                if getattr(self.order_group, "material", None):
+                    material_tonnage_str = self.order_group.material.tonnage_included
+                rental_included_days = 0
+                if getattr(self.order_group, "rental", None):
+                    rental_included_days = self.order_group.rental.included_days
+
+                mailchimp.messages.send(
+                    {
+                        "message": {
+                            "headers": {
+                                "reply-to": "dispatch@trydownstream.com",
+                            },
+                            "from_name": "Downstream",
+                            "from_email": "dispatch@trydownstream.com",
+                            "to": [{"email": "dispatch@trydownstream.com"}],
+                            "subject": "Order Confirmed",
+                            "track_opens": True,
+                            "track_clicks": True,
+                            "html": render_to_string(
+                                "order-submission-email.html",
+                                {
+                                    "orderId": self.id,
+                                    "seller": self.order_group.seller_product_seller_location.seller_location.seller.name,
+                                    "sellerLocation": self.order_group.seller_product_seller_location.seller_location.name,
+                                    "mainProduct": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                                    "bookingType": self.order_type,
+                                    "wasteType": waste_type_str,
+                                    "supplierTonsIncluded": material_tonnage_str,
+                                    "supplierRentalDaysIncluded": rental_included_days,
+                                    "serviceDate": self.end_date,
+                                    "timeWindow": self.schedule_window,
+                                    "locationAddress": self.order_group.user_address.street,
+                                    "locationCity": self.order_group.user_address.city,
+                                    "locationState": self.order_group.user_address.state,
+                                    "locationZip": self.order_group.user_address.postal_code,
+                                    "locationDetails": self.order_group.access_details,
+                                    "additionalDetails": self.order_group.placement_details,
+                                },
+                            ),
+                        }
+                    }
+                )
+            except Exception as e:
+                logger.error(
+                    f"Order.send_internal_order_confirmation_email: [{e}]", exc_info=e
+                )
 
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
@@ -473,41 +606,3 @@ class Order(BaseModel):
 
 
 post_save.connect(Order.post_save, sender=Order)
-
-
-@receiver(pre_save, sender=Order)
-def pre_save_order(sender, instance: Order, **kwargs):
-    #  Check if Order is being created.
-    creating = not Order.objects.filter(id=instance.id).exists()
-
-    if creating:
-        # Get all Orders for this UserGroup this month.
-        orders_this_month = Order.objects.filter(
-            submitted_on__gte=datetime.datetime.now().replace(day=1),
-        )
-
-        # Calculate the total of all Orders for this UserGroup this month.
-        order_total_this_month = sum(
-            [order.customer_price() for order in orders_this_month]
-        )
-
-        # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
-        # this Order.
-        if instance.order_group.user_address.user_group.policy_monthly_limit and (
-            order_total_this_month + instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_monthly_limit
-        ):
-            raise ValidationError(
-                "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
-            )
-        # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
-        # this Order.
-        elif hasattr(
-            instance.order_group.user_address.user_group, "policy_purchase_approval"
-        ) and (
-            instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_purchase_approval
-        ):
-            raise ValidationError(
-                "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
-            )
