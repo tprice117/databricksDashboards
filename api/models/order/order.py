@@ -436,7 +436,11 @@ class Order(BaseModel):
 
                 # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
                 # this Order.
-                if self.order_group.user_address.user_group.policy_monthly_limit and (
+                if getattr(
+                    self.order_group.user_address.user_group,
+                    "policy_monthly_limit",
+                    None,
+                ) is not None and (
                     order_total_this_month + self.customer_price()
                     > self.order_group.user_address.user_group.policy_monthly_limit.amount
                 ):
