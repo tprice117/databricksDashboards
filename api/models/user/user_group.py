@@ -97,6 +97,14 @@ class UserGroup(BaseModel):
             else None
         )
 
+    @property
+    def policy_user_invitations(self):
+        return (
+            self.user_group_policy_invitation_approvals
+            if hasattr(self, "user_group_policy_invitation_approvals")
+            else None
+        )
+
     def __str__(self):
         return self.name
 
