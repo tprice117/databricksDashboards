@@ -163,7 +163,9 @@ class UserGroupSerializer(WritableNestedModelSerializer):
     seller_id = serializers.PrimaryKeyRelatedField(
         queryset=Seller.objects.all(), source="seller", write_only=True, allow_null=True
     )
-    legal = UserGroupLegalSerializer()
+    legal = UserGroupLegalSerializer(
+        allow_null=True,
+    )
     credit_applications = UserGroupCreditApplicationSerializer(
         many=True,
         read_only=True,
