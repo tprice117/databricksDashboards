@@ -409,6 +409,7 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         self.queryset = self.queryset.prefetch_related(
             "orders__order_line_items",
+            "user__user_group__credit_applications",
             "seller_product_seller_location__seller_product__product__product_add_on_choices",
         )
         self.queryset = self.queryset.select_related(
