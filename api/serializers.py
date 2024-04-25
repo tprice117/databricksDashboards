@@ -192,6 +192,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         allow_blank=True,
     )
     policy_invitation_approvals = UserGroupPolicyInvitationApprovalSerializer(
+        many=True,
         required=False,
         allow_null=True,
     )
@@ -200,6 +201,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         allow_null=True,
     )
     policy_purchase_approvals = UserGroupPolicyPurchaseApprovalSerializer(
+        many=True,
         required=False,
         allow_null=True,
     )
