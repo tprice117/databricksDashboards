@@ -192,12 +192,15 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         allow_blank=True,
     )
     policy_invitation_approvals = UserGroupPolicyInvitationApprovalSerializer(
+        required=False,
         allow_null=True,
     )
     policy_monthly_limit = UserGroupPolicyMonthlyLimitSerializer(
+        required=False,
         allow_null=True,
     )
     policy_purchase_approvals = UserGroupPolicyPurchaseApprovalSerializer(
+        required=False,
         allow_null=True,
     )
 
