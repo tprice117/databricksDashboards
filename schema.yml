@@ -3680,6 +3680,111 @@ paths:
           description: ''
         '204':
           description: No response body
+  /api/order/{order_id}/accept/:
+    get:
+      operationId: order_accept_retrieve
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - order
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAcceptRetrieveErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          description: No response body
+  /api/order/{order_id}/deny/:
+    get:
+      operationId: order_deny_retrieve
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - order
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDenyRetrieveErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          description: No response body
+  /api/order/{order_id}/view/:
+    get:
+      operationId: order_view_retrieve
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - order
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderViewRetrieveErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          description: No response body
   /api/orders/:
     get:
       operationId: orders_list
@@ -10608,6 +10713,516 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAddressesDestroyErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '204':
+          description: No response body
+  /api/user-group-admin-approval-order/:
+    get:
+      operationId: user_group_admin_approval_order_list
+      tags:
+      - user-group-admin-approval-order
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrderListErrorResponse400'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          description: ''
+    post:
+      operationId: user_group_admin_approval_order_create
+      tags:
+      - user-group-admin-approval-order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+        required: true
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateErrorResponse400'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          description: ''
+  /api/user-group-admin-approval-order/{id}/:
+    get:
+      operationId: user_group_admin_approval_order_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Order Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-order
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrderRetrieveErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          description: ''
+    put:
+      operationId: user_group_admin_approval_order_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Order Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+        required: true
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          description: ''
+    patch:
+      operationId: user_group_admin_approval_order_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Order Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupAdminApprovalOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupAdminApprovalOrder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupAdminApprovalOrder'
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrder'
+          description: ''
+    delete:
+      operationId: user_group_admin_approval_order_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Order Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-order
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalOrderDestroyErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '204':
+          description: No response body
+  /api/user-group-admin-approval-user-invite/:
+    get:
+      operationId: user_group_admin_approval_user_invite_list
+      tags:
+      - user-group-admin-approval-user-invite
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteListErrorResponse400'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          description: ''
+    post:
+      operationId: user_group_admin_approval_user_invite_create
+      tags:
+      - user-group-admin-approval-user-invite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+        required: true
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateErrorResponse400'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          description: ''
+  /api/user-group-admin-approval-user-invite/{id}/:
+    get:
+      operationId: user_group_admin_approval_user_invite_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this User Invite Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-user-invite
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteRetrieveErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          description: ''
+    put:
+      operationId: user_group_admin_approval_user_invite_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this User Invite Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-user-invite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+        required: true
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          description: ''
+    patch:
+      operationId: user_group_admin_approval_user_invite_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this User Invite Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-user-invite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupAdminApprovalUserInvite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupAdminApprovalUserInvite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserGroupAdminApprovalUserInvite'
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInvite'
+          description: ''
+    delete:
+      operationId: user_group_admin_approval_user_invite_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this User Invite Approval.
+        required: true
+      tags:
+      - user-group-admin-approval-user-invite
+      security:
+      - CustomAuthentication: []
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteDestroyErrorResponse400'
           description: ''
         '404':
           content:
@@ -18272,6 +18887,20 @@ components:
       - service_date
       - start_date
       - updated_on
+    OrderAcceptRetrieveErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
+    OrderDenyRetrieveErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
     OrderDisposalTicket:
       type: object
       properties:
@@ -27379,6 +28008,7 @@ components:
       - type
     OrderStatusEnum:
       enum:
+      - APPROVAL
       - PENDING
       - SCHEDULED
       - IN-PROGRESS
@@ -27387,6 +28017,7 @@ components:
       - COMPLETE
       type: string
       description: |-
+        * `APPROVAL` - Approval
         * `PENDING` - Pending
         * `SCHEDULED` - Scheduled
         * `IN-PROGRESS` - In-Progress
@@ -27401,6 +28032,13 @@ components:
       - SWAP
       - AUTO_RENEWAL
       type: string
+    OrderViewRetrieveErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
     OrdersCreateBillingCommentsInternalUseErrorComponent:
       type: object
       properties:
@@ -31148,7 +31786,14 @@ components:
           writeOnly: true
           nullable: true
         legal:
-          $ref: '#/components/schemas/UserGroupLegal'
+          allOf:
+          - $ref: '#/components/schemas/UserGroupLegal'
+          nullable: true
+        credit_applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupCreditApplication'
+          readOnly: true
         credit_limit_utilized:
           type: number
           format: double
@@ -31163,6 +31808,18 @@ components:
           default: false
         share_code:
           type: string
+          nullable: true
+        policy_invitation_approvals:
+          allOf:
+          - $ref: '#/components/schemas/UserGroupPolicyInvitationApproval'
+          nullable: true
+        policy_monthly_limit:
+          allOf:
+          - $ref: '#/components/schemas/UserGroupPolicyMonthlyLimit'
+          nullable: true
+        policy_purchase_approvals:
+          allOf:
+          - $ref: '#/components/schemas/UserGroupPolicyPurchaseApproval'
           nullable: true
         created_on:
           type: string
@@ -31216,6 +31873,59 @@ components:
           nullable: true
           description: This is the company_id in Intercom.
           maxLength: 255
+    PatchedUserGroupAdminApprovalOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/StatusCceEnum'
+        order:
+          type: string
+          format: uuid
+    PatchedUserGroupAdminApprovalUserInvite:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        status:
+          $ref: '#/components/schemas/StatusCceEnum'
+        user_group:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
     PatchedUserGroupBilling:
       type: object
       properties:
@@ -31297,6 +32007,10 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusCceEnum'
+          readOnly: true
         user_group:
           type: string
           format: uuid
@@ -47466,6 +48180,16 @@ components:
         propertyName: type
         mapping:
           client_error: '#/components/schemas/ParseErrorResponse'
+    StatusCceEnum:
+      enum:
+      - PENDING
+      - APPROVED
+      - DECLINED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `APPROVED` - Approved
+        * `DECLINED` - Declined
     StripeBillingInvoiceItemsRetrieveErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ParseErrorResponse'
@@ -53734,7 +54458,14 @@ components:
           writeOnly: true
           nullable: true
         legal:
-          $ref: '#/components/schemas/UserGroupLegal'
+          allOf:
+          - $ref: '#/components/schemas/UserGroupLegal'
+          nullable: true
+        credit_applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupCreditApplication'
+          readOnly: true
         credit_limit_utilized:
           type: number
           format: double
@@ -53749,6 +54480,18 @@ components:
           default: false
         share_code:
           type: string
+          nullable: true
+        policy_invitation_approvals:
+          allOf:
+          - $ref: '#/components/schemas/UserGroupPolicyInvitationApproval'
+          nullable: true
+        policy_monthly_limit:
+          allOf:
+          - $ref: '#/components/schemas/UserGroupPolicyMonthlyLimit'
+          nullable: true
+        policy_purchase_approvals:
+          allOf:
+          - $ref: '#/components/schemas/UserGroupPolicyPurchaseApproval'
           nullable: true
         created_on:
           type: string
@@ -53804,12 +54547,1300 @@ components:
           maxLength: 255
       required:
       - created_on
+      - credit_applications
       - credit_limit_utilized
       - legal
       - name
+      - policy_invitation_approvals
+      - policy_monthly_limit
+      - policy_purchase_approvals
       - seller
       - seller_id
       - updated_on
+    UserGroupAdminApprovalOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/StatusCceEnum'
+        order:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - order
+      - updated_on
+    UserGroupAdminApprovalOrderCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateStatusErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateOrderErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/UserGroupAdminApprovalOrderCreateNonFieldErrorsErrorComponent'
+          id: '#/components/schemas/UserGroupAdminApprovalOrderCreateIdErrorComponent'
+          is_deleted: '#/components/schemas/UserGroupAdminApprovalOrderCreateIsDeletedErrorComponent'
+          status: '#/components/schemas/UserGroupAdminApprovalOrderCreateStatusErrorComponent'
+          order: '#/components/schemas/UserGroupAdminApprovalOrderCreateOrderErrorComponent'
+    UserGroupAdminApprovalOrderCreateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/UserGroupAdminApprovalOrderCreateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalOrderCreateIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - id
+          type: string
+          description: '* `id` - id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderCreateIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - is_deleted
+          type: string
+          description: '* `is_deleted` - is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderCreateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          type: string
+          description: '* `invalid` - invalid'
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderCreateOrderErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - order
+          type: string
+          description: '* `order` - order'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderCreateStatusErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - status
+          type: string
+          description: '* `status` - status'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderCreateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupAdminApprovalOrderCreateError'
+      required:
+      - errors
+      - type
+    UserGroupAdminApprovalOrderDestroyErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalOrderListErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalOrderPartialUpdateError:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateStatusErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateOrderErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateNonFieldErrorsErrorComponent'
+          id: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateIdErrorComponent'
+          is_deleted: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateIsDeletedErrorComponent'
+          status: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateStatusErrorComponent'
+          order: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateOrderErrorComponent'
+    UserGroupAdminApprovalOrderPartialUpdateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalOrderPartialUpdateIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - id
+          type: string
+          description: '* `id` - id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderPartialUpdateIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - is_deleted
+          type: string
+          description: '* `is_deleted` - is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderPartialUpdateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          type: string
+          description: '* `invalid` - invalid'
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderPartialUpdateOrderErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - order
+          type: string
+          description: '* `order` - order'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderPartialUpdateStatusErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - status
+          type: string
+          description: '* `status` - status'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderPartialUpdateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupAdminApprovalOrderPartialUpdateError'
+      required:
+      - errors
+      - type
+    UserGroupAdminApprovalOrderRetrieveErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalOrderUpdateError:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateStatusErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateOrderErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/UserGroupAdminApprovalOrderUpdateNonFieldErrorsErrorComponent'
+          id: '#/components/schemas/UserGroupAdminApprovalOrderUpdateIdErrorComponent'
+          is_deleted: '#/components/schemas/UserGroupAdminApprovalOrderUpdateIsDeletedErrorComponent'
+          status: '#/components/schemas/UserGroupAdminApprovalOrderUpdateStatusErrorComponent'
+          order: '#/components/schemas/UserGroupAdminApprovalOrderUpdateOrderErrorComponent'
+    UserGroupAdminApprovalOrderUpdateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/UserGroupAdminApprovalOrderUpdateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalOrderUpdateIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - id
+          type: string
+          description: '* `id` - id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderUpdateIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - is_deleted
+          type: string
+          description: '* `is_deleted` - is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderUpdateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          type: string
+          description: '* `invalid` - invalid'
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderUpdateOrderErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - order
+          type: string
+          description: '* `order` - order'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderUpdateStatusErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - status
+          type: string
+          description: '* `status` - status'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalOrderUpdateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupAdminApprovalOrderUpdateError'
+      required:
+      - errors
+      - type
+    UserGroupAdminApprovalUserInvite:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        status:
+          $ref: '#/components/schemas/StatusCceEnum'
+        user_group:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+      required:
+      - created_by
+      - created_on
+      - email
+      - updated_on
+      - user_group
+    UserGroupAdminApprovalUserInviteCreateCreatedByErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - created_by
+          type: string
+          description: '* `created_by` - created_by'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateEmailErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - email
+          type: string
+          description: '* `email` - email'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateEmailErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateStatusErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateUserErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateCreatedByErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateNonFieldErrorsErrorComponent'
+          id: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateIdErrorComponent'
+          is_deleted: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateIsDeletedErrorComponent'
+          email: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateEmailErrorComponent'
+          status: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateStatusErrorComponent'
+          user_group: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateUserGroupErrorComponent'
+          user: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateUserErrorComponent'
+          created_by: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateCreatedByErrorComponent'
+    UserGroupAdminApprovalUserInviteCreateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalUserInviteCreateIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - id
+          type: string
+          description: '* `id` - id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - is_deleted
+          type: string
+          description: '* `is_deleted` - is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateStatusErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - status
+          type: string
+          description: '* `status` - status'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateUserErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user
+          type: string
+          description: '* `user` - user'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user_group
+          type: string
+          description: '* `user_group` - user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteCreateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteCreateError'
+      required:
+      - errors
+      - type
+    UserGroupAdminApprovalUserInviteDestroyErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalUserInviteListErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalUserInvitePartialUpdateCreatedByErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - created_by
+          type: string
+          description: '* `created_by` - created_by'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateEmailErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - email
+          type: string
+          description: '* `email` - email'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateError:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateEmailErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateStatusErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateUserErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateCreatedByErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateNonFieldErrorsErrorComponent'
+          id: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateIdErrorComponent'
+          is_deleted: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateIsDeletedErrorComponent'
+          email: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateEmailErrorComponent'
+          status: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateStatusErrorComponent'
+          user_group: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateUserGroupErrorComponent'
+          user: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateUserErrorComponent'
+          created_by: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateCreatedByErrorComponent'
+    UserGroupAdminApprovalUserInvitePartialUpdateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalUserInvitePartialUpdateIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - id
+          type: string
+          description: '* `id` - id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - is_deleted
+          type: string
+          description: '* `is_deleted` - is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateStatusErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - status
+          type: string
+          description: '* `status` - status'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateUserErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user
+          type: string
+          description: '* `user` - user'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user_group
+          type: string
+          description: '* `user_group` - user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInvitePartialUpdateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupAdminApprovalUserInvitePartialUpdateError'
+      required:
+      - errors
+      - type
+    UserGroupAdminApprovalUserInviteRetrieveErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalUserInviteUpdateCreatedByErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - created_by
+          type: string
+          description: '* `created_by` - created_by'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateEmailErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - email
+          type: string
+          description: '* `email` - email'
+        code:
+          enum:
+          - blank
+          - invalid
+          - max_length
+          - 'null'
+          - null_characters_not_allowed
+          - required
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `null` - null
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `required` - required
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateError:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateEmailErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateStatusErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateUserErrorComponent'
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateCreatedByErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateNonFieldErrorsErrorComponent'
+          id: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateIdErrorComponent'
+          is_deleted: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateIsDeletedErrorComponent'
+          email: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateEmailErrorComponent'
+          status: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateStatusErrorComponent'
+          user_group: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateUserGroupErrorComponent'
+          user: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateUserErrorComponent'
+          created_by: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateCreatedByErrorComponent'
+    UserGroupAdminApprovalUserInviteUpdateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    UserGroupAdminApprovalUserInviteUpdateIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - id
+          type: string
+          description: '* `id` - id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - is_deleted
+          type: string
+          description: '* `is_deleted` - is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateStatusErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - status
+          type: string
+          description: '* `status` - status'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateUserErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user
+          type: string
+          description: '* `user` - user'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user_group
+          type: string
+          description: '* `user_group` - user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupAdminApprovalUserInviteUpdateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupAdminApprovalUserInviteUpdateError'
+      required:
+      - errors
+      - type
     UserGroupBilling:
       type: object
       properties:
@@ -55001,11 +57032,16 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusCceEnum'
+          readOnly: true
         user_group:
           type: string
           format: uuid
       required:
       - created_on
+      - status
       - updated_on
       - user_group
     UserGroupCreditApplicationsCreateError:
@@ -55506,32 +57542,6 @@ components:
         id:
           type: string
           nullable: true
-        latitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          readOnly: true
-        longitude:
-          type: number
-          format: double
-          maximum: 1000
-          minimum: -1000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          readOnly: true
-        created_on:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
         name:
           type: string
           maxLength: 255
@@ -55557,13 +57567,25 @@ components:
         country:
           type: string
           maxLength: 80
-        user_group:
-          type: string
-          format: uuid
+        latitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+        longitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
       required:
       - city
       - country
-      - created_on
       - industry
       - latitude
       - longitude
@@ -55572,8 +57594,91 @@ components:
       - state
       - street
       - structure
+    UserGroupPolicyInvitationApproval:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user_type:
+          $ref: '#/components/schemas/UserTypeEnum'
+        user_group:
+          type: string
+          format: uuid
+      required:
+      - created_on
       - updated_on
       - user_group
+      - user_type
+    UserGroupPolicyMonthlyLimit:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        amount:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        user_group:
+          type: string
+          format: uuid
+      required:
+      - amount
+      - created_on
+      - updated_on
+      - user_group
+    UserGroupPolicyPurchaseApproval:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        user_type:
+          $ref: '#/components/schemas/UserTypeEnum'
+        amount:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        user_group:
+          type: string
+          format: uuid
+      required:
+      - amount
+      - created_on
+      - updated_on
+      - user_group
+      - user_type
     UserGroupsCreateAutopayErrorComponent:
       type: object
       properties:
@@ -55653,7 +57758,6 @@ components:
       - $ref: '#/components/schemas/UserGroupsCreateSellerIdErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateLegalNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateLegalIdErrorComponent'
-      - $ref: '#/components/schemas/UserGroupsCreateLegalIsDeletedErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateLegalNameErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateLegalDoingBusinessAsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateLegalStructureErrorComponent'
@@ -55663,10 +57767,25 @@ components:
       - $ref: '#/components/schemas/UserGroupsCreateLegalStateErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateLegalPostalCodeErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateLegalCountryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupsCreateLegalUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateNetTermsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateInvoiceAtProjectCompletionErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateShareCodeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsUserTypeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitAmountErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsUserTypeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsAmountErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateIsDeletedErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreateNameErrorComponent'
       - $ref: '#/components/schemas/UserGroupsCreatePayLaterErrorComponent'
@@ -55687,7 +57806,6 @@ components:
           seller_id: '#/components/schemas/UserGroupsCreateSellerIdErrorComponent'
           legal.non_field_errors: '#/components/schemas/UserGroupsCreateLegalNonFieldErrorsErrorComponent'
           legal.id: '#/components/schemas/UserGroupsCreateLegalIdErrorComponent'
-          legal.is_deleted: '#/components/schemas/UserGroupsCreateLegalIsDeletedErrorComponent'
           legal.name: '#/components/schemas/UserGroupsCreateLegalNameErrorComponent'
           legal.doing_business_as: '#/components/schemas/UserGroupsCreateLegalDoingBusinessAsErrorComponent'
           legal.structure: '#/components/schemas/UserGroupsCreateLegalStructureErrorComponent'
@@ -55697,10 +57815,25 @@ components:
           legal.state: '#/components/schemas/UserGroupsCreateLegalStateErrorComponent'
           legal.postal_code: '#/components/schemas/UserGroupsCreateLegalPostalCodeErrorComponent'
           legal.country: '#/components/schemas/UserGroupsCreateLegalCountryErrorComponent'
-          legal.user_group: '#/components/schemas/UserGroupsCreateLegalUserGroupErrorComponent'
           net_terms: '#/components/schemas/UserGroupsCreateNetTermsErrorComponent'
           invoice_at_project_completion: '#/components/schemas/UserGroupsCreateInvoiceAtProjectCompletionErrorComponent'
           share_code: '#/components/schemas/UserGroupsCreateShareCodeErrorComponent'
+          policy_invitation_approvals.non_field_errors: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsNonFieldErrorsErrorComponent'
+          policy_invitation_approvals.id: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsIdErrorComponent'
+          policy_invitation_approvals.is_deleted: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsIsDeletedErrorComponent'
+          policy_invitation_approvals.user_type: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsUserTypeErrorComponent'
+          policy_invitation_approvals.user_group: '#/components/schemas/UserGroupsCreatePolicyInvitationApprovalsUserGroupErrorComponent'
+          policy_monthly_limit.non_field_errors: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitNonFieldErrorsErrorComponent'
+          policy_monthly_limit.id: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitIdErrorComponent'
+          policy_monthly_limit.is_deleted: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitIsDeletedErrorComponent'
+          policy_monthly_limit.amount: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitAmountErrorComponent'
+          policy_monthly_limit.user_group: '#/components/schemas/UserGroupsCreatePolicyMonthlyLimitUserGroupErrorComponent'
+          policy_purchase_approvals.non_field_errors: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent'
+          policy_purchase_approvals.id: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsIdErrorComponent'
+          policy_purchase_approvals.is_deleted: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsIsDeletedErrorComponent'
+          policy_purchase_approvals.user_type: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsUserTypeErrorComponent'
+          policy_purchase_approvals.amount: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsAmountErrorComponent'
+          policy_purchase_approvals.user_group: '#/components/schemas/UserGroupsCreatePolicyPurchaseApprovalsUserGroupErrorComponent'
           is_deleted: '#/components/schemas/UserGroupsCreateIsDeletedErrorComponent'
           name: '#/components/schemas/UserGroupsCreateNameErrorComponent'
           pay_later: '#/components/schemas/UserGroupsCreatePayLaterErrorComponent'
@@ -56027,28 +58160,6 @@ components:
       - attr
       - code
       - detail
-    UserGroupsCreateLegalIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - legal.is_deleted
-          type: string
-          description: '* `legal.is_deleted` - legal.is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     UserGroupsCreateLegalNameErrorComponent:
       type: object
       properties:
@@ -56092,12 +58203,10 @@ components:
         code:
           enum:
           - invalid
-          - 'null'
           - required
           type: string
           description: |-
             * `invalid` - invalid
-            * `null` - null
             * `required` - required
         detail:
           type: string
@@ -56217,34 +58326,6 @@ components:
             * `invalid_choice` - invalid_choice
             * `null` - null
             * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupsCreateLegalUserGroupErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - legal.user_group
-          type: string
-          description: '* `legal.user_group` - legal.user_group'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          - 'null'
-          - required
-          - unique
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
-            * `unique` - unique
         detail:
           type: string
       required:
@@ -56375,6 +58456,408 @@ components:
       - attr
       - code
       - detail
+    UserGroupsCreatePolicyInvitationApprovalsIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.id
+          type: string
+          description: '* `policy_invitation_approvals.id` - policy_invitation_approvals.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyInvitationApprovalsIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.is_deleted
+          type: string
+          description: '* `policy_invitation_approvals.is_deleted` - policy_invitation_approvals.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyInvitationApprovalsNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.non_field_errors
+          type: string
+          description: '* `policy_invitation_approvals.non_field_errors` - policy_invitation_approvals.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyInvitationApprovalsUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.user_group
+          type: string
+          description: '* `policy_invitation_approvals.user_group` - policy_invitation_approvals.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyInvitationApprovalsUserTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.user_type
+          type: string
+          description: '* `policy_invitation_approvals.user_type` - policy_invitation_approvals.user_type'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyMonthlyLimitAmountErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.amount
+          type: string
+          description: '* `policy_monthly_limit.amount` - policy_monthly_limit.amount'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyMonthlyLimitIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.id
+          type: string
+          description: '* `policy_monthly_limit.id` - policy_monthly_limit.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyMonthlyLimitIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.is_deleted
+          type: string
+          description: '* `policy_monthly_limit.is_deleted` - policy_monthly_limit.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyMonthlyLimitNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.non_field_errors
+          type: string
+          description: '* `policy_monthly_limit.non_field_errors` - policy_monthly_limit.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyMonthlyLimitUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.user_group
+          type: string
+          description: '* `policy_monthly_limit.user_group` - policy_monthly_limit.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyPurchaseApprovalsAmountErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.amount
+          type: string
+          description: '* `policy_purchase_approvals.amount` - policy_purchase_approvals.amount'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyPurchaseApprovalsIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.id
+          type: string
+          description: '* `policy_purchase_approvals.id` - policy_purchase_approvals.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyPurchaseApprovalsIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.is_deleted
+          type: string
+          description: '* `policy_purchase_approvals.is_deleted` - policy_purchase_approvals.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.non_field_errors
+          type: string
+          description: '* `policy_purchase_approvals.non_field_errors` - policy_purchase_approvals.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyPurchaseApprovalsUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.user_group
+          type: string
+          description: '* `policy_purchase_approvals.user_group` - policy_purchase_approvals.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsCreatePolicyPurchaseApprovalsUserTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.user_type
+          type: string
+          description: '* `policy_purchase_approvals.user_type` - policy_purchase_approvals.user_type'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     UserGroupsCreateSellerIdErrorComponent:
       type: object
       properties:
@@ -56409,13 +58892,11 @@ components:
           description: '* `share_code` - share_code'
         code:
           enum:
-          - blank
           - invalid
           - null_characters_not_allowed
           - surrogate_characters_not_allowed
           type: string
           description: |-
-            * `blank` - blank
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
@@ -56616,7 +59097,6 @@ components:
       - $ref: '#/components/schemas/UserGroupsPartialUpdateSellerIdErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalIdErrorComponent'
-      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalIsDeletedErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalNameErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalDoingBusinessAsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalStructureErrorComponent'
@@ -56626,10 +59106,25 @@ components:
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalStateErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalPostalCodeErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalCountryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupsPartialUpdateLegalUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateNetTermsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateInvoiceAtProjectCompletionErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateShareCodeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsUserTypeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitAmountErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsUserTypeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsAmountErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateIsDeletedErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdateNameErrorComponent'
       - $ref: '#/components/schemas/UserGroupsPartialUpdatePayLaterErrorComponent'
@@ -56650,7 +59145,6 @@ components:
           seller_id: '#/components/schemas/UserGroupsPartialUpdateSellerIdErrorComponent'
           legal.non_field_errors: '#/components/schemas/UserGroupsPartialUpdateLegalNonFieldErrorsErrorComponent'
           legal.id: '#/components/schemas/UserGroupsPartialUpdateLegalIdErrorComponent'
-          legal.is_deleted: '#/components/schemas/UserGroupsPartialUpdateLegalIsDeletedErrorComponent'
           legal.name: '#/components/schemas/UserGroupsPartialUpdateLegalNameErrorComponent'
           legal.doing_business_as: '#/components/schemas/UserGroupsPartialUpdateLegalDoingBusinessAsErrorComponent'
           legal.structure: '#/components/schemas/UserGroupsPartialUpdateLegalStructureErrorComponent'
@@ -56660,10 +59154,25 @@ components:
           legal.state: '#/components/schemas/UserGroupsPartialUpdateLegalStateErrorComponent'
           legal.postal_code: '#/components/schemas/UserGroupsPartialUpdateLegalPostalCodeErrorComponent'
           legal.country: '#/components/schemas/UserGroupsPartialUpdateLegalCountryErrorComponent'
-          legal.user_group: '#/components/schemas/UserGroupsPartialUpdateLegalUserGroupErrorComponent'
           net_terms: '#/components/schemas/UserGroupsPartialUpdateNetTermsErrorComponent'
           invoice_at_project_completion: '#/components/schemas/UserGroupsPartialUpdateInvoiceAtProjectCompletionErrorComponent'
           share_code: '#/components/schemas/UserGroupsPartialUpdateShareCodeErrorComponent'
+          policy_invitation_approvals.non_field_errors: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsNonFieldErrorsErrorComponent'
+          policy_invitation_approvals.id: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsIdErrorComponent'
+          policy_invitation_approvals.is_deleted: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsIsDeletedErrorComponent'
+          policy_invitation_approvals.user_type: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsUserTypeErrorComponent'
+          policy_invitation_approvals.user_group: '#/components/schemas/UserGroupsPartialUpdatePolicyInvitationApprovalsUserGroupErrorComponent'
+          policy_monthly_limit.non_field_errors: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitNonFieldErrorsErrorComponent'
+          policy_monthly_limit.id: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitIdErrorComponent'
+          policy_monthly_limit.is_deleted: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitIsDeletedErrorComponent'
+          policy_monthly_limit.amount: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitAmountErrorComponent'
+          policy_monthly_limit.user_group: '#/components/schemas/UserGroupsPartialUpdatePolicyMonthlyLimitUserGroupErrorComponent'
+          policy_purchase_approvals.non_field_errors: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent'
+          policy_purchase_approvals.id: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsIdErrorComponent'
+          policy_purchase_approvals.is_deleted: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsIsDeletedErrorComponent'
+          policy_purchase_approvals.user_type: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsUserTypeErrorComponent'
+          policy_purchase_approvals.amount: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsAmountErrorComponent'
+          policy_purchase_approvals.user_group: '#/components/schemas/UserGroupsPartialUpdatePolicyPurchaseApprovalsUserGroupErrorComponent'
           is_deleted: '#/components/schemas/UserGroupsPartialUpdateIsDeletedErrorComponent'
           name: '#/components/schemas/UserGroupsPartialUpdateNameErrorComponent'
           pay_later: '#/components/schemas/UserGroupsPartialUpdatePayLaterErrorComponent'
@@ -56990,28 +59499,6 @@ components:
       - attr
       - code
       - detail
-    UserGroupsPartialUpdateLegalIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - legal.is_deleted
-          type: string
-          description: '* `legal.is_deleted` - legal.is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     UserGroupsPartialUpdateLegalNameErrorComponent:
       type: object
       properties:
@@ -57055,12 +59542,10 @@ components:
         code:
           enum:
           - invalid
-          - 'null'
           - required
           type: string
           description: |-
             * `invalid` - invalid
-            * `null` - null
             * `required` - required
         detail:
           type: string
@@ -57180,34 +59665,6 @@ components:
             * `invalid_choice` - invalid_choice
             * `null` - null
             * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupsPartialUpdateLegalUserGroupErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - legal.user_group
-          type: string
-          description: '* `legal.user_group` - legal.user_group'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          - 'null'
-          - required
-          - unique
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
-            * `unique` - unique
         detail:
           type: string
       required:
@@ -57338,6 +59795,408 @@ components:
       - attr
       - code
       - detail
+    UserGroupsPartialUpdatePolicyInvitationApprovalsIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.id
+          type: string
+          description: '* `policy_invitation_approvals.id` - policy_invitation_approvals.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyInvitationApprovalsIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.is_deleted
+          type: string
+          description: '* `policy_invitation_approvals.is_deleted` - policy_invitation_approvals.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyInvitationApprovalsNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.non_field_errors
+          type: string
+          description: '* `policy_invitation_approvals.non_field_errors` - policy_invitation_approvals.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyInvitationApprovalsUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.user_group
+          type: string
+          description: '* `policy_invitation_approvals.user_group` - policy_invitation_approvals.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyInvitationApprovalsUserTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.user_type
+          type: string
+          description: '* `policy_invitation_approvals.user_type` - policy_invitation_approvals.user_type'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyMonthlyLimitAmountErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.amount
+          type: string
+          description: '* `policy_monthly_limit.amount` - policy_monthly_limit.amount'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyMonthlyLimitIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.id
+          type: string
+          description: '* `policy_monthly_limit.id` - policy_monthly_limit.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyMonthlyLimitIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.is_deleted
+          type: string
+          description: '* `policy_monthly_limit.is_deleted` - policy_monthly_limit.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyMonthlyLimitNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.non_field_errors
+          type: string
+          description: '* `policy_monthly_limit.non_field_errors` - policy_monthly_limit.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyMonthlyLimitUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.user_group
+          type: string
+          description: '* `policy_monthly_limit.user_group` - policy_monthly_limit.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyPurchaseApprovalsAmountErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.amount
+          type: string
+          description: '* `policy_purchase_approvals.amount` - policy_purchase_approvals.amount'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyPurchaseApprovalsIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.id
+          type: string
+          description: '* `policy_purchase_approvals.id` - policy_purchase_approvals.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyPurchaseApprovalsIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.is_deleted
+          type: string
+          description: '* `policy_purchase_approvals.is_deleted` - policy_purchase_approvals.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.non_field_errors
+          type: string
+          description: '* `policy_purchase_approvals.non_field_errors` - policy_purchase_approvals.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyPurchaseApprovalsUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.user_group
+          type: string
+          description: '* `policy_purchase_approvals.user_group` - policy_purchase_approvals.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsPartialUpdatePolicyPurchaseApprovalsUserTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.user_type
+          type: string
+          description: '* `policy_purchase_approvals.user_type` - policy_purchase_approvals.user_type'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     UserGroupsPartialUpdateSellerIdErrorComponent:
       type: object
       properties:
@@ -57372,13 +60231,11 @@ components:
           description: '* `share_code` - share_code'
         code:
           enum:
-          - blank
           - invalid
           - null_characters_not_allowed
           - surrogate_characters_not_allowed
           type: string
           description: |-
-            * `blank` - blank
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
@@ -57508,7 +60365,6 @@ components:
       - $ref: '#/components/schemas/UserGroupsUpdateSellerIdErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateLegalNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateLegalIdErrorComponent'
-      - $ref: '#/components/schemas/UserGroupsUpdateLegalIsDeletedErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateLegalNameErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateLegalDoingBusinessAsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateLegalStructureErrorComponent'
@@ -57518,10 +60374,25 @@ components:
       - $ref: '#/components/schemas/UserGroupsUpdateLegalStateErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateLegalPostalCodeErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateLegalCountryErrorComponent'
-      - $ref: '#/components/schemas/UserGroupsUpdateLegalUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateNetTermsErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateInvoiceAtProjectCompletionErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateShareCodeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsUserTypeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitAmountErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitUserGroupErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsIdErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsUserTypeErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsAmountErrorComponent'
+      - $ref: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsUserGroupErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateIsDeletedErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdateNameErrorComponent'
       - $ref: '#/components/schemas/UserGroupsUpdatePayLaterErrorComponent'
@@ -57542,7 +60413,6 @@ components:
           seller_id: '#/components/schemas/UserGroupsUpdateSellerIdErrorComponent'
           legal.non_field_errors: '#/components/schemas/UserGroupsUpdateLegalNonFieldErrorsErrorComponent'
           legal.id: '#/components/schemas/UserGroupsUpdateLegalIdErrorComponent'
-          legal.is_deleted: '#/components/schemas/UserGroupsUpdateLegalIsDeletedErrorComponent'
           legal.name: '#/components/schemas/UserGroupsUpdateLegalNameErrorComponent'
           legal.doing_business_as: '#/components/schemas/UserGroupsUpdateLegalDoingBusinessAsErrorComponent'
           legal.structure: '#/components/schemas/UserGroupsUpdateLegalStructureErrorComponent'
@@ -57552,10 +60422,25 @@ components:
           legal.state: '#/components/schemas/UserGroupsUpdateLegalStateErrorComponent'
           legal.postal_code: '#/components/schemas/UserGroupsUpdateLegalPostalCodeErrorComponent'
           legal.country: '#/components/schemas/UserGroupsUpdateLegalCountryErrorComponent'
-          legal.user_group: '#/components/schemas/UserGroupsUpdateLegalUserGroupErrorComponent'
           net_terms: '#/components/schemas/UserGroupsUpdateNetTermsErrorComponent'
           invoice_at_project_completion: '#/components/schemas/UserGroupsUpdateInvoiceAtProjectCompletionErrorComponent'
           share_code: '#/components/schemas/UserGroupsUpdateShareCodeErrorComponent'
+          policy_invitation_approvals.non_field_errors: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsNonFieldErrorsErrorComponent'
+          policy_invitation_approvals.id: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsIdErrorComponent'
+          policy_invitation_approvals.is_deleted: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsIsDeletedErrorComponent'
+          policy_invitation_approvals.user_type: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsUserTypeErrorComponent'
+          policy_invitation_approvals.user_group: '#/components/schemas/UserGroupsUpdatePolicyInvitationApprovalsUserGroupErrorComponent'
+          policy_monthly_limit.non_field_errors: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitNonFieldErrorsErrorComponent'
+          policy_monthly_limit.id: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitIdErrorComponent'
+          policy_monthly_limit.is_deleted: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitIsDeletedErrorComponent'
+          policy_monthly_limit.amount: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitAmountErrorComponent'
+          policy_monthly_limit.user_group: '#/components/schemas/UserGroupsUpdatePolicyMonthlyLimitUserGroupErrorComponent'
+          policy_purchase_approvals.non_field_errors: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent'
+          policy_purchase_approvals.id: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsIdErrorComponent'
+          policy_purchase_approvals.is_deleted: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsIsDeletedErrorComponent'
+          policy_purchase_approvals.user_type: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsUserTypeErrorComponent'
+          policy_purchase_approvals.amount: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsAmountErrorComponent'
+          policy_purchase_approvals.user_group: '#/components/schemas/UserGroupsUpdatePolicyPurchaseApprovalsUserGroupErrorComponent'
           is_deleted: '#/components/schemas/UserGroupsUpdateIsDeletedErrorComponent'
           name: '#/components/schemas/UserGroupsUpdateNameErrorComponent'
           pay_later: '#/components/schemas/UserGroupsUpdatePayLaterErrorComponent'
@@ -57882,28 +60767,6 @@ components:
       - attr
       - code
       - detail
-    UserGroupsUpdateLegalIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - legal.is_deleted
-          type: string
-          description: '* `legal.is_deleted` - legal.is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     UserGroupsUpdateLegalNameErrorComponent:
       type: object
       properties:
@@ -57947,12 +60810,10 @@ components:
         code:
           enum:
           - invalid
-          - 'null'
           - required
           type: string
           description: |-
             * `invalid` - invalid
-            * `null` - null
             * `required` - required
         detail:
           type: string
@@ -58072,34 +60933,6 @@ components:
             * `invalid_choice` - invalid_choice
             * `null` - null
             * `required` - required
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    UserGroupsUpdateLegalUserGroupErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - legal.user_group
-          type: string
-          description: '* `legal.user_group` - legal.user_group'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          - 'null'
-          - required
-          - unique
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
-            * `unique` - unique
         detail:
           type: string
       required:
@@ -58230,6 +61063,408 @@ components:
       - attr
       - code
       - detail
+    UserGroupsUpdatePolicyInvitationApprovalsIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.id
+          type: string
+          description: '* `policy_invitation_approvals.id` - policy_invitation_approvals.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyInvitationApprovalsIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.is_deleted
+          type: string
+          description: '* `policy_invitation_approvals.is_deleted` - policy_invitation_approvals.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyInvitationApprovalsNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.non_field_errors
+          type: string
+          description: '* `policy_invitation_approvals.non_field_errors` - policy_invitation_approvals.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyInvitationApprovalsUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.user_group
+          type: string
+          description: '* `policy_invitation_approvals.user_group` - policy_invitation_approvals.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyInvitationApprovalsUserTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_invitation_approvals.user_type
+          type: string
+          description: '* `policy_invitation_approvals.user_type` - policy_invitation_approvals.user_type'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyMonthlyLimitAmountErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.amount
+          type: string
+          description: '* `policy_monthly_limit.amount` - policy_monthly_limit.amount'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyMonthlyLimitIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.id
+          type: string
+          description: '* `policy_monthly_limit.id` - policy_monthly_limit.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyMonthlyLimitIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.is_deleted
+          type: string
+          description: '* `policy_monthly_limit.is_deleted` - policy_monthly_limit.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyMonthlyLimitNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.non_field_errors
+          type: string
+          description: '* `policy_monthly_limit.non_field_errors` - policy_monthly_limit.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyMonthlyLimitUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_monthly_limit.user_group
+          type: string
+          description: '* `policy_monthly_limit.user_group` - policy_monthly_limit.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          - unique
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyPurchaseApprovalsAmountErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.amount
+          type: string
+          description: '* `policy_purchase_approvals.amount` - policy_purchase_approvals.amount'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyPurchaseApprovalsIdErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.id
+          type: string
+          description: '* `policy_purchase_approvals.id` - policy_purchase_approvals.id'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyPurchaseApprovalsIsDeletedErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.is_deleted
+          type: string
+          description: '* `policy_purchase_approvals.is_deleted` - policy_purchase_approvals.is_deleted'
+        code:
+          enum:
+          - invalid
+          - 'null'
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `null` - null
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyPurchaseApprovalsNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.non_field_errors
+          type: string
+          description: '* `policy_purchase_approvals.non_field_errors` - policy_purchase_approvals.non_field_errors'
+        code:
+          enum:
+          - invalid
+          - required
+          - unique
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `required` - required
+            * `unique` - unique
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyPurchaseApprovalsUserGroupErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.user_group
+          type: string
+          description: '* `policy_purchase_approvals.user_group` - policy_purchase_approvals.user_group'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    UserGroupsUpdatePolicyPurchaseApprovalsUserTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - policy_purchase_approvals.user_type
+          type: string
+          description: '* `policy_purchase_approvals.user_type` - policy_purchase_approvals.user_type'
+        code:
+          enum:
+          - invalid_choice
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid_choice` - invalid_choice
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     UserGroupsUpdateSellerIdErrorComponent:
       type: object
       properties:
@@ -58264,13 +61499,11 @@ components:
           description: '* `share_code` - share_code'
         code:
           enum:
-          - blank
           - invalid
           - null_characters_not_allowed
           - surrogate_characters_not_allowed
           type: string
           description: |-
-            * `blank` - blank
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed

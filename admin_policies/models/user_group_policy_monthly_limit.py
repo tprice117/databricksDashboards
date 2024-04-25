@@ -15,7 +15,7 @@ class UserGroupPolicyMonthlyLimit(BaseModel):
     user_group = models.OneToOneField(
         UserGroup,
         models.CASCADE,
-        related_name="user_group_policy_monthly_limit",
+        related_name="policy_monthly_limit",
     )
     amount = models.IntegerField()
 
