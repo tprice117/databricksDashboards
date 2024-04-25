@@ -7,7 +7,7 @@ import notifications.models as models
 
 
 def parse_order_id(s):
-    start = s.find("[") + 1
+    start = s.rfind("[") + 1
     end = s.find("]", start)
     if start > 0 and end > 0:
         return s[start:end]
