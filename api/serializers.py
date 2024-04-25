@@ -184,6 +184,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
     share_code = serializers.CharField(
         required=False,
         allow_null=True,
+        allow_blank=True,
     )
 
     class Meta:
