@@ -1312,7 +1312,10 @@ def order_status_view(request, order_id):
         order = Order.objects.get(id=order_id)
         accept_url = f"/api/order/{order_id}/accept/?key={key}"
         # deny_url = f"/api/order/{order_id}/deny/?key={key}"
-        payload = {"order": order, "accept_url": accept_url}  # "deny_url": deny_url
+        deny_url = (
+            order.order_group.seller_product_seller_location.seller_product.seller.dashboard_url
+        )
+        payload = {"order": order, "accept_url": accept_url, "deny_url": deny_url}
         return render(request, "notifications/emails/supplier_email.min.html", payload)
     else:
         return render(
