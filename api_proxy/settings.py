@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") != "TEST"
 # NOTE: DRF Standardized Errors will handle uncaught exceptions if this is set to False.
 # Setting it to True will still show the Django error page on uncaught exceptions.
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "external_contracts",
     "notifications",
     "payment_methods",
+    "supplier_dashboard",
     # END: Django Apps.
     "api.pricing_ml",
     "api.utils",
@@ -381,7 +382,7 @@ else:
         "a44b44d5-2cb8-4255-bbf6-dc5884bffdbf"  # env("BASIS_DEV_THEORY_APPLICATION_ID")
     )
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_DEV_TOKEN")
-
+API_URL = "http://127.0.0.1:8000"
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]

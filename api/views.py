@@ -1318,11 +1318,11 @@ def order_status_view(request, order_id):
         return render(
             request,
             "notifications/emails/failover_email_us.html",
-            {"order_id": order_id},
+            {"subject": f"Supplier%20Approved%20%5B{order_id}%5D"},
         )
 
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @authentication_classes([])
 @permission_classes([])
 def update_order_status(request, order_id, accept=True):
@@ -1340,16 +1340,25 @@ def update_order_status(request, order_id, accept=True):
                     internal_email.supplier_denied_order(order)
         else:
             raise ValueError("Invalid Token")
-        return render(
-            request,
-            "notifications/emails/supplier_order_updated.html",
-            {"order_id": order_id},
-        )
     except Exception as e:
         logger.error(f"update_order_status: [{e}]", exc_info=e)
         return render(
             request,
             "notifications/emails/failover_email_us.html",
+            {"subject": f"Supplier%20Approved%20%5B{order_id}%5D"},
+        )
+    if request.method == "POST":
+        # This is an HTMX request, so respond with html snippet
+        return render(
+            request,
+            "supplier_dashboard/snippets/order_status.html",
+            {"order": order},
+        )
+    else:
+        # This is a GET request, so render a full success page.
+        return render(
+            request,
+            "notifications/emails/supplier_order_updated.html",
             {"order_id": order_id},
         )
 

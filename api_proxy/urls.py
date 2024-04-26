@@ -156,6 +156,8 @@ urlpatterns = [
     path(
         "api/order/<uuid:order_id>/deny/", views.update_order_status, {"accept": False}
     ),
+    # Supplier Dashboard.
+    path("", include("supplier_dashboard.urls")),
     # Test.
     path("test/", views.test3),
 ]

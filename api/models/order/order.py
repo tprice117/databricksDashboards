@@ -94,6 +94,14 @@ class Order(BaseModel):
     def order_type(self):
         return self.get_order_type()
 
+    @property
+    def seller_accept_order_url(self):
+        return f"{settings.API_URL}/api/order/{self.id}/accept/?key={encrypt_string(str(self.id))}"
+
+    @property
+    def seller_view_order_url(self):
+        return f"{settings.API_URL}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
+
     def customer_price(self):
         return sum(
             [
@@ -546,8 +554,7 @@ class Order(BaseModel):
             if self.order_type != Order.Type.AUTO_RENEWAL:
                 # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
                 # then it opens the order html to allow them to select order status.
-                base_url = settings.API_URL
-                accept_url = f"{base_url}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
+                accept_url = self.seller_view_order_url
                 subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
                 html_content_supplier = render_to_string(
                     "notifications/emails/supplier_email.min.html",
