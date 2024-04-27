@@ -3,6 +3,7 @@ import csv
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from django.http import HttpResponseRedirect
 
 from api.admin.filters.seller.admin_tasks import SellerAdminTasksFilter
 from api.admin.inlines import SellerLocationInline, SellerProductInline
@@ -12,6 +13,13 @@ from api.models import Seller
 
 @admin.register(Seller)
 class SellerAdmin(admin.ModelAdmin):
+    # Add dropdown to see seller dashboard.
+    actions = ["view_seller_dashboard"]
+
+    def view_seller_dashboard(self, request, queryset):
+        for seller in queryset:
+            return HttpResponseRedirect(seller.dashboard_url)
+
     search_fields = [
         "name",
     ]

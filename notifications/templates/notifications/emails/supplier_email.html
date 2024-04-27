@@ -224,6 +224,248 @@
                                                                                 style="height:32px;min-height:32px;line-height:32px;">
                                                                             </td>
                                                                         </tr>
+                                                                        {% if not is_email %}
+                                                                        <tr>
+                                                                            <td width="100%">
+                                                                                <table width="100%" cellspacing="0"
+                                                                                    cellpadding="0" border="0">
+                                                                                    <tr>
+                                                                                        <td width="100%" align="center"
+                                                                                            style="background-color:#ffffff;border-radius:16px;box-shadow:0px 16px 24px 0px rgba(2,15,22,0.10000000149011612);padding-left:24px;padding-right:24px;"
+                                                                                            bgcolor="#ffffff">
+                                                                                            <table width="100%"
+                                                                                                border="0"
+                                                                                                cellpadding="0"
+                                                                                                cellspacing="0">
+                                                                                                <tr>
+                                                                                                    <td height="24"
+                                                                                                        style="height:24px;min-height:24px;line-height:24px;">
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td align="center">
+                                                                                                        <div
+                                                                                                            style="line-height:24px;text-align:center;">
+                                                                                                            <span
+                                                                                                                style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:18px;line-height:24px;text-align:center;">
+                                                                                                                {% if order.status == "PENDING" %}
+                                                                                                                Are you
+                                                                                                                able to
+                                                                                                                fulfill
+                                                                                                                this
+                                                                                                                booking?
+                                                                                                                {% else %}
+                                                                                                                Order
+                                                                                                                Status:
+                                                                                                                <span
+                                                                                                                    style="color:#018381;font-style:italic;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:center;">
+                                                                                                                    {{ order.status }}
+                                                                                                                </span>
+                                                                                                                {% endif %}
+                                                                                                            </span>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td height="24"
+                                                                                                        style="height:24px;min-height:24px;line-height:24px;">
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td width="100%"
+                                                                                                        align="center">
+                                                                                                        <table
+                                                                                                            width="100%"
+                                                                                                            border="0"
+                                                                                                            cellpadding="0"
+                                                                                                            cellspacing="0">
+                                                                                                            <tr>
+                                                                                                                {% if deny_url %}
+                                                                                                                <td width="47.73%"
+                                                                                                                    align="center"
+                                                                                                                    style="vertical-align:middle;height:48px;border-radius:8px;border:2px solid #018381;padding-left:16px;padding-right:16px;">
+                                                                                                                    <a
+                                                                                                                        href="{{deny_url}}">
+                                                                                                                        <div>
+                                                                                                                            <table
+                                                                                                                                border="0"
+                                                                                                                                cellpadding="0"
+                                                                                                                                cellspacing="0">
+                                                                                                                                <tr>
+                                                                                                                                    <td height="4"
+                                                                                                                                        style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                                <tr>
+                                                                                                                                    <td
+                                                                                                                                        style="vertical-align:middle;">
+                                                                                                                                        <table
+                                                                                                                                            cellspacing="0"
+                                                                                                                                            cellpadding="0"
+                                                                                                                                            border="0">
+                                                                                                                                            <tr>
+                                                                                                                                                <td align="center"
+                                                                                                                                                    style="vertical-align:middle;">
+                                                                                                                                                    <table
+                                                                                                                                                        width="100%"
+                                                                                                                                                        border="0"
+                                                                                                                                                        cellpadding="0"
+                                                                                                                                                        cellspacing="0">
+                                                                                                                                                        <tr>
+                                                                                                                                                            <td style="vertical-align:middle;"
+                                                                                                                                                                align="center">
+                                                                                                                                                                <div
+                                                                                                                                                                    style="line-height:16px;text-align:center;">
+                                                                                                                                                                    <span
+                                                                                                                                                                        style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
+                                                                                                                                                                        See
+                                                                                                                                                                        All
+                                                                                                                                                                        Orders
+                                                                                                                                                                    </span>
+                                                                                                                                                                </div>
+                                                                                                                                                            </td>
+                                                                                                                                                        </tr>
+                                                                                                                                                    </table>
+                                                                                                                                                </td>
+                                                                                                                                            </tr>
+                                                                                                                                        </table>
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                                <tr>
+                                                                                                                                    <td height="4"
+                                                                                                                                        style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                            </table>
+                                                                                                                        </div>
+                                                                                                                    </a>
+                                                                                                                </td>
+                                                                                                                <td style="width:16px;min-width:16px;"
+                                                                                                                    width="16">
+                                                                                                                </td>
+                                                                                                                {% endif %}
+                                                                                                                {% if order.status == "PENDING" %}
+                                                                                                                <td
+                                                                                                                    width="{% if deny_url %}47.73%{%endif%}">
+                                                                                                                    <table
+                                                                                                                        width="100%"
+                                                                                                                        cellspacing="0"
+                                                                                                                        cellpadding="0"
+                                                                                                                        border="0">
+                                                                                                                        <tr>
+                                                                                                                            <td width="47.73%"
+                                                                                                                                align="center"
+                                                                                                                                style="vertical-align:middle;height:48px;background-color:#018381;border-radius:8px;padding-left:16px;padding-right:16px;"
+                                                                                                                                bgcolor="#018381">
+                                                                                                                                <a
+                                                                                                                                    href="{{accept_url}}">
+                                                                                                                                    <div>
+                                                                                                                                        <table
+                                                                                                                                            border="0"
+                                                                                                                                            cellpadding="0"
+                                                                                                                                            cellspacing="0">
+                                                                                                                                            <tr>
+                                                                                                                                                <td height="4"
+                                                                                                                                                    style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                                                                </td>
+                                                                                                                                            </tr>
+                                                                                                                                            <tr>
+                                                                                                                                                <td
+                                                                                                                                                    style="vertical-align:middle;">
+                                                                                                                                                    <table
+                                                                                                                                                        cellspacing="0"
+                                                                                                                                                        cellpadding="0"
+                                                                                                                                                        border="0">
+                                                                                                                                                        <tr>
+                                                                                                                                                            <td align="center"
+                                                                                                                                                                style="vertical-align:middle;">
+                                                                                                                                                                <table
+                                                                                                                                                                    width="100%"
+                                                                                                                                                                    border="0"
+                                                                                                                                                                    cellpadding="0"
+                                                                                                                                                                    cellspacing="0">
+                                                                                                                                                                    <tr>
+                                                                                                                                                                        <td style="vertical-align:middle;"
+                                                                                                                                                                            align="center">
+                                                                                                                                                                            <div
+                                                                                                                                                                                style="line-height:16px;text-align:center;">
+                                                                                                                                                                                <span
+                                                                                                                                                                                    style="color:#ffffff;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
+                                                                                                                                                                                    {% if is_email %}
+                                                                                                                                                                                    Open
+                                                                                                                                                                                    Confirmation
+                                                                                                                                                                                    Form
+                                                                                                                                                                                    {% else %}
+                                                                                                                                                                                    Accept
+                                                                                                                                                                                    {% endif %}
+                                                                                                                                                                                </span>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        </td>
+                                                                                                                                                                    </tr>
+                                                                                                                                                                </table>
+                                                                                                                                                            </td>
+                                                                                                                                                        </tr>
+                                                                                                                                                    </table>
+                                                                                                                                                </td>
+                                                                                                                                            </tr>
+                                                                                                                                            <tr>
+                                                                                                                                                <td height="4"
+                                                                                                                                                    style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                                                                </td>
+                                                                                                                                            </tr>
+                                                                                                                                        </table>
+                                                                                                                                    </div>
+                                                                                                                                </a>
+                                                                                                                            </td>
+                                                                                                                        </tr>
+                                                                                                                    </table>
+                                                                                                                </td>
+                                                                                                                {% endif %}
+                                                                                                            </tr>
+                                                                                                        </table>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                {% if is_email %}
+                                                                                                <tr>
+                                                                                                    <td height="24"
+                                                                                                        style="height:24px;min-height:24px;line-height:24px;">
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td align="center">
+                                                                                                        <div
+                                                                                                            style="line-height:24px;text-align:center;">
+                                                                                                            <span
+                                                                                                                style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:right;">
+                                                                                                                *Please
+                                                                                                                respond
+                                                                                                                to this
+                                                                                                                email to
+                                                                                                                request
+                                                                                                                a
+                                                                                                                change.
+                                                                                                            </span>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                {% endif %}
+                                                                                                <tr>
+                                                                                                    <td height="24"
+                                                                                                        style="height:24px;min-height:24px;line-height:24px;">
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            </table>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </table>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td height="8"
+                                                                                style="height:8px;min-height:8px;line-height:8px;">
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endif %}
                                                                         <tr>
                                                                             <td width="100%">
                                                                                 <table width="100%" cellspacing="0"
@@ -834,6 +1076,102 @@
                                                                                                                                     cellpadding="0"
                                                                                                                                     cellspacing="0">
                                                                                                                                     <tr>
+                                                                                                                                        <td height="8"
+                                                                                                                                            style="height:8px;min-height:8px;line-height:8px;">
+                                                                                                                                        </td>
+                                                                                                                                    </tr>
+                                                                                                                                    <tr>
+                                                                                                                                        <td
+                                                                                                                                            style="vertical-align:middle;">
+                                                                                                                                            <div
+                                                                                                                                                style="line-height:16px;text-align:left;">
+                                                                                                                                                <span
+                                                                                                                                                    style="color:#020f16;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:left;">
+                                                                                                                                                    Site
+                                                                                                                                                    Contact
+                                                                                                                                                </span>
+                                                                                                                                            </div>
+                                                                                                                                        </td>
+                                                                                                                                        <td>
+                                                                                                                                        </td>
+                                                                                                                                        <td
+                                                                                                                                            style="vertical-align:middle;">
+                                                                                                                                            <div
+                                                                                                                                                style="line-height:16px;text-align:right;">
+                                                                                                                                                <span
+                                                                                                                                                    style="color:#020f16;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:right;">
+                                                                                                                                                    {{ order.order_group.user.full_name }}{% if order.order_group.user.phone %}
+                                                                                                                                                    <br>
+                                                                                                                                                    <a style="color:#020f16"
+                                                                                                                                                        href="tel:{{ order.order_group.user.phone }}">{{ order.order_group.user.phone }}</a>{% endif %}
+                                                                                                                                                </span>
+                                                                                                                                            </div>
+                                                                                                                                        </td>
+                                                                                                                                    </tr>
+                                                                                                                                    <tr>
+                                                                                                                                        <td height="8"
+                                                                                                                                            style="height:8px;min-height:8px;line-height:8px;">
+                                                                                                                                        </td>
+                                                                                                                                    </tr>
+                                                                                                                                </table>
+                                                                                                                            </td>
+                                                                                                                        </tr>
+                                                                                                                        {% if order.order_group.subscription and order.order_group.subscription.frequency %}
+                                                                                                                        <tr>
+                                                                                                                            <td width="100%"
+                                                                                                                                style="vertical-align:middle;border-width:0px 0px 1px 0px;border-color:#020f16;border-style:solid;">
+                                                                                                                                <table
+                                                                                                                                    width="100%"
+                                                                                                                                    border="0"
+                                                                                                                                    cellpadding="0"
+                                                                                                                                    cellspacing="0">
+                                                                                                                                    <tr>
+                                                                                                                                        <td height="8"
+                                                                                                                                            style="height:8px;min-height:8px;line-height:8px;">
+                                                                                                                                        </td>
+                                                                                                                                    </tr>
+                                                                                                                                    <tr>
+                                                                                                                                        <td
+                                                                                                                                            style="vertical-align:middle;">
+                                                                                                                                            <div
+                                                                                                                                                style="line-height:16px;text-align:left;">
+                                                                                                                                                <span
+                                                                                                                                                    style="color:#020f16;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:left;">
+                                                                                                                                                    Frequency
+                                                                                                                                                </span>
+                                                                                                                                            </div>
+                                                                                                                                        </td>
+                                                                                                                                        <td>
+                                                                                                                                        </td>
+                                                                                                                                        <td
+                                                                                                                                            style="vertical-align:middle;">
+                                                                                                                                            <div
+                                                                                                                                                style="line-height:16px;text-align:right;">
+                                                                                                                                                <span
+                                                                                                                                                    style="color:#020f16;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:right;">
+                                                                                                                                                    {{ order.order_group.subscription.frequency.name }}
+                                                                                                                                                </span>
+                                                                                                                                            </div>
+                                                                                                                                        </td>
+                                                                                                                                    </tr>
+                                                                                                                                    <tr>
+                                                                                                                                        <td height="8"
+                                                                                                                                            style="height:8px;min-height:8px;line-height:8px;">
+                                                                                                                                        </td>
+                                                                                                                                    </tr>
+                                                                                                                                </table>
+                                                                                                                            </td>
+                                                                                                                        </tr>
+                                                                                                                        {% endif %}
+                                                                                                                        <tr>
+                                                                                                                            <td width="100%"
+                                                                                                                                style="vertical-align:middle;border-width:0px 0px 1px 0px;border-color:#020f16;border-style:solid;">
+                                                                                                                                <table
+                                                                                                                                    width="100%"
+                                                                                                                                    border="0"
+                                                                                                                                    cellpadding="0"
+                                                                                                                                    cellspacing="0">
+                                                                                                                                    <tr>
                                                                                                                                         <td height="12"
                                                                                                                                             style="height:12px;min-height:12px;line-height:12px;">
                                                                                                                                         </td>
@@ -947,60 +1285,128 @@
                                                                     </table>
                                                                 </td>
                                                             </tr>
+                                                            {% if is_email %}
                                                             <tr>
                                                                 <td height="8"
                                                                     style="height:8px;min-height:8px;line-height:8px;">
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td width="100%">
-                                                                    <table width="100%" cellspacing="0" cellpadding="0"
-                                                                        border="0">
+                                                                <td width="100%" align="center"
+                                                                    style="background-color:#ffffff;border-radius:16px;box-shadow:0px 16px 24px 0px rgba(2,15,22,0.10000000149011612);padding-left:24px;padding-right:24px;"
+                                                                    bgcolor="#ffffff">
+                                                                    <table width="100%" border="0" cellpadding="0"
+                                                                        cellspacing="0">
                                                                         <tr>
-                                                                            <td width="100%" align="center"
-                                                                                style="background-color:#ffffff;border-radius:16px;box-shadow:0px 16px 24px 0px rgba(2,15,22,0.10000000149011612);padding-left:24px;padding-right:24px;"
-                                                                                bgcolor="#ffffff">
+                                                                            <td height="24"
+                                                                                style="height:24px;min-height:24px;line-height:24px;">
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td align="center">
+                                                                                <div
+                                                                                    style="line-height:24px;text-align:center;">
+                                                                                    <span
+                                                                                        style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:18px;line-height:24px;text-align:center;">
+                                                                                        {% if order.status == "PENDING" %}
+                                                                                        Are you
+                                                                                        able to
+                                                                                        fulfill
+                                                                                        this
+                                                                                        booking?
+                                                                                        {% else %}
+                                                                                        Order
+                                                                                        Status
+                                                                                        {% endif %}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td height="24"
+                                                                                style="height:24px;min-height:24px;line-height:24px;">
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td width="100%" align="center">
                                                                                 <table width="100%" border="0"
                                                                                     cellpadding="0" cellspacing="0">
-                                                                                    <tr>
-                                                                                        <td height="24"
-                                                                                            style="height:24px;min-height:24px;line-height:24px;">
+                                                                                    <tr> {% if order.status == "PENDING" %}
+                                                                                        {% if deny_url %}
+                                                                                        <td width="47.73%"
+                                                                                            align="center"
+                                                                                            style="vertical-align:middle;height:48px;border-radius:8px;border:2px solid #018381;padding-left:16px;padding-right:16px;">
+                                                                                            <a href="{{deny_url}}">
+                                                                                                <div>
+                                                                                                    <table border="0"
+                                                                                                        cellpadding="0"
+                                                                                                        cellspacing="0">
+                                                                                                        <tr>
+                                                                                                            <td height="4"
+                                                                                                                style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                        <tr>
+                                                                                                            <td
+                                                                                                                style="vertical-align:middle;">
+                                                                                                                <table
+                                                                                                                    cellspacing="0"
+                                                                                                                    cellpadding="0"
+                                                                                                                    border="0">
+                                                                                                                    <tr>
+                                                                                                                        <td align="center"
+                                                                                                                            style="vertical-align:middle;">
+                                                                                                                            <table
+                                                                                                                                width="100%"
+                                                                                                                                border="0"
+                                                                                                                                cellpadding="0"
+                                                                                                                                cellspacing="0">
+                                                                                                                                <tr>
+                                                                                                                                    <td style="vertical-align:middle;"
+                                                                                                                                        align="center">
+                                                                                                                                        <div
+                                                                                                                                            style="line-height:16px;text-align:center;">
+                                                                                                                                            <span
+                                                                                                                                                style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
+                                                                                                                                                See
+                                                                                                                                                All
+                                                                                                                                                Orders
+                                                                                                                                            </span>
+                                                                                                                                        </div>
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                            </table>
+                                                                                                                        </td>
+                                                                                                                    </tr>
+                                                                                                                </table>
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                        <tr>
+                                                                                                            <td height="4"
+                                                                                                                style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>
+                                                                                                </div>
+                                                                                            </a>
                                                                                         </td>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <td align="center">
-                                                                                            <div
-                                                                                                style="line-height:24px;text-align:center;">
-                                                                                                <span
-                                                                                                    style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:18px;line-height:24px;text-align:center;">
-                                                                                                    {% if order.status == "PENDING" %}
-                                                                                                    Are you able to
-                                                                                                    fulfill this
-                                                                                                    booking?
-                                                                                                    {% else %} Order
-                                                                                                    Status {% endif %}
-                                                                                                </span>
-                                                                                            </div>
+                                                                                        <td style="width:16px;min-width:16px;"
+                                                                                            width="16">
                                                                                         </td>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <td height="24"
-                                                                                            style="height:24px;min-height:24px;line-height:24px;">
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <td width="100%" align="center">
+                                                                                        {% endif %}
+                                                                                        <td
+                                                                                            width="{% if deny_url %}47.73%{%endif%}">
                                                                                             <table width="100%"
-                                                                                                border="0"
+                                                                                                cellspacing="0"
                                                                                                 cellpadding="0"
-                                                                                                cellspacing="0">
-                                                                                                <tr> {% if order.status == "PENDING" %}
-                                                                                                    {% if deny_url %}
+                                                                                                border="0">
+                                                                                                <tr>
                                                                                                     <td width="47.73%"
                                                                                                         align="center"
-                                                                                                        style="vertical-align:middle;height:48px;border-radius:8px;border:2px solid #018381;padding-left:16px;padding-right:16px;">
+                                                                                                        style="vertical-align:middle;height:48px;background-color:#018381;border-radius:8px;padding-left:16px;padding-right:16px;"
+                                                                                                        bgcolor="#018381">
                                                                                                         <a
-                                                                                                            href="{{deny_url}}">
+                                                                                                            href="{{accept_url}}">
                                                                                                             <div>
                                                                                                                 <table
                                                                                                                     border="0"
@@ -1032,8 +1438,14 @@
                                                                                                                                                     <div
                                                                                                                                                         style="line-height:16px;text-align:center;">
                                                                                                                                                         <span
-                                                                                                                                                            style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
-                                                                                                                                                            Deny
+                                                                                                                                                            style="color:#ffffff;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
+                                                                                                                                                            {% if is_email %}
+                                                                                                                                                            Open
+                                                                                                                                                            Confirmation
+                                                                                                                                                            Form
+                                                                                                                                                            {% else %}
+                                                                                                                                                            Accept
+                                                                                                                                                            {% endif %}
                                                                                                                                                         </span>
                                                                                                                                                     </div>
                                                                                                                                                 </td>
@@ -1053,393 +1465,257 @@
                                                                                                             </div>
                                                                                                         </a>
                                                                                                     </td>
-                                                                                                    <td style="width:16px;min-width:16px;"
-                                                                                                        width="16">
-                                                                                                    </td>
-                                                                                                    {% endif %}
-                                                                                                    <td
-                                                                                                        width="{% if deny_url %}47.73%{%endif%}">
-                                                                                                        <table
-                                                                                                            width="100%"
-                                                                                                            cellspacing="0"
-                                                                                                            cellpadding="0"
-                                                                                                            border="0">
-                                                                                                            <tr>
-                                                                                                                <td width="47.73%"
-                                                                                                                    align="center"
-                                                                                                                    style="vertical-align:middle;height:48px;background-color:#018381;border-radius:8px;padding-left:16px;padding-right:16px;"
-                                                                                                                    bgcolor="#018381">
-                                                                                                                    <a
-                                                                                                                        href="{{accept_url}}">
-                                                                                                                        <div>
+                                                                                                </tr>
+                                                                                            </table>
+                                                                                        </td>
+                                                                                        {% else %}
+                                                                                        <td width="100%" align="center">
+                                                                                            <span
+                                                                                                style="color:#018381;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:center;">
+                                                                                                {{ order.status }}
+                                                                                            </span>
+                                                                                        </td>
+                                                                                        {% endif %}
+                                                                                    </tr>
+                                                                                </table>
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% if is_email %}
+                                                                        <tr>
+                                                                            <td height="24"
+                                                                                style="height:24px;min-height:24px;line-height:24px;">
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td align="center">
+                                                                                <div
+                                                                                    style="line-height:24px;text-align:center;">
+                                                                                    <span
+                                                                                        style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:right;">
+                                                                                        *Please
+                                                                                        respond
+                                                                                        to this
+                                                                                        email to
+                                                                                        request
+                                                                                        a
+                                                                                        change.
+                                                                                    </span>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endif %}
+                                                                        <tr>
+                                                                            <td height="24"
+                                                                                style="height:24px;min-height:24px;line-height:24px;">
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                            {% endif %}
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td height="64" style="height:64px;min-height:64px;line-height:64px;">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="100%" align="center">
+                                            <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <td align="center">
+                                                        <div style="line-height:26px;text-align:center;">
+                                                            <span
+                                                                style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:24px;line-height:26px;text-align:center;">We
+                                                                appreciate your partnership!</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td height="32"
+                                                        style="height:32px;min-height:32px;line-height:32px;">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="100%" align="center" style="border-radius:16px;">
+                                                        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                                                            <tr>
+                                                                <td align="center">
+                                                                    <table cellspacing="0" cellpadding="0" border="0">
+                                                                        <tr>
+                                                                            <td align="center">
+                                                                                <div
+                                                                                    style="line-height:16px;text-align:center;">
+                                                                                    <span
+                                                                                        style="color:#020f16;font-family:Outfit,Arial,sans-serif;font-size:12px;line-height:16px;text-align:center;">Order
+                                                                                        Support Team</span>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td height="16"
+                                                                    style="height:16px;min-height:16px;line-height:16px;">
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td align="center">
+                                                                    <table cellspacing="0" cellpadding="0" border="0">
+                                                                        <tr>
+                                                                            <td width="336" align="center">
+                                                                                <table width="100%" border="0"
+                                                                                    cellpadding="0" cellspacing="0">
+                                                                                    <tr>
+                                                                                        <td width="47.62%"
+                                                                                            align="center"
+                                                                                            class="D9cOKmzn6QzyytK8KyaL4xT8WC0Fl8 invert-bg"
+                                                                                            style="vertical-align:middle;height:40px;background-repeat:no-repeat!important;background-position:center center!important;background-size:cover!important;border-radius:8px;border-collapse:separate!important;padding-left:16px;padding-right:16px;"
+                                                                                            background="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAoCAMAAABO8gGqAAAALVBMVEUAgIBMaXEAiIgAgIAAhoYAd3cAhYUAgIAAbW0AgIAAqqoAeHgAgIAAkpIAenqsdneBAAAAD3RSTlMaAA8CFQ8XFgcEAxEQBxey2ciVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAcUlEQVR4nO3Z2Q0DMRRC0cvzMp4l6b/cyGkiROJUgPgEJOlVEzv9Pnc2pFaYqrYDto6t3oRs+9tKnFhb3FgrDqy9fx0gIiIiIiIiIv7axFrHen2Dh4W1Cw2MjT0BH+YTsJpth+M7oku6HsMWZ619Q3wAzlsBH5TB5XgAAAAASUVORK5CYII=">
+                                                                                            <!--[if gte mso 9]><v:image xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;width:160px;height:40px;" src="https://plugin.markaimg.com/public/8197865d/D9cOKmzn6QzyytK8KyaL4xT8WC0Fl8.png"/><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;position:absolute;width:160px;height:40px;"><v:fill opacity="0%" color="#000"/><v:textbox inset="0,0,0,0">
+<![endif]--> <a href="https://help.trydownstream.com/">
+                                                                                                <div>
+                                                                                                    <table border="0"
+                                                                                                        cellpadding="0"
+                                                                                                        cellspacing="0">
+                                                                                                        <tr>
+                                                                                                            <td height="4"
+                                                                                                                style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                        <tr>
+                                                                                                            <td style="vertical-align:middle;"
+                                                                                                                width="24"
+                                                                                                                align="center">
+                                                                                                                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAQlBMVEVMaXEAg4ACg4MAgIAAgoAAh4ABg4IBhIEBg4EAgIADhIQAhIQCg4EDgoIBhIIDgoAChIIAh4cCg4AAg4ABg4EBg4FKTxSEAAAAFXRSTlMAgH8QYCC/3+8gX1+AYL9gnyCgoM+YOaLAAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAt0lEQVR4nO2UyQ7DIAxE3RCwaZPu8/+/WkVFlBLWQ6UemItlaZ4sG2yioWapyQgKErN++S2jKtYB0OAHWHn/pcUPLB4wAB5hxZ3sHYDx6dZv0U9kt859ttWrzRGhZwA/ntJR+JSKlAPYvWccKQcIwKlIOWBmmVORxtegP9wHAXDrAQyAq+4AluL9eq46BlTlVPKkoz6rx5ineDDzuXju36pN0lU/cB9AH6QVIIe43WtGxO3eEFX1AiiIKtqDbP9rAAAAAElFTkSuQmCC"
+                                                                                                                    width="24"
+                                                                                                                    border="0"
+                                                                                                                    style="min-width:24px;width:24px;height:auto;display:block;">
+                                                                                                            </td>
+                                                                                                            <td style="width:8px;min-width:8px;"
+                                                                                                                width="8">
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                style="vertical-align:middle;">
+                                                                                                                <table
+                                                                                                                    cellspacing="0"
+                                                                                                                    cellpadding="0"
+                                                                                                                    border="0">
+                                                                                                                    <tr>
+                                                                                                                        <td align="center"
+                                                                                                                            style="vertical-align:middle;">
                                                                                                                             <table
+                                                                                                                                width="100%"
                                                                                                                                 border="0"
                                                                                                                                 cellpadding="0"
                                                                                                                                 cellspacing="0">
                                                                                                                                 <tr>
-                                                                                                                                    <td height="4"
-                                                                                                                                        style="height:4px;min-height:4px;line-height:4px;">
-                                                                                                                                    </td>
-                                                                                                                                </tr>
-                                                                                                                                <tr>
-                                                                                                                                    <td
-                                                                                                                                        style="vertical-align:middle;">
-                                                                                                                                        <table
-                                                                                                                                            cellspacing="0"
-                                                                                                                                            cellpadding="0"
-                                                                                                                                            border="0">
-                                                                                                                                            <tr>
-                                                                                                                                                <td align="center"
-                                                                                                                                                    style="vertical-align:middle;">
-                                                                                                                                                    <table
-                                                                                                                                                        width="100%"
-                                                                                                                                                        border="0"
-                                                                                                                                                        cellpadding="0"
-                                                                                                                                                        cellspacing="0">
-                                                                                                                                                        <tr>
-                                                                                                                                                            <td style="vertical-align:middle;"
-                                                                                                                                                                align="center">
-                                                                                                                                                                <div
-                                                                                                                                                                    style="line-height:16px;text-align:center;">
-                                                                                                                                                                    <span
-                                                                                                                                                                        style="color:#ffffff;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">
-                                                                                                                                                                        {% if is_email %}
-                                                                                                                                                                        Open
-                                                                                                                                                                        Confirmation
-                                                                                                                                                                        Form
-                                                                                                                                                                        {% else %}
-                                                                                                                                                                        Accept
-                                                                                                                                                                        {% endif %}
-                                                                                                                                                                    </span>
-                                                                                                                                                                </div>
-                                                                                                                                                            </td>
-                                                                                                                                                        </tr>
-                                                                                                                                                    </table>
-                                                                                                                                                </td>
-                                                                                                                                            </tr>
-                                                                                                                                        </table>
-                                                                                                                                    </td>
-                                                                                                                                </tr>
-                                                                                                                                <tr>
-                                                                                                                                    <td height="4"
-                                                                                                                                        style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                                                    <td style="vertical-align:middle;"
+                                                                                                                                        align="center">
+                                                                                                                                        <div
+                                                                                                                                            style="line-height:16px;text-align:center;">
+                                                                                                                                            <span
+                                                                                                                                                style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">Chat</span>
+                                                                                                                                        </div>
                                                                                                                                     </td>
                                                                                                                                 </tr>
                                                                                                                             </table>
-                                                                                                                        </div>
-                                                                                                                    </a>
-                                                                                                                </td>
-                                                                                                            </tr>
-                                                                                                        </table>
-                                                                                                    </td> {% else %} <td
-                                                                                                        width="100%"
-                                                                                                        align="center">
-                                                                                                        <span
-                                                                                                            style="color:#018381;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:center;">
-                                                                                                            {{ order.status }}
-                                                                                                        </span>
-                                                                                                    </td> {% endif %}
-                                                                                                </tr>
-                                                                                            </table>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <td height="24"
-                                                                                            style="height:24px;min-height:24px;line-height:24px;">
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <td align="center">
-                                                                                            <div
-                                                                                                style="line-height:24px;text-align:center;">
-                                                                                                <span
-                                                                                                    style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:right;">
-                                                                                                    *Please respond to
-                                                                                                    this email to
-                                                                                                    request a change.
-                                                                                                </span>
-                                                                                            </div>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                    <tr>
-                                                                                        <td height="24"
-                                                                                            style="height:24px;min-height:24px;line-height:24px;">
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                </table>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td height="64"
-                                                        style="height:64px;min-height:64px;line-height:64px;">
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td width="100%" align="center">
-                                                        <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                                                            <tr>
-                                                                <td align="center">
-                                                                    <div style="line-height:26px;text-align:center;">
-                                                                        <span
-                                                                            style="color:#020f16;font-weight:600;font-family:Outfit,Arial,sans-serif;font-size:24px;line-height:26px;text-align:center;">We
-                                                                            appreciate your partnership!</span>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="32"
-                                                                    style="height:32px;min-height:32px;line-height:32px;">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td width="100%" align="center"
-                                                                    style="border-radius:16px;">
-                                                                    <table width="100%" border="0" cellpadding="0"
-                                                                        cellspacing="0">
-                                                                        <tr>
-                                                                            <td align="center">
-                                                                                <table cellspacing="0" cellpadding="0"
-                                                                                    border="0">
-                                                                                    <tr>
-                                                                                        <td align="center">
-                                                                                            <div
-                                                                                                style="line-height:16px;text-align:center;">
-                                                                                                <span
-                                                                                                    style="color:#020f16;font-family:Outfit,Arial,sans-serif;font-size:12px;line-height:16px;text-align:center;">Order
-                                                                                                    Support Team</span>
-                                                                                            </div>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                </table>
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td height="16"
-                                                                                style="height:16px;min-height:16px;line-height:16px;">
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <td align="center">
-                                                                                <table cellspacing="0" cellpadding="0"
-                                                                                    border="0">
-                                                                                    <tr>
-                                                                                        <td width="336" align="center">
-                                                                                            <table width="100%"
-                                                                                                border="0"
-                                                                                                cellpadding="0"
-                                                                                                cellspacing="0">
-                                                                                                <tr>
-                                                                                                    <td width="47.62%"
-                                                                                                        align="center"
-                                                                                                        class="D9cOKmzn6QzyytK8KyaL4xT8WC0Fl8 invert-bg"
-                                                                                                        style="vertical-align:middle;height:40px;background-repeat:no-repeat!important;background-position:center center!important;background-size:cover!important;border-radius:8px;border-collapse:separate!important;padding-left:16px;padding-right:16px;"
-                                                                                                        background="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAoCAMAAABO8gGqAAAALVBMVEUAgIBMaXEAiIgAgIAAhoYAd3cAhYUAgIAAbW0AgIAAqqoAeHgAgIAAkpIAenqsdneBAAAAD3RSTlMaAA8CFQ8XFgcEAxEQBxey2ciVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAcUlEQVR4nO3Z2Q0DMRRC0cvzMp4l6b/cyGkiROJUgPgEJOlVEzv9Pnc2pFaYqrYDto6t3oRs+9tKnFhb3FgrDqy9fx0gIiIiIiIiIv7axFrHen2Dh4W1Cw2MjT0BH+YTsJpth+M7oku6HsMWZ619Q3wAzlsBH5TB5XgAAAAASUVORK5CYII=">
-                                                                                                        <!--[if gte mso 9]><v:image xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;width:160px;height:40px;" src="https://plugin.markaimg.com/public/8197865d/D9cOKmzn6QzyytK8KyaL4xT8WC0Fl8.png"/><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;position:absolute;width:160px;height:40px;"><v:fill opacity="0%" color="#000"/><v:textbox inset="0,0,0,0">
-<![endif]--> <a href="https://help.trydownstream.com/">
-                                                                                                            <div>
-                                                                                                                <table
-                                                                                                                    border="0"
-                                                                                                                    cellpadding="0"
-                                                                                                                    cellspacing="0">
-                                                                                                                    <tr>
-                                                                                                                        <td height="4"
-                                                                                                                            style="height:4px;min-height:4px;line-height:4px;">
-                                                                                                                        </td>
-                                                                                                                    </tr>
-                                                                                                                    <tr>
-                                                                                                                        <td style="vertical-align:middle;"
-                                                                                                                            width="24"
-                                                                                                                            align="center">
-                                                                                                                            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAQlBMVEVMaXEAg4ACg4MAgIAAgoAAh4ABg4IBhIEBg4EAgIADhIQAhIQCg4EDgoIBhIIDgoAChIIAh4cCg4AAg4ABg4EBg4FKTxSEAAAAFXRSTlMAgH8QYCC/3+8gX1+AYL9gnyCgoM+YOaLAAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAt0lEQVR4nO2UyQ7DIAxE3RCwaZPu8/+/WkVFlBLWQ6UemItlaZ4sG2yioWapyQgKErN++S2jKtYB0OAHWHn/pcUPLB4wAB5hxZ3sHYDx6dZv0U9kt859ttWrzRGhZwA/ntJR+JSKlAPYvWccKQcIwKlIOWBmmVORxtegP9wHAXDrAQyAq+4AluL9eq46BlTlVPKkoz6rx5ineDDzuXju36pN0lU/cB9AH6QVIIe43WtGxO3eEFX1AiiIKtqDbP9rAAAAAElFTkSuQmCC"
-                                                                                                                                width="24"
-                                                                                                                                border="0"
-                                                                                                                                style="min-width:24px;width:24px;height:auto;display:block;">
-                                                                                                                        </td>
-                                                                                                                        <td style="width:8px;min-width:8px;"
-                                                                                                                            width="8">
-                                                                                                                        </td>
-                                                                                                                        <td
-                                                                                                                            style="vertical-align:middle;">
-                                                                                                                            <table
-                                                                                                                                cellspacing="0"
-                                                                                                                                cellpadding="0"
-                                                                                                                                border="0">
-                                                                                                                                <tr>
-                                                                                                                                    <td align="center"
-                                                                                                                                        style="vertical-align:middle;">
-                                                                                                                                        <table
-                                                                                                                                            width="100%"
-                                                                                                                                            border="0"
-                                                                                                                                            cellpadding="0"
-                                                                                                                                            cellspacing="0">
-                                                                                                                                            <tr>
-                                                                                                                                                <td style="vertical-align:middle;"
-                                                                                                                                                    align="center">
-                                                                                                                                                    <div
-                                                                                                                                                        style="line-height:16px;text-align:center;">
-                                                                                                                                                        <span
-                                                                                                                                                            style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">Chat</span>
-                                                                                                                                                    </div>
-                                                                                                                                                </td>
-                                                                                                                                            </tr>
-                                                                                                                                        </table>
-                                                                                                                                    </td>
-                                                                                                                                </tr>
-                                                                                                                            </table>
-                                                                                                                        </td>
-                                                                                                                    </tr>
-                                                                                                                    <tr>
-                                                                                                                        <td height="4"
-                                                                                                                            style="height:4px;min-height:4px;line-height:4px;">
                                                                                                                         </td>
                                                                                                                     </tr>
                                                                                                                 </table>
-                                                                                                            </div>
-                                                                                                        </a>
-                                                                                                        <!--[if gte mso 9]></v:textbox></v:fill></v:rect></v:image>
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                        <tr>
+                                                                                                            <td height="4"
+                                                                                                                style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>
+                                                                                                </div>
+                                                                                            </a>
+                                                                                            <!--[if gte mso 9]></v:textbox></v:fill></v:rect></v:image>
 <![endif]-->
-                                                                                                    </td>
-                                                                                                    <td style="width:16px;min-width:16px;"
-                                                                                                        width="16">
-                                                                                                    </td>
-                                                                                                    <td width="47.62%"
-                                                                                                        align="center"
-                                                                                                        class="2by71rfR29j9QDfeSCVrAivpQK6Xjj invert-bg"
-                                                                                                        style="vertical-align:middle;height:40px;background-repeat:no-repeat!important;background-position:center center!important;background-size:cover!important;border-radius:8px;border-collapse:separate!important;padding-left:16px;padding-right:16px;"
-                                                                                                        background="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAoCAMAAABO8gGqAAAALVBMVEUAgIBMaXEAiIgAgIAAhoYAd3cAhYUAgIAAbW0AgIAAqqoAeHgAgIAAkpIAenqsdneBAAAAD3RSTlMaAA8CFQ8XFgcEAxEQBxey2ciVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAcUlEQVR4nO3Z2Q0DMRRC0cvzMp4l6b/cyGkiROJUgPgEJOlVEzv9Pnc2pFaYqrYDto6t3oRs+9tKnFhb3FgrDqy9fx0gIiIiIiIiIv7axFrHen2Dh4W1Cw2MjT0BH+YTsJpth+M7oku6HsMWZ619Q3wAzlsBH5TB5XgAAAAASUVORK5CYII=">
-                                                                                                        <!--[if gte mso 9]><v:image xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;width:160px;height:40px;" src="https://plugin.markaimg.com/public/8197865d/2by71rfR29j9QDfeSCVrAivpQK6Xjj.png"/><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;position:absolute;width:160px;height:40px;"><v:fill opacity="0%" color="#000"/><v:textbox inset="0,0,0,0">
+                                                                                        </td>
+                                                                                        <td style="width:16px;min-width:16px;"
+                                                                                            width="16">
+                                                                                        </td>
+                                                                                        <td width="47.62%"
+                                                                                            align="center"
+                                                                                            class="2by71rfR29j9QDfeSCVrAivpQK6Xjj invert-bg"
+                                                                                            style="vertical-align:middle;height:40px;background-repeat:no-repeat!important;background-position:center center!important;background-size:cover!important;border-radius:8px;border-collapse:separate!important;padding-left:16px;padding-right:16px;"
+                                                                                            background="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAoCAMAAABO8gGqAAAALVBMVEUAgIBMaXEAiIgAgIAAhoYAd3cAhYUAgIAAbW0AgIAAqqoAeHgAgIAAkpIAenqsdneBAAAAD3RSTlMaAA8CFQ8XFgcEAxEQBxey2ciVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAcUlEQVR4nO3Z2Q0DMRRC0cvzMp4l6b/cyGkiROJUgPgEJOlVEzv9Pnc2pFaYqrYDto6t3oRs+9tKnFhb3FgrDqy9fx0gIiIiIiIiIv7axFrHen2Dh4W1Cw2MjT0BH+YTsJpth+M7oku6HsMWZ619Q3wAzlsBH5TB5XgAAAAASUVORK5CYII=">
+                                                                                            <!--[if gte mso 9]><v:image xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;width:160px;height:40px;" src="https://plugin.markaimg.com/public/8197865d/2by71rfR29j9QDfeSCVrAivpQK6Xjj.png"/><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="border:0;display:inline-block;position:absolute;width:160px;height:40px;"><v:fill opacity="0%" color="#000"/><v:textbox inset="0,0,0,0">
 <![endif]--> <a href="tel:+17193949986">
-                                                                                                            <div>
-                                                                                                                <table
+                                                                                                <div>
+                                                                                                    <table border="0"
+                                                                                                        cellpadding="0"
+                                                                                                        cellspacing="0">
+                                                                                                        <tr>
+                                                                                                            <td height="4"
+                                                                                                                style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                        <tr>
+                                                                                                            <td style="vertical-align:middle;"
+                                                                                                                width="24"
+                                                                                                                align="center">
+                                                                                                                <img width="24"
                                                                                                                     border="0"
+                                                                                                                    style="min-width:24px;width:24px;height:auto;display:block;"
+                                                                                                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAwCAMAAACPHmKLAAAAe1BMVEVMaXEAg4ACg4EChIIAgIABg4IAhYABhIEBg4EAgIAAh4ABhIECg4EBg4ECg4EDgoICg4MEg4MBg4IAg4AAg4AChIIAgoABhYIBhIIDhYICgoICgoIIh4cAh4cDg4MAhIADhIQDgoAFhYUChIIAhIICg4AAg4MAg4ABg4Gb0wslAAAAKHRSTlMAQICfIL8w3+8QIM+Qz6Bgf0CvUIBwYK+/YI9wICBQcF9gMI9woFCQBwONlQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAAe9JREFUeJzVldlygzAMRY0BL4EshGxN033T/39hR7YsbBNS+tSpXgDbR5IlzUWIvzVlYFmuF78gGnC27a5tVm/GbwPoTUYA1OM4lQ6bzmnIaljd5EQZAwBFWLeFJGqZheH4lEW8V6x8souEQEcPdAAAjE12ez1GcCWm99k1ty6xKUJyWsqYeu0XP/DEeYKw+GH5dtoz26QiKSFqAJBRPUrErU4rEt1ciD16dlmFylqqSBQEvSlOy/CeWg0trZMgRwC4S9LaJ9NwH4Jw2VsAaMNHtwwXcRGXoUF17PZliGj9xHwOzTAUUmIVeJUb/exnOO5WaFARKuKML+vL8xWPiXMnfKPwmV0EUR11itZ0/EznD1Mw2WSrpnGlV82JW+B9r0MzkmmfMhkOPoX6/2QVD0GdzdykrfDKNtTfhIQ7KbtbQSS+9cCIdQH1/rpmtXxux/LBilFfEzpXJZcXIeXiNZaL8nGEuGz84HhEOx/HkY6leZGW9SyRSlSHE73zQCeDTUhQSR+zevcClBN0jBTzoBORKhItYFMumbOf3GqnzWHYg6sEIZli3iQE5b+ZTwhCSNjmEMK6Io8ZmCSoSsiU3UxCVF7YcNBq+dhdcO1yk4iZ2MwNApnk3+iM1WrK+gzSc37tqm+PjZ+pZpf+6/67fQPhOl4zBxj7cQAAAABJRU5ErkJggg==">
+                                                                                                            </td>
+                                                                                                            <td style="width:8px;min-width:8px;"
+                                                                                                                width="8">
+                                                                                                            </td>
+                                                                                                            <td
+                                                                                                                style="vertical-align:middle;">
+                                                                                                                <table
+                                                                                                                    cellspacing="0"
                                                                                                                     cellpadding="0"
-                                                                                                                    cellspacing="0">
+                                                                                                                    border="0">
                                                                                                                     <tr>
-                                                                                                                        <td height="4"
-                                                                                                                            style="height:4px;min-height:4px;line-height:4px;">
-                                                                                                                        </td>
-                                                                                                                    </tr>
-                                                                                                                    <tr>
-                                                                                                                        <td style="vertical-align:middle;"
-                                                                                                                            width="24"
-                                                                                                                            align="center">
-                                                                                                                            <img width="24"
-                                                                                                                                border="0"
-                                                                                                                                style="min-width:24px;width:24px;height:auto;display:block;"
-                                                                                                                                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAwCAMAAACPHmKLAAAAe1BMVEVMaXEAg4ACg4EChIIAgIABg4IAhYABhIEBg4EAgIAAh4ABhIECg4EBg4ECg4EDgoICg4MEg4MBg4IAg4AAg4AChIIAgoABhYIBhIIDhYICgoICgoIIh4cAh4cDg4MAhIADhIQDgoAFhYUChIIAhIICg4AAg4MAg4ABg4Gb0wslAAAAKHRSTlMAQICfIL8w3+8QIM+Qz6Bgf0CvUIBwYK+/YI9wICBQcF9gMI9woFCQBwONlQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAAe9JREFUeJzVldlygzAMRY0BL4EshGxN033T/39hR7YsbBNS+tSpXgDbR5IlzUWIvzVlYFmuF78gGnC27a5tVm/GbwPoTUYA1OM4lQ6bzmnIaljd5EQZAwBFWLeFJGqZheH4lEW8V6x8souEQEcPdAAAjE12ez1GcCWm99k1ty6xKUJyWsqYeu0XP/DEeYKw+GH5dtoz26QiKSFqAJBRPUrErU4rEt1ciD16dlmFylqqSBQEvSlOy/CeWg0trZMgRwC4S9LaJ9NwH4Jw2VsAaMNHtwwXcRGXoUF17PZliGj9xHwOzTAUUmIVeJUb/exnOO5WaFARKuKML+vL8xWPiXMnfKPwmV0EUR11itZ0/EznD1Mw2WSrpnGlV82JW+B9r0MzkmmfMhkOPoX6/2QVD0GdzdykrfDKNtTfhIQ7KbtbQSS+9cCIdQH1/rpmtXxux/LBilFfEzpXJZcXIeXiNZaL8nGEuGz84HhEOx/HkY6leZGW9SyRSlSHE73zQCeDTUhQSR+zevcClBN0jBTzoBORKhItYFMumbOf3GqnzWHYg6sEIZli3iQE5b+ZTwhCSNjmEMK6Io8ZmCSoSsiU3UxCVF7YcNBq+dhdcO1yk4iZ2MwNApnk3+iM1WrK+gzSc37tqm+PjZ+pZpf+6/67fQPhOl4zBxj7cQAAAABJRU5ErkJggg==">
-                                                                                                                        </td>
-                                                                                                                        <td style="width:8px;min-width:8px;"
-                                                                                                                            width="8">
-                                                                                                                        </td>
-                                                                                                                        <td
+                                                                                                                        <td align="center"
                                                                                                                             style="vertical-align:middle;">
                                                                                                                             <table
-                                                                                                                                cellspacing="0"
+                                                                                                                                width="100%"
+                                                                                                                                border="0"
                                                                                                                                 cellpadding="0"
-                                                                                                                                border="0">
+                                                                                                                                cellspacing="0">
                                                                                                                                 <tr>
-                                                                                                                                    <td align="center"
-                                                                                                                                        style="vertical-align:middle;">
-                                                                                                                                        <table
-                                                                                                                                            width="100%"
-                                                                                                                                            border="0"
-                                                                                                                                            cellpadding="0"
-                                                                                                                                            cellspacing="0">
-                                                                                                                                            <tr>
-                                                                                                                                                <td style="vertical-align:middle;"
-                                                                                                                                                    align="center">
-                                                                                                                                                    <div
-                                                                                                                                                        style="line-height:16px;text-align:center;">
-                                                                                                                                                        <span
-                                                                                                                                                            style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">(719)
-                                                                                                                                                            394-9986</span>
-                                                                                                                                                    </div>
-                                                                                                                                                </td>
-                                                                                                                                            </tr>
-                                                                                                                                        </table>
+                                                                                                                                    <td style="vertical-align:middle;"
+                                                                                                                                        align="center">
+                                                                                                                                        <div
+                                                                                                                                            style="line-height:16px;text-align:center;">
+                                                                                                                                            <span
+                                                                                                                                                style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">(719)
+                                                                                                                                                394-9986</span>
+                                                                                                                                        </div>
                                                                                                                                     </td>
                                                                                                                                 </tr>
                                                                                                                             </table>
                                                                                                                         </td>
                                                                                                                     </tr>
-                                                                                                                    <tr>
-                                                                                                                        <td height="4"
-                                                                                                                            style="height:4px;min-height:4px;line-height:4px;">
-                                                                                                                        </td>
-                                                                                                                    </tr>
                                                                                                                 </table>
-                                                                                                            </div>
-                                                                                                        </a>
-                                                                                                        <!--[if gte mso 9]></v:textbox></v:fill></v:rect></v:image>
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                        <tr>
+                                                                                                            <td height="4"
+                                                                                                                style="height:4px;min-height:4px;line-height:4px;">
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>
+                                                                                                </div>
+                                                                                            </a>
+                                                                                            <!--[if gte mso 9]></v:textbox></v:fill></v:rect></v:image>
 <![endif]-->
-                                                                                                    </td>
-                                                                                                </tr>
-                                                                                            </table>
                                                                                         </td>
                                                                                     </tr>
                                                                                 </table>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="32"
-                                                                    style="height:32px;min-height:32px;line-height:32px;">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td width="400" align="center"> <img
-                                                                        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAACCAMAAACXIkj6AAAAA1BMVEUAFBSTDj7yAAAAAXRSTlMavYQhHAAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAABZJREFUeJxjYBgFo2AUjIJRMAoYyAAABkIAAdz+OlkAAAAASUVORK5CYII="
-                                                                        width="400" border="0"
-                                                                        style="width:100%;height:auto;display:block;">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="32"
-                                                                    style="height:32px;min-height:32px;line-height:32px;">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td align="center">
-                                                                    <table cellspacing="0" cellpadding="0" border="0">
-                                                                        <tr>
-                                                                            <td align="center"> <a
-                                                                                    href="https://zfrmz.com/8yHeK64J9WZxMihd0hQY">
-                                                                                    <div
-                                                                                        style="line-height:16px;text-align:center;">
-                                                                                        <span
-                                                                                            style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">Could
-                                                                                            you please share your
-                                                                                            experience with us?</span>
-                                                                                    </div>
-                                                                                </a>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="32"
-                                                                    style="height:32px;min-height:32px;line-height:32px;">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td align="center">
-                                                                    <table cellspacing="0" cellpadding="0" border="0">
-                                                                        <tr>
-                                                                            <td width="274" align="center"> <a
-                                                                                    href="https://trydownstream.onelink.me/sqsQ/b07f65lo">
-                                                                                    <img width="274" border="0"
-                                                                                        style="max-width:274px;width:100%;height:auto;display:block;"
-                                                                                        src="data:image/png;base64,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">
-                                                                                </a>
                                                                             </td>
                                                                         </tr>
                                                                     </table>
@@ -1449,11 +1725,66 @@
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td height="64"
-                                                        style="height:64px;min-height:64px;line-height:64px;">
+                                                    <td height="32"
+                                                        style="height:32px;min-height:32px;line-height:32px;">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="400" align="center"> <img
+                                                            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAACCAMAAACXIkj6AAAAA1BMVEUAFBSTDj7yAAAAAXRSTlMavYQhHAAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAABZJREFUeJxjYBgFo2AUjIJRMAoYyAAABkIAAdz+OlkAAAAASUVORK5CYII="
+                                                            width="400" border="0"
+                                                            style="width:100%;height:auto;display:block;">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td height="32"
+                                                        style="height:32px;min-height:32px;line-height:32px;">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center">
+                                                        <table cellspacing="0" cellpadding="0" border="0">
+                                                            <tr>
+                                                                <td align="center"> <a
+                                                                        href="https://zfrmz.com/8yHeK64J9WZxMihd0hQY">
+                                                                        <div
+                                                                            style="line-height:16px;text-align:center;">
+                                                                            <span
+                                                                                style="color:#018381;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:center;">Could
+                                                                                you please share your
+                                                                                experience with us?</span>
+                                                                        </div>
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td height="32"
+                                                        style="height:32px;min-height:32px;line-height:32px;">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center">
+                                                        <table cellspacing="0" cellpadding="0" border="0">
+                                                            <tr>
+                                                                <td width="274" align="center"> <a
+                                                                        href="https://trydownstream.onelink.me/sqsQ/b07f65lo">
+                                                                        <img width="274" border="0"
+                                                                            style="max-width:274px;width:100%;height:auto;display:block;"
+                                                                            src="data:image/png;base64,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">
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
                                                     </td>
                                                 </tr>
                                             </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td height="64" style="height:64px;min-height:64px;line-height:64px;">
                                         </td>
                                     </tr>
                                 </table>
@@ -1462,6 +1793,9 @@
                     </table>
                 </td>
             </tr>
+        </table>
+        </td>
+        </tr>
         </table>
     </div>
 </body>
