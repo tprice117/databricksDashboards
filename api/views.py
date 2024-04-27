@@ -1,6 +1,7 @@
 import datetime
-from random import randint
+import logging
 import time
+from random import randint
 
 import requests
 import stripe
@@ -21,23 +22,23 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import logging
 
 from api.filters import OrderGroupFilterset
 from api.utils.denver_compliance_report import send_denver_compliance_report
-from billing.utils.billing import BillingUtils
-from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 from api.utils.utils import decrypt_string
+from billing.utils.billing import BillingUtils
 from notifications.utils import internal_email
+from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 
 from .models import (
+    AddOn,
+    AddOnChoice,
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
-    AddOn,
-    AddOnChoice,
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
@@ -45,15 +46,14 @@ from .models import (
     MainProductInfo,
     MainProductServiceRecurringFrequency,
     MainProductWasteType,
-    Product,
-    ProductAddOnChoice,
     Order,
     OrderDisposalTicket,
     OrderGroup,
     OrderLineItem,
     OrderLineItemType,
-    Subscription,
     Payout,
+    Product,
+    ProductAddOnChoice,
     Seller,
     SellerInvoicePayable,
     SellerInvoicePayableLineItem,
@@ -66,6 +66,7 @@ from .models import (
     SellerProductSellerLocationService,
     SellerProductSellerLocationServiceRecurringFrequency,
     ServiceRecurringFrequency,
+    Subscription,
     TimeSlot,
     User,
     UserAddress,
@@ -82,20 +83,9 @@ from .models import (
 # import pandas as pd
 from .pricing_ml import pricing
 from .serializers import (
-    SellerSerializer,
-    SellerLocationSerializer,
-    UserAddressTypeSerializer,
-    UserAddressSerializer,
-    UserSerializer,
-    UserGroupSerializer,
-    UserGroupBillingSerializer,
-    UserGroupLegalSerializer,
-    UserGroupCreditApplicationSerializer,
-    UserUserAddressSerializer,
-    UserSellerReviewSerializer,
-    UserSellerReviewAggregateSerializer,
     AddOnChoiceSerializer,
     AddOnSerializer,
+    DayOfWeekSerializer,
     DisposalLocationSerializer,
     DisposalLocationWasteTypeSerializer,
     MainProductAddOnSerializer,
@@ -103,32 +93,42 @@ from .serializers import (
     MainProductCategorySerializer,
     MainProductInfoSerializer,
     MainProductSerializer,
+    MainProductServiceRecurringFrequencySerializer,
     MainProductWasteTypeSerializer,
+    OrderDisposalTicketSerializer,
     OrderGroupSerializer,
-    OrderSerializer,
     OrderLineItemSerializer,
     OrderLineItemTypeSerializer,
-    OrderDisposalTicketSerializer,
-    DayOfWeekSerializer,
-    TimeSlotSerializer,
-    SubscriptionSerializer,
+    OrderSerializer,
     PayoutSerializer,
     ProductAddOnChoiceSerializer,
     ProductSerializer,
-    SellerProductSerializer,
-    SellerProductSellerLocationSerializer,
-    SellerProductSellerLocationServiceSerializer,
-    SellerInvoicePayableSerializer,
     SellerInvoicePayableLineItemSerializer,
-    ServiceRecurringFrequencySerializer,
-    MainProductServiceRecurringFrequencySerializer,
-    SellerProductSellerLocationServiceRecurringFrequencySerializer,
-    SellerProductSellerLocationRentalSerializer,
+    SellerInvoicePayableSerializer,
+    SellerLocationSerializer,
     SellerProductSellerLocationMaterialSerializer,
     SellerProductSellerLocationMaterialWasteTypeSerializer,
+    SellerProductSellerLocationRentalSerializer,
+    SellerProductSellerLocationSerializer,
+    SellerProductSellerLocationServiceRecurringFrequencySerializer,
+    SellerProductSellerLocationServiceSerializer,
+    SellerProductSerializer,
+    SellerSerializer,
+    ServiceRecurringFrequencySerializer,
+    SubscriptionSerializer,
+    TimeSlotSerializer,
+    UserAddressSerializer,
+    UserAddressTypeSerializer,
+    UserGroupBillingSerializer,
+    UserGroupCreditApplicationSerializer,
+    UserGroupLegalSerializer,
+    UserGroupSerializer,
+    UserSellerReviewAggregateSerializer,
+    UserSellerReviewSerializer,
+    UserSerializer,
+    UserUserAddressSerializer,
     WasteTypeSerializer,
 )
-
 
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -195,6 +195,7 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
     filterset_fields = ["id", "user_id"]
 
     def get_queryset(self):
