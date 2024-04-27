@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") != "TEST"
 # NOTE: DRF Standardized Errors will handle uncaught exceptions if this is set to False.
 # Setting it to True will still show the Django error page on uncaught exceptions.
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -310,13 +310,14 @@ if ENVIRONMENT == "TEST":
 else:
     DEFAULT_FILE_STORAGE = "api.custom_storage.MediaStorageDev"
 
+AUTH_USER_MODEL = "api.User"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
+    "DEFAULT_AUTHENTICATION_CLASSES": [
         "api.authentication.CustomAuthentication",
+        "api_proxy.authentication.authentication.CustomOIDCAuthenticationBackend",
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
-    ),
+    ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     # "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_SCHEMA_CLASS": "drf_standardized_errors.openapi.AutoSchema",
