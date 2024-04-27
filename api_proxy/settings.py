@@ -382,7 +382,7 @@ else:
         "a44b44d5-2cb8-4255-bbf6-dc5884bffdbf"  # env("BASIS_DEV_THEORY_APPLICATION_ID")
     )
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_DEV_TOKEN")
-API_URL = "http://127.0.0.1:8000"
+
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]
