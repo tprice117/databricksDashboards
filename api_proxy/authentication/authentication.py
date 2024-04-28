@@ -17,6 +17,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
     def authenticate(self, request, **kwargs):
         """Authenticates a user based on the OIDC code flow, with additional checks for admin tokens and impersonation."""
 
+        print("CustomOIDCAuthenticationBackend")
         # 1. Check for pre-defined admin tokens (stored securely)
         #  - This bypasses the OIDC flow for authorized admins.
         admin_tokens = [
@@ -34,19 +35,21 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
 
         # 2. Delegate to OIDC authentication for regular users
         #  - If not an admin, use the standard OIDC flow for authentication.
+        print("Calling super().authenticate")
         user, token = super().authenticate(request, **kwargs)
 
         # 3. Handle impersonation only for staff users with proper header
         #  - This allows staff users to act on behalf of other users.
-        if not user.is_staff:
-            raise SuspiciousOperation(
-                "Only staff users are allowed to impersonate other users.",
-            )
-
         on_behalf_of_header = request.META.get("HTTP_X_ON_BEHALF_OF")
         if not on_behalf_of_header:
             return (user, None)
         else:
+            # Check if the user is staff. If not, raise an exception.
+            if not user.is_staff:
+                raise SuspiciousOperation(
+                    "Only staff users are allowed to impersonate other users.",
+                )
+
             # Check if the 'X-ON-BEHALF-OF' header is a valid UUID.
             try:
                 on_behalf_of_user_id = uuid.UUID(str(on_behalf_of_header))
