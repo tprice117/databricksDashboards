@@ -39,6 +39,10 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
         # 2. Delegate to OIDC authentication for regular users
         #  - If not an admin, use the standard OIDC flow for authentication.
         id_token = request.META.get("HTTP_X_AUTHORIZATION_ID_TOKEN")
+
+        if not id_token:
+            return None
+
         decoded_id_token = jwt.JWT().decode(id_token, None, None) if id_token else None
 
         # Check if the ID token contains the email field.
