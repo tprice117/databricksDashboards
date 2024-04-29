@@ -1,6 +1,7 @@
 import datetime
-from random import randint
+import logging
 import time
+from random import randint
 
 import requests
 import stripe
@@ -21,23 +22,23 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import logging
 
 from api.filters import OrderGroupFilterset
 from api.utils.denver_compliance_report import send_denver_compliance_report
-from billing.utils.billing import BillingUtils
-from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 from api.utils.utils import decrypt_string
+from billing.utils.billing import BillingUtils
 from notifications.utils import internal_email
+from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 
 from .models import (
+    AddOn,
+    AddOnChoice,
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
-    AddOn,
-    AddOnChoice,
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
@@ -45,15 +46,14 @@ from .models import (
     MainProductInfo,
     MainProductServiceRecurringFrequency,
     MainProductWasteType,
-    Product,
-    ProductAddOnChoice,
     Order,
     OrderDisposalTicket,
     OrderGroup,
     OrderLineItem,
     OrderLineItemType,
-    Subscription,
     Payout,
+    Product,
+    ProductAddOnChoice,
     Seller,
     SellerInvoicePayable,
     SellerInvoicePayableLineItem,
@@ -66,6 +66,7 @@ from .models import (
     SellerProductSellerLocationService,
     SellerProductSellerLocationServiceRecurringFrequency,
     ServiceRecurringFrequency,
+    Subscription,
     TimeSlot,
     User,
     UserAddress,
@@ -82,20 +83,9 @@ from .models import (
 # import pandas as pd
 from .pricing_ml import pricing
 from .serializers import (
-    SellerSerializer,
-    SellerLocationSerializer,
-    UserAddressTypeSerializer,
-    UserAddressSerializer,
-    UserSerializer,
-    UserGroupSerializer,
-    UserGroupBillingSerializer,
-    UserGroupLegalSerializer,
-    UserGroupCreditApplicationSerializer,
-    UserUserAddressSerializer,
-    UserSellerReviewSerializer,
-    UserSellerReviewAggregateSerializer,
     AddOnChoiceSerializer,
     AddOnSerializer,
+    DayOfWeekSerializer,
     DisposalLocationSerializer,
     DisposalLocationWasteTypeSerializer,
     MainProductAddOnSerializer,
@@ -103,32 +93,42 @@ from .serializers import (
     MainProductCategorySerializer,
     MainProductInfoSerializer,
     MainProductSerializer,
+    MainProductServiceRecurringFrequencySerializer,
     MainProductWasteTypeSerializer,
+    OrderDisposalTicketSerializer,
     OrderGroupSerializer,
-    OrderSerializer,
     OrderLineItemSerializer,
     OrderLineItemTypeSerializer,
-    OrderDisposalTicketSerializer,
-    DayOfWeekSerializer,
-    TimeSlotSerializer,
-    SubscriptionSerializer,
+    OrderSerializer,
     PayoutSerializer,
     ProductAddOnChoiceSerializer,
     ProductSerializer,
-    SellerProductSerializer,
-    SellerProductSellerLocationSerializer,
-    SellerProductSellerLocationServiceSerializer,
-    SellerInvoicePayableSerializer,
     SellerInvoicePayableLineItemSerializer,
-    ServiceRecurringFrequencySerializer,
-    MainProductServiceRecurringFrequencySerializer,
-    SellerProductSellerLocationServiceRecurringFrequencySerializer,
-    SellerProductSellerLocationRentalSerializer,
+    SellerInvoicePayableSerializer,
+    SellerLocationSerializer,
     SellerProductSellerLocationMaterialSerializer,
     SellerProductSellerLocationMaterialWasteTypeSerializer,
+    SellerProductSellerLocationRentalSerializer,
+    SellerProductSellerLocationSerializer,
+    SellerProductSellerLocationServiceRecurringFrequencySerializer,
+    SellerProductSellerLocationServiceSerializer,
+    SellerProductSerializer,
+    SellerSerializer,
+    ServiceRecurringFrequencySerializer,
+    SubscriptionSerializer,
+    TimeSlotSerializer,
+    UserAddressSerializer,
+    UserAddressTypeSerializer,
+    UserGroupBillingSerializer,
+    UserGroupCreditApplicationSerializer,
+    UserGroupLegalSerializer,
+    UserGroupSerializer,
+    UserSellerReviewAggregateSerializer,
+    UserSellerReviewSerializer,
+    UserSerializer,
+    UserUserAddressSerializer,
     WasteTypeSerializer,
 )
-
 
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -195,6 +195,7 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
     filterset_fields = ["id", "user_id"]
 
     def get_queryset(self):
@@ -409,6 +410,7 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         self.queryset = self.queryset.prefetch_related(
             "orders__order_line_items",
+            "user__user_group__credit_applications",
             "seller_product_seller_location__seller_product__product__product_add_on_choices",
         )
         self.queryset = self.queryset.select_related(
@@ -1311,17 +1313,20 @@ def order_status_view(request, order_id):
         order = Order.objects.get(id=order_id)
         accept_url = f"/api/order/{order_id}/accept/?key={key}"
         # deny_url = f"/api/order/{order_id}/deny/?key={key}"
-        payload = {"order": order, "accept_url": accept_url}  # "deny_url": deny_url
+        deny_url = (
+            order.order_group.seller_product_seller_location.seller_product.seller.dashboard_url
+        )
+        payload = {"order": order, "accept_url": accept_url, "deny_url": deny_url}
         return render(request, "notifications/emails/supplier_email.min.html", payload)
     else:
         return render(
             request,
             "notifications/emails/failover_email_us.html",
-            {"order_id": order_id},
+            {"subject": f"Supplier%20Approved%20%5B{order_id}%5D"},
         )
 
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @authentication_classes([])
 @permission_classes([])
 def update_order_status(request, order_id, accept=True):
@@ -1339,16 +1344,25 @@ def update_order_status(request, order_id, accept=True):
                     internal_email.supplier_denied_order(order)
         else:
             raise ValueError("Invalid Token")
-        return render(
-            request,
-            "notifications/emails/supplier_order_updated.html",
-            {"order_id": order_id},
-        )
     except Exception as e:
         logger.error(f"update_order_status: [{e}]", exc_info=e)
         return render(
             request,
             "notifications/emails/failover_email_us.html",
+            {"subject": f"Supplier%20Approved%20%5B{order_id}%5D"},
+        )
+    if request.method == "POST":
+        # This is an HTMX request, so respond with html snippet
+        return render(
+            request,
+            "supplier_dashboard/snippets/order_status.html",
+            {"order": order},
+        )
+    else:
+        # This is a GET request, so render a full success page.
+        return render(
+            request,
+            "notifications/emails/supplier_order_updated.html",
             {"order_id": order_id},
         )
 

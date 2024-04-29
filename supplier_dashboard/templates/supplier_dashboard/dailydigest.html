@@ -1,0 +1,134 @@
+{% extends 'supplier_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Daily Digest{% endblock %}
+{% block stylesheet %}
+<style>
+    @keyframes flash {
+
+        0%,
+        50%,
+        100% {
+            opacity: 1;
+        }
+
+        25%,
+        75% {
+            opacity: 0;
+        }
+    }
+
+    .htmx-indicator {
+        display: none;
+    }
+
+    .htmx-request .htmx-indicator {
+        display: inline;
+        animation: flash 1s infinite;
+    }
+
+    .htmx-request.htmx-indicator {
+        display: inline;
+        animation: flash 2.0s infinite;
+    }
+</style>
+{% endblock %}
+
+{% block javascript %}
+<script>
+</script>
+{% endblock %}
+
+
+{% block content %}
+<br>
+<div class="container">
+    <!-- MESSAGES -->
+    {% include 'supplier_dashboard/snippets/djangomessages.html' %}
+    <!-- MESSAGES -->
+    <img width="336" border="0" style="max-width:336px;width:100%;height:auto;display:block;margin:auto;"
+        src="data:image/png;base64,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">
+    <hr>
+    <h1>{{ seller.name }} Daily Digest</h1>
+    <div class="accordion" id="accordionExample">
+        <!-- Show any status lists that might be passed on initial call. -->
+        {% for status in status_list %}
+        {% include 'supplier_dashboard/snippets/accordian_status_orders.html' %}
+        {% endfor %}
+        <!-- Add bootstrap accordians for all of the statuses and use HTMX to get the contents on page load. This to ensure a speedy initial page load. -->
+        <div class="accordion-item" _="on load transition my opacity to 1 over 0.3 seconds" style="opacity: .01;"
+            hx-get="{{status_pending_link}}" hx-trigger="load" hx-swap="outerHTML"
+            hx-indicator="#htmx-indicator-status">
+            <h2 class="accordion-header" id="headingPENDING">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapsePENDING" aria-controls="collapsePENDING">
+                    Orders with status: PENDING <span class="htmx-indicator" style="margin-left:10px;"
+                        id="htmx-indicator-status">Loading...</span>
+                </button>
+            </h2>
+            <div id="collapsePENDING" class="accordion-collapse collapse" aria-labelledby="headingPENDING"
+                data-bs-parent="#accordionExample">
+                <div class="accordion-body" style="background-color: #f2f3f3;">
+                    <div class="inner-container" style="padding: 5px; margin: 0 auto; display: flex; flex-wrap: wrap">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item" _="on load transition my opacity to 1 over 0.4 seconds" style="opacity: .01;"
+            hx-get="{{status_scheduled_link}}" hx-trigger="load" hx-swap="outerHTML"
+            hx-indicator="#htmx-indicator-status">
+            <h2 class="accordion-header" id="headingSCHEDULED">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseSCHEDULED" aria-controls="collapseSCHEDULED">
+                    Orders with status: SCHEDULED <span class="htmx-indicator" style="margin-left:10px;"
+                        id="htmx-indicator-status">Loading...</span>
+                </button>
+            </h2>
+            <div id="collapseSCHEDULED" class="accordion-collapse collapse" aria-labelledby="headingSCHEDULED"
+                data-bs-parent="#accordionExample">
+                <div class="accordion-body" style="background-color: #f2f3f3;">
+                    <div class="inner-container" style="padding: 5px; margin: 0 auto; display: flex; flex-wrap: wrap">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item" _="on load transition my opacity to 1 over 0.5 seconds" style="opacity: .01;"
+            hx-get="{{status_cancelled_link}}" hx-trigger="load" hx-swap="outerHTML"
+            hx-indicator="#htmx-indicator-status">
+            <h2 class="accordion-header" id="headingCANCELLED">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseCANCELLED" aria-controls="collapseCANCELLED">
+                    Orders with status: CANCELLED <span class="htmx-indicator" style="margin-left:10px;"
+                        id="htmx-indicator-status">Loading...</span>
+                </button>
+            </h2>
+            <div id="collapseCANCELLED" class="accordion-collapse collapse" aria-labelledby="headingCANCELLED"
+                data-bs-parent="#accordionExample">
+                <div class="accordion-body" style="background-color: #f2f3f3;">
+                    <div class="inner-container" style="padding: 5px; margin: 0 auto; display: flex; flex-wrap: wrap">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item" _="on load transition my opacity to 1 over 0.7 seconds" style="opacity: .01;"
+            hx-get="{{status_complete_link}}" hx-trigger="load" hx-swap="outerHTML"
+            hx-indicator="#htmx-indicator-status">
+            <h2 class="accordion-header" id="headingCOMPLETED">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseCOMPLETED" aria-controls="collapseCOMPLETED">
+                    Orders with status: COMPLETED <span class="htmx-indicator" style="margin-left:10px;"
+                        id="htmx-indicator-status">Loading...</span>
+                </button>
+            </h2>
+            <div id="collapseCOMPLETED" class="accordion-collapse collapse" aria-labelledby="headingCOMPLETED"
+                data-bs-parent="#accordionExample">
+                <div class="accordion-body" style="background-color: #f2f3f3;">
+                    <div class="inner-container" style="padding: 5px; margin: 0 auto; display: flex; flex-wrap: wrap">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+</div>
+{% endblock %}

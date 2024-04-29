@@ -8,6 +8,11 @@ from drf_spectacular.utils import OpenApiTypes, extend_schema_field
 from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 
+from admin_policies.api.v1.serializers import (
+    UserGroupPolicyInvitationApprovalSerializer,
+    UserGroupPolicyMonthlyLimitSerializer,
+    UserGroupPolicyPurchaseApprovalSerializer,
+)
 from notifications.utils.internal_email import send_email_on_new_signup
 
 from .models import (
@@ -163,7 +168,9 @@ class UserGroupSerializer(WritableNestedModelSerializer):
     seller_id = serializers.PrimaryKeyRelatedField(
         queryset=Seller.objects.all(), source="seller", write_only=True, allow_null=True
     )
-    legal = UserGroupLegalSerializer()
+    legal = UserGroupLegalSerializer(
+        allow_null=True,
+    )
     credit_applications = UserGroupCreditApplicationSerializer(
         many=True,
         read_only=True,
@@ -180,6 +187,21 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         allow_null=True,
     )
     share_code = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    policy_invitation_approvals = UserGroupPolicyInvitationApprovalSerializer(
+        many=True,
+        required=False,
+        allow_null=True,
+    )
+    policy_monthly_limit = UserGroupPolicyMonthlyLimitSerializer(
+        required=False,
+        allow_null=True,
+    )
+    policy_purchase_approvals = UserGroupPolicyPurchaseApprovalSerializer(
+        many=True,
         required=False,
         allow_null=True,
     )

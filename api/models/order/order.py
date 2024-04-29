@@ -3,22 +3,22 @@ import logging
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
-from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.utils import timezone
 
+from api.models.choices.user_type import UserType
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
+from api.utils.utils import encrypt_string
 from common.models import BaseModel
 from notifications.utils.add_email_to_queue import add_email_to_queue
-from api.utils.utils import encrypt_string
-from api.models.choices.user_type import UserType
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,14 @@ class Order(BaseModel):
     def order_type(self):
         return self.get_order_type()
 
+    @property
+    def seller_accept_order_url(self):
+        return f"{settings.API_URL}/api/order/{self.id}/accept/?key={encrypt_string(str(self.id))}"
+
+    @property
+    def seller_view_order_url(self):
+        return f"{settings.API_URL}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
+
     def customer_price(self):
         return sum(
             [
@@ -124,67 +132,36 @@ class Order(BaseModel):
         return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {str(self.id)[:5]}'
 
     def get_order_type(self):
-        # Assign variables comparing Order StartDate and EndDate to OrderGroup StartDate and EndDate.
-        order_order_group_start_date_equal = (
-            self.start_date == self.order_group.start_date
+        # Pre-calculate conditions
+        is_first_order = (
+            self.order_group.orders.order_by("created_on").first().id == self.id
         )
-        order_order_group_end_dates_equal = self.end_date == self.order_group.end_date
-
-        # Does the OrderGroup have a Subscription?
+        order_start_end_equal = self.start_date == self.end_date
+        order_group_start_equal = self.start_date == self.order_group.start_date
+        order_group_end_equal = self.end_date == self.order_group.end_date
         has_subscription = hasattr(self.order_group, "subscription")
-
-        # Are Order.StartDate and Order.EndDate equal?
-        order_start_end_dates_equal = self.start_date == self.end_date
-
-        # Assign variables based on Order.Type.
-        # DELIVERY: Order.StartDate == OrderGroup.StartDate AND Order.StartDate == Order.EndDate
-        # AND Order.EndDate != OrderGroup.EndDate.
-        order_type_delivery = (
-            order_order_group_start_date_equal
-            and order_start_end_dates_equal
-            and not order_order_group_end_dates_equal
-        )
-        # Return directly is true so that total order lookup doesn't happen.
-        if order_type_delivery:
-            return Order.Type.DELIVERY
-
-        # Orders in OrderGroup.
         order_count = Order.objects.filter(order_group=self.order_group).count()
 
-        # ONE TIME: Order.StartDate == OrderGroup.StartDate AND Order.EndDate == OrderGroup.EndDate
-        # AND OrderGroup has no Subscription.
-        order_type_one_time = (
-            order_count == 1
-            and order_order_group_start_date_equal
-            and order_order_group_end_dates_equal
-            and not has_subscription
-        )
-        # REMOVAL: Order.EndDate == OrderGroup.EndDate AND OrderGroup.Orders.Count > 1.
-        order_type_removal = order_order_group_end_dates_equal and order_count > 1
-        # SWAP: OrderGroup.Orders.Count > 1 AND Order.EndDate != OrderGroup.EndDate AND OrderGroup has no Subscription.
-        order_type_swap = (
-            order_count > 1
-            and not order_order_group_end_dates_equal
-            and not has_subscription
-        )
-        # AUTO RENEWAL: OrderGroup has Subscription and does not meet any other criteria.
-        order_type_auto_renewal = (
-            has_subscription
-            and not order_type_delivery
-            and not order_type_one_time
-            and not order_type_removal
-            and not order_type_swap
-        )
-
-        if order_type_delivery:
+        # Check order types in order of precedence
+        if (
+            order_group_start_equal
+            and order_start_end_equal
+            and not order_group_end_equal
+            and is_first_order
+        ):
             return Order.Type.DELIVERY
-        elif order_type_one_time:
+        elif (
+            order_count == 1
+            and order_group_start_equal
+            and order_group_end_equal
+            and not has_subscription
+        ):
             return Order.Type.ONE_TIME
-        elif order_type_removal:
+        elif order_group_end_equal and order_count > 1:
             return Order.Type.REMOVAL
-        elif order_type_swap:
+        elif order_count > 1 and not order_group_end_equal and not has_subscription:
             return Order.Type.SWAP
-        elif order_type_auto_renewal:
+        elif has_subscription:
             return Order.Type.AUTO_RENEWAL
         else:
             return None
@@ -577,9 +554,8 @@ class Order(BaseModel):
             if self.order_type != Order.Type.AUTO_RENEWAL:
                 # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
                 # then it opens the order html to allow them to select order status.
-                base_url = settings.API_URL
-                accept_url = f"{base_url}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
-                subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{str(self.id)}]"
+                accept_url = self.seller_view_order_url
+                subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
                 html_content_supplier = render_to_string(
                     "notifications/emails/supplier_email.min.html",
                     {"order": self, "accept_url": accept_url, "is_email": True},

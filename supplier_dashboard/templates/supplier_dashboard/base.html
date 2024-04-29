@@ -1,0 +1,57 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>{% block title %}Downstream{% endblock %}</title>
+    <!-- <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}"> -->
+    <link rel="icon" type="image/png"
+        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABbElEQVR4AWNhLC9lYGBkYPjPAAIEGYwsDH/+MpACgBr+YBP/DzYSq4bff5AtZWdmkhIQYmRk+PXnz/MPH/9CpVBs+A3naElIlri7X3z06N///1xs7KoS4uvOnd1+5fJ/JNuANiA0pNrYZC1YoCohAbTk1aeP3Vs3l3p6ff/2ff/NGyhO+s/wnxFsBiPQ5F8/Wf7+Yf73x0xONsLUpGrFiq6oqP1gS8DB9J/l/+9fjDBvzt2zuz8m9urjJ//+/1uwf3+Bp6cUL+/n79+Zf/3+ywj1JQvjL6iTgJwrd+/lzpghzs8PZP/4+k0UqPrzZxagWUjOhvsBFI4Jrq76ioqQcOFkYd1/+dK/Xz+Z//37BwyY/9CARgml+du3AT0Ddi7QtQwSQoITUtLqFy1ADhigHxARF+XkpC2vAPY+CHz+9rV8xvTXHz8ixwULI5INy3fuhDFhfgRHHHKco9hADADaQIKG/yAb/vzGTMp4AACCn6yMFV/i0QAAAABJRU5ErkJggg==">
+    <!-- <link rel="stylesheet" type="text/css" href="{% static 'supplier_dashboard/style.css' %}"> -->
+    <!-- Bootstrap CSS -->
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- https://htmx.org/ -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"
+        integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
+        crossorigin="anonymous"></script>
+    <!-- https://github.com/bigskysoftware/_hyperscript -->
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <!-- https://sweetalert2.github.io/ -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% block stylesheet %}{% endblock %}
+    {% block javascript_head %}{% endblock %}
+    <style>
+        .accordion-button:not(.collapsed) {
+            background-color: #D9E7E7;
+        }
+
+        .accordion-button.collapsed {
+            background-color: #eef2f2;
+        }
+    </style>
+</head>
+
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' style="background-color:#ebebeb;">
+
+    <main role="main">
+        <!-- class="container mt-4" style="padding-top:10px;padding-bottom:10px;" -->
+        <div class="container mt-4">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+    {% include 'supplier_dashboard/footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    {% block javascript %}{% endblock %}
+</body>
+
+</html>

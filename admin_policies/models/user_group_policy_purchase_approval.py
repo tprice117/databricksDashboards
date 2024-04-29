@@ -18,7 +18,7 @@ class UserGroupPolicyPurchaseApproval(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
         models.CASCADE,
-        related_name="user_group_policy_purchase_approvals",
+        related_name="policy_purchase_approvals",
     )
     user_type = models.CharField(
         max_length=255,
