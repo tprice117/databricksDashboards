@@ -173,10 +173,11 @@ CORS_ORIGIN_ALLOW_ALL = True
 #      'http://localhost:62964',
 # ]
 
-CORS_ALLOW_HEADERS = [
-    "X-Authorization-Id-Token",
-    "X-On-Behalf-Of",
-]
+# CORS_ALLOW_HEADERS = [
+#     "Authorization",
+#     "X-Authorization-Id-Token",
+#     "X-On-Behalf-Of",
+# ]
 
 SPECTACULAR_DESCRIPTION = """# Introduction
 
