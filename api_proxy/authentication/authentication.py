@@ -1,10 +1,13 @@
 import logging
 import uuid
 
+import jwt
 from django.core.exceptions import SuspiciousOperation
 from django.urls import reverse
 from mozilla_django_oidc.contrib.drf import OIDCAuthentication
 from mozilla_django_oidc.utils import absolutify
+from requests.exceptions import HTTPError
+from rest_framework import authentication, exceptions
 
 from api.models.user.user import User
 
@@ -35,8 +38,29 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
 
         # 2. Delegate to OIDC authentication for regular users
         #  - If not an admin, use the standard OIDC flow for authentication.
-        print("Calling super().authenticate")
-        user, token = super().authenticate(request, **kwargs)
+        id_token = request.META.get("HTTP_X_AUTHORIZATION_ID_TOKEN")
+        decoded_id_token = jwt.JWT().decode(id_token, None, None) if id_token else None
+
+        # Check if the ID token contains the email field.
+        if decoded_id_token and "email" in decoded_id_token:
+            email = decoded_id_token["email"]
+
+            # Get or create a user based on the email address.
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "username": email,
+                    "user_id": (
+                        decoded_id_token["sub"] if "sub" in decoded_id_token else None
+                    ),
+                },
+            )
+        else:
+            return None
+
+        if not user:
+            msg = "Login failed: No user found for the given access token."
+            raise exceptions.AuthenticationFailed(msg)
 
         # 3. Handle impersonation only for staff users with proper header
         #  - This allows staff users to act on behalf of other users.
