@@ -413,7 +413,9 @@ class Order(BaseModel):
 
                 # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
                 # this Order.
-                if self.order_group.user_address.user_group.policy_monthly_limit and (
+                if hasattr(
+                    self.order_group.user_address.user_group, "policy_monthly_limit"
+                ) and (
                     order_total_this_month + self.customer_price()
                     > self.order_group.user_address.user_group.policy_monthly_limit.amount
                 ):
@@ -427,9 +429,9 @@ class Order(BaseModel):
                 # Check that UserGroupPolicyPurchaseApproval will not be exceeded with this Order.
                 elif hasattr(
                     self.order_group.user_address.user_group,
-                    "user_group_policy_purchase_approvals",
+                    "policy_purchase_approvals",
                 ):
-                    user_group_purchase_approval = self.order_group.user_address.user_group.user_group_policy_purchase_approvals.filter(
+                    user_group_purchase_approval = self.order_group.user_address.user_group.policy_purchase_approvals.filter(
                         user_type=user.type
                     ).first()
                     if (

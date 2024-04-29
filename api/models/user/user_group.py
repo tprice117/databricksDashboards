@@ -89,22 +89,6 @@ class UserGroup(BaseModel):
         help_text="This is the company_id in Intercom.",
     )
 
-    @property
-    def policy_monthly_limit(self):
-        return (
-            self.user_group_policy_monthly_limit
-            if hasattr(self, "user_group_policy_monthly_limit")
-            else None
-        )
-
-    @property
-    def policy_user_invitations(self):
-        return (
-            self.user_group_policy_invitation_approvals
-            if hasattr(self, "user_group_policy_invitation_approvals")
-            else None
-        )
-
     def __str__(self):
         return self.name
 
