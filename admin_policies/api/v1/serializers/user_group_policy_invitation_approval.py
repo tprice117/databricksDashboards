@@ -8,4 +8,7 @@ class UserGroupPolicyInvitationApprovalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserGroupPolicyInvitationApproval
-        fields = "__all__"
+        fields = [
+            "id",
+            "user_type",
+        ]

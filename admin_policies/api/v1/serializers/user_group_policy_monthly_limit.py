@@ -8,4 +8,7 @@ class UserGroupPolicyMonthlyLimitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserGroupPolicyMonthlyLimit
-        fields = "__all__"
+        fields = [
+            "id",
+            "amount",
+        ]
