@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Received Invoice Details</title>
+    <link rel="icon" type="image/png"
+        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABbElEQVR4AWNhLC9lYGBkYPjPAAIEGYwsDH/+MpACgBr+YBP/DzYSq4bff5AtZWdmkhIQYmRk+PXnz/MPH/9CpVBs+A3naElIlri7X3z06N///1xs7KoS4uvOnd1+5fJ/JNuANiA0pNrYZC1YoCohAbTk1aeP3Vs3l3p6ff/2ff/NGyhO+s/wnxFsBiPQ5F8/Wf7+Yf73x0xONsLUpGrFiq6oqP1gS8DB9J/l/+9fjDBvzt2zuz8m9urjJ//+/1uwf3+Bp6cUL+/n79+Zf/3+ywj1JQvjL6iTgJwrd+/lzpghzs8PZP/4+k0UqPrzZxagWUjOhvsBFI4Jrq76ioqQcOFkYd1/+dK/Xz+Z//37BwyY/9CARgml+du3AT0Ddi7QtQwSQoITUtLqFy1ADhigHxARF+XkpC2vAPY+CHz+9rV8xvTXHz8ixwULI5INy3fuhDFhfgRHHHKco9hADADaQIKG/yAb/vzGTMp4AACCn6yMFV/i0QAAAABJRU5ErkJggg==">
+    <link rel="stylesheet" href="{% static 'supplier_dashboard/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    <link rel="stylesheet" href="{% static 'supplier_dashboard/css/bs-theme-overrides.css' %}">
+</head>
+
+<body id="page-top">
+    <div id="wrapper">
+        {% include 'supplier_dashboard/sidebar.html' %}
+        <div class="d-flex flex-column" id="content-wrapper">
+            <div id="content">
+                {% include 'supplier_dashboard/navbar.html' %}
+                <div class="container-fluid">
+                    <h3 class="text-dark mb-1">Received Invoice Details</h3>
+                </div><!-- Start: 1 Row 2 Columns -->
+                <div class="container">
+                    <div class="row" style="padding-bottom: 24px;">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title">{{seller_invoice_payable.amount}}</h4>
+                                    <h6 class="text-muted card-subtitle mb-2">Received on:
+                                        {{seller_invoice_payable.created_on}}</h6>
+                                    <p style="margin-bottom: 0px;"><strong>Location</strong></p><a
+                                        href="{% url 'supplier_location_detail' location_id=seller_invoice_payable.seller_location.id %}">{{seller_invoice_payable.seller_location.name}}</a>
+                                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Invoice Date</strong></p>
+                                    <p>{{seller_invoice_payable.invoice_date}}</p>
+                                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Due Date</strong></p>
+                                    <p>{{seller_invoice_payable.due_date}}</p>
+                                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Status</strong></p>
+                                    <p>{{seller_invoice_payable.status}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6"><img class="img-fluid" alt="adobe, pdf, application" width="100"
+                                height="80" src="{% static 'supplier_dashboard/img/temp_pay_logo.png' %}">
+                        </div>
+                    </div>
+                </div><!-- End: 1 Row 2 Columns -->
+                <!-- Start: 1 Row 2 Columns -->
+                <div class="container">
+                    <div class="row" style="padding-bottom: 24px;">
+                        <div class="col-md-6 col-xl-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title">Received Invoice Line Items&nbsp;</h4>
+                                    <p>Each line item in your invoice must be associated to a booking. Our team has done
+                                        this while processing the invoice.</p><a class="card-link" href="#">
+                                        <div class="table-responsive" style="margin-bottom: 16px;">
+                                            <table class="table">
+                                                <thead>
+                                                    <tr></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for seller_invoice_payable_line_item in seller_invoice_payable_line_items %}
+                                                    <tr>
+                                                        <td><a
+                                                                href="{% url 'supplier_booking_detail' order_id=seller_invoice_payable_line_item.order_id %}">{{seller_invoice_payable_line_item.order_id}}</a>
+                                                        </td>
+                                                        <td>{{seller_invoice_payable_line_item.amount}}</td>
+                                                        <td>{{seller_invoice_payable_line_item.description}}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- End: 1 Row 2 Columns -->
+            </div>
+            <footer class="bg-white sticky-footer">
+                <div class="container my-auto">
+                    <div class="text-center my-auto copyright"><span>Copyright © Downstream 2024</span></div>
+                </div>
+            </footer>
+        </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" id="modal-1">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Are you sure?</h4><button class="btn-close" type="button" aria-label="Close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Say something here.</p>
+                </div>
+                <div class="modal-footer"><button class="btn btn-light" type="button"
+                        data-bs-dismiss="modal">Close</button><button class="btn btn-primary" type="button"
+                        style="background: var(--bs-success);">Accept Order</button></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" id="modal-2">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Are you sure?</h4><button class="btn-close" type="button" aria-label="Close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>If so, please click "Request Change" and let us know what information, change request, or pricing
+                        changes are needed before accepting the Order.</p>
+                </div>
+                <div class="modal-footer"><button class="btn btn-light" type="button"
+                        data-bs-dismiss="modal">Close</button><button class="btn btn-primary" type="button">Request
+                        Change</button></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'supplier_dashboard/js/bs-init.js' %}"></script>
+    <script src="{% static 'supplier_dashboard/js/theme.js' %}"></script>
+</body>
+
+</html>
