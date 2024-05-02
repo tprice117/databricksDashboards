@@ -20,6 +20,16 @@ urlpatterns = [
         views.booking_detail,
         name="supplier_booking_detail",
     ),
+    path(
+        "supplier/order/<uuid:order_id>/accept/",
+        views.update_order_status,
+        {"accept": True},
+    ),
+    path(
+        "supplier/order/<uuid:order_id>/deny/",
+        views.update_order_status,
+        {"accept": False},
+    ),
     path("supplier/payouts/", views.payouts, name="supplier_payouts"),
     path(
         "supplier/payout/<uuid:payout_id>/",
