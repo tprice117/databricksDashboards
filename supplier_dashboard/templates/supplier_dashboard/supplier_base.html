@@ -15,8 +15,45 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
     <link rel="stylesheet" href="{% static 'supplier_dashboard/css/bs-theme-overrides.css' %}">
+    <!-- https://htmx.org/ -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"
+        integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
+        crossorigin="anonymous"></script>
+    <!-- https://github.com/bigskysoftware/_hyperscript -->
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <!-- https://sweetalert2.github.io/ -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {% block stylesheet %}{% endblock %}
     {% block javascript_head %}{% endblock %}
+    <style>
+        @keyframes flash {
+
+            0%,
+            50%,
+            100% {
+                opacity: 1;
+            }
+
+            25%,
+            75% {
+                opacity: 0;
+            }
+        }
+
+        .htmx-indicator {
+            display: none;
+        }
+
+        .htmx-request .htmx-indicator {
+            display: inline;
+            animation: flash 1s infinite;
+        }
+
+        .htmx-request.htmx-indicator {
+            display: inline;
+            animation: flash 2.0s infinite;
+        }
+    </style>
 </head>
 
 <body id="page-top" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
