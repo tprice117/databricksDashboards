@@ -1,382 +1,269 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html data-bs-theme="light" lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Booking Details</title>
-    <link rel="icon" type="image/png"
-        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABbElEQVR4AWNhLC9lYGBkYPjPAAIEGYwsDH/+MpACgBr+YBP/DzYSq4bff5AtZWdmkhIQYmRk+PXnz/MPH/9CpVBs+A3naElIlri7X3z06N///1xs7KoS4uvOnd1+5fJ/JNuANiA0pNrYZC1YoCohAbTk1aeP3Vs3l3p6ff/2ff/NGyhO+s/wnxFsBiPQ5F8/Wf7+Yf73x0xONsLUpGrFiq6oqP1gS8DB9J/l/+9fjDBvzt2zuz8m9urjJ//+/1uwf3+Bp6cUL+/n79+Zf/3+ywj1JQvjL6iTgJwrd+/lzpghzs8PZP/4+k0UqPrzZxagWUjOhvsBFI4Jrq76ioqQcOFkYd1/+dK/Xz+Z//37BwyY/9CARgml+du3AT0Ddi7QtQwSQoITUtLqFy1ADhigHxARF+XkpC2vAPY+CHz+9rV8xvTXHz8ixwULI5INy3fuhDFhfgRHHHKco9hADADaQIKG/yAb/vzGTMp4AACCn6yMFV/i0QAAAABJRU5ErkJggg==">
-    <link rel="stylesheet" href="{% static 'supplier_dashboard/bootstrap/css/bootstrap.min.css' %}">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
-    <link rel="stylesheet" href="{% static 'supplier_dashboard/css/bs-theme-overrides.css' %}">
-</head>
-
-<body id="page-top">
-    <div id="wrapper">
-        <nav class="navbar align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0 navbar-dark"
-            style="background: var(--bs-primary);">
-            <div class="container-fluid d-flex flex-column p-0"><a
-                    class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="#">
-                    <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-truck"></i></div>
-                    <div class="sidebar-brand-text mx-3"><span>Downstream</span></div>
-                </a>
-                <hr class="sidebar-divider my-0">
-                <ul class="navbar-nav text-light" id="accordionSidebar">
-                    <li class="nav-item"><a class="nav-link" href="index.html"><i
-                                class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
-                    <li class="nav-item"></li>
-                    <li class="nav-item"><a class="nav-link" href="bookings.html"><i
-                                class="icon ion-calendar"></i><span>Bookings</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="payouts.html"><i
-                                class="far fa-chart-bar"></i><span>Payouts</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="locations.html"><i
-                                class="far fa-map"></i><span>Locations</span></a><a class="nav-link"
-                            href="received_invoices.html"><i class="far fa-file-alt"></i><span>Received
-                                Invoices</span></a><a class="nav-link" href="company_settings.html"><i
-                                class="fas fa-user"></i><span>Company Settings</span></a><a class="nav-link"
-                            href="profile.html"><i class="fas fa-user"></i><span>Profile</span></a></li>
-                    <li class="nav-item"></li>
-                    <li class="nav-item"></li>
-                </ul>
-                <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0"
-                        id="sidebarToggle" type="button"></button></div>
-            </div>
-        </nav>
-        <div class="d-flex flex-column" id="content-wrapper">
-            <div id="content">
-                <nav class="navbar navbar-expand bg-white shadow mb-4 topbar static-top navbar-light">
-                    <div class="container-fluid"><button class="btn btn-link d-md-none rounded-circle me-3"
-                            id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
-                        <ul class="navbar-nav flex-nowrap ms-auto">
-                            <li class="nav-item dropdown d-sm-none no-arrow"><a class="dropdown-toggle nav-link"
-                                    aria-expanded="false" data-bs-toggle="dropdown" href="#"><i
-                                        class="fas fa-search"></i></a>
-                                <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in"
-                                    aria-labelledby="searchDropdown">
-                                    <form class="me-auto navbar-search w-100">
-                                        <div class="input-group"><input class="bg-light form-control border-0 small"
-                                                type="text" placeholder="Search for ...">
-                                            <div class="input-group-append"><button class="btn btn-primary py-0"
-                                                    type="button"><i class="fas fa-search"></i></button></div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </li>
-                            <div class="d-none d-sm-block topbar-divider"></div>
-                            <li class="nav-item dropdown no-arrow">
-                                <div class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link"
-                                        aria-expanded="false" data-bs-toggle="dropdown" href="#"><span
-                                            class="d-none d-lg-inline me-2 text-gray-600 small">{{user.name}}</span><img
-                                            class="border rounded-circle img-profile"
-                                            src="{% static 'supplier_dashboard/img/avatars/avatar1.jpeg' %}"></a>
-                                    <div class="dropdown-menu shadow dropdown-menu-end animated--grow-in"><a
-                                            class="dropdown-item" href="profile.html"><i
-                                                class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Profile</a><a
-                                            class="dropdown-item" href="company_settings.html"><i
-                                                class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Settings</a>
-                                        <div class="dropdown-divider"></div><a class="dropdown-item" href="#"><i
-                                                class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Logout</a>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
-                <div class="container-fluid">
-                    <h3 class="text-dark mb-1">Booking Details</h3>
-                </div><!-- Start: 1 Row 2 Columns -->
-                <div class="container">
-                    <div class="row" style="padding-bottom: 24px;">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Order.OrderGroup.SPSL.SP.P.MP.Name</h4>
-                                    <h6 class="text-muted card-subtitle mb-2">Order.Id</h6>
-                                    <p style="margin-bottom: 0px;"><strong>Status</strong></p>
-                                    <p>{{order.status}}</p>
-                                    <p style="margin-bottom: 0px;"><strong>Created</strong></p>
-                                    <p>{{order.created_on}}</p>
-                                    <p class="card-text"></p><button class="btn btn-primary" type="button"
-                                        style="background: var(--bs-success);" data-bs-target="#modal-1"
-                                        data-bs-toggle="modal">Accept</button><button class="btn btn-primary"
-                                        type="button" style="background: var(--bs-danger);margin-left: 10px;"
-                                        data-bs-target="#modal-2" data-bs-toggle="modal">Request Change</button><a
-                                        class="card-link" href="#"></a><a class="card-link" href="#"></a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6"><iframe allowfullscreen="" frameborder="0"
-                                src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%"
-                                height="200"></iframe></div>
-                    </div>
-                </div><!-- End: 1 Row 2 Columns -->
-                <!-- Start: 1 Row 2 Columns -->
-                <div class="container">
-                    <div class="row" style="padding-bottom: 24px;">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Schedule Details</h4>
-                                    <p style="margin-bottom: 0px;"><strong>Service Date</strong></p>
-                                    <p>{{order.end_date}}</p>
-                                    <p style="margin-bottom: 0px;"><strong>Time Window</strong></p>
-                                    <p>{{order.time_window}}</p><a class="card-link" href="#"></a><a
-                                        href="bookings.html">See Other Accepted Orders on this Service Date</a><a
-                                        class="card-link" href="#"></a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Location Details</h4>
-                                    <p style="margin-bottom: 0px;"><strong>Address</strong></p>
-                                    <p>{{order.order_group.user_address}}</p>
-                                    <p style="margin-bottom: 0px;"><strong>Access Details</strong></p>
-                                    <p>{{order.access_details}}</p>
-                                    <p style="margin-bottom: 0px;">Additional Details</p>
-                                    <p>{{order.additional_details}}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div><!-- End: 1 Row 2 Columns -->
-                <!-- Start: 1 Row 2 Columns -->
-                <div class="container">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Customer Details</h4>
-                                    <p style="margin-bottom: 0px;"><strong>Name</strong></p>
-                                    <p>{{order.order_group.user.name}}</p>
-                                    <p style="margin-bottom: 0px;"><strong>Email</strong></p>
-                                    <p>{{order.order_group.user.email}}</p>
-                                    <p style="margin-bottom: 0px;"><strong>Phone</strong></p>
-                                    <p>{{order.order_group.user.phone}}</p>
-                                    <h6 class="text-muted card-subtitle mb-2"></h6>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Pricing Details</h4>
-                                    <p style="margin-bottom: 0px;"><strong>Service</strong></p>
-                                    <div class="row">
-                                        <div class="col">
-                                            <p style="margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$9.80 / unit @
-                                                        3.02</span></em></p>
-                                        </div>
-                                        <div class="col">
-                                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p style="margin-bottom: 0px;"><strong>Rental</strong></p>
-                                    <div class="row">
-                                        <div class="col">
-                                            <p style="margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$7.00 / unit @ 4
-                                                        (included)</span></em></p>
-                                        </div>
-                                        <div class="col">
-                                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">
-                                            <p style="margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$12.00 / unit @ 3
-                                                        (additional)</span></em></p>
-                                        </div>
-                                        <div class="col">
-                                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p></p>
-                                    <p style="margin-bottom: 0px;"><strong>Material</strong></p>
-                                    <div class="row">
-                                        <div class="col">
-                                            <p style="margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$1.20 / unit @ 4
-                                                        units (included)</span></em></p>
-                                        </div>
-                                        <div class="col">
-                                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">
-                                            <p style="margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$4.10 / unit @ 2
-                                                        units</span></em></p>
-                                        </div>
-                                        <div class="col">
-                                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p style="margin-bottom: 0px;"><strong>Fuel &amp; Fees</strong></p>
-                                    <div class="row">
-                                        <div class="col">
-                                            <p style="margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">Delivery @ 12.3
-                                                        miles</span></em></p>
-                                        </div>
-                                        <div class="col">
-                                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col">
-                                            <p style="margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">Fuel &amp; Env. @
-                                                        11.5%</span></em></p>
-                                        </div>
-                                        <div class="col">
-                                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p
-                                        style="margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
-                                        Total: <strong>$425.25</strong></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div><!-- End: 1 Row 2 Columns -->
-                <!-- Start: 1 Row 2 Columns -->
-                <div class="container" style="margin-top: 24px;">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Payout Details</h4>
-                                    <div class="table-responsive" style="margin-bottom: 16px;">
-                                        <table class="table">
-                                            <thead>
-                                                <tr></tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>{{payout.created_on}}</td>
-                                                    <td>{{payout.amount}}</td>
-                                                    <td>{{payout.status}}</td>
-                                                    <td><a class="btn btn-light" role="button"
-                                                            href="{% url 'supplier_payout_detail' payout_id=payout.id %}"><i
-                                                                class="far fa-eye"></i></a>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>{{payout.created_on}}</td>
-                                                    <td>{{payout.amount}}</td>
-                                                    <td>{{payout.status}}</td>
-                                                    <td><a class="btn btn-light" role="button"
-                                                            href="{% url 'supplier_payout_detail' payout_id=payout.id %}"><i
-                                                                class="far fa-eye"></i></a>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Received Invoice Details</h4>
-                                    <div class="table-responsive" style="margin-bottom: 16px;">
-                                        <table class="table">
-                                            <thead>
-                                                <tr></tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>{{seller_invoice_payable_line_item.amount}}</td>
-                                                    <td>{{seller_invoice_payable_line_item.description}}</td>
-                                                    <td><a class="btn btn-light" role="button"
-                                                            href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}"><i
-                                                                class="far fa-eye"></i></a></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>{{seller_invoice_payable_line_item.amount}}</td>
-                                                    <td>{{seller_invoice_payable_line_item.description}}</td>
-                                                    <td><a class="btn btn-light" role="button"
-                                                            href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}"><i
-                                                                class="far fa-eye"></i></a></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div><!-- End: 1 Row 2 Columns -->
-            </div>
-            <footer class="bg-white sticky-footer">
-                <div class="container my-auto">
-                    <div class="text-center my-auto copyright"><span>Copyright © Downstream 2024</span></div>
+{% block title %}Booking Details{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h3 class="text-dark mb-1">Booking Details</h3>
+</div><!-- Start: 1 Row 2 Columns -->
+<div class="container">
+    <div class="row" style="padding-bottom: 24px;">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">
+                        {{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
+                    </h4>
+                    <h6 class="text-muted card-subtitle mb-2">{{order.id}}</h6>
+                    <p style="margin-bottom: 0px;"><strong>Status</strong></p>
+                    <p>{{order.status}}</p>
+                    <p style="margin-bottom: 0px;"><strong>Created</strong></p>
+                    <p>{{order.created_on}}</p>
+                    <p class="card-text"></p><button class="btn btn-primary" type="button"
+                        style="background: var(--bs-success);" data-bs-target="#modal-1"
+                        data-bs-toggle="modal">Accept</button><button class="btn btn-primary" type="button"
+                        style="background: var(--bs-danger);margin-left: 10px;" data-bs-target="#modal-2"
+                        data-bs-toggle="modal">Request Change</button><a class="card-link" href="#"></a><a
+                        class="card-link" href="#"></a>
                 </div>
-            </footer>
-        </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+            </div>
+        </div>
+        <div class="col-md-6"><iframe allowfullscreen="" frameborder="0"
+                src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe></div>
     </div>
-    <div class="modal fade" role="dialog" tabindex="-1" id="modal-1">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Are you sure?</h4><button class="btn-close" type="button" aria-label="Close"
-                        data-bs-dismiss="modal"></button>
+</div><!-- End: 1 Row 2 Columns -->
+<!-- Start: 1 Row 2 Columns -->
+<div class="container">
+    <div class="row" style="padding-bottom: 24px;">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Schedule Details</h4>
+                    <p style="margin-bottom: 0px;"><strong>Service Date</strong></p>
+                    <p>{{order.end_date}}</p>
+                    <p style="margin-bottom: 0px;"><strong>Time Window</strong></p>
+                    <p>
+                        {% if order.order_group.time_slot %}
+                        {{ order.order_group.time_slot.name }}
+                        <br>
+                        {{ order.order_group.time_slot.start }}
+                        -
+                        {{ order.order_group.time_slot.end }}
+                        {% else %}
+                        Any
+                        {% endif %}
+                    </p>
+                    <!-- TODO: Create supplier url that accepts a date and will display orders with that end_date -->
+                    <a class="card-link" href="#"></a><a href="bookings.html">See Other
+                        Accepted Orders on this Service Date</a><a class="card-link" href="#"></a>
                 </div>
-                <div class="modal-body">
-                    <p>Say something here.</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Location Details</h4>
+                    <p style="margin-bottom: 0px;"><strong>Address</strong></p>
+                    <p>{{order.order_group.user_address.formatted_address}}</p>
+                    <p style="margin-bottom: 0px;"><strong>Access Details</strong></p>
+                    <p>
+                        {% if order.order_group.user_address.access_details %}
+                        {{ order.order_group.user_address.access_details }}
+                        {% else %}
+                        None
+                        {% endif %}
+                    </p>
+                    <p style="margin-bottom: 0px;">Additional/Placement Details</p>
+                    <p>
+                        {% if order.order_group.placement_details %}
+                        {{ order.order_group.placement_details }}
+                        {% else %}
+                        None
+                        {% endif %}
+                    </p>
                 </div>
-                <div class="modal-footer"><button class="btn btn-light" type="button"
-                        data-bs-dismiss="modal">Close</button><button class="btn btn-primary" type="button"
-                        style="background: var(--bs-success);">Accept Order</button></div>
             </div>
         </div>
     </div>
-    <div class="modal fade" role="dialog" tabindex="-1" id="modal-2">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Are you sure?</h4><button class="btn-close" type="button" aria-label="Close"
-                        data-bs-dismiss="modal"></button>
+</div><!-- End: 1 Row 2 Columns -->
+<!-- Start: 1 Row 2 Columns -->
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Customer Details</h4>
+                    <p style="margin-bottom: 0px;"><strong>Name</strong></p>
+                    <p>{{ order.order_group.user.first_name }}</p>
+                    <!-- <p style="margin-bottom: 0px;"><strong>Email</strong></p>
+                    <p>
+                        <a
+                            href="mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order_id}}%5D">Request
+                            Change</a>
+                    </p> -->
+                    <p style="margin-bottom: 0px;"><strong>Phone</strong></p>
+                    <p>
+                        <!-- Show Downstream phone until a masked direct option is figured out. -->
+                        <a style="color:#020f16" href="tel:+17193949986">(719) 394-9986</a>
+                    </p>
+                    <h6 class="text-muted card-subtitle mb-2"></h6>
                 </div>
-                <div class="modal-body">
-                    <p>If so, please click "Request Change" and let us know what information, change request, or pricing
-                        changes are needed before accepting the Order.</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Pricing Details</h4>
+                    <p style="margin-bottom: 0px;"><strong>Service</strong></p>
+                    <div class="row">
+                        <div class="col">
+                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$9.80
+                                        / unit @
+                                        3.02</span></em></p>
+                        </div>
+                        <div class="col">
+                            <p style="text-align: right;margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                            </p>
+                        </div>
+                    </div>
+                    <p style="margin-bottom: 0px;"><strong>Rental</strong></p>
+                    <div class="row">
+                        <div class="col">
+                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$7.00
+                                        / unit @ 4
+                                        (included)</span></em></p>
+                        </div>
+                        <div class="col">
+                            <p style="text-align: right;margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p style="margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$12.00 / unit @ 3
+                                        (additional)</span></em></p>
+                        </div>
+                        <div class="col">
+                            <p style="text-align: right;margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                            </p>
+                        </div>
+                    </div>
+                    <p></p>
+                    <p style="margin-bottom: 0px;"><strong>Material</strong></p>
+                    <div class="row">
+                        <div class="col">
+                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$1.20
+                                        / unit @ 4
+                                        units (included)</span></em></p>
+                        </div>
+                        <div class="col">
+                            <p style="text-align: right;margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$4.10
+                                        / unit @ 2
+                                        units</span></em></p>
+                        </div>
+                        <div class="col">
+                            <p style="text-align: right;margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                            </p>
+                        </div>
+                    </div>
+                    <p style="margin-bottom: 0px;"><strong>Fuel &amp; Fees</strong></p>
+                    <div class="row">
+                        <div class="col">
+                            <p style="margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">Delivery @ 12.3
+                                        miles</span></em></p>
+                        </div>
+                        <div class="col">
+                            <p style="text-align: right;margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">Fuel
+                                        &amp; Env. @
+                                        11.5%</span></em></p>
+                        </div>
+                        <div class="col">
+                            <p style="text-align: right;margin-bottom: 0px;"><em><span
+                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                            </p>
+                        </div>
+                    </div>
+                    <p style="margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
+                        Total: <strong>$425.25</strong></p>
                 </div>
-                <div class="modal-footer"><button class="btn btn-light" type="button"
-                        data-bs-dismiss="modal">Close</button><button class="btn btn-primary" type="button">Request
-                        Change</button></div>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'supplier_dashboard/js/bs-init.js' %}"></script>
-    <script src="{% static 'supplier_dashboard/js/theme.js' %}"></script>
-</body>
-
-</html>
+</div><!-- End: 1 Row 2 Columns -->
+<!-- Start: 1 Row 2 Columns -->
+<div class="container" style="margin-top: 24px;">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Payout Details</h4>
+                    <div class="table-responsive" style="margin-bottom: 16px;">
+                        <table class="table">
+                            <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody>
+                                {% for payout in order.payouts.all %}
+                                <tr>
+                                    <td>{{payout.created_on}}</td>
+                                    <td>{{payout.amount}}</td>
+                                    <td>{{payout.status}}</td>
+                                    <td><a class="btn btn-light" role="button"
+                                            href="{% url 'supplier_payout_detail' payout_id=payout.id %}"><i
+                                                class="far fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Received Invoice Details</h4>
+                    <div class="table-responsive" style="margin-bottom: 16px;">
+                        <table class="table">
+                            <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody>
+                                {% for seller_invoice_payable_line_item in order.seller_invoice_payable_line_items.all %}
+                                <tr>
+                                    <td>{{seller_invoice_payable_line_item.amount}}</td>
+                                    <td>{{seller_invoice_payable_line_item.description}}</td>
+                                    <td><a class="btn btn-light" role="button"
+                                            href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}"><i
+                                                class="far fa-eye"></i></a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- End: 1 Row 2 Columns -->
+{% endblock %}

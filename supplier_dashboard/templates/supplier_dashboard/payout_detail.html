@@ -1,195 +1,62 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html data-bs-theme="light" lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Payout Details</title>
-    <link rel="icon" type="image/png"
-        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABbElEQVR4AWNhLC9lYGBkYPjPAAIEGYwsDH/+MpACgBr+YBP/DzYSq4bff5AtZWdmkhIQYmRk+PXnz/MPH/9CpVBs+A3naElIlri7X3z06N///1xs7KoS4uvOnd1+5fJ/JNuANiA0pNrYZC1YoCohAbTk1aeP3Vs3l3p6ff/2ff/NGyhO+s/wnxFsBiPQ5F8/Wf7+Yf73x0xONsLUpGrFiq6oqP1gS8DB9J/l/+9fjDBvzt2zuz8m9urjJ//+/1uwf3+Bp6cUL+/n79+Zf/3+ywj1JQvjL6iTgJwrd+/lzpghzs8PZP/4+k0UqPrzZxagWUjOhvsBFI4Jrq76ioqQcOFkYd1/+dK/Xz+Z//37BwyY/9CARgml+du3AT0Ddi7QtQwSQoITUtLqFy1ADhigHxARF+XkpC2vAPY+CHz+9rV8xvTXHz8ixwULI5INy3fuhDFhfgRHHHKco9hADADaQIKG/yAb/vzGTMp4AACCn6yMFV/i0QAAAABJRU5ErkJggg==">
-    <link rel="stylesheet" href="{% static 'supplier_dashboard/bootstrap/css/bootstrap.min.css' %}">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
-    <link rel="stylesheet" href="{% static 'supplier_dashboard/css/bs-theme-overrides.css' %}">
-</head>
-
-<body id="page-top">
-    <div id="wrapper">
-        <!-- <nav class="navbar align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0 navbar-dark"
-            style="background: var(--bs-primary);">
-            <div class="container-fluid d-flex flex-column p-0"><a
-                    class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="#">
-                    <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-truck"></i></div>
-                    <div class="sidebar-brand-text mx-3"><span>Downstream</span></div>
-                </a>
-                <hr class="sidebar-divider my-0">
-                <ul class="navbar-nav text-light" id="accordionSidebar">
-                    <li class="nav-item"><a class="nav-link" href="index.html"><i
-                                class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
-                    <li class="nav-item"></li>
-                    <li class="nav-item"><a class="nav-link" href="bookings.html"><i
-                                class="icon ion-calendar"></i><span>Bookings</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="payouts.html"><i
-                                class="far fa-chart-bar"></i><span>Payouts</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="locations.html"><i
-                                class="far fa-map"></i><span>Locations</span></a><a class="nav-link"
-                            href="received_invoices.html"><i class="far fa-file-alt"></i><span>Received
-                                Invoices</span></a><a class="nav-link" href="company_settings.html"><i
-                                class="fas fa-user"></i><span>Company Settings</span></a><a class="nav-link"
-                            href="profile.html"><i class="fas fa-user"></i><span>Profile</span></a></li>
-                    <li class="nav-item"></li>
-                    <li class="nav-item"></li>
-                </ul>
-                <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0"
-                        id="sidebarToggle" type="button"></button></div>
-            </div>
-        </nav> -->
-        {% include 'supplier_dashboard/sidebar.html' %}
-        <div class="d-flex flex-column" id="content-wrapper">
-            <div id="content">
-                <!-- <nav class="navbar navbar-expand bg-white shadow mb-4 topbar static-top navbar-light">
-                    <div class="container-fluid"><button class="btn btn-link d-md-none rounded-circle me-3"
-                            id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
-                        <ul class="navbar-nav flex-nowrap ms-auto">
-                            <li class="nav-item dropdown d-sm-none no-arrow"><a class="dropdown-toggle nav-link"
-                                    aria-expanded="false" data-bs-toggle="dropdown" href="#"><i
-                                        class="fas fa-search"></i></a>
-                                <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in"
-                                    aria-labelledby="searchDropdown">
-                                    <form class="me-auto navbar-search w-100">
-                                        <div class="input-group"><input class="bg-light form-control border-0 small"
-                                                type="text" placeholder="Search for ...">
-                                            <div class="input-group-append"><button class="btn btn-primary py-0"
-                                                    type="button"><i class="fas fa-search"></i></button></div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </li>
-                            <div class="d-none d-sm-block topbar-divider"></div>
-                            <li class="nav-item dropdown no-arrow">
-                                <div class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link"
-                                        aria-expanded="false" data-bs-toggle="dropdown" href="#"><span
-                                            class="d-none d-lg-inline me-2 text-gray-600 small">{{user.name}}</span><img
-                                            class="border rounded-circle img-profile"
-                                            src="{% static 'supplier_dashboard/img/avatars/avatar1.jpeg' %}"></a>
-                                    <div class="dropdown-menu shadow dropdown-menu-end animated--grow-in"><a
-                                            class="dropdown-item" href="profile.html"><i
-                                                class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Profile</a><a
-                                            class="dropdown-item" href="company_settings.html"><i
-                                                class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Settings</a>
-                                        <div class="dropdown-divider"></div><a class="dropdown-item" href="#"><i
-                                                class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Logout</a>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </nav> -->
-                {% include 'supplier_dashboard/navbar.html' %}
-                <div class="container-fluid">
-                    <h3 class="text-dark mb-1">Payout Details</h3>
-                </div><!-- Start: 1 Row 2 Columns -->
-                <div class="container">
-                    <div class="row" style="padding-bottom: 24px;">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">{{payout.amount}}</h4>
-                                    <p style="margin-bottom: 0px;"><strong>Associated Booking</strong></p><a
-                                        href="{% url 'supplier_booking_detail' order_id=payout.order_id %}">{{payout.order_id}}</a>
-                                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Description</strong></p>
-                                    <p>{{payout.description}}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6"><img class="img-fluid" alt="adobe, pdf, application" width="100"
-                                height="80" src="{% static 'supplier_dashboard/img/temp_pay_logo.png' %}">
-                        </div>
-                    </div>
-                </div><!-- End: 1 Row 2 Columns -->
-                <!-- Start: 1 Row 2 Columns -->
-                <div class="container">
-                    <div class="row" style="padding-bottom: 24px;">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">{% if payout.checkbook_payout_id %} Associated Payouts
-                                        {% endif %}&nbsp;
-                                    </h4>
-                                    <p>When we send a check, it includes payment for 1 or more Booking(s). If more than
-                                        1 Booking is included with this payout, see the other Payouts included below.
-                                    </p><a class="card-link" href="#">
-                                        <div class="table-responsive" style="margin-bottom: 16px;">
-                                            <table class="table">
-                                                <thead>
-                                                    <tr></tr>
-                                                </thead>
-                                                <tbody>
-                                                    {% for payout in related_payouts %}
-                                                    <tr>
-                                                        <td>{{payout.created_on}}</td>
-                                                        <td>{{payout.amount}}</td>
-                                                        <td>{{payout.status}}</td>
-                                                        <td><button class="btn btn-light" type="button"><i
-                                                                    class="far fa-eye"></i></button></td>
-                                                    </tr>
-                                                    {% endfor %}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div><!-- End: 1 Row 2 Columns -->
-            </div>
-            <footer class="bg-white sticky-footer">
-                <div class="container my-auto">
-                    <div class="text-center my-auto copyright"><span>Copyright © Downstream 2024</span></div>
+{% block title %}Payout Details{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h3 class="text-dark mb-1">Payout Details</h3>
+</div><!-- Start: 1 Row 2 Columns -->
+<div class="container">
+    <div class="row" style="padding-bottom: 24px;">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">{{payout.amount}}</h4>
+                    <p style="margin-bottom: 0px;"><strong>Associated Booking</strong></p><a
+                        href="{% url 'supplier_booking_detail' order_id=payout.order_id %}">{{payout.order_id}}</a>
+                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Description</strong></p>
+                    <p>{{payout.description}}</p>
                 </div>
-            </footer>
-        </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+            </div>
+        </div>
+        <div class="col-md-6"><img class="img-fluid" alt="adobe, pdf, application" width="100" height="80"
+                src="{% static 'supplier_dashboard/img/temp_pay_logo.png' %}">
+        </div>
     </div>
-    <div class="modal fade" role="dialog" tabindex="-1" id="modal-1">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Are you sure?</h4><button class="btn-close" type="button" aria-label="Close"
-                        data-bs-dismiss="modal"></button>
+</div><!-- End: 1 Row 2 Columns -->
+<!-- Start: 1 Row 2 Columns -->
+<div class="container">
+    <div class="row" style="padding-bottom: 24px;">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">{% if payout.checkbook_payout_id %} Associated Payouts
+                        {% endif %}&nbsp;
+                    </h4>
+                    <p>When we send a check, it includes payment for 1 or more Booking(s). If more than
+                        1 Booking is included with this payout, see the other Payouts included below.
+                    </p><a class="card-link" href="#">
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for payout in related_payouts %}
+                                    <tr>
+                                        <td>{{payout.created_on}}</td>
+                                        <td>{{payout.amount}}</td>
+                                        <td>{{payout.status}}</td>
+                                        <td><button class="btn btn-light" type="button"><i
+                                                    class="far fa-eye"></i></button></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </a>
                 </div>
-                <div class="modal-body">
-                    <p>Say something here.</p>
-                </div>
-                <div class="modal-footer"><button class="btn btn-light" type="button"
-                        data-bs-dismiss="modal">Close</button><button class="btn btn-primary" type="button"
-                        style="background: var(--bs-success);">Accept Order</button></div>
             </div>
         </div>
     </div>
-    <div class="modal fade" role="dialog" tabindex="-1" id="modal-2">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Are you sure?</h4><button class="btn-close" type="button" aria-label="Close"
-                        data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>If so, please click "Request Change" and let us know what information, change request, or pricing
-                        changes are needed before accepting the Order.</p>
-                </div>
-                <div class="modal-footer"><button class="btn btn-light" type="button"
-                        data-bs-dismiss="modal">Close</button><button class="btn btn-primary" type="button">Request
-                        Change</button></div>
-            </div>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'supplier_dashboard/js/bs-init.js' %}"></script>
-    <script src="{% static 'supplier_dashboard/js/theme.js' %}"></script>
-</body>
-
-</html>
+</div><!-- End: 1 Row 2 Columns -->
+{% endblock %}
