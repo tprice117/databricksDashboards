@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 import datetime
+from itertools import chain
+from django.http import HttpResponse, HttpResponseRedirect
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -19,42 +21,81 @@ from api.models import (
 )
 from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
+from communications.intercom.utils.utils import get_json_safe_value
 
 logger = logging.getLogger(__name__)
+
+
+def to_dict(instance):
+    opts = instance._meta
+    data = {}
+    for f in chain(opts.concrete_fields, opts.private_fields):
+        data[f.name] = get_json_safe_value(f.value_from_object(instance))
+    for f in opts.many_to_many:
+        data[f.name] = [
+            get_json_safe_value(i.id) for i in f.value_from_object(instance)
+        ]
+    return data
 
 
 ########################
 # Page views
 ########################
+# Add redirect to auth0 login if not logged in.
+@login_required(login_url="/supplier/login/")
+def supplier_login(request):
+    pass
+
+
+@login_required(login_url="/admin/login/")
+def supplier_select(request):
+    if request.method == "POST":
+        seller_id = request.POST.get("seller_id")
+    elif request.method == "GET":
+        seller_id = request.GET.get("seller_id")
+    else:
+        return HttpResponse("Not Implemented", status=406)
+    try:
+        seller = Seller.objects.get(id=seller_id)
+        request.session["seller"] = to_dict(seller)
+        return HttpResponseRedirect("/supplier/")
+    except Exception as e:
+        return HttpResponse("Not Found", status=404)
 
 
 @login_required(login_url="/admin/login/")
 def index(request):
-    seller = request.user.user_group.seller
     context = {}
     context["user"] = request.user
-    context["seller"] = seller
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     return render(request, "supplier_dashboard/index.html", context)
 
 
 @login_required(login_url="/admin/login/")
 def profile(request):
-    seller = request.user.user_group.seller
     context = {}
     context["user"] = request.user
-    context["seller"] = seller
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     return render(request, "supplier_dashboard/profile.html", context)
 
 
 @login_required(login_url="/admin/login/")
 def bookings(request):
-    seller = request.user.user_group.seller
     non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
     context = {}
-    context["user"] = request.user
-    context["seller"] = seller
+    # context["user"] = request.user
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
+    seller = Seller.objects.get(id=context["seller"]["id"])
     orders = Order.objects.filter(
-        order_group__seller_product_seller_location__seller_product__seller_id=request.user.user_group.seller_id
+        order_group__seller_product_seller_location__seller_product__seller_id=context[
+            "seller"
+        ]["id"]
     )
     context["pending_count"] = 0
     context["scheduled_count"] = 0
@@ -104,7 +145,7 @@ def update_order_status(request, order_id, accept=True):
                     .filter(end_date__gt=non_pending_cutoff)
                 )
                 oob_html = f"""
-                <span id="scheduled-count-badge" hx-swap-oob="true">{orders.count()}</span>
+                <span id="scheduled-count-badge" hx-swap-oob="true">+{orders.count()}+</span>
                 """
             else:
                 # Send internal email to notify of denial.
@@ -134,10 +175,10 @@ def update_order_status(request, order_id, accept=True):
 
 @login_required(login_url="/admin/login/")
 def booking_detail(request, order_id):
-    seller: Seller = request.user.user_group.seller
     context = {}
-    context["user"] = request.user
-    context["seller"] = seller
+    # context["user"] = request.user
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
@@ -155,11 +196,10 @@ def booking_detail(request, order_id):
 @login_required(login_url="/admin/login/")
 def payouts(request):
     context = {}
-    context["user"] = request.user
+    # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
-    # if not request.session.get("seller"):
-    #     request.session["seller"] = request.user.user_group.seller
-    context["seller"] = request.user.user_group.seller
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
     orders = Order.objects.filter(
         order_group__user_id=request.user.id
     ).prefetch_related("payouts")
@@ -189,21 +229,23 @@ def payout_detail(request, payout_id):
 
 @login_required(login_url="/admin/login/")
 def locations(request):
-    seller = request.user.user_group.seller
     context = {}
-    context["user"] = request.user
-    context["seller"] = seller
-    seller_locations = SellerLocation.objects.filter(seller_id=seller.id)
+    # context["user"] = request.user
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
+    seller_locations = SellerLocation.objects.filter(
+        seller_id=request.session["seller"]["id"]
+    )
     context["seller_locations"] = seller_locations
     return render(request, "supplier_dashboard/locations.html", context)
 
 
 @login_required(login_url="/admin/login/")
 def location_detail(request, location_id):
-    seller = request.user.user_group.seller
     context = {}
-    context["user"] = request.user
-    context["seller"] = seller
+    # context["user"] = request.user
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
     seller_location = SellerLocation.objects.get(id=location_id)
     context["seller_location"] = seller_location
     orders = (
@@ -225,12 +267,12 @@ def location_detail(request, location_id):
 
 @login_required(login_url="/admin/login/")
 def received_invoices(request):
-    seller = request.user.user_group.seller
     context = {}
-    context["user"] = request.user
-    context["seller"] = seller
+    # context["user"] = request.user
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
     invoices = SellerInvoicePayable.objects.filter(
-        seller_location__seller_id=seller.id
+        seller_location__seller_id=request.session["seller"]["id"]
     ).order_by("-invoice_date")
     context["seller_invoice_payables"] = invoices
     return render(request, "supplier_dashboard/received_invoices.html", context)
@@ -238,10 +280,10 @@ def received_invoices(request):
 
 @login_required(login_url="/admin/login/")
 def received_invoice_detail(request, invoice_id):
-    seller = request.user.user_group.seller
     context = {}
-    context["user"] = request.user
-    context["seller"] = seller
+    # context["user"] = request.user
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
     invoice = SellerInvoicePayable.objects.get(id=invoice_id)
     # invoice_line_items = invoice.seller_invoice_payable_line_items.all()
     invoice_line_items = SellerInvoicePayableLineItem.objects.filter(
