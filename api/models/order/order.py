@@ -129,7 +129,7 @@ class Order(BaseModel):
         return round(self.seller_price() - self.total_paid_to_seller(), 2)
 
     def stripe_invoice_summary_item_description(self):
-        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {str(self.id)[:5]}'
+        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type} | {str(self.id)[:5]}'
 
     def get_order_type(self):
         # Pre-calculate conditions
