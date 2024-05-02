@@ -121,8 +121,10 @@ class Seller(BaseModel):
         """Returns the URL for the seller dashboard."""
         return f"{settings.API_URL}/supplier/{self.id}/dashboard/?key={encrypt_string(str(self.id))}"
 
-    def get_dashboard_status_url(self, status: str):
+    def get_dashboard_status_url(
+        self, status: str, snippet_name="accordian_status_orders"
+    ):
         """Returns the URL for the seller dashboard items with the specified status.
         This works in conjunction with the supplier dashboard view since it returns a subset of the orders based on the status.
         """
-        return f"{settings.API_URL}/supplier/{self.id}/status/{status.lower()}/?key={encrypt_string(str(self.id))}"
+        return f"{settings.API_URL}/supplier/{self.id}/status/{status.lower()}/?key={encrypt_string(str(self.id))}&snippet_name={snippet_name}"
