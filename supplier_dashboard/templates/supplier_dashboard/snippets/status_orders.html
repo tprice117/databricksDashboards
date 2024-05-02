@@ -33,8 +33,9 @@
             <!-- This button uses htmx to perform an AJAX post to set status of order, then swaps out button for returned html. -->
             <!-- On click show a confirmation popup using sweet alert. https://htmx.org/examples/confirm/ -->
             <button type="button" class="btn btn-primary" style="background-color:#018381;" id="accept-button"
-                hx-post="{{order.seller_accept_order_url}}" hx-swap="innerHTML" hx-target="#accept-button-container"
-                hx-indicator="#htmx-indicator" hx-trigger='confirmed' onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
+                hx-post="{{order.seller_accept_order_url}}" hx-swap="innerHTML"
+                hx-target="closest #accept-button-container" hx-indicator="#htmx-indicator" hx-trigger='confirmed'
+                onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
                 if(result.isConfirmed){
                 htmx.trigger(this, 'confirmed');  
                 } 
