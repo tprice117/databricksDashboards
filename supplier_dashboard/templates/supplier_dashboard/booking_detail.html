@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load humanize %}
 {% block title %}Booking Details{% endblock %}
 {% block content %}
 <div class="container-fluid">
@@ -113,6 +114,30 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Pricing Details</h4>
+                    <p style="margin-bottom: 0px;"><strong>Total</strong></p>
+                    <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">${{order.customer_price|floatformat:2|intcomma}}</p>
+                    <div class="table-responsive" style="margin-bottom: 16px;">
+                        <table class="table">
+                            <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody>
+                                {% for order_line_item in order.order_line_items.all %}
+                                <tr>
+                                    <td>{{order_line_item.order_line_item_type.name}}</td>
+                                    <td>${{order_line_item.customer_price|floatformat:2|intcomma}} per {{order_line_item.order_line_item_type.units}}</td>
+                                    <td>{{order_line_item.description}}</td>
+                                    <td>&nbsp;{% if order_line_item.paid %}Paid{% else %}Unpaid{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% comment %} <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Pricing Details</h4>
                     <p style="margin-bottom: 0px;"><strong>Service</strong></p>
                     <div class="row">
                         <div class="col">
@@ -205,7 +230,7 @@
                     <p style="margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
                         Total: <strong>$425.25</strong></p>
                 </div>
-            </div>
+            </div> {% endcomment %}
         </div>
     </div>
 </div><!-- End: 1 Row 2 Columns -->

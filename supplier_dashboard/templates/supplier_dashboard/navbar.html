@@ -6,11 +6,16 @@
                     data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
                 <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in" aria-labelledby="searchDropdown">
                     <!-- TODO: Make this search act as Seller selector -->
-                    <form class="me-auto navbar-search w-100">
-                        <div class="input-group"><input class="bg-light form-control border-0 small" type="text"
+                    <form class="me-auto navbar-search w-100" action="{% url 'supplier_select' %}" method="post"
+                        enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input name="seller_id" class="bg-light form-control border-0 small" type="text"
                                 placeholder="Search for ...">
-                            <div class="input-group-append"><button class="btn btn-primary py-0" type="button"><i
-                                        class="fas fa-search"></i></button></div>
+                            <div class="input-group-append">
+                                <button class="btn btn-primary py-0" type="submit"><i
+                                        class="fas fa-search"></i></button>
+                            </div>
                         </div>
                     </form>
                 </div>
