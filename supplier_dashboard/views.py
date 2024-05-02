@@ -60,6 +60,17 @@ def booking_detail(request, order_id):
     context = {}
     context["user"] = request.user
     context["seller"] = seller
+    order = Order.objects.filter(id=order_id)
+    order = order.select_related(
+        "order_group__seller_product_seller_location__seller_product__seller",
+        "order_group__user_address",
+        "order_group__user",
+        "order_group__seller_product_seller_location__seller_product__product__main_product",
+    )
+    order = order.prefetch_related(
+        "payouts", "seller_invoice_payable_line_items"
+    ).first()
+    context["order"] = order
     return render(request, "supplier_dashboard/booking_detail.html", context)
 
 
