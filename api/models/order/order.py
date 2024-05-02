@@ -104,7 +104,7 @@ class Order(BaseModel):
 
     @property
     def dashboard_accept_order_url(self):
-        return f"{settings.API_URL}/supplier/order/{self.id}/accept/?key={encrypt_string(str(self.id))}"
+        return f"{settings.API_URL}/supplier/order/{self.id}/accept/"
 
     def customer_price(self):
         return sum(
