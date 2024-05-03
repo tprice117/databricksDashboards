@@ -47,7 +47,9 @@
     }
 
     #pending-count-badge,
-    #scheduled-count-badge {
+    #scheduled-count-badge,
+    #complete-count-badge,
+    #cancelled-count-badge {
         animation: pop-in 0.5s;
     }
 </style>
@@ -136,7 +138,8 @@
                             </div>
                             <div class="row g-0 align-items-center">
                                 <div class="col-auto">
-                                    <div class="text-dark fw-bold h5 mb-0 me-3"><span>{{complete_count}}</span></div>
+                                    <div class="text-dark fw-bold h5 mb-0 me-3"><span
+                                            id="complete-count-badge">{{complete_count}}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -155,7 +158,8 @@
                             <div class="text-uppercase text-warning fw-bold text-xs mb-1">
                                 <span>CANCELLED</span>
                             </div>
-                            <div class="text-dark fw-bold h5 mb-0"><span>{{cancelled_count}}</span></div>
+                            <div class="text-dark fw-bold h5 mb-0"><span
+                                    id="cancelled-count-badge">{{cancelled_count}}</span></div>
                         </div>
                         <div class="col-auto"><i class="fas fa-calendar-times fa-2x text-gray-300"></i>
                         </div>

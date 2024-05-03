@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect
@@ -129,24 +130,55 @@ def bookings(request):
 
 @login_required(login_url="/admin/login/")
 def update_order_status(request, order_id, accept=True):
-    oob_html = None
+    context = {}
     try:
         order = Order.objects.get(id=order_id)
+        context["order"] = order
         if order.status == Order.PENDING:
             if accept:
                 order.status = Order.SCHEDULED
-                # order.save()
+                order.save()
+                if request.session.get("seller"):
+                    seller_id = request.session["seller"]["id"]
+                else:
+                    seller_id = (
+                        order.order_group.seller_product_seller_location.seller_product.seller_id
+                    )
+                request.session["seller"] = to_dict(request.user.user_group.seller)
+                context["seller"] = request.session["seller"]
                 non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
                 orders = (
                     Order.objects.filter(
-                        order_group__seller_product_seller_location__seller_product__seller_id=order.order_group.seller_product_seller_location.seller_product.seller_id
+                        order_group__seller_product_seller_location__seller_product__seller_id=seller_id
                     )
                     .filter(status=Order.SCHEDULED)
                     .filter(end_date__gt=non_pending_cutoff)
                 )
-                oob_html = f"""
-                <span id="pending-count-badge" hx-swap-oob="true">+{orders.count()}+</span>
-                <span id="scheduled-count-badge" hx-swap-oob="true">+{orders.count()}+</span>
+                orders = Order.objects.filter(
+                    order_group__seller_product_seller_location__seller_product__seller_id=seller_id
+                )
+                # orders = orders.filter(Q(status=Order.SCHEDULED) | Q(status=Order.PENDING))
+                pending_count = 0
+                scheduled_count = 0
+                complete_count = 0
+                cancelled_count = 0
+                for order in orders:
+                    if order.status == Order.PENDING:
+                        pending_count += 1
+                    elif order.end_date > non_pending_cutoff:
+                        if order.status == Order.SCHEDULED:
+                            scheduled_count += 1
+                        elif order.status == Order.COMPLETE:
+                            complete_count += 1
+                        elif order.status == Order.CANCELLED:
+                            cancelled_count += 1
+                context[
+                    "oob_html"
+                ] = f"""
+                <span id="pending-count-badge" hx-swap-oob="true">{pending_count}</span>
+                <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
+                <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
+                <span id="cancelled-count-badge" hx-swap-oob="true">{cancelled_count}</span>
                 """
             else:
                 # Send internal email to notify of denial.
@@ -159,11 +191,12 @@ def update_order_status(request, order_id, accept=True):
             {"subject": f"Supplier%20Approved%20%5B{order_id}%5D"},
         )
     if request.method == "POST":
-        # This is an HTMX request, so respond with html snippet
+        # if request.headers.get("HX-Request"): # This is an HTMX request, so respond with html snippet
+        context["forloop"] = {"counter": request.POST.get("loopcount", 0)}
         return render(
             request,
-            "supplier_dashboard/snippets/table_row_order.html",
-            {"order": order, "oob_html": oob_html},
+            "supplier_dashboard/snippets/table_row_order_update.html",
+            context,
         )
     else:
         # This is a GET request, so render a full success page.
