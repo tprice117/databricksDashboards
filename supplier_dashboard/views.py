@@ -145,6 +145,7 @@ def update_order_status(request, order_id, accept=True):
                     .filter(end_date__gt=non_pending_cutoff)
                 )
                 oob_html = f"""
+                <span id="pending-count-badge" hx-swap-oob="true">+{orders.count()}+</span>
                 <span id="scheduled-count-badge" hx-swap-oob="true">+{orders.count()}+</span>
                 """
             else:
