@@ -1,4 +1,4 @@
-<tr id="order_row_{{forloop.counter}}">
+<tr id="order_row_{{forloop.counter}}" _="on load transition my opacity to 0.3 over 1.5 seconds then remove me">
     <td>{{order.end_date}}</td>
     <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
     </td>
@@ -10,7 +10,8 @@
             <!-- <button class="btn btn-success" type="button" data-bs-target="#modal-1"
                 data-bs-toggle="modal">Accept</button> -->
             <button type="button" class="btn btn-success" id="accept-button"
-                hx-post="{% url 'supplier_order_accept' order_id=order.id %}" hx-swap="outerHTML"
+                hx-post="{% url 'supplier_order_accept' order_id=order.id %}"
+                hx-vals='{"loopcount": "{{forloop.counter}}"}' hx-swap="delete"
                 hx-target="#order_row_{{forloop.counter}}" hx-indicator="#htmx-indicator{{forloop.counter}}"
                 hx-trigger='confirmed' onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
         if(result.isConfirmed){
@@ -26,3 +27,6 @@
     <td><a class="btn btn-light" role="button" href="{% url 'supplier_booking_detail' order_id=order.id %}"><i
                 class="far fa-eye"></i></a></td>
 </tr>
+{% if oob_html %}
+{{oob_html|safe}}
+{% endif %}

@@ -16,9 +16,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
     <link rel="stylesheet" href="{% static 'supplier_dashboard/css/bs-theme-overrides.css' %}">
     <!-- https://htmx.org/ -->
+    <!-- NOTE: the onload is required for table partials https://htmx.org/examples/update-other-content/#oob -->
     <script src="https://unpkg.com/htmx.org@1.9.12"
-        integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
-        crossorigin="anonymous"></script>
+        integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"
+        onload="htmx.config.useTemplateFragments = true;"></script>
     <!-- https://github.com/bigskysoftware/_hyperscript -->
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
     <!-- https://sweetalert2.github.io/ -->
