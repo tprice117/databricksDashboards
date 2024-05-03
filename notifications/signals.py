@@ -24,6 +24,8 @@ def get_order_status_from_choice(status: str) -> str:
     Returns:
         str: The human readable status.
     """
+    from api.models import Order
+
     for choice in Order.STATUS_CHOICES:
         if choice[0] == status:
             return choice[1]
