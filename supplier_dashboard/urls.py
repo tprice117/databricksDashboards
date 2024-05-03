@@ -25,11 +25,13 @@ urlpatterns = [
         "supplier/order/<uuid:order_id>/accept/",
         views.update_order_status,
         {"accept": True},
+        name="supplier_order_accept",
     ),
     path(
         "supplier/order/<uuid:order_id>/deny/",
         views.update_order_status,
         {"accept": False},
+        name="supplier_order_deny",
     ),
     path("supplier/payouts/", views.payouts, name="supplier_payouts"),
     path(

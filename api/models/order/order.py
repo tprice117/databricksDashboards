@@ -102,10 +102,6 @@ class Order(BaseModel):
     def seller_view_order_url(self):
         return f"{settings.API_URL}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
 
-    @property
-    def dashboard_accept_order_url(self):
-        return f"{settings.API_URL}/supplier/order/{self.id}/accept/"
-
     def customer_price(self):
         return sum(
             [
