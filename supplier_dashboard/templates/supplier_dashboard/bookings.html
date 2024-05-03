@@ -33,6 +33,23 @@
         color: #007bff;
         /* Same color as the border */
     }
+
+    @keyframes pop-in {
+        0% {
+            opacity: 0;
+            transform: scale(0.1);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    #pending-count-badge,
+    #scheduled-count-badge {
+        animation: pop-in 0.5s;
+    }
 </style>
 {% endblock %}
 {% block javascript %}
