@@ -15,6 +15,7 @@ urlpatterns = [
     path("supplier/select/", views.supplier_select, name="supplier_select"),
     path("supplier/", views.index, name="supplier_home"),
     path("supplier/profile/", views.profile, name="supplier_profile"),
+    path("supplier/company/", views.profile, name="supplier_company"),
     path("supplier/bookings/", views.bookings, name="supplier_bookings"),
     path(
         "supplier/booking/<uuid:order_id>/",

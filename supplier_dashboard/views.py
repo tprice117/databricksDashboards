@@ -85,6 +85,16 @@ def profile(request):
 
 
 @login_required(login_url="/admin/login/")
+def company(request):
+    context = {}
+    context["user"] = request.user
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
+    return render(request, "supplier_dashboard/company_settings.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def bookings(request):
     non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
     context = {}
