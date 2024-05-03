@@ -2,7 +2,6 @@ from django.db.models.signals import post_save
 from django.template.loader import render_to_string
 from django.conf import settings
 import logging
-from api.models import Order
 from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils.add_email_to_queue import add_email_to_queue
 
@@ -25,6 +24,8 @@ def get_order_status_from_choice(status: str) -> str:
     Returns:
         str: The human readable status.
     """
+    from api.models import Order
+
     for choice in Order.STATUS_CHOICES:
         if choice[0] == status:
             return choice[1]
@@ -36,14 +37,16 @@ def get_order_status_from_choice(status: str) -> str:
 # ================================================#
 
 
-def on_order_post_save(sender, **kwargs):
+def on_order_post_save(sender, instance, created, **kwargs):
     """Sends an email on Order database actions, such as Order created, submitted or status changed
     to SCHEDULED, CANCELLED, OR COMPLETE."""
-    order: Order = kwargs.get("instance", None)
+    from api.models import Order
+
+    order: Order = instance
     bcc_emails = []
     if settings.ENVIRONMENT == "TEST":
         bcc_emails.append("dispatch@trydownstream.com")
-    if kwargs.get("created", False) is False:
+    if created is False:
         # Order updated
         error_status = "created-Order"
         order_id = get_json_safe_value(order.id)
@@ -107,4 +110,6 @@ def on_order_post_save(sender, **kwargs):
             logger.exception(f"notification: [{order_id}]-[{error_status}]-[{e}]")
 
 
-post_save.connect(on_order_post_save, sender=Order)
+# TODO: This is being called from api.models.order.order.py pre_save to ensure line items are
+# saved before this is called. This is a temporary solution until a better solution is found.
+# post_save.connect(on_order_post_save, sender=Order)
