@@ -19,6 +19,7 @@ from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from common.models import BaseModel
 from notifications.utils.add_email_to_queue import add_email_to_queue
+from notifications import signals as notifications_signals
 
 logger = logging.getLogger(__name__)
 
@@ -374,6 +375,8 @@ class Order(BaseModel):
                 instance.admin_policy_checks(orders=order_group_orders)
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
+
+        notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
 
     def admin_policy_checks(self, orders=None):
         """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
