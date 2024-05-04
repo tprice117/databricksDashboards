@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.contrib import messages
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect
@@ -15,7 +16,6 @@ from api.models import (
     Order,
     Seller,
     Payout,
-    Order,
     SellerInvoicePayable,
     SellerLocation,
     SellerInvoicePayableLineItem,
@@ -23,6 +23,7 @@ from api.models import (
 from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
 from communications.intercom.utils.utils import get_json_safe_value
+from .forms import UserForm
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,31 @@ def profile(request):
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
     context["seller"] = request.session["seller"]
+
+    if request.method == "POST":
+        form = UserForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Successfully saved!", extra_tags="alert-success")
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            if request.headers.get("HX-Request"):
+                return render(request, "supplier_dashboard/profile.html", context)
+            else:
+                context["form"] = form
+                return render(request, "supplier_dashboard/profile.html", context)
+    else:
+        form = UserForm(
+            initial={
+                "first_name": request.user.first_name,
+                "last_name": request.user.last_name,
+                "phone": request.user.phone,
+                "photo_url": request.user.photo_url,
+                "email": request.user.email,
+            }
+        )
+        context["form"] = form
     return render(request, "supplier_dashboard/profile.html", context)
 
 
