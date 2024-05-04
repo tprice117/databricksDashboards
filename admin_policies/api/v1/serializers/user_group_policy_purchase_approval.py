@@ -8,4 +8,8 @@ class UserGroupPolicyPurchaseApprovalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserGroupPolicyPurchaseApproval
-        fields = "__all__"
+        fields = [
+            "id",
+            "user_type",
+            "amount",
+        ]
