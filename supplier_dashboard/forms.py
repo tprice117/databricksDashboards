@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from api.models import User
 
 from api.models import (
     Order,
@@ -11,7 +12,7 @@ from api.models import (
 )
 
 
-class UserForm(forms.ModelForm):
+class UserForm(forms.Form):
     first_name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "John"}),
@@ -33,12 +34,9 @@ class UserForm(forms.ModelForm):
                 "placeholder": "john.doe@example.com",
                 "disabled": True,
             }
-        )
+        ),
+        required=False,
     )
     photo_url = forms.CharField(
         widget=forms.TextInput(attrs={"class": "form-control"}), required=False
     )
-
-    class Meta:
-        model = get_user_model()
-        fields = ["first_name", "last_name", "phone", "photo_url", "email"]

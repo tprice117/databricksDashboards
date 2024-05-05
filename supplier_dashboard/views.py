@@ -84,18 +84,38 @@ def profile(request):
     context["seller"] = request.session["seller"]
 
     if request.method == "POST":
-        form = UserForm(request.POST, instance=request.user)
+        form = UserForm(request.POST)
+        context["form"] = form
         if form.is_valid():
-            form.save()
-            messages.success(request, "Successfully saved!", extra_tags="alert-success")
-            context["form"] = form
+            save_db = False
+            if form.cleaned_data.get("first_name") != request.user.first_name:
+                request.user.first_name = form.cleaned_data.get("first_name")
+                save_db = True
+            if form.cleaned_data.get("last_name") != request.user.last_name:
+                request.user.last_name = form.cleaned_data.get("last_name")
+                save_db = True
+            if form.cleaned_data.get("phone") != request.user.phone:
+                request.user.phone = form.cleaned_data.get("phone")
+                save_db = True
+            if form.cleaned_data.get("photo_url") != request.user.photo_url:
+                request.user.photo_url = form.cleaned_data.get("photo_url")
+                save_db = True
+            if save_db:
+                request.user.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
             if request.headers.get("HX-Request"):
                 return render(request, "supplier_dashboard/profile.html", context)
             else:
-                context["form"] = form
                 return render(request, "supplier_dashboard/profile.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            messages.error(request, "Error saving form!")
     else:
         form = UserForm(
             initial={
