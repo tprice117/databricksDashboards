@@ -8,10 +8,10 @@
         <div class="col-lg-4">
             <div class="card mb-3">
                 <div class="card-body text-center shadow"><img class="rounded-circle mb-3 mt-4"
-                        src="{% if user.photo_url %}{{ user.photo_url }}{% else %}{% static 'supplier_dashboard/img/dogs/image2.jpeg' %}{% endif %}"
+                        src="{% if seller.location_logo_url %}{{ seller.location_logo_url }}{% else %}{% static 'supplier_dashboard/img/dogs/image2.jpeg' %}{% endif %}"
                         width="160" height="160">
-                    <div class="mb-3"><button class="btn btn-primary btn-sm" type="button">Change
-                            Photo</button></div>
+                    <!-- <div class="mb-3"><button class="btn btn-primary btn-sm" type="button">Change
+                            Photo</button></div> -->
                 </div>
             </div>
         </div>
@@ -55,29 +55,32 @@
                             <p class="text-primary m-0 fw-bold">Company Information</p>
                         </div>
                         <div class="card-body">
-                            <form>
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="mb-3"><label class="form-label" for="username"><strong>Company
-                                                    Name</strong></label><input class="form-control" type="text"
-                                                id="username" placeholder="user.name" name="username"></div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="mb-3"><label class="form-label" for="email"><strong>Company
-                                                    Phone</strong></label><input class="form-control" type="email"
-                                                id="email" placeholder="(000) 867-5309" name="phone"></div>
-                                    </div>
+                            <form action="{% url 'supplier_company' %}" method="post">
+                                <span class="htmx-indicator" style="margin-left:10px;"
+                                    id="htmx-indicator">Loading...</span>
+                                {% csrf_token %}
+                                <!-- Include the hidden fields -->
+                                {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                                {% endfor %}
+                                <!-- Include the visible fields -->
+                                {% for field in form.visible_fields %}
+                                <div class="mb-3">
+                                    {{ field.label_tag }} {{ field }}
+                                    {% if field.help_text %}
+                                    <small id="{{field.html_name}}Help"
+                                        class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                    <small class="text-danger">{{ field.errors }}</small>
+                                    {% endif %}
                                 </div>
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="mb-3"><label class="form-label" for="first_name"><strong>First
-                                                    Name</strong></label><input class="form-control" type="text"
-                                                id="first_name" placeholder="John" name="first_name"></div>
-                                    </div>
-                                    <div class="col"></div>
+                                {% endfor %}
+                                <div class="d-flex flex-row-reverse">
+                                    <!-- <input type="submit" name="action_button" id="submit-button" value="Submit"> -->
+                                    <button class="btn btn-primary btn-sm" type="submit" name="company_submit"
+                                        id="submit-button">Save Settings</button>
                                 </div>
-                                <div class="mb-3"><button class="btn btn-primary btn-sm" type="submit">Save
-                                        Settings</button></div>
                             </form>
                         </div>
                     </div>
@@ -88,7 +91,33 @@
                         <div class="card-body">
                             <p>This is how we will get in contact with you if there are issues, changes,
                                 or questions about a specific Booking.</p>
-                            <form>
+                            <form action="{% url 'supplier_company' %}" method="post">
+                                <span class="htmx-indicator" style="margin-left:10px;"
+                                    id="htmx-indicator">Loading...</span>
+                                {% csrf_token %}
+                                <!-- Include the hidden fields -->
+                                {% for hidden in seller_communication_form.hidden_fields %}
+                                {{ hidden }}
+                                {% endfor %}
+                                <!-- Include the visible fields -->
+                                {% for field in seller_communication_form.visible_fields %}
+                                <div class="mb-3">
+                                    {{ field.label_tag }} {{ field }}
+                                    {% if field.help_text %}
+                                    <small id="{{field.html_name}}Help"
+                                        class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                    <small class="text-danger">{{ field.errors }}</small>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                                <div class="d-flex flex-row-reverse">
+                                    <button class="btn btn-primary btn-sm" type="submit" name="communication_submit"
+                                        id="submit-button">Save Settings</button>
+                                </div>
+                            </form>
+                            <!-- <form>
                                 <div class="mb-3"><label class="form-label" for="address"><strong>Dispatch
                                             Email</strong></label><input class="form-control" type="text" id="address"
                                         placeholder="dispatch@company.com" name="order_email"></div>
@@ -102,7 +131,7 @@
                                 </div>
                                 <div class="mb-3"><button class="btn btn-primary btn-sm"
                                         type="submit">Save&nbsp;Settings</button></div>
-                            </form>
+                            </form> -->
                         </div>
                     </div>
                 </div>
@@ -115,15 +144,40 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-6">
-                    <form>
+                <div class="col-md-12">
+                    <form action="{% url 'supplier_company' %}" method="post">
+                        <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator">Loading...</span>
+                        {% csrf_token %}
+                        <!-- Include the hidden fields -->
+                        {% for hidden in seller_about_us_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        <!-- Include the visible fields -->
+                        {% for field in seller_about_us_form.visible_fields %}
+                        <div class="mb-3">
+                            {{ field.label_tag }} {{ field }}
+                            {% if field.help_text %}
+                            <small id="{{field.html_name}}Help"
+                                class="form-text text-muted">{{ field.help_text|safe }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                            <small class="text-danger">{{ field.errors }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        <div class="d-flex flex-row-reverse">
+                            <button class="btn btn-primary btn-sm" type="submit" name="about_us_submit"
+                                id="submit-button">Save Settings</button>
+                        </div>
+                    </form>
+                    <!-- <form>
                         <div class="mb-3"><label class="form-label" for="signature"><strong>About
                                     Us</strong></label><textarea class="form-control" id="signature" rows="4"
                                 name="signature"></textarea></div>
                         <div class="mb-3"></div>
                         <div class="mb-3"><button class="btn btn-primary btn-sm" type="submit">Save
                                 Settings</button></div>
-                    </form>
+                    </form> -->
                 </div>
             </div>
         </div>

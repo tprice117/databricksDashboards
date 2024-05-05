@@ -23,9 +23,20 @@ from api.models import (
 from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
 from communications.intercom.utils.utils import get_json_safe_value
-from .forms import UserForm
+from .forms import UserForm, SellerForm, SellerCommunicationForm, SellerAboutUsForm
 
 logger = logging.getLogger(__name__)
+
+
+class InvalidFormError(Exception):
+    """Exception raised for validation errors in the form."""
+
+    def __init__(self, form, msg):
+        self.form = form
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
 
 
 def to_dict(instance):
@@ -115,7 +126,7 @@ def profile(request):
             # This will let bootstrap know to highlight the fields with errors.
             for field in form.errors:
                 form[field].field.widget.attrs["class"] += " is-invalid"
-            messages.error(request, "Error saving form!")
+            # messages.error(request, "Error saving, please contact us if this continues.")
     else:
         form = UserForm(
             initial={
@@ -137,6 +148,171 @@ def company(request):
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
     context["seller"] = request.session["seller"]
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "company_submit" in request.POST:
+                # Load other forms so template has complete data.
+                seller_communication_form = SellerCommunicationForm(
+                    initial={
+                        "dispatch_email": request.user.user_group.seller.order_email,
+                        "dispatch_phone": request.user.user_group.seller.order_phone,
+                    }
+                )
+                context["seller_communication_form"] = seller_communication_form
+                seller_about_us_form = SellerAboutUsForm(
+                    initial={"about_us": request.user.user_group.seller.about_us}
+                )
+                context["seller_about_us_form"] = seller_about_us_form
+                # Load the form that was submitted.
+                form = SellerForm(request.POST)
+                context["form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("company_name")
+                        != request.user.user_group.seller.name
+                    ):
+                        request.user.user_group.seller.name = form.cleaned_data.get(
+                            "company_name"
+                        )
+                        save_model = request.user.user_group.seller
+                    if (
+                        form.cleaned_data.get("company_phone")
+                        != request.user.user_group.seller.phone
+                    ):
+                        request.user.user_group.seller.phone = form.cleaned_data.get(
+                            "company_phone"
+                        )
+                        save_model = request.user.user_group.seller
+                    # if form.cleaned_data.get("first_name") != request.user.first_name:
+                    #     request.user.first_name = form.cleaned_data.get("first_name")
+                    #     save_model = request.user.user_group.seller
+                    if (
+                        form.cleaned_data.get("company_logo")
+                        != request.user.user_group.seller.location_logo_url
+                    ):
+                        request.user.user_group.seller.location_logo_url = (
+                            form.cleaned_data.get("company_logo")
+                        )
+                        save_model = request.user.user_group.seller
+                else:
+                    raise InvalidFormError(form, "Invalid SellerForm")
+            elif "communication_submit" in request.POST:
+                # Load other forms so template has complete data.
+                form = SellerForm(
+                    initial={
+                        "company_name": request.user.user_group.seller.name,
+                        "company_phone": request.user.user_group.seller.phone,
+                        "first_name": request.user.first_name,
+                        "company_logo": request.user.user_group.seller.location_logo_url,
+                    }
+                )
+                context["form"] = form
+                seller_about_us_form = SellerAboutUsForm(
+                    initial={"about_us": request.user.user_group.seller.about_us}
+                )
+                context["seller_about_us_form"] = seller_about_us_form
+                # Load the form that was submitted.
+                seller_communication_form = SellerCommunicationForm(request.POST)
+                context["seller_communication_form"] = seller_communication_form
+                if seller_communication_form.is_valid():
+                    save_model = None
+                    if (
+                        seller_communication_form.cleaned_data.get("dispatch_email")
+                        != request.user.user_group.seller.order_email
+                    ):
+                        request.user.user_group.seller.order_email = (
+                            seller_communication_form.cleaned_data.get("dispatch_email")
+                        )
+                        save_model = request.user.user_group.seller
+                    if (
+                        seller_communication_form.cleaned_data.get("dispatch_phone")
+                        != request.user.user_group.seller.order_phone
+                    ):
+                        request.user.user_group.seller.order_phone = (
+                            seller_communication_form.cleaned_data.get("dispatch_phone")
+                        )
+                        save_model = request.user.user_group.seller
+                else:
+                    raise InvalidFormError(
+                        seller_communication_form, "Invalid SellerCommunicationForm"
+                    )
+            elif "about_us_submit" in request.POST:
+                # Load other forms so template has complete data.
+                form = SellerForm(
+                    initial={
+                        "company_name": request.user.user_group.seller.name,
+                        "company_phone": request.user.user_group.seller.phone,
+                        "first_name": request.user.first_name,
+                        "company_logo": request.user.user_group.seller.location_logo_url,
+                    }
+                )
+                context["form"] = form
+                seller_communication_form = SellerCommunicationForm(
+                    initial={
+                        "dispatch_email": request.user.user_group.seller.order_email,
+                        "dispatch_phone": request.user.user_group.seller.order_phone,
+                    }
+                )
+                context["seller_communication_form"] = seller_communication_form
+                # Load the form that was submitted.
+                seller_about_us_form = SellerAboutUsForm(request.POST)
+                context["seller_about_us_form"] = seller_about_us_form
+                if seller_about_us_form.is_valid():
+                    save_model = None
+                    if (
+                        seller_about_us_form.cleaned_data.get("about_us")
+                        != request.user.user_group.seller.about_us
+                    ):
+                        request.user.user_group.seller.about_us = (
+                            seller_about_us_form.cleaned_data.get("about_us")
+                        )
+                        save_model = request.user.user_group.seller
+                else:
+                    raise InvalidFormError(
+                        seller_about_us_form, "Invalid SellerAboutUsForm"
+                    )
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # This is an HTMX request, so respond with html snippet
+            if request.headers.get("HX-Request"):
+                return render(
+                    request, "supplier_dashboard/company_settings.html", context
+                )
+            else:
+                return render(
+                    request, "supplier_dashboard/company_settings.html", context
+                )
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        form = SellerForm(
+            initial={
+                "company_name": request.user.user_group.seller.name,
+                "company_phone": request.user.user_group.seller.phone,
+                "first_name": request.user.first_name,
+                "company_logo": request.user.user_group.seller.location_logo_url,
+            }
+        )
+        context["form"] = form
+        seller_communication_form = SellerCommunicationForm(
+            initial={
+                "dispatch_email": request.user.user_group.seller.order_email,
+                "dispatch_phone": request.user.user_group.seller.order_phone,
+            }
+        )
+        context["seller_communication_form"] = seller_communication_form
+        seller_about_us_form = SellerAboutUsForm(
+            initial={"about_us": request.user.user_group.seller.about_us}
+        )
+        context["seller_about_us_form"] = seller_about_us_form
     return render(request, "supplier_dashboard/company_settings.html", context)
 
 
