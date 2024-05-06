@@ -34,6 +34,18 @@ urlpatterns = [
         {"accept": False},
         name="supplier_order_deny",
     ),
+    path(
+        "supplier/booking/<uuid:order_id>/accept/",
+        views.update_booking_status,
+        {"accept": True},
+        name="supplier_booking_accept",
+    ),
+    path(
+        "supplier/booking/<uuid:order_id>/deny/",
+        views.update_booking_status,
+        {"accept": False},
+        name="supplier_booking_deny",
+    ),
     path("supplier/payouts/", views.payouts, name="supplier_payouts"),
     path(
         "supplier/payout/<uuid:payout_id>/",
