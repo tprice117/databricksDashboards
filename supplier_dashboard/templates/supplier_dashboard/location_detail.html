@@ -180,7 +180,9 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    </div><a href="{% url 'supplier_bookings' %}">See All Bookings for this Location</a>
+                    </div><a href="{% url 'supplier_bookings' %}?location_id={{ seller_location.id|urlencode }}">See All
+                        Bookings for
+                        this Location</a>
                 </div>
             </div>
         </div>

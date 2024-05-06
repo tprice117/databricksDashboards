@@ -324,9 +324,13 @@ def bookings(request):
     if request.method == "POST":
         if request.POST.get("service_date", None) is not None:
             link_params["service_date"] = request.POST.get("service_date")
+        if request.POST.get("location_id", None) is not None:
+            link_params["location_id"] = request.POST.get("location_id")
     elif request.method == "GET":
         if request.GET.get("service_date", None) is not None:
             link_params["service_date"] = request.GET.get("service_date")
+        if request.GET.get("location_id", None) is not None:
+            link_params["location_id"] = request.GET.get("location_id")
     non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
     context = {}
     # context["user"] = request.user
@@ -341,6 +345,12 @@ def bookings(request):
     )
     if link_params.get("service_date", None) is not None:
         orders = orders.filter(end_date=link_params["service_date"])
+    if link_params.get("location_id", None) is not None:
+        orders = orders.filter(
+            order_group__seller_product_seller_location__seller_location_id=link_params[
+                "location_id"
+            ]
+        )
     context["non_pending_cutoff"] = non_pending_cutoff
     context["pending_count"] = 0
     context["scheduled_count"] = 0
@@ -635,6 +645,7 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
     key = request.query_params.get("key", "")
     snippet_name = request.query_params.get("snippet_name", "accordian_status_orders")
     service_date = request.query_params.get("service_date", None)
+    location_id = request.query_params.get("location_id", None)
     try:
         params = decrypt_string(key)
         if str(params) == str(supplier_id):
@@ -648,6 +659,10 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
                     orders = orders.filter(end_date__gt=non_pending_cutoff)
                 if service_date:
                     orders = orders.filter(end_date=service_date)
+                if location_id:
+                    orders = orders.filter(
+                        order_group__seller_product_seller_location__seller_location_id=location_id
+                    )
                 # Select related fields to reduce db queries.
                 orders = orders.select_related(
                     "order_group__seller_product_seller_location__seller_product__seller",
