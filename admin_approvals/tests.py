@@ -159,7 +159,15 @@ class OrderApprovalTests(TestCase):
         order_admin_data = OrderSerializer(order_admin).data
         print("Created Admin Order", order_admin_data)
         # Check that the order is pending. This means Order did not require approval.
-        self.assertEqual(order_admin_data["status"], "PENDING")
+        self.assertEqual(order_admin_data["status"], Order.PENDING)
+
+        # Ensure policy is lower than order amount so that it requires approval.
+        purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
+            user_type=user_member.type
+        ).first()
+        # The order below is $184, so it should require approval.
+        purchase_policy.amount = 100
+        purchase_policy.save()
 
         # Create Order for Member User
         order_member = Order(
@@ -173,6 +181,26 @@ class OrderApprovalTests(TestCase):
         print("Created Order", order_member_data)
         # Check that the order status is set to approval. This means Order requires approval.
         self.assertEqual(order_member_data["status"], Order.APPROVAL)
+
+        # Ensure policy is higher than order amount so that it doesn't require approval.
+        purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
+            user_type=user_member.type
+        ).first()
+        purchase_policy.amount = 1000
+        purchase_policy.save()
+
+        # Create Order for Member User
+        order_member2 = Order(
+            order_group=order_group_member,
+            start_date=date.today() + timedelta(days=1),
+            end_date=date.today() + timedelta(days=4),
+        )
+        order_member2.save()
+        order_member2_data = OrderSerializer(order_member2).data
+        print("============================")
+        print("Created Order 2", order_member2_data)
+        # Check that the order status is set to approval. This means Order requires approval.
+        self.assertEqual(order_member2_data["status"], Order.PENDING)
 
         # Have the admin approve the order
 
@@ -203,6 +231,7 @@ class OrderApprovalTests(TestCase):
         # Delete order after testing
         order_admin.delete()
         order_member.delete()
+        order_member2.delete()
 
         print("DONE")
 
