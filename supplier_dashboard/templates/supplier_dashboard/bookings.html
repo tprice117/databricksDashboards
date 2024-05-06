@@ -90,7 +90,7 @@
     <h3 class="text-dark mb-4">My Bookings</h3>
     <div class="row">
         <div class="col-md-6 col-xl-3 mb-4">
-            <div class="card shadow border-start-primary py-2 status-card status-selected"
+            <div class="card shadow border-start-primary py-2 status-card btn status-selected"
                 hx-get="{{status_pending_link}}" hx-target="tbody" hx-trigger="click" hx-swap="outerHTML"
                 hx-indicator="#htmx-indicator-status">
                 <div class="card-body">
@@ -101,6 +101,9 @@
                             </div>
                             <div class="text-dark fw-bold h5 mb-0"><span
                                     id="pending-count-badge">{{pending_count}}</span></div>
+                            <div class="text-dark text-xs">
+                                <span class="text-muted">Anytime</span>
+                            </div>
                         </div>
                         <div class="col-auto"><i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
                         </div>
@@ -119,6 +122,9 @@
                             </div>
                             <div class="text-dark fw-bold h5 mb-0"><span
                                     id="scheduled-count-badge">{{scheduled_count}}</span></div>
+                            <div class="text-dark text-xs">
+                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
+                            </div>
                         </div>
                         <div class="col-auto"><i class="fas fa-calendar-day fa-2x text-gray-300"></i>
                         </div>
@@ -127,7 +133,7 @@
             </div>
         </div>
         <div class="col-md-6 col-xl-3 mb-4">
-            <div class="card shadow border-start-info py-2 status-card" hx-get="{{status_complete_link}}"
+            <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{status_complete_link}}"
                 hx-target="tbody" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status">
                 <!-- onclick="selectCard(this)" -->
                 <div class="card-body">
@@ -136,11 +142,10 @@
                             <div class="text-uppercase text-info fw-bold text-xs mb-1">
                                 <span>COMPLETED</span>
                             </div>
-                            <div class="row g-0 align-items-center">
-                                <div class="col-auto">
-                                    <div class="text-dark fw-bold h5 mb-0 me-3"><span
-                                            id="complete-count-badge">{{complete_count}}</span></div>
-                                </div>
+                            <div class="text-dark fw-bold h5 mb-0"><span
+                                    id="complete-count-badge">{{complete_count}}</span></div>
+                            <div class="text-dark text-xs">
+                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
                             </div>
                         </div>
                         <div class="col-auto"><i class="fas fa-calendar-check fa-2x text-gray-300"></i>
@@ -150,7 +155,7 @@
             </div>
         </div>
         <div class="col-md-6 col-xl-3 mb-4">
-            <div class="card shadow border-start-warning py-2 status-card" hx-get="{{status_cancelled_link}}"
+            <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{status_cancelled_link}}"
                 hx-target="tbody" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
@@ -158,8 +163,12 @@
                             <div class="text-uppercase text-warning fw-bold text-xs mb-1">
                                 <span>CANCELLED</span>
                             </div>
-                            <div class="text-dark fw-bold h5 mb-0"><span
-                                    id="cancelled-count-badge">{{cancelled_count}}</span></div>
+                            <div class="text-dark fw-bold h5 mb-1">
+                                <span id="cancelled-count-badge">{{cancelled_count}}</span>
+                            </div>
+                            <div class="text-dark text-xs">
+                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
+                            </div>
                         </div>
                         <div class="col-auto"><i class="fas fa-calendar-times fa-2x text-gray-300"></i>
                         </div>

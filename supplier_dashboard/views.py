@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+
+# from django.db.models import Q
 from django.contrib import messages
+from urllib.parse import parse_qs
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect
@@ -318,6 +320,13 @@ def company(request):
 
 @login_required(login_url="/admin/login/")
 def bookings(request):
+    link_params = {}
+    if request.method == "POST":
+        if request.POST.get("service_date", None) is not None:
+            link_params["service_date"] = request.POST.get("service_date")
+    elif request.method == "GET":
+        if request.GET.get("service_date", None) is not None:
+            link_params["service_date"] = request.GET.get("service_date")
     non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
     context = {}
     # context["user"] = request.user
@@ -330,6 +339,9 @@ def bookings(request):
             "seller"
         ]["id"]
     )
+    if link_params.get("service_date", None) is not None:
+        orders = orders.filter(end_date=link_params["service_date"])
+    context["non_pending_cutoff"] = non_pending_cutoff
     context["pending_count"] = 0
     context["scheduled_count"] = 0
     context["complete_count"] = 0
@@ -345,16 +357,16 @@ def bookings(request):
             elif order.status == Order.CANCELLED:
                 context["cancelled_count"] += 1
     context["status_complete_link"] = seller.get_dashboard_status_url(
-        Order.COMPLETE, snippet_name="table_status_orders"
+        Order.COMPLETE, snippet_name="table_status_orders", **link_params
     )
     context["status_cancelled_link"] = seller.get_dashboard_status_url(
-        Order.CANCELLED, snippet_name="table_status_orders"
+        Order.CANCELLED, snippet_name="table_status_orders", **link_params
     )
     context["status_scheduled_link"] = seller.get_dashboard_status_url(
-        Order.SCHEDULED, snippet_name="table_status_orders"
+        Order.SCHEDULED, snippet_name="table_status_orders", **link_params
     )
     context["status_pending_link"] = seller.get_dashboard_status_url(
-        Order.PENDING, snippet_name="table_status_orders"
+        Order.PENDING, snippet_name="table_status_orders", **link_params
     )
     print(context["status_pending_link"])
     return render(request, "supplier_dashboard/bookings.html", context)
@@ -363,6 +375,19 @@ def bookings(request):
 @login_required(login_url="/admin/login/")
 def update_order_status(request, order_id, accept=True):
     context = {}
+    service_date = None
+    if request.method == "POST":
+        if request.POST.get("queryParams", None) is not None:
+            queryParams = request.POST.get("queryParams")
+            params = parse_qs(queryParams)
+            if params.get("service_date"):
+                service_date = params["service_date"][0]
+    elif request.method == "GET":
+        if request.GET.get("queryParams", None) is not None:
+            queryParams = request.GET.get("queryParams")
+            params = parse_qs(queryParams)
+            if params.get("service_date"):
+                service_date = params["service_date"][0]
     try:
         order = Order.objects.get(id=order_id)
         context["order"] = order
@@ -379,16 +404,11 @@ def update_order_status(request, order_id, accept=True):
                 request.session["seller"] = to_dict(request.user.user_group.seller)
                 context["seller"] = request.session["seller"]
                 non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
-                orders = (
-                    Order.objects.filter(
-                        order_group__seller_product_seller_location__seller_product__seller_id=seller_id
-                    )
-                    .filter(status=Order.SCHEDULED)
-                    .filter(end_date__gt=non_pending_cutoff)
-                )
                 orders = Order.objects.filter(
                     order_group__seller_product_seller_location__seller_product__seller_id=seller_id
                 )
+                if service_date:
+                    orders = orders.filter(end_date=service_date)
                 # orders = orders.filter(Q(status=Order.SCHEDULED) | Q(status=Order.PENDING))
                 pending_count = 0
                 scheduled_count = 0
@@ -604,6 +624,7 @@ def received_invoice_detail(request, invoice_id):
 def supplier_digest_dashboard(request, supplier_id, status: str = None):
     key = request.query_params.get("key", "")
     snippet_name = request.query_params.get("snippet_name", "accordian_status_orders")
+    service_date = request.query_params.get("service_date", None)
     try:
         params = decrypt_string(key)
         if str(params) == str(supplier_id):
@@ -613,20 +634,17 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
                 orders = Order.objects.filter(
                     order_group__seller_product_seller_location__seller_product__seller_id=supplier_id
                 ).filter(status=status.upper())
-                if status != Order.PENDING:
+                if status.upper() != Order.PENDING:
                     orders = orders.filter(end_date__gt=non_pending_cutoff)
+                if service_date:
+                    orders = orders.filter(end_date=service_date)
                 # Select related fields to reduce db queries.
                 orders = orders.select_related(
                     "order_group__seller_product_seller_location__seller_product__seller",
                     "order_group__user_address",
                 )
                 orders = orders.order_by("-end_date")
-                context["status"] = {
-                    "name": status.upper(),
-                    "orders": [
-                        order for order in orders if order.end_date > non_pending_cutoff
-                    ],
-                }
+                context["status"] = {"name": status.upper(), "orders": orders}
 
                 return render(
                     request,

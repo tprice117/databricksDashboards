@@ -73,7 +73,9 @@
                         {% endif %}
                     </p>
                     <!-- TODO: Create supplier url that accepts a date and will display orders with that end_date -->
-                    <a class="card-link" href="#"></a><a href="bookings.html">See Other
+                    <a class="card-link" href="#"></a><a
+                        href="{% url 'supplier_bookings' %}?service_date={{ order.end_date|urlencode }}">See
+                        Other
                         Accepted Orders on this Service Date</a><a class="card-link" href="#"></a>
                 </div>
             </div>

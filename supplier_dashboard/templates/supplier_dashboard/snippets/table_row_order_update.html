@@ -11,9 +11,9 @@
                 data-bs-toggle="modal">Accept</button> -->
             <button type="button" class="btn btn-success" id="accept-button"
                 hx-post="{% url 'supplier_order_accept' order_id=order.id %}"
-                hx-vals='{"loopcount": "{{forloop.counter}}"}' hx-swap="delete"
-                hx-target="#order_row_{{forloop.counter}}" hx-indicator="#htmx-indicator{{forloop.counter}}"
-                hx-trigger='confirmed' onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
+                hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
+                hx-swap="delete" hx-target="#order_row_{{forloop.counter}}"
+                hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger='confirmed' onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
         if(result.isConfirmed){
         htmx.trigger(this, 'confirmed');  
         } 
