@@ -19,6 +19,7 @@ from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from common.models import BaseModel
 from notifications.utils.add_email_to_queue import add_email_to_queue
+from notifications import signals as notifications_signals
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +130,7 @@ class Order(BaseModel):
         return round(self.seller_price() - self.total_paid_to_seller(), 2)
 
     def stripe_invoice_summary_item_description(self):
-        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {str(self.id)[:5]}'
+        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type} | {str(self.id)[:5]}'
 
     def get_order_type(self):
         # Pre-calculate conditions
@@ -374,6 +375,8 @@ class Order(BaseModel):
                 instance.admin_policy_checks(orders=order_group_orders)
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
+
+        notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
 
     def admin_policy_checks(self, orders=None):
         """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
