@@ -31,25 +31,30 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Compliance Details</h4>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><strong>General Liability Proof of
-                                    Insurance</strong></p><input type="file">
-                            <p style="margin-bottom: 0px;">Expires on</p><input type="date">
-                            <p style="margin-bottom: 0px;padding-top: 24px;"><strong>Auto Proof of
-                                    Insurance</strong></p><input type="file">
-                            <p style="margin-bottom: 0px;">Expires on</p><input type="date">
-                            <p style="margin-bottom: 0px;padding-top: 24px;"><strong>Workers Comp Proof
-                                    of Insurance</strong></p><input type="file">
-                            <p style="margin-bottom: 0px;">Expires on</p><input type="date">
-                            <p style="margin-bottom: 0px;padding-top: 24px;"><strong>Form W9</strong>
-                            </p><input type="file">
+                    <form action="{% url 'supplier_location_detail' location_id=seller_location.id %}" method="post">
+                        {% csrf_token %}
+                        <!-- Include the hidden fields -->
+                        {% for hidden in compliance_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        <!-- Include the visible fields -->
+                        {% for field in compliance_form.visible_fields %}
+                        <div class="mb-3">
+                            {{ field.label_tag }} {{ field }}
+                            {% if field.help_text %}
+                            <small id="{{field.html_name}}Help"
+                                class="form-text text-muted">{{ field.help_text|safe }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                            <small class="text-danger">{{ field.errors }}</small>
+                            {% endif %}
                         </div>
-                    </div>
-                    <div class="row" style="margin-top: 24px;">
-                        <div class="col"><button class="btn btn-primary" type="button">Save</button>
+                        {% endfor %}
+                        <div class="d-flex flex-row-reverse">
+                            <button class="btn btn-primary" type="submit" name="compliance_submit"
+                                id="submit-button">Save</button>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -87,7 +92,31 @@
                             Connect)&nbsp;</strong></p><button class="btn btn-primary" type="button">Setup up Stripe
                         Connect</button>
                     <p style="margin-top: 16px;"><strong>Receive Payments by Check</strong></p>
-                    <div class="row">
+                    <form action="{% url 'supplier_location_detail' location_id=seller_location.id %}" method="post">
+                        {% csrf_token %}
+                        <!-- Include the hidden fields -->
+                        {% for hidden in payout_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        <!-- Include the visible fields -->
+                        {% for field in payout_form.visible_fields %}
+                        <div class="mb-3">
+                            {{ field.label_tag }} {{ field }}
+                            {% if field.help_text %}
+                            <small id="{{field.html_name}}Help"
+                                class="form-text text-muted">{{ field.help_text|safe }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                            <small class="text-danger">{{ field.errors }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        <div class="d-flex flex-row-reverse">
+                            <button class="btn btn-primary" type="submit" name="payout_submit"
+                                id="submit-button">Save</button>
+                        </div>
+                    </form>
+                    <!-- <div class="row">
                         <div class="col">
                             <p style="margin-bottom: 0px;">Payee Name</p>
                         </div>
@@ -139,7 +168,7 @@
                     <div class="row" style="margin-top: 24px;">
                         <div class="col"><button class="btn btn-primary" type="button">Save</button>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>

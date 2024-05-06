@@ -25,7 +25,14 @@ from api.models import (
 from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
 from communications.intercom.utils.utils import get_json_safe_value
-from .forms import UserForm, SellerForm, SellerCommunicationForm, SellerAboutUsForm
+from .forms import (
+    UserForm,
+    SellerForm,
+    SellerCommunicationForm,
+    SellerAboutUsForm,
+    SellerLocationComplianceForm,
+    SellerPayoutForm,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -606,6 +613,163 @@ def location_detail(request, location_id):
         context["payouts"].extend([p for p in order.payouts.all()])
     context["orders"] = context["orders"][:5]
     context["payouts"] = context["payouts"][:5]
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "compliance_submit" in request.POST:
+                # Load other forms so template has complete data.
+                payout_form = SellerPayoutForm(
+                    initial={
+                        "payee_name": seller_location.payee_name,
+                        "street": seller_location.street,
+                        "city": seller_location.city,
+                        "state": seller_location.state,
+                        "postal_code": seller_location.postal_code,
+                    }
+                )
+                context["payout_form"] = payout_form
+                # Load the form that was submitted.
+                form = SellerLocationComplianceForm(request.POST)
+                context["compliance_form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("gl_coi")
+                        and form.cleaned_data.get("gl_coi") != seller_location.gl_coi
+                    ):
+                        seller_location.gl_coi = form.cleaned_data.get("gl_coi")
+                        save_model = seller_location
+                    if (
+                        form.cleaned_data.get("gl_coi_expiration_date")
+                        != seller_location.gl_coi_expiration_date
+                    ):
+                        seller_location.gl_coi_expiration_date = form.cleaned_data.get(
+                            "gl_coi_expiration_date"
+                        )
+                        save_model = seller_location
+                    if (
+                        form.cleaned_data.get("auto_coi")
+                        and form.cleaned_data.get("auto_coi")
+                        != seller_location.auto_coi
+                    ):
+                        seller_location.auto_coi = form.cleaned_data.get("auto_coi")
+                        save_model = seller_location
+                    if (
+                        form.cleaned_data.get("auto_coi_expiration_date")
+                        != seller_location.auto_coi_expiration_date
+                    ):
+                        seller_location.auto_coi_expiration_date = (
+                            form.cleaned_data.get("auto_coi_expiration_date")
+                        )
+                        save_model = seller_location
+                    if (
+                        form.cleaned_data.get("workers_comp_coi")
+                        and form.cleaned_data.get("workers_comp_coi")
+                        != seller_location.workers_comp_coi
+                    ):
+                        seller_location.workers_comp_coi = form.cleaned_data.get(
+                            "workers_comp_coi"
+                        )
+                        save_model = seller_location
+                    if (
+                        form.cleaned_data.get("workers_comp_coi_expiration_date")
+                        != seller_location.workers_comp_coi_expiration_date
+                    ):
+                        seller_location.workers_comp_coi_expiration_date = (
+                            form.cleaned_data.get("workers_comp_coi_expiration_date")
+                        )
+                        save_model = seller_location
+                    if (
+                        form.cleaned_data.get("w9")
+                        and form.cleaned_data.get("w9") != seller_location.w9
+                    ):
+                        seller_location.w9 = form.cleaned_data.get("w9")
+                        save_model = seller_location
+                else:
+                    raise InvalidFormError(form, "Invalid SellerLocationComplianceForm")
+            elif "payout_submit" in request.POST:
+                # Load other forms so template has complete data.
+                compliance_form = SellerLocationComplianceForm(
+                    initial={
+                        "gl_coi": seller_location.gl_coi,
+                        "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
+                        "auto_coi": seller_location.auto_coi,
+                        "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
+                        "workers_comp_coi": seller_location.workers_comp_coi,
+                        "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
+                        "w9": seller_location.w9,
+                    }
+                )
+                context["compliance_form"] = compliance_form
+                # Load the form that was submitted.
+                payout_form = SellerPayoutForm(request.POST)
+                context["payout_form"] = payout_form
+                if payout_form.is_valid():
+                    save_model = None
+                    if (
+                        payout_form.cleaned_data.get("payee_name")
+                        != seller_location.payee_name
+                    ):
+                        seller_location.payee_name = payout_form.cleaned_data.get(
+                            "payee_name"
+                        )
+                        save_model = seller_location
+                    if payout_form.cleaned_data.get("street") != seller_location.street:
+                        seller_location.street = payout_form.cleaned_data.get("street")
+                        save_model = seller_location
+                    if payout_form.cleaned_data.get("city") != seller_location.city:
+                        seller_location.city = payout_form.cleaned_data.get("city")
+                        save_model = seller_location
+                    if payout_form.cleaned_data.get("state") != seller_location.state:
+                        seller_location.state = payout_form.cleaned_data.get("state")
+                        save_model = seller_location
+                    if (
+                        payout_form.cleaned_data.get("postal_code")
+                        != seller_location.postal_code
+                    ):
+                        seller_location.postal_code = payout_form.cleaned_data.get(
+                            "postal_code"
+                        )
+                        save_model = seller_location
+                else:
+                    raise InvalidFormError(payout_form, "Invalid SellerPayoutForm")
+
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # if request.headers.get("HX-Request"): Could handle htmx here.
+            return render(request, "supplier_dashboard/location_detail.html", context)
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        compliance_form = SellerLocationComplianceForm(
+            initial={
+                "gl_coi": seller_location.gl_coi,
+                "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
+                "auto_coi": seller_location.auto_coi,
+                "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
+                "workers_comp_coi": seller_location.workers_comp_coi,
+                "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
+                "w9": seller_location.w9,
+            }
+        )
+        context["compliance_form"] = compliance_form
+        payout_form = SellerPayoutForm(
+            initial={
+                "payee_name": seller_location.payee_name,
+                "street": seller_location.street,
+                "city": seller_location.city,
+                "state": seller_location.state,
+                "postal_code": seller_location.postal_code,
+            }
+        )
+        context["payout_form"] = payout_form
+
     return render(request, "supplier_dashboard/location_detail.html", context)
 
 

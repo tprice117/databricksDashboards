@@ -2,15 +2,6 @@ from django import forms
 from django.contrib.auth import get_user_model
 from api.models import User
 
-from api.models import (
-    Order,
-    Seller,
-    Payout,
-    SellerInvoicePayable,
-    SellerLocation,
-    SellerInvoicePayableLineItem,
-)
-
 
 class UserForm(forms.Form):
     first_name = forms.CharField(
@@ -86,4 +77,75 @@ class SellerAboutUsForm(forms.Form):
     about_us = forms.CharField(
         widget=forms.Textarea(attrs={"class": "form-control", "rows": "4"}),
         required=False,
+    )
+
+
+class SellerLocationComplianceForm(forms.Form):
+    gl_coi = forms.FileField(
+        label="General Liability Proof of Insurance",
+        widget=forms.FileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+    gl_coi_expiration_date = forms.DateField(
+        label="Expires on",
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        required=False,
+    )
+
+    auto_coi = forms.FileField(
+        label="Auto Proof of Insurance",
+        widget=forms.FileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+    auto_coi_expiration_date = forms.DateField(
+        label="Expires on",
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        required=False,
+    )
+
+    workers_comp_coi = forms.FileField(
+        label="Workers Comp Proof of Insurance",
+        widget=forms.FileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+    workers_comp_coi_expiration_date = forms.DateField(
+        label="Expires on",
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        required=False,
+    )
+
+    w9 = forms.FileField(
+        label="Form W9",
+        widget=forms.FileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+
+
+class SellerPayoutForm(forms.Form):
+    payee_name = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "John Doe"}
+        ),
+    )
+    street = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "123 Main St."}
+        ),
+    )
+    city = forms.CharField(
+        max_length=40,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Springfield"}
+        ),
+    )
+    state = forms.CharField(
+        max_length=80,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "IL"}),
+    )
+    postal_code = forms.CharField(
+        label="Zip Code",
+        max_length=20,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "62701"}),
     )
