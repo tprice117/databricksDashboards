@@ -520,13 +520,21 @@ def booking_detail(request, order_id):
 @login_required(login_url="/admin/login/")
 def payouts(request):
     context = {}
+    location_id = None
+    if request.method == "POST":
+        location_id = request.POST.get("location_id", None)
+    elif request.method == "GET":
+        location_id = request.GET.get("location_id", None)
     # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
-    orders = Order.objects.filter(
-        order_group__user_id=request.user.id
-    ).prefetch_related("payouts")
+    orders = Order.objects.filter(order_group__user_id=request.user.id)
+    if location_id:
+        orders = orders.filter(
+            order_group__seller_product_seller_location__seller_location_id=location_id
+        )
+    orders = orders.prefetch_related("payouts").order_by("-end_date")
     context["payouts"] = []
     for order in orders:
         context["payouts"].extend([p for p in order.payouts.all()])
@@ -574,18 +582,20 @@ def location_detail(request, location_id):
     context["seller_location"] = seller_location
     orders = (
         Order.objects.filter(order_group__user_id=request.user.id)
+        .filter(
+            order_group__seller_product_seller_location__seller_location_id=location_id
+        )
         .prefetch_related("payouts")
         .order_by("-end_date")
     )
     context["orders"] = []
     context["payouts"] = []
+    # Only show the last 5 orders, and add a "View All" link.
     for order in orders:
-        if (
-            order.order_group.seller_product_seller_location.seller_location_id
-            == location_id
-        ):
-            context["orders"].append(order)
+        context["orders"].append(order)
         context["payouts"].extend([p for p in order.payouts.all()])
+    context["orders"] = context["orders"][:5]
+    context["payouts"] = context["payouts"][:5]
     return render(request, "supplier_dashboard/location_detail.html", context)
 
 
