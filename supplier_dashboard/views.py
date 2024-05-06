@@ -448,7 +448,7 @@ def update_booking_status(request, order_id, accept=True):
         if order.status == Order.PENDING:
             if accept:
                 order.status = Order.SCHEDULED
-                # order.save()
+                order.save()
                 context["oob_html"] = (
                     f"""<p id="booking-status" hx-swap-oob="true">{order.status}</p>"""
                 )
