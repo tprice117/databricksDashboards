@@ -70,8 +70,11 @@
                 <!-- MESSAGES -->
                 {% include 'supplier_dashboard/snippets/djangomessages.html' %}
                 <!-- MESSAGES -->
-                {% block content %}
-                {% endblock %}
+                <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-page">Loading...</span>
+                <div id="page-content-wrappper">
+                    {% block content %}
+                    {% endblock %}
+                </div>
             </div>
             {% include 'supplier_dashboard/footer.html' %}
         </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>

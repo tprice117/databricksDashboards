@@ -93,6 +93,7 @@ def index(request):
         request.session["seller"] = to_dict(request.user.user_group.seller)
     context["seller"] = request.session["seller"]
     if request.headers.get("HX-Request"):
+        context["page_title"] = "Dashboard"
         return render(request, "supplier_dashboard/snippets/dashboard.html", context)
     else:
         return render(request, "supplier_dashboard/index.html", context)

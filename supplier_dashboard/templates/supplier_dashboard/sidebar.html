@@ -15,6 +15,16 @@
                                         href="{% url 'supplier_home' %}"><i
                                                 class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
                         </li>
+                        {% comment %} <li class="nav-item">
+                                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_home' %} active{% endif %}"
+                                        href="{% url 'supplier_home' %}"
+                                        hx-get="{% url 'supplier_home' %}" hx-push-url="true"
+                                        hx-indicator="#htmx-indicator-page"
+                                        hx-swap="innerHTML" hx-target="#page-content-wrappper">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                        <span>Dashboard</span>
+                                </a>
+                        </li> {% endcomment %}
                         <li class="nav-item"></li>
                         <li class="nav-item"><a
                                         class="nav-link{% if request.resolver_match.url_name == 'supplier_bookings' %} active{% endif %}"
