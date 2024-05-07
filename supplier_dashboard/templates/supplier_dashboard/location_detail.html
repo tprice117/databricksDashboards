@@ -31,7 +31,8 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Compliance Details</h4>
-                    <form action="{% url 'supplier_location_detail' location_id=seller_location.id %}" method="post">
+                    <form action="{% url 'supplier_location_detail' location_id=seller_location.id %}" method="post"
+                        enctype="multipart/form-data">
                         {% csrf_token %}
                         <!-- Include the hidden fields -->
                         {% for hidden in compliance_form.hidden_fields %}
@@ -86,11 +87,12 @@
                     <p style="margin-top: 24px;border-top-style: solid;padding-top: 12px;">
                         <strong>Payout Settings</strong>
                     </p>
+                    <!-- TODO: Set up Stripe integration and remove the following for first iteration -->
                     <p>Payouts can be made by ACH (via Stripe Connect) or by check. Stripe Connect will
-                        be used, if configured, otherwise a check will be sent.</p>
-                    <p style="margin-bottom: 0px;"><strong>Receive Payments by ACH (Stripe
+                        be used, if configured, otherwise a check will be sent. Please contact us to set up Stripe.</p>
+                    <!-- <p style="margin-bottom: 0px;"><strong>Receive Payments by ACH (Stripe
                             Connect)&nbsp;</strong></p><button class="btn btn-primary" type="button">Setup up Stripe
-                        Connect</button>
+                        Connect</button> -->
                     <p style="margin-top: 16px;"><strong>Receive Payments by Check</strong></p>
                     <form action="{% url 'supplier_location_detail' location_id=seller_location.id %}" method="post">
                         {% csrf_token %}

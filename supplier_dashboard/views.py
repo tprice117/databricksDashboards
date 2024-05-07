@@ -22,6 +22,7 @@ from api.models import (
     SellerInvoicePayable,
     SellerLocation,
     SellerInvoicePayableLineItem,
+    SellerLocationMailingAddress,
 )
 from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
@@ -552,7 +553,7 @@ def bookings(request):
     context["status_pending_link"] = seller.get_dashboard_status_url(
         Order.PENDING, snippet_name="table_status_orders", **link_params
     )
-    print(context["status_pending_link"])
+    # print(context["status_pending_link"])
     return render(request, "supplier_dashboard/bookings.html", context)
 
 
@@ -797,26 +798,25 @@ def location_detail(request, location_id):
             save_model = None
             if "compliance_submit" in request.POST:
                 # Load other forms so template has complete data.
-                # TODO: The address is on SellerLocationMailingAddress
-                payout_form = SellerPayoutForm(
-                    initial={
-                        "payee_name": seller_location.payee_name,
-                        "street": seller_location.street,
-                        "city": seller_location.city,
-                        "state": seller_location.state,
-                        "postal_code": seller_location.postal_code,
-                    }
-                )
-                context["payout_form"] = payout_form
+                seller_payout_initial = {
+                    "payee_name": seller_location.payee_name,
+                }
+                if hasattr(seller_location, "mailing_address"):
+                    seller_payout_initial.update(
+                        {
+                            "street": seller_location.mailing_address.street,
+                            "city": seller_location.mailing_address.city,
+                            "state": seller_location.mailing_address.state,
+                            "postal_code": seller_location.mailing_address.postal_code,
+                        }
+                    )
+                payout_form = SellerPayoutForm(initial=seller_payout_initial)
                 # Load the form that was submitted.
-                form = SellerLocationComplianceForm(request.POST)
+                form = SellerLocationComplianceForm(request.POST, request.FILES)
                 context["compliance_form"] = form
                 if form.is_valid():
-                    if (
-                        form.cleaned_data.get("gl_coi")
-                        and form.cleaned_data.get("gl_coi") != seller_location.gl_coi
-                    ):
-                        seller_location.gl_coi = form.cleaned_data.get("gl_coi")
+                    if request.FILES.get("gl_coi"):
+                        seller_location.gl_coi = request.FILES["gl_coi"]
                         save_model = seller_location
                     if (
                         form.cleaned_data.get("gl_coi_expiration_date")
@@ -826,12 +826,8 @@ def location_detail(request, location_id):
                             "gl_coi_expiration_date"
                         )
                         save_model = seller_location
-                    if (
-                        form.cleaned_data.get("auto_coi")
-                        and form.cleaned_data.get("auto_coi")
-                        != seller_location.auto_coi
-                    ):
-                        seller_location.auto_coi = form.cleaned_data.get("auto_coi")
+                    if request.FILES.get("auto_coi"):
+                        seller_location.auto_coi = request.FILES["auto_coi"]
                         save_model = seller_location
                     if (
                         form.cleaned_data.get("auto_coi_expiration_date")
@@ -841,14 +837,10 @@ def location_detail(request, location_id):
                             form.cleaned_data.get("auto_coi_expiration_date")
                         )
                         save_model = seller_location
-                    if (
-                        form.cleaned_data.get("workers_comp_coi")
-                        and form.cleaned_data.get("workers_comp_coi")
-                        != seller_location.workers_comp_coi
-                    ):
-                        seller_location.workers_comp_coi = form.cleaned_data.get(
+                    if request.FILES.get("workers_comp_coi"):
+                        seller_location.workers_comp_coi = request.FILES[
                             "workers_comp_coi"
-                        )
+                        ]
                         save_model = seller_location
                     if (
                         form.cleaned_data.get("workers_comp_coi_expiration_date")
@@ -858,11 +850,8 @@ def location_detail(request, location_id):
                             form.cleaned_data.get("workers_comp_coi_expiration_date")
                         )
                         save_model = seller_location
-                    if (
-                        form.cleaned_data.get("w9")
-                        and form.cleaned_data.get("w9") != seller_location.w9
-                    ):
-                        seller_location.w9 = form.cleaned_data.get("w9")
+                    if request.FILES.get("w9"):
+                        seller_location.w9 = request.FILES["w9"]
                         save_model = seller_location
                 else:
                     raise InvalidFormError(form, "Invalid SellerLocationComplianceForm")
@@ -885,31 +874,67 @@ def location_detail(request, location_id):
                 context["payout_form"] = payout_form
                 if payout_form.is_valid():
                     save_model = None
-                    if (
-                        payout_form.cleaned_data.get("payee_name")
-                        != seller_location.payee_name
-                    ):
-                        seller_location.payee_name = payout_form.cleaned_data.get(
-                            "payee_name"
+                    if not hasattr(seller_location, "mailing_address"):
+                        mailing_address = SellerLocationMailingAddress(
+                            seller_location_id=seller_location.id,
+                            street=payout_form.cleaned_data.get("street"),
+                            city=payout_form.cleaned_data.get("city"),
+                            state=payout_form.cleaned_data.get("state"),
+                            postal_code=payout_form.cleaned_data.get("postal_code"),
+                            country="US",
                         )
-                        save_model = seller_location
-                    if payout_form.cleaned_data.get("street") != seller_location.street:
-                        seller_location.street = payout_form.cleaned_data.get("street")
-                        save_model = seller_location
-                    if payout_form.cleaned_data.get("city") != seller_location.city:
-                        seller_location.city = payout_form.cleaned_data.get("city")
-                        save_model = seller_location
-                    if payout_form.cleaned_data.get("state") != seller_location.state:
-                        seller_location.state = payout_form.cleaned_data.get("state")
-                        save_model = seller_location
-                    if (
-                        payout_form.cleaned_data.get("postal_code")
-                        != seller_location.postal_code
-                    ):
-                        seller_location.postal_code = payout_form.cleaned_data.get(
-                            "postal_code"
-                        )
-                        save_model = seller_location
+                        mailing_address.save()
+                        save_model = mailing_address
+                        if (
+                            payout_form.cleaned_data.get("payee_name")
+                            != seller_location.payee_name
+                        ):
+                            seller_location.payee_name = payout_form.cleaned_data.get(
+                                "payee_name"
+                            )
+                            seller_location.save()
+                    else:
+                        if (
+                            payout_form.cleaned_data.get("payee_name")
+                            != seller_location.payee_name
+                        ):
+                            seller_location.payee_name = payout_form.cleaned_data.get(
+                                "payee_name"
+                            )
+                            seller_location.save()
+                            save_model = seller_location.mailing_address
+                        if (
+                            payout_form.cleaned_data.get("street")
+                            != seller_location.mailing_address.street
+                        ):
+                            seller_location.mailing_address.street = (
+                                payout_form.cleaned_data.get("street")
+                            )
+                            save_model = seller_location.mailing_address
+                        if (
+                            payout_form.cleaned_data.get("city")
+                            != seller_location.mailing_address.city
+                        ):
+                            seller_location.mailing_address.city = (
+                                payout_form.cleaned_data.get("city")
+                            )
+                            save_model = seller_location.mailing_address
+                        if (
+                            payout_form.cleaned_data.get("state")
+                            != seller_location.mailing_address.state
+                        ):
+                            seller_location.mailing_address.state = (
+                                payout_form.cleaned_data.get("state")
+                            )
+                            save_model = seller_location.mailing_address
+                        if (
+                            payout_form.cleaned_data.get("postal_code")
+                            != seller_location.mailing_address.postal_code
+                        ):
+                            seller_location.mailing_address.postal_code = (
+                                payout_form.cleaned_data.get("postal_code")
+                            )
+                            save_model = seller_location.mailing_address
                 else:
                     raise InvalidFormError(payout_form, "Invalid SellerPayoutForm")
 
@@ -939,15 +964,19 @@ def location_detail(request, location_id):
             }
         )
         context["compliance_form"] = compliance_form
-        payout_form = SellerPayoutForm(
-            initial={
-                "payee_name": seller_location.payee_name,
-                "street": seller_location.street,
-                "city": seller_location.city,
-                "state": seller_location.state,
-                "postal_code": seller_location.postal_code,
-            }
-        )
+        seller_payout_initial = {
+            "payee_name": seller_location.payee_name,
+        }
+        if hasattr(seller_location, "mailing_address"):
+            seller_payout_initial.update(
+                {
+                    "street": seller_location.mailing_address.street,
+                    "city": seller_location.mailing_address.city,
+                    "state": seller_location.mailing_address.state,
+                    "postal_code": seller_location.mailing_address.postal_code,
+                }
+            )
+        payout_form = SellerPayoutForm(initial=seller_payout_initial)
         context["payout_form"] = payout_form
 
     return render(request, "supplier_dashboard/location_detail.html", context)
@@ -983,7 +1012,6 @@ def received_invoice_detail(request, invoice_id):
     else:
         context["is_pdf"] = False
     context["seller_invoice_payable_line_items"] = invoice_line_items
-    # TODO: Show SellerInvoicePayable.invoice_file
     return render(request, "supplier_dashboard/received_invoice_detail.html", context)
 
 
