@@ -3,6 +3,8 @@
         <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i
                 class="fas fa-bars"></i></button>
         <ul class="navbar-nav flex-nowrap ms-auto">
+            {% if seller %}<p class="text-center" style="margin: auto;">{{ seller.name }} - {{ seller.id }}</p>
+            {% endif %}
             {% if request.user.is_staff %}
             <li class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link" aria-expanded="false"
                     data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
