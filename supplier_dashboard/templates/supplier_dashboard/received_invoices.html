@@ -1,0 +1,74 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% block title %}Received Invoices{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h3 class="text-dark mb-4">Received Invoices</h3>
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <p class="text-primary m-0 fw-bold">Invoices Downstream has received from your
+                Locations&nbsp;</p>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                <table class="table my-0" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>Amount</th>
+                            <th>Invoice ID</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for seller_invoice_payable in seller_invoice_payables %}
+                        <tr>
+                            <td><img class="rounded-circle me-2" width="30" height="30"
+                                    src="{% static 'supplier_dashboard/img/avatars/avatar1.jpeg' %}">&nbsp;{{seller_invoice_payable.seller_location.name}}
+                            </td>
+                            <td>{{seller_invoice_payable.amount}}</td>
+                            <td>{{seller_invoice_payable.supplier_invoice_id}}</td>
+                            <td>{{seller_invoice_payable.due_date}}</td>
+                            <td>{{seller_invoice_payable.status}}</td>
+                            <td><a class="btn btn-light" role="button"
+                                    href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable.id %}"><i
+                                        class="far fa-eye"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>Location</strong></td>
+                            <td><strong>Amount</strong></td>
+                            <td><strong>Invoice ID</strong></td>
+                            <td><strong>Due Date</strong></td>
+                            <td><strong>Status</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="row">
+                <div class="col-md-6 align-self-center">
+                    <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
+                        Showing 1 to 10 of 27</p>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+                        <ul class="pagination">
+                            <li class="page-item disabled"><a class="page-link" aria-label="Previous" href="#"><span
+                                        aria-hidden="true">«</span></a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" aria-label="Next" href="#"><span
+                                        aria-hidden="true">»</span></a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

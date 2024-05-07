@@ -1,4 +1,5 @@
 import uuid
+import datetime
 
 from django.db import models
 from django.db.models.signals import pre_save
@@ -60,6 +61,22 @@ class SellerLocation(BaseModel):
     @property
     def formatted_address(self):
         return f"{self.street} {self.city}, {self.state} {self.postal_code}"
+
+    @property
+    def is_insurance_compliant(self):
+        today = datetime.date.today()
+        return (
+            self.gl_coi_expiration_date
+            and self.auto_coi_expiration_date
+            and self.workers_comp_coi_expiration_date
+            and self.gl_coi_expiration_date > today
+            and self.auto_coi_expiration_date > today
+            and self.workers_comp_coi_expiration_date > today
+        )
+
+    @property
+    def is_tax_compliant(self):
+        return self.stripe_connect_account_id and self.w9
 
     def pre_save(sender, instance, *args, **kwargs):
         latitude, longitude = geocode_address(

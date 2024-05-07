@@ -1,3 +1,8 @@
+{% if oob_html %}
+<span style="color:#018381;">{{order.status}}</span>
+{{oob_html|safe}}
+{% else %}
 <h5 class="card-title">Order Status</h5>
 <span
     style="color:#018381;font-family:Outfit,Arial,sans-serif;font-size:16px;line-height:24px;text-align:center;">{{order.status}}</span>
+{% endif %}
