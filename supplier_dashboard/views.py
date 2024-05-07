@@ -670,6 +670,7 @@ def booking_detail(request, order_id):
     # context["user"] = request.user
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
@@ -696,6 +697,7 @@ def payouts(request):
     # NOTE: Can add stuff to session if needed to speed up queries.
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     orders = Order.objects.filter(order_group__user_id=request.user.id)
     if location_id:
         orders = orders.filter(
@@ -721,7 +723,11 @@ def payouts(request):
 
 @login_required(login_url="/admin/login/")
 def payout_detail(request, payout_id):
+    context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
+    if not request.session.get("seller"):
+        request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     payout = None
     if not payout:
         payout = Payout.objects.get(id=payout_id)
@@ -742,6 +748,7 @@ def locations(request):
     # context["user"] = request.user
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     seller_locations = SellerLocation.objects.filter(
         seller_id=request.session["seller"]["id"]
     )
@@ -755,6 +762,7 @@ def location_detail(request, location_id):
     # context["user"] = request.user
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     seller_location = SellerLocation.objects.get(id=location_id)
     context["seller_location"] = seller_location
     orders = (
@@ -968,6 +976,7 @@ def received_invoices(request):
     # context["user"] = request.user
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     invoices = SellerInvoicePayable.objects.filter(
         seller_location__seller_id=request.session["seller"]["id"]
     ).order_by("-invoice_date")
@@ -981,6 +990,7 @@ def received_invoice_detail(request, invoice_id):
     # context["user"] = request.user
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
+    context["seller"] = request.session["seller"]
     invoice = SellerInvoicePayable.objects.get(id=invoice_id)
     # invoice_line_items = invoice.seller_invoice_payable_line_items.all()
     invoice_line_items = SellerInvoicePayableLineItem.objects.filter(
