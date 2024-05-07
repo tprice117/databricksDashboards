@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load humanize %}
 {% block title %}Payouts{% endblock %}
 {% block content %}
 <div class="container-fluid">
@@ -13,7 +14,9 @@
                             <div class="text-uppercase text-primary fw-bold text-xs mb-1">
                                 <span>PENDING</span>
                             </div>
-                            <div class="text-dark fw-bold h5 mb-0"><span>$1,245.43</span></div>
+                            <div class="text-dark fw-bold h5 mb-0">
+                                <span>${{ not_yet_paid|stringformat:".2f"|intcomma }}</span>
+                            </div>
                         </div>
                         <div class="col-auto"><i class="fas fa-clock fa-2x text-gray-300"></i></div>
                     </div>
@@ -27,7 +30,9 @@
                         <div class="col me-2">
                             <div class="text-uppercase text-success fw-bold text-xs mb-1"><span>THIS
                                     WEEK</span></div>
-                            <div class="text-dark fw-bold h5 mb-0"><span>$3,405.78</span></div>
+                            <div class="text-dark fw-bold h5 mb-0">
+                                <span>${{ paid_this_week|stringformat:".2f"|intcomma }}</span>
+                            </div>
                         </div>
                         <div class="col-auto"><i class="fas fa-calendar-day fa-2x text-gray-300"></i>
                         </div>
@@ -44,7 +49,8 @@
                                     Completed</span></div>
                             <div class="row g-0 align-items-center">
                                 <div class="col-auto">
-                                    <div class="text-dark fw-bold h5 mb-0 me-3"><span>$9,450.21</span>
+                                    <div class="text-dark fw-bold h5 mb-0 me-3">
+                                        <span>${{ total_paid|stringformat:".2f"|intcomma }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -65,7 +71,8 @@
                                     PAID</span></div>
                             <div class="row g-0 align-items-center">
                                 <div class="col-auto">
-                                    <div class="text-dark fw-bold h5 mb-0 me-3"><span>$2,450.21</span>
+                                    <div class="text-dark fw-bold h5 mb-0 me-3">
+                                        <span>${{ not_yet_paid|stringformat:".2f"|intcomma }}</span>
                                     </div>
                                 </div>
                             </div>

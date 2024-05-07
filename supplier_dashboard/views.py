@@ -92,7 +92,10 @@ def index(request):
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
     context["seller"] = request.session["seller"]
-    return render(request, "supplier_dashboard/index.html", context)
+    if request.headers.get("HX-Request"):
+        return render(request, "supplier_dashboard/snippets/dashboard.html", context)
+    else:
+        return render(request, "supplier_dashboard/index.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -552,8 +555,19 @@ def payouts(request):
             order_group__seller_product_seller_location__seller_location_id=location_id
         )
     orders = orders.prefetch_related("payouts").order_by("-end_date")
+    sunday = datetime.date.today() - datetime.timedelta(
+        days=datetime.date.today().weekday()
+    )
     context["payouts"] = []
+    context["total_paid"] = 0
+    context["paid_this_week"] = 0
+    context["not_yet_paid"] = 0
     for order in orders:
+        total_paid = order.total_paid_to_seller()
+        context["total_paid"] += total_paid
+        context["not_yet_paid"] += order.needed_payout_to_seller()
+        if order.start_date >= sunday:
+            context["paid_this_week"] += total_paid
         context["payouts"].extend([p for p in order.payouts.all()])
     return render(request, "supplier_dashboard/payouts.html", context)
 
