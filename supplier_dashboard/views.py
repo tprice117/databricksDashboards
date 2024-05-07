@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-
-# from django.db.models import Q
+from typing import List
+import json
 from django.contrib import messages
 from urllib.parse import parse_qs
 import datetime
@@ -15,6 +15,7 @@ from rest_framework.decorators import (
 import logging
 
 from api.models import (
+    User,
     Order,
     Seller,
     Payout,
@@ -60,6 +61,89 @@ def to_dict(instance):
     return data
 
 
+def get_dashboard_chart_data(data_by_month: List[int]):
+    # Create a list of labels along with earnings data of months going back from the current month to 8 months ago.
+    data = []
+    all_months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    current_month = datetime.date.today().month
+    months = []
+    for i in range(8, 1, -1):
+        months.append(all_months[(current_month - i - 1) % 12])
+        data.append(data_by_month[(current_month - i - 1) % 12])
+
+    dashboard_chart = {
+        "type": "line",
+        "data": {
+            "labels": months,
+            "datasets": [
+                {
+                    "label": "Earnings",
+                    "fill": True,
+                    "data": data,
+                    "backgroundColor": "rgba(78, 115, 223, 0.05)",
+                    "borderColor": "rgba(78, 115, 223, 1)",
+                }
+            ],
+        },
+        "options": {
+            "maintainAspectRatio": False,
+            "legend": {"display": False, "labels": {"fontStyle": "normal"}},
+            "title": {"fontStyle": "normal"},
+            "scales": {
+                "xAxes": [
+                    {
+                        "gridLines": {
+                            "color": "rgb(234, 236, 244)",
+                            "zeroLineColor": "rgb(234, 236, 244)",
+                            "drawBorder": False,
+                            "drawTicks": False,
+                            "borderDash": ["2"],
+                            "zeroLineBorderDash": ["2"],
+                            "drawOnChartArea": False,
+                        },
+                        "ticks": {
+                            "fontColor": "#858796",
+                            "fontStyle": "normal",
+                            "padding": 20,
+                        },
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "gridLines": {
+                            "color": "rgb(234, 236, 244)",
+                            "zeroLineColor": "rgb(234, 236, 244)",
+                            "drawBorder": False,
+                            "drawTicks": False,
+                            "borderDash": ["2"],
+                            "zeroLineBorderDash": ["2"],
+                        },
+                        "ticks": {
+                            "fontColor": "#858796",
+                            "fontStyle": "normal",
+                            "padding": 20,
+                        },
+                    }
+                ],
+            },
+        },
+    }
+    return dashboard_chart
+
+
 ########################
 # Page views
 ########################
@@ -92,6 +176,80 @@ def index(request):
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
     context["seller"] = request.session["seller"]
+    orders = Order.objects.filter(
+        order_group__seller_product_seller_location__seller_product__seller_id=context[
+            "seller"
+        ]["id"]
+    )
+    # .filter(status=Order.PENDING)
+    context["earnings"] = 0
+    earnings_by_category = {}
+    pending_count = 0
+    scheduled_count = 0
+    complete_count = 0
+    cancelled_count = 0
+    earnings_by_month = [0] * 12
+    for order in orders:
+        context["earnings"] += float(order.seller_price())
+        earnings_by_month[order.end_date.month - 1] += float(order.seller_price())
+
+        category = (
+            order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
+        )
+        if category not in earnings_by_category:
+            earnings_by_category[category] = {"amount": 0, "percent": 0}
+        earnings_by_category[category]["amount"] += float(order.seller_price())
+
+        if order.status == Order.PENDING:
+            pending_count += 1
+        elif order.status == Order.SCHEDULED:
+            scheduled_count += 1
+        elif order.status == Order.COMPLETE:
+            complete_count += 1
+        elif order.status == Order.CANCELLED:
+            cancelled_count += 1
+
+    # # Just test data here
+    # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
+    # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
+    # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
+    # earnings_by_category["Concrete & Masonary"] = {
+    #     "amount": 50,
+    #     "percent": 0,
+    # }
+    # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
+    # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
+    # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
+    # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
+
+    # Sort the dictionary by the 'amount' field in descending order
+    sorted_categories = sorted(
+        earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
+    )
+
+    # Calculate the 'percent' field for each category
+    for category, data in sorted_categories:
+        data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+
+    # Create a new category 'Other' for the categories that are not in the top 4
+    other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
+    other_percent = int((other_amount / context["earnings"]) * 100)
+
+    # Create the final dictionary
+    final_categories = dict(sorted_categories[:4])
+    final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
+    context["earnings_by_category"] = final_categories
+    # print(final_categories)
+    context["pending_count"] = pending_count
+    seller_locations = SellerLocation.objects.filter(seller_id=context["seller"]["id"])
+    # context["pending_count"] = orders.count()
+    context["location_count"] = seller_locations.count()
+    context["user_count"] = User.objects.filter(
+        user_group__seller_id=context["seller"]["id"]
+    ).count()
+
+    context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
+
     if request.headers.get("HX-Request"):
         context["page_title"] = "Dashboard"
         return render(request, "supplier_dashboard/snippets/dashboard.html", context)
@@ -197,9 +355,14 @@ def company(request):
                             "company_phone"
                         )
                         save_model = request.user.user_group.seller
-                    # if form.cleaned_data.get("first_name") != request.user.first_name:
-                    #     request.user.first_name = form.cleaned_data.get("first_name")
-                    #     save_model = request.user.user_group.seller
+                    if (
+                        form.cleaned_data.get("website")
+                        != request.user.user_group.seller.website
+                    ):
+                        request.user.user_group.seller.website = form.cleaned_data.get(
+                            "website"
+                        )
+                        save_model = request.user.user_group.seller
                     if (
                         form.cleaned_data.get("company_logo")
                         != request.user.user_group.seller.location_logo_url
@@ -216,7 +379,7 @@ def company(request):
                     initial={
                         "company_name": request.user.user_group.seller.name,
                         "company_phone": request.user.user_group.seller.phone,
-                        "first_name": request.user.first_name,
+                        "website": request.user.user_group.seller.website,
                         "company_logo": request.user.user_group.seller.location_logo_url,
                     }
                 )
@@ -256,7 +419,7 @@ def company(request):
                     initial={
                         "company_name": request.user.user_group.seller.name,
                         "company_phone": request.user.user_group.seller.phone,
-                        "first_name": request.user.first_name,
+                        "website": request.user.user_group.seller.website,
                         "company_logo": request.user.user_group.seller.location_logo_url,
                     }
                 )
@@ -310,7 +473,7 @@ def company(request):
             initial={
                 "company_name": request.user.user_group.seller.name,
                 "company_phone": request.user.user_group.seller.phone,
-                "first_name": request.user.first_name,
+                "website": request.user.user_group.seller.website,
                 "company_logo": request.user.user_group.seller.location_logo_url,
             }
         )
@@ -342,7 +505,7 @@ def bookings(request):
             link_params["service_date"] = request.GET.get("service_date")
         if request.GET.get("location_id", None) is not None:
             link_params["location_id"] = request.GET.get("location_id")
-    non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
+    # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
     context = {}
     # context["user"] = request.user
     if not request.session.get("seller"):
@@ -362,7 +525,7 @@ def bookings(request):
                 "location_id"
             ]
         )
-    context["non_pending_cutoff"] = non_pending_cutoff
+    # context["non_pending_cutoff"] = non_pending_cutoff
     context["pending_count"] = 0
     context["scheduled_count"] = 0
     context["complete_count"] = 0
@@ -370,13 +533,13 @@ def bookings(request):
     for order in orders:
         if order.status == Order.PENDING:
             context["pending_count"] += 1
-        elif order.end_date > non_pending_cutoff:
-            if order.status == Order.SCHEDULED:
-                context["scheduled_count"] += 1
-            elif order.status == Order.COMPLETE:
-                context["complete_count"] += 1
-            elif order.status == Order.CANCELLED:
-                context["cancelled_count"] += 1
+        # if order.end_date >= non_pending_cutoff:
+        elif order.status == Order.SCHEDULED:
+            context["scheduled_count"] += 1
+        elif order.status == Order.COMPLETE:
+            context["complete_count"] += 1
+        elif order.status == Order.CANCELLED:
+            context["cancelled_count"] += 1
     context["status_complete_link"] = seller.get_dashboard_status_url(
         Order.COMPLETE, snippet_name="table_status_orders", **link_params
     )
@@ -424,7 +587,7 @@ def update_order_status(request, order_id, accept=True):
                     )
                 request.session["seller"] = to_dict(request.user.user_group.seller)
                 context["seller"] = request.session["seller"]
-                non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
+                # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
                 orders = Order.objects.filter(
                     order_group__seller_product_seller_location__seller_product__seller_id=seller_id
                 )
@@ -438,13 +601,14 @@ def update_order_status(request, order_id, accept=True):
                 for order in orders:
                     if order.status == Order.PENDING:
                         pending_count += 1
-                    elif order.end_date > non_pending_cutoff:
-                        if order.status == Order.SCHEDULED:
-                            scheduled_count += 1
-                        elif order.status == Order.COMPLETE:
-                            complete_count += 1
-                        elif order.status == Order.CANCELLED:
-                            cancelled_count += 1
+                    # if order.end_date >= non_pending_cutoff:
+                    elif order.status == Order.SCHEDULED:
+                        scheduled_count += 1
+                    elif order.status == Order.COMPLETE:
+                        complete_count += 1
+                    elif order.status == Order.CANCELLED:
+                        cancelled_count += 1
+                # TODO: Add toast that shows the order with a link to see it.
                 context[
                     "oob_html"
                 ] = f"""
@@ -633,6 +797,7 @@ def location_detail(request, location_id):
             save_model = None
             if "compliance_submit" in request.POST:
                 # Load other forms so template has complete data.
+                # TODO: The address is on SellerLocationMailingAddress
                 payout_form = SellerPayoutForm(
                     initial={
                         "payee_name": seller_location.payee_name,
@@ -814,6 +979,7 @@ def received_invoice_detail(request, invoice_id):
     )
     context["seller_invoice_payable"] = invoice
     context["seller_invoice_payable_line_items"] = invoice_line_items
+    # TODO: Show SellerInvoicePayable.invoice_file
     return render(request, "supplier_dashboard/received_invoice_detail.html", context)
 
 
@@ -829,13 +995,14 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
         params = decrypt_string(key)
         if str(params) == str(supplier_id):
             context = {}
-            non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=15)
+            # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
             if status:
                 orders = Order.objects.filter(
                     order_group__seller_product_seller_location__seller_product__seller_id=supplier_id
                 ).filter(status=status.upper())
-                if status.upper() != Order.PENDING:
-                    orders = orders.filter(end_date__gt=non_pending_cutoff)
+                # TODO: Check the delay for a seller with large number of orders, like Hillen.
+                # if status.upper() != Order.PENDING:
+                #     orders = orders.filter(end_date__gt=non_pending_cutoff)
                 if service_date:
                     orders = orders.filter(end_date=service_date)
                 if location_id:
