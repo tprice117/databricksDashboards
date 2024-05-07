@@ -46,9 +46,11 @@ class SellerForm(forms.Form):
             attrs={"class": "form-control", "placeholder": "(000) 867-5309"}
         ),
     )
-    first_name = forms.CharField(
+    website = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "John"}),
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "https://www.example.com"}
+        ),
         required=False,
     )
     company_logo = forms.CharField(
