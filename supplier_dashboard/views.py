@@ -978,6 +978,10 @@ def received_invoice_detail(request, invoice_id):
         seller_invoice_payable_id=invoice_id
     )
     context["seller_invoice_payable"] = invoice
+    if invoice.invoice_file.name.endswith(".pdf"):
+        context["is_pdf"] = True
+    else:
+        context["is_pdf"] = False
     context["seller_invoice_payable_line_items"] = invoice_line_items
     # TODO: Show SellerInvoicePayable.invoice_file
     return render(request, "supplier_dashboard/received_invoice_detail.html", context)
