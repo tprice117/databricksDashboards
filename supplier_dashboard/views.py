@@ -320,6 +320,7 @@ def company(request):
     if not request.session.get("seller"):
         request.session["seller"] = to_dict(request.user.user_group.seller)
     context["seller"] = request.session["seller"]
+    seller = Seller.objects.get(id=context["seller"]["id"])
     if request.method == "POST":
         try:
             save_model = None
@@ -327,66 +328,49 @@ def company(request):
                 # Load other forms so template has complete data.
                 seller_communication_form = SellerCommunicationForm(
                     initial={
-                        "dispatch_email": request.user.user_group.seller.order_email,
-                        "dispatch_phone": request.user.user_group.seller.order_phone,
+                        "dispatch_email": seller.order_email,
+                        "dispatch_phone": seller.order_phone,
                     }
                 )
                 context["seller_communication_form"] = seller_communication_form
                 seller_about_us_form = SellerAboutUsForm(
-                    initial={"about_us": request.user.user_group.seller.about_us}
+                    initial={"about_us": seller.about_us}
                 )
                 context["seller_about_us_form"] = seller_about_us_form
                 # Load the form that was submitted.
                 form = SellerForm(request.POST)
                 context["form"] = form
                 if form.is_valid():
-                    if (
-                        form.cleaned_data.get("company_name")
-                        != request.user.user_group.seller.name
-                    ):
-                        request.user.user_group.seller.name = form.cleaned_data.get(
-                            "company_name"
-                        )
-                        save_model = request.user.user_group.seller
-                    if (
-                        form.cleaned_data.get("company_phone")
-                        != request.user.user_group.seller.phone
-                    ):
-                        request.user.user_group.seller.phone = form.cleaned_data.get(
-                            "company_phone"
-                        )
-                        save_model = request.user.user_group.seller
-                    if (
-                        form.cleaned_data.get("website")
-                        != request.user.user_group.seller.website
-                    ):
-                        request.user.user_group.seller.website = form.cleaned_data.get(
-                            "website"
-                        )
-                        save_model = request.user.user_group.seller
+                    if form.cleaned_data.get("company_name") != seller.name:
+                        seller.name = form.cleaned_data.get("company_name")
+                        save_model = seller
+                    if form.cleaned_data.get("company_phone") != seller.phone:
+                        seller.phone = form.cleaned_data.get("company_phone")
+                        save_model = seller
+                    if form.cleaned_data.get("website") != seller.website:
+                        seller.website = form.cleaned_data.get("website")
+                        save_model = seller
                     if (
                         form.cleaned_data.get("company_logo")
-                        != request.user.user_group.seller.location_logo_url
+                        != seller.location_logo_url
                     ):
-                        request.user.user_group.seller.location_logo_url = (
-                            form.cleaned_data.get("company_logo")
-                        )
-                        save_model = request.user.user_group.seller
+                        seller.location_logo_url = form.cleaned_data.get("company_logo")
+                        save_model = seller
                 else:
                     raise InvalidFormError(form, "Invalid SellerForm")
             elif "communication_submit" in request.POST:
                 # Load other forms so template has complete data.
                 form = SellerForm(
                     initial={
-                        "company_name": request.user.user_group.seller.name,
-                        "company_phone": request.user.user_group.seller.phone,
-                        "website": request.user.user_group.seller.website,
-                        "company_logo": request.user.user_group.seller.location_logo_url,
+                        "company_name": seller.name,
+                        "company_phone": seller.phone,
+                        "website": seller.website,
+                        "company_logo": seller.location_logo_url,
                     }
                 )
                 context["form"] = form
                 seller_about_us_form = SellerAboutUsForm(
-                    initial={"about_us": request.user.user_group.seller.about_us}
+                    initial={"about_us": seller.about_us}
                 )
                 context["seller_about_us_form"] = seller_about_us_form
                 # Load the form that was submitted.
@@ -396,20 +380,20 @@ def company(request):
                     save_model = None
                     if (
                         seller_communication_form.cleaned_data.get("dispatch_email")
-                        != request.user.user_group.seller.order_email
+                        != seller.order_email
                     ):
-                        request.user.user_group.seller.order_email = (
-                            seller_communication_form.cleaned_data.get("dispatch_email")
+                        seller.order_email = seller_communication_form.cleaned_data.get(
+                            "dispatch_email"
                         )
-                        save_model = request.user.user_group.seller
+                        save_model = seller
                     if (
                         seller_communication_form.cleaned_data.get("dispatch_phone")
-                        != request.user.user_group.seller.order_phone
+                        != seller.order_phone
                     ):
-                        request.user.user_group.seller.order_phone = (
-                            seller_communication_form.cleaned_data.get("dispatch_phone")
+                        seller.order_phone = seller_communication_form.cleaned_data.get(
+                            "dispatch_phone"
                         )
-                        save_model = request.user.user_group.seller
+                        save_model = seller
                 else:
                     raise InvalidFormError(
                         seller_communication_form, "Invalid SellerCommunicationForm"
@@ -418,17 +402,17 @@ def company(request):
                 # Load other forms so template has complete data.
                 form = SellerForm(
                     initial={
-                        "company_name": request.user.user_group.seller.name,
-                        "company_phone": request.user.user_group.seller.phone,
-                        "website": request.user.user_group.seller.website,
-                        "company_logo": request.user.user_group.seller.location_logo_url,
+                        "company_name": seller.name,
+                        "company_phone": seller.phone,
+                        "website": seller.website,
+                        "company_logo": seller.location_logo_url,
                     }
                 )
                 context["form"] = form
                 seller_communication_form = SellerCommunicationForm(
                     initial={
-                        "dispatch_email": request.user.user_group.seller.order_email,
-                        "dispatch_phone": request.user.user_group.seller.order_phone,
+                        "dispatch_email": seller.order_email,
+                        "dispatch_phone": seller.order_phone,
                     }
                 )
                 context["seller_communication_form"] = seller_communication_form
@@ -439,12 +423,12 @@ def company(request):
                     save_model = None
                     if (
                         seller_about_us_form.cleaned_data.get("about_us")
-                        != request.user.user_group.seller.about_us
+                        != seller.about_us
                     ):
-                        request.user.user_group.seller.about_us = (
-                            seller_about_us_form.cleaned_data.get("about_us")
+                        seller.about_us = seller_about_us_form.cleaned_data.get(
+                            "about_us"
                         )
-                        save_model = request.user.user_group.seller
+                        save_model = seller
                 else:
                     raise InvalidFormError(
                         seller_about_us_form, "Invalid SellerAboutUsForm"
@@ -472,23 +456,21 @@ def company(request):
     else:
         form = SellerForm(
             initial={
-                "company_name": request.user.user_group.seller.name,
-                "company_phone": request.user.user_group.seller.phone,
-                "website": request.user.user_group.seller.website,
-                "company_logo": request.user.user_group.seller.location_logo_url,
+                "company_name": seller.name,
+                "company_phone": seller.phone,
+                "website": seller.website,
+                "company_logo": seller.location_logo_url,
             }
         )
         context["form"] = form
         seller_communication_form = SellerCommunicationForm(
             initial={
-                "dispatch_email": request.user.user_group.seller.order_email,
-                "dispatch_phone": request.user.user_group.seller.order_phone,
+                "dispatch_email": seller.order_email,
+                "dispatch_phone": seller.order_phone,
             }
         )
         context["seller_communication_form"] = seller_communication_form
-        seller_about_us_form = SellerAboutUsForm(
-            initial={"about_us": request.user.user_group.seller.about_us}
-        )
+        seller_about_us_form = SellerAboutUsForm(initial={"about_us": seller.about_us})
         context["seller_about_us_form"] = seller_about_us_form
     return render(request, "supplier_dashboard/company_settings.html", context)
 
@@ -586,8 +568,6 @@ def update_order_status(request, order_id, accept=True):
                     seller_id = (
                         order.order_group.seller_product_seller_location.seller_product.seller_id
                     )
-                request.session["seller"] = to_dict(request.user.user_group.seller)
-                context["seller"] = request.session["seller"]
                 # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
                 orders = Order.objects.filter(
                     order_group__seller_product_seller_location__seller_product__seller_id=seller_id
@@ -610,6 +590,7 @@ def update_order_status(request, order_id, accept=True):
                     elif order.status == Order.CANCELLED:
                         cancelled_count += 1
                 # TODO: Add toast that shows the order with a link to see it.
+                # https://getbootstrap.com/docs/5.3/components/toasts/
                 context[
                     "oob_html"
                 ] = f"""
@@ -746,7 +727,6 @@ def payout_detail(request, payout_id):
         payout = Payout.objects.get(id=payout_id)
     context = {}
     context["user"] = request.user
-    # context["seller"] = request.user.user_group.seller
     # TODO: Check if this is a checkbook payout (this changes with LOB integration).
     if payout.checkbook_payout_id:
         context["related_payouts"] = Payout.objects.filter(
