@@ -88,6 +88,61 @@ class SellerLocationComplianceForm(forms.Form):
     )
     gl_coi_expiration_date = forms.DateField(
         label="Expires on",
+        widget=forms.DateInput(
+            attrs={"class": "form-control", "type": "date", "disabled": True}
+        ),
+        required=False,
+    )
+
+    auto_coi = forms.FileField(
+        label="Auto Proof of Insurance",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+    auto_coi_expiration_date = forms.DateField(
+        label="Expires on",
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "disabled": True,
+            }
+        ),
+        required=False,
+    )
+
+    workers_comp_coi = forms.FileField(
+        label="Workers Comp Proof of Insurance",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+    workers_comp_coi_expiration_date = forms.DateField(
+        label="Expires on",
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "disabled": True,
+            }
+        ),
+        required=False,
+    )
+
+    w9 = forms.FileField(
+        label="Form W9",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+
+
+class SellerLocationComplianceAdminForm(forms.Form):
+    gl_coi = forms.FileField(
+        label="General Liability Proof of Insurance",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+    gl_coi_expiration_date = forms.DateField(
+        label="Expires on",
         widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
         required=False,
     )
