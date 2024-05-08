@@ -157,7 +157,9 @@ def get_seller(request: HttpRequest):
         elif request.user.is_staff:
             # TODO: If staff, then set seller to all available sellers
             # Temporarily set to Hillen as default
-            seller = to_dict(Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6"))
+            seller = to_dict(
+                Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
+            )
             request.session["seller"] = seller
         else:
             return HttpResponse("Not Allowed", status=403)
@@ -201,6 +203,13 @@ def index(request):
             "seller"
         ]["id"]
     )
+    orders = orders.select_related(
+        "order_group__seller_product_seller_location__seller_product__seller",
+        "order_group__user_address",
+        "order_group__user",
+        "order_group__seller_product_seller_location__seller_product__product__main_product",
+    )
+    orders = orders.prefetch_related("payouts", "seller_invoice_payable_line_items")
     # .filter(status=Order.PENDING)
     context["earnings"] = 0
     earnings_by_category = {}
