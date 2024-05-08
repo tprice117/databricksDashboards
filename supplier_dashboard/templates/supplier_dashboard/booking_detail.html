@@ -264,6 +264,7 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Payout Details</h4>
+                    {% if order.payouts.exists %}
                     <div class="table-responsive" style="margin-bottom: 16px;">
                         <table class="table">
                             <thead>
@@ -284,6 +285,9 @@
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                    <p>No Payouts for this Order</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -291,6 +295,7 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Received Invoice Details</h4>
+                    {% if order.seller_invoice_payable_line_items.exists %}
                     <div class="table-responsive" style="margin-bottom: 16px;">
                         <table class="table">
                             <thead>
@@ -309,6 +314,9 @@
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                    <p>No Recieved Invoices for this Order</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
