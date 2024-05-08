@@ -6,7 +6,7 @@ from django.contrib import messages
 from urllib.parse import parse_qs
 import datetime
 from itertools import chain
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -145,6 +145,27 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     return dashboard_chart
 
 
+def get_seller(request: HttpRequest):
+    if request.session.get("seller"):
+        seller = request.session["seller"]
+    else:
+        if hasattr(request.user, "user_group") and hasattr(
+            request.user.user_group, "seller"
+        ):
+            seller = to_dict(request.user.user_group.seller)
+            request.session["seller"] = seller
+        elif request.user.is_staff:
+            # TODO: If staff, then set seller to all available sellers
+            # Temporarily set to Hillen as default
+            seller = Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
+            request.session["seller"] = to_dict(seller)
+        else:
+            return HttpResponse("Not Allowed", status=403)
+            # return HttpResponseRedirect("/admin/login/")
+
+    return seller
+
+
 ########################
 # Page views
 ########################
@@ -174,9 +195,7 @@ def supplier_select(request):
 def index(request):
     context = {}
     context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     orders = Order.objects.filter(
         order_group__seller_product_seller_location__seller_product__seller_id=context[
             "seller"
@@ -262,9 +281,7 @@ def index(request):
 def profile(request):
     context = {}
     context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
 
     if request.method == "POST":
         form = UserForm(request.POST)
@@ -317,9 +334,7 @@ def profile(request):
 def company(request):
     context = {}
     context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     seller = Seller.objects.get(id=context["seller"]["id"])
     if request.method == "POST":
         try:
@@ -491,9 +506,7 @@ def bookings(request):
     # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
     context = {}
     # context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     seller = Seller.objects.get(id=context["seller"]["id"])
     orders = Order.objects.filter(
         order_group__seller_product_seller_location__seller_product__seller_id=context[
@@ -668,9 +681,7 @@ def update_booking_status(request, order_id, accept=True):
 def booking_detail(request, order_id):
     context = {}
     # context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
@@ -695,9 +706,7 @@ def payouts(request):
         location_id = request.GET.get("location_id", None)
     # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     orders = Order.objects.filter(order_group__user_id=request.user.id)
     if location_id:
         orders = orders.filter(
@@ -725,9 +734,7 @@ def payouts(request):
 def payout_detail(request, payout_id):
     context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     payout = None
     if not payout:
         payout = Payout.objects.get(id=payout_id)
@@ -746,9 +753,7 @@ def payout_detail(request, payout_id):
 def locations(request):
     context = {}
     # context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     seller_locations = SellerLocation.objects.filter(
         seller_id=request.session["seller"]["id"]
     )
@@ -760,9 +765,7 @@ def locations(request):
 def location_detail(request, location_id):
     context = {}
     # context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     seller_location = SellerLocation.objects.get(id=location_id)
     context["seller_location"] = seller_location
     orders = (
@@ -974,9 +977,7 @@ def location_detail(request, location_id):
 def received_invoices(request):
     context = {}
     # context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     invoices = SellerInvoicePayable.objects.filter(
         seller_location__seller_id=request.session["seller"]["id"]
     ).order_by("-invoice_date")
@@ -988,9 +989,7 @@ def received_invoices(request):
 def received_invoice_detail(request, invoice_id):
     context = {}
     # context["user"] = request.user
-    if not request.session.get("seller"):
-        request.session["seller"] = to_dict(request.user.user_group.seller)
-    context["seller"] = request.session["seller"]
+    context["seller"] = get_seller(request)
     invoice = SellerInvoicePayable.objects.get(id=invoice_id)
     # invoice_line_items = invoice.seller_invoice_payable_line_items.all()
     invoice_line_items = SellerInvoicePayableLineItem.objects.filter(
