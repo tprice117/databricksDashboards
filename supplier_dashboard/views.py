@@ -210,7 +210,7 @@ def index(request):
         "order_group__user",
         "order_group__seller_product_seller_location__seller_product__product__main_product",
     )
-    orders = orders.prefetch_related("payouts", "seller_invoice_payable_line_items")
+    orders = orders.prefetch_related("payouts", "order_line_items")
     # .filter(status=Order.PENDING)
     context["earnings"] = 0
     earnings_by_category = {}
@@ -717,12 +717,17 @@ def payouts(request):
     # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["seller"] = get_seller(request)
-    orders = Order.objects.filter(order_group__user_id=request.user.id)
+    orders = Order.objects.filter(
+        order_group__seller_product_seller_location__seller_product__seller_id=context[
+            "seller"
+        ]["id"]
+    )
     if location_id:
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
         )
-    orders = orders.prefetch_related("payouts").order_by("-end_date")
+    orders = orders.prefetch_related("payouts", "order_line_items")
+    orders = orders.order_by("-end_date")
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )
