@@ -157,8 +157,8 @@ def get_seller(request: HttpRequest):
         elif request.user.is_staff:
             # TODO: If staff, then set seller to all available sellers
             # Temporarily set to Hillen as default
-            seller = Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
-            request.session["seller"] = to_dict(seller)
+            seller = to_dict(Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6"))
+            request.session["seller"] = seller
         else:
             return HttpResponse("Not Allowed", status=403)
             # return HttpResponseRedirect("/admin/login/")
