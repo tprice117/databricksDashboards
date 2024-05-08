@@ -33,6 +33,7 @@ from .forms import (
     SellerCommunicationForm,
     SellerAboutUsForm,
     SellerLocationComplianceForm,
+    SellerLocationComplianceAdminForm,
     SellerPayoutForm,
 )
 
@@ -793,6 +794,10 @@ def location_detail(request, location_id):
         context["payouts"].extend([p for p in order.payouts.all()])
     context["orders"] = context["orders"][:5]
     context["payouts"] = context["payouts"][:5]
+    if request.user.is_staff:
+        compliance_form_class = SellerLocationComplianceAdminForm
+    else:
+        compliance_form_class = SellerLocationComplianceForm
     if request.method == "POST":
         try:
             save_model = None
@@ -812,52 +817,81 @@ def location_detail(request, location_id):
                     )
                 payout_form = SellerPayoutForm(initial=seller_payout_initial)
                 # Load the form that was submitted.
-                form = SellerLocationComplianceForm(request.POST, request.FILES)
+                form = compliance_form_class(request.POST, request.FILES)
                 context["compliance_form"] = form
                 if form.is_valid():
                     if request.FILES.get("gl_coi"):
                         seller_location.gl_coi = request.FILES["gl_coi"]
                         save_model = seller_location
-                    if (
-                        form.cleaned_data.get("gl_coi_expiration_date")
-                        != seller_location.gl_coi_expiration_date
-                    ):
-                        seller_location.gl_coi_expiration_date = form.cleaned_data.get(
-                            "gl_coi_expiration_date"
-                        )
+                    elif request.POST.get("gl_coi-clear") == "on":
+                        seller_location.gl_coi = None
                         save_model = seller_location
                     if request.FILES.get("auto_coi"):
                         seller_location.auto_coi = request.FILES["auto_coi"]
                         save_model = seller_location
-                    if (
-                        form.cleaned_data.get("auto_coi_expiration_date")
-                        != seller_location.auto_coi_expiration_date
-                    ):
-                        seller_location.auto_coi_expiration_date = (
-                            form.cleaned_data.get("auto_coi_expiration_date")
-                        )
+                    elif request.POST.get("auto_coi-clear") == "on":
+                        seller_location.auto_coi = None
                         save_model = seller_location
                     if request.FILES.get("workers_comp_coi"):
                         seller_location.workers_comp_coi = request.FILES[
                             "workers_comp_coi"
                         ]
                         save_model = seller_location
-                    if (
-                        form.cleaned_data.get("workers_comp_coi_expiration_date")
-                        != seller_location.workers_comp_coi_expiration_date
-                    ):
-                        seller_location.workers_comp_coi_expiration_date = (
-                            form.cleaned_data.get("workers_comp_coi_expiration_date")
-                        )
+                    elif request.POST.get("workers_comp_coi-clear") == "on":
+                        seller_location.workers_comp_coi = None
                         save_model = seller_location
                     if request.FILES.get("w9"):
                         seller_location.w9 = request.FILES["w9"]
                         save_model = seller_location
+                    elif request.POST.get("w9-clear") == "on":
+                        seller_location.w9 = None
+                        save_model = seller_location
+                    # Allow editing if user is staff.
+                    if request.user.is_staff:
+                        if (
+                            form.cleaned_data.get("gl_coi_expiration_date")
+                            != seller_location.gl_coi_expiration_date
+                        ):
+                            seller_location.gl_coi_expiration_date = (
+                                form.cleaned_data.get("gl_coi_expiration_date")
+                            )
+                            save_model = seller_location
+                        if (
+                            form.cleaned_data.get("auto_coi_expiration_date")
+                            != seller_location.auto_coi_expiration_date
+                        ):
+                            seller_location.auto_coi_expiration_date = (
+                                form.cleaned_data.get("auto_coi_expiration_date")
+                            )
+                            save_model = seller_location
+                        if (
+                            form.cleaned_data.get("workers_comp_coi_expiration_date")
+                            != seller_location.workers_comp_coi_expiration_date
+                        ):
+                            seller_location.workers_comp_coi_expiration_date = (
+                                form.cleaned_data.get(
+                                    "workers_comp_coi_expiration_date"
+                                )
+                            )
+                            save_model = seller_location
+                    # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
+                    compliance_form = compliance_form_class(
+                        initial={
+                            "gl_coi": seller_location.gl_coi,
+                            "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
+                            "auto_coi": seller_location.auto_coi,
+                            "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
+                            "workers_comp_coi": seller_location.workers_comp_coi,
+                            "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
+                            "w9": seller_location.w9,
+                        }
+                    )
+                    context["compliance_form"] = compliance_form
                 else:
                     raise InvalidFormError(form, "Invalid SellerLocationComplianceForm")
             elif "payout_submit" in request.POST:
                 # Load other forms so template has complete data.
-                compliance_form = SellerLocationComplianceForm(
+                compliance_form = compliance_form_class(
                     initial={
                         "gl_coi": seller_location.gl_coi,
                         "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
@@ -952,7 +986,7 @@ def location_detail(request, location_id):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
-        compliance_form = SellerLocationComplianceForm(
+        compliance_form = compliance_form_class(
             initial={
                 "gl_coi": seller_location.gl_coi,
                 "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
