@@ -117,6 +117,7 @@ class SellerLocationAdmin(admin.ModelAdmin):
             # Do nothing if first row is not "name".
             reader = csv.DictReader(decoded_file)
             keys = [
+                "id",
                 "seller_id",
                 "name",
                 "street",
@@ -125,13 +126,14 @@ class SellerLocationAdmin(admin.ModelAdmin):
                 "postal_code",
                 "country",
                 "stripe_connect_account_id",
+                "order_email",
             ]
             for row in reader:
                 print(row.keys())
                 if not all(key in keys for key in list(row.keys())):
                     self.message_user(
                         request,
-                        "Your csv file must have a header rows with 'seller_id', 'name', 'street', 'city', 'state', 'postal_code', 'country', and 'stripe_connect_account_id' as the first columns.",
+                        "Your csv file must have a header rows with 'seller_id', 'name', 'street', 'city', 'state', 'postal_code', 'country', 'stripe_connect_account_id', and 'order_email' as the first columns.",
                     )
                     return redirect("..")
 
@@ -139,7 +141,28 @@ class SellerLocationAdmin(admin.ModelAdmin):
             reader = csv.DictReader(decoded_file)
             for row in reader:
                 print(row)
-                if SellerLocation.objects.filter(name=row["name"]).count() == 0:
+                if row.get("id", None) is not None:
+                    seller = SellerLocation.objects.get(id=row["id"])
+                    if row["name"].strip() != "":
+                        seller.name = row["name"]
+                    if row["street"].strip() != "":
+                        seller.street = row["street"]
+                    if row["city"].strip() != "":
+                        seller.city = row["city"]
+                    if row["state"].strip() != "":
+                        seller.state = row["state"]
+                    if row["postal_code"].strip() != "":
+                        seller.postal_code = row["postal_code"]
+                    if row["country"].strip() != "":
+                        seller.country = row["country"]
+                    if row["stripe_connect_account_id"].strip() != "":
+                        seller.stripe_connect_account_id = row[
+                            "stripe_connect_account_id"
+                        ]
+                    if row["order_email"].strip() != "":
+                        seller.order_email = row["order_email"]
+                    seller.save()
+                elif SellerLocation.objects.filter(name=row["name"]).count() == 0:
                     test, test2 = SellerLocation.objects.get_or_create(
                         seller=Seller.objects.get(id=row["seller_id"]),
                         name=row["name"],
@@ -149,6 +172,7 @@ class SellerLocationAdmin(admin.ModelAdmin):
                         postal_code=row["postal_code"],
                         country=row["country"],
                         stripe_connect_account_id=row["stripe_connect_account_id"],
+                        order_email=row["order_email"],
                     )
                     print(test)
                     print(test2)
