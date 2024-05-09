@@ -150,17 +150,17 @@ def get_seller(request: HttpRequest):
     if request.session.get("seller"):
         seller = request.session["seller"]
     else:
-        if hasattr(request.user, "user_group") and hasattr(
-            request.user.user_group, "seller"
-        ):
-            seller = to_dict(request.user.user_group.seller)
-            request.session["seller"] = seller
-        elif request.user.is_staff:
+        if request.user.is_staff:
             # TODO: If staff, then set seller to all available sellers
             # Temporarily set to Hillen as default
             seller = to_dict(
                 Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
             )
+            request.session["seller"] = seller
+        elif hasattr(request.user, "user_group") and hasattr(
+            request.user.user_group, "seller"
+        ):
+            seller = to_dict(request.user.user_group.seller)
             request.session["seller"] = seller
         else:
             return HttpResponse("Not Allowed", status=403)
