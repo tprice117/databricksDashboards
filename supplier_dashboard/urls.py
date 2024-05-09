@@ -12,6 +12,7 @@ urlpatterns = [
         views.supplier_digest_dashboard,
         name="supplier_dashboard",
     ),
+    path("supplier/search/", views.supplier_search, name="supplier_search"),
     path("supplier/select/", views.supplier_select, name="supplier_select"),
     path("supplier/", views.index, name="supplier_home"),
     path("supplier/profile/", views.profile, name="supplier_profile"),

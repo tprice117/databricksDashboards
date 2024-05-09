@@ -1,27 +1,38 @@
+{% load static %}
 <nav class="navbar navbar-expand bg-white shadow mb-4 topbar static-top navbar-light">
     <div class="container-fluid">
         <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i
                 class="fas fa-bars"></i></button>
         <ul class="navbar-nav flex-nowrap ms-auto">
+            {% if request.user.is_staff %}
             {% if seller %}<p class="text-center" style="margin: auto;">{{ seller.name }} - {{ seller.id }}</p>
             {% endif %}
-            {% if request.user.is_staff %}
             <li class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link" aria-expanded="false"
                     data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
-                <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in" aria-labelledby="searchDropdown">
-                    <!-- TODO: Make this search act as Seller selector -->
-                    <form class="me-auto navbar-search" action="{% url 'supplier_select' %}" method="post"
-                        enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="input-group">
-                            <input name="seller_id" class="bg-light form-control border-0 small" type="text"
-                                placeholder="Search for ...">
-                            <div class="input-group-append">
-                                <button class="btn btn-primary py-0" type="submit"><i
-                                        class="fas fa-search"></i></button>
-                            </div>
-                        </div>
-                    </form>
+                <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in navbar-search-dropdown"
+                    aria-labelledby="searchDropdown">
+                    <h3>
+                        Search Sellers<span class="htmx-indicator" id="htmx-indicator-seller-search">
+                            <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
+                        </span>
+                    </h3>
+                    <input class="form-control" type="search" name="search"
+                        placeholder="Begin Typing To Search Users..." hx-post="{% url 'supplier_search' %}"
+                        hx-trigger="input changed delay:500ms, search" hx-target="#search-results"
+                        hx-indicator="#htmx-indicator-seller-search">
+
+                    <div class="table-responsive">
+                        <table class="table navbar-search-dropdown">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="search-results">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </li>
             {% endif %}

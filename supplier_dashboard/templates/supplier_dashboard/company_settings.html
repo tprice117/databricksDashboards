@@ -56,8 +56,6 @@
                         </div>
                         <div class="card-body">
                             <form action="{% url 'supplier_company' %}" method="post">
-                                <span class="htmx-indicator" style="margin-left:10px;"
-                                    id="htmx-indicator">Loading...</span>
                                 {% csrf_token %}
                                 <!-- Include the hidden fields -->
                                 {% for hidden in form.hidden_fields %}
@@ -92,8 +90,6 @@
                             <p>This is how we will get in contact with you if there are issues, changes,
                                 or questions about a specific Booking.</p>
                             <form action="{% url 'supplier_company' %}" method="post">
-                                <span class="htmx-indicator" style="margin-left:10px;"
-                                    id="htmx-indicator">Loading...</span>
                                 {% csrf_token %}
                                 <!-- Include the hidden fields -->
                                 {% for hidden in seller_communication_form.hidden_fields %}
@@ -146,7 +142,6 @@
             <div class="row">
                 <div class="col-md-12">
                     <form action="{% url 'supplier_company' %}" method="post">
-                        <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator">Loading...</span>
                         {% csrf_token %}
                         <!-- Include the hidden fields -->
                         {% for hidden in seller_about_us_form.hidden_fields %}

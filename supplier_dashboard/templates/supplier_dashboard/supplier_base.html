@@ -47,12 +47,37 @@
 
         .htmx-request .htmx-indicator {
             display: inline;
-            animation: flash 1s infinite;
+            /* animation: flash 1s infinite; */
         }
 
         .htmx-request.htmx-indicator {
             display: inline;
+            /* animation: flash 2.0s infinite; */
+        }
+
+        #htmx-indicator-page {
             animation: flash 2.0s infinite;
+        }
+
+        .svg-loader {
+            width: 20px;
+            height: 20px;
+        }
+
+        .navbar-search-dropdown {
+            width: 100%;
+        }
+
+        .navbar-search-dropdown .svg-loader {
+            margin-left: 5px;
+            font-size: x-small;
+        }
+
+        @media (min-width: 768px) {
+            .navbar-search-dropdown {
+                width: auto;
+                min-width: 400px;
+            }
         }
     </style>
 </head>
