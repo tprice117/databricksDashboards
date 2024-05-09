@@ -479,6 +479,9 @@ def company(request):
                         seller_about_us_form, "Invalid SellerAboutUsForm"
                     )
             if save_model:
+                # Update seller in session and page context.
+                request.session["seller"] = to_dict(seller)
+                context["seller"] = get_seller(request)
                 save_model.save()
                 messages.success(request, "Successfully saved!")
             else:
