@@ -333,6 +333,7 @@ def profile(request):
                 request.user.photo_url = form.cleaned_data.get("photo_url")
                 save_db = True
             if save_db:
+                context["user"] = request.user
                 request.user.save()
                 messages.success(request, "Successfully saved!")
             else:
