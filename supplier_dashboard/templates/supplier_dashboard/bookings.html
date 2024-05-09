@@ -52,6 +52,17 @@
     #cancelled-count-badge {
         animation: pop-in 0.5s;
     }
+
+    .status-card[disabled] {
+        pointer-events: none;
+        /* Optional: Change the cursor to not-allowed to indicate the div is disabled */
+        cursor: not-allowed;
+        color: var(--bs-btn-disabled-color);
+        pointer-events: none;
+        background-color: var(--bs-btn-disabled-bg);
+        border-color: var(--bs-btn-disabled-border-color);
+        opacity: var(--bs-btn-disabled-opacity);
+    }
 </style>
 {% endblock %}
 {% block javascript %}
@@ -92,7 +103,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-primary py-2 status-card btn status-selected"
                 hx-get="{{status_pending_link}}" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML"
-                hx-indicator="#htmx-indicator-status">
+                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -119,7 +130,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-success py-2 status-card btn" hx-get="{{status_scheduled_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status-scheduled">
+                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status-scheduled">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -146,7 +157,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{status_complete_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status-completed">
+                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status-completed">
                 <!-- onclick="selectCard(this)" -->
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
@@ -174,7 +185,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{status_cancelled_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status-cancelled">
+                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status-cancelled">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -218,7 +229,7 @@
                         </tr>
                     </thead>
                     <tbody id="booking-results" hx-get="{{status_pending_link}}" hx-trigger="load" hx-swap="outerHTML"
-                        hx-indicator="#htmx-indicator-status">
+                        hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status">
                     </tbody>
                     <tfoot>
                         <tr>
