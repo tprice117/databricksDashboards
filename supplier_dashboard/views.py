@@ -4,6 +4,7 @@ from typing import List
 import json
 import uuid
 from django.contrib import messages
+from django.contrib.auth import logout
 from urllib.parse import parse_qs
 import datetime
 from itertools import chain
@@ -153,22 +154,26 @@ def get_seller(request: HttpRequest):
     else:
         if request.user.is_staff:
             # TODO: If staff, then set seller to all available sellers
-            # Temporarily set to Hillen as default
-            seller = to_dict(
-                Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
-            )
+            try:
+                # Temporarily set to Hillen as default
+                seller = to_dict(
+                    Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
+                )
+            except Seller.DoesNotExist:
+                # Fails on DEV, so see if we can get user's seller.
+                if hasattr(request.user, "user_group") and hasattr(
+                    request.user.user_group, "seller"
+                ):
+                    seller = to_dict(request.user.user_group.seller)
+                    request.session["seller"] = seller
+                else:
+                    # Get first available seller.
+                    seller = to_dict(Seller.objects.all().first())
             request.session["seller"] = seller
         elif hasattr(request.user, "user_group") and hasattr(
             request.user.user_group, "seller"
         ):
             seller = to_dict(request.user.user_group.seller)
-            request.session["seller"] = seller
-        elif request.user.is_staff:
-            # TODO: If staff, then set seller to all available sellers
-            # Temporarily set to Hillen as default
-            seller = to_dict(
-                Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
-            )
             request.session["seller"] = seller
         else:
             return HttpResponse("Not Allowed", status=403)
@@ -181,9 +186,10 @@ def get_seller(request: HttpRequest):
 # Page views
 ########################
 # Add redirect to auth0 login if not logged in.
-@login_required(login_url="/supplier/login/")
-def supplier_login(request):
-    pass
+def supplier_logout(request):
+    logout(request)
+    # Redirect to a success page.
+    return HttpResponseRedirect("https://trydownstream.com/")
 
 
 @login_required(login_url="/admin/login/")
