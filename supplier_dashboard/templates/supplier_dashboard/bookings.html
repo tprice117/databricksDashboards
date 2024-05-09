@@ -99,8 +99,13 @@
                             <div class="text-uppercase text-primary fw-bold text-xs mb-1">
                                 <span>PENDING</span>
                             </div>
-                            <div class="text-dark fw-bold h5 mb-0"><span
-                                    id="pending-count-badge">{{pending_count}}</span></div>
+                            <div class="text-dark fw-bold h5 mb-0">
+                                <span id="pending-count-badge">{{pending_count}}</span>
+                                <span class="htmx-indicator" id="htmx-indicator-status">
+                                    <img class="svg-loader"
+                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
+                                </span>
+                            </div>
                             <!-- <div class="text-dark text-xs">
                                 <span class="text-muted">Anytime</span>
                             </div> -->
@@ -114,15 +119,20 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-success py-2 status-card btn" hx-get="{{status_scheduled_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status">
+                hx-indicator="#htmx-indicator-status-scheduled">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
                             <div class="text-uppercase text-success fw-bold text-xs mb-1">
                                 <span>SCHEDULED</span>
                             </div>
-                            <div class="text-dark fw-bold h5 mb-0"><span
-                                    id="scheduled-count-badge">{{scheduled_count}}</span></div>
+                            <div class="text-dark fw-bold h5 mb-0">
+                                <span id="scheduled-count-badge">{{scheduled_count}}</span>
+                                <span class="htmx-indicator" id="htmx-indicator-status-scheduled">
+                                    <img class="svg-loader"
+                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
+                                </span>
+                            </div>
                             <!-- <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
                             </div> -->
@@ -136,7 +146,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{status_complete_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status">
+                hx-indicator="#htmx-indicator-status-completed">
                 <!-- onclick="selectCard(this)" -->
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
@@ -144,8 +154,13 @@
                             <div class="text-uppercase text-info fw-bold text-xs mb-1">
                                 <span>COMPLETED</span>
                             </div>
-                            <div class="text-dark fw-bold h5 mb-0"><span
-                                    id="complete-count-badge">{{complete_count}}</span></div>
+                            <div class="text-dark fw-bold h5 mb-0">
+                                <span id="complete-count-badge">{{complete_count}}</span>
+                                <span class="htmx-indicator" id="htmx-indicator-status-completed">
+                                    <img class="svg-loader"
+                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
+                                </span>
+                            </div>
                             <!-- <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
                             </div> -->
@@ -159,7 +174,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{status_cancelled_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status">
+                hx-indicator="#htmx-indicator-status-cancelled">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -168,6 +183,10 @@
                             </div>
                             <div class="text-dark fw-bold h5 mb-1">
                                 <span id="cancelled-count-badge">{{cancelled_count}}</span>
+                                <span class="htmx-indicator" id="htmx-indicator-status-cancelled">
+                                    <img class="svg-loader"
+                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
+                                </span>
                             </div>
                             <!-- <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
@@ -183,7 +202,7 @@
     <div class="card shadow">
         <div class="card-header py-3">
             <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
-            <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-status">Loading...</span>
+            <!-- <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-status">Loading...</span> -->
         </div>
         <div class="card-body">
             <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">

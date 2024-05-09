@@ -1,3 +1,4 @@
+{% load static %}
 <tr id="order_row_{{forloop.counter}}" _="on load transition my opacity to 0.3 over 1.5 seconds then remove me">
     <td>{{order.end_date}}</td>
     <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
@@ -7,9 +8,7 @@
     {% if order.status == "PENDING" %}
     <td>
         <span id="accept-button-container">
-            <!-- <button class="btn btn-success" type="button" data-bs-target="#modal-1"
-                data-bs-toggle="modal">Accept</button> -->
-            <button type="button" class="btn btn-success" id="accept-button"
+            <button type="button" class="btn btn-primary" id="accept-button" style="background: var(--bs-success);"
                 hx-post="{% url 'supplier_order_accept' order_id=order.id %}"
                 hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
                 hx-swap="delete" hx-target="#order_row_{{forloop.counter}}"
@@ -19,9 +18,11 @@
         } 
     })">
                 Accept
+                <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">
+                    <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
+                </span>
             </button>
         </span>
-        <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">Loading...</span>
     </td>
     {% endif %}
     <td><a class="btn btn-light" role="button" href="{% url 'supplier_booking_detail' order_id=order.id %}"><i
