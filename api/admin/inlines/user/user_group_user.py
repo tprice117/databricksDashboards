@@ -8,3 +8,4 @@ class UserGroupUserInline(admin.TabularInline):
     fields = ("user_group", "user")
     show_change_link = True
     extra = 0
+    fk_name = "user"

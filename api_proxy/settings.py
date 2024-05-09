@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "admin_policies",
     "api",
     "billing",
+    "common",
     "communications",
     "external_contracts",
     "notifications",
@@ -84,6 +85,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "common.middleware.save_author.SaveAuthorMiddleware",
 ]
 
 ROOT_URLCONF = "api_proxy.urls"
