@@ -12,7 +12,12 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
 
         # Get current user via author backend.
         request = get_request()
-        authenticated_user = request.auth or request.user
+
+        authenticated_user = None
+        if hasattr(request, "auth"):
+            authenticated_user = request.auth
+        elif hasattr(request, "user"):
+            authenticated_user = request.user
 
         # Set the 'updated_by' user.
         instance.updated_by = authenticated_user
