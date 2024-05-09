@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from typing import List
 import json
+import uuid
 from django.contrib import messages
 from urllib.parse import parse_qs
 import datetime
@@ -176,6 +177,23 @@ def get_seller(request: HttpRequest):
 @login_required(login_url="/supplier/login/")
 def supplier_login(request):
     pass
+
+
+@login_required(login_url="/admin/login/")
+def supplier_search(request):
+    context = {}
+    if request.method == "POST":
+        search = request.POST.get("search")
+        try:
+            seller_id = uuid.UUID(search)
+            sellers = Seller.objects.filter(id=seller_id)
+        except ValueError:
+            sellers = Seller.objects.filter(name__icontains=search)
+        context["sellers"] = sellers
+
+    return render(
+        request, "supplier_dashboard/snippets/seller_search_list.html", context
+    )
 
 
 @login_required(login_url="/admin/login/")
