@@ -39,7 +39,7 @@ def get_order_status_from_choice(status: str) -> str:
 
 def on_order_post_save(sender, instance, created, **kwargs):
     """Sends an email on Order database actions, such as Order created, submitted or status changed
-    to SCHEDULED, CANCELLED, OR COMPLETE."""
+    to SCHEDULED."""
     from api.models import Order
 
     order: Order = instance
@@ -72,34 +72,34 @@ def on_order_post_save(sender, instance, created, **kwargs):
                 elif order.old_value("status") != order.status:
                     if order.status == Order.SCHEDULED:
                         order.send_customer_email_when_order_scheduled()
-                    elif (
-                        order.status == Order.CANCELLED
-                        or order.status == Order.COMPLETE
-                    ):
-                        subject = "Your Downstream order has been completed!"
-                        if order.status == Order.CANCELLED:
-                            subject = "Your Downstream order has been cancelled"
-                        error_status = "updated-Order"
-                        # Order status changed
-                        html_content = render_to_string(
-                            "notifications/emails/order_status_change.html",
-                            {
-                                "order": order,
-                                "new_status": get_order_status_from_choice(
-                                    order.status
-                                ),
-                                "previous_status": get_order_status_from_choice(
-                                    order.old_value("status")
-                                ),
-                            },
-                        )
-                        add_email_to_queue(
-                            from_email="dispatch@trydownstream.com",
-                            to_emails=[order.order_group.user.email],
-                            subject=subject,
-                            html_content=html_content,
-                            reply_to="dispatch@trydownstream.com",
-                        )
+                    # elif (
+                    #     order.status == Order.CANCELLED
+                    #     or order.status == Order.COMPLETE
+                    # ):
+                    #     subject = "Your Downstream order has been completed!"
+                    #     if order.status == Order.CANCELLED:
+                    #         subject = "Your Downstream order has been cancelled"
+                    #     error_status = "updated-Order"
+                    #     # Order status changed
+                    #     html_content = render_to_string(
+                    #         "notifications/emails/order_status_change.html",
+                    #         {
+                    #             "order": order,
+                    #             "new_status": get_order_status_from_choice(
+                    #                 order.status
+                    #             ),
+                    #             "previous_status": get_order_status_from_choice(
+                    #                 order.old_value("status")
+                    #             ),
+                    #         },
+                    #     )
+                    #     add_email_to_queue(
+                    #         from_email="dispatch@trydownstream.com",
+                    #         to_emails=[order.order_group.user.email],
+                    #         subject=subject,
+                    #         html_content=html_content,
+                    #         reply_to="dispatch@trydownstream.com",
+                    #     )
         except Exception as e:
             logger.exception(f"notification: [{order_id}]-[{error_status}]-[{e}]")
     else:
