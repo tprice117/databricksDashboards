@@ -129,4 +129,4 @@ class Seller(BaseModel):
         """
         for key, value in kwargs.items():
             snippet_name += f"&{key}={value}"
-        return f"{settings.API_URL}/supplier/{self.id}/status/{status.lower()}/?key={encrypt_string(str(self.id))}&snippet_name={snippet_name}"
+        return f"/supplier/{self.id}/status/{status.lower()}/?key={encrypt_string(str(self.id))}&snippet_name={snippet_name}"

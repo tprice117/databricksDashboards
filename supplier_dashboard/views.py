@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from typing import List
 import json
+import uuid
 from django.contrib import messages
 from urllib.parse import parse_qs
 import datetime
@@ -179,6 +180,23 @@ def supplier_login(request):
 
 
 @login_required(login_url="/admin/login/")
+def supplier_search(request):
+    context = {}
+    if request.method == "POST":
+        search = request.POST.get("search")
+        try:
+            seller_id = uuid.UUID(search)
+            sellers = Seller.objects.filter(id=seller_id)
+        except ValueError:
+            sellers = Seller.objects.filter(name__icontains=search)
+        context["sellers"] = sellers
+
+    return render(
+        request, "supplier_dashboard/snippets/seller_search_list.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def supplier_select(request):
     if request.method == "POST":
         seller_id = request.POST.get("seller_id")
@@ -210,7 +228,7 @@ def index(request):
         "order_group__user",
         "order_group__seller_product_seller_location__seller_product__product__main_product",
     )
-    orders = orders.prefetch_related("payouts", "seller_invoice_payable_line_items")
+    orders = orders.prefetch_related("payouts", "order_line_items")
     # .filter(status=Order.PENDING)
     context["earnings"] = 0
     earnings_by_category = {}
@@ -294,7 +312,11 @@ def profile(request):
     context["seller"] = get_seller(request)
 
     if request.method == "POST":
-        form = UserForm(request.POST)
+        # NOTE: Since email is disabled, it is never POSTed,
+        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
+        POST_COPY = request.POST.copy()
+        POST_COPY["email"] = request.user.email
+        form = UserForm(POST_COPY)
         context["form"] = form
         if form.is_valid():
             save_db = False
@@ -311,16 +333,15 @@ def profile(request):
                 request.user.photo_url = form.cleaned_data.get("photo_url")
                 save_db = True
             if save_db:
+                context["user"] = request.user
                 request.user.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
-            if request.headers.get("HX-Request"):
-                return render(request, "supplier_dashboard/profile.html", context)
-            else:
-                return render(request, "supplier_dashboard/profile.html", context)
+            # if request.headers.get("HX-Request"):
+            return render(request, "supplier_dashboard/profile.html", context)
         else:
             # This will let bootstrap know to highlight the fields with errors.
             for field in form.errors:
@@ -459,6 +480,9 @@ def company(request):
                         seller_about_us_form, "Invalid SellerAboutUsForm"
                     )
             if save_model:
+                # Update seller in session and page context.
+                request.session["seller"] = to_dict(seller)
+                context["seller"] = get_seller(request)
                 save_model.save()
                 messages.success(request, "Successfully saved!")
             else:
@@ -717,12 +741,17 @@ def payouts(request):
     # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["seller"] = get_seller(request)
-    orders = Order.objects.filter(order_group__user_id=request.user.id)
+    orders = Order.objects.filter(
+        order_group__seller_product_seller_location__seller_product__seller_id=context[
+            "seller"
+        ]["id"]
+    )
     if location_id:
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
         )
-    orders = orders.prefetch_related("payouts").order_by("-end_date")
+    orders = orders.prefetch_related("payouts", "order_line_items")
+    orders = orders.order_by("-end_date")
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )

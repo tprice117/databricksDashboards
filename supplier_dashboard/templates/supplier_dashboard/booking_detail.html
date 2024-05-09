@@ -23,17 +23,21 @@
                     {% if order.status == "PENDING" %}
                     <button type="button" class="btn btn-primary" style="background: var(--bs-success);"
                         id="accept-button" hx-post="{% url 'supplier_booking_accept' order_id=order.id %}"
-                        hx-swap="delete" hx-indicator="#htmx-indicator" hx-trigger='confirmed' onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
+                        hx-disabled-elt=".status-card, button" hx-swap="delete" hx-indicator="#htmx-indicator"
+                        hx-trigger='confirmed' onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
                             if(result.isConfirmed){htmx.trigger(this, 'confirmed');}})">
                         Accept
+                        <span class="htmx-indicator" id="htmx-indicator">
+                            <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
+                        </span>
                     </button>
-                    {% endif %}
                     <button type="button" class="btn btn-primary"
                         style="background: var(--bs-danger);margin-left: 10px;" id="change-button"
                         onClick="Swal.fire({title: 'Request Change', text:'Would you like to request a change?', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
                             if(result.isConfirmed){window.open('mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order.id}}%5D', '_blank');}})">
                         Request Change
                     </button>
+                    {% endif %}
                     <!-- <button class="btn btn-primary" type="button" style="background: var(--bs-success);"
                         data-bs-target="#modal-1" data-bs-toggle="modal">Accept</button> -->
                     <!-- <button class="btn btn-primary" type="button"
@@ -45,7 +49,9 @@
                     </a> -->
                     <a class="card-link" href="#"></a>
                     <a class="card-link" href="#"></a>
-                    <span class="htmx-indicator" id="htmx-indicator">Loading...</span>
+                    <!-- <span class="htmx-indicator" id="htmx-indicator">
+                        <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
+                    </span> -->
                 </div>
             </div>
         </div>
@@ -264,6 +270,7 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Payout Details</h4>
+                    {% if order.payouts.exists %}
                     <div class="table-responsive" style="margin-bottom: 16px;">
                         <table class="table">
                             <thead>
@@ -284,6 +291,9 @@
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                    <p>No Payouts for this Order</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -291,6 +301,7 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Received Invoice Details</h4>
+                    {% if order.seller_invoice_payable_line_items.exists %}
                     <div class="table-responsive" style="margin-bottom: 16px;">
                         <table class="table">
                             <thead>
@@ -309,6 +320,9 @@
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                    <p>No Recieved Invoices for this Order</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

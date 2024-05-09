@@ -17,10 +17,9 @@
                         </li>
                         {% comment %} <li class="nav-item">
                                 <a class="nav-link{% if request.resolver_match.url_name == 'supplier_home' %} active{% endif %}"
-                                        href="{% url 'supplier_home' %}"
-                                        hx-get="{% url 'supplier_home' %}" hx-push-url="true"
-                                        hx-indicator="#htmx-indicator-page"
-                                        hx-swap="innerHTML" hx-target="#page-content-wrappper">
+                                        href="{% url 'supplier_home' %}" hx-get="{% url 'supplier_home' %}"
+                                        hx-push-url="true" hx-indicator="#htmx-indicator-page" hx-swap="innerHTML"
+                                        hx-target="#page-content-wrappper">
                                         <i class="fas fa-tachometer-alt"></i>
                                         <span>Dashboard</span>
                                 </a>
@@ -44,7 +43,8 @@
                                         <i class="far fa-file-alt"></i><span>Received Invoices</span></a>
                         </li>
                         <li class="nav-item">
-                                <a class="nav-link" href="{% url 'supplier_company' %}"><i class="fas fa-building"></i>
+                                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_company' %} active{% endif %}"
+                                        href="{% url 'supplier_company' %}"><i class="fas fa-building"></i>
                                         <span>Company Settings</span></a>
                         </li>
                         <li class="nav-item">
