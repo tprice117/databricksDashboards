@@ -418,6 +418,8 @@ class OrderSerializer(serializers.ModelSerializer):
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
     service_date = serializers.SerializerMethodField(read_only=True)
+    customer_price = serializers.SerializerMethodField(read_only=True)
+    seller_price = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -441,6 +443,12 @@ class OrderSerializer(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.DATE)
     def get_service_date(self, obj: Order):
         return obj.end_date
+
+    def get_customer_price(self, obj: Order):
+        return obj.customer_price()
+
+    def get_seller_price(self, obj: Order):
+        return obj.seller_price()
 
     # def get_status(self, obj):
     #     return stripe.Invoice.retrieve(

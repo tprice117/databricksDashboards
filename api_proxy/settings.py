@@ -111,7 +111,7 @@ WSGI_APPLICATION = "api_proxy.wsgi.application"
 # Add 'mozilla_django_oidc' authentication backend
 AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
 
-LOGIN_REDIRECT_URL = "admin:index"
+LOGIN_REDIRECT_URL = "api_proxy:post_login_router"
 LOGOUT_REDIRECT_URL = "admin:index"
 
 # Database.
