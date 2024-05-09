@@ -329,7 +329,7 @@ def profile(request):
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
         POST_COPY["email"] = request.user.email
-        form = UserForm(POST_COPY)
+        form = UserForm(POST_COPY, request.FILES)
         context["form"] = form
         if form.is_valid():
             save_db = False
@@ -342,8 +342,11 @@ def profile(request):
             if form.cleaned_data.get("phone") != request.user.phone:
                 request.user.phone = form.cleaned_data.get("phone")
                 save_db = True
-            if form.cleaned_data.get("photo_url") != request.user.photo_url:
-                request.user.photo_url = form.cleaned_data.get("photo_url")
+            if request.FILES.get("photo"):
+                request.user.photo = request.FILES["photo"]
+                save_db = True
+            elif request.POST.get("photo-clear") == "on":
+                request.user.photo = None
                 save_db = True
             if save_db:
                 context["user"] = request.user
@@ -351,6 +354,17 @@ def profile(request):
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
+            # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
+            form = UserForm(
+                initial={
+                    "first_name": request.user.first_name,
+                    "last_name": request.user.last_name,
+                    "phone": request.user.phone,
+                    "photo": request.user.photo,
+                    "email": request.user.email,
+                }
+            )
+            context["form"] = form
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
             # if request.headers.get("HX-Request"):
@@ -366,7 +380,7 @@ def profile(request):
                 "first_name": request.user.first_name,
                 "last_name": request.user.last_name,
                 "phone": request.user.phone,
-                "photo_url": request.user.photo_url,
+                "photo": request.user.photo,
                 "email": request.user.email,
             }
         )
