@@ -31,7 +31,9 @@
                             <td>{% if seller.stripe_connect_account_id %}Direct Deposit{% else %}Check{% endif %}
                             </td>
                             <td>
-                                {% if seller_location.is_insurance_compliant %}
+                                {% if seller_location.is_insurance_expiring_soon %}
+                                <i class="fas fa-check-circle text-warning"></i> Expiring Soon
+                                {% elif seller_location.is_insurance_compliant %}
                                 <i class="fas fa-check-circle text-success"></i> Compliant
                                 {% else %}
                                 <i class="fas fa-times-circle text-danger"></i> Insurance Verification Required
