@@ -4,6 +4,7 @@ from django.views.generic.base import RedirectView
 from rest_framework import routers
 
 from api import views
+from api_proxy import post_login_router
 
 router = routers.DefaultRouter()
 router.register(
@@ -119,6 +120,8 @@ urlpatterns = [
         views.SpectacularSwaggerViewNoAuth.as_view(url_name="schema"),
         name="swagger",
     ),
+    # Login Redirect.
+    path("post-login/", post_login_router.post_login_router, name="post_login_router"),
     # Stripe.
     path("api/payment-methods/", views.StripePaymentMethods.as_view()),
     path("api/setup-intents/", views.StripeSetupIntents.as_view()),
