@@ -100,7 +100,8 @@ router.register(r"order-groups-for-seller", views.OrderGroupsForSellerViewSet, "
 router.register(r"orders-for-seller", views.OrdersForSellerViewSet, "api")
 
 urlpatterns = [
-    path("", RedirectView.as_view(url=reverse_lazy("admin:index"))),
+    # Login Redirect.
+    path("", post_login_router.post_login_router, name="post_login_router"),
     path("admin/", admin.site.urls),
     path("oidc/", include("mozilla_django_oidc.urls")),
     # START: API URLs.
@@ -120,8 +121,6 @@ urlpatterns = [
         views.SpectacularSwaggerViewNoAuth.as_view(url_name="schema"),
         name="swagger",
     ),
-    # Login Redirect.
-    path("post-login/", post_login_router.post_login_router, name="post_login_router"),
     # Stripe.
     path("api/payment-methods/", views.StripePaymentMethods.as_view()),
     path("api/setup-intents/", views.StripeSetupIntents.as_view()),
