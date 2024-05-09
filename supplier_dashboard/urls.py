@@ -15,6 +15,7 @@ urlpatterns = [
     path("supplier/search/", views.supplier_search, name="supplier_search"),
     path("supplier/select/", views.supplier_select, name="supplier_select"),
     path("supplier/", views.index, name="supplier_home"),
+    path("supplier/logout/", views.supplier_logout, name="supplier_logout"),
     path("supplier/profile/", views.profile, name="supplier_profile"),
     path("supplier/company/", views.company, name="supplier_company"),
     path("supplier/bookings/", views.bookings, name="supplier_bookings"),

@@ -5,7 +5,7 @@
                 class="fas fa-bars"></i></button>
         <ul class="navbar-nav flex-nowrap ms-auto">
             {% if request.user.is_staff %}
-            {% if seller %}<p class="text-center" style="margin: auto;">{{ seller.name }} - {{ seller.id }}</p>
+            {% if seller %}<p class="text-center" style="margin: auto;">{{ seller.name }}</p>
             {% endif %}
             <li class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link" aria-expanded="false"
                     data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>

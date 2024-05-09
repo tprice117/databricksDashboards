@@ -4,6 +4,7 @@ from typing import List
 import json
 import uuid
 from django.contrib import messages
+from django.contrib.auth import logout
 from urllib.parse import parse_qs
 import datetime
 from itertools import chain
@@ -153,22 +154,26 @@ def get_seller(request: HttpRequest):
     else:
         if request.user.is_staff:
             # TODO: If staff, then set seller to all available sellers
-            # Temporarily set to Hillen as default
-            seller = to_dict(
-                Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
-            )
+            try:
+                # Temporarily set to Hillen as default
+                seller = to_dict(
+                    Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
+                )
+            except Seller.DoesNotExist:
+                # Fails on DEV, so see if we can get user's seller.
+                if hasattr(request.user, "user_group") and hasattr(
+                    request.user.user_group, "seller"
+                ):
+                    seller = to_dict(request.user.user_group.seller)
+                    request.session["seller"] = seller
+                else:
+                    # Get first available seller.
+                    seller = to_dict(Seller.objects.all().first())
             request.session["seller"] = seller
         elif hasattr(request.user, "user_group") and hasattr(
             request.user.user_group, "seller"
         ):
             seller = to_dict(request.user.user_group.seller)
-            request.session["seller"] = seller
-        elif request.user.is_staff:
-            # TODO: If staff, then set seller to all available sellers
-            # Temporarily set to Hillen as default
-            seller = to_dict(
-                Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
-            )
             request.session["seller"] = seller
         else:
             return HttpResponse("Not Allowed", status=403)
@@ -181,9 +186,10 @@ def get_seller(request: HttpRequest):
 # Page views
 ########################
 # Add redirect to auth0 login if not logged in.
-@login_required(login_url="/supplier/login/")
-def supplier_login(request):
-    pass
+def supplier_logout(request):
+    logout(request)
+    # Redirect to a success page.
+    return HttpResponseRedirect("https://trydownstream.com/")
 
 
 @login_required(login_url="/admin/login/")
@@ -323,7 +329,7 @@ def profile(request):
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
         POST_COPY["email"] = request.user.email
-        form = UserForm(POST_COPY)
+        form = UserForm(POST_COPY, request.FILES)
         context["form"] = form
         if form.is_valid():
             save_db = False
@@ -336,8 +342,11 @@ def profile(request):
             if form.cleaned_data.get("phone") != request.user.phone:
                 request.user.phone = form.cleaned_data.get("phone")
                 save_db = True
-            if form.cleaned_data.get("photo_url") != request.user.photo_url:
-                request.user.photo_url = form.cleaned_data.get("photo_url")
+            if request.FILES.get("photo"):
+                request.user.photo = request.FILES["photo"]
+                save_db = True
+            elif request.POST.get("photo-clear") == "on":
+                request.user.photo = None
                 save_db = True
             if save_db:
                 context["user"] = request.user
@@ -345,6 +354,17 @@ def profile(request):
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
+            # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
+            form = UserForm(
+                initial={
+                    "first_name": request.user.first_name,
+                    "last_name": request.user.last_name,
+                    "phone": request.user.phone,
+                    "photo": request.user.photo,
+                    "email": request.user.email,
+                }
+            )
+            context["form"] = form
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
             # if request.headers.get("HX-Request"):
@@ -360,7 +380,7 @@ def profile(request):
                 "first_name": request.user.first_name,
                 "last_name": request.user.last_name,
                 "phone": request.user.phone,
-                "photo_url": request.user.photo_url,
+                "photo": request.user.photo,
                 "email": request.user.email,
             }
         )

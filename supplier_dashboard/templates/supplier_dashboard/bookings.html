@@ -97,13 +97,13 @@
 </script>
 {% endblock %}
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid" hx-disabled-elt=".status-card, button">
     <h3 class="text-dark mb-4">My Bookings</h3>
     <div class="row">
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-primary py-2 status-card btn status-selected"
                 hx-get="{{status_pending_link}}" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML"
-                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status">
+                hx-indicator="#htmx-indicator-status">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -130,7 +130,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-success py-2 status-card btn" hx-get="{{status_scheduled_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status-scheduled">
+                hx-indicator="#htmx-indicator-status-scheduled">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -157,7 +157,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{status_complete_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status-completed">
+                hx-indicator="#htmx-indicator-status-completed">
                 <!-- onclick="selectCard(this)" -->
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
@@ -185,7 +185,7 @@
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{status_cancelled_link}}"
                 hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status-cancelled">
+                hx-indicator="#htmx-indicator-status-cancelled">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -222,6 +222,7 @@
                         <tr>
                             <th>Service Date</th>
                             <th>Product</th>
+                            <th>Booking Address</th>
                             <th>Type</th>
                             <th>Status</th>
                             <th></th>
@@ -229,12 +230,13 @@
                         </tr>
                     </thead>
                     <tbody id="booking-results" hx-get="{{status_pending_link}}" hx-trigger="load" hx-swap="outerHTML"
-                        hx-disabled-elt=".status-card, button" hx-indicator="#htmx-indicator-status">
+                        hx-indicator="#htmx-indicator-status">
                     </tbody>
                     <tfoot>
                         <tr>
                             <td><strong>Service Date</strong></td>
                             <td><strong>Product</strong></td>
+                            <td><strong>Booking Address</strong></td>
                             <td><strong>Type</strong></td>
                             <td><strong>Status</strong></td>
                             <td><strong></strong></td>

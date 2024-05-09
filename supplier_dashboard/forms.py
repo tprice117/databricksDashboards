@@ -26,8 +26,10 @@ class UserForm(forms.Form):
         ),
         required=False,
     )
-    photo_url = forms.CharField(
-        widget=forms.TextInput(attrs={"class": "form-control"}), required=False
+    photo = forms.ImageField(
+        label="Profile Picture",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        required=False,
     )
 
 

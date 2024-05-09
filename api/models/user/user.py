@@ -31,6 +31,11 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
     "terms_accepted",
 )
 class User(AbstractUser):
+    def get_file_path(instance, filename):
+        ext = filename.split(".")[-1]
+        filename = "%s.%s" % (uuid.uuid4(), ext)
+        return filename
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -53,6 +58,7 @@ class User(AbstractUser):
     intercom_id = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, unique=True)
+    photo = models.ImageField(upload_to=get_file_path, blank=True, null=True)
     photo_url = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
