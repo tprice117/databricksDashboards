@@ -312,7 +312,11 @@ def profile(request):
     context["seller"] = get_seller(request)
 
     if request.method == "POST":
-        form = UserForm(request.POST)
+        # NOTE: Since email is disabled, it is never POSTed,
+        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
+        POST_COPY = request.POST.copy()
+        POST_COPY["email"] = request.user.email
+        form = UserForm(POST_COPY)
         context["form"] = form
         if form.is_valid():
             save_db = False
@@ -335,10 +339,8 @@ def profile(request):
                 messages.info(request, "No changes detected.")
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
-            if request.headers.get("HX-Request"):
-                return render(request, "supplier_dashboard/profile.html", context)
-            else:
-                return render(request, "supplier_dashboard/profile.html", context)
+            # if request.headers.get("HX-Request"):
+            return render(request, "supplier_dashboard/profile.html", context)
         else:
             # This will let bootstrap know to highlight the fields with errors.
             for field in form.errors:
