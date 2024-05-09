@@ -91,7 +91,7 @@
     <div class="row">
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-primary py-2 status-card btn status-selected"
-                hx-get="{{status_pending_link}}" hx-target="tbody" hx-trigger="click" hx-swap="outerHTML"
+                hx-get="{{status_pending_link}}" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML"
                 hx-indicator="#htmx-indicator-status">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
@@ -113,7 +113,8 @@
         </div>
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-success py-2 status-card btn" hx-get="{{status_scheduled_link}}"
-                hx-target="tbody" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status">
+                hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
+                hx-indicator="#htmx-indicator-status">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -134,7 +135,8 @@
         </div>
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{status_complete_link}}"
-                hx-target="tbody" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status">
+                hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
+                hx-indicator="#htmx-indicator-status">
                 <!-- onclick="selectCard(this)" -->
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
@@ -156,7 +158,8 @@
         </div>
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{status_cancelled_link}}"
-                hx-target="tbody" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status">
+                hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
+                hx-indicator="#htmx-indicator-status">
                 <div class="card-body">
                     <div class="row align-items-center no-gutters">
                         <div class="col me-2">
@@ -195,7 +198,7 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody hx-get="{{status_pending_link}}" hx-trigger="load" hx-swap="outerHTML"
+                    <tbody id="booking-results" hx-get="{{status_pending_link}}" hx-trigger="load" hx-swap="outerHTML"
                         hx-indicator="#htmx-indicator-status">
                     </tbody>
                     <tfoot>
