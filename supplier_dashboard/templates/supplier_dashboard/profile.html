@@ -61,7 +61,6 @@
                         </div>
                         <div class="card-body">
                             <form action="{% url 'supplier_profile' %}" method="post">
-                                <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator">Loading...</span>
                                 {% csrf_token %}
                                 <!-- Include the hidden fields -->
                                 {% for hidden in form.hidden_fields %}
@@ -76,7 +75,7 @@
                                         class="form-text text-muted">{{ field.help_text|safe }}</small>
                                     {% endif %}
                                     {% if field.errors %}
-                                        <small class="text-danger">{{ field.errors }}</small>
+                                    <small class="text-danger">{{ field.errors }}</small>
                                     {% endif %}
                                 </div>
                                 {% endfor %}
