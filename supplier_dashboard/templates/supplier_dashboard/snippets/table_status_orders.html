@@ -14,7 +14,7 @@
                 <!-- TODO: Look at using Bootstrap modal -->
                 <!-- <button class="btn btn-success" type="button" data-bs-target="#modal-1"
                     data-bs-toggle="modal">Accept</button> -->
-                <button type="button" class="btn btn-primary" id="accept-button" style="background: var(--bs-success);"
+                <button type="button" class="btn btn-primary accept-button"
                     hx-post="{% url 'supplier_order_accept' order_id=order.id %}" hx-disabled-elt=".status-card, button"
                     hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
                     hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
