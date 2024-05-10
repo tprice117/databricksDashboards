@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <h3 class="text-dark mb-1">Booking Details</h3>
 </div><!-- Start: 1 Row 2 Columns -->
-<div class="container">
+<div class="container" hx-disabled-elt=".status-card, button">
     <div class="row" style="padding-bottom: 24px;">
         <div class="col-md-6">
             <div class="card">
@@ -22,8 +22,8 @@
                     <p class="card-text"></p>
                     {% if order.status == "PENDING" %}
                     <button type="button" class="btn btn-primary" style="background: var(--bs-success);"
-                        id="accept-button" hx-post="{% url 'supplier_booking_accept' order_id=order.id %}"
-                        hx-disabled-elt=".status-card, button" hx-swap="delete" hx-indicator="#htmx-indicator"
+                        id="accept-button" hx-post="{% url 'supplier_booking_update' order_id=order.id %}"
+                        hx-vals='{"status": "{{order.PENDING}}"}' hx-swap="delete" hx-indicator="#htmx-indicator"
                         hx-trigger='confirmed' onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
                             if(result.isConfirmed){htmx.trigger(this, 'confirmed');}})">
                         Accept
@@ -36,6 +36,17 @@
                         onClick="Swal.fire({title: 'Request Change', text:'Would you like to request a change?', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
                             if(result.isConfirmed){window.open('mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order.id}}%5D', '_blank');}})">
                         Request Change
+                    </button>
+                    {% elif order.status == "SCHEDULED" %}
+                    <button type="button" class="btn btn-primary" style="background: var(--bs-success);"
+                        id="complete-button" hx-post="{% url 'supplier_booking_update' order_id=order.id %}"
+                        hx-vals='{"status": "{{order.COMPLETE}}"}' hx-swap="delete" hx-indicator="#htmx-indicator"
+                        hx-trigger='confirmed' onClick="Swal.fire({title: 'Complete Booking', text:'Has this booking been completed?', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
+                            if(result.isConfirmed){htmx.trigger(this, 'confirmed');}})">
+                        Complete
+                        <span class="htmx-indicator" id="htmx-indicator">
+                            <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
+                        </span>
                     </button>
                     {% endif %}
                     <!-- <button class="btn btn-primary" type="button" style="background: var(--bs-success);"

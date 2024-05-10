@@ -701,21 +701,31 @@ def update_order_status(request, order_id, accept=True):
 
 
 @login_required(login_url="/admin/login/")
-def update_booking_status(request, order_id, accept=True):
+def update_booking_status(request, order_id):
     context = {}
+    update_status = Order.PENDING  # Accept the order
+    if request.method == "POST":
+        update_status = request.POST.get("status", Order.PENDING)
+    elif request.method == "GET":
+        update_status = request.GET.get("status", Order.PENDING)
     try:
         order = Order.objects.get(id=order_id)
         context["order"] = order
-        if order.status == Order.PENDING:
-            if accept:
-                order.status = Order.SCHEDULED
-                order.save()
-                context["oob_html"] = (
-                    f"""<p id="booking-status" hx-swap-oob="true">{order.status}</p>"""
-                )
-            else:
-                # Send internal email to notify of denial.
-                internal_email.supplier_denied_order(order)
+        if order.status == Order.PENDING and update_status == Order.SCHEDULED:
+            order.status = Order.SCHEDULED
+            order.save()
+            context["oob_html"] = (
+                f"""<p id="booking-status" hx-swap-oob="true">{order.status}</p>"""
+            )
+        elif order.status == Order.SCHEDULED and update_status == Order.COMPLETE:
+            order.status = Order.COMPLETE
+            order.save()
+            context["oob_html"] = (
+                f"""<p id="booking-status" hx-swap-oob="true">{order.status}</p>"""
+            )
+        elif order.status == Order.PENDING and update_status == Order.CANCELLED:
+            # Send internal email to notify of denial.
+            internal_email.supplier_denied_order(order)
     except Exception as e:
         logger.error(f"update_booking_status: [{e}]", exc_info=e)
         return render(
@@ -723,19 +733,12 @@ def update_booking_status(request, order_id, accept=True):
             "notifications/emails/failover_email_us.html",
             {"subject": f"Supplier%20Approved%20%5B{order_id}%5D"},
         )
-    if request.method == "POST":
-        # if request.headers.get("HX-Request"): # This is an HTMX request, so respond with html snippet
-        return render(
-            request,
-            "supplier_dashboard/snippets/order_status.html",
-            context,
-        )
-    else:
-        return render(
-            request,
-            "supplier_dashboard/snippets/order_status.html",
-            context,
-        )
+    # if request.headers.get("HX-Request"): # This is an HTMX request, so respond with html snippet
+    return render(
+        request,
+        "supplier_dashboard/snippets/order_status.html",
+        context,
+    )
 
 
 @login_required(login_url="/admin/login/")
