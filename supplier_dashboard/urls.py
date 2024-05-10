@@ -31,6 +31,12 @@ urlpatterns = [
         name="supplier_order_accept",
     ),
     path(
+        "supplier/order/<uuid:order_id>/complete/",
+        views.update_order_status,
+        {"complete": True, "accept": None},
+        name="supplier_order_complete",
+    ),
+    path(
         "supplier/order/<uuid:order_id>/deny/",
         views.update_order_status,
         {"accept": False},

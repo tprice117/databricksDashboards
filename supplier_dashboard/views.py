@@ -614,7 +614,7 @@ def bookings(request):
 
 
 @login_required(login_url="/admin/login/")
-def update_order_status(request, order_id, accept=True):
+def update_order_status(request, order_id, accept=True, complete=False):
     context = {}
     service_date = None
     if request.method == "POST":
@@ -632,9 +632,12 @@ def update_order_status(request, order_id, accept=True):
     try:
         order = Order.objects.get(id=order_id)
         context["order"] = order
-        if order.status == Order.PENDING:
-            if accept:
-                order.status = Order.SCHEDULED
+        if order.status == Order.PENDING or order.status == Order.SCHEDULED:
+            if accept or complete:
+                if accept:
+                    order.status = Order.SCHEDULED
+                else:
+                    order.status = Order.COMPLETE
                 order.save()
                 if request.session.get("seller"):
                     seller_id = request.session["seller"]["id"]
@@ -673,7 +676,7 @@ def update_order_status(request, order_id, accept=True):
                 <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
                 <span id="cancelled-count-badge" hx-swap-oob="true">{cancelled_count}</span>
                 """
-            else:
+            elif accept is False:
                 # Send internal email to notify of denial.
                 internal_email.supplier_denied_order(order)
     except Exception as e:
