@@ -703,7 +703,7 @@ def update_order_status(request, order_id, accept=True):
 @login_required(login_url="/admin/login/")
 def update_booking_status(request, order_id):
     context = {}
-    update_status = Order.PENDING  # Accept the order
+    update_status = Order.PENDING
     if request.method == "POST":
         update_status = request.POST.get("status", Order.PENDING)
     elif request.method == "GET":
@@ -736,7 +736,7 @@ def update_booking_status(request, order_id):
     # if request.headers.get("HX-Request"): # This is an HTMX request, so respond with html snippet
     return render(
         request,
-        "supplier_dashboard/snippets/order_status.html",
+        "supplier_dashboard/snippets/booking_detail_actions.html",
         context,
     )
 
