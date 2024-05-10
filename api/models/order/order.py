@@ -92,6 +92,12 @@ class Order(BaseModel):
         self.__original_status = self.status
 
     @property
+    def is_past_due(self):
+        """Returns True if the Order is past due (end date is <= today), False otherwise.
+        NOTE: Maybe should add a bit of fudge due to timezone differences."""
+        return self.end_date <= timezone.now().date()
+
+    @property
     def order_type(self):
         return self.get_order_type()
 
