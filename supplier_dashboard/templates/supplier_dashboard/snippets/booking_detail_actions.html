@@ -2,7 +2,7 @@
 {% if order.status == "PENDING" %}
 <button type="button" class="btn btn-primary" style="background: var(--bs-success);" id="accept-button"
     hx-post="{% url 'supplier_booking_update' order_id=order.id %}" hx-vals='{"status": "{{order.SCHEDULED}}"}'
-    hx-target="#booking-detail-actions" hx-swap="innerHTML" hx-indicator="#htmx-indicator" hx-trigger='confirmed'
+    hx-target="#booking-detail-actions" hx-swap="innerHTML" hx-indicator="#htmx-indicator" hx-trigger="confirmed"
     onClick="Swal.fire({title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
                             if(result.isConfirmed){htmx.trigger(this, 'confirmed');}})">
     Accept
@@ -15,10 +15,10 @@
                             if(result.isConfirmed){window.open('mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order.id}}%5D', '_blank');}})">
     Request Change
 </button>
-{% elif order.status == "SCHEDULED" %}
+{% elif order.is_past_due and order.status == "SCHEDULED" %}
 <button type="button" class="btn btn-primary" style="background: var(--bs-success);" id="complete-button"
     hx-post="{% url 'supplier_booking_update' order_id=order.id %}" hx-vals='{"status": "{{order.COMPLETE}}"}'
-    hx-target="#booking-detail-actions" hx-swap="innerHTML" hx-indicator="#htmx-indicator" hx-trigger='confirmed'
+    hx-target="#booking-detail-actions" hx-swap="innerHTML" hx-indicator="#htmx-indicator" hx-trigger="confirmed"
     onClick="Swal.fire({title: 'Complete Booking', text:'Has this booking been completed?', icon: 'question', confirmButtonText: 'Confirm'}).then((result)=>{
                             if(result.isConfirmed){htmx.trigger(this, 'confirmed');}})">
     Complete
