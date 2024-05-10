@@ -148,48 +148,55 @@ class User(AbstractUser):
         Returns:
             dict: The ContactType from Intercom.
         """
-        if self.intercom_id:
-            contact = Intercom.Contact.get(self.intercom_id)
-            if contact:
-                if (
-                    contact["name"] != self.full_name
-                    or contact["email"] != self.email
-                    or contact["phone"] != self.phone
-                    or contact["avatar"] != self.photo_url
-                ):
-                    Intercom.Contact.update(
-                        self.intercom_id,
-                        str(self.id),
-                        self.email,
-                        name=self.full_name,
-                        phone=self.phone,
-                        avatar=self.photo_url,
-                    )
-        else:
-            contact = Intercom.Contact.create(
-                str(self.id),
-                self.email,
-                name=self.full_name,
-                phone=self.phone,
-                avatar=self.photo_url,
-            )
-            if contact and save_data:
-                User.objects.filter(id=self.id).update(intercom_id=contact["id"])
-        if create_company and self.user_group and contact:
-            # Update or create Company in Intercom
-            company = Intercom.Company.update_or_create(
-                str(self.user_group.id),
-                self.user_group.name,
-                custom_attributes=self.user_group.intercom_custom_attributes,
-            )
-            if company:
-                # Attach user to company
-                Intercom.Contact.attach_user(company["id"], self.intercom_id)
-                if self.user_group.intercom_id != company["id"] and save_data:
-                    UserGroup.objects.filter(id=self.user_group.id).update(
-                        intercom_id=company["id"]
-                    )
-        return contact
+        try:
+            photo_url = None
+            if self.photo:
+                photo_url = self.photo.url
+            if self.intercom_id:
+                contact = Intercom.Contact.get(self.intercom_id)
+                if contact:
+                    if (
+                        contact["name"] != self.full_name
+                        or contact["email"] != self.email
+                        or contact["phone"] != self.phone
+                        or contact["avatar"] != photo_url
+                    ):
+                        Intercom.Contact.update(
+                            self.intercom_id,
+                            str(self.id),
+                            self.email,
+                            name=self.full_name,
+                            phone=self.phone,
+                            avatar=photo_url,
+                        )
+            else:
+                contact = Intercom.Contact.create(
+                    str(self.id),
+                    self.email,
+                    name=self.full_name,
+                    phone=self.phone,
+                    avatar=photo_url,
+                )
+                if contact and save_data:
+                    User.objects.filter(id=self.id).update(intercom_id=contact["id"])
+            if create_company and self.user_group and contact:
+                # Update or create Company in Intercom
+                company = Intercom.Company.update_or_create(
+                    str(self.user_group.id),
+                    self.user_group.name,
+                    custom_attributes=self.user_group.intercom_custom_attributes,
+                )
+                if company:
+                    # Attach user to company
+                    Intercom.Contact.attach_user(company["id"], self.intercom_id)
+                    if self.user_group.intercom_id != company["id"] and save_data:
+                        UserGroup.objects.filter(id=self.user_group.id).update(
+                            intercom_id=company["id"]
+                        )
+            return contact
+        except Exception as e:
+            logger.error(f"User.intercom_sync: [{e}]", exc_info=e)
+            return None
 
 
 post_delete.connect(User.post_delete, sender=User)

@@ -31,22 +31,21 @@ urlpatterns = [
         name="supplier_order_accept",
     ),
     path(
+        "supplier/order/<uuid:order_id>/complete/",
+        views.update_order_status,
+        {"complete": True, "accept": None},
+        name="supplier_order_complete",
+    ),
+    path(
         "supplier/order/<uuid:order_id>/deny/",
         views.update_order_status,
         {"accept": False},
         name="supplier_order_deny",
     ),
     path(
-        "supplier/booking/<uuid:order_id>/accept/",
+        "supplier/booking/<uuid:order_id>/update/",
         views.update_booking_status,
-        {"accept": True},
-        name="supplier_booking_accept",
-    ),
-    path(
-        "supplier/booking/<uuid:order_id>/deny/",
-        views.update_booking_status,
-        {"accept": False},
-        name="supplier_booking_deny",
+        name="supplier_booking_update",
     ),
     path("supplier/payouts/", views.payouts, name="supplier_payouts"),
     path(
