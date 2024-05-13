@@ -1,6 +1,6 @@
 {% load static %}
 <tbody id="booking-results" hx-disabled-elt=".status-card, button">
-    {% for order in status.orders %}
+    {% for order in status.page_obj %}
     <tr id="order_row_{{forloop.counter}}">
         <td>{{order.end_date}}</td>
         <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
@@ -53,26 +53,20 @@
 </tbody>
 <div class="row" id="bookings-pagination" hx-swap-oob="true">
     <div class="col-md-6 align-self-center">
-        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing {{ page_obj.number }} to {{ page_obj.paginator.per_page }} of {{ page_obj.paginator.count }}</p>
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}</p>
     </div>
     <div class="col-md-6">
         <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
             <ul class="pagination">
-                <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
-                    <a class="page-link" aria-label="Previous" href="{% url 'supplier_booking' %}?p={{ page_obj.previous_page_number }}"><span aria-hidden="true">«</span></a>
-                </li>
-                <li class="page-item active">
-                    <a class="page-link" href="{% url 'supplier_booking' %}?p={{ page_obj.number|add:1 }}">{{ page_obj.number|add:1 }}</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="{% url 'supplier_booking' %}?p={{ page_obj.number|add:2 }}">{{ page_obj.number|add:2 }}</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="{% url 'supplier_booking' %}?p={{ page_obj.number|add:3 }}">{{ page_obj.number|add:3 }}</a>
-                </li>
-                <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
-                    <a class="page-link" aria-label="Next" href="{% url 'supplier_booking' %}?p={{ page_obj.next_page_number }}"><span aria-hidden="true">»</span></a>
-                </li>
+                {% for page in pages %}
+                {% if page.number == '...' %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% elif page.is_current %}
+                <li class="page-item active"><span class="page-link">{{ page.number }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="{{ page.url }}" hx-boost="true" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page.number }}</a></li>
+                {% endif %}
+                {% endfor %}
             </ul>
         </nav>
     </div>

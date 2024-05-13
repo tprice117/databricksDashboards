@@ -557,6 +557,7 @@ def bookings(request):
     link_params = {}
     context = {}
     pagination_limit = 10
+    page_number = 1
     # context["user"] = request.user
     context["seller"] = get_seller(request)
     if request.GET.get("service_date", None) is not None:
@@ -567,6 +568,7 @@ def bookings(request):
         page_number = request.GET.get("p")
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
+        query_params = request.GET.copy()
         # Ensure tab is valid. Default to PENDING if not.
         tab = request.GET.get("tab", Order.PENDING)
         if tab.upper() not in [
@@ -600,16 +602,32 @@ def bookings(request):
             "order_group__user_address",
         )
         orders = orders.order_by("-end_date")
-        for order in orders:
-            print(order.id, order.end_date)
         paginator = Paginator(orders, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["status"] = {
             "name": tab.upper(),
-            "orders": orders,
             "page_obj": page_obj,
         }
         context["page_obj"] = page_obj
+        context["pages"] = []
+        for i in paginator.page_range:
+            if query_params:
+                query_params["p"] = i
+                context["pages"].append(
+                    {
+                        "number": i,
+                        "is_current": i == page_obj.number,
+                        "url": f"/supplier/bookings/?{query_params.urlencode()}",
+                    }
+                )
+            else:
+                context["pages"].append(
+                    {
+                        "number": i,
+                        "is_current": i == page_obj.number,
+                        "url": f"/supplier/bookings/?p={i}",
+                    }
+                )
         return render(
             request, "supplier_dashboard/snippets/table_status_orders.html", context
         )

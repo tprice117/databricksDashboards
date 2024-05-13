@@ -5,7 +5,8 @@
 {% endblock %}
 {% block stylesheet %}
     <style>
-        .status-card {
+        .status-card,
+        .page-item {
             cursor: pointer;
         }
         
@@ -55,7 +56,8 @@
             animation: pop-in 0.5s;
         }
         
-        .status-card[disabled] {
+        .status-card[disabled],
+        .page-item[disabled] {
             pointer-events: none;
             /* Optional: Change the cursor to not-allowed to indicate the div is disabled */
             cursor: not-allowed;
@@ -114,9 +116,9 @@
                                     <span id="pending-count-badge">{{ pending_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--         <div class="text-dark text-xs">
+                                <!--            <div class="text-dark text-xs">
                                 <span class="text-muted">Anytime</span>
-                            </div>         -->
+                            </div>            -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
@@ -137,9 +139,9 @@
                                     <span id="scheduled-count-badge">{{ scheduled_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-scheduled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--         <div class="text-dark text-xs">
+                                <!--            <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>         -->
+                            </div>            -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
@@ -161,9 +163,9 @@
                                     <span id="complete-count-badge">{{ complete_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-completed"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--         <div class="text-dark text-xs">
+                                <!--            <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>         -->
+                            </div>            -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
@@ -184,9 +186,9 @@
                                     <span id="cancelled-count-badge">{{ cancelled_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-cancelled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--         <div class="text-dark text-xs">
+                                <!--            <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>         -->
+                            </div>            -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
@@ -200,6 +202,7 @@
             <div class="card-header py-3">
                 <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
                 <!-- <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-status">Loading...</span> -->
+                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
