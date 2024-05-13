@@ -562,7 +562,12 @@ class Order(BaseModel):
             bcc_emails.append("dispatch@trydownstream.com")
 
         try:
-            if self.order_type != Order.Type.AUTO_RENEWAL:
+            is_first_order = (
+                self.order_group.orders.order_by("created_on").first().id == self.id
+            )
+            if self.order_type != Order.Type.AUTO_RENEWAL or (
+                is_first_order and self.order_type == Order.Type.AUTO_RENEWAL
+            ):
                 # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
                 # then it opens the order html to allow them to select order status.
                 accept_url = self.seller_view_order_url
