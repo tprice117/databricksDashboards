@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from typing import List
 import json
 import uuid
@@ -555,12 +556,15 @@ def company(request):
 def bookings(request):
     link_params = {}
     context = {}
+    pagination_limit = 10
     # context["user"] = request.user
     context["seller"] = get_seller(request)
     if request.GET.get("service_date", None) is not None:
         link_params["service_date"] = request.GET.get("service_date")
     if request.GET.get("location_id", None) is not None:
         link_params["location_id"] = request.GET.get("location_id")
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         # Ensure tab is valid. Default to PENDING if not.
@@ -596,8 +600,16 @@ def bookings(request):
             "order_group__user_address",
         )
         orders = orders.order_by("-end_date")
-        context["status"] = {"name": tab.upper(), "orders": orders}
-
+        for order in orders:
+            print(order.id, order.end_date)
+        paginator = Paginator(orders, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["status"] = {
+            "name": tab.upper(),
+            "orders": orders,
+            "page_obj": page_obj,
+        }
+        context["page_obj"] = page_obj
         return render(
             request, "supplier_dashboard/snippets/table_status_orders.html", context
         )

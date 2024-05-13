@@ -114,9 +114,9 @@
                                     <span id="pending-count-badge">{{ pending_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--      <div class="text-dark text-xs">
+                                <!--         <div class="text-dark text-xs">
                                 <span class="text-muted">Anytime</span>
-                            </div>      -->
+                            </div>         -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
@@ -137,9 +137,9 @@
                                     <span id="scheduled-count-badge">{{ scheduled_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-scheduled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--      <div class="text-dark text-xs">
+                                <!--         <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>      -->
+                            </div>         -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
@@ -161,9 +161,9 @@
                                     <span id="complete-count-badge">{{ complete_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-completed"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--      <div class="text-dark text-xs">
+                                <!--         <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>      -->
+                            </div>         -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
@@ -184,9 +184,9 @@
                                     <span id="cancelled-count-badge">{{ cancelled_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-cancelled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--      <div class="text-dark text-xs">
+                                <!--         <div class="text-dark text-xs">
                                 <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>      -->
+                            </div>         -->
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
@@ -243,25 +243,32 @@
                         </tfoot>
                     </table>
                 </div>
-                <!--      <div class="row">
-                <div class="col-md-6 align-self-center">
-                    <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
-                        Showing 1 to 10 of 27</p>
+                <div class="row invisible" id="bookings-pagination">
+                    <div class="col-md-6 align-self-center">
+                        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
+                                </li>
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">1</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">2</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">3</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
-                        <ul class="pagination">
-                            <li class="page-item disabled"><a class="page-link" aria-label="Previous" href="#"><span
-                                        aria-hidden="true">«</span></a></li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" aria-label="Next" href="#"><span
-                                        aria-hidden="true">»</span></a></li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>      -->
             </div>
         </div>
     </div>

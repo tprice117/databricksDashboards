@@ -51,3 +51,29 @@
     </tr>
     {% endfor %}
 </tbody>
+<div class="row" id="bookings-pagination" hx-swap-oob="true">
+    <div class="col-md-6 align-self-center">
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing {{ page_obj.number }} to {{ page_obj.paginator.per_page }} of {{ page_obj.paginator.count }}</p>
+    </div>
+    <div class="col-md-6">
+        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+                    <a class="page-link" aria-label="Previous" href="{% url 'supplier_booking' %}?p={{ page_obj.previous_page_number }}"><span aria-hidden="true">«</span></a>
+                </li>
+                <li class="page-item active">
+                    <a class="page-link" href="{% url 'supplier_booking' %}?p={{ page_obj.number|add:1 }}">{{ page_obj.number|add:1 }}</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{% url 'supplier_booking' %}?p={{ page_obj.number|add:2 }}">{{ page_obj.number|add:2 }}</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="{% url 'supplier_booking' %}?p={{ page_obj.number|add:3 }}">{{ page_obj.number|add:3 }}</a>
+                </li>
+                <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+                    <a class="page-link" aria-label="Next" href="{% url 'supplier_booking' %}?p={{ page_obj.next_page_number }}"><span aria-hidden="true">»</span></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
