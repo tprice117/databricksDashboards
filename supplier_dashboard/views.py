@@ -5,7 +5,7 @@ import json
 import uuid
 from django.contrib import messages
 from django.contrib.auth import logout
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
@@ -554,63 +554,102 @@ def company(request):
 @login_required(login_url="/admin/login/")
 def bookings(request):
     link_params = {}
-    if request.method == "POST":
-        if request.POST.get("service_date", None) is not None:
-            link_params["service_date"] = request.POST.get("service_date")
-        if request.POST.get("location_id", None) is not None:
-            link_params["location_id"] = request.POST.get("location_id")
-    elif request.method == "GET":
-        if request.GET.get("service_date", None) is not None:
-            link_params["service_date"] = request.GET.get("service_date")
-        if request.GET.get("location_id", None) is not None:
-            link_params["location_id"] = request.GET.get("location_id")
-    # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
     context = {}
     # context["user"] = request.user
     context["seller"] = get_seller(request)
-    seller = Seller.objects.get(id=context["seller"]["id"])
-    orders = Order.objects.filter(
-        order_group__seller_product_seller_location__seller_product__seller_id=context[
-            "seller"
-        ]["id"]
-    )
-    if link_params.get("service_date", None) is not None:
-        orders = orders.filter(end_date=link_params["service_date"])
-    if link_params.get("location_id", None) is not None:
-        orders = orders.filter(
-            order_group__seller_product_seller_location__seller_location_id=link_params[
-                "location_id"
+    if request.GET.get("service_date", None) is not None:
+        link_params["service_date"] = request.GET.get("service_date")
+    if request.GET.get("location_id", None) is not None:
+        link_params["location_id"] = request.GET.get("location_id")
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        # Ensure tab is valid. Default to PENDING if not.
+        tab = request.GET.get("tab", Order.PENDING)
+        if tab.upper() not in [
+            Order.PENDING,
+            Order.SCHEDULED,
+            Order.COMPLETE,
+            Order.CANCELLED,
+        ]:
+            tab = Order.PENDING
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ][
+                "id"
+            ]
+        ).filter(status=tab.upper())
+        # TODO: Check the delay for a seller with large number of orders, like Hillen.
+        # if status.upper() != Order.PENDING:
+        #     orders = orders.filter(end_date__gt=non_pending_cutoff)
+        if link_params.get("service_date", None) is not None:
+            orders = orders.filter(end_date=link_params["service_date"])
+        if link_params.get("location_id", None) is not None:
+            orders = orders.filter(
+                order_group__seller_product_seller_location__seller_location_id=link_params[
+                    "location_id"
+                ]
+            )
+        # Select related fields to reduce db queries.
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+        )
+        orders = orders.order_by("-end_date")
+        context["status"] = {"name": tab.upper(), "orders": orders}
+
+        return render(
+            request, "supplier_dashboard/snippets/table_status_orders.html", context
+        )
+    else:
+        # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
+        # seller = Seller.objects.get(id=context["seller"]["id"])
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ][
+                "id"
             ]
         )
-    # context["non_pending_cutoff"] = non_pending_cutoff
-    context["pending_count"] = 0
-    context["scheduled_count"] = 0
-    context["complete_count"] = 0
-    context["cancelled_count"] = 0
-    for order in orders:
-        if order.status == Order.PENDING:
-            context["pending_count"] += 1
-        # if order.end_date >= non_pending_cutoff:
-        elif order.status == Order.SCHEDULED:
-            context["scheduled_count"] += 1
-        elif order.status == Order.COMPLETE:
-            context["complete_count"] += 1
-        elif order.status == Order.CANCELLED:
-            context["cancelled_count"] += 1
-    context["status_complete_link"] = seller.get_dashboard_status_url(
-        Order.COMPLETE, snippet_name="table_status_orders", **link_params
-    )
-    context["status_cancelled_link"] = seller.get_dashboard_status_url(
-        Order.CANCELLED, snippet_name="table_status_orders", **link_params
-    )
-    context["status_scheduled_link"] = seller.get_dashboard_status_url(
-        Order.SCHEDULED, snippet_name="table_status_orders", **link_params
-    )
-    context["status_pending_link"] = seller.get_dashboard_status_url(
-        Order.PENDING, snippet_name="table_status_orders", **link_params
-    )
-    # print(context["status_pending_link"])
-    return render(request, "supplier_dashboard/bookings.html", context)
+        if link_params.get("service_date", None) is not None:
+            orders = orders.filter(end_date=link_params["service_date"])
+        if link_params.get("location_id", None) is not None:
+            orders = orders.filter(
+                order_group__seller_product_seller_location__seller_location_id=link_params[
+                    "location_id"
+                ]
+            )
+        # context["non_pending_cutoff"] = non_pending_cutoff
+        context["pending_count"] = 0
+        context["scheduled_count"] = 0
+        context["complete_count"] = 0
+        context["cancelled_count"] = 0
+        for order in orders:
+            if order.status == Order.PENDING:
+                context["pending_count"] += 1
+            # if order.end_date >= non_pending_cutoff:
+            elif order.status == Order.SCHEDULED:
+                context["scheduled_count"] += 1
+            elif order.status == Order.COMPLETE:
+                context["complete_count"] += 1
+            elif order.status == Order.CANCELLED:
+                context["cancelled_count"] += 1
+        query_params = ""
+        if link_params:
+            query_params = f"&{urlencode(link_params)}"
+        context["status_complete_link"] = (
+            f"/supplier/bookings/?tab={Order.COMPLETE}{query_params}"
+        )
+        context["status_cancelled_link"] = (
+            f"/supplier/bookings/?tab={Order.CANCELLED}{query_params}"
+        )
+        context["status_scheduled_link"] = (
+            f"/supplier/bookings/?tab={Order.SCHEDULED}{query_params}"
+        )
+        context["status_pending_link"] = (
+            f"/supplier/bookings/?tab={Order.PENDING}{query_params}"
+        )
+        return render(request, "supplier_dashboard/bookings.html", context)
 
 
 @login_required(login_url="/admin/login/")
