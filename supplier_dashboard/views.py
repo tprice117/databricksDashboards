@@ -1148,6 +1148,11 @@ def received_invoice_detail(request, invoice_id):
     return render(request, "supplier_dashboard/received_invoice_detail.html", context)
 
 
+def messages_clear(request):
+    """Clear the Django messages currently displayed on the page."""
+    return HttpResponse("")
+
+
 @api_view(["GET"])
 @authentication_classes([])
 @permission_classes([])
