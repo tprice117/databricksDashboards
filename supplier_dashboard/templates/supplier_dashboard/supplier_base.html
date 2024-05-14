@@ -24,9 +24,18 @@
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
     <!-- https://sweetalert2.github.io/ -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- The callback parameter is required, so we use console.debug as a noop -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE&callback=console.debug&libraries=maps,marker&v=beta">
+    </script>
     {% block stylesheet %}{% endblock %}
     {% block javascript_head %}{% endblock %}
     <style>
+        /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      gmp-map {
+        height: 100%;
+      }
         .accept-button {
             background: var(--bs-success);
         }

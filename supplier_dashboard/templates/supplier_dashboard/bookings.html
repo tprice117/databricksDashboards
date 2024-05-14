@@ -1,270 +1,278 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
-{% block title %}Bookings{% endblock %}
+{% block title %}
+    Bookings
+{% endblock %}
 {% block stylesheet %}
-<style>
-    .status-card {
-        cursor: pointer;
-    }
-
-    .status-selected {
-        background-color: var(--bs-btn-hover-bg);
-    }
-
-    .status-selected {
-        border: 2px solid #007bff !important;
-        /* Change border color to Bootstrap's primary color */
-        position: relative;
-        /* Needed to position the checkmark */
-    }
-
-    /* Add a checkmark icon to selected cards */
-    .status-selected1::after {
-        content: "\f00c";
-        /* Unicode for Font Awesome's checkmark icon */
-        font-family: "Font Awesome 5 Free";
-        /* Font Awesome's font-family */
-        font-weight: 900;
-        /* Needed for Font Awesome's solid icons */
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 24px;
-        color: #007bff;
-        /* Same color as the border */
-    }
-
-    @keyframes pop-in {
-        0% {
-            opacity: 0;
-            transform: scale(0.1);
+    <style>
+        .status-card,
+        .page-item {
+            cursor: pointer;
         }
-
-        100% {
-            opacity: 1;
-            transform: scale(1);
+        
+        .status-selected {
+            background-color: var(--bs-btn-hover-bg);
         }
-    }
-
-    #pending-count-badge,
-    #scheduled-count-badge,
-    #complete-count-badge,
-    #cancelled-count-badge {
-        animation: pop-in 0.5s;
-    }
-
-    .status-card[disabled] {
-        pointer-events: none;
-        /* Optional: Change the cursor to not-allowed to indicate the div is disabled */
-        cursor: not-allowed;
-        color: var(--bs-btn-disabled-color);
-        pointer-events: none;
-        background-color: var(--bs-btn-disabled-bg);
-        border-color: var(--bs-btn-disabled-border-color);
-        opacity: var(--bs-btn-disabled-opacity);
-    }
-</style>
+        
+        .status-selected {
+            border: 2px solid #007bff !important;
+            /* Change border color to Bootstrap's primary color */
+            position: relative;
+            /* Needed to position the checkmark */
+        }
+        
+        /* Add a checkmark icon to selected cards */
+        .status-selected1::after {
+            content: "\f00c";
+            /* Unicode for Font Awesome's checkmark icon */
+            font-family: "Font Awesome 5 Free";
+            /* Font Awesome's font-family */
+            font-weight: 900;
+            /* Needed for Font Awesome's solid icons */
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #007bff;
+            /* Same color as the border */
+        }
+        
+        @keyframes pop-in {
+            0% {
+                opacity: 0;
+                transform: scale(0.1);
+            }
+        
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        #pending-count-badge,
+        #scheduled-count-badge,
+        #complete-count-badge,
+        #cancelled-count-badge {
+            animation: pop-in 0.5s;
+        }
+        
+        .status-card[disabled],
+        .page-item[disabled] {
+            pointer-events: none;
+            /* Optional: Change the cursor to not-allowed to indicate the div is disabled */
+            cursor: not-allowed;
+            color: var(--bs-btn-disabled-color);
+            pointer-events: none;
+            background-color: var(--bs-btn-disabled-bg);
+            border-color: var(--bs-btn-disabled-border-color);
+            opacity: var(--bs-btn-disabled-opacity);
+        }
+    </style>
 {% endblock %}
 {% block javascript %}
-<script>
-    // function selectCard(card) {
-    //     card.classList.toggle('status-selected');
-    // }
-    function selectCard(card) {
+    <script>
+        // function selectCard(card) {
+        //     card.classList.toggle('status-selected');
+        // }
+        function selectCard(card) {
+            // Get all cards
+            var cards = document.querySelectorAll(".status-card");
+        
+            // Loop through all cards
+            for (var i = 0; i < cards.length; i++) {
+                // Remove the 'status-selected' class from each card
+                cards[i].classList.remove("status-selected");
+            }
+        
+            // Add the 'status-selected' class to the clicked card
+            card.classList.add("status-selected");
+        }
+        
         // Get all cards
-        var cards = document.querySelectorAll('.status-card');
-
+        var cards = document.querySelectorAll(".status-card");
+        
         // Loop through all cards
         for (var i = 0; i < cards.length; i++) {
-            // Remove the 'status-selected' class from each card
-            cards[i].classList.remove('status-selected');
+            // Add a click event listener to each card
+            cards[i].addEventListener("click", function () {
+                selectCard(this);
+            });
         }
-
-        // Add the 'status-selected' class to the clicked card
-        card.classList.add('status-selected');
-    }
-
-    // Get all cards
-    var cards = document.querySelectorAll('.status-card');
-
-    // Loop through all cards
-    for (var i = 0; i < cards.length; i++) {
-        // Add a click event listener to each card
-        cards[i].addEventListener('click', function () {
-            selectCard(this);
-        });
-    }
-</script>
+    </script>
 {% endblock %}
 {% block content %}
-<div class="container-fluid" hx-disabled-elt=".status-card, button">
-    <h3 class="text-dark mb-4">My Bookings</h3>
-    <div class="row">
-        <div class="col-md-6 col-xl-3 mb-4">
-            <div class="card shadow border-start-primary py-2 status-card btn status-selected"
-                hx-get="{{status_pending_link}}" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML"
-                hx-indicator="#htmx-indicator-status">
-                <div class="card-body">
-                    <div class="row align-items-center no-gutters">
-                        <div class="col me-2">
-                            <div class="text-uppercase text-primary fw-bold text-xs mb-1">
-                                <span>PENDING</span>
-                            </div>
-                            <div class="text-dark fw-bold h5 mb-0">
-                                <span id="pending-count-badge">{{pending_count}}</span>
-                                <span class="htmx-indicator" id="htmx-indicator-status">
-                                    <img class="svg-loader"
-                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
-                                </span>
-                            </div>
-                            <!-- <div class="text-dark text-xs">
+    <div class="container-fluid" hx-disabled-elt=".status-card, button">
+        <h3 class="text-dark mb-4">My Bookings</h3>
+        <div class="row">
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card shadow border-start-primary py-2 status-card btn status-selected" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col me-2">
+                                <div class="text-uppercase text-primary fw-bold text-xs mb-1">
+                                    <span>PENDING</span>
+                                </div>
+                                <div class="text-dark fw-bold h5 mb-0">
+                                    <span id="pending-count-badge">{{ pending_count }}</span>
+                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </div>
+                                <!--            <div class="text-dark text-xs">
                                 <span class="text-muted">Anytime</span>
-                            </div> -->
+                            </div>            -->
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
+                            </div>
                         </div>
-                        <div class="col-auto"><i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card shadow border-start-success py-2 status-card btn" hx-get="{{ status_scheduled_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-scheduled">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col me-2">
+                                <div class="text-uppercase text-success fw-bold text-xs mb-1">
+                                    <span>SCHEDULED</span>
+                                </div>
+                                <div class="text-dark fw-bold h5 mb-0">
+                                    <span id="scheduled-count-badge">{{ scheduled_count }}</span>
+                                    <span class="htmx-indicator" id="htmx-indicator-status-scheduled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </div>
+                                <!--            <div class="text-dark text-xs">
+                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
+                            </div>            -->
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{ status_complete_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-completed">
+                    <!-- onclick="selectCard(this)" -->
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col me-2">
+                                <div class="text-uppercase text-info fw-bold text-xs mb-1">
+                                    <span>COMPLETED</span>
+                                </div>
+                                <div class="text-dark fw-bold h5 mb-0">
+                                    <span id="complete-count-badge">{{ complete_count }}</span>
+                                    <span class="htmx-indicator" id="htmx-indicator-status-completed"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </div>
+                                <!--            <div class="text-dark text-xs">
+                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
+                            </div>            -->
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{ status_cancelled_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-cancelled">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col me-2">
+                                <div class="text-uppercase text-warning fw-bold text-xs mb-1">
+                                    <span>CANCELLED</span>
+                                </div>
+                                <div class="text-dark fw-bold h5 mb-1">
+                                    <span id="cancelled-count-badge">{{ cancelled_count }}</span>
+                                    <span class="htmx-indicator" id="htmx-indicator-status-cancelled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </div>
+                                <!--            <div class="text-dark text-xs">
+                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
+                            </div>            -->
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-xl-3 mb-4">
-            <div class="card shadow border-start-success py-2 status-card btn" hx-get="{{status_scheduled_link}}"
-                hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status-scheduled">
-                <div class="card-body">
-                    <div class="row align-items-center no-gutters">
-                        <div class="col me-2">
-                            <div class="text-uppercase text-success fw-bold text-xs mb-1">
-                                <span>SCHEDULED</span>
-                            </div>
-                            <div class="text-dark fw-bold h5 mb-0">
-                                <span id="scheduled-count-badge">{{scheduled_count}}</span>
-                                <span class="htmx-indicator" id="htmx-indicator-status-scheduled">
-                                    <img class="svg-loader"
-                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
-                                </span>
-                            </div>
-                            <!-- <div class="text-dark text-xs">
-                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div> -->
-                        </div>
-                        <div class="col-auto"><i class="fas fa-calendar-day fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
+                <!-- <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-status">Loading...</span> -->
+                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
-        </div>
-        <div class="col-md-6 col-xl-3 mb-4">
-            <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{status_complete_link}}"
-                hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status-completed">
-                <!-- onclick="selectCard(this)" -->
-                <div class="card-body">
-                    <div class="row align-items-center no-gutters">
-                        <div class="col me-2">
-                            <div class="text-uppercase text-info fw-bold text-xs mb-1">
-                                <span>COMPLETED</span>
-                            </div>
-                            <div class="text-dark fw-bold h5 mb-0">
-                                <span id="complete-count-badge">{{complete_count}}</span>
-                                <span class="htmx-indicator" id="htmx-indicator-status-completed">
-                                    <img class="svg-loader"
-                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
-                                </span>
-                            </div>
-                            <!-- <div class="text-dark text-xs">
-                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div> -->
-                        </div>
-                        <div class="col-auto"><i class="fas fa-calendar-check fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Service Date</th>
+                                <th>Product</th>
+                                <th>Booking Address</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="booking-results" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Service Date</strong>
+                                </td>
+                                <td>
+                                    <strong>Product</strong>
+                                </td>
+                                <td>
+                                    <strong>Booking Address</strong>
+                                </td>
+                                <td>
+                                    <strong>Type</strong>
+                                </td>
+                                <td>
+                                    <strong>Status</strong>
+                                </td>
+                                <td>
+                                    <strong></strong>
+                                </td>
+                                <td>
+                                    <strong></strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-xl-3 mb-4">
-            <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{status_cancelled_link}}"
-                hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click"
-                hx-indicator="#htmx-indicator-status-cancelled">
-                <div class="card-body">
-                    <div class="row align-items-center no-gutters">
-                        <div class="col me-2">
-                            <div class="text-uppercase text-warning fw-bold text-xs mb-1">
-                                <span>CANCELLED</span>
-                            </div>
-                            <div class="text-dark fw-bold h5 mb-1">
-                                <span id="cancelled-count-badge">{{cancelled_count}}</span>
-                                <span class="htmx-indicator" id="htmx-indicator-status-cancelled">
-                                    <img class="svg-loader"
-                                        src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" />
-                                </span>
-                            </div>
-                            <!-- <div class="text-dark text-xs">
-                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div> -->
-                        </div>
-                        <div class="col-auto"><i class="fas fa-calendar-times fa-2x text-gray-300"></i>
-                        </div>
+                <div class="row invisible" id="bookings-pagination">
+                    <div class="col-md-6 align-self-center">
+                        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
+                                </li>
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">1</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">2</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">3</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
+                                </li>
+                            </ul>
+                        </nav>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card shadow">
-        <div class="card-header py-3">
-            <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
-            <!-- <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-status">Loading...</span> -->
-        </div>
-        <div class="card-body">
-            <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                <table class="table my-0" id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>Service Date</th>
-                            <th>Product</th>
-                            <th>Booking Address</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="booking-results" hx-get="{{status_pending_link}}" hx-trigger="load" hx-swap="outerHTML"
-                        hx-indicator="#htmx-indicator-status">
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td><strong>Service Date</strong></td>
-                            <td><strong>Product</strong></td>
-                            <td><strong>Booking Address</strong></td>
-                            <td><strong>Type</strong></td>
-                            <td><strong>Status</strong></td>
-                            <td><strong></strong></td>
-                            <td><strong></strong></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            <!-- <div class="row">
-                <div class="col-md-6 align-self-center">
-                    <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
-                        Showing 1 to 10 of 27</p>
-                </div>
-                <div class="col-md-6">
-                    <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
-                        <ul class="pagination">
-                            <li class="page-item disabled"><a class="page-link" aria-label="Previous" href="#"><span
-                                        aria-hidden="true">«</span></a></li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" aria-label="Next" href="#"><span
-                                        aria-hidden="true">»</span></a></li>
-                        </ul>
-                    </nav>
-                </div>
-            </div> -->
-        </div>
-    </div>
-</div>
 {% endblock %}
