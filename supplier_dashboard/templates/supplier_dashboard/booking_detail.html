@@ -21,6 +21,10 @@
                         </p>
                         <p id="booking-status">{{ order.status }}</p>
                         <p style="margin-bottom: 0px;">
+                            <strong>Type</strong>
+                        </p>
+                        <p id="booking-status">{{ order.order_type }}</p>
+                        <p style="margin-bottom: 0px;">
                             <strong>Created</strong>
                         </p>
                         <p>{{ order.created_on }}</p>
@@ -111,12 +115,12 @@
                             <strong>Name</strong>
                         </p>
                         <p>{{ order.order_group.user.first_name }}</p>
-                        <!--   <p style="margin-bottom: 0px;"><strong>Email</strong></p>
+                        <!--    <p style="margin-bottom: 0px;"><strong>Email</strong></p>
                     <p>
                         <a
                             href="mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order_id}}%5D">Request
                             Change</a>
-                    </p>   -->
+                    </p>    -->
                         <p style="margin-bottom: 0px;">
                             <strong>Phone</strong>
                         </p>
