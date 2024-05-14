@@ -556,7 +556,7 @@ def company(request):
 def bookings(request):
     link_params = {}
     context = {}
-    pagination_limit = 10
+    pagination_limit = 25
     page_number = 1
     # context["user"] = request.user
     context["seller"] = get_seller(request)
@@ -610,24 +610,29 @@ def bookings(request):
         }
         context["page_obj"] = page_obj
         context["pages"] = []
-        for i in paginator.page_range:
-            if query_params:
-                query_params["p"] = i
-                context["pages"].append(
-                    {
-                        "number": i,
-                        "is_current": i == page_obj.number,
-                        "url": f"/supplier/bookings/?{query_params.urlencode()}",
-                    }
-                )
-            else:
-                context["pages"].append(
-                    {
-                        "number": i,
-                        "is_current": i == page_obj.number,
-                        "url": f"/supplier/bookings/?p={i}",
-                    }
-                )
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/supplier/bookings/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = f"/supplier/bookings/?{query_params.urlencode()}"
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/supplier/bookings/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/supplier/bookings/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/supplier/bookings/?{query_params.urlencode()}"
+
         return render(
             request, "supplier_dashboard/snippets/table_status_orders.html", context
         )
