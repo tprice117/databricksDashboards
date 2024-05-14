@@ -1224,10 +1224,47 @@ def received_invoices(request):
     context = {}
     # context["user"] = request.user
     context["seller"] = get_seller(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    query_params = request.GET.copy()
     invoices = SellerInvoicePayable.objects.filter(
         seller_location__seller_id=request.session["seller"]["id"]
     ).order_by("-invoice_date")
-    context["seller_invoice_payables"] = invoices
+    paginator = Paginator(invoices, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = (
+        f"/supplier/received_invoices/?{query_params.urlencode()}"
+    )
+    query_params["p"] = page_number
+    context["page_current_link"] = (
+        f"/supplier/received_invoices/?{query_params.urlencode()}"
+    )
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = (
+            f"/supplier/received_invoices/?{query_params.urlencode()}"
+        )
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = (
+            f"/supplier/received_invoices/?{query_params.urlencode()}"
+        )
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = (
+        f"/supplier/received_invoices/?{query_params.urlencode()}"
+    )
     return render(request, "supplier_dashboard/received_invoices.html", context)
 
 
