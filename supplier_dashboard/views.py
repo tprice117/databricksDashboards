@@ -841,10 +841,16 @@ def booking_detail(request, order_id):
 def payouts(request):
     context = {}
     location_id = None
+    pagination_limit = 25
+    page_number = 1
     if request.method == "POST":
         location_id = request.POST.get("location_id", None)
     elif request.method == "GET":
         location_id = request.GET.get("location_id", None)
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
     # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["seller"] = get_seller(request)
@@ -862,7 +868,7 @@ def payouts(request):
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )
-    context["payouts"] = []
+    payouts = []
     context["total_paid"] = 0
     context["paid_this_week"] = 0
     context["not_yet_paid"] = 0
@@ -872,7 +878,29 @@ def payouts(request):
         context["not_yet_paid"] += order.needed_payout_to_seller()
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
-        context["payouts"].extend([p for p in order.payouts.all()])
+        payouts.extend([p for p in order.payouts.all()])
+    paginator = Paginator(payouts, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    query_params = request.GET.copy()
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    query_params["p"] = page_number
+    context["page_current_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
     return render(request, "supplier_dashboard/payouts.html", context)
 
 
