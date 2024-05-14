@@ -28,13 +28,20 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+                {% if seller_location.latitude and seller_location.longitude %}
+                    <gmp-map center="{{ seller_location.latitude }},{{ seller_location.longitude }}" zoom="14" map-id="DEMO_MAP_ID">
+                        <gmp-advanced-marker position="{{ seller_location.latitude }},{{ seller_location.longitude }}" title="{{ seller_location.name }}"></gmp-advanced-marker>
+                    </gmp-map>
+                {% else %}
+                    <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+                {% endif %}
+                <a class="card-link" href="https://www.google.com/maps/place/{{ seller_location.formatted_address }}" target="_blank">Google Maps</a>
             </div>
         </div>
     </div>
     <!-- End: 1 Row 2 Columns -->
     <!-- Start: 1 Row 2 Columns -->
-    <div class="container">
+    <div class="container mt-3">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
                 <div class="card">
@@ -120,9 +127,9 @@
                         </p>
                         <!-- TODO: Set up Stripe integration and remove the following for first iteration -->
                         <p>Payouts can be made by ACH (via Stripe Connect) or by check. Stripe Connect will be used, if configured, otherwise a check will be sent. Please contact us to set up Stripe.</p>
-                        <!--   <p style="margin-bottom: 0px;"><strong>Receive Payments by ACH (Stripe
+                        <!--       <p style="margin-bottom: 0px;"><strong>Receive Payments by ACH (Stripe
                             Connect)&nbsp;</strong></p><button class="btn btn-primary" type="button">Setup up Stripe
-                        Connect</button>   -->
+                        Connect</button>       -->
                         <p style="margin-top: 16px;">
                             <strong>Receive Payments by Check</strong>
                         </p>
@@ -148,7 +155,7 @@
                                 <button class="btn btn-primary" type="submit" name="payout_submit" id="submit-button">Save</button>
                             </div>
                         </form>
-                        <!--   <div class="row">
+                        <!--       <div class="row">
                         <div class="col">
                             <p style="margin-bottom: 0px;">Payee Name</p>
                         </div>
@@ -200,7 +207,7 @@
                     <div class="row" style="margin-top: 24px;">
                         <div class="col"><button class="btn btn-primary" type="button">Save</button>
                         </div>
-                    </div>   -->
+                    </div>       -->
                     </div>
                 </div>
             </div>

@@ -38,13 +38,19 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+                {% if order.order_group.user_address.latitude and order.order_group.user_address.longitude %}
+                    <gmp-map center="{{ order.order_group.user_address.latitude }},{{ order.order_group.user_address.longitude }}" zoom="14" map-id="DEMO_MAP_ID">
+                        <gmp-advanced-marker position="{{ order.order_group.user_address.latitude }},{{ order.order_group.user_address.longitude }}" title="{{ order.order_group.user_address.name }}"></gmp-advanced-marker>
+                    </gmp-map>
+                {% else %}
+                    <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+                {% endif %}
             </div>
         </div>
     </div>
     <!-- End: 1 Row 2 Columns -->
     <!-- Start: 1 Row 2 Columns -->
-    <div class="container">
+    <div class="container mt-3">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
                 <div class="card">
@@ -79,7 +85,9 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Address</strong>
                         </p>
-                        <p>{{ order.order_group.user_address.formatted_address }}</p>
+                        <p>
+                            <a class="card-link" href="https://www.google.com/maps/place/{{ order.order_group.user_address.formatted_address }}" target="_blank">{{ order.order_group.user_address.formatted_address }}</a>
+                        </p>
                         <p style="margin-bottom: 0px;">
                             <strong>Access Details</strong>
                         </p>
@@ -115,12 +123,12 @@
                             <strong>Name</strong>
                         </p>
                         <p>{{ order.order_group.user.first_name }}</p>
-                        <!--    <p style="margin-bottom: 0px;"><strong>Email</strong></p>
+                        <!--                              <p style="margin-bottom: 0px;"><strong>Email</strong></p>
                     <p>
                         <a
                             href="mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order_id}}%5D">Request
                             Change</a>
-                    </p>    -->
+                    </p>                              -->
                         <p style="margin-bottom: 0px;">
                             <strong>Phone</strong>
                         </p>
