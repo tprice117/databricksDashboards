@@ -946,7 +946,13 @@ def location_detail(request, location_id):
                             "postal_code": seller_location.mailing_address.postal_code,
                         }
                     )
-                payout_form = SellerPayoutForm(initial=seller_payout_initial)
+                context["payout_form"] = SellerPayoutForm(initial=seller_payout_initial)
+                context["seller_communication_form"] = SellerCommunicationForm(
+                    initial={
+                        "dispatch_email": seller_location.order_email,
+                        "dispatch_phone": seller_location.order_phone,
+                    }
+                )
                 # Load the form that was submitted.
                 form = compliance_form_class(request.POST, request.FILES)
                 context["compliance_form"] = form
@@ -1022,7 +1028,7 @@ def location_detail(request, location_id):
                     raise InvalidFormError(form, "Invalid SellerLocationComplianceForm")
             elif "payout_submit" in request.POST:
                 # Load other forms so template has complete data.
-                compliance_form = compliance_form_class(
+                context["compliance_form"] = compliance_form_class(
                     initial={
                         "gl_coi": seller_location.gl_coi,
                         "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
@@ -1033,7 +1039,12 @@ def location_detail(request, location_id):
                         "w9": seller_location.w9,
                     }
                 )
-                context["compliance_form"] = compliance_form
+                context["seller_communication_form"] = SellerCommunicationForm(
+                    initial={
+                        "dispatch_email": seller_location.order_email,
+                        "dispatch_phone": seller_location.order_phone,
+                    }
+                )
                 # Load the form that was submitted.
                 payout_form = SellerPayoutForm(request.POST)
                 context["payout_form"] = payout_form
@@ -1102,6 +1113,58 @@ def location_detail(request, location_id):
                             save_model = seller_location.mailing_address
                 else:
                     raise InvalidFormError(payout_form, "Invalid SellerPayoutForm")
+            elif "communication_submit" in request.POST:
+                # Load other forms so template has complete data.
+                context["compliance_form"] = compliance_form_class(
+                    initial={
+                        "gl_coi": seller_location.gl_coi,
+                        "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
+                        "auto_coi": seller_location.auto_coi,
+                        "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
+                        "workers_comp_coi": seller_location.workers_comp_coi,
+                        "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
+                        "w9": seller_location.w9,
+                    }
+                )
+                seller_payout_initial = {
+                    "payee_name": seller_location.payee_name,
+                }
+                if hasattr(seller_location, "mailing_address"):
+                    seller_payout_initial.update(
+                        {
+                            "street": seller_location.mailing_address.street,
+                            "city": seller_location.mailing_address.city,
+                            "state": seller_location.mailing_address.state,
+                            "postal_code": seller_location.mailing_address.postal_code,
+                        }
+                    )
+                context["payout_form"] = SellerPayoutForm(initial=seller_payout_initial)
+                # Load the form that was submitted.
+                seller_communication_form = SellerCommunicationForm(request.POST)
+                context["seller_communication_form"] = seller_communication_form
+                if seller_communication_form.is_valid():
+                    save_model = None
+                    if (
+                        seller_communication_form.cleaned_data.get("dispatch_email")
+                        != seller_location.order_email
+                    ):
+                        seller_location.order_email = (
+                            seller_communication_form.cleaned_data.get("dispatch_email")
+                        )
+                        save_model = seller_location
+                    if (
+                        seller_communication_form.cleaned_data.get("dispatch_phone")
+                        != seller_location.order_phone
+                    ):
+                        seller_location.order_phone = (
+                            seller_communication_form.cleaned_data.get("dispatch_phone")
+                        )
+                        save_model = seller_location
+                else:
+                    raise InvalidFormError(
+                        seller_communication_form,
+                        "Invalid SellerLocationCommunicationForm",
+                    )
 
             if save_model:
                 save_model.save()
@@ -1117,7 +1180,7 @@ def location_detail(request, location_id):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
-        compliance_form = compliance_form_class(
+        context["compliance_form"] = compliance_form_class(
             initial={
                 "gl_coi": seller_location.gl_coi,
                 "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
@@ -1128,7 +1191,6 @@ def location_detail(request, location_id):
                 "w9": seller_location.w9,
             }
         )
-        context["compliance_form"] = compliance_form
         seller_payout_initial = {
             "payee_name": seller_location.payee_name,
         }
@@ -1141,8 +1203,13 @@ def location_detail(request, location_id):
                     "postal_code": seller_location.mailing_address.postal_code,
                 }
             )
-        payout_form = SellerPayoutForm(initial=seller_payout_initial)
-        context["payout_form"] = payout_form
+        context["payout_form"] = SellerPayoutForm(initial=seller_payout_initial)
+        context["seller_communication_form"] = SellerCommunicationForm(
+            initial={
+                "dispatch_email": seller_location.order_email,
+                "dispatch_phone": seller_location.order_phone,
+            }
+        )
 
     return render(request, "supplier_dashboard/location_detail.html", context)
 
