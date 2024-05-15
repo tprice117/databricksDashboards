@@ -16,13 +16,15 @@
                         <h4 class="card-title">{{ seller_location.name }}</h4>
                         <h6 class="text-muted card-subtitle mb-2">{{ seller_location.address }}</h6>
                         <p style="margin-bottom: 0px;">
-                            <strong>Status</strong>
+                            <strong>Address</strong>
                         </p>
-                        <p>{{ order.status }}</p>
+                        <p>
+                            <a class="card-link" href="https://www.google.com/maps/place/{{ seller_location.formatted_address|urlencode }}" target="_blank">{{ seller_location.formatted_address }}</a>
+                        </p>
                         <p style="margin-bottom: 0px;">
                             <strong>Created</strong>
                         </p>
-                        <p>{{ order.created_on }}</p>
+                        <p>{{ seller_location.created_on }}</p>
                         <p class="card-text"></p>
                     </div>
                 </div>
@@ -35,7 +37,6 @@
                 {% else %}
                     <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
                 {% endif %}
-                <a class="card-link" href="https://www.google.com/maps/place/{{ seller_location.formatted_address }}" target="_blank">Google Maps</a>
             </div>
         </div>
     </div>
@@ -127,9 +128,9 @@
                         </p>
                         <!-- TODO: Set up Stripe integration and remove the following for first iteration -->
                         <p>Payouts can be made by ACH (via Stripe Connect) or by check. Stripe Connect will be used, if configured, otherwise a check will be sent. Please contact us to set up Stripe.</p>
-                        <!--       <p style="margin-bottom: 0px;"><strong>Receive Payments by ACH (Stripe
+                        <!--          <p style="margin-bottom: 0px;"><strong>Receive Payments by ACH (Stripe
                             Connect)&nbsp;</strong></p><button class="btn btn-primary" type="button">Setup up Stripe
-                        Connect</button>       -->
+                        Connect</button>          -->
                         <p style="margin-top: 16px;">
                             <strong>Receive Payments by Check</strong>
                         </p>
@@ -155,7 +156,7 @@
                                 <button class="btn btn-primary" type="submit" name="payout_submit" id="submit-button">Save</button>
                             </div>
                         </form>
-                        <!--       <div class="row">
+                        <!--          <div class="row">
                         <div class="col">
                             <p style="margin-bottom: 0px;">Payee Name</p>
                         </div>
@@ -207,7 +208,7 @@
                     <div class="row" style="margin-top: 24px;">
                         <div class="col"><button class="btn btn-primary" type="button">Save</button>
                         </div>
-                    </div>       -->
+                    </div>          -->
                     </div>
                 </div>
             </div>

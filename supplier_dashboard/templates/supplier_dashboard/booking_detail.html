@@ -86,7 +86,7 @@
                             <strong>Address</strong>
                         </p>
                         <p>
-                            <a class="card-link" href="https://www.google.com/maps/place/{{ order.order_group.user_address.formatted_address }}" target="_blank">{{ order.order_group.user_address.formatted_address }}</a>
+                            <a class="card-link" href="https://www.google.com/maps/place/{{ order.order_group.user_address.formatted_address|urlencode }}" target="_blank">{{ order.order_group.user_address.formatted_address }}</a>
                         </p>
                         <p style="margin-bottom: 0px;">
                             <strong>Access Details</strong>
@@ -123,12 +123,12 @@
                             <strong>Name</strong>
                         </p>
                         <p>{{ order.order_group.user.first_name }}</p>
-                        <!--                              <p style="margin-bottom: 0px;"><strong>Email</strong></p>
+                        <!--                                <p style="margin-bottom: 0px;"><strong>Email</strong></p>
                     <p>
                         <a
                             href="mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order_id}}%5D">Request
                             Change</a>
-                    </p>                              -->
+                    </p>                                -->
                         <p style="margin-bottom: 0px;">
                             <strong>Phone</strong>
                         </p>
