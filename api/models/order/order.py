@@ -250,52 +250,50 @@ class Order(BaseModel):
                 "Only 1 Order from an OrderGroup can be in the cart at a time"
             )
 
-    def post_save(sender, instance, created, **kwargs):
-        order_line_items = OrderLineItem.objects.filter(order=instance)
-        # if instance.submitted_on_has_changed and order_line_items.count() == 0:
+    def add_line_items(self, created):
+        order_line_items = OrderLineItem.objects.filter(order=self)
+        # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
             try:
                 # Create Delivery Fee OrderLineItem.
-                order_group_orders = Order.objects.filter(
-                    order_group=instance.order_group
-                )
+                order_group_orders = Order.objects.filter(order_group=self.order_group)
                 if order_group_orders.count() == 0:
                     delivery_fee = 0
-                    if instance.order_group.seller_product_seller_location.delivery_fee:
+                    if self.order_group.seller_product_seller_location.delivery_fee:
                         delivery_fee = (
-                            instance.order_group.seller_product_seller_location.delivery_fee
+                            self.order_group.seller_product_seller_location.delivery_fee
                         )
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=OrderLineItemType.objects.get(
                             code="DELIVERY"
                         ),
                         rate=delivery_fee,
                         quantity=1,
                         description="Delivery Fee",
-                        platform_fee_percent=instance.order_group.take_rate,
+                        platform_fee_percent=self.order_group.take_rate,
                         is_flat_rate=True,
                     )
 
                 # Create Removal Fee OrderLineItem.
                 if (
-                    instance.order_group.end_date == instance.end_date
+                    self.order_group.end_date == self.end_date
                     and order_group_orders.count() > 1
                 ):
                     removal_fee = 0
-                    if instance.order_group.seller_product_seller_location.removal_fee:
+                    if self.order_group.seller_product_seller_location.removal_fee:
                         removal_fee = (
-                            instance.order_group.seller_product_seller_location.removal_fee
+                            self.order_group.seller_product_seller_location.removal_fee
                         )
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=OrderLineItemType.objects.get(
                             code="REMOVAL"
                         ),
                         rate=removal_fee,
                         quantity=1,
                         description="Removal Fee",
-                        platform_fee_percent=instance.order_group.take_rate,
+                        platform_fee_percent=self.order_group.take_rate,
                         is_flat_rate=True,
                     )
                     # Don't add any other OrderLineItems if this is a removal.
@@ -303,85 +301,85 @@ class Order(BaseModel):
 
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
-                if hasattr(instance.order_group, "service"):
+                if hasattr(self.order_group, "service"):
                     order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=order_line_item_type,
-                        rate=instance.order_group.service.rate,
-                        quantity=instance.order_group.service.miles or 1,
-                        is_flat_rate=instance.order_group.service.miles is None,
-                        platform_fee_percent=instance.order_group.take_rate,
+                        rate=self.order_group.service.rate,
+                        quantity=self.order_group.service.miles or 1,
+                        is_flat_rate=self.order_group.service.miles is None,
+                        platform_fee_percent=self.order_group.take_rate,
                     )
 
                 # Rental Price.
-                if hasattr(instance.order_group, "rental"):
+                if hasattr(self.order_group, "rental"):
                     day_count = (
-                        (instance.end_date - instance.start_date).days
-                        if instance.end_date
-                        else 0
+                        (self.end_date - self.start_date).days if self.end_date else 0
                     )
                     days_over_included = (
-                        day_count - instance.order_group.rental.included_days
+                        day_count - self.order_group.rental.included_days
                     )
                     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
 
                     # Create OrderLineItem for Included Days.
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=order_line_item_type,
-                        rate=instance.order_group.rental.price_per_day_included,
-                        quantity=instance.order_group.rental.included_days,
+                        rate=self.order_group.rental.price_per_day_included,
+                        quantity=self.order_group.rental.included_days,
                         description="Included Days",
-                        platform_fee_percent=instance.order_group.take_rate,
+                        platform_fee_percent=self.order_group.take_rate,
                     )
 
                     # Create OrderLineItem for Additional Days.
                     if days_over_included > 0:
                         OrderLineItem.objects.create(
-                            order=instance,
+                            order=self,
                             order_line_item_type=order_line_item_type,
-                            rate=instance.order_group.rental.price_per_day_additional,
+                            rate=self.order_group.rental.price_per_day_additional,
                             quantity=days_over_included,
                             description="Additional Days",
-                            platform_fee_percent=instance.order_group.take_rate,
+                            platform_fee_percent=self.order_group.take_rate,
                         )
 
                 # Material Price.
-                if hasattr(instance.order_group, "material"):
+                if hasattr(self.order_group, "material"):
                     tons_over_included = (
-                        instance.order_group.tonnage_quantity or 0
-                    ) - instance.order_group.material.tonnage_included
+                        self.order_group.tonnage_quantity or 0
+                    ) - self.order_group.material.tonnage_included
                     order_line_item_type = OrderLineItemType.objects.get(
                         code="MATERIAL"
                     )
 
                     # Create OrderLineItem for Included Tons.
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=order_line_item_type,
-                        rate=instance.order_group.material.price_per_ton,
-                        quantity=instance.order_group.material.tonnage_included,
+                        rate=self.order_group.material.price_per_ton,
+                        quantity=self.order_group.material.tonnage_included,
                         description="Included Tons",
-                        platform_fee_percent=instance.order_group.take_rate,
+                        platform_fee_percent=self.order_group.take_rate,
                     )
 
                     # Create OrderLineItem for Additional Tons.
                     if tons_over_included > 0:
                         OrderLineItem.objects.create(
-                            order=instance,
+                            order=self,
                             order_line_item_type=order_line_item_type,
-                            rate=instance.order_group.material.price_per_ton,
+                            rate=self.order_group.material.price_per_ton,
                             quantity=tons_over_included,
                             description="Additional Tons",
-                            platform_fee_percent=instance.order_group.take_rate,
+                            platform_fee_percent=self.order_group.take_rate,
                         )
 
                 # Check for any Admin Policy checks.
-                instance.admin_policy_checks(orders=order_group_orders)
+                self.admin_policy_checks(orders=order_group_orders)
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
 
+    def post_save(sender, instance, created, **kwargs):
+        instance.add_line_items(created)
         notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
 
     def admin_policy_checks(self, orders=None):
