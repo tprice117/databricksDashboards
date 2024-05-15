@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from typing import List
 import json
 import uuid
 from django.contrib import messages
 from django.contrib.auth import logout
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
@@ -554,63 +555,136 @@ def company(request):
 @login_required(login_url="/admin/login/")
 def bookings(request):
     link_params = {}
-    if request.method == "POST":
-        if request.POST.get("service_date", None) is not None:
-            link_params["service_date"] = request.POST.get("service_date")
-        if request.POST.get("location_id", None) is not None:
-            link_params["location_id"] = request.POST.get("location_id")
-    elif request.method == "GET":
-        if request.GET.get("service_date", None) is not None:
-            link_params["service_date"] = request.GET.get("service_date")
-        if request.GET.get("location_id", None) is not None:
-            link_params["location_id"] = request.GET.get("location_id")
-    # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
     context = {}
+    pagination_limit = 25
+    page_number = 1
     # context["user"] = request.user
     context["seller"] = get_seller(request)
-    seller = Seller.objects.get(id=context["seller"]["id"])
-    orders = Order.objects.filter(
-        order_group__seller_product_seller_location__seller_product__seller_id=context[
-            "seller"
-        ]["id"]
-    )
-    if link_params.get("service_date", None) is not None:
-        orders = orders.filter(end_date=link_params["service_date"])
-    if link_params.get("location_id", None) is not None:
-        orders = orders.filter(
-            order_group__seller_product_seller_location__seller_location_id=link_params[
-                "location_id"
+    if request.GET.get("service_date", None) is not None:
+        link_params["service_date"] = request.GET.get("service_date")
+    if request.GET.get("location_id", None) is not None:
+        link_params["location_id"] = request.GET.get("location_id")
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        query_params = request.GET.copy()
+        # Ensure tab is valid. Default to PENDING if not.
+        tab = request.GET.get("tab", Order.PENDING)
+        if tab.upper() not in [
+            Order.PENDING,
+            Order.SCHEDULED,
+            Order.COMPLETE,
+            Order.CANCELLED,
+        ]:
+            tab = Order.PENDING
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ][
+                "id"
+            ]
+        ).filter(status=tab.upper())
+        # TODO: Check the delay for a seller with large number of orders, like Hillen.
+        # if status.upper() != Order.PENDING:
+        #     orders = orders.filter(end_date__gt=non_pending_cutoff)
+        if link_params.get("service_date", None) is not None:
+            orders = orders.filter(end_date=link_params["service_date"])
+        if link_params.get("location_id", None) is not None:
+            orders = orders.filter(
+                order_group__seller_product_seller_location__seller_location_id=link_params[
+                    "location_id"
+                ]
+            )
+        # Select related fields to reduce db queries.
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+        )
+        orders = orders.order_by("-end_date")
+        paginator = Paginator(orders, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["status"] = {
+            "name": tab.upper(),
+            "page_obj": page_obj,
+        }
+        context["page_obj"] = page_obj
+        context["pages"] = []
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/supplier/bookings/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = f"/supplier/bookings/?{query_params.urlencode()}"
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/supplier/bookings/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/supplier/bookings/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/supplier/bookings/?{query_params.urlencode()}"
+
+        return render(
+            request, "supplier_dashboard/snippets/table_status_orders.html", context
+        )
+    else:
+        # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
+        # seller = Seller.objects.get(id=context["seller"]["id"])
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ][
+                "id"
             ]
         )
-    # context["non_pending_cutoff"] = non_pending_cutoff
-    context["pending_count"] = 0
-    context["scheduled_count"] = 0
-    context["complete_count"] = 0
-    context["cancelled_count"] = 0
-    for order in orders:
-        if order.status == Order.PENDING:
-            context["pending_count"] += 1
-        # if order.end_date >= non_pending_cutoff:
-        elif order.status == Order.SCHEDULED:
-            context["scheduled_count"] += 1
-        elif order.status == Order.COMPLETE:
-            context["complete_count"] += 1
-        elif order.status == Order.CANCELLED:
-            context["cancelled_count"] += 1
-    context["status_complete_link"] = seller.get_dashboard_status_url(
-        Order.COMPLETE, snippet_name="table_status_orders", **link_params
-    )
-    context["status_cancelled_link"] = seller.get_dashboard_status_url(
-        Order.CANCELLED, snippet_name="table_status_orders", **link_params
-    )
-    context["status_scheduled_link"] = seller.get_dashboard_status_url(
-        Order.SCHEDULED, snippet_name="table_status_orders", **link_params
-    )
-    context["status_pending_link"] = seller.get_dashboard_status_url(
-        Order.PENDING, snippet_name="table_status_orders", **link_params
-    )
-    # print(context["status_pending_link"])
-    return render(request, "supplier_dashboard/bookings.html", context)
+        if link_params.get("service_date", None) is not None:
+            orders = orders.filter(end_date=link_params["service_date"])
+        if link_params.get("location_id", None) is not None:
+            orders = orders.filter(
+                order_group__seller_product_seller_location__seller_location_id=link_params[
+                    "location_id"
+                ]
+            )
+        # context["non_pending_cutoff"] = non_pending_cutoff
+        context["pending_count"] = 0
+        context["scheduled_count"] = 0
+        context["complete_count"] = 0
+        context["cancelled_count"] = 0
+        for order in orders:
+            if order.status == Order.PENDING:
+                context["pending_count"] += 1
+            # if order.end_date >= non_pending_cutoff:
+            elif order.status == Order.SCHEDULED:
+                context["scheduled_count"] += 1
+            elif order.status == Order.COMPLETE:
+                context["complete_count"] += 1
+            elif order.status == Order.CANCELLED:
+                context["cancelled_count"] += 1
+        query_params = ""
+        if link_params:
+            query_params = f"&{urlencode(link_params)}"
+        context["status_complete_link"] = (
+            f"/supplier/bookings/?tab={Order.COMPLETE}{query_params}"
+        )
+        context["status_cancelled_link"] = (
+            f"/supplier/bookings/?tab={Order.CANCELLED}{query_params}"
+        )
+        context["status_scheduled_link"] = (
+            f"/supplier/bookings/?tab={Order.SCHEDULED}{query_params}"
+        )
+        context["status_pending_link"] = (
+            f"/supplier/bookings/?tab={Order.PENDING}{query_params}"
+        )
+        return render(request, "supplier_dashboard/bookings.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -767,10 +841,16 @@ def booking_detail(request, order_id):
 def payouts(request):
     context = {}
     location_id = None
+    pagination_limit = 25
+    page_number = 1
     if request.method == "POST":
         location_id = request.POST.get("location_id", None)
     elif request.method == "GET":
         location_id = request.GET.get("location_id", None)
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
     # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["seller"] = get_seller(request)
@@ -788,7 +868,7 @@ def payouts(request):
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )
-    context["payouts"] = []
+    payouts = []
     context["total_paid"] = 0
     context["paid_this_week"] = 0
     context["not_yet_paid"] = 0
@@ -798,7 +878,29 @@ def payouts(request):
         context["not_yet_paid"] += order.needed_payout_to_seller()
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
-        context["payouts"].extend([p for p in order.payouts.all()])
+        payouts.extend([p for p in order.payouts.all()])
+    paginator = Paginator(payouts, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    query_params = request.GET.copy()
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    query_params["p"] = page_number
+    context["page_current_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
     return render(request, "supplier_dashboard/payouts.html", context)
 
 
@@ -826,10 +928,37 @@ def locations(request):
     context = {}
     # context["user"] = request.user
     context["seller"] = get_seller(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    query_params = request.GET.copy()
     seller_locations = SellerLocation.objects.filter(
         seller_id=request.session["seller"]["id"]
     )
-    context["seller_locations"] = seller_locations
+    paginator = Paginator(seller_locations, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    query_params["p"] = page_number
+    context["page_current_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = f"/supplier/locations/?{query_params.urlencode()}"
     return render(request, "supplier_dashboard/locations.html", context)
 
 
@@ -877,7 +1006,13 @@ def location_detail(request, location_id):
                             "postal_code": seller_location.mailing_address.postal_code,
                         }
                     )
-                payout_form = SellerPayoutForm(initial=seller_payout_initial)
+                context["payout_form"] = SellerPayoutForm(initial=seller_payout_initial)
+                context["seller_communication_form"] = SellerCommunicationForm(
+                    initial={
+                        "dispatch_email": seller_location.order_email,
+                        "dispatch_phone": seller_location.order_phone,
+                    }
+                )
                 # Load the form that was submitted.
                 form = compliance_form_class(request.POST, request.FILES)
                 context["compliance_form"] = form
@@ -953,7 +1088,7 @@ def location_detail(request, location_id):
                     raise InvalidFormError(form, "Invalid SellerLocationComplianceForm")
             elif "payout_submit" in request.POST:
                 # Load other forms so template has complete data.
-                compliance_form = compliance_form_class(
+                context["compliance_form"] = compliance_form_class(
                     initial={
                         "gl_coi": seller_location.gl_coi,
                         "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
@@ -964,7 +1099,12 @@ def location_detail(request, location_id):
                         "w9": seller_location.w9,
                     }
                 )
-                context["compliance_form"] = compliance_form
+                context["seller_communication_form"] = SellerCommunicationForm(
+                    initial={
+                        "dispatch_email": seller_location.order_email,
+                        "dispatch_phone": seller_location.order_phone,
+                    }
+                )
                 # Load the form that was submitted.
                 payout_form = SellerPayoutForm(request.POST)
                 context["payout_form"] = payout_form
@@ -1033,6 +1173,58 @@ def location_detail(request, location_id):
                             save_model = seller_location.mailing_address
                 else:
                     raise InvalidFormError(payout_form, "Invalid SellerPayoutForm")
+            elif "communication_submit" in request.POST:
+                # Load other forms so template has complete data.
+                context["compliance_form"] = compliance_form_class(
+                    initial={
+                        "gl_coi": seller_location.gl_coi,
+                        "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
+                        "auto_coi": seller_location.auto_coi,
+                        "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
+                        "workers_comp_coi": seller_location.workers_comp_coi,
+                        "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
+                        "w9": seller_location.w9,
+                    }
+                )
+                seller_payout_initial = {
+                    "payee_name": seller_location.payee_name,
+                }
+                if hasattr(seller_location, "mailing_address"):
+                    seller_payout_initial.update(
+                        {
+                            "street": seller_location.mailing_address.street,
+                            "city": seller_location.mailing_address.city,
+                            "state": seller_location.mailing_address.state,
+                            "postal_code": seller_location.mailing_address.postal_code,
+                        }
+                    )
+                context["payout_form"] = SellerPayoutForm(initial=seller_payout_initial)
+                # Load the form that was submitted.
+                seller_communication_form = SellerCommunicationForm(request.POST)
+                context["seller_communication_form"] = seller_communication_form
+                if seller_communication_form.is_valid():
+                    save_model = None
+                    if (
+                        seller_communication_form.cleaned_data.get("dispatch_email")
+                        != seller_location.order_email
+                    ):
+                        seller_location.order_email = (
+                            seller_communication_form.cleaned_data.get("dispatch_email")
+                        )
+                        save_model = seller_location
+                    if (
+                        seller_communication_form.cleaned_data.get("dispatch_phone")
+                        != seller_location.order_phone
+                    ):
+                        seller_location.order_phone = (
+                            seller_communication_form.cleaned_data.get("dispatch_phone")
+                        )
+                        save_model = seller_location
+                else:
+                    raise InvalidFormError(
+                        seller_communication_form,
+                        "Invalid SellerLocationCommunicationForm",
+                    )
 
             if save_model:
                 save_model.save()
@@ -1048,7 +1240,7 @@ def location_detail(request, location_id):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
-        compliance_form = compliance_form_class(
+        context["compliance_form"] = compliance_form_class(
             initial={
                 "gl_coi": seller_location.gl_coi,
                 "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
@@ -1059,7 +1251,6 @@ def location_detail(request, location_id):
                 "w9": seller_location.w9,
             }
         )
-        context["compliance_form"] = compliance_form
         seller_payout_initial = {
             "payee_name": seller_location.payee_name,
         }
@@ -1072,8 +1263,13 @@ def location_detail(request, location_id):
                     "postal_code": seller_location.mailing_address.postal_code,
                 }
             )
-        payout_form = SellerPayoutForm(initial=seller_payout_initial)
-        context["payout_form"] = payout_form
+        context["payout_form"] = SellerPayoutForm(initial=seller_payout_initial)
+        context["seller_communication_form"] = SellerCommunicationForm(
+            initial={
+                "dispatch_email": seller_location.order_email,
+                "dispatch_phone": seller_location.order_phone,
+            }
+        )
 
     return render(request, "supplier_dashboard/location_detail.html", context)
 
@@ -1083,10 +1279,47 @@ def received_invoices(request):
     context = {}
     # context["user"] = request.user
     context["seller"] = get_seller(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    query_params = request.GET.copy()
     invoices = SellerInvoicePayable.objects.filter(
         seller_location__seller_id=request.session["seller"]["id"]
     ).order_by("-invoice_date")
-    context["seller_invoice_payables"] = invoices
+    paginator = Paginator(invoices, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = (
+        f"/supplier/received_invoices/?{query_params.urlencode()}"
+    )
+    query_params["p"] = page_number
+    context["page_current_link"] = (
+        f"/supplier/received_invoices/?{query_params.urlencode()}"
+    )
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = (
+            f"/supplier/received_invoices/?{query_params.urlencode()}"
+        )
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = (
+            f"/supplier/received_invoices/?{query_params.urlencode()}"
+        )
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = (
+        f"/supplier/received_invoices/?{query_params.urlencode()}"
+    )
     return render(request, "supplier_dashboard/received_invoices.html", context)
 
 
@@ -1107,6 +1340,11 @@ def received_invoice_detail(request, invoice_id):
         context["is_pdf"] = False
     context["seller_invoice_payable_line_items"] = invoice_line_items
     return render(request, "supplier_dashboard/received_invoice_detail.html", context)
+
+
+def messages_clear(request):
+    """Clear the Django messages currently displayed on the page."""
+    return HttpResponse("")
 
 
 @api_view(["GET"])

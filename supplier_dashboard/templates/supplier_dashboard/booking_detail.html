@@ -1,304 +1,351 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
 {% load humanize %}
-{% block title %}Booking Details{% endblock %}
+{% block title %}
+    Booking Details
+{% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <h3 class="text-dark mb-1">Booking Details</h3>
-</div><!-- Start: 1 Row 2 Columns -->
-<div class="container" hx-disabled-elt=".status-card, button">
-    <div class="row" style="padding-bottom: 24px;">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">
-                        {{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
-                    </h4>
-                    <h6 class="text-muted card-subtitle mb-2">{{order.id}}</h6>
-                    <p style="margin-bottom: 0px;"><strong>Status</strong></p>
-                    <p id="booking-status">{{order.status}}</p>
-                    <p style="margin-bottom: 0px;"><strong>Created</strong></p>
-                    <p>{{order.created_on}}</p>
-                    <p class="card-text"></p>
-                    <div id="booking-detail-actions">
-                        {% include 'supplier_dashboard/snippets/booking_detail_actions.html' %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">Booking Details</h3>
+    </div>
+    <!-- Start: 1 Row 2 Columns -->
+    <div class="container" hx-disabled-elt=".status-card, button">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
+                        <h6 class="text-muted card-subtitle mb-2">{{ order.id }}</h6>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Status</strong>
+                        </p>
+                        <p id="booking-status">{{ order.status }}</p>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Type</strong>
+                        </p>
+                        <p id="booking-status">{{ order.order_type }}</p>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Created</strong>
+                        </p>
+                        <p>{{ order.created_on }}</p>
+                        <p class="card-text"></p>
+                        <div id="booking-detail-actions">
+                            {% include 'supplier_dashboard/snippets/booking_detail_actions.html' %}
+                        </div>
+                        <a class="card-link" href="#"></a>
+                        <a class="card-link" href="#"></a>
                     </div>
-                    <a class="card-link" href="#"></a>
-                    <a class="card-link" href="#"></a>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6"><iframe allowfullscreen="" frameborder="0"
-                src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe></div>
-    </div>
-</div><!-- End: 1 Row 2 Columns -->
-<!-- Start: 1 Row 2 Columns -->
-<div class="container">
-    <div class="row" style="padding-bottom: 24px;">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Schedule Details</h4>
-                    <p style="margin-bottom: 0px;"><strong>Service Date</strong></p>
-                    <p>{{order.end_date}}</p>
-                    <p style="margin-bottom: 0px;"><strong>Time Window</strong></p>
-                    <p>
-                        {% if order.order_group.time_slot %}
-                        {{ order.order_group.time_slot.name }}
-                        <br>
-                        {{ order.order_group.time_slot.start }}
-                        -
-                        {{ order.order_group.time_slot.end }}
-                        {% else %}
-                        Any
-                        {% endif %}
-                    </p>
-                    <a class="card-link" href="#"></a><a
-                        href="{% url 'supplier_bookings' %}?service_date={{ order.end_date|urlencode }}">See All
-                        Orders on this Service Date</a><a class="card-link" href="#"></a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Location Details</h4>
-                    <p style="margin-bottom: 0px;"><strong>Address</strong></p>
-                    <p>{{order.order_group.user_address.formatted_address}}</p>
-                    <p style="margin-bottom: 0px;"><strong>Access Details</strong></p>
-                    <p>
-                        {% if order.order_group.user_address.access_details %}
-                        {{ order.order_group.user_address.access_details }}
-                        {% else %}
-                        None
-                        {% endif %}
-                    </p>
-                    <p style="margin-bottom: 0px;">Additional/Placement Details</p>
-                    <p>
-                        {% if order.order_group.placement_details %}
-                        {{ order.order_group.placement_details }}
-                        {% else %}
-                        None
-                        {% endif %}
-                    </p>
-                </div>
+            <div class="col-md-6">
+                {% if order.order_group.user_address.latitude and order.order_group.user_address.longitude %}
+                    <gmp-map center="{{ order.order_group.user_address.latitude }},{{ order.order_group.user_address.longitude }}" zoom="14" map-id="DEMO_MAP_ID">
+                        <gmp-advanced-marker position="{{ order.order_group.user_address.latitude }},{{ order.order_group.user_address.longitude }}" title="{{ order.order_group.user_address.name }}"></gmp-advanced-marker>
+                    </gmp-map>
+                {% else %}
+                    <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+                {% endif %}
             </div>
         </div>
     </div>
-</div><!-- End: 1 Row 2 Columns -->
-<!-- Start: 1 Row 2 Columns -->
-<div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Customer Details</h4>
-                    <p style="margin-bottom: 0px;"><strong>Name</strong></p>
-                    <p>{{ order.order_group.user.first_name }}</p>
-                    <!-- <p style="margin-bottom: 0px;"><strong>Email</strong></p>
+    <!-- End: 1 Row 2 Columns -->
+    <!-- Start: 1 Row 2 Columns -->
+    <div class="container mt-3">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Schedule Details</h4>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Service Date</strong>
+                        </p>
+                        <p>{{ order.end_date }}</p>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Time Window</strong>
+                        </p>
+                        <p>
+                            {% if order.order_group.time_slot %}
+                                {{ order.order_group.time_slot.name }}
+                                <br />
+                                {{ order.order_group.time_slot.start }}
+                                -
+                                {{ order.order_group.time_slot.end }}
+                            {% else %}
+                                Any
+                            {% endif %}
+                        </p>
+                        <a class="card-link" href="#"></a><a href="{% url 'supplier_bookings' %}?service_date={{ order.end_date|urlencode }}">See All Orders on this Service Date</a><a class="card-link" href="#"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Location Details</h4>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Address</strong>
+                        </p>
+                        <p>
+                            <a class="card-link" href="https://www.google.com/maps/place/{{ order.order_group.user_address.formatted_address|urlencode }}" target="_blank">{{ order.order_group.user_address.formatted_address }}</a>
+                        </p>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Access Details</strong>
+                        </p>
+                        <p>
+                            {% if order.order_group.user_address.access_details %}
+                                {{ order.order_group.user_address.access_details }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </p>
+                        <p style="margin-bottom: 0px;">Additional/Placement Details</p>
+                        <p>
+                            {% if order.order_group.placement_details %}
+                                {{ order.order_group.placement_details }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End: 1 Row 2 Columns -->
+    <!-- Start: 1 Row 2 Columns -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Customer Details</h4>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Name</strong>
+                        </p>
+                        <p>{{ order.order_group.user.first_name }}</p>
+                        <!--                                <p style="margin-bottom: 0px;"><strong>Email</strong></p>
                     <p>
                         <a
                             href="mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order_id}}%5D">Request
                             Change</a>
-                    </p> -->
-                    <p style="margin-bottom: 0px;"><strong>Phone</strong></p>
-                    <p>
-                        <!-- Show Downstream phone until a masked direct option is figured out. -->
-                        <a style="color:#020f16" href="tel:+17193949986">(719) 394-9986</a>
-                    </p>
-                    <h6 class="text-muted card-subtitle mb-2"></h6>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Pricing Details</h4>
-                    <p style="margin-bottom: 0px;"><strong>Total</strong></p>
-                    <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">
-                        ${{order.seller_price|floatformat:2|intcomma}}</p>
-                    <div class="table-responsive" style="margin-bottom: 16px;">
-                        <table class="table">
-                            <thead>
-                                <tr></tr>
-                            </thead>
-                            <tbody>
-                                {% for order_line_item in order.order_line_items.all %}
-                                <tr>
-                                    <td>{{order_line_item.order_line_item_type.name}}</td>
-                                    <td>${{order_line_item.seller_payout_price|floatformat:2|intcomma}} per
-                                        {{order_line_item.order_line_item_type.units}}</td>
-                                    <td>{{order_line_item.description}}</td>
-                                    <td>&nbsp;{% if order_line_item.paid %}Paid{% else %}Unpaid{% endif %}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    </p>                                -->
+                        <p style="margin-bottom: 0px;">
+                            <strong>Phone</strong>
+                        </p>
+                        <p>
+                            <!-- Show Downstream phone until a masked direct option is figured out. -->
+                            <a style="color:#020f16" href="tel:+17193949986">(719) 394-9986</a>
+                        </p>
+                        <h6 class="text-muted card-subtitle mb-2"></h6>
                     </div>
                 </div>
             </div>
-            {% comment %} <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Pricing Details</h4>
-                    <p style="margin-bottom: 0px;"><strong>Service</strong></p>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$9.80
-                                        / unit @
-                                        3.02</span></em></p>
-                        </div>
-                        <div class="col">
-                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                            </p>
-                        </div>
-                    </div>
-                    <p style="margin-bottom: 0px;"><strong>Rental</strong></p>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$7.00
-                                        / unit @ 4
-                                        (included)</span></em></p>
-                        </div>
-                        <div class="col">
-                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$12.00 / unit @ 3
-                                        (additional)</span></em></p>
-                        </div>
-                        <div class="col">
-                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                            </p>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Pricing Details</h4>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Total</strong>
+                        </p>
+                        <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">${{ order.seller_price|floatformat:2|intcomma }}</p>
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for order_line_item in order.order_line_items.all %}
+                                        <tr>
+                                            <td>{{ order_line_item.order_line_item_type.name }}</td>
+                                            <td>${{ order_line_item.seller_payout_price|floatformat:2|intcomma }} per
+                                                {{ order_line_item.order_line_item_type.units }}</td>
+                                            <td>{{ order_line_item.description }}</td>
+                                            <td>
+                                                &nbsp;{% if order_line_item.paid %}
+                                                    Paid
+                                                {% else %}
+                                                    Unpaid
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <p></p>
-                    <p style="margin-bottom: 0px;"><strong>Material</strong></p>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$1.20
-                                        / unit @ 4
-                                        units (included)</span></em></p>
-                        </div>
-                        <div class="col">
-                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">$4.10
-                                        / unit @ 2
-                                        units</span></em></p>
-                        </div>
-                        <div class="col">
-                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                            </p>
-                        </div>
-                    </div>
-                    <p style="margin-bottom: 0px;"><strong>Fuel &amp; Fees</strong></p>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">Delivery @ 12.3
-                                        miles</span></em></p>
-                        </div>
-                        <div class="col">
-                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;"><em><span style="background-color: rgb(248, 249, 252);">Fuel
-                                        &amp; Env. @
-                                        11.5%</span></em></p>
-                        </div>
-                        <div class="col">
-                            <p style="text-align: right;margin-bottom: 0px;"><em><span
-                                        style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                            </p>
-                        </div>
-                    </div>
-                    <p style="margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
-                        Total: <strong>$425.25</strong></p>
                 </div>
-            </div> {% endcomment %}
-        </div>
-    </div>
-</div><!-- End: 1 Row 2 Columns -->
-<!-- Start: 1 Row 2 Columns -->
-<div class="container" style="margin-top: 24px;">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Payout Details</h4>
-                    {% if order.payouts.exists %}
-                    <div class="table-responsive" style="margin-bottom: 16px;">
-                        <table class="table">
-                            <thead>
-                                <tr></tr>
-                            </thead>
-                            <tbody>
-                                {% for payout in order.payouts.all %}
-                                <tr>
-                                    <td>{{payout.created_on}}</td>
-                                    <td>{{payout.amount}}</td>
-                                    <td>{{payout.status}}</td>
-                                    <td><a class="btn btn-light" role="button"
-                                            href="{% url 'supplier_payout_detail' payout_id=payout.id %}"><i
-                                                class="far fa-eye"></i></a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                {% comment %} <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Pricing Details</h4>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Service</strong>
+                        </p>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$9.80 / unit @ 3.02</span></em>
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p style="text-align: right;margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                                </p>
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Rental</strong>
+                        </p>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$7.00 / unit @ 4 (included)</span></em>
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p style="text-align: right;margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$12.00 / unit @ 3 (additional)</span></em>
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p style="text-align: right;margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                                </p>
+                            </div>
+                        </div>
+                        <p></p>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Material</strong>
+                        </p>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$1.20 / unit @ 4 units (included)</span></em>
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p style="text-align: right;margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$4.10 / unit @ 2 units</span></em>
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p style="text-align: right;margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                                </p>
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Fuel &amp; Fees</strong>
+                        </p>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">Delivery @ 12.3 miles</span></em>
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p style="text-align: right;margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">Fuel &amp; Env. @ 11.5%</span></em>
+                                </p>
+                            </div>
+                            <div class="col">
+                                <p style="text-align: right;margin-bottom: 0px;">
+                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
+                                </p>
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
+                            Total: <strong>$425.25</strong>
+                        </p>
                     </div>
-                    {% else %}
-                    <p>No Payouts for this Order</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Received Invoice Details</h4>
-                    {% if order.seller_invoice_payable_line_items.exists %}
-                    <div class="table-responsive" style="margin-bottom: 16px;">
-                        <table class="table">
-                            <thead>
-                                <tr></tr>
-                            </thead>
-                            <tbody>
-                                {% for seller_invoice_payable_line_item in order.seller_invoice_payable_line_items.all %}
-                                <tr>
-                                    <td>{{seller_invoice_payable_line_item.amount}}</td>
-                                    <td>{{seller_invoice_payable_line_item.description}}</td>
-                                    <td><a class="btn btn-light" role="button"
-                                            href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}"><i
-                                                class="far fa-eye"></i></a></td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <p>No Recieved Invoices for this Order</p>
-                    {% endif %}
-                </div>
+                </div> {% endcomment %}
             </div>
         </div>
     </div>
-</div><!-- End: 1 Row 2 Columns -->
+    <!-- End: 1 Row 2 Columns -->
+    <!-- Start: 1 Row 2 Columns -->
+    <div class="container" style="margin-top: 24px;">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Payout Details</h4>
+                        {% if order.payouts.exists %}
+                            <div class="table-responsive" style="margin-bottom: 16px;">
+                                <table class="table">
+                                    <thead>
+                                        <tr></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for payout in order.payouts.all %}
+                                            <tr>
+                                                <td>{{ payout.created_on }}</td>
+                                                <td>{{ payout.amount }}</td>
+                                                <td>{{ payout.status }}</td>
+                                                <td>
+                                                    <a class="btn btn-light" role="button" href="{% url 'supplier_payout_detail' payout_id=payout.id %}"><i class="far fa-eye"></i></a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>No Payouts for this Order</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Received Invoice Details</h4>
+                        {% if order.seller_invoice_payable_line_items.exists %}
+                            <div class="table-responsive" style="margin-bottom: 16px;">
+                                <table class="table">
+                                    <thead>
+                                        <tr></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for seller_invoice_payable_line_item in order.seller_invoice_payable_line_items.all %}
+                                            <tr>
+                                                <td>{{ seller_invoice_payable_line_item.amount }}</td>
+                                                <td>{{ seller_invoice_payable_line_item.description }}</td>
+                                                <td>
+                                                    <a class="btn btn-light" role="button" href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}"><i class="far fa-eye"></i></a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>No Recieved Invoices for this Order</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End: 1 Row 2 Columns -->
 {% endblock %}

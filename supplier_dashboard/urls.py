@@ -69,4 +69,7 @@ urlpatterns = [
         views.received_invoice_detail,
         name="supplier_received_invoice_detail",
     ),
+    path(
+        "supplier/messages/clear/", views.messages_clear, name="supplier_messages_clear"
+    ),
 ]

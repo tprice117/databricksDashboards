@@ -10,7 +10,17 @@ from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 
 
-@track_data('name', 'project_id', 'street', 'city', 'state', 'postal_code', 'country', 'access_details', 'autopay')
+@track_data(
+    "name",
+    "project_id",
+    "street",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "access_details",
+    "autopay",
+)
 class UserAddress(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
@@ -45,6 +55,7 @@ class UserAddress(BaseModel):
     name = models.CharField(max_length=255, blank=True, null=True)
     project_id = models.CharField(max_length=50, blank=True, null=True)
     street = models.TextField(blank=True, null=True)
+    street2 = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=40)
     state = models.CharField(max_length=80)
     postal_code = models.CharField(max_length=20)
@@ -54,7 +65,8 @@ class UserAddress(BaseModel):
     access_details = models.TextField(blank=True, null=True)
     autopay = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
-    child_account_id = models.CharField(max_length=255, blank=True, null=True)
+    allow_saturday_delivery = models.BooleanField(default=False)
+    allow_sunday_delivery = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name or "[No name]"
