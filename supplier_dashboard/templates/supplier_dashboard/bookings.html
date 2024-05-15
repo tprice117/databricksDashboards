@@ -74,6 +74,7 @@
         // function selectCard(card) {
         //     card.classList.toggle('status-selected');
         // }
+        // Ensure correct card tab is selected.
         function selectCard(card) {
             // Get all cards
             var cards = document.querySelectorAll(".status-card");
@@ -98,10 +99,40 @@
                 selectCard(this);
             });
         }
+        const dateFilter = document.getElementById("order-date-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has service_date
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceDate = urlParams.get("service_date");
+            if (serviceDate) {
+                // update date filter value
+                dateFilter.value = serviceDate;
+            }
+        });
+        function selectDate(el) {
+            var date = el.value;
+            let urlencodeDate = encodeURIComponent(date);
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set("service_date", urlencodeDate);
+            // current queryParams
+            var queryParams = new URLSearchParams(window.location.search);
+            queryParams.set("service_date", date);
+            // new url with queryParams
+            var url = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+            htmx.find("#order-date-filter").setAttribute("hx-get", url);
+            htmx.process("#order-date-filter");
+            htmx.trigger(el, "onDateFilter");
+        }
+        // Add change event listener to date filter
+        dateFilter.addEventListener("change", function () {
+            selectDate(this);
+        });
     </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid" hx-disabled-elt=".status-card, button">
+    <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control">
         <h3 class="text-dark mb-4">My Bookings</h3>
         <div class="row">
             <div class="col-md-6 col-xl-3 mb-4">
@@ -116,9 +147,9 @@
                                     <span id="pending-count-badge">{{ pending_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--            <div class="text-dark text-xs">
-                                <span class="text-muted">Anytime</span>
-                            </div>            -->
+                                {% comment %} <div class="text-dark text-xs">
+                                    <span class="text-muted">Anytime</span>
+                                </div> {% endcomment %}
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
@@ -139,9 +170,9 @@
                                     <span id="scheduled-count-badge">{{ scheduled_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-scheduled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--            <div class="text-dark text-xs">
-                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>            -->
+                                {% comment %} <div class="text-dark text-xs">
+                                    <span class="text-muted">*Since: {{ non_pending_cutoff }}</span>
+                                </div> {% endcomment %}
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
@@ -163,9 +194,9 @@
                                     <span id="complete-count-badge">{{ complete_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-completed"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--            <div class="text-dark text-xs">
-                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>            -->
+                                {% comment %} <div class="text-dark text-xs">
+                                    <span class="text-muted">*Since: {{ non_pending_cutoff }}</span>
+                                </div> {% endcomment %}
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
@@ -186,9 +217,9 @@
                                     <span id="cancelled-count-badge">{{ cancelled_count }}</span>
                                     <span class="htmx-indicator" id="htmx-indicator-status-cancelled"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
-                                <!--            <div class="text-dark text-xs">
-                                <span class="text-muted">*Since: {{non_pending_cutoff}}</span>
-                            </div>            -->
+                                {% comment %} <div class="text-dark text-xs">
+                                    <span class="text-muted">*Since: {{ non_pending_cutoff }}</span>
+                                </div> {% endcomment %}
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
@@ -200,7 +231,17 @@
         </div>
         <div class="card shadow">
             <div class="card-header py-3">
-                <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
+                <div class="row">
+                    <div class="col">
+                        <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="order-date-filter">Filter by date</label>
+                            <input id="order-date-filter" class="form-control" type="date" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="onDateFilter" hx-indicator="#htmx-indicator-loading-status" />
+                        </div>
+                    </div>
+                </div>
                 <!-- <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-status">Loading...</span> -->
                 <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
