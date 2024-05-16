@@ -578,13 +578,15 @@ def bookings(request):
             Order.CANCELLED,
         ]:
             tab = Order.PENDING
+        tab_status = tab.upper()
         orders = Order.objects.filter(
             order_group__seller_product_seller_location__seller_product__seller_id=context[
                 "seller"
             ][
                 "id"
             ]
-        ).filter(status=tab.upper())
+        )
+        # orders = orders.filter(status=tab_status)
         # TODO: Check the delay for a seller with large number of orders, like Hillen.
         # if status.upper() != Order.PENDING:
         #     orders = orders.filter(end_date__gt=non_pending_cutoff)
@@ -602,10 +604,37 @@ def bookings(request):
             "order_group__user_address",
         )
         orders = orders.order_by("-end_date")
-        paginator = Paginator(orders, pagination_limit)
+        status_orders = []
+        # Return the correct counts for each status.
+        pending_count = 0
+        scheduled_count = 0
+        complete_count = 0
+        cancelled_count = 0
+        for order in orders:
+            if order.status == tab_status:
+                status_orders.append(order)
+            if order.status == Order.PENDING:
+                pending_count += 1
+            # if order.end_date >= non_pending_cutoff:
+            elif order.status == Order.SCHEDULED:
+                scheduled_count += 1
+            elif order.status == Order.COMPLETE:
+                complete_count += 1
+            elif order.status == Order.CANCELLED:
+                cancelled_count += 1
+        context[
+            "oob_html"
+        ] = f"""
+        <span id="pending-count-badge" hx-swap-oob="true">{pending_count}</span>
+        <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
+        <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
+        <span id="cancelled-count-badge" hx-swap-oob="true">{cancelled_count}</span>
+        """
+
+        paginator = Paginator(status_orders, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["status"] = {
-            "name": tab.upper(),
+            "name": tab_status,
             "page_obj": page_obj,
         }
         context["page_obj"] = page_obj
@@ -654,20 +683,21 @@ def bookings(request):
                     "location_id"
                 ]
             )
+        # To optimize, we can use values_list to get only the status field.
+        orders = orders.values_list("status", flat=True)
         # context["non_pending_cutoff"] = non_pending_cutoff
         context["pending_count"] = 0
         context["scheduled_count"] = 0
         context["complete_count"] = 0
         context["cancelled_count"] = 0
-        for order in orders:
-            if order.status == Order.PENDING:
+        for status in orders:
+            if status == Order.PENDING:
                 context["pending_count"] += 1
-            # if order.end_date >= non_pending_cutoff:
-            elif order.status == Order.SCHEDULED:
+            elif status == Order.SCHEDULED:
                 context["scheduled_count"] += 1
-            elif order.status == Order.COMPLETE:
+            elif status == Order.COMPLETE:
                 context["complete_count"] += 1
-            elif order.status == Order.CANCELLED:
+            elif status == Order.CANCELLED:
                 context["cancelled_count"] += 1
         query_params = ""
         if link_params:
