@@ -1,0 +1,131 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% block title %}
+    Profile
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-4">Invoices</h3>
+        <div class="row">
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card shadow border-start-primary py-2">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col me-2">
+                                <div class="text-uppercase text-primary fw-bold text-xs mb-1">
+                                    <span>OPEN</span>
+                                </div>
+                                <div class="text-dark fw-bold h5 mb-0">
+                                    <span>$3,545.34</span>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-door-open fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card shadow border-start-success py-2">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col me-2">
+                                <div class="text-uppercase text-success fw-bold text-xs mb-1">
+                                    <span>PAST DUE</span>
+                                </div>
+                                <div class="text-dark fw-bold h5 mb-0">
+                                    <span>$1,345.32</span>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-biohazard fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card shadow border-start-info py-2">
+                    <div class="card-body">
+                        <div class="row align-items-center no-gutters">
+                            <div class="col me-2">
+                                <div class="text-uppercase text-info fw-bold text-xs mb-1">
+                                    <span>PAID</span>
+                                </div>
+                                <div class="row g-0 align-items-center">
+                                    <div class="col-auto">
+                                        <div class="text-dark fw-bold h5 mb-0 me-3">
+                                            <span>$45,232.32</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-check-square fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3 mb-4"></div>
+        </div>
+        <div class="card shadow">
+            <div class="card-header py-3"></div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Invoice #</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in page_obj %}
+                                <tr>
+                                    <td>{{ invoice.due_date }}</td>
+                                    <td>{{ invoice.total }}</td>
+                                    <td>{{ invoice.status }}</td>
+                                    <td>{{ invoice.invoice_id }}</td>
+                                    <td>
+                                        <a href="location_detail.html">{{ invoice.user_address.formatted_address }}</a>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-light" type="button"><i class="far fa-eye"></i></button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Name</strong>
+                                </td>
+                                <td>
+                                    <strong>Amount</strong>
+                                </td>
+                                <td>
+                                    <strong>Status</strong>
+                                </td>
+                                <td>
+                                    <strong>Invoice #</strong>
+                                </td>
+                                <td>
+                                    <strong>Location</strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% include 'customer_dashboard/snippets/pagination.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
