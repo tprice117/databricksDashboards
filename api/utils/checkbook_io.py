@@ -5,7 +5,7 @@ from typing import List
 import requests
 from django.conf import settings
 
-from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
+from api.models import Order, Payout, SellerInvoicePayableLineItem, SellerLocation
 
 
 class CheckbookIO:
@@ -13,13 +13,21 @@ class CheckbookIO:
         self, seller_location: SellerLocation, amount, orders: List[Order]
     ):
         # Build remittance advice object.
-        # Get SellerInvoicePayable
-        seller_invoice_payable = SellerInvoicePayable.objects.filter(seller_location_id=seller_location.id).first()
-        seller_invoice_str = "No Invoice Provided"
-        if seller_invoice_payable:
-            seller_invoice_str = seller_invoice_payable.supplier_invoice_id
         remittance_advice = []
         for order in orders:
+            related_seller_invoice_payable_line_items = (
+                SellerInvoicePayableLineItem.objects.filter(order=order)
+            )
+
+            # Get list of SellerInvoicePayableLineItem.SellerInvoicePayable.supplier_invoice_id.
+            supplier_invoice_ids = [
+                line_item.seller_invoice_payable.supplier_invoice_id
+                for line_item in related_seller_invoice_payable_line_items
+            ]
+
+            # Get unique supplier_invoice_ids.
+            supplier_invoice_ids = list(set(supplier_invoice_ids))
+
             # Get total already paid to seller for this order.
             payouts = Payout.objects.filter(order=order)
             total_paid_to_seller = sum([payout.amount for payout in payouts])
@@ -31,8 +39,10 @@ class CheckbookIO:
 
             remittance_advice.append(
                 {
-                    "id": seller_invoice_str,
-                    "amount": round(float(order.seller_price() - total_paid_to_seller), 2),
+                    "id": ", ".join(supplier_invoice_ids),
+                    "amount": round(
+                        float(order.seller_price() - total_paid_to_seller), 2
+                    ),
                     "description": description[:64],
                     "date": order.end_date.strftime("%Y-%m-%d"),
                 }
