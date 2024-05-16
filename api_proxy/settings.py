@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "notifications",
     "payment_methods",
     "supplier_dashboard",
+    "customer_dashboard",
     # END: Django Apps.
     "api.pricing_ml",
     "api.utils",

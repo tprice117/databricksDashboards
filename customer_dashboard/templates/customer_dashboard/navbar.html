@@ -1,0 +1,34 @@
+{% load static %}
+<nav class="navbar navbar-expand bg-white shadow mb-4 topbar static-top navbar-light">
+    <div class="container-fluid">
+        <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
+        <ul class="navbar-nav flex-nowrap ms-auto">
+            {% if request.user.is_staff %}
+                {% if seller %}
+                    <p class="text-center" style="margin: auto;">{{ seller.name }}</p>
+                {% endif %}
+                <li class="nav-item dropdown no-arrow">
+                    <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
+                    <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in navbar-search-dropdown" aria-labelledby="searchDropdown">
+                        <h3>Search Sellers<span class="htmx-indicator" id="htmx-indicator-seller-search"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></h3>
+                        <input class="form-control" type="search" name="search" placeholder="Begin Typing To Search Users..." hx-post="{% url 'customer_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#search-results" hx-indicator="#htmx-indicator-seller-search" />
+
+                        <div class="table-responsive">
+                            <table class="table navbar-search-dropdown">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="search-results"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </li>
+            {% endif %}
+            <div class="d-none d-sm-block topbar-divider"></div>
+            {% include 'customer_dashboard/snippets/profile_dropdown.html' %}
+        </ul>
+    </div>
+</nav>
