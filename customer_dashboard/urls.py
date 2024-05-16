@@ -12,8 +12,5 @@ urlpatterns = [
     path("customer/orders/", views.index, name="customer_orders"),
     path("customer/locations/", views.index, name="customer_locations"),
     path("customer/users/", views.index, name="customer_users"),
-    path("customer/invoices/", views.index, name="customer_invoices"),
-    path(
-        "customer/messages/clear/", views.messages_clear, name="customer_messages_clear"
-    ),
+    path("customer/invoices/", views.invoices, name="customer_invoices"),
 ]

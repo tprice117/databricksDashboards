@@ -1,5 +1,6 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
+{% load humanize %}
 {% block title %}
     Profile
 {% endblock %}
@@ -19,7 +20,7 @@
                                     <span>OPEN</span>
                                 </div>
                                 <div class="text-dark fw-bold h5 mb-0">
-                                    <span>$3,545.34</span>
+                                    <span>${{ total_open|stringformat:'.2f'|intcomma }}</span>
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -38,7 +39,7 @@
                                     <span>PAST DUE</span>
                                 </div>
                                 <div class="text-dark fw-bold h5 mb-0">
-                                    <span>$1,345.32</span>
+                                    <span>${{ past_due|stringformat:'.2f'|intcomma }}</span>
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -59,7 +60,7 @@
                                 <div class="row g-0 align-items-center">
                                     <div class="col-auto">
                                         <div class="text-dark fw-bold h5 mb-0 me-3">
-                                            <span>$45,232.32</span>
+                                            <span>${{ total_paid|stringformat:'.2f'|intcomma }}</span>
                                         </div>
                                     </div>
                                 </div>

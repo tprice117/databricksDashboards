@@ -398,6 +398,16 @@ def invoices(request):
     if service_date:
         invoices = invoices.filter(due_date=service_date)
     invoices = invoices.order_by("-due_date")
+    today = datetime.date.today()
+    context["total_paid"] = 0
+    context["past_due"] = 0
+    context["total_open"] = 0
+    for invoice in invoices:
+        context["total_paid"] += invoice.amount_paid
+        context["total_open"] += invoice.amount_remaining
+        if invoice.due_date.date() > today:
+            context["past_due"] += invoice.amount_remaining
+
     paginator = Paginator(invoices, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
