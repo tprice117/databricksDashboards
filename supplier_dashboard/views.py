@@ -877,6 +877,7 @@ def payouts(request):
         location_id = request.POST.get("location_id", None)
     elif request.method == "GET":
         location_id = request.GET.get("location_id", None)
+    service_date = request.GET.get("service_date", None)
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
     # This is an HTMX request, so respond with html snippet
@@ -893,6 +894,9 @@ def payouts(request):
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
         )
+    # TODO: Need to filter on payout date, not order date
+    # if service_date:
+    #     orders = orders.filter(end_date=service_date)
     orders = orders.prefetch_related("payouts", "order_line_items")
     orders = orders.order_by("-end_date")
     sunday = datetime.date.today() - datetime.timedelta(
@@ -1313,12 +1317,16 @@ def received_invoices(request):
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
+    service_date = request.GET.get("service_date", None)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
     invoices = SellerInvoicePayable.objects.filter(
         seller_location__seller_id=request.session["seller"]["id"]
-    ).order_by("-invoice_date")
+    )
+    if service_date:
+        invoices = invoices.filter(invoice_date=service_date)
+    invoices = invoices.order_by("-invoice_date")
     paginator = Paginator(invoices, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
