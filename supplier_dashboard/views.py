@@ -894,9 +894,11 @@ def payouts(request):
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
         )
-    # TODO: Need to filter on payout date, not order date
+    # TODO: Ask if filter should be here, or in the loop below.
+    # The difference is the total_paid, paid_this_week, and not_yet_paid values.
     # if service_date:
-    #     orders = orders.filter(end_date=service_date)
+    #     # filter orders by their payouts created_on date
+    #     orders = orders.filter(payouts__created_on__date=service_date)
     orders = orders.prefetch_related("payouts", "order_line_items")
     orders = orders.order_by("-end_date")
     sunday = datetime.date.today() - datetime.timedelta(
@@ -912,7 +914,12 @@ def payouts(request):
         context["not_yet_paid"] += order.needed_payout_to_seller()
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
-        payouts.extend([p for p in order.payouts.all()])
+        if service_date:
+            payouts.extend(
+                [p for p in order.payouts.filter(created_on__date=service_date)]
+            )
+        else:
+            payouts.extend([p for p in order.payouts.all()])
     paginator = Paginator(payouts, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
