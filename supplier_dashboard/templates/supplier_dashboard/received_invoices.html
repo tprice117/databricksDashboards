@@ -3,12 +3,59 @@
 {% block title %}
     Received Invoices
 {% endblock %}
+{% block javascript %}
+    <script>
+        const dateFilter = document.getElementById("order-date-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has service_date
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceDate = urlParams.get("service_date");
+            if (serviceDate) {
+                // update date filter value
+                dateFilter.value = serviceDate;
+            }
+        });
+        function selectDate(el) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Check if date filter has a value
+            if (el.value) {
+                // update current queryParams for date filter url
+                let urlencodeDate = encodeURIComponent(el.value);
+                queryParams.set("service_date", urlencodeDate);
+            } else {
+                // remove service_date from queryParams
+                queryParams.delete("service_date");
+            }
+            // update date filter url with current queryParams
+            const dateFilterUrl = "{% url 'supplier_received_invoices' %}?" + queryParams.toString();
+            // redirect to date filter url
+            window.location.href = dateFilterUrl;
+        }
+        // Add change event listener to date filter
+        dateFilter.addEventListener("change", function () {
+            selectDate(this);
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         <h3 class="text-dark mb-4">Received Invoices</h3>
         <div class="card shadow">
             <div class="card-header py-3">
-                <p class="text-primary m-0 fw-bold">Invoices Downstream has received from your Locations&nbsp;</p>
+                <div class="row">
+                    <div class="col">
+                        <p class="text-primary m-0 fw-bold">Invoices Downstream has received from your Locations&nbsp;</p>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="order-date-filter">Filter by date</label>
+                            <input id="order-date-filter" class="form-control" type="date" />
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
@@ -30,7 +77,7 @@
                                     </td>
                                     <td>{{ seller_invoice_payable.amount }}</td>
                                     <td>{{ seller_invoice_payable.supplier_invoice_id }}</td>
-                                    <td>{{ seller_invoice_payable.due_date }}</td>
+                                    <td>{{ seller_invoice_payable.invoice_date }}</td>
                                     <td>{{ seller_invoice_payable.status }}</td>
                                     <td>
                                         <a class="btn btn-light" role="button" href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable.id %}"><i class="far fa-eye"></i></a>

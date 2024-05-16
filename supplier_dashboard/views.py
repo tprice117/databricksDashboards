@@ -578,13 +578,15 @@ def bookings(request):
             Order.CANCELLED,
         ]:
             tab = Order.PENDING
+        tab_status = tab.upper()
         orders = Order.objects.filter(
             order_group__seller_product_seller_location__seller_product__seller_id=context[
                 "seller"
             ][
                 "id"
             ]
-        ).filter(status=tab.upper())
+        )
+        # orders = orders.filter(status=tab_status)
         # TODO: Check the delay for a seller with large number of orders, like Hillen.
         # if status.upper() != Order.PENDING:
         #     orders = orders.filter(end_date__gt=non_pending_cutoff)
@@ -602,10 +604,37 @@ def bookings(request):
             "order_group__user_address",
         )
         orders = orders.order_by("-end_date")
-        paginator = Paginator(orders, pagination_limit)
+        status_orders = []
+        # Return the correct counts for each status.
+        pending_count = 0
+        scheduled_count = 0
+        complete_count = 0
+        cancelled_count = 0
+        for order in orders:
+            if order.status == tab_status:
+                status_orders.append(order)
+            if order.status == Order.PENDING:
+                pending_count += 1
+            # if order.end_date >= non_pending_cutoff:
+            elif order.status == Order.SCHEDULED:
+                scheduled_count += 1
+            elif order.status == Order.COMPLETE:
+                complete_count += 1
+            elif order.status == Order.CANCELLED:
+                cancelled_count += 1
+        context[
+            "oob_html"
+        ] = f"""
+        <span id="pending-count-badge" hx-swap-oob="true">{pending_count}</span>
+        <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
+        <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
+        <span id="cancelled-count-badge" hx-swap-oob="true">{cancelled_count}</span>
+        """
+
+        paginator = Paginator(status_orders, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["status"] = {
-            "name": tab.upper(),
+            "name": tab_status,
             "page_obj": page_obj,
         }
         context["page_obj"] = page_obj
@@ -654,20 +683,21 @@ def bookings(request):
                     "location_id"
                 ]
             )
+        # To optimize, we can use values_list to get only the status field.
+        orders = orders.values_list("status", flat=True)
         # context["non_pending_cutoff"] = non_pending_cutoff
         context["pending_count"] = 0
         context["scheduled_count"] = 0
         context["complete_count"] = 0
         context["cancelled_count"] = 0
-        for order in orders:
-            if order.status == Order.PENDING:
+        for status in orders:
+            if status == Order.PENDING:
                 context["pending_count"] += 1
-            # if order.end_date >= non_pending_cutoff:
-            elif order.status == Order.SCHEDULED:
+            elif status == Order.SCHEDULED:
                 context["scheduled_count"] += 1
-            elif order.status == Order.COMPLETE:
+            elif status == Order.COMPLETE:
                 context["complete_count"] += 1
-            elif order.status == Order.CANCELLED:
+            elif status == Order.CANCELLED:
                 context["cancelled_count"] += 1
         query_params = ""
         if link_params:
@@ -847,6 +877,7 @@ def payouts(request):
         location_id = request.POST.get("location_id", None)
     elif request.method == "GET":
         location_id = request.GET.get("location_id", None)
+    service_date = request.GET.get("service_date", None)
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
     # This is an HTMX request, so respond with html snippet
@@ -863,6 +894,11 @@ def payouts(request):
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
         )
+    # TODO: Ask if filter should be here, or in the loop below.
+    # The difference is the total_paid, paid_this_week, and not_yet_paid values.
+    # if service_date:
+    #     # filter orders by their payouts created_on date
+    #     orders = orders.filter(payouts__created_on__date=service_date)
     orders = orders.prefetch_related("payouts", "order_line_items")
     orders = orders.order_by("-end_date")
     sunday = datetime.date.today() - datetime.timedelta(
@@ -878,7 +914,12 @@ def payouts(request):
         context["not_yet_paid"] += order.needed_payout_to_seller()
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
-        payouts.extend([p for p in order.payouts.all()])
+        if service_date:
+            payouts.extend(
+                [p for p in order.payouts.filter(created_on__date=service_date)]
+            )
+        else:
+            payouts.extend([p for p in order.payouts.all()])
     paginator = Paginator(payouts, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
@@ -1283,12 +1324,16 @@ def received_invoices(request):
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
+    service_date = request.GET.get("service_date", None)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
     invoices = SellerInvoicePayable.objects.filter(
         seller_location__seller_id=request.session["seller"]["id"]
-    ).order_by("-invoice_date")
+    )
+    if service_date:
+        invoices = invoices.filter(invoice_date=service_date)
+    invoices = invoices.order_by("-invoice_date")
     paginator = Paginator(invoices, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj

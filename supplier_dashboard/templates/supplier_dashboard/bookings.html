@@ -112,17 +112,51 @@
             }
         });
         function selectDate(el) {
-            var date = el.value;
-            let urlencodeDate = encodeURIComponent(date);
-            const urlParams = new URLSearchParams(window.location.search);
-            urlParams.set("service_date", urlencodeDate);
-            // current queryParams
-            var queryParams = new URLSearchParams(window.location.search);
-            queryParams.set("service_date", date);
-            // new url with queryParams
-            var url = "{% url 'supplier_bookings' %}?" + queryParams.toString();
-            htmx.find("#order-date-filter").setAttribute("hx-get", url);
+            const tabPending = document.getElementById("bookings-tab-pending");
+            const tabScheduled = document.getElementById("bookings-tab-scheduled");
+            const tabCompleted = document.getElementById("bookings-tab-completed");
+            const tabCancelled = document.getElementById("bookings-tab-cancelled");
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Check if date filter has a value
+            if (el.value) {
+                // update current queryParams for date filter url
+                let urlencodeDate = encodeURIComponent(el.value);
+                queryParams.set("service_date", urlencodeDate);
+            } else {
+                // remove service_date from queryParams
+                queryParams.delete("service_date");
+            }
+            // update date filter url with current queryParams
+            const dateFilterUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+        
+            // update current queryParams for tab urls
+            // This is so that the tab urls will have the correct date filter value.
+            queryParams.set("tab", "PENDING");
+            const pendingUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+        
+            queryParams.set("tab", "SCHEDULED");
+            const scheduledUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+        
+            queryParams.set("tab", "COMPLETE");
+            const completedUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+        
+            queryParams.set("tab", "CANCELLED");
+            const cancelledUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+        
+            // update hx-get attribute of date filter and tab urls
+            htmx.find("#order-date-filter").setAttribute("hx-get", dateFilterUrl);
+            htmx.find("#bookings-tab-pending").setAttribute("hx-get", pendingUrl);
+            htmx.find("#bookings-tab-scheduled").setAttribute("hx-get", scheduledUrl);
+            htmx.find("#bookings-tab-completed").setAttribute("hx-get", completedUrl);
+            htmx.find("#bookings-tab-cancelled").setAttribute("hx-get", cancelledUrl);
+            // force htmx to process the new hx-get attributes
             htmx.process("#order-date-filter");
+            htmx.process("#bookings-tab-pending");
+            htmx.process("#bookings-tab-scheduled");
+            htmx.process("#bookings-tab-completed");
+            htmx.process("#bookings-tab-cancelled");
+            // trigger onDateFilter event
             htmx.trigger(el, "onDateFilter");
         }
         // Add change event listener to date filter
@@ -136,7 +170,7 @@
         <h3 class="text-dark mb-4">My Bookings</h3>
         <div class="row">
             <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-primary py-2 status-card btn status-selected" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
+                <div class="card shadow border-start-primary py-2 status-card btn status-selected" id="bookings-tab-pending" role="tab" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
                     <div class="card-body">
                         <div class="row align-items-center no-gutters">
                             <div class="col me-2">
@@ -159,7 +193,7 @@
                 </div>
             </div>
             <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-success py-2 status-card btn" hx-get="{{ status_scheduled_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-scheduled">
+                <div class="card shadow border-start-success py-2 status-card btn" id="bookings-tab-scheduled" role="tab" hx-get="{{ status_scheduled_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-scheduled">
                     <div class="card-body">
                         <div class="row align-items-center no-gutters">
                             <div class="col me-2">
@@ -182,7 +216,7 @@
                 </div>
             </div>
             <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-info py-2 btn status-card" hx-get="{{ status_complete_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-completed">
+                <div class="card shadow border-start-info py-2 btn status-card" id="bookings-tab-completed" role="tab" hx-get="{{ status_complete_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-completed">
                     <!-- onclick="selectCard(this)" -->
                     <div class="card-body">
                         <div class="row align-items-center no-gutters">
@@ -206,7 +240,7 @@
                 </div>
             </div>
             <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-warning py-2 btn status-card" hx-get="{{ status_cancelled_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-cancelled">
+                <div class="card shadow border-start-warning py-2 btn status-card" id="bookings-tab-cancelled" role="tab" hx-get="{{ status_cancelled_link }}" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-status-cancelled">
                     <div class="card-body">
                         <div class="row align-items-center no-gutters">
                             <div class="col me-2">
