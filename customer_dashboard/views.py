@@ -140,38 +140,15 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     return dashboard_chart
 
 
-def get_seller(request: HttpRequest):
-    if request.session.get("seller"):
-        seller = request.session["seller"]
+def get_user(request: HttpRequest):
+    # TODO: Add get_user function to get user from request or saved session.
+    # This is so that admins can imitate users and see their profile.
+    if request.session.get("user"):
+        user = request.session["user"]
     else:
-        if request.user.is_staff:
-            # TODO: If staff, then set seller to all available sellers
-            try:
-                # Temporarily set to Hillen as default
-                seller = to_dict(
-                    Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
-                )
-            except Seller.DoesNotExist:
-                # Fails on DEV, so see if we can get user's seller.
-                if hasattr(request.user, "user_group") and hasattr(
-                    request.user.user_group, "seller"
-                ):
-                    seller = to_dict(request.user.user_group.seller)
-                    request.session["seller"] = seller
-                else:
-                    # Get first available seller.
-                    seller = to_dict(Seller.objects.all().first())
-            request.session["seller"] = seller
-        elif hasattr(request.user, "user_group") and hasattr(
-            request.user.user_group, "seller"
-        ):
-            seller = to_dict(request.user.user_group.seller)
-            request.session["seller"] = seller
-        else:
-            return HttpResponse("Not Allowed", status=403)
-            # return HttpResponseRedirect("/admin/login/")
-
-    return seller
+        user = to_dict(request.user)
+        request.session["user"] = to_dict(user)
+    return user
 
 
 ########################
@@ -190,28 +167,26 @@ def customer_search(request):
     if request.method == "POST":
         search = request.POST.get("search")
         try:
-            seller_id = uuid.UUID(search)
-            sellers = Seller.objects.filter(id=seller_id)
+            user_id = uuid.UUID(search)
+            users = User.objects.filter(id=user_id)
         except ValueError:
-            sellers = Seller.objects.filter(name__icontains=search)
-        context["sellers"] = sellers
+            users = User.objects.filter(email__icontains=search)
+        context["users"] = users
 
-    return render(
-        request, "customer_dashboard/snippets/seller_search_list.html", context
-    )
+    return render(request, "customer_dashboard/snippets/user_search_list.html", context)
 
 
 @login_required(login_url="/admin/login/")
 def customer_select(request):
     if request.method == "POST":
-        seller_id = request.POST.get("seller_id")
+        user_id = request.POST.get("user_id")
     elif request.method == "GET":
-        seller_id = request.GET.get("seller_id")
+        user_id = request.GET.get("user_id")
     else:
         return HttpResponse("Not Implemented", status=406)
     try:
-        seller = Seller.objects.get(id=seller_id)
-        request.session["seller"] = to_dict(seller)
+        user = User.objects.get(id=user_id)
+        request.session["user"] = to_dict(user)
         return HttpResponseRedirect("/customer/")
     except Exception as e:
         return HttpResponse("Not Found", status=404)
@@ -221,7 +196,6 @@ def customer_select(request):
 def index(request):
     context = {}
     # context["user"] = request.user
-    # context["seller"] = get_seller(request)
     # orders = Order.objects.filter(
     #     order_group__seller_product_seller_location__seller_product__seller_id=context[
     #         "seller"
@@ -314,7 +288,6 @@ def index(request):
 def profile(request):
     context = {}
     context["user"] = request.user
-    context["seller"] = get_seller(request)
 
     if request.method == "POST":
         # NOTE: Since email is disabled, it is never POSTed,
@@ -381,10 +354,63 @@ def profile(request):
 
 
 @login_required(login_url="/admin/login/")
+def my_orders(request):
+    context = {}
+    # context["user"] = request.user
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    date = request.GET.get("date", None)
+    location_id = request.GET.get("location_id", None)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    query_params = request.GET.copy()
+    orders = Order.objects.filter(order_group__user_address__user_id=request.user.id)
+    # TODO: Check the delay for a seller with large number of orders, if so then add a cutoff date.
+    # if status.upper() != Order.PENDING:
+    #     orders = orders.filter(end_date__gt=non_pending_cutoff)
+    if date:
+        orders = orders.filter(end_date=date)
+    if location_id:
+        orders = orders.filter(
+            order_group__seller_product_seller_location__seller_location_id=location_id
+        )
+    # Select related fields to reduce db queries.
+    orders = orders.select_related(
+        "order_group__seller_product_seller_location__seller_product__seller",
+        "order_group__user_address",
+    )
+    orders = orders.order_by("-end_date")
+
+    paginator = Paginator(orders, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = f"/customer/locations/?{query_params.urlencode()}"
+    query_params["p"] = page_number
+    context["page_current_link"] = f"/customer/locations/?{query_params.urlencode()}"
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = f"/customer/locations/?{query_params.urlencode()}"
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = f"/customer/locations/?{query_params.urlencode()}"
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = f"/customer/locations/?{query_params.urlencode()}"
+    return render(request, "customer_dashboard/order_groups.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
     # context["user"] = request.user
-    context["seller"] = get_seller(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -404,17 +430,17 @@ def locations(request):
         page_number = int(page_number)
 
     query_params["p"] = 1
-    context["page_start_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    context["page_start_link"] = f"/customer/locations/?{query_params.urlencode()}"
     query_params["p"] = page_number
-    context["page_current_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    context["page_current_link"] = f"/customer/locations/?{query_params.urlencode()}"
     if page_obj.has_previous():
         query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+        context["page_prev_link"] = f"/customer/locations/?{query_params.urlencode()}"
     if page_obj.has_next():
         query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+        context["page_next_link"] = f"/customer/locations/?{query_params.urlencode()}"
     query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    context["page_end_link"] = f"/customer/locations/?{query_params.urlencode()}"
     return render(request, "customer_dashboard/locations.html", context)
 
 

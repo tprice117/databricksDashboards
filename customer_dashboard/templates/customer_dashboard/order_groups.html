@@ -1,0 +1,82 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Order Groups
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Order Groups</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="main_product_categories.html"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create Order Group</a>
+        </div>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="formCheck-4" name="active" checked="" /><label class="form-check-label" for="formCheck-4"><strong>Active Orders</strong></label>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Location</th>
+                                <th>Supplier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in page_obj %}
+                                <tr>
+                                    <td>
+                                        <img class="rounded-circle me-2"
+                                            width="30"
+                                            height="30"
+                                            src="{% if order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                            {% else %}
+                                                {% static 'customer_dashboard/img/avatars/avatar1.jpeg' %}
+                                            {% endif %}" />&nbsp;{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-link" href="{% url 'customer_location_detail' location_id=order.order_group.user_address.id %}">{{ order.order_group.user_address.formatted_address }}</a>
+                                    </td>
+                                    <td>
+                                        <img class="rounded-circle me-2"
+                                            width="30"
+                                            height="30"
+                                            src="{% if order.order_group.seller_product_seller_location.seller_location.seller.location_logo_url %}
+                                                {{ order.order_group.seller_product_seller_location.seller_location.seller.location_logo_url }}
+                                            {% else %}
+                                                {% static 'customer_dashboard/img/avatars/avatar1.jpeg' %}
+                                            {% endif %}" />&nbsp;{{ order.order_group.seller_product_seller_location.seller_location.name }}
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-light" role="button" href="order_group_detail.html"><i class="far fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Product</strong>
+                                </td>
+                                <td>
+                                    <strong>Location</strong>
+                                </td>
+                                <td>
+                                    <strong>Supplier</strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% include 'customer_dashboard/snippets/pagination.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
