@@ -30,12 +30,14 @@
                             {% for obj in page_obj %}
                                 <tr>
                                     <td>
-                                        {% if obj.user.photo %}
-                                            <img class="border rounded-circle img-profile" style="height: 2rem; width: 2rem;" src="{{ obj.user.photo.url }}" />
-                                        {% else %}
-                                            <span class="border rounded-circle img-profile" style="height: 2rem; width: 2rem;" style="display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
-                                        {% endif %}
-                                        {{ obj.user.full_name }}
+                                        <div class="d-flex flex-row">
+                                            {% if obj.user.photo %}
+                                                <img class="border rounded-circle img-profile" style="height: 2rem; width: 2rem;" src="{{ obj.user.photo.url }}" />
+                                            {% else %}
+                                                <span class="border rounded-circle img-profile" style="height: 2rem; width: 2rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+                                            {% endif %}
+                                            <div class="align-self-center ms-2">{{ obj.user.full_name }}</div>
+                                        </div>
                                     </td>
                                     <td>{{ obj.user.email }}</td>
                                     <td>{{ obj.user.type }}</td>
