@@ -21,6 +21,7 @@ from api.models import (
     User,
     UserAddress,
     Order,
+    OrderGroup,
     Seller,
     Payout,
     SellerInvoicePayable,
@@ -391,13 +392,14 @@ def users(request):
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
-    service_date = request.GET.get("service_date", None)
+    user_id = request.GET.get("user_id", None)
+    date = request.GET.get("date", None)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
     users = User.objects.filter(user_group_id=request.user.user_group_id)
-    if service_date:
-        users = users.filter(date_joined__date=service_date)
+    if date:
+        users = users.filter(date_joined__date=date)
     users = users.order_by("-date_joined")
 
     user_lst = []
@@ -434,19 +436,45 @@ def users(request):
 
 
 @login_required(login_url="/admin/login/")
+def user_detail(request, user_id):
+    context = {}
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    user = User.objects.get(id=user_id)
+    if user.user_group_id:
+        context["user_addresses"] = UserAddress.objects.filter(user_id=user.id)[0:3]
+        orders = Order.objects.filter(
+            order_group__user_address__user_group_id=user.user_group_id
+        )
+        context["active_orders"] = []
+        context["past_orders"] = []
+        for order in orders:
+            if order.status == Order.COMPLETE and len(context["past_orders"]) < 2:
+                context["past_orders"].append(order)
+            elif len(context["active_orders"]) < 2:
+                context["active_orders"].append(order)
+            # Only show the first 2 active and past orders.
+            if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
+                break
+        # TODO: Maybe store these orders for this user in session so that, if see all is tapped, it will be faster.
+
+    return render(request, "customer_dashboard/user_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def invoices(request):
     context = {}
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
-    service_date = request.GET.get("service_date", None)
+    date = request.GET.get("date", None)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
     invoices = Invoice.objects.filter(user_address__user_id=request.user.id)
-    if service_date:
-        invoices = invoices.filter(due_date__date=service_date)
+    if date:
+        invoices = invoices.filter(due_date__date=date)
     invoices = invoices.order_by("-due_date")
     today = datetime.date.today()
     context["total_paid"] = 0

@@ -2,7 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Profile
+    Users
 {% endblock %}
 {% block stylesheet %}
     <style></style>
@@ -44,7 +44,7 @@
                                     <td class="text-center">{{ obj.meta.associated_locations }}</td>
                                     <td>{{ obj.user.date_joined }}</td>
                                     <td>
-                                        <a class="btn btn-light" role="button" href="user_detail.html"><i class="far fa-eye"></i></a>
+                                        <a class="btn btn-light" role="button" href="{% url 'customer_user_detail' user_id=obj.user.id %}"><i class="far fa-eye"></i></a>
                                     </td>
                                 </tr>
                             {% endfor %}
