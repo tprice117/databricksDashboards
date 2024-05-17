@@ -31,3 +31,15 @@ class UserForm(forms.Form):
         widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
         required=False,
     )
+
+
+class AccessDetailsForm(forms.Form):
+    access_details = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Access details for delivery",
+                "rows": 3,
+            }
+        )
+    )
