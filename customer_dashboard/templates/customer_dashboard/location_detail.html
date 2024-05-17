@@ -1,0 +1,157 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Location Details
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">Location Detail</h3>
+    </div>
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">{{ user_address.name }}</h4>
+                        <h6 class="text-muted card-subtitle mb-2"><a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a></h6>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Archived?</strong>
+                        </p>
+                        <p>{{ user_address.is_archived }}</p>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Created</strong>
+                        </p>
+                        <p>{{ user_address.created_on }}</p>
+                        <p class="card-text"></p><a class="card-link" href="#"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                {% if user_address.latitude and user_address.longitude %}
+                    <gmp-map center="{{ user_address.latitude }},{{ user_address.longitude }}" zoom="14" map-id="DEMO_MAP_ID">
+                        <gmp-advanced-marker position="{{ user_address.latitude }},{{ user_address.longitude }}" title="{{ user_address.name }}"></gmp-advanced-marker>
+                    </gmp-map>
+                {% else %}
+                    <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Access Details</h4>
+                        <form action="{{ request.get_full_path }}" method="post">
+                            {% csrf_token %}
+                            <!-- Include the hidden fields -->
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                            <!-- Include the visible fields -->
+                            {% for field in form.visible_fields %}
+                                <div class="mb-3">
+                                    {{ field.label_tag }} {{ field }}
+                                    {% if field.help_text %}
+                                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <small class="text-danger">{{ field.errors }}</small>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <div class="d-flex flex-row-reverse">
+                                <button class="btn btn-primary mt-2" type="submit" name="access_details_submit" id="access_details_submit">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Active Orders</h4>
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in active_orders %}
+                                        <tr>
+                                            <td>{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</td>
+                                            <td>{{ order.order_group.seller_product_seller_location.seller_location.seller.name }}</td>
+                                            <td>
+                                                <a class="btn btn-light" role="button" href="order_group_detail.html"><i class="far fa-eye"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div><a href="order_groups.html">See All Orders for this Location</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Users&nbsp;</h4>
+                        <p>Users with access to this Location</p>
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                        <tr>
+                                            <td>{{ user.full_name }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                <a class="btn btn-light" role="button" href="{% url 'customer_user_detail' user_id=user.id %}"><i class="far fa-eye"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Past Orders</h4>
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in past_orders %}
+                                        <tr>
+                                            <td>{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</td>
+                                            <td>{{ order.order_group.seller_product_seller_location.seller_location.seller.name }}</td>
+                                            <td>
+                                                <a class="btn btn-light" role="button" href="order_group_detail.html"><i class="far fa-eye"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div><a href="order_groups.html">See All Orders for this Location</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

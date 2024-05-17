@@ -10,11 +10,6 @@ from urllib.parse import parse_qs, urlencode
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
-from rest_framework.decorators import (
-    api_view,
-    authentication_classes,
-    permission_classes,
-)
 import logging
 
 from api.models import (
@@ -34,7 +29,7 @@ from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
 from communications.intercom.utils.utils import get_json_safe_value
 
-from .forms import UserForm
+from .forms import UserForm, AccessDetailsForm
 
 logger = logging.getLogger(__name__)
 
@@ -383,6 +378,104 @@ def profile(request):
         )
         context["form"] = form
     return render(request, "customer_dashboard/profile.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def locations(request):
+    context = {}
+    # context["user"] = request.user
+    context["seller"] = get_seller(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    query_params = request.GET.copy()
+    user_addresses = UserAddress.objects.filter(user_id=request.user.id)
+
+    paginator = Paginator(user_addresses, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    query_params["p"] = page_number
+    context["page_current_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+    return render(request, "customer_dashboard/locations.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def location_detail(request, location_id):
+    context = {}
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    user_address = UserAddress.objects.get(id=location_id)
+    context["user_address"] = user_address
+    if user_address.user_group_id:
+        context["users"] = User.objects.filter(user_group_id=user_address.user_group_id)
+        orders = Order.objects.filter(order_group__user_address_id=user_address.id)
+        context["active_orders"] = []
+        context["past_orders"] = []
+        for order in orders:
+            if order.status == Order.COMPLETE and len(context["past_orders"]) < 2:
+                context["past_orders"].append(order)
+            elif len(context["active_orders"]) < 2:
+                context["active_orders"].append(order)
+            # Only show the first 2 active and past orders.
+            if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
+                break
+
+        # TODO: Maybe store these orders for this user in session so that, if see all is tapped, it will be faster.
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "access_details_submit" in request.POST:
+                form = AccessDetailsForm(request.POST)
+                context["form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("access_details")
+                        != user_address.access_details
+                    ):
+                        user_address.access_details = form.cleaned_data.get(
+                            "access_details"
+                        )
+                        save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid AccessDetailsForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return render(request, "customer_dashboard/location_detail.html", context)
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        context["form"] = AccessDetailsForm(
+            initial={"access_details": user_address.access_details}
+        )
+
+    return render(request, "customer_dashboard/location_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")
