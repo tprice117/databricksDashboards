@@ -209,7 +209,7 @@
                                                                                                     {% endif %}
                                                                                                     {{ order.order_group.seller_product_seller_location.seller_product.seller.name }},
                                                                                                     <br>you have a new
-                                                                                                    {{ order.order_type }}
+                                                                                                    {% if order.order_type %} {{ order.order_type }} {% endif %}
                                                                                                     booking request
                                                                                                     through Downstream
                                                                                                     Marketplace! </span>
