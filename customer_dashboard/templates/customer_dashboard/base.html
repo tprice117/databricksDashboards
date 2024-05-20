@@ -114,7 +114,7 @@
                 {% include 'supplier_dashboard/snippets/djangomessages.html' %}
                 <!-- MESSAGES -->
                 <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-page">Loading...</span>
-                <div id="page-content-wrappper">
+                <div id="page-content-wrappper" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
                     {% block content %}
                     {% endblock %}
                 </div>
