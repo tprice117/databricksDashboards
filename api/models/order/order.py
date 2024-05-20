@@ -573,7 +573,7 @@ class Order(BaseModel):
                 -[has_subscription:{has_subscription}]-[order_count:{order_count}]
                 -[status:{self.status}]-[start_date:{self.start_date}]-[end_date:{self.end_date}]
                 -[order_group.start_date:{self.order_group.start_date}]
-                -[order_group.start_date:{self.order_group.end_date}]"""
+                -[order_group.end_date:{self.order_group.end_date}]"""
             )
         except Exception as e:
             logger.error(f"Order.log_order_state: [{e}]", exc_info=e)
