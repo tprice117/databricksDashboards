@@ -9,7 +9,12 @@ urlpatterns = [
     path("customer/profile/", views.profile, name="customer_profile"),
     path("customer/company/", views.profile, name="customer_company"),
     path("customer/order/add/", views.index, name="customer_new_order"),
-    path("customer/orders/", views.my_orders, name="customer_orders"),
+    path("customer/order_groups/", views.my_order_groups, name="customer_order_groups"),
+    path(
+        "customer/order_group/<uuid:order_group_id>/",
+        views.order_group_detail,
+        name="customer_order_group_detail",
+    ),
     path("customer/locations/", views.locations, name="customer_locations"),
     path(
         "customer/location/<uuid:location_id>/",

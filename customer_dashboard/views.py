@@ -354,7 +354,7 @@ def profile(request):
 
 
 @login_required(login_url="/admin/login/")
-def my_orders(request):
+def my_order_groups(request):
     context = {}
     # context["user"] = request.user
     pagination_limit = 25
@@ -363,27 +363,44 @@ def my_orders(request):
         page_number = request.GET.get("p")
     date = request.GET.get("date", None)
     location_id = request.GET.get("location_id", None)
+    try:
+        is_active = int(request.GET.get("active", 1))
+    except ValueError:
+        is_active = 1
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    orders = Order.objects.filter(order_group__user_address__user_id=request.user.id)
+    order_groups = OrderGroup.objects.filter(user_address__user_id=request.user.id)
+
     # TODO: Check the delay for a seller with large number of orders, if so then add a cutoff date.
     # if status.upper() != Order.PENDING:
     #     orders = orders.filter(end_date__gt=non_pending_cutoff)
     if date:
-        orders = orders.filter(end_date=date)
+        order_groups = order_groups.filter(end_date=date)
     if location_id:
-        orders = orders.filter(
-            order_group__seller_product_seller_location__seller_location_id=location_id
-        )
+        # TODO: Ask if location is user_address_id or seller_product_seller_location__seller_location_id
+        order_groups = order_groups.filter(user_address_id=location_id)
     # Select related fields to reduce db queries.
-    orders = orders.select_related(
-        "order_group__seller_product_seller_location__seller_product__seller",
-        "order_group__user_address",
+    order_groups = order_groups.select_related(
+        "seller_product_seller_location__seller_product__seller",
+        "seller_product_seller_location__seller_product__product__main_product",
+        # "user_address",
     )
-    orders = orders.order_by("-end_date")
+    # order_groups = order_groups.prefetch_related("orders")
+    order_groups = order_groups.order_by("-end_date")
 
-    paginator = Paginator(orders, pagination_limit)
+    # Active orders are those that have an end_date in the future or are null (recurring orders).
+    today = datetime.date.today()
+    order_groups_lst = []
+    for order_group in order_groups:
+        if order_group.end_date and order_group.end_date < today:
+            if not is_active:
+                order_groups_lst.append(order_group)
+        else:
+            if is_active:
+                order_groups_lst.append(order_group)
+
+    paginator = Paginator(order_groups_lst, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
 
@@ -405,6 +422,67 @@ def my_orders(request):
     query_params["p"] = paginator.num_pages
     context["page_end_link"] = f"/customer/locations/?{query_params.urlencode()}"
     return render(request, "customer_dashboard/order_groups.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def order_group_detail(request, order_group_id):
+    context = {}
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    # order.order_group.user_address.access_details
+    # order.order_group.placement_details
+    order_group = OrderGroup.objects.filter(id=order_group_id)
+    order_group = order_group.select_related(
+        "seller_product_seller_location__seller_product__seller",
+        "seller_product_seller_location__seller_product__product__main_product",
+        "user_address",
+    )
+    order_group = order_group.prefetch_related("orders")
+    order_group = order_group.first()
+    context["order_group"] = order_group
+    user_address = order_group.user_address
+    context["user_address"] = user_address
+    context["orders"] = order_group.orders.all()
+    today = datetime.date.today()
+    # Active orders are those that have an end_date in the future or are null (recurring orders).
+
+    # TODO: Maybe store these orders for this user in session so that, if see all is tapped, it will be faster.
+
+    # if request.method == "POST":
+    #     try:
+    #         save_model = None
+    #         if "access_details_submit" in request.POST:
+    #             form = AccessDetailsForm(request.POST)
+    #             context["form"] = form
+    #             if form.is_valid():
+    #                 if (
+    #                     form.cleaned_data.get("access_details")
+    #                     != user_address.access_details
+    #                 ):
+    #                     user_address.access_details = form.cleaned_data.get(
+    #                         "access_details"
+    #                     )
+    #                     save_model = user_address
+    #             else:
+    #                 raise InvalidFormError(form, "Invalid AccessDetailsForm")
+    #         if save_model:
+    #             save_model.save()
+    #             messages.success(request, "Successfully saved!")
+    #         else:
+    #             messages.info(request, "No changes detected.")
+    #         return render(request, "customer_dashboard/location_detail.html", context)
+    #     except InvalidFormError as e:
+    #         # This will let bootstrap know to highlight the fields with errors.
+    #         for field in e.form.errors:
+    #             e.form[field].field.widget.attrs["class"] += " is-invalid"
+    #         # messages.error(request, "Error saving, please contact us if this continues.")
+    #         # messages.error(request, e.msg)
+    # else:
+    #     context["form"] = AccessDetailsForm(
+    #         initial={"access_details": user_address.access_details}
+    #     )
+
+    return render(request, "customer_dashboard/order_group_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -453,18 +531,28 @@ def location_detail(request, location_id):
     context["user_address"] = user_address
     if user_address.user_group_id:
         context["users"] = User.objects.filter(user_group_id=user_address.user_group_id)
-        orders = Order.objects.filter(order_group__user_address_id=user_address.id)
+        today = datetime.date.today()
+        order_groups = OrderGroup.objects.filter(user_address_id=user_address.id)
+        order_groups = order_groups.select_related(
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product",
+            # "user_address",
+        )
+        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.order_by("-end_date")
+        # Active orders are those that have an end_date in the future or are null (recurring orders).
         context["active_orders"] = []
         context["past_orders"] = []
-        for order in orders:
-            if order.status == Order.COMPLETE and len(context["past_orders"]) < 2:
-                context["past_orders"].append(order)
-            elif len(context["active_orders"]) < 2:
-                context["active_orders"].append(order)
-            # Only show the first 2 active and past orders.
+        for order_group in order_groups:
+            if order_group.end_date and order_group.end_date < today:
+                if len(context["past_orders"]) < 2:
+                    context["past_orders"].append(order_group)
+            else:
+                if len(context["active_orders"]) < 2:
+                    context["active_orders"].append(order_group)
+            # Only show the first 2 active and past order_groups.
             if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
                 break
-
         # TODO: Maybe store these orders for this user in session so that, if see all is tapped, it will be faster.
 
     if request.method == "POST":
