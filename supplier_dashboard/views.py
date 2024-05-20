@@ -756,19 +756,21 @@ def update_order_status(request, order_id, accept=True, complete=False):
                 if service_date:
                     orders = orders.filter(end_date=service_date)
                 # orders = orders.filter(Q(status=Order.SCHEDULED) | Q(status=Order.PENDING))
+                # To optimize, we can use values_list to get only the status field.
+                orders = orders.values_list("status", flat=True)
                 pending_count = 0
                 scheduled_count = 0
                 complete_count = 0
                 cancelled_count = 0
-                for order in orders:
-                    if order.status == Order.PENDING:
+                for status in orders:
+                    if status == Order.PENDING:
                         pending_count += 1
                     # if order.end_date >= non_pending_cutoff:
-                    elif order.status == Order.SCHEDULED:
+                    elif status == Order.SCHEDULED:
                         scheduled_count += 1
-                    elif order.status == Order.COMPLETE:
+                    elif status == Order.COMPLETE:
                         complete_count += 1
-                    elif order.status == Order.CANCELLED:
+                    elif status == Order.CANCELLED:
                         cancelled_count += 1
                 # TODO: Add toast that shows the order with a link to see it.
                 # https://getbootstrap.com/docs/5.3/components/toasts/
