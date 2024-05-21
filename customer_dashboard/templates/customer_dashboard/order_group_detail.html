@@ -2,7 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Order Details
+    Order Group Details
 {% endblock %}
 {% block stylesheet %}
     <style></style>
@@ -149,7 +149,7 @@
                                             <td>{{ order.type }}</td>
                                             <td>{{ order.status }}</td>
                                             <td>
-                                                <a class="btn btn-light" role="button" href="order_detail.html"><i class="far fa-eye"></i></a>
+                                                <a class="btn btn-light" role="button" href="{% url 'customer_order_detail' order_id=order.id %}"><i class="far fa-eye"></i></a>
                                             </td>
                                         </tr>
                                     {% endfor %}

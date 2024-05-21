@@ -536,6 +536,22 @@ def order_group_detail(request, order_group_id):
 
 
 @login_required(login_url="/admin/login/")
+def order_detail(request, order_id):
+    context = {}
+    order = Order.objects.filter(id=order_id)
+    order = order.select_related(
+        "order_group__seller_product_seller_location__seller_product__seller",
+        "order_group__user_address",
+        "order_group__user",
+        "order_group__seller_product_seller_location__seller_product__product__main_product",
+    )
+    order = order.prefetch_related("payouts", "order_line_items")
+    context["order"] = order.first()
+
+    return render(request, "customer_dashboard/order_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
     context["user"] = get_user(request)
