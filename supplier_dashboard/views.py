@@ -291,11 +291,17 @@ def index(request):
 
     # Calculate the 'percent' field for each category
     for category, data in sorted_categories:
-        data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+        if context["earnings"] == 0:
+            data["percent"] = int((data["amount"] / 1) * 100)
+        else:
+            data["percent"] = int((data["amount"] / context["earnings"]) * 100)
 
     # Create a new category 'Other' for the categories that are not in the top 4
     other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
-    other_percent = int((other_amount / context["earnings"]) * 100)
+    if context["earnings"] == 0:
+        other_percent = int((other_amount / 1) * 100)
+    else:
+        other_percent = int((other_amount / context["earnings"]) * 100)
 
     # Create the final dictionary
     final_categories = dict(sorted_categories[:4])
