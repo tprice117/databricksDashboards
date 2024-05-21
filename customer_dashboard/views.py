@@ -78,7 +78,7 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     months = []
     for i in range(8, 1, -1):
         months.append(all_months[(current_month - i - 1) % 12])
-        data.append(data_by_month[(current_month - i - 1) % 12])
+        data.append(round(data_by_month[(current_month - i - 1) % 12], 2))
 
     dashboard_chart = {
         "type": "line",
@@ -195,87 +195,92 @@ def customer_select(request):
 @login_required(login_url="/admin/login/")
 def index(request):
     context = {}
-    # context["user"] = request.user
-    # orders = Order.objects.filter(
-    #     order_group__seller_product_seller_location__seller_product__seller_id=context[
-    #         "seller"
-    #     ]["id"]
+    context["user"] = request.user
+    # order_groups = OrderGroup.objects.filter(user_address__user_id=request.user.id)
+    # order_groups = order_groups.select_related(
+    #     "seller_product_seller_location__seller_product__seller",
+    #     "seller_product_seller_location__seller_product__product__main_product",
+    #     # "user_address",
     # )
-    # orders = orders.select_related(
-    #     "order_group__seller_product_seller_location__seller_product__seller",
-    #     "order_group__user_address",
-    #     "order_group__user",
-    #     "order_group__seller_product_seller_location__seller_product__product__main_product",
-    # )
-    # orders = orders.prefetch_related("payouts", "order_line_items")
-    # # .filter(status=Order.PENDING)
-    # context["earnings"] = 0
-    # earnings_by_category = {}
-    # pending_count = 0
-    # scheduled_count = 0
-    # complete_count = 0
-    # cancelled_count = 0
-    # earnings_by_month = [0] * 12
-    # for order in orders:
-    #     context["earnings"] += float(order.seller_price())
-    #     earnings_by_month[order.end_date.month - 1] += float(order.seller_price())
+    # # order_groups = order_groups.prefetch_related("orders")
+    # order_groups = order_groups.order_by("-end_date")
+    orders = Order.objects.filter(order_group__user_id=request.user.id)
+    orders = orders.select_related(
+        "order_group__seller_product_seller_location__seller_product__seller",
+        "order_group__user_address",
+        "order_group__user",
+        "order_group__seller_product_seller_location__seller_product__product__main_product",
+    )
+    orders = orders.prefetch_related("payouts", "order_line_items")
+    # .filter(status=Order.PENDING)
+    context["earnings"] = 0
+    earnings_by_category = {}
+    pending_count = 0
+    scheduled_count = 0
+    complete_count = 0
+    cancelled_count = 0
+    earnings_by_month = [0] * 12
+    for order in orders:
+        context["earnings"] += float(order.customer_price())
+        earnings_by_month[order.end_date.month - 1] += float(order.customer_price())
 
-    #     category = (
-    #         order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
-    #     )
-    #     if category not in earnings_by_category:
-    #         earnings_by_category[category] = {"amount": 0, "percent": 0}
-    #     earnings_by_category[category]["amount"] += float(order.seller_price())
+        category = (
+            order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
+        )
+        if category not in earnings_by_category:
+            earnings_by_category[category] = {"amount": 0, "percent": 0}
+        earnings_by_category[category]["amount"] += float(order.customer_price())
 
-    #     if order.status == Order.PENDING:
-    #         pending_count += 1
-    #     elif order.status == Order.SCHEDULED:
-    #         scheduled_count += 1
-    #     elif order.status == Order.COMPLETE:
-    #         complete_count += 1
-    #     elif order.status == Order.CANCELLED:
-    #         cancelled_count += 1
+        if order.status == Order.PENDING:
+            pending_count += 1
+        elif order.status == Order.SCHEDULED:
+            scheduled_count += 1
+        elif order.status == Order.COMPLETE:
+            complete_count += 1
+        elif order.status == Order.CANCELLED:
+            cancelled_count += 1
 
-    # # # Just test data here
-    # # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
-    # # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
-    # # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
-    # # earnings_by_category["Concrete & Masonary"] = {
-    # #     "amount": 50,
-    # #     "percent": 0,
-    # # }
-    # # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
-    # # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
-    # # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
-    # # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
+    # # Just test data here
+    # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
+    # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
+    # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
+    # earnings_by_category["Concrete & Masonary"] = {
+    #     "amount": 50,
+    #     "percent": 0,
+    # }
+    # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
+    # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
+    # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
+    # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
 
-    # # Sort the dictionary by the 'amount' field in descending order
-    # sorted_categories = sorted(
-    #     earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
-    # )
+    # Sort the dictionary by the 'amount' field in descending order
+    sorted_categories = sorted(
+        earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
+    )
 
-    # # Calculate the 'percent' field for each category
-    # for category, data in sorted_categories:
-    #     data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+    # Calculate the 'percent' field for each category
+    for category, data in sorted_categories:
+        data["percent"] = int((data["amount"] / context["earnings"]) * 100)
 
-    # # Create a new category 'Other' for the categories that are not in the top 4
-    # other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
-    # other_percent = int((other_amount / context["earnings"]) * 100)
+    # Create a new category 'Other' for the categories that are not in the top 4
+    other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
+    other_percent = int((other_amount / context["earnings"]) * 100)
 
-    # # Create the final dictionary
-    # final_categories = dict(sorted_categories[:4])
-    # final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
-    # context["earnings_by_category"] = final_categories
-    # # print(final_categories)
-    # context["pending_count"] = pending_count
-    # seller_locations = SellerLocation.objects.filter(seller_id=context["seller"]["id"])
-    # # context["pending_count"] = orders.count()
-    # context["location_count"] = seller_locations.count()
-    # context["user_count"] = User.objects.filter(
-    #     user_group__seller_id=context["seller"]["id"]
-    # ).count()
+    # Create the final dictionary
+    final_categories = dict(sorted_categories[:4])
+    final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
+    context["earnings_by_category"] = final_categories
+    # print(final_categories)
+    context["pending_count"] = pending_count
+    # context["pending_count"] = orders.count()
+    context["location_count"] = UserAddress.objects.filter(
+        user_id=request.user.id
+    ).count()
+    context["user_count"] = User.objects.filter(
+        user_group_id=request.user.user_group_id
+    ).count()
 
-    # context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
+    context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
 
     if request.headers.get("HX-Request"):
         context["page_title"] = "Dashboard"
