@@ -372,6 +372,7 @@ def my_order_groups(request):
         page_number = request.GET.get("p")
     date = request.GET.get("date", None)
     location_id = request.GET.get("location_id", None)
+    user_id = request.GET.get("user_id", None)
     try:
         is_active = int(request.GET.get("active", 1))
     except ValueError:
@@ -379,9 +380,10 @@ def my_order_groups(request):
     query_params = request.GET.copy()
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
-        order_groups = OrderGroup.objects.filter(
-            user_address__user_id=context["user"].id
-        )
+        if user_id:
+            order_groups = OrderGroup.objects.filter(user_id=user_id)
+        else:
+            order_groups = OrderGroup.objects.filter(user_id=context["user"].id)
 
         # TODO: Check the delay for a seller with large number of orders, if so then add a cutoff date.
         # if status.upper() != Order.PENDING:
@@ -715,22 +717,32 @@ def user_detail(request, user_id):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     user = User.objects.get(id=user_id)
+    context["user"] = user
     if user.user_group_id:
         context["user_addresses"] = UserAddress.objects.filter(user_id=user.id)[0:3]
-        orders = Order.objects.filter(
-            order_group__user_address__user_group_id=user.user_group_id
+        order_groups = OrderGroup.objects.filter(user_id=user.id)
+        # Select related fields to reduce db queries.
+        order_groups = order_groups.select_related(
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product",
+            # "user_address",
         )
+        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.order_by("-end_date")
+
+        today = datetime.date.today()
         context["active_orders"] = []
         context["past_orders"] = []
-        for order in orders:
-            if order.status == Order.COMPLETE and len(context["past_orders"]) < 2:
-                context["past_orders"].append(order)
-            elif len(context["active_orders"]) < 2:
-                context["active_orders"].append(order)
-            # Only show the first 2 active and past orders.
+        for order_group in order_groups:
+            if order_group.end_date and order_group.end_date < today:
+                if len(context["past_orders"]) < 2:
+                    context["past_orders"].append(order_group)
+            else:
+                if len(context["active_orders"]) < 2:
+                    context["active_orders"].append(order_group)
+            # Only show the first 2 active and past order_groups.
             if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
                 break
-        # TODO: Maybe store these orders for this user in session so that, if see all is tapped, it will be faster.
 
     return render(request, "customer_dashboard/user_detail.html", context)
 
