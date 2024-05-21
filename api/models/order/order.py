@@ -140,9 +140,8 @@ class Order(BaseModel):
 
     def get_order_type(self):
         # Pre-calculate conditions
-        is_first_order = (
-            self.order_group.orders.order_by("created_on").first().id == self.id
-        )
+        first_order = self.order_group.orders.order_by("created_on").first()
+        is_first_order = str(first_order.id) == str(self.id)
         order_start_end_equal = self.start_date == self.end_date
         order_group_start_equal = self.start_date == self.order_group.start_date
         order_group_end_equal = self.end_date == self.order_group.end_date
