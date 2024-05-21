@@ -4,8 +4,9 @@
         <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
         <ul class="navbar-nav flex-nowrap ms-auto">
             {% if request.user.is_staff %}
-                {% if seller %}
-                    <p class="text-center" style="margin: auto;">{{ seller.name }}</p>
+                {% if request.session.user_id %}
+                    <p class="text-center" style="margin: auto;">Impersonating User</p>
+                    <a class="btn btn-link" style="margin-top:auto;margin-bottom:auto;" href="{% url 'customer_impersonation_stop' %}"><i class="fas fa-times-circle" style="color: red;"></i></a>
                 {% endif %}
                 <li class="nav-item dropdown no-arrow">
                     <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
