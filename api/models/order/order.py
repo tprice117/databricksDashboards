@@ -557,9 +557,8 @@ class Order(BaseModel):
         # Log the Order state.
         # This is used to debug order_type None issues.
         try:
-            is_first_order = (
-                self.order_group.orders.order_by("created_on").first().id == self.id
-            )
+            first_order = self.order_group.orders.order_by("created_on").first()
+            is_first_order = first_order.id == self.id
             order_start_end_equal = self.start_date == self.end_date
             order_group_start_equal = self.start_date == self.order_group.start_date
             order_group_end_equal = self.end_date == self.order_group.end_date
@@ -568,7 +567,9 @@ class Order(BaseModel):
 
             logger.warning(
                 f"""Order.log_order_state: [{self.id}]
-                -[is_first_order:{is_first_order}]-[order_start_end_equal:{order_start_end_equal}]
+                -[is_first_order:{is_first_order}]-[first_order.id:{first_order.id}:{type(first_order.id)}]-[self.id:{self.id}:{type(self.id)}]
+                -[first_order_id:{first_order.id}]-[order_start_end_equal:{order_start_end_equal}]
+                -[order_start_end_equal:{order_start_end_equal}]
                 -[order_group_start_equal:{order_group_start_equal}]-[order_group_end_equal:{order_group_end_equal}]
                 -[has_subscription:{has_subscription}]-[order_count:{order_count}]
                 -[status:{self.status}]-[start_date:{self.start_date}]-[end_date:{self.end_date}]
