@@ -43,3 +43,15 @@ class AccessDetailsForm(forms.Form):
             }
         )
     )
+
+
+class PlacementDetailsForm(forms.Form):
+    placement_details = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Placement details for delivery",
+                "rows": 3,
+            }
+        )
+    )

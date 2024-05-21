@@ -74,11 +74,26 @@
                         <p style="margin-bottom: 0pc;">
                             <strong>Access Details</strong>
                         </p>
-                        <form>
-                            <div class="row">
-                                <div class="col">
-                                    <textarea class="form-control"></textarea><button class="btn btn-primary btn-sm" type="button" style="margin-top: 12px;">Save</button>
+                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post">
+                            {% csrf_token %}
+                            <!-- Include the hidden fields -->
+                            {% for hidden in access_form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                            <!-- Include the visible fields -->
+                            {% for field in access_form.visible_fields %}
+                                <div class="mb-3">
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <small class="text-danger">{{ field.errors }}</small>
+                                    {% endif %}
                                 </div>
+                            {% endfor %}
+                            <div class="d-flex flex-row-reverse">
+                                <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Save</button>
                             </div>
                         </form>
                     </div>
@@ -88,11 +103,26 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Placement Details</strong>
                         </p>
-                        <form>
-                            <div class="row">
-                                <div class="col">
-                                    <textarea class="form-control"></textarea><button class="btn btn-primary btn-sm" type="button" style="margin-top: 12px;">Save</button>
+                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post">
+                            {% csrf_token %}
+                            <!-- Include the hidden fields -->
+                            {% for hidden in placement_form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                            <!-- Include the visible fields -->
+                            {% for field in placement_form.visible_fields %}
+                                <div class="mb-3">
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <small class="text-danger">{{ field.errors }}</small>
+                                    {% endif %}
                                 </div>
+                            {% endfor %}
+                            <div class="d-flex flex-row-reverse">
+                                <button class="btn btn-primary btn-sm" type="submit" name="placement_details_button" style="margin-top: 12px;">Save</button>
                             </div>
                         </form>
                     </div>

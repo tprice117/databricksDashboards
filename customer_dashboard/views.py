@@ -30,7 +30,7 @@ from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
 from communications.intercom.utils.utils import get_json_safe_value
 
-from .forms import UserForm, AccessDetailsForm
+from .forms import UserForm, AccessDetailsForm, PlacementDetailsForm
 
 logger = logging.getLogger(__name__)
 
@@ -472,44 +472,65 @@ def order_group_detail(request, order_group_id):
     user_address = order_group.user_address
     context["user_address"] = user_address
     context["orders"] = order_group.orders.all()
-    today = datetime.date.today()
-    # Active orders are those that have an end_date in the future or are null (recurring orders).
 
-    # TODO: Maybe store these orders for this user in session so that, if see all is tapped, it will be faster.
-
-    # if request.method == "POST":
-    #     try:
-    #         save_model = None
-    #         if "access_details_submit" in request.POST:
-    #             form = AccessDetailsForm(request.POST)
-    #             context["form"] = form
-    #             if form.is_valid():
-    #                 if (
-    #                     form.cleaned_data.get("access_details")
-    #                     != user_address.access_details
-    #                 ):
-    #                     user_address.access_details = form.cleaned_data.get(
-    #                         "access_details"
-    #                     )
-    #                     save_model = user_address
-    #             else:
-    #                 raise InvalidFormError(form, "Invalid AccessDetailsForm")
-    #         if save_model:
-    #             save_model.save()
-    #             messages.success(request, "Successfully saved!")
-    #         else:
-    #             messages.info(request, "No changes detected.")
-    #         return render(request, "customer_dashboard/location_detail.html", context)
-    #     except InvalidFormError as e:
-    #         # This will let bootstrap know to highlight the fields with errors.
-    #         for field in e.form.errors:
-    #             e.form[field].field.widget.attrs["class"] += " is-invalid"
-    #         # messages.error(request, "Error saving, please contact us if this continues.")
-    #         # messages.error(request, e.msg)
-    # else:
-    #     context["form"] = AccessDetailsForm(
-    #         initial={"access_details": user_address.access_details}
-    #     )
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "access_details_button" in request.POST:
+                context["placement_form"] = PlacementDetailsForm(
+                    initial={"placement_details": order_group.placement_details}
+                )
+                form = AccessDetailsForm(request.POST)
+                context["access_form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("access_details")
+                        != user_address.access_details
+                    ):
+                        user_address.access_details = form.cleaned_data.get(
+                            "access_details"
+                        )
+                        save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid AccessDetailsForm")
+            elif "placement_details_button" in request.POST:
+                context["access_form"] = AccessDetailsForm(
+                    initial={"access_details": user_address.access_details}
+                )
+                form = PlacementDetailsForm(request.POST)
+                context["placement_form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("placement_details")
+                        != order_group.placement_details
+                    ):
+                        order_group.placement_details = form.cleaned_data.get(
+                            "placement_details"
+                        )
+                        save_model = order_group
+                else:
+                    raise InvalidFormError(form, "Invalid PlacementDetailsForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return render(
+                request, "customer_dashboard/order_group_detail.html", context
+            )
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        context["access_form"] = AccessDetailsForm(
+            initial={"access_details": user_address.access_details}
+        )
+        context["placement_form"] = PlacementDetailsForm(
+            initial={"placement_details": order_group.placement_details}
+        )
 
     return render(request, "customer_dashboard/order_group_detail.html", context)
 
