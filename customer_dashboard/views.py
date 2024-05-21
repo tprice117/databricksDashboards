@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlencode
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
+from rest_framework import serializers
 import logging
 
 from api.models import (
@@ -34,6 +35,12 @@ from .forms import UserForm, AccessDetailsForm
 logger = logging.getLogger(__name__)
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "__all__"
+
+
 class InvalidFormError(Exception):
     """Exception raised for validation errors in the form."""
 
@@ -54,15 +61,10 @@ def to_dict(instance) -> dict:
     Returns:
         dict: Dictionary representation of the model instance.
     """
-    opts = instance._meta
-    data = {}
-    for f in chain(opts.concrete_fields, opts.private_fields):
-        data[f.name] = get_json_safe_value(f.value_from_object(instance))
-    for f in opts.many_to_many:
-        data[f.name] = [
-            get_json_safe_value(i.id) for i in f.value_from_object(instance)
-        ]
-    return data
+    rep_dict = {}
+    for k, v in UserSerializer(instance).data.items():
+        rep_dict[k] = get_json_safe_value(v)
+    return rep_dict
 
 
 def get_dashboard_chart_data(data_by_month: List[int]):
@@ -268,11 +270,17 @@ def index(request):
 
     # Calculate the 'percent' field for each category
     for category, data in sorted_categories:
-        data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+        if context["earnings"] == 0:
+            data["percent"] = int((data["amount"] / 1) * 100)
+        else:
+            data["percent"] = int((data["amount"] / context["earnings"]) * 100)
 
     # Create a new category 'Other' for the categories that are not in the top 4
     other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
-    other_percent = int((other_amount / context["earnings"]) * 100)
+    if context["earnings"] == 0:
+        other_percent = int((other_amount / 1) * 100)
+    else:
+        other_percent = int((other_amount / context["earnings"]) * 100)
 
     # Create the final dictionary
     final_categories = dict(sorted_categories[:4])
