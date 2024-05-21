@@ -45,7 +45,15 @@ class InvalidFormError(Exception):
         return self.msg
 
 
-def to_dict(instance):
+def to_dict(instance) -> dict:
+    """Converts a model instance to a dictionary.
+
+    Args:
+        instance (models.Model): Any Django database model instance.
+
+    Returns:
+        dict: Dictionary representation of the model instance.
+    """
     opts = instance._meta
     data = {}
     for f in chain(opts.concrete_fields, opts.private_fields):
@@ -140,14 +148,22 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     return dashboard_chart
 
 
-def get_user(request: HttpRequest):
-    # TODO: Add get_user function to get user from request or saved session.
-    # This is so that admins can imitate users and see their profile.
+def get_user(request: HttpRequest) -> dict:
+    """Returns the current user from the session, if user is not in session
+    then it gets the user attached to the request and attaches it to the session.
+    This function is used so that admins can imitate users and see their profile.
+
+    Args:
+        request (HttpRequest): Current request object.
+
+    Returns:
+        dict: Dictionary of the User object.
+    """
     if request.session.get("user"):
         user = request.session["user"]
     else:
         user = to_dict(request.user)
-        request.session["user"] = to_dict(user)
+        request.session["user"] = user
     return user
 
 
@@ -195,16 +211,8 @@ def customer_select(request):
 @login_required(login_url="/admin/login/")
 def index(request):
     context = {}
-    context["user"] = request.user
-    # order_groups = OrderGroup.objects.filter(user_address__user_id=request.user.id)
-    # order_groups = order_groups.select_related(
-    #     "seller_product_seller_location__seller_product__seller",
-    #     "seller_product_seller_location__seller_product__product__main_product",
-    #     # "user_address",
-    # )
-    # # order_groups = order_groups.prefetch_related("orders")
-    # order_groups = order_groups.order_by("-end_date")
-    orders = Order.objects.filter(order_group__user_id=request.user.id)
+    context["user"] = get_user(request)
+    orders = Order.objects.filter(order_group__user_id=context["user"]["id"])
     orders = orders.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
         "order_group__user_address",
@@ -274,10 +282,10 @@ def index(request):
     context["pending_count"] = pending_count
     # context["pending_count"] = orders.count()
     context["location_count"] = UserAddress.objects.filter(
-        user_id=request.user.id
+        user_id=context["user"]["id"]
     ).count()
     context["user_count"] = User.objects.filter(
-        user_group_id=request.user.user_group_id
+        user_group_id=context["user"]["user_group"]
     ).count()
 
     context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
@@ -292,46 +300,48 @@ def index(request):
 @login_required(login_url="/admin/login/")
 def profile(request):
     context = {}
-    context["user"] = request.user
+    current_user_dict = get_user(request)
+    user = User.objects.get(id=current_user_dict["id"])
+    context["user"] = user
 
     if request.method == "POST":
         # NOTE: Since email is disabled, it is never POSTed,
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
-        POST_COPY["email"] = request.user.email
+        POST_COPY["email"] = user.email
         form = UserForm(POST_COPY, request.FILES)
         context["form"] = form
         if form.is_valid():
             save_db = False
-            if form.cleaned_data.get("first_name") != request.user.first_name:
-                request.user.first_name = form.cleaned_data.get("first_name")
+            if form.cleaned_data.get("first_name") != user.first_name:
+                user.first_name = form.cleaned_data.get("first_name")
                 save_db = True
-            if form.cleaned_data.get("last_name") != request.user.last_name:
-                request.user.last_name = form.cleaned_data.get("last_name")
+            if form.cleaned_data.get("last_name") != user.last_name:
+                user.last_name = form.cleaned_data.get("last_name")
                 save_db = True
-            if form.cleaned_data.get("phone") != request.user.phone:
-                request.user.phone = form.cleaned_data.get("phone")
+            if form.cleaned_data.get("phone") != user.phone:
+                user.phone = form.cleaned_data.get("phone")
                 save_db = True
             if request.FILES.get("photo"):
-                request.user.photo = request.FILES["photo"]
+                user.photo = request.FILES["photo"]
                 save_db = True
             elif request.POST.get("photo-clear") == "on":
-                request.user.photo = None
+                user.photo = None
                 save_db = True
             if save_db:
-                context["user"] = request.user
-                request.user.save()
+                context["user"] = user
+                user.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
             form = UserForm(
                 initial={
-                    "first_name": request.user.first_name,
-                    "last_name": request.user.last_name,
-                    "phone": request.user.phone,
-                    "photo": request.user.photo,
-                    "email": request.user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "phone": user.phone,
+                    "photo": user.photo,
+                    "email": user.email,
                 }
             )
             context["form"] = form
@@ -347,11 +357,11 @@ def profile(request):
     else:
         form = UserForm(
             initial={
-                "first_name": request.user.first_name,
-                "last_name": request.user.last_name,
-                "phone": request.user.phone,
-                "photo": request.user.photo,
-                "email": request.user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "phone": user.phone,
+                "photo": user.photo,
+                "email": user.email,
             }
         )
         context["form"] = form
@@ -361,7 +371,7 @@ def profile(request):
 @login_required(login_url="/admin/login/")
 def my_order_groups(request):
     context = {}
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -375,7 +385,9 @@ def my_order_groups(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    order_groups = OrderGroup.objects.filter(user_address__user_id=request.user.id)
+    order_groups = OrderGroup.objects.filter(
+        user_address__user_id=context["user"]["id"]
+    )
 
     # TODO: Check the delay for a seller with large number of orders, if so then add a cutoff date.
     # if status.upper() != Order.PENDING:
@@ -493,7 +505,7 @@ def order_group_detail(request, order_group_id):
 @login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -501,7 +513,7 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    user_addresses = UserAddress.objects.filter(user_id=request.user.id)
+    user_addresses = UserAddress.objects.filter(user_id=context["user"]["id"])
 
     paginator = Paginator(user_addresses, pagination_limit)
     page_obj = paginator.get_page(page_number)
@@ -600,6 +612,7 @@ def location_detail(request, location_id):
 @login_required(login_url="/admin/login/")
 def users(request):
     context = {}
+    context["user"] = get_user(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -609,7 +622,7 @@ def users(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    users = User.objects.filter(user_group_id=request.user.user_group_id)
+    users = User.objects.filter(user_group_id=context["user"]["user_group"])
     if date:
         users = users.filter(date_joined__date=date)
     users = users.order_by("-date_joined")
@@ -676,6 +689,7 @@ def user_detail(request, user_id):
 @login_required(login_url="/admin/login/")
 def invoices(request):
     context = {}
+    context["user"] = get_user(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -684,7 +698,7 @@ def invoices(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    invoices = Invoice.objects.filter(user_address__user_id=request.user.id)
+    invoices = Invoice.objects.filter(user_address__user_id=context["user"]["id"])
     if date:
         invoices = invoices.filter(due_date__date=date)
     invoices = invoices.order_by("-due_date")
