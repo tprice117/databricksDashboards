@@ -35,12 +35,6 @@ from .forms import UserForm, AccessDetailsForm
 logger = logging.getLogger(__name__)
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = "__all__"
-
-
 class InvalidFormError(Exception):
     """Exception raised for validation errors in the form."""
 
@@ -50,21 +44,6 @@ class InvalidFormError(Exception):
 
     def __str__(self):
         return self.msg
-
-
-def to_dict(instance) -> dict:
-    """Converts a model instance to a dictionary.
-
-    Args:
-        instance (models.Model): Any Django database model instance.
-
-    Returns:
-        dict: Dictionary representation of the model instance.
-    """
-    rep_dict = {}
-    for k, v in UserSerializer(instance).data.items():
-        rep_dict[k] = get_json_safe_value(v)
-    return rep_dict
 
 
 def get_dashboard_chart_data(data_by_month: List[int]):
@@ -150,10 +129,8 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     return dashboard_chart
 
 
-def get_user(request: HttpRequest) -> dict:
-    """Returns the current user from the session, if user is not in session
-    then it gets the user attached to the request and attaches it to the session.
-    This function is used so that admins can imitate users and see their profile.
+def get_user(request: HttpRequest) -> User:
+    """Returns the current user. This handles the case where the user is impersonating another user.
 
     Args:
         request (HttpRequest): Current request object.
@@ -161,11 +138,12 @@ def get_user(request: HttpRequest) -> dict:
     Returns:
         dict: Dictionary of the User object.
     """
-    if request.session.get("user"):
-        user = request.session["user"]
+    if request.session.get("user_id") and request.session.get("user_id") != str(
+        request.user.id
+    ):
+        user = User.objects.get(id=request.session.get("user_id"))
     else:
-        user = to_dict(request.user)
-        request.session["user"] = user
+        user = request.user
     return user
 
 
@@ -195,26 +173,35 @@ def customer_search(request):
 
 
 @login_required(login_url="/admin/login/")
-def customer_select(request):
-    if request.method == "POST":
-        user_id = request.POST.get("user_id")
-    elif request.method == "GET":
-        user_id = request.GET.get("user_id")
+def customer_impersonation_start(request):
+    if request.user.is_staff:
+        if request.method == "POST":
+            user_id = request.POST.get("user_id")
+        elif request.method == "GET":
+            user_id = request.GET.get("user_id")
+        else:
+            return HttpResponse("Not Implemented", status=406)
+        try:
+            user = User.objects.get(id=user_id)
+            request.session["user_id"] = get_json_safe_value(user_id)
+            return HttpResponseRedirect("/customer/")
+        except Exception as e:
+            return HttpResponse("Not Found", status=404)
     else:
-        return HttpResponse("Not Implemented", status=406)
-    try:
-        user = User.objects.get(id=user_id)
-        request.session["user"] = to_dict(user)
-        return HttpResponseRedirect("/customer/")
-    except Exception as e:
-        return HttpResponse("Not Found", status=404)
+        return HttpResponse("Unauthorized", status=401)
+
+
+@login_required(login_url="/admin/login/")
+def customer_impersonation_stop(request):
+    del request.session["user_id"]
+    return HttpResponseRedirect("/customer/")
 
 
 @login_required(login_url="/admin/login/")
 def index(request):
     context = {}
     context["user"] = get_user(request)
-    orders = Order.objects.filter(order_group__user_id=context["user"]["id"])
+    orders = Order.objects.filter(order_group__user_id=context["user"].id)
     orders = orders.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
         "order_group__user_address",
@@ -290,10 +277,10 @@ def index(request):
     context["pending_count"] = pending_count
     # context["pending_count"] = orders.count()
     context["location_count"] = UserAddress.objects.filter(
-        user_id=context["user"]["id"]
+        user_id=context["user"].id
     ).count()
     context["user_count"] = User.objects.filter(
-        user_group_id=context["user"]["user_group"]
+        user_group_id=context["user"].user_group_id
     ).count()
 
     context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
@@ -308,8 +295,7 @@ def index(request):
 @login_required(login_url="/admin/login/")
 def profile(request):
     context = {}
-    current_user_dict = get_user(request)
-    user = User.objects.get(id=current_user_dict["id"])
+    user = get_user(request)
     context["user"] = user
 
     if request.method == "POST":
@@ -390,63 +376,81 @@ def my_order_groups(request):
         is_active = int(request.GET.get("active", 1))
     except ValueError:
         is_active = 1
-    # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    order_groups = OrderGroup.objects.filter(
-        user_address__user_id=context["user"]["id"]
-    )
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        order_groups = OrderGroup.objects.filter(
+            user_address__user_id=context["user"].id
+        )
 
-    # TODO: Check the delay for a seller with large number of orders, if so then add a cutoff date.
-    # if status.upper() != Order.PENDING:
-    #     orders = orders.filter(end_date__gt=non_pending_cutoff)
-    if date:
-        order_groups = order_groups.filter(end_date=date)
-    if location_id:
-        # TODO: Ask if location is user_address_id or seller_product_seller_location__seller_location_id
-        order_groups = order_groups.filter(user_address_id=location_id)
-    # Select related fields to reduce db queries.
-    order_groups = order_groups.select_related(
-        "seller_product_seller_location__seller_product__seller",
-        "seller_product_seller_location__seller_product__product__main_product",
-        # "user_address",
-    )
-    # order_groups = order_groups.prefetch_related("orders")
-    order_groups = order_groups.order_by("-end_date")
+        # TODO: Check the delay for a seller with large number of orders, if so then add a cutoff date.
+        # if status.upper() != Order.PENDING:
+        #     orders = orders.filter(end_date__gt=non_pending_cutoff)
+        if date:
+            order_groups = order_groups.filter(end_date=date)
+        if location_id:
+            # TODO: Ask if location is user_address_id or seller_product_seller_location__seller_location_id
+            order_groups = order_groups.filter(user_address_id=location_id)
+        # Select related fields to reduce db queries.
+        order_groups = order_groups.select_related(
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product",
+            # "user_address",
+        )
+        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.order_by("-end_date")
 
-    # Active orders are those that have an end_date in the future or are null (recurring orders).
-    today = datetime.date.today()
-    order_groups_lst = []
-    for order_group in order_groups:
-        if order_group.end_date and order_group.end_date < today:
-            if not is_active:
-                order_groups_lst.append(order_group)
+        # Active orders are those that have an end_date in the future or are null (recurring orders).
+        today = datetime.date.today()
+        order_groups_lst = []
+        for order_group in order_groups:
+            if order_group.end_date and order_group.end_date < today:
+                if not is_active:
+                    order_groups_lst.append(order_group)
+            else:
+                if is_active:
+                    order_groups_lst.append(order_group)
+
+        paginator = Paginator(order_groups_lst, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
         else:
-            if is_active:
-                order_groups_lst.append(order_group)
+            page_number = int(page_number)
 
-    paginator = Paginator(order_groups_lst, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
+        query_params["p"] = 1
+        context["page_start_link"] = (
+            f"/customer/order_groups/?{query_params.urlencode()}"
+        )
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/customer/order_groups/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/customer/order_groups/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/customer/order_groups/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/order_groups/?{query_params.urlencode()}"
 
-    if page_number is None:
-        page_number = 1
+        return render(
+            request, "customer_dashboard/snippets/order_groups_table.html", context
+        )
     else:
-        page_number = int(page_number)
-
-    query_params["p"] = 1
-    context["page_start_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    return render(request, "customer_dashboard/order_groups.html", context)
+        if query_params.get("active") is None:
+            query_params["active"] = 1
+        context["active_orders_link"] = (
+            f"/customer/order_groups/?{query_params.urlencode()}"
+        )
+        return render(request, "customer_dashboard/order_groups.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -521,7 +525,7 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    user_addresses = UserAddress.objects.filter(user_id=context["user"]["id"])
+    user_addresses = UserAddress.objects.filter(user_id=context["user"].id)
 
     paginator = Paginator(user_addresses, pagination_limit)
     page_obj = paginator.get_page(page_number)
@@ -630,7 +634,7 @@ def users(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    users = User.objects.filter(user_group_id=context["user"]["user_group"])
+    users = User.objects.filter(user_group_id=context["user"].user_group_id)
     if date:
         users = users.filter(date_joined__date=date)
     users = users.order_by("-date_joined")
@@ -706,7 +710,7 @@ def invoices(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    invoices = Invoice.objects.filter(user_address__user_id=context["user"]["id"])
+    invoices = Invoice.objects.filter(user_address__user_id=context["user"].id)
     if date:
         invoices = invoices.filter(due_date__date=date)
     invoices = invoices.order_by("-due_date")
