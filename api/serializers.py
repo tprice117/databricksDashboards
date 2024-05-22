@@ -105,6 +105,8 @@ class UserAddressTypeSerializer(serializers.ModelSerializer):
 class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     stripe_customer_id = serializers.CharField(required=False, allow_null=True)
+    allow_saturday_delivery = serializers.CharField(required=False, allow_null=True)
+    allow_sunday_delivery = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = UserAddress
