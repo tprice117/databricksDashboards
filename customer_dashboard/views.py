@@ -18,12 +18,17 @@ from api.models import (
     UserAddress,
     Order,
     OrderGroup,
-    Seller,
-    Payout,
-    SellerInvoicePayable,
-    SellerLocation,
-    SellerInvoicePayableLineItem,
-    SellerLocationMailingAddress,
+    MainProductCategory,
+    MainProduct,
+    MainProductInfo,
+    MainProductAddOn,
+    MainProductCategoryInfo,
+    MainProductServiceRecurringFrequency,
+    MainProductWasteType,
+    Product,
+    ProductAddOnChoice,
+    AddOn,
+    AddOnChoice,
 )
 from billing.models import Invoice
 from api.utils.utils import decrypt_string
@@ -290,6 +295,62 @@ def index(request):
         return render(request, "customer_dashboard/snippets/dashboard.html", context)
     else:
         return render(request, "customer_dashboard/index.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_order(request):
+    context = {}
+    context["user"] = get_user(request)
+    main_product_categories = MainProductCategory.objects.all().order_by("sort")
+    context["main_product_categories"] = main_product_categories
+
+    return render(
+        request, "customer_dashboard/new_order/main_product_categories.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_2(request, category_id):
+    context = {}
+    context["user"] = get_user(request)
+    main_product_category = MainProductCategory.objects.filter(id=category_id)
+    main_product_category = main_product_category.prefetch_related("main_products")
+    main_product_category = main_product_category.first()
+    main_products = main_product_category.main_products.all().order_by("sort")
+    context["main_product_category"] = main_product_category
+    context["main_products"] = []
+    for main_product in main_products:
+        main_product_dict = {}
+        main_product_dict["product"] = main_product
+        main_product_dict["infos"] = main_product.mainproductinfo_set.all().order_by(
+            "sort"
+        )
+        context["main_products"].append(main_product_dict)
+
+    return render(request, "customer_dashboard/new_order/main_products.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_order_3(request, product_id):
+    context = {}
+    context["user"] = get_user(request)
+    main_product = MainProduct.objects.filter(id=product_id)
+    main_product = main_product.select_related("main_product_category")
+    main_product = main_product.first()
+    context["main_product"] = main_product
+    main_product_infos = MainProductInfo.objects.filter(main_product_id=main_product.id)
+    for main_product_info in main_product_infos:
+        print(main_product_info.name)
+    main_product_infos = main_product.mainproductinfo_set.all()
+    for main_product_info in main_product_infos:
+        print(main_product_info.name)
+    # context["main_product_info"] = MainProductInfo.objects.filter(
+    #     main_product_id=main_product.id
+    # ).first()
+
+    return render(
+        request, "customer_dashboard/new_order/main_product_detail.html", context
+    )
 
 
 @login_required(login_url="/admin/login/")

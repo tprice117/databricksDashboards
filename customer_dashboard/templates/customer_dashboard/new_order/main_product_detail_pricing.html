@@ -1,0 +1,33 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Select Supplier
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">New Order: Supplier Options</h3>
+        <div class="row">
+            <div class="col">
+                <div class="row">
+                    <div class="col-auto">
+                        <img class="img-thumbnail img-fluid" alt="Starbucks logo" width="200" height="200" src="assets/img/photo-1545231027-637d2f6210f8.jpg" />
+                    </div>
+                    <div class="col">
+                        <h3>{{ seller_location.name }}</h3>
+                        <p>{{ seller_location.formatted_address() }}</p>
+                    </div>
+                    <div class="col-auto">
+                        <p class="text-end">{{ price }}</p>
+                    </div>
+                    <div class="col-auto">
+                        <a class="btn btn-primary" role="button" href="cart.html">Add to Cart</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

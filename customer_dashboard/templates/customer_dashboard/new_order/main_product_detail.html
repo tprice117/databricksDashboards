@@ -1,0 +1,65 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Select Options
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">New Order</h3>
+        <div class="row">
+            <div class="col">
+                <img class="img-fluid"
+                    style="border-radius: 37px 37px 0 0;"
+                    src="{% if main_product.image_del %}
+                        {{ main_product.image_del }}
+                    {% else %}
+                        {% static 'customer_dashboard/img/dogs/image2.jpeg' %}
+                    {% endif %}" />
+            </div>
+            <div class="col">
+                <h2>{{ main_product.name }}</h2>
+                <p>
+                    <strong>{{ main_product.main_product_category.name }}</strong>
+                </p>
+                <p>{{ main_product.description }}</p>
+                <form>
+                    <p style="margin-bottom: 0px;">Add On #1</p>
+                    <select class="form-select" style="margin-bottom: 12px;">
+                        <optgroup label="This is a group">
+                            <option value="12" selected="">This is item 1</option>
+                            <option value="13">This is item 2</option>
+                            <option value="14">This is item 3</option>
+                        </optgroup>
+                    </select>
+                    <p style="margin-bottom: 0px;">Add On #2</p>
+                    <select class="form-select" style="margin-bottom: 12px;">
+                        <optgroup label="This is a group">
+                            <option value="12" selected="">This is item 1</option>
+                            <option value="13">This is item 2</option>
+                            <option value="14">This is item 3</option>
+                        </optgroup>
+                    </select>
+                    <p style="margin-bottom: 0px;">
+                        {% if main_product.has_material %} Material Type {% endif %}
+                    </p><small class="form-text">Hold CTRL to select multiple.</small><select class="form-select" style="margin-bottom: 12px;" multiple="">
+                        <option value="" selected="">Misc Waste</option>
+                        <option value="">Concrete</option>
+                        <option value="">Cardboard</option>
+                    </select>
+                    <p style="margin-bottom: 0px;">
+                        {% if main_product.has_rental %} Delivery Date {% endif %}
+                    </p>
+                    <input class="form-control" type="date" style="margin-bottom: 12px;" required="" />
+                    <p style="margin-bottom: 0px;">
+                        {% if main_product.has_rental %} Removal Date {% endif %}
+                    </p>
+                    <input class="form-control" type="date" style="margin-bottom: 12px;" />
+                </form><a class="btn btn-primary" role="button" href="main_product_detail_pricing.html">See Pricing</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
