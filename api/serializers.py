@@ -113,6 +113,15 @@ class UserAddressSerializer(serializers.ModelSerializer):
         fields = "__all__"
         validators = []
 
+    def validate(self, data):
+        # If allow_saturday_delivery is None, set it to False
+        if data.get("allow_saturday_delivery") is None:
+            data["allow_saturday_delivery"] = False
+        # If allow_sunday_delivery is None, set it to False
+        if data.get("allow_sunday_delivery") is None:
+            data["allow_sunday_delivery"] = False
+        return data
+
 
 class UserGroupBillingSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
