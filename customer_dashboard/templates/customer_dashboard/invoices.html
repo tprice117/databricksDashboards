@@ -96,7 +96,7 @@
                                     <td>{{ invoice.status }}</td>
                                     <td>{{ invoice.invoice_id }}</td>
                                     <td>
-                                        <a href="location_detail.html">{{ invoice.user_address.formatted_address }}</a>
+                                        <a href="{% url 'customer_location_detail' location_id=invoice.user_address.id %}">{{ invoice.user_address.formatted_address }}</a>
                                     </td>
                                     <td>
                                         <button class="btn btn-light" type="button"><i class="far fa-eye"></i></button>
