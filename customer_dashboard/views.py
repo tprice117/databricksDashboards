@@ -27,8 +27,7 @@ from api.models import (
     MainProductWasteType,
     Product,
     ProductAddOnChoice,
-    AddOn,
-    AddOnChoice,
+    SellerProductSellerLocation,
 )
 from billing.models import Invoice
 from api.utils.utils import decrypt_string
@@ -338,18 +337,56 @@ def new_order_3(request, product_id):
     main_product = main_product.select_related("main_product_category")
     main_product = main_product.first()
     context["main_product"] = main_product
-    main_product_infos = MainProductInfo.objects.filter(main_product_id=main_product.id)
-    for main_product_info in main_product_infos:
-        print(main_product_info.name)
-    main_product_infos = main_product.mainproductinfo_set.all()
-    for main_product_info in main_product_infos:
-        print(main_product_info.name)
-    # context["main_product_info"] = MainProductInfo.objects.filter(
-    #     main_product_id=main_product.id
-    # ).first()
-
+    product_waste_types = MainProductWasteType.objects.filter(
+        main_product_id=main_product.id
+    )
+    product_waste_types = product_waste_types.select_related("waste_type")
+    context["product_waste_types"] = product_waste_types
+    product_add_ons = MainProductAddOn.objects.filter(main_product_id=main_product.id)
+    product_add_ons = product_add_ons.select_related("add_on")
+    context["product_add_ons"] = product_add_ons
     return render(
         request, "customer_dashboard/new_order/main_product_detail.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_4(request):
+    context = {}
+    context["user"] = get_user(request)
+    product_id = request.GET.get("product_id")
+    product_waste_types = request.GET.getlist("product_waste_types")
+    product_add_ons = request.GET.getlist("product_add_ons")
+    delivery_date = request.GET.get("delivery_date")
+    removal_date = request.GET.get("removal_date")
+    main_product = MainProduct.objects.filter(id=product_id)
+    main_product = main_product.select_related("main_product_category")
+    # main_product = main_product.prefetch_related("products")
+    main_product = main_product.first()
+    # products = main_product.products.all()
+    products = Product.objects.filter(main_product_id=product_id)
+    prd_lst = [p.id for p in products]
+
+    # TODO: Get sellers that have the product and waste types.
+    seller_product_locations = SellerProductSellerLocation.objects.filter(
+        seller_product__product_id__in=prd_lst,
+        # seller_product__product__main_product__main_product_category_id=main_product.main_product_category.id,
+        # seller_product__product__main_product__main_product_waste_types__waste_type_id__in=product_waste_types,
+        # seller_product__product__main_product__main_product_add_ons__add_on_id__in=product_add_ons,
+    )
+
+    # if request.method == "POST":
+    context["seller_locations"] = []
+    for seller_product_location in seller_product_locations:
+        if hasattr(seller_product_location, "seller_location"):
+            context["seller_locations"].append(seller_product_location.seller_location)
+            break
+
+    # context["seller_locations"] = seller_product_location.first().seller_location
+    return render(
+        request,
+        "customer_dashboard/new_order/main_product_detail_pricing.html",
+        context,
     )
 
 

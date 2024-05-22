@@ -12,21 +12,36 @@
         <h3 class="text-dark mb-1">New Order: Supplier Options</h3>
         <div class="row">
             <div class="col">
-                <div class="row">
-                    <div class="col-auto">
-                        <img class="img-thumbnail img-fluid" alt="Starbucks logo" width="200" height="200" src="assets/img/photo-1545231027-637d2f6210f8.jpg" />
+                {% for seller_location in seller_locations %}
+                    <div class="row">
+                        <div class="col-auto">
+                            <img class="img-thumbnail img-fluid"
+                                alt="Seller logo"
+                                width="200"
+                                height="200"
+                                src="{% if seller_location.seller.location_logo_url %}
+                                    {{ seller_location.seller.location_logo_url }}
+                                {% else %}
+                                    {% static 'customer_dashboard/img/photo-1545231027-637d2f6210f8.jpg' %}
+                                {% endif %}" />
+                        </div>
+                        <div class="col">
+                            <h3>{{ seller_location.name }}</h3>
+                            <p>
+                                <a class="card-link" href="https://www.google.com/maps/place/{{ seller_location.formatted_address|urlencode }}" target="_blank">{{ seller_location.formatted_address }}</a>
+                            </p>
+                        </div>
+                        <div class="col-auto">
+                            <p class="text-end">{{ price }}</p>
+                        </div>
+                        <div class="col-auto">
+                            <a class="btn btn-primary" role="button" href="cart.html">Add to Cart</a>
+                        </div>
                     </div>
-                    <div class="col">
-                        <h3>{{ seller_location.name }}</h3>
-                        <p>{{ seller_location.formatted_address() }}</p>
-                    </div>
-                    <div class="col-auto">
-                        <p class="text-end">{{ price }}</p>
-                    </div>
-                    <div class="col-auto">
-                        <a class="btn btn-primary" role="button" href="cart.html">Add to Cart</a>
-                    </div>
-                </div>
+                    {% if not forloop.first %}
+                        <hr />
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
     </div>

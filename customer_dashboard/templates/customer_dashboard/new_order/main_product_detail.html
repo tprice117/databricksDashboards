@@ -26,13 +26,14 @@
                     <strong>{{ main_product.main_product_category.name }}</strong>
                 </p>
                 <p>{{ main_product.description }}</p>
-                <form>
+                <form action="{% url 'customer_new_order_4' %}" method="get">
+                    <input name="product_id" type="hidden" value="{{ main_product.id }}" />
                     <p style="margin-bottom: 0px;">Add On #1</p>
-                    <select class="form-select" style="margin-bottom: 12px;">
+                    <select class="form-select" name="product_add_ons" style="margin-bottom: 12px;">
                         <optgroup label="This is a group">
-                            <option value="12" selected="">This is item 1</option>
-                            <option value="13">This is item 2</option>
-                            <option value="14">This is item 3</option>
+                            {% for product_add_on in product_add_ons %}
+                                <option value="{{ product_add_on.id }}">{{ product_add_on.add_on.name }}</option>
+                            {% endfor %}
                         </optgroup>
                     </select>
                     <p style="margin-bottom: 0px;">Add On #2</p>
@@ -45,20 +46,21 @@
                     </select>
                     <p style="margin-bottom: 0px;">
                         {% if main_product.has_material %} Material Type {% endif %}
-                    </p><small class="form-text">Hold CTRL to select multiple.</small><select class="form-select" style="margin-bottom: 12px;" multiple="">
-                        <option value="" selected="">Misc Waste</option>
-                        <option value="">Concrete</option>
-                        <option value="">Cardboard</option>
+                    </p><small class="form-text">Hold CTRL to select multiple.</small><select class="form-select" name="product_waste_types" style="margin-bottom: 12px;" multiple="">
+                        {% for product_waste_type in product_waste_types %}
+                            <option value="{{ product_waste_type.id }}">{{ product_waste_type.waste_type.name }}</option>
+                        {% endfor %}
                     </select>
-                    <p style="margin-bottom: 0px;">
-                        {% if main_product.has_rental %} Delivery Date {% endif %}
-                    </p>
-                    <input class="form-control" type="date" style="margin-bottom: 12px;" required="" />
-                    <p style="margin-bottom: 0px;">
-                        {% if main_product.has_rental %} Removal Date {% endif %}
-                    </p>
-                    <input class="form-control" type="date" style="margin-bottom: 12px;" />
-                </form><a class="btn btn-primary" role="button" href="main_product_detail_pricing.html">See Pricing</a>
+                    {% if main_product.has_rental %}
+                        <p style="margin-bottom: 0px;">Delivery Date</p>
+                        <input class="form-control" type="date" name="delivery_date" style="margin-bottom: 12px;" required />
+                        <p style="margin-bottom: 0px;">Removal Date (blank for recurring)</p>
+                        <input class="form-control" type="date" name="removal_date" style="margin-bottom: 12px;" />
+                    {% endif %}
+                    <div class="d-flex flex-row-reverse">
+                        <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">See Pricing</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

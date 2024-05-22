@@ -54,4 +54,9 @@ urlpatterns = [
         views.new_order_3,
         name="customer_new_order_3",
     ),
+    path(
+        "customer/order/new/suppliers/",
+        views.new_order_4,
+        name="customer_new_order_4",
+    ),
 ]
