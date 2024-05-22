@@ -458,6 +458,7 @@ def my_order_groups(request):
 @login_required(login_url="/admin/login/")
 def order_group_detail(request, order_group_id):
     context = {}
+    context["user"] = get_user(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     # order.order_group.user_address.access_details
@@ -540,6 +541,7 @@ def order_group_detail(request, order_group_id):
 @login_required(login_url="/admin/login/")
 def order_detail(request, order_id):
     context = {}
+    context["user"] = get_user(request)
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
@@ -593,6 +595,7 @@ def locations(request):
 @login_required(login_url="/admin/login/")
 def location_detail(request, location_id):
     context = {}
+    context["user"] = get_user(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     user_address = UserAddress.objects.get(id=location_id)
