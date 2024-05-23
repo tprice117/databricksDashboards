@@ -26,6 +26,7 @@ class SellerInvoicePayable(BaseModel):
     invoice_file = models.FileField(upload_to=get_file_path, blank=True, null=True)
     supplier_invoice_id = models.CharField(max_length=255)
     invoice_date = models.DateField()
+    due_date = models.DateField(null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="UNPAID")
 
