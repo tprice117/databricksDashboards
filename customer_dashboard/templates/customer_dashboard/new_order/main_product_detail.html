@@ -26,31 +26,34 @@
                     <strong>{{ main_product.main_product_category.name }}</strong>
                 </p>
                 <p>{{ main_product.description }}</p>
-                <form action="{% url 'customer_new_order_4' %}" method="get">
+                <form action="{% url 'customer_new_order_4' %}" method="get" class="mb-2">
                     <input name="product_id" type="hidden" value="{{ main_product.id }}" />
-                    <p style="margin-bottom: 0px;">Add On #1</p>
-                    <select class="form-select" name="product_add_ons" style="margin-bottom: 12px;">
-                        <optgroup label="This is a group">
-                            {% for product_add_on in product_add_ons %}
-                                <option value="{{ product_add_on.id }}">{{ product_add_on.add_on.name }}</option>
+                    <p style="margin-bottom: 0px;">Select Address</p>
+                    <select class="form-select" name="user_address" style="margin-bottom: 12px;">
+                        <optgroup label="Your added locations">
+                            {% for user_address in user_addresses %}
+                                <option value="{{ user_address.id }}">{{ user_address.formatted_address }}</option>
                             {% endfor %}
                         </optgroup>
                     </select>
-                    <p style="margin-bottom: 0px;">Add On #2</p>
-                    <select class="form-select" style="margin-bottom: 12px;">
-                        <optgroup label="This is a group">
-                            <option value="12" selected="">This is item 1</option>
-                            <option value="13">This is item 2</option>
-                            <option value="14">This is item 3</option>
-                        </optgroup>
-                    </select>
-                    <p style="margin-bottom: 0px;">
-                        {% if main_product.has_material %} Material Type {% endif %}
-                    </p><small class="form-text">Hold CTRL to select multiple.</small><select class="form-select" name="product_waste_types" style="margin-bottom: 12px;" multiple="">
-                        {% for product_waste_type in product_waste_types %}
-                            <option value="{{ product_waste_type.id }}">{{ product_waste_type.waste_type.name }}</option>
-                        {% endfor %}
-                    </select>
+                    {% for product_add_on in product_add_ons %}
+                        <p style="margin-bottom: 0px;">{{ product_add_on.add_on.name }}</p>
+                        <select class="form-select" name="product_add_on_choices_{{ forloop.counter }}" style="margin-bottom: 12px;">
+                            <optgroup label="{{ product_add_on.add_on.name }}">
+                                {% for product_add_on_choice in product_add_on.choices %}
+                                    <option value="{{ product_add_on_choice.id }}">{{ product_add_on_choice.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    {% endfor %}
+                    {% if main_product.has_material %}
+                        <p style="margin-bottom: 0px;">Material Type</p><small class="form-text">Hold CTRL to select multiple.</small>
+                        <select class="form-select" name="product_waste_types" style="margin-bottom: 12px;" multiple="">
+                            {% for product_waste_type in product_waste_types %}
+                                <option value="{{ product_waste_type.id }}">{{ product_waste_type.waste_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
                     {% if main_product.has_rental %}
                         <p style="margin-bottom: 0px;">Delivery Date</p>
                         <input class="form-control" type="date" name="delivery_date" style="margin-bottom: 12px;" required />
