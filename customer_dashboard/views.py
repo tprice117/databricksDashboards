@@ -456,6 +456,18 @@ def new_order_5(request, order_group_id=None):
 
 
 @login_required(login_url="/admin/login/")
+def new_order_6(request, order_group_id):
+    context = {}
+    context["user"] = get_user(request)
+    count, deleted_objs = OrderGroup.objects.filter(id=order_group_id).delete()
+    if count:
+        messages.success(request, "Order removed from cart.")
+    else:
+        messages.error(request, f"Order not found [{order_group_id}].")
+    return HttpResponseRedirect(reverse("customer_new_order"))
+
+
+@login_required(login_url="/admin/login/")
 def profile(request):
     context = {}
     user = get_user(request)

@@ -21,6 +21,18 @@
             }
             window.history.pushState({}, null, cartUrl);
         });
+        
+        const myModalEl = document.getElementById("modal-remove-item");
+        
+        function removeItem() {
+            console.log("Removing item...");
+            console.log("Redirecting to {% url 'customer_new_order' %}");
+            let modal = bootstrap.Modal.getInstance(myModalEl);
+            if (modal) {
+                modal.hide();
+            }
+            window.location.href = "{% url 'customer_new_order_6_remove' order_group_id=order_group.id %}";
+        }
     </script>
 {% endblock %}
 {% block content %}
@@ -69,5 +81,25 @@
             </div>
         </div>
         <button class="btn btn-primary float-end" type="button">Checkout</button>
+    </div>
+{% endblock %}
+{% block modals %}
+    <div class="modal fade" role="dialog" tabindex="-1" id="modal-remove-item">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Are you sure?</h4>
+                    <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This will delete the Order from your Cart.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
+                    <a class="btn btn-danger" type="button" name="action_button" href="{% url 'customer_new_order_6_remove' order_group_id=order_group.id %}">Delete</a>
+                    {% comment %} <button class="btn btn-danger" type="button" name="action_button" onclick="removeItem()">Delete</button> {% endcomment %}
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
