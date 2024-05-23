@@ -12,32 +12,32 @@
         <h3 class="text-dark mb-1">New Order: Supplier Options</h3>
         <div class="row">
             <div class="col">
-                {% for seller_product_location in seller_product_locations %}
+                {% for item in seller_product_locations %}
                     <div class="row">
                         <div class="col-auto">
                             <img class="img-thumbnail img-fluid"
                                 alt="Seller logo"
                                 width="200"
                                 height="200"
-                                src="{% if seller_product_location.seller_location.seller.location_logo_url %}
-                                    {{ seller_product_location.seller_location.seller.location_logo_url }}
+                                src="{% if item.seller_product_location.seller_location.seller.location_logo_url %}
+                                    {{ item.seller_product_location.seller_location.seller.location_logo_url }}
                                 {% else %}
                                     {% static 'customer_dashboard/img/photo-1545231027-637d2f6210f8.jpg' %}
                                 {% endif %}" />
                         </div>
                         <div class="col">
-                            <h3>{{ seller_product_location.seller_location.name }}</h3>
+                            <h3>{{ item.seller_product_location.seller_location.name }}</h3>
                             <p>
-                                <a class="card-link" href="https://www.google.com/maps/place/{{ seller_product_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ seller_product_location.seller_location.formatted_address }}</a>
+                                <a class="card-link" href="https://www.google.com/maps/place/{{ item.seller_product_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.seller_product_location.seller_location.formatted_address }}</a>
                             </p>
                         </div>
                         <div class="col-auto">
-                            <p class="text-end">{{ price }}</p>
+                            <p class="text-end">{{ item.price }}</p>
                         </div>
                         <div class="col-auto">
-                            <form action="{% url 'customer_new_order_5_post' %}" method="post">
+                            <form action="{% url 'customer_new_order_5' %}" method="post">
                                 {% csrf_token %}
-                                <input name="seller_product_location_id" type="hidden" value="{{ seller_product_location.id }}" />
+                                <input name="seller_product_location_id" type="hidden" value="{{ item.seller_product_location.id }}" />
                                 <input name="product_id" type="hidden" value="{{ product_id }}" />
                                 <input name="product_waste_types" type="hidden" value="{{ product_waste_types }}" />
                                 <input name="product_add_ons" type="hidden" value="{{ product_add_ons }}" />
