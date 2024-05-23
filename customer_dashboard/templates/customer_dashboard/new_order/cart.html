@@ -8,71 +8,52 @@
     <style></style>
 {% endblock %}
 {% block javascript %}
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Push new url to history and to the browser
-            let cartUrl;
-            if (window.location.search) {
-                // Get current query params.
-                queryParams = new URLSearchParams(window.location.search);
-                cartUrl = "{% url 'customer_new_order_5_get' order_group_id=order_group.id %}?" + queryParams.toString();
-            } else {
-                cartUrl = "{% url 'customer_new_order_5_get' order_group_id=order_group.id %}";
-            }
-            window.history.pushState({}, null, cartUrl);
-        });
-        
-        const myModalEl = document.getElementById("modal-remove-item");
-        
-        function removeItem() {
-            console.log("Removing item...");
-            console.log("Redirecting to {% url 'customer_new_order' %}");
-            let modal = bootstrap.Modal.getInstance(myModalEl);
-            if (modal) {
-                modal.hide();
-            }
-            window.location.href = "{% url 'customer_new_order_6_remove' order_group_id=order_group.id %}";
-        }
-    </script>
+    <script></script>
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
         <h3 class="text-dark mb-1">Shopping Cart</h3>
         <div class="row">
             <div class="col">
-                <div class="row">
-                    <div class="col-auto">
-                        <img class="img-thumbnail img-fluid"
-                            alt="Product category image"
-                            width="67"
-                            height="96"
-                            src="{% if main_product.main_product_category.image %}
-                                {{ main_product.main_product_category.image }}
-                            {% else %}
-                                {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
-                            {% endif %}" />
-                        <img class="img-thumbnail img-fluid"
-                            alt="Product image"
-                            width="138"
-                            height="95"
-                            src="{% if main_product.image_del %}
-                                {{ main_product.image_del }}
-                            {% else %}
-                                {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
-                            {% endif %}" />
+                {% for item in cart.values %}
+                    <div class="row">
+                        <div class="col-auto">
+                            <img class="img-thumbnail img-fluid"
+                                alt="Product category image"
+                                width="67"
+                                height="96"
+                                src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image %}
+                                    {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image }}
+                                {% else %}
+                                    {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
+                                {% endif %}" />
+                            <img class="img-thumbnail img-fluid"
+                                alt="Product image"
+                                width="138"
+                                height="95"
+                                src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                    {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                {% else %}
+                                    {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
+                                {% endif %}" />
+                        </div>
+                        <div class="col">
+                            <h3>{{ item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
+                            <p>{{ item.order_group.user_address.formatted_address }}</p>
+                            <p>{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
+                        </div>
+                        <div class="col-auto">
+                            <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
+                        </div>
+                        <div class="col-auto">
+                            <!-- TODO: Add htmx remove item -->
+                            <button class="btn btn-outline-danger" type="button">Remove</button>
+                        </div>
                     </div>
-                    <div class="col">
-                        <h3>{{ order_group.spsl.sp.product.main_product.name }}</h3>
-                        <p>{{ order_group.user_address.formatted_address }}</p>
-                        <p>{{ order_group.start_date }} to {{ order_group.end_date }}</p>
-                    </div>
-                    <div class="col-auto">
-                        <p class="text-end">${{ price|floatformat:2|intcomma }}</p>
-                    </div>
-                    <div class="col-auto">
-                        <button class="btn btn-outline-danger" type="button" data-bs-target="#modal-remove-item" data-bs-toggle="modal">Remove</button>
-                    </div>
-                </div>
+                    {% if not forloop.last %}
+                        <hr />
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
         <div class="row" style="margin-top: 12px;">
@@ -96,7 +77,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
-                    <a class="btn btn-danger" type="button" name="action_button" href="{% url 'customer_new_order_6_remove' order_group_id=order_group.id %}">Delete</a>
+                    {% comment %} <a class="btn btn-danger" type="button" name="action_button" href="{% url 'customer_new_order_6_remove' order_group_id=order_group.id %}">Delete</a> {% endcomment %}
                     {% comment %} <button class="btn btn-danger" type="button" name="action_button" onclick="removeItem()">Delete</button> {% endcomment %}
                 </div>
             </div>
