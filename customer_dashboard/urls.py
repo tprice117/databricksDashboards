@@ -45,6 +45,11 @@ urlpatterns = [
     # NEW ORDER #
     path("customer/order/new/", views.new_order, name="customer_new_order"),
     path(
+        "customer/order/category/<uuid:category_id>/price/",
+        views.new_order_category_price,
+        name="customer_category_price",
+    ),
+    path(
         "customer/order/new/product/<uuid:category_id>/",
         views.new_order_2,
         name="customer_new_order_2",
@@ -59,17 +64,11 @@ urlpatterns = [
         views.new_order_4,
         name="customer_new_order_4",
     ),
-    # POST: Create OrderGroup #
+    # POST: Create OrderGroup and loads cart. GET: Load cart #
     path(
         "customer/order/new/cart/",
         views.new_order_5,
-        name="customer_new_order_5_post",
-    ),
-    # GET: Load OrderGroup from url #
-    path(
-        "customer/order/new/cart/<uuid:order_group_id>/",
-        views.new_order_5,
-        name="customer_new_order_5_get",
+        name="customer_new_order_5",
     ),
     path(
         "customer/order/new/cart/<uuid:order_group_id>/remove/",

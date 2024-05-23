@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from typing import List
+import ast
 import json
 import uuid
 from django.contrib import messages
@@ -27,6 +28,7 @@ from api.models import (
     MainProductServiceRecurringFrequency,
     MainProductWasteType,
     Product,
+    AddOn,
     ProductAddOnChoice,
     SellerProductSellerLocation,
     SellerLocation,
@@ -311,6 +313,18 @@ def new_order(request):
 
 
 @login_required(login_url="/admin/login/")
+def new_order_category_price(request, category_id):
+    context = {}
+    main_product_category = MainProductCategory.objects.get(id=category_id)
+    context["price_from"] = main_product_category.price_from
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request, "customer_dashboard/snippets/category_price_from.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def new_order_2(request, category_id):
     context = {}
     context["user"] = get_user(request)
@@ -344,9 +358,16 @@ def new_order_3(request, product_id):
     )
     product_waste_types = product_waste_types.select_related("waste_type")
     context["product_waste_types"] = product_waste_types
-    product_add_ons = MainProductAddOn.objects.filter(main_product_id=main_product.id)
-    product_add_ons = product_add_ons.select_related("add_on")
-    context["product_add_ons"] = product_add_ons
+    add_ons = AddOn.objects.filter(main_product_id=product_id)
+    # TODO: Get addon choices for each add_on and display the choices under the add_on.
+    context["product_add_ons"] = []
+    for add_on in add_ons:
+        context["product_add_ons"].append(
+            {"add_on": add_on, "choices": add_on.addonchoice_set.all()}
+        )
+    # TODO: Add dropdown for to select a UserAddress.
+    user_addresses = UserAddress.objects.filter(user_id=context["user"].id)
+    context["user_addresses"] = user_addresses
     return render(
         request, "customer_dashboard/new_order/main_product_detail.html", context
     )
@@ -357,36 +378,52 @@ def new_order_4(request):
     context = {}
     context["user"] = get_user(request)
     product_id = request.GET.get("product_id")
+    user_address = request.GET.get("user_address")
+    product_add_on_choices = []
+    for key, value in request.GET.items():
+        if key.startswith("product_add_on_choices"):
+            product_add_on_choices.append(value)
     product_waste_types = request.GET.getlist("product_waste_types")
-    product_add_ons = request.GET.getlist("product_add_ons")
     delivery_date = request.GET.get("delivery_date")
     removal_date = request.GET.get("removal_date")
     context["product_id"] = product_id
     context["product_waste_types"] = product_waste_types
-    context["product_add_ons"] = product_add_ons
+    context["product_add_on_choices"] = product_add_on_choices
     context["delivery_date"] = delivery_date
     context["removal_date"] = removal_date
-    main_product = MainProduct.objects.filter(id=product_id)
-    main_product = main_product.select_related("main_product_category")
-    # main_product = main_product.prefetch_related("products")
-    main_product = main_product.first()
-    # products = main_product.products.all()
     products = Product.objects.filter(main_product_id=product_id)
-    prd_lst = [p.id for p in products]
+    prdall = ProductAddOnChoice.objects.all()
+    for prd in prdall:
+        print(prd.product_id, prd.name)
+    # TODO: Find the products that have the waste types and add ons.
+    if product_add_on_choices:
+        for product in products:
+            product_addon_choices_db = ProductAddOnChoice.objects.filter(
+                product_id=product.id
+            ).values_list("add_on_choice_id", flat=True)
+            if set(product_addon_choices_db) == set(product_add_on_choices):
+                context["product"] = product
+                break
+    elif products.count() == 1:
+        context["product"] = products.first()
+    if context.get("product", None) is None:
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_new_order"))
 
-    # TODO: Get sellers that have the product and waste types.
+    # We know the product the user wants
     seller_product_locations = SellerProductSellerLocation.objects.filter(
-        seller_product__product_id__in=prd_lst,
-        # seller_product__product__main_product__main_product_category_id=main_product.main_product_category.id,
-        # seller_product__product__main_product__main_product_waste_types__waste_type_id__in=product_waste_types,
-        # seller_product__product__main_product__main_product_add_ons__add_on_id__in=product_add_ons,
+        seller_product__product_id=context["product"].id
     )
 
     # if request.method == "POST":
     context["seller_product_locations"] = []
     for seller_product_location in seller_product_locations:
         if hasattr(seller_product_location, "seller_location"):
-            context["seller_product_locations"].append(seller_product_location)
+            seller_d = {}
+            seller_d["seller_product_location"] = seller_product_location
+            # TODO: Call price function to get the price for the product in views get_pricing
+            seller_d["price"] = 250.55
+            context["seller_product_locations"].append(seller_d)
             break
 
     # context["seller_locations"] = seller_product_location.first().seller_location
@@ -398,15 +435,19 @@ def new_order_4(request):
 
 
 @login_required(login_url="/admin/login/")
-def new_order_5(request, order_group_id=None):
+def new_order_5(request):
     context = {}
     context["user"] = get_user(request)
+    context["cart"] = {}
     if request.method == "POST":
         # Create the order group and orders.
         seller_product_location_id = request.POST.get("seller_product_location_id")
         product_id = request.POST.get("product_id")
         product_waste_types = request.POST.get("product_waste_types")
-        product_add_ons = request.POST.get("product_add_ons")
+        if product_waste_types:
+            product_waste_types = ast.literal_eval(product_waste_types)
+        placement_details = request.POST.get("placement_details")
+        # product_add_on_choices = request.POST.get("product_add_on_choices")
         delivery_date = request.POST.get("delivery_date")
         removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
@@ -414,11 +455,12 @@ def new_order_5(request, order_group_id=None):
         # main_product = main_product.prefetch_related("products")
         main_product = main_product.first()
         context["main_product"] = main_product
-        # seller_location = SellerProductSellerLocation.objects.get(
-        #     id=seller_product_location_id
-        # )
+        seller_product_location = SellerProductSellerLocation.objects.get(
+            id=seller_product_location_id
+        )
         user_address = UserAddress.objects.filter(user_id=context["user"].id).first()
         # create order group and orders
+        # TODO: where do I get take_rate, tonnage_quantity?
         order_group = OrderGroup(
             user=context["user"],
             user_address=user_address,
@@ -427,8 +469,12 @@ def new_order_5(request, order_group_id=None):
         )
         if removal_date:
             order_group.end_date = removal_date
+        if seller_product_location.delivery_fee:
+            order_group.delivery_fee = seller_product_location.delivery_fee
+        if seller_product_location.removal_fee:
+            order_group.removal_fee = seller_product_location.removal_fee
         # order_group.save()
-        # Create the order
+        # Create the order (Let submitted on null, this indicates that the order is in the cart)
         # order = Order(
         #     order_group=order_group,
         #     user=context["user"],
@@ -438,16 +484,36 @@ def new_order_5(request, order_group_id=None):
         # if removal_date:
         #     order.end_date = removal_date
         # order.save()
-        context["price"] = 250.55  # order.customer_price()
-        context["subtotal"] = 250  # order.customer_price()
-    else:
-        order_group = OrderGroup.objects.filter(id=order_group_id).first()
-        if not order_group:
-            messages.error(request, "Cart not found.")
-            return HttpResponseRedirect(reverse("customer_new_order"))
-    context["order_group"] = order_group
+        context["cart"][order_group.id] = {
+            "order_group": order_group,
+            "price": 250.55,  # order.customer_price()
+        }
 
-    # if request.method == "POST":
+    # Load the cart page
+    context["subtotal"] = 0
+    # Pull all orders with submitted_on = None and show them in the cart.
+    orders = (
+        Order.objects.filter(order_group__user_id=context["user"].id)
+        .filter(submitted_on__isnull=True)
+        .order_by("order_group__start_date")
+    )
+    if not orders:
+        messages.error(request, "Your cart is empty.")
+    else:
+        # Get unique order group objects from the orders
+        for order in orders:
+            try:
+                customer_price = order.customer_price()
+                context["cart"][order.order_group.id]["price"] += customer_price
+                context["subtotal"] += customer_price
+            except KeyError:
+                customer_price = order.customer_price()
+                context["cart"][order.order_group.id] = {
+                    "order_group": order.order_group,
+                    "price": customer_price,
+                }
+                context["subtotal"] += customer_price
+
     return render(
         request,
         "customer_dashboard/new_order/cart.html",
