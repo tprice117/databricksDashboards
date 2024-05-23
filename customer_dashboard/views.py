@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlencode
 import datetime
 from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
+from django.urls import reverse
 from rest_framework import serializers
 import logging
 
@@ -28,6 +29,7 @@ from api.models import (
     Product,
     ProductAddOnChoice,
     SellerProductSellerLocation,
+    SellerLocation,
 )
 from billing.models import Invoice
 from api.utils.utils import decrypt_string
@@ -359,6 +361,11 @@ def new_order_4(request):
     product_add_ons = request.GET.getlist("product_add_ons")
     delivery_date = request.GET.get("delivery_date")
     removal_date = request.GET.get("removal_date")
+    context["product_id"] = product_id
+    context["product_waste_types"] = product_waste_types
+    context["product_add_ons"] = product_add_ons
+    context["delivery_date"] = delivery_date
+    context["removal_date"] = removal_date
     main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related("main_product_category")
     # main_product = main_product.prefetch_related("products")
@@ -376,16 +383,74 @@ def new_order_4(request):
     )
 
     # if request.method == "POST":
-    context["seller_locations"] = []
+    context["seller_product_locations"] = []
     for seller_product_location in seller_product_locations:
         if hasattr(seller_product_location, "seller_location"):
-            context["seller_locations"].append(seller_product_location.seller_location)
+            context["seller_product_locations"].append(seller_product_location)
             break
 
     # context["seller_locations"] = seller_product_location.first().seller_location
     return render(
         request,
         "customer_dashboard/new_order/main_product_detail_pricing.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_5(request, order_group_id=None):
+    context = {}
+    context["user"] = get_user(request)
+    if request.method == "POST":
+        # Create the order group and orders.
+        seller_product_location_id = request.POST.get("seller_product_location_id")
+        product_id = request.POST.get("product_id")
+        product_waste_types = request.POST.get("product_waste_types")
+        product_add_ons = request.POST.get("product_add_ons")
+        delivery_date = request.POST.get("delivery_date")
+        removal_date = request.POST.get("removal_date")
+        main_product = MainProduct.objects.filter(id=product_id)
+        main_product = main_product.select_related("main_product_category")
+        # main_product = main_product.prefetch_related("products")
+        main_product = main_product.first()
+        context["main_product"] = main_product
+        # seller_location = SellerProductSellerLocation.objects.get(
+        #     id=seller_product_location_id
+        # )
+        user_address = UserAddress.objects.filter(user_id=context["user"].id).first()
+        # create order group and orders
+        order_group = OrderGroup(
+            user=context["user"],
+            user_address=user_address,
+            seller_product_seller_location_id=seller_product_location_id,
+            start_date=delivery_date,
+        )
+        if removal_date:
+            order_group.end_date = removal_date
+        # order_group.save()
+        # Create the order
+        # order = Order(
+        #     order_group=order_group,
+        #     user=context["user"],
+        #     user_address=user_address,
+        #     start_date=delivery_date,
+        # )
+        # if removal_date:
+        #     order.end_date = removal_date
+        # order.save()
+        context["price"] = 250.55  # order.customer_price()
+        context["subtotal"] = 250  # order.customer_price()
+    else:
+        order_group = OrderGroup.objects.filter(id=order_group_id).first()
+        if not order_group:
+            messages.error(request, "Cart not found.")
+            return HttpResponseRedirect(reverse("customer_new_order"))
+    context["order_group"] = order_group
+
+    # if request.method == "POST":
+    return render(
+        request,
+        "customer_dashboard/new_order/cart.html",
         context,
     )
 

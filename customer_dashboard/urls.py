@@ -59,4 +59,16 @@ urlpatterns = [
         views.new_order_4,
         name="customer_new_order_4",
     ),
+    # POST: Create OrderGroup #
+    path(
+        "customer/order/new/cart/",
+        views.new_order_5,
+        name="customer_new_order_5_post",
+    ),
+    # GET: Load OrderGroup from url #
+    path(
+        "customer/order/new/cart/<uuid:order_group_id>/",
+        views.new_order_5,
+        name="customer_new_order_5_get",
+    ),
 ]

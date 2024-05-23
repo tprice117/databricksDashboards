@@ -12,30 +12,42 @@
         <h3 class="text-dark mb-1">New Order: Supplier Options</h3>
         <div class="row">
             <div class="col">
-                {% for seller_location in seller_locations %}
+                {% for seller_product_location in seller_product_locations %}
                     <div class="row">
                         <div class="col-auto">
                             <img class="img-thumbnail img-fluid"
                                 alt="Seller logo"
                                 width="200"
                                 height="200"
-                                src="{% if seller_location.seller.location_logo_url %}
-                                    {{ seller_location.seller.location_logo_url }}
+                                src="{% if seller_product_location.seller_location.seller.location_logo_url %}
+                                    {{ seller_product_location.seller_location.seller.location_logo_url }}
                                 {% else %}
                                     {% static 'customer_dashboard/img/photo-1545231027-637d2f6210f8.jpg' %}
                                 {% endif %}" />
                         </div>
                         <div class="col">
-                            <h3>{{ seller_location.name }}</h3>
+                            <h3>{{ seller_product_location.seller_location.name }}</h3>
                             <p>
-                                <a class="card-link" href="https://www.google.com/maps/place/{{ seller_location.formatted_address|urlencode }}" target="_blank">{{ seller_location.formatted_address }}</a>
+                                <a class="card-link" href="https://www.google.com/maps/place/{{ seller_product_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ seller_product_location.seller_location.formatted_address }}</a>
                             </p>
                         </div>
                         <div class="col-auto">
                             <p class="text-end">{{ price }}</p>
                         </div>
                         <div class="col-auto">
-                            <a class="btn btn-primary" role="button" href="cart.html">Add to Cart</a>
+                            <form action="{% url 'customer_new_order_5_post' %}" method="post">
+                                {% csrf_token %}
+                                <input name="seller_product_location_id" type="hidden" value="{{ seller_product_location.id }}" />
+                                <input name="product_id" type="hidden" value="{{ product_id }}" />
+                                <input name="product_waste_types" type="hidden" value="{{ product_waste_types }}" />
+                                <input name="product_add_ons" type="hidden" value="{{ product_add_ons }}" />
+                                <input name="delivery_date" type="hidden" value="{{ delivery_date }}" />
+                                <input name="removal_date" type="hidden" value="{{ removal_date }}" />
+                                <div class="d-flex flex-row-reverse">
+                                    <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">Add to Cart</button>
+                                </div>
+                            </form>
+                            {% comment %} <a class="btn btn-primary" role="button" href="cart.html">Add to Cart</a> {% endcomment %}
                         </div>
                     </div>
                     {% if not forloop.first %}

@@ -7,6 +7,22 @@
 {% block stylesheet %}
     <style></style>
 {% endblock %}
+{% block javascript %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Push new url to history and to the browser
+            let cartUrl;
+            if (window.location.search) {
+                // Get current query params.
+                queryParams = new URLSearchParams(window.location.search);
+                cartUrl = "{% url 'customer_new_order_5_get' order_group_id=order_group.id %}?" + queryParams.toString();
+            } else {
+                cartUrl = "{% url 'customer_new_order_5_get' order_group_id=order_group.id %}";
+            }
+            window.history.pushState({}, null, cartUrl);
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         <h3 class="text-dark mb-1">Shopping Cart</h3>
@@ -14,15 +30,32 @@
             <div class="col">
                 <div class="row">
                     <div class="col-auto">
-                        <img class="img-thumbnail img-fluid" alt="green plastic trash bin beside white wall" width="67" height="96" src="assets/img/photo-1619155442906-c8030bd86f49.jpg" /><img class="img-thumbnail img-fluid" alt="silver mercedes benz emblem on blue surface" width="138" height="95" src="assets/img/photo-1599305445671-ac291c95aaa9.jpg" />
+                        <img class="img-thumbnail img-fluid"
+                            alt="Product category image"
+                            width="67"
+                            height="96"
+                            src="{% if main_product.main_product_category.image %}
+                                {{ main_product.main_product_category.image }}
+                            {% else %}
+                                {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
+                            {% endif %}" />
+                        <img class="img-thumbnail img-fluid"
+                            alt="Product image"
+                            width="138"
+                            height="95"
+                            src="{% if main_product.image_del %}
+                                {{ main_product.image_del }}
+                            {% else %}
+                                {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
+                            {% endif %}" />
                     </div>
                     <div class="col">
                         <h3>{{ order_group.spsl.sp.product.main_product.name }}</h3>
-                        <p>{{ order_group.user_address.formatted_address() }}</p>
+                        <p>{{ order_group.user_address.formatted_address }}</p>
                         <p>{{ order_group.start_date }} to {{ order_group.end_date }}</p>
                     </div>
                     <div class="col-auto">
-                        <p class="text-end">{{ price }}</p>
+                        <p class="text-end">${{ price|floatformat:2|intcomma }}</p>
                     </div>
                     <div class="col-auto">
                         <button class="btn btn-outline-danger" type="button" data-bs-target="#modal-remove-item" data-bs-toggle="modal">Remove</button>
@@ -32,8 +65,9 @@
         </div>
         <div class="row" style="margin-top: 12px;">
             <div class="col">
-                <h4 class="float-end"><strong>Subtotal: {{ subtotal }}</strong></h4>
+                <h4 class="float-end"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
             </div>
-        </div><button class="btn btn-primary float-end" type="button">Checkout</button>
+        </div>
+        <button class="btn btn-primary float-end" type="button">Checkout</button>
     </div>
 {% endblock %}
