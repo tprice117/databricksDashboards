@@ -105,11 +105,22 @@ class UserAddressTypeSerializer(serializers.ModelSerializer):
 class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     stripe_customer_id = serializers.CharField(required=False, allow_null=True)
+    allow_saturday_delivery = serializers.CharField(required=False, allow_null=True)
+    allow_sunday_delivery = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = UserAddress
         fields = "__all__"
         validators = []
+
+    def validate(self, data):
+        # If allow_saturday_delivery is None, set it to False
+        if data.get("allow_saturday_delivery") is None:
+            data["allow_saturday_delivery"] = False
+        # If allow_sunday_delivery is None, set it to False
+        if data.get("allow_sunday_delivery") is None:
+            data["allow_sunday_delivery"] = False
+        return data
 
 
 class UserGroupBillingSerializer(serializers.ModelSerializer):
