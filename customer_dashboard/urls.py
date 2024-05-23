@@ -45,12 +45,12 @@ urlpatterns = [
     # NEW ORDER #
     path("customer/order/new/", views.new_order, name="customer_new_order"),
     path(
-        "customer/order/new/category/<uuid:category_id>/",
+        "customer/order/new/product/<uuid:category_id>/",
         views.new_order_2,
         name="customer_new_order_2",
     ),
     path(
-        "customer/order/new/product/<uuid:product_id>/",
+        "customer/order/new/options/<uuid:product_id>/",
         views.new_order_3,
         name="customer_new_order_3",
     ),
