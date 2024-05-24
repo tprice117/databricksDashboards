@@ -9,6 +9,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.urls import reverse
 
 from api.models.choices.user_type import UserType
 from api.models.disposal_location.disposal_location import DisposalLocation
@@ -599,7 +600,7 @@ class Order(BaseModel):
                     subject_supplier = f"🚀 Yippee! New Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
                 # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
                 # then it opens the order html to allow them to select order status.
-                accept_url = self.seller_view_order_url
+                accept_url = f"{settings.DASHBOARD_BASE_URL}{reverse('supplier_booking_detail', kwargs={'order_id': self.id})}"
                 html_content_supplier = render_to_string(
                     "notifications/emails/supplier_email.min.html",
                     {"order": self, "accept_url": accept_url, "is_email": True},
