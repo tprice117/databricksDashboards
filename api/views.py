@@ -6,6 +6,7 @@ from random import randint
 import requests
 import stripe
 from django.conf import settings
+from django.urls import reverse
 from django.db.models import Avg, Count  # F, OuterRef, Q, Subquery, Sum,
 from django.db.models.functions import Round
 from django.http import HttpResponse
@@ -1319,9 +1320,7 @@ def order_status_view(request, order_id):
         order = Order.objects.get(id=order_id)
         accept_url = f"/api/order/{order_id}/accept/?key={key}"
         # deny_url = f"/api/order/{order_id}/deny/?key={key}"
-        deny_url = (
-            order.order_group.seller_product_seller_location.seller_product.seller.dashboard_url
-        )
+        deny_url = reverse("supplier_bookings")
         payload = {"order": order, "accept_url": accept_url, "deny_url": deny_url}
         return render(request, "notifications/emails/supplier_email.min.html", payload)
     else:
