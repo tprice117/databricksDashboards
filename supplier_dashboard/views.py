@@ -954,6 +954,27 @@ def payouts(request):
 
 
 @login_required(login_url="/admin/login/")
+def payout_invoice(request, payout_id):
+    context = {}
+    # NOTE: Can add stuff to session if needed to speed up queries.
+    context["seller"] = get_seller(request)
+    payout = Payout.objects.filter(id=payout_id).select_related("order").first()
+    order_line_item = payout.order.order_line_items.all().first()
+    context["is_pdf"] = False
+    if order_line_item:
+        # TODO: Add support for check once LOB is integrated.
+        stripe_invoice = order_line_item.get_invoice()
+        if stripe_invoice:
+            # hosted_invoice_url
+            context["hosted_invoice_url"] = stripe_invoice.hosted_invoice_url
+            context["invoice_pdf"] = stripe_invoice.invoice_pdf
+            context["is_pdf"] = True
+    return render(
+        request, "supplier_dashboard/snippets/payout_detail_invoice.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def payout_detail(request, payout_id):
     context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
