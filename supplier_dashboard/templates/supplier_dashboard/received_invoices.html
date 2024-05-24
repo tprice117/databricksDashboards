@@ -66,7 +66,6 @@
                                 <th>Amount</th>
                                 <th>Invoice ID</th>
                                 <th>Due Date</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -78,7 +77,6 @@
                                     <td>{{ seller_invoice_payable.amount }}</td>
                                     <td>{{ seller_invoice_payable.supplier_invoice_id }}</td>
                                     <td>{{ seller_invoice_payable.invoice_date }}</td>
-                                    <td>{{ seller_invoice_payable.status }}</td>
                                     <td>
                                         <a class="btn btn-light" role="button" href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable.id %}"><i class="far fa-eye"></i></a>
                                     </td>
@@ -98,9 +96,6 @@
                                 </td>
                                 <td>
                                     <strong>Due Date</strong>
-                                </td>
-                                <td>
-                                    <strong>Status</strong>
                                 </td>
                             </tr>
                         </tfoot>
