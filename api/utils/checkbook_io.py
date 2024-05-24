@@ -44,7 +44,7 @@ class CheckbookIO:
 
                 remittance_advice.append(
                     {
-                        "id": ", ".join(supplier_invoice_ids),
+                        "id": ", ".join(supplier_invoice_ids)[:32],
                         "amount": round(
                             float(order.seller_price() - total_paid_to_seller), 2
                         ),
