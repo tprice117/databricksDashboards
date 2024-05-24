@@ -1,7 +1,8 @@
-import stripe
-from stripe.error import InvalidRequestError
-from django.conf import settings
 import logging
+
+import stripe
+from django.conf import settings
+from stripe.error import InvalidRequestError
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +11,14 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class PaymentMethod:
     @staticmethod
+    def get(id: str):
+        return stripe.PaymentMethod.retrieve(id)
+
+    @staticmethod
     def list(customer_id: str):
+        """
+        List all Payment Methods for a Customer (card type only).
+        """
         try:
             return stripe.Customer.list_payment_methods(
                 customer_id,
@@ -19,7 +27,8 @@ class PaymentMethod:
             )["data"]
         except InvalidRequestError as e:
             logger.error(
-                f"stripe.PaymentMethod.list: [customer_id:{customer_id}]-[{e}]", exc_info=e
+                f"stripe.PaymentMethod.list: [customer_id:{customer_id}]-[{e}]",
+                exc_info=e,
             )
             return []
 

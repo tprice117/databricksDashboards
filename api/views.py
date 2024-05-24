@@ -29,6 +29,12 @@ from rest_framework.views import APIView
 from api.filters import OrderGroupFilterset
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.utils import decrypt_string
+from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
+    attempt_charge_for_past_due_invoices,
+)
+from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method import (
+    ensure_invoice_settings_default_payment_method,
+)
 from billing.utils.billing import BillingUtils
 from notifications.utils import internal_email
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
@@ -1368,7 +1374,7 @@ def update_order_status(request, order_id, accept=True):
 
 
 def test3(request):
-    print("TEST")
+    attempt_charge_for_past_due_invoices()
     # BillingUtils.run_interval_based_invoicing()
     # sync_stripe_payment_methods()
     # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
