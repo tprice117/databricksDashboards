@@ -12,7 +12,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0" id="dataTable">
+                    <table class="table table-hover my-0" id="dataTable">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -20,12 +20,11 @@
                                 <th>Payout Method</th>
                                 <th>Insurance</th>
                                 <th>Tax</th>
-                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for seller_location in page_obj %}
-                                <tr>
+                                <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_location_detail' location_id=seller_location.id %}'">
                                     <td>
                                         <img class="rounded-circle me-2"
                                             width="30"
@@ -59,9 +58,6 @@
                                         {% else %}
                                             <i class="fas fa-times-circle text-danger"></i> Missing Tax Info
                                         {% endif %}
-                                    </td>
-                                    <td>
-                                        <a class="btn btn-light" role="button" href="{% url 'supplier_location_detail' location_id=seller_location.id %}"><i class="far fa-eye"></i></a>
                                     </td>
                                 </tr>
                             {% endfor %}
