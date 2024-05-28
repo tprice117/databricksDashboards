@@ -18,6 +18,7 @@ import logging
 from api.models import (
     User,
     UserAddress,
+    UserAddressType,
     Order,
     OrderGroup,
     MainProductCategory,
@@ -38,7 +39,7 @@ from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
 from communications.intercom.utils.utils import get_json_safe_value
 
-from .forms import UserForm, AccessDetailsForm, PlacementDetailsForm
+from .forms import UserForm, AccessDetailsForm, PlacementDetailsForm, UserAddressForm
 
 logger = logging.getLogger(__name__)
 
@@ -884,6 +885,61 @@ def location_detail(request, location_id):
                         save_model = user_address
                 else:
                     raise InvalidFormError(form, "Invalid AccessDetailsForm")
+            elif "user_address_submit" in request.POST:
+                form = UserAddressForm(request.POST)
+                context["user_address_form"] = form
+                if form.is_valid():
+                    if form.cleaned_data.get("name") != user_address.name:
+                        user_address.name = form.cleaned_data.get("name")
+                        save_model = user_address
+                    if form.cleaned_data.get("address_type") != str(
+                        user_address.user_address_type_id
+                    ):
+                        user_address.user_address_type_id = form.cleaned_data.get(
+                            "address_type"
+                        )
+                        save_model = user_address
+                    if form.cleaned_data.get("street") != user_address.street:
+                        user_address.street = form.cleaned_data.get("street")
+                        save_model = user_address
+                    if form.cleaned_data.get("city") != user_address.city:
+                        user_address.city = form.cleaned_data.get("city")
+                        save_model = user_address
+                    if form.cleaned_data.get("state") != user_address.state:
+                        user_address.state = form.cleaned_data.get("state")
+                        save_model = user_address
+                    if form.cleaned_data.get("postal_code") != user_address.postal_code:
+                        user_address.postal_code = form.cleaned_data.get("postal_code")
+                        save_model = user_address
+                    if form.cleaned_data.get("is_archived") != user_address.is_archived:
+                        user_address.is_archived = form.cleaned_data.get("is_archived")
+                        save_model = user_address
+                    if (
+                        form.cleaned_data.get("access_details")
+                        != user_address.access_details
+                    ):
+                        user_address.access_details = form.cleaned_data.get(
+                            "access_details"
+                        )
+                        save_model = user_address
+                    if (
+                        form.cleaned_data.get("allow_saturday_delivery")
+                        != user_address.allow_saturday_delivery
+                    ):
+                        user_address.allow_saturday_delivery = form.cleaned_data.get(
+                            "allow_saturday_delivery"
+                        )
+                        save_model = user_address
+                    if (
+                        form.cleaned_data.get("allow_sunday_delivery")
+                        != user_address.allow_sunday_delivery
+                    ):
+                        user_address.allow_sunday_delivery = form.cleaned_data.get(
+                            "allow_sunday_delivery"
+                        )
+                        save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid UserAddressForm")
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
@@ -899,6 +955,20 @@ def location_detail(request, location_id):
     else:
         context["form"] = AccessDetailsForm(
             initial={"access_details": user_address.access_details}
+        )
+        context["user_address_form"] = UserAddressForm(
+            initial={
+                "name": user_address.name,
+                "address_type": user_address.user_address_type_id,
+                "street": user_address.street,
+                "city": user_address.city,
+                "state": user_address.state,
+                "postal_code": user_address.postal_code,
+                "is_archived": user_address.is_archived,
+                "allow_saturday_delivery": user_address.allow_saturday_delivery,
+                "allow_sunday_delivery": user_address.allow_sunday_delivery,
+                "access_details": user_address.access_details,
+            }
         )
 
     return render(request, "customer_dashboard/location_detail.html", context)
