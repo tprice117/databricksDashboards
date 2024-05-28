@@ -24,8 +24,13 @@ class EmailNotificationAdmin(admin.ModelAdmin):
         for email_notification in queryset:
             find_start = "https://api"
             start = email_notification.html_content.find(f'href="{find_start}')
+            if start == -1:
+                find_start = "https://portal"
+                start = email_notification.html_content.find(f'href="{find_start}')
             if start > 0:
                 start += len('href="')
+                # NOTE: This shows the the booking details page for the order.
+                # Could also get order_id from view_link and get order.seller_view_order_url for old view.
                 end = email_notification.html_content.find('"', start)
                 view_link = email_notification.html_content[start:end]
                 break
