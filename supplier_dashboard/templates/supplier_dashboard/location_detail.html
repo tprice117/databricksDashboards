@@ -105,19 +105,16 @@
                     <div class="card-body">
                         <h4 class="card-title">Payout Details</h4>
                         <div class="table-responsive" style="margin-bottom: 16px;">
-                            <table class="table">
+                            <table class="table table-hover">
                                 <thead>
                                     <tr></tr>
                                 </thead>
                                 <tbody>
                                     {% for payout in payouts %}
-                                        <tr>
+                                        <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
                                             <td>{{ payout.created_on }}</td>
                                             <td>{{ payout.amount }}</td>
                                             <td>{{ payout.status }}</td>
-                                            <td>
-                                                <a class="btn btn-light" role="button" href="{% url 'supplier_payout_detail' payout_id=payout.id %}"><i class="far fa-eye"></i></a>
-                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -128,9 +125,9 @@
                         </p>
                         <!-- TODO: Set up Stripe integration and remove the following for first iteration -->
                         <p>Payouts can be made by ACH (via Stripe Connect) or by check. Stripe Connect will be used, if configured, otherwise a check will be sent. Please contact us to set up Stripe.</p>
-                        <!--          <p style="margin-bottom: 0px;"><strong>Receive Payments by ACH (Stripe
-                            Connect)&nbsp;</strong></p><button class="btn btn-primary" type="button">Setup up Stripe
-                        Connect</button>          -->
+                        {% comment %} <p style="margin-bottom: 0px;">
+                            <strong>Receive Payments by ACH (Stripe Connect)&nbsp;</strong>
+                        </p><button class="btn btn-primary" type="button">Setup up Stripe Connect</button> {% endcomment %}
                         <p style="margin-top: 16px;">
                             <strong>Receive Payments by Check</strong>
                         </p>
@@ -156,59 +153,6 @@
                                 <button class="btn btn-primary" type="submit" name="payout_submit" id="submit-button">Save</button>
                             </div>
                         </form>
-                        <!--          <div class="row">
-                        <div class="col">
-                            <p style="margin-bottom: 0px;">Payee Name</p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col"><input type="text"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col"><small class="form-text">The payee name on the check.</small>
-                        </div>
-                    </div>
-                    <p style="margin-top: 16px;">Mailing Address</p>
-                    <div class="row">
-                        <div class="col">
-                            <div class="row">
-                                <div class="col"><small class="form-text">Street Address</small></div>
-                            </div>
-                            <div class="row">
-                                <div class="col"><input type="text"></div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="row">
-                                <div class="col"><small class="form-text">City</small></div>
-                            </div>
-                            <div class="row">
-                                <div class="col"><input type="text"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <div class="row">
-                                <div class="col"><small class="form-text">State</small></div>
-                            </div>
-                            <div class="row">
-                                <div class="col"><input type="text"></div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="row">
-                                <div class="col"><small class="form-text">Zip Code</small></div>
-                            </div>
-                            <div class="row">
-                                <div class="col"><input type="text"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top: 24px;">
-                        <div class="col"><button class="btn btn-primary" type="button">Save</button>
-                        </div>
-                    </div>          -->
                     </div>
                 </div>
             </div>
@@ -231,19 +175,16 @@
                     <div class="card-body">
                         <h4 class="card-title">Bookings</h4>
                         <div class="table-responsive" style="margin-bottom: 16px;">
-                            <table class="table">
+                            <table class="table table-hover">
                                 <thead>
                                     <tr></tr>
                                 </thead>
                                 <tbody>
                                     {% for order in orders %}
-                                        <tr>
+                                        <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_booking_detail' order_id=order.id %}'">
                                             <td>{{ order.end_date }}</td>
                                             <td>{{ order.type }}</td>
                                             <td>{{ order.status }}</td>
-                                            <td>
-                                                <a class="btn btn-light" role="button" href="{% url 'supplier_booking_detail' order_id=order.id %}"><i class="far fa-eye"></i></a>
-                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>

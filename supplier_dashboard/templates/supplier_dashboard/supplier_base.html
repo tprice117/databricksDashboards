@@ -97,6 +97,13 @@
                 min-width: 400px;
             }
         }
+        .clickable-row {
+            transition: background-color 0.3s ease;
+        }
+        .clickable-row:hover {
+            cursor: pointer;
+        }
+        
     </style>
 </head>
 
@@ -105,7 +112,7 @@
         {% block sidebar %}
         {% include 'supplier_dashboard/sidebar.html' %}
         {% endblock %}
-        <div class="d-flex flex-column" id="content-wrapper">
+        <div class="d-flex flex-column" id="content-wrapper" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
             <div id="content">
                 {% block navbar %}
                 {% include 'supplier_dashboard/navbar.html' %}
