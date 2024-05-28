@@ -136,22 +136,30 @@ class UserAddressForm(forms.Form):
     )
     autopay = forms.BooleanField(
         initial=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
         required=False,
     )
     is_archived = forms.BooleanField(
         initial=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
         required=False,
     )
     allow_saturday_delivery = forms.BooleanField(
         initial=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
         required=False,
     )
     allow_sunday_delivery = forms.BooleanField(
         initial=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
         required=False,
     )
     access_details = forms.CharField(

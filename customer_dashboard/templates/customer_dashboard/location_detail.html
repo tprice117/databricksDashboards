@@ -24,20 +24,39 @@
                             {% endfor %}
                             <!-- Include the visible fields -->
                             {% for field in user_address_form.visible_fields %}
-                                <div class="mb-3">
-                                    {{ field.label_tag }} {{ field }}
-                                    {% if field.help_text %}
-                                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                                    {% endif %}
-                                    {% if field.errors %}
-                                        <small class="text-danger">{{ field.errors }}</small>
-                                    {% endif %}
-                                    {% if field.name == 'street' %}
-                                        <div class="form-text">
-                                            <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
-                                        </div>
-                                    {% endif %}
-                                </div>
+                                {% if field.widget_type == 'checkbox' %}
+                                    <div class="mb-3 form-switch">
+                                        {{ field }}
+                                        <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}{{ field.label_suffix }}</label>
+                                        {% if field.help_text %}
+                                            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                        {% endif %}
+                                        {% if field.errors %}
+                                            <small class="text-danger">{{ field.errors }}</small>
+                                        {% endif %}
+                                        {% if field.name == 'street' %}
+                                            <div class="form-text">
+                                                <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{{ field.label_suffix }}</label>
+                                        {{ field }}
+                                        {% if field.help_text %}
+                                            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                        {% endif %}
+                                        {% if field.errors %}
+                                            <small class="text-danger">{{ field.errors }}</small>
+                                        {% endif %}
+                                        {% if field.name == 'street' %}
+                                            <div class="form-text">
+                                                <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                             <div class="d-flex flex-row-reverse">
                                 <button class="btn btn-primary mt-2" type="submit" name="user_address_submit" id="user_address_submit">Save</button>
