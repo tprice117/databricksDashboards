@@ -1,5 +1,6 @@
 from django import forms
-from api.models.user.user_address_type import UserAddressType
+from api.models import UserAddressType
+from api.models.choices.user_type import UserType
 
 
 def get_all_address_types(_social_site=None):
@@ -33,16 +34,18 @@ class UserForm(forms.Form):
         widget=forms.TextInput(
             attrs={"class": "form-control", "placeholder": "(000) 867-5309"}
         ),
+        required=False,
     )
     email = forms.CharField(
         widget=forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "john.doe@example.com",
-                "disabled": True,
-            }
+            attrs={"class": "form-control", "placeholder": "john.doe@example.com"}
         ),
+        disabled=True,
         required=False,
+    )
+    type = forms.ChoiceField(
+        choices=UserType.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     photo = forms.ImageField(
         label="Profile Picture",
@@ -75,7 +78,6 @@ class PlacementDetailsForm(forms.Form):
     )
 
 
-# Create a User Address form
 class UserAddressForm(forms.Form):
     name = forms.CharField(
         max_length=255,
@@ -90,7 +92,7 @@ class UserAddressForm(forms.Form):
     all_address_types = get_all_address_types()
     address_type = forms.ChoiceField(
         choices=all_address_types,
-        widget=forms.Select(attrs={"class": "form-control"}),
+        widget=forms.Select(attrs={"class": "form-select"}),
         required=False,
     )
     street = forms.CharField(

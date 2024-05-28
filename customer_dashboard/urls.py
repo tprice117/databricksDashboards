@@ -32,6 +32,7 @@ urlpatterns = [
         views.user_detail,
         name="customer_user_detail",
     ),
+    path("customer/user/new/", views.new_user, name="customer_new_user"),
     path("customer/invoices/", views.invoices, name="customer_invoices"),
     path(
         "customer/impersonation/start/",

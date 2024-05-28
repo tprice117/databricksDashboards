@@ -558,6 +558,9 @@ def profile(request):
             if form.cleaned_data.get("phone") != user.phone:
                 user.phone = form.cleaned_data.get("phone")
                 save_db = True
+            if form.cleaned_data.get("type") != user.type:
+                user.type = form.cleaned_data.get("type")
+                save_db = True
             if request.FILES.get("photo"):
                 user.photo = request.FILES["photo"]
                 save_db = True
@@ -578,6 +581,7 @@ def profile(request):
                     "phone": user.phone,
                     "photo": user.photo,
                     "email": user.email,
+                    "type": user.type,
                 }
             )
             context["form"] = form
@@ -598,6 +602,7 @@ def profile(request):
                 "phone": user.phone,
                 "photo": user.photo,
                 "email": user.email,
+                "type": user.type,
             }
         )
         context["form"] = form
@@ -1128,7 +1133,127 @@ def user_detail(request, user_id):
             if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
                 break
 
+    if request.method == "POST":
+        # NOTE: Since email is disabled, it is never POSTed,
+        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
+        POST_COPY = request.POST.copy()
+        POST_COPY["email"] = user.email
+        form = UserForm(POST_COPY, request.FILES)
+        context["form"] = form
+        if form.is_valid():
+            save_db = False
+            if form.cleaned_data.get("first_name") != user.first_name:
+                user.first_name = form.cleaned_data.get("first_name")
+                save_db = True
+            if form.cleaned_data.get("last_name") != user.last_name:
+                user.last_name = form.cleaned_data.get("last_name")
+                save_db = True
+            if form.cleaned_data.get("phone") != user.phone:
+                user.phone = form.cleaned_data.get("phone")
+                save_db = True
+            if form.cleaned_data.get("type") != user.type:
+                user.type = form.cleaned_data.get("type")
+                save_db = True
+            if request.FILES.get("photo"):
+                user.photo = request.FILES["photo"]
+                save_db = True
+            elif request.POST.get("photo-clear") == "on":
+                user.photo = None
+                save_db = True
+            if save_db:
+                context["user"] = user
+                user.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
+            form = UserForm(
+                initial={
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "phone": user.phone,
+                    "photo": user.photo,
+                    "email": user.email,
+                    "type": user.type,
+                }
+            )
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            # if request.headers.get("HX-Request"):
+            return render(request, "customer_dashboard/user_detail.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+    else:
+        form = UserForm(
+            initial={
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "phone": user.phone,
+                "photo": user.photo,
+                "email": user.email,
+                "type": user.type,
+            }
+        )
+        context["form"] = form
+
     return render(request, "customer_dashboard/user_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_user(request):
+    context = {}
+    # TODO: Only allow admin to create new users.
+    context["user"] = get_user(request)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            POST_COPY = request.POST.copy()
+            # POST_COPY["email"] = user.email
+            form = UserForm(POST_COPY, request.FILES)
+            context["form"] = form
+            context["form"].fields["email"].disabled = False
+            if form.is_valid():
+                first_name = form.cleaned_data.get("first_name")
+                last_name = form.cleaned_data.get("last_name")
+                phone = form.cleaned_data.get("phone")
+                email = form.cleaned_data.get("email")
+                user_type = form.cleaned_data.get("type")
+                user = User(
+                    user_group_id=context["user"].user_group_id,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    type=user_type,
+                )
+                if phone:
+                    user.phone = phone
+                if request.FILES.get("photo"):
+                    user.photo = request.FILES["photo"]
+                save_model = user
+            else:
+                raise InvalidFormError(form, "Invalid UserForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return HttpResponseRedirect(reverse("customer_users"))
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+    else:
+        context["form"] = UserForm()
+        context["form"].fields["email"].disabled = False
+
+    return render(request, "customer_dashboard/user_new_edit.html", context)
 
 
 @login_required(login_url="/admin/login/")
