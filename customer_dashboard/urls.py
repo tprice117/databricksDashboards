@@ -25,6 +25,7 @@ urlpatterns = [
         views.location_detail,
         name="customer_location_detail",
     ),
+    path("customer/location/new/", views.new_location, name="customer_new_location"),
     path("customer/users/", views.users, name="customer_users"),
     path(
         "customer/user/<uuid:user_id>/",

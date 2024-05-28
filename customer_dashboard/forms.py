@@ -79,7 +79,13 @@ class PlacementDetailsForm(forms.Form):
 class UserAddressForm(forms.Form):
     name = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Home"}),
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Home",
+                "autocomplete": "name",
+            }
+        ),
     )
     all_address_types = get_all_address_types()
     address_type = forms.ChoiceField(
@@ -92,28 +98,46 @@ class UserAddressForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "placeholder": "1234 Main St",
+                "autocomplete": "street-address",
             }
         )
     )
     city = forms.CharField(
         max_length=40,
         widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Anytown"}
+            attrs={
+                "class": "form-control",
+                "placeholder": "Anytown",
+                "autocomplete": "address-level2",
+            }
         ),
     )
     state = forms.CharField(
         max_length=80,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "CA"}),
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "CA", "autocomplete": "name"}
+        ),
     )
     postal_code = forms.CharField(
         max_length=20,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "90210"}),
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "90210",
+                "autocomplete": "postal-code",
+            }
+        ),
     )
     country = forms.CharField(
         initial="US",
         max_length=80,
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "US"}),
         disabled=True,
+    )
+    autopay = forms.BooleanField(
+        initial=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        required=False,
     )
     is_archived = forms.BooleanField(
         initial=False,

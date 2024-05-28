@@ -911,6 +911,9 @@ def location_detail(request, location_id):
                     if form.cleaned_data.get("postal_code") != user_address.postal_code:
                         user_address.postal_code = form.cleaned_data.get("postal_code")
                         save_model = user_address
+                    if form.cleaned_data.get("autopay") != user_address.autopay:
+                        user_address.autopay = form.cleaned_data.get("autopay")
+                        save_model = user_address
                     if form.cleaned_data.get("is_archived") != user_address.is_archived:
                         user_address.is_archived = form.cleaned_data.get("is_archived")
                         save_model = user_address
@@ -972,6 +975,73 @@ def location_detail(request, location_id):
         )
 
     return render(request, "customer_dashboard/location_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_location(request):
+    context = {}
+    context["user"] = get_user(request)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "user_address_submit" in request.POST:
+                form = UserAddressForm(request.POST)
+                context["user_address_form"] = form
+                if form.is_valid():
+                    name = form.cleaned_data.get("name")
+                    address_type = form.cleaned_data.get("address_type")
+                    street = form.cleaned_data.get("street")
+                    city = form.cleaned_data.get("city")
+                    state = form.cleaned_data.get("state")
+                    postal_code = form.cleaned_data.get("postal_code")
+                    autopay = form.cleaned_data.get("autopay")
+                    is_archived = form.cleaned_data.get("is_archived")
+                    access_details = form.cleaned_data.get("access_details")
+                    allow_saturday_delivery = form.cleaned_data.get(
+                        "allow_saturday_delivery"
+                    )
+                    allow_sunday_delivery = form.cleaned_data.get(
+                        "allow_sunday_delivery"
+                    )
+                    user_address = UserAddress(
+                        user_group_id=context["user"].user_group_id,
+                        user_id=context["user"].id,
+                        name=name,
+                        street=street,
+                        city=city,
+                        state=state,
+                        postal_code=postal_code,
+                        autopay=autopay,
+                        is_archived=is_archived,
+                        allow_saturday_delivery=allow_saturday_delivery,
+                        allow_sunday_delivery=allow_sunday_delivery,
+                    )
+                    if address_type:
+                        user_address.user_address_type_id = address_type
+                    if access_details:
+                        user_address.access_details = access_details
+                    save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid UserAddressForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return HttpResponseRedirect(reverse("customer_locations"))
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        context["user_address_form"] = UserAddressForm()
+
+    return render(request, "customer_dashboard/location_new_edit.html", context)
 
 
 @login_required(login_url="/admin/login/")
