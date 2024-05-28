@@ -32,7 +32,7 @@
                     <select class="form-select" name="user_address" style="margin-bottom: 12px;">
                         <optgroup label="Your added locations">
                             {% for user_address in user_addresses %}
-                                <option value="{{ user_address.id }}">{{ user_address.formatted_address }}</option>
+                                <option value="{{ user_address.id }}">{{ user_address.formatted_address }} - {{ user_address.name }}</option>
                             {% endfor %}
                         </optgroup>
                     </select>
