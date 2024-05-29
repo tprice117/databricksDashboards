@@ -87,7 +87,11 @@
                             {% if item.order_group.end_date %}
                                 <p class="mb-1">{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
                             {% else %}
-                                <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
+                                {% if item.order_group.service_recurring_frequency %}
+                                    <p class="mb-1">Subscription starts on {{ item.order_group.start_date }} and recurring {{ item.order_group.service_recurring_frequency.name|lower }}</p>
+                                {% else %}
+                                    <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
+                                {% endif %}
                             {% endif %}
                             <p class="mb-1">Status: {{ item.status }}</p>
                             {% comment %} <p>order line items: {{ item.count }} - [{{ item.status }}]</p> {% endcomment %}

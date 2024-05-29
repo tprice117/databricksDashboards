@@ -59,6 +59,15 @@
                         <input class="form-control" type="date" name="delivery_date" style="margin-bottom: 12px;" required />
                         <p style="margin-bottom: 0px;">Removal Date (blank for recurring)</p>
                         <input class="form-control" type="date" name="removal_date" style="margin-bottom: 12px;" />
+                        <p style="margin-bottom: 0px;">Service Frequency</p>
+                        <select class="form-select" name="service_frequency" style="margin-bottom: 12px;">
+                            <optgroup label="Service Frequency">
+                                <option value="">---------</option>
+                                {% for frequency in service_freqencies %}
+                                    <option value="{{ frequency.id }}">{{ frequency.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
                     {% endif %}
                     <div class="d-flex flex-row-reverse">
                         <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">See Pricing</button>

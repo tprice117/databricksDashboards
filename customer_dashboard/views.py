@@ -34,6 +34,7 @@ from api.models import (
     ProductAddOnChoice,
     SellerProductSellerLocation,
     SellerLocation,
+    ServiceRecurringFrequency,
 )
 from billing.models import Invoice
 from api.utils.utils import decrypt_string
@@ -370,6 +371,7 @@ def new_order_3(request, product_id):
     # TODO: Add dropdown for to select a UserAddress.
     user_addresses = UserAddress.objects.filter(user_id=context["user"].id)
     context["user_addresses"] = user_addresses
+    context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
     return render(
         request, "customer_dashboard/new_order/main_product_detail.html", context
     )
@@ -386,11 +388,14 @@ def new_order_4(request):
         if key.startswith("product_add_on_choices"):
             product_add_on_choices.append(value)
     product_waste_types = request.GET.getlist("product_waste_types")
+    service_frequency = request.GET.get("service_frequency")
     delivery_date = request.GET.get("delivery_date")
     removal_date = request.GET.get("removal_date")
     context["product_id"] = product_id
+    context["user_address"] = user_address
     context["product_waste_types"] = product_waste_types
     context["product_add_on_choices"] = product_add_on_choices
+    context["service_frequency"] = service_frequency
     context["delivery_date"] = delivery_date
     context["removal_date"] = removal_date
     products = Product.objects.filter(main_product_id=product_id)
@@ -445,11 +450,13 @@ def new_order_5(request):
         # Create the order group and orders.
         seller_product_location_id = request.POST.get("seller_product_location_id")
         product_id = request.POST.get("product_id")
+        user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
         if product_waste_types:
             product_waste_types = ast.literal_eval(product_waste_types)
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
+        service_frequency = request.POST.get("service_frequency")
         delivery_date = request.POST.get("delivery_date")
         removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
@@ -460,7 +467,7 @@ def new_order_5(request):
         seller_product_location = SellerProductSellerLocation.objects.get(
             id=seller_product_location_id
         )
-        user_address = UserAddress.objects.filter(user_id=context["user"].id).first()
+        user_address = UserAddress.objects.filter(id=user_address_id).first()
         # create order group and orders
         # TODO: where do I get tonnage_quantity?
         order_group = OrderGroup(
@@ -470,6 +477,8 @@ def new_order_5(request):
             start_date=delivery_date,
             take_rate=30.0,
         )
+        if service_frequency:
+            order_group.service_recurring_frequency_id = service_frequency
         if removal_date:
             order_group.end_date = removal_date
         if seller_product_location.delivery_fee:
@@ -478,19 +487,17 @@ def new_order_5(request):
             order_group.removal_fee = seller_product_location.removal_fee
         order_group.save()
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
+        # The first order of an order group always gets the same start and end date.
+        # if not removal_date:
+        #     removal_date = delivery_date
         order = Order(
-            order_group=order_group,
-            user=context["user"],
-            user_address=user_address,
-            start_date=delivery_date,
+            order_group=order_group, start_date=delivery_date, end_date=delivery_date
         )
-        if removal_date:
-            order.end_date = removal_date
         order.save()
-        context["cart"][order_group.id] = {
-            "order_group": order_group,
-            "price": 250.55,  # order.customer_price()
-        }
+        # context["cart"][order_group.id] = {
+        #     "order_group": order_group,
+        #     "price": order.customer_price()
+        # }
     elif request.method == "DELETE":
         # Delete the order group and orders.
         order_group_id = request.GET.get("id")

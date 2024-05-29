@@ -39,8 +39,10 @@
                                 {% csrf_token %}
                                 <input name="seller_product_location_id" type="hidden" value="{{ item.seller_product_location.id }}" />
                                 <input name="product_id" type="hidden" value="{{ product_id }}" />
+                                <input name="user_address" type="hidden" value="{{ user_address }}" />
                                 <input name="product_waste_types" type="hidden" value="{{ product_waste_types }}" />
                                 <input name="product_add_ons" type="hidden" value="{{ product_add_ons }}" />
+                                <input name="service_frequency" type="hidden" value="{{ service_frequency }}" />
                                 <input name="delivery_date" type="hidden" value="{{ delivery_date }}" />
                                 <input name="removal_date" type="hidden" value="{{ removal_date }}" />
                                 <div class="d-flex flex-row-reverse">
