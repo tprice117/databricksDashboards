@@ -1,72 +1,82 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
-{% block title %}Received Invoice Details{% endblock %}
+{% block title %}
+    Received Invoice Details
+{% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <h3 class="text-dark mb-1">Received Invoice Details</h3>
-</div><!-- Start: 1 Row 2 Columns -->
-<div class="container">
-    <div class="row" style="padding-bottom: 24px;">
-        <div class="col-md-6">
-            <div class="card mb-2">
-                <div class="card-body">
-                    <h4 class="card-title">{{seller_invoice_payable.amount}}</h4>
-                    <h6 class="text-muted card-subtitle mb-2">Received on:
-                        {{seller_invoice_payable.created_on}}</h6>
-                    <p style="margin-bottom: 0px;"><strong>Location</strong></p><a
-                        href="{% url 'supplier_location_detail' location_id=seller_invoice_payable.seller_location.id %}">{{seller_invoice_payable.seller_location.name}}</a>
-                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Invoice Date</strong></p>
-                    <p>{{seller_invoice_payable.invoice_date}}</p>
-                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Due Date</strong></p>
-                    <p>{{seller_invoice_payable.due_date}}</p>
-                    <p style="margin-bottom: 0px;margin-top: 16px;"><strong>Status</strong></p>
-                    <p>{{seller_invoice_payable.status}}</p>
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">Received Invoice Details</h3>
+    </div>
+    <!-- Start: 1 Row 2 Columns -->
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h4 class="card-title">{{ seller_invoice_payable.amount }}</h4>
+                        <h6 class="text-muted card-subtitle mb-2">
+                            Received on:
+                            {{ seller_invoice_payable.created_on }}
+                        </h6>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Location</strong>
+                        </p><a href="{% url 'supplier_location_detail' location_id=seller_invoice_payable.seller_location.id %}">{{ seller_invoice_payable.seller_location.name }}</a>
+                        <p style="margin-bottom: 0px;margin-top: 16px;">
+                            <strong>Invoice Date</strong>
+                        </p>
+                        <p>{{ seller_invoice_payable.invoice_date }}</p>
+                        <p style="margin-bottom: 0px;margin-top: 16px;">
+                            <strong>Due Date</strong>
+                        </p>
+                        <p>{{ seller_invoice_payable.due_date }}</p>
+                        <p style="margin-bottom: 0px;margin-top: 16px;">
+                            <strong>Invoice ID</strong>
+                        </p>
+                        <p>{{ seller_invoice_payable.supplier_invoice_id }}</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Received Invoice Line Items&nbsp;</h4>
+                        <p>Each line item in your invoice must be associated to a booking. Our team has done this while processing the invoice.</p><a class="card-link" href="#">
+                            <div class="table-responsive" style="margin-bottom: 16px;">
+                                <table class="table">
+                                    <thead>
+                                        <tr></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for seller_invoice_payable_line_item in seller_invoice_payable_line_items %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'supplier_booking_detail' order_id=seller_invoice_payable_line_item.order_id %}">{{ seller_invoice_payable_line_item.order_id }}</a>
+                                                </td>
+                                                <td>{{ seller_invoice_payable_line_item.amount }}</td>
+                                                <td>{{ seller_invoice_payable_line_item.description }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Received Invoice Line Items&nbsp;</h4>
-                    <p>Each line item in your invoice must be associated to a booking. Our team has done
-                        this while processing the invoice.</p><a class="card-link" href="#">
-                        <div class="table-responsive" style="margin-bottom: 16px;">
-                            <table class="table">
-                                <thead>
-                                    <tr></tr>
-                                </thead>
-                                <tbody>
-                                    {% for seller_invoice_payable_line_item in seller_invoice_payable_line_items %}
-                                    <tr>
-                                        <td><a
-                                                href="{% url 'supplier_booking_detail' order_id=seller_invoice_payable_line_item.order_id %}">{{seller_invoice_payable_line_item.order_id}}</a>
-                                        </td>
-                                        <td>{{seller_invoice_payable_line_item.amount}}</td>
-                                        <td>{{seller_invoice_payable_line_item.description}}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </a>
-                </div>
+            <div class="col-md-6">
+                {% if seller_invoice_payable.invoice_file %}
+                    {% if is_pdf %}
+                        <object alt="adobe, pdf, application" data="{{ seller_invoice_payable.invoice_file.url }}" type="application/pdf" width="100%" height="800px">
+                            <p>
+                                This browser does not support PDFs. Please download the PDF to view it: <a href="{{ seller_invoice_payable.invoice_file.url }}">Download PDF</a>.
+                            </p>
+                        </object>
+                    {% else %}
+                        <img class="img-fluid" alt="adobe, pdf, application" width="100%" height="auto" src="{{ seller_invoice_payable.invoice_file.url }}" />
+                    {% endif %}
+                {% else %}
+                    <img class="img-fluid" alt="adobe, pdf, application" width="100" height="80" src="{% static 'supplier_dashboard/img/temp_pay_logo.png' %}" />
+                {% endif %}
             </div>
-        </div>
-        <div class="col-md-6">
-            {% if seller_invoice_payable.invoice_file %}
-            {% if is_pdf %}
-            <object alt="adobe, pdf, application" data="{{ seller_invoice_payable.invoice_file.url }}"
-                type="application/pdf" width="100%" height="800px">
-                <p>This browser does not support PDFs. Please download the PDF to view it: <a
-                        href="{{ seller_invoice_payable.invoice_file.url }}">Download PDF</a>.</p>
-            </object>
-            {% else %}
-            <img class="img-fluid" alt="adobe, pdf, application" width="100%" height="auto"
-                src="{{ seller_invoice_payable.invoice_file.url }}">
-            {% endif %}
-            {% else %}
-            <img class="img-fluid" alt="adobe, pdf, application" width="100" height="80"
-                src="{% static 'supplier_dashboard/img/temp_pay_logo.png' %}">
-            {% endif %}
         </div>
     </div>
-</div><!-- End: 1 Row 2 Columns -->
+    <!-- End: 1 Row 2 Columns -->
 {% endblock %}

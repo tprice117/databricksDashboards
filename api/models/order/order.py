@@ -9,6 +9,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.urls import reverse
 
 from api.models.choices.user_type import UserType
 from api.models.disposal_location.disposal_location import DisposalLocation
@@ -140,9 +141,8 @@ class Order(BaseModel):
 
     def get_order_type(self):
         # Pre-calculate conditions
-        is_first_order = (
-            self.order_group.orders.order_by("created_on").first().id == self.id
-        )
+        first_order = self.order_group.orders.order_by("created_on").first()
+        is_first_order = str(first_order.id) == str(self.id)
         order_start_end_equal = self.start_date == self.end_date
         order_group_start_equal = self.start_date == self.order_group.start_date
         order_group_end_equal = self.end_date == self.order_group.end_date
@@ -553,6 +553,32 @@ class Order(BaseModel):
                     f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e
                 )
 
+    def log_order_state(self):
+        # Log the Order state.
+        # This is used to debug order_type None issues.
+        try:
+            first_order = self.order_group.orders.order_by("created_on").first()
+            is_first_order = first_order.id == self.id
+            order_start_end_equal = self.start_date == self.end_date
+            order_group_start_equal = self.start_date == self.order_group.start_date
+            order_group_end_equal = self.end_date == self.order_group.end_date
+            has_subscription = hasattr(self.order_group, "subscription")
+            order_count = Order.objects.filter(order_group=self.order_group).count()
+
+            logger.warning(
+                f"""Order.log_order_state: [{self.id}]
+                -[is_first_order:{is_first_order}]-[first_order.id:{first_order.id}:{type(first_order.id)}]-[self.id:{self.id}:{type(self.id)}]
+                -[first_order_id:{first_order.id}]-[order_start_end_equal:{order_start_end_equal}]
+                -[order_start_end_equal:{order_start_end_equal}]
+                -[order_group_start_equal:{order_group_start_equal}]-[order_group_end_equal:{order_group_end_equal}]
+                -[has_subscription:{has_subscription}]-[order_count:{order_count}]
+                -[status:{self.status}]-[start_date:{self.start_date}]-[end_date:{self.end_date}]
+                -[order_group.start_date:{self.order_group.start_date}]
+                -[order_group.end_date:{self.order_group.end_date}]"""
+            )
+        except Exception as e:
+            logger.error(f"Order.log_order_state: [{e}]", exc_info=e)
+
     def send_supplier_approval_email(self):
         # Send email to supplier. Only CC on our PROD environment.
         bcc_emails = []
@@ -560,16 +586,21 @@ class Order(BaseModel):
             bcc_emails.append("dispatch@trydownstream.com")
 
         try:
+            if self.order_type is None:
+                self.log_order_state()
             is_first_order = (
                 self.order_group.orders.order_by("created_on").first().id == self.id
             )
             if self.order_type != Order.Type.AUTO_RENEWAL or (
                 is_first_order and self.order_type == Order.Type.AUTO_RENEWAL
             ):
+                # If order type is none, then do not include it in the email.
+                subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
+                if self.order_type is None:
+                    subject_supplier = f"🚀 Yippee! New Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
                 # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
                 # then it opens the order html to allow them to select order status.
-                accept_url = self.seller_view_order_url
-                subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
+                accept_url = f"{settings.DASHBOARD_BASE_URL}{reverse('supplier_booking_detail', kwargs={'order_id': self.id})}"
                 html_content_supplier = render_to_string(
                     "notifications/emails/supplier_email.min.html",
                     {"order": self, "accept_url": accept_url, "is_email": True},

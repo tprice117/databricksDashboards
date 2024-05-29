@@ -17,6 +17,9 @@ from api.utils.payouts import PayoutUtils
 from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
     attempt_charge_for_past_due_invoices,
 )
+from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method import (
+    ensure_invoice_settings_default_payment_method,
+)
 from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import (
@@ -143,6 +146,19 @@ class Command(BaseCommand):
                 jitter=640,
             ),
             id="attempt_charge_for_past_due_invoices",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Ensure that all Stripe Customer that have a Card on file
+        # have a DefaultPaymentMethod set. Run every day at 1am.
+        scheduler.add_job(
+            ensure_invoice_settings_default_payment_method,
+            trigger=CronTrigger(
+                hour="1",
+                jitter=640,
+            ),
+            id="ensure_invoice_settings_default_payment_method",
             max_instances=1,
             replace_existing=True,
         )

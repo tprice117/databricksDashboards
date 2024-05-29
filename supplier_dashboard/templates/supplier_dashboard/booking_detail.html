@@ -9,7 +9,7 @@
         <h3 class="text-dark mb-1">Booking Details</h3>
     </div>
     <!-- Start: 1 Row 2 Columns -->
-    <div class="container" hx-disabled-elt=".status-card, button">
+    <div class="container">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
                 <div class="card">
@@ -123,12 +123,12 @@
                             <strong>Name</strong>
                         </p>
                         <p>{{ order.order_group.user.first_name }}</p>
-                        <!--                                <p style="margin-bottom: 0px;"><strong>Email</strong></p>
-                    <p>
-                        <a
-                            href="mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{order_id}}%5D">Request
-                            Change</a>
-                    </p>                                -->
+                        {% comment %} <p style="margin-bottom: 0px;">
+                            <strong>Email</strong>
+                        </p>
+                        <p>
+                            <a href="mailto:dispatch@trydownstream.com?subject=Supplier%20Change%20Requested%20%5B{{ order_id }}%5D">Request Change</a>
+                        </p> {% endcomment %}
                         <p style="margin-bottom: 0px;">
                             <strong>Phone</strong>
                         </p>
@@ -292,19 +292,16 @@
                         <h4 class="card-title">Payout Details</h4>
                         {% if order.payouts.exists %}
                             <div class="table-responsive" style="margin-bottom: 16px;">
-                                <table class="table">
+                                <table class="table table-hover">
                                     <thead>
                                         <tr></tr>
                                     </thead>
                                     <tbody>
                                         {% for payout in order.payouts.all %}
-                                            <tr>
+                                            <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
                                                 <td>{{ payout.created_on }}</td>
                                                 <td>{{ payout.amount }}</td>
                                                 <td>{{ payout.status }}</td>
-                                                <td>
-                                                    <a class="btn btn-light" role="button" href="{% url 'supplier_payout_detail' payout_id=payout.id %}"><i class="far fa-eye"></i></a>
-                                                </td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
@@ -322,18 +319,15 @@
                         <h4 class="card-title">Received Invoice Details</h4>
                         {% if order.seller_invoice_payable_line_items.exists %}
                             <div class="table-responsive" style="margin-bottom: 16px;">
-                                <table class="table">
+                                <table class="table table-hover">
                                     <thead>
                                         <tr></tr>
                                     </thead>
                                     <tbody>
                                         {% for seller_invoice_payable_line_item in order.seller_invoice_payable_line_items.all %}
-                                            <tr>
+                                            <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}'">
                                                 <td>{{ seller_invoice_payable_line_item.amount }}</td>
                                                 <td>{{ seller_invoice_payable_line_item.description }}</td>
-                                                <td>
-                                                    <a class="btn btn-light" role="button" href="{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}"><i class="far fa-eye"></i></a>
-                                                </td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>

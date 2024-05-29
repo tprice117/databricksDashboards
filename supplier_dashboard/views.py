@@ -291,11 +291,17 @@ def index(request):
 
     # Calculate the 'percent' field for each category
     for category, data in sorted_categories:
-        data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+        if context["earnings"] == 0:
+            data["percent"] = int((data["amount"] / 1) * 100)
+        else:
+            data["percent"] = int((data["amount"] / context["earnings"]) * 100)
 
     # Create a new category 'Other' for the categories that are not in the top 4
     other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
-    other_percent = int((other_amount / context["earnings"]) * 100)
+    if context["earnings"] == 0:
+        other_percent = int((other_amount / 1) * 100)
+    else:
+        other_percent = int((other_amount / context["earnings"]) * 100)
 
     # Create the final dictionary
     final_categories = dict(sorted_categories[:4])
@@ -756,19 +762,21 @@ def update_order_status(request, order_id, accept=True, complete=False):
                 if service_date:
                     orders = orders.filter(end_date=service_date)
                 # orders = orders.filter(Q(status=Order.SCHEDULED) | Q(status=Order.PENDING))
+                # To optimize, we can use values_list to get only the status field.
+                orders = orders.values_list("status", flat=True)
                 pending_count = 0
                 scheduled_count = 0
                 complete_count = 0
                 cancelled_count = 0
-                for order in orders:
-                    if order.status == Order.PENDING:
+                for status in orders:
+                    if status == Order.PENDING:
                         pending_count += 1
                     # if order.end_date >= non_pending_cutoff:
-                    elif order.status == Order.SCHEDULED:
+                    elif status == Order.SCHEDULED:
                         scheduled_count += 1
-                    elif order.status == Order.COMPLETE:
+                    elif status == Order.COMPLETE:
                         complete_count += 1
-                    elif order.status == Order.CANCELLED:
+                    elif status == Order.CANCELLED:
                         cancelled_count += 1
                 # TODO: Add toast that shows the order with a link to see it.
                 # https://getbootstrap.com/docs/5.3/components/toasts/
@@ -943,6 +951,27 @@ def payouts(request):
     query_params["p"] = paginator.num_pages
     context["page_end_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
     return render(request, "supplier_dashboard/payouts.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def payout_invoice(request, payout_id):
+    context = {}
+    # NOTE: Can add stuff to session if needed to speed up queries.
+    context["seller"] = get_seller(request)
+    payout = Payout.objects.filter(id=payout_id).select_related("order").first()
+    order_line_item = payout.order.order_line_items.all().first()
+    context["is_pdf"] = False
+    if order_line_item:
+        # TODO: Add support for check once LOB is integrated.
+        stripe_invoice = order_line_item.get_invoice()
+        if stripe_invoice:
+            # hosted_invoice_url
+            context["hosted_invoice_url"] = stripe_invoice.hosted_invoice_url
+            context["invoice_pdf"] = stripe_invoice.invoice_pdf
+            context["is_pdf"] = True
+    return render(
+        request, "supplier_dashboard/snippets/payout_detail_invoice.html", context
+    )
 
 
 @login_required(login_url="/admin/login/")

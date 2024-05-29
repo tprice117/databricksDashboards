@@ -53,6 +53,11 @@ urlpatterns = [
         views.payout_detail,
         name="supplier_payout_detail",
     ),
+    path(
+        "supplier/payout/<uuid:payout_id>/invoice/",
+        views.payout_invoice,
+        name="supplier_payout_invoice",
+    ),
     path("supplier/locations/", views.locations, name="supplier_locations"),
     path(
         "supplier/location/<uuid:location_id>/",

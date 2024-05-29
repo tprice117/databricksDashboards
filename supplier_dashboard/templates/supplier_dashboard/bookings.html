@@ -166,7 +166,7 @@
     </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control">
+    <div class="container-fluid">
         <h3 class="text-dark mb-4">My Bookings</h3>
         <div class="row">
             <div class="col-md-6 col-xl-3 mb-4">
@@ -281,7 +281,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0" id="dataTable">
+                    <table class="table table-hover my-0" id="dataTable">
                         <thead>
                             <tr>
                                 <th>Service Date</th>
@@ -289,7 +289,6 @@
                                 <th>Booking Address</th>
                                 <th>Type</th>
                                 <th>Status</th>
-                                <th></th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -310,9 +309,6 @@
                                 </td>
                                 <td>
                                     <strong>Status</strong>
-                                </td>
-                                <td>
-                                    <strong></strong>
                                 </td>
                                 <td>
                                     <strong></strong>
