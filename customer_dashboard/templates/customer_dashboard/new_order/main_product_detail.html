@@ -29,7 +29,7 @@
                 <form action="{% url 'customer_new_order_4' %}" method="get" class="mb-2">
                     <input name="product_id" type="hidden" value="{{ main_product.id }}" />
                     <p style="margin-bottom: 0px;">Select Address</p>
-                    <select class="form-select" name="user_address" style="margin-bottom: 12px;">
+                    <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
                         <optgroup label="Your added locations">
                             {% for user_address in user_addresses %}
                                 <option value="{{ user_address.id }}">{{ user_address.formatted_address }} - {{ user_address.name }}</option>
@@ -48,7 +48,7 @@
                     {% endfor %}
                     {% if main_product.has_material %}
                         <p style="margin-bottom: 0px;">Material Type</p><small class="form-text">Hold CTRL to select multiple.</small>
-                        <select class="form-select" name="product_waste_types" style="margin-bottom: 12px;" multiple="">
+                        <select class="form-select" name="product_waste_types" style="margin-bottom: 12px;" multiple="" required>
                             {% for product_waste_type in product_waste_types %}
                                 <option value="{{ product_waste_type.id }}">{{ product_waste_type.waste_type.name }}</option>
                             {% endfor %}

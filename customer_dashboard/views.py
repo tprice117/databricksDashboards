@@ -10,6 +10,7 @@ from django.contrib.auth import logout
 import datetime
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.urls import reverse
+from api.pricing_ml import pricing
 import logging
 
 from api.models import (
@@ -30,6 +31,7 @@ from api.models import (
     AddOn,
     ProductAddOnChoice,
     SellerProductSellerLocation,
+    SellerProduct,
     SellerLocation,
     ServiceRecurringFrequency,
 )
@@ -373,6 +375,30 @@ def new_order_3(request, product_id):
     )
 
 
+def get_pricing(
+    product_id: uuid.UUID,
+    user_address_id: uuid.UUID,
+    waste_type_id: uuid.UUID,
+    seller_location_id: uuid.UUID = None,
+):
+    price_mod = pricing.Price_Model(
+        data={
+            "seller_location": seller_location_id,
+            "product": product_id,
+            "user_address": user_address_id,
+            "waste_type": waste_type_id,
+        }
+    )
+
+    # Get SellerLocations that offer the product.
+    seller_products = SellerProduct.objects.filter(product_id=product_id)
+    seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
+        seller_product__in=seller_products, active=True
+    )
+
+    return price_mod.get_prices(seller_product_seller_locations)
+
+
 @login_required(login_url="/admin/login/")
 def new_order_4(request):
     context = {}
@@ -394,6 +420,11 @@ def new_order_4(request):
     context["service_frequency"] = service_frequency
     context["delivery_date"] = delivery_date
     context["removal_date"] = removal_date
+    # if product_waste_types:
+    main_product_waste_type = MainProductWasteType.objects.filter(
+        id=product_waste_types[0]
+    ).first()
+
     products = Product.objects.filter(main_product_id=product_id)
     # Find the products that have the waste types and add ons.
     if product_add_on_choices:
@@ -421,8 +452,13 @@ def new_order_4(request):
         if hasattr(seller_product_location, "seller_location"):
             seller_d = {}
             seller_d["seller_product_location"] = seller_product_location
-            # TODO: Call price function to get the price for the product in views get_pricing
-            seller_d["price"] = 250.55
+            pricing_data = get_pricing(
+                context["product"].id,
+                user_address,
+                main_product_waste_type.waste_type_id,
+                seller_location_id=seller_product_location.seller_location_id,
+            )
+            seller_d["price"] = float(pricing_data["service"]["rate"])
             context["seller_product_locations"].append(seller_d)
             break
 

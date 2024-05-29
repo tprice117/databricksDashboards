@@ -32,7 +32,7 @@
                             </p>
                         </div>
                         <div class="col-auto">
-                            <p class="text-end">{{ item.price }}</p>
+                            <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
                         </div>
                         <div class="col-auto">
                             <form action="{% url 'customer_new_order_5' %}" method="post">
