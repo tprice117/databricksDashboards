@@ -362,13 +362,12 @@ def new_order_3(request, product_id):
     product_waste_types = product_waste_types.select_related("waste_type")
     context["product_waste_types"] = product_waste_types
     add_ons = AddOn.objects.filter(main_product_id=product_id)
-    # TODO: Get addon choices for each add_on and display the choices under the add_on.
+    # Get addon choices for each add_on and display the choices under the add_on.
     context["product_add_ons"] = []
     for add_on in add_ons:
         context["product_add_ons"].append(
             {"add_on": add_on, "choices": add_on.addonchoice_set.all()}
         )
-    # TODO: Add dropdown for to select a UserAddress.
     user_addresses = UserAddress.objects.filter(user_id=context["user"].id)
     context["user_addresses"] = user_addresses
     context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
@@ -399,10 +398,7 @@ def new_order_4(request):
     context["delivery_date"] = delivery_date
     context["removal_date"] = removal_date
     products = Product.objects.filter(main_product_id=product_id)
-    prdall = ProductAddOnChoice.objects.all()
-    for prd in prdall:
-        print(prd.product_id, prd.name)
-    # TODO: Find the products that have the waste types and add ons.
+    # Find the products that have the waste types and add ons.
     if product_add_on_choices:
         for product in products:
             product_addon_choices_db = ProductAddOnChoice.objects.filter(
@@ -681,9 +677,6 @@ def my_order_groups(request):
         else:
             order_groups = OrderGroup.objects.filter(user_id=context["user"].id)
 
-        # TODO: Check the delay for a seller with large number of orders, if so then add a cutoff date.
-        # if status.upper() != Order.PENDING:
-        #     orders = orders.filter(end_date__gt=non_pending_cutoff)
         if date:
             order_groups = order_groups.filter(end_date=date)
         if location_id:
@@ -920,7 +913,7 @@ def location_detail(request, location_id):
             # Only show the first 2 active and past order_groups.
             if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
                 break
-        # TODO: Maybe store these orders for this user in session so that, if see all is tapped, it will be faster.
+        # TODO: Maybe store these orders for this user in local cache so that, if see all is tapped, it will be faster.
 
     if request.method == "POST":
         try:
