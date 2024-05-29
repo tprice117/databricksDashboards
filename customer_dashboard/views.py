@@ -20,6 +20,7 @@ from api.models import (
     UserAddress,
     UserAddressType,
     Order,
+    Subscription,
     OrderGroup,
     MainProductCategory,
     MainProduct,
@@ -461,12 +462,13 @@ def new_order_5(request):
         )
         user_address = UserAddress.objects.filter(user_id=context["user"].id).first()
         # create order group and orders
-        # TODO: where do I get take_rate, tonnage_quantity?
+        # TODO: where do I get tonnage_quantity?
         order_group = OrderGroup(
             user=context["user"],
             user_address=user_address,
             seller_product_seller_location_id=seller_product_location_id,
             start_date=delivery_date,
+            take_rate=30.0,
         )
         if removal_date:
             order_group.end_date = removal_date
@@ -474,29 +476,64 @@ def new_order_5(request):
             order_group.delivery_fee = seller_product_location.delivery_fee
         if seller_product_location.removal_fee:
             order_group.removal_fee = seller_product_location.removal_fee
-        # order_group.save()
+        order_group.save()
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
-        # order = Order(
-        #     order_group=order_group,
-        #     user=context["user"],
-        #     user_address=user_address,
-        #     start_date=delivery_date,
-        # )
-        # if removal_date:
-        #     order.end_date = removal_date
-        # order.save()
+        order = Order(
+            order_group=order_group,
+            user=context["user"],
+            user_address=user_address,
+            start_date=delivery_date,
+        )
+        if removal_date:
+            order.end_date = removal_date
+        order.save()
         context["cart"][order_group.id] = {
             "order_group": order_group,
             "price": 250.55,  # order.customer_price()
         }
+    elif request.method == "DELETE":
+        # Delete the order group and orders.
+        order_group_id = request.GET.get("id")
+        subtotal = request.GET.get("subtotal")
+        cart_count = request.GET.get("count")
+        customer_price = request.GET.get("price")
+        order_group = OrderGroup.objects.filter(id=order_group_id).first()
+        if customer_price:
+            customer_price = float(customer_price)
+        else:
+            customer_price = 0
+        if order_group:
+            # Delete any related protected objects, like orders and subscriptions.
+            sub_obj = Subscription.objects.filter(order_group_id=order_group.id).first()
+            if sub_obj:
+                sub_obj.delete()
+            for order in order_group.orders.all():
+                # del_subtotal += order.customer_price()
+                order.delete()
+            order_group.delete()
+        if subtotal:
+            context["subtotal"] = float(subtotal) - float(customer_price)
+        if cart_count:
+            context["cart_count"] = int(cart_count) - 1
+        if order_group:
+            messages.success(request, "Order removed from cart.")
+        else:
+            messages.error(request, f"Order not found [{order_group_id}].")
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "customer_dashboard/new_order/cart_remove_item.html",
+                context,
+            )
 
     # Load the cart page
     context["subtotal"] = 0
+    context["cart_count"] = 0
     # Pull all orders with submitted_on = None and show them in the cart.
     orders = (
         Order.objects.filter(order_group__user_id=context["user"].id)
         .filter(submitted_on__isnull=True)
-        .order_by("order_group__start_date")
+        .order_by("-order_group__start_date")
     )
     if not orders:
         messages.error(request, "Your cart is empty.")
@@ -506,14 +543,19 @@ def new_order_5(request):
             try:
                 customer_price = order.customer_price()
                 context["cart"][order.order_group.id]["price"] += customer_price
+                context["cart"][order.order_group.id]["count"] += 1
+                context["cart"][order.order_group.id]["status"] = order.status
                 context["subtotal"] += customer_price
             except KeyError:
                 customer_price = order.customer_price()
                 context["cart"][order.order_group.id] = {
                     "order_group": order.order_group,
                     "price": customer_price,
+                    "count": 1,
+                    "status": order.status,
                 }
                 context["subtotal"] += customer_price
+                context["cart_count"] += 1
 
     return render(
         request,

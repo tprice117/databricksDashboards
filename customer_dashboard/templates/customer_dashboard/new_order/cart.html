@@ -5,19 +5,63 @@
     Select Supplier
 {% endblock %}
 {% block stylesheet %}
-    <style></style>
+    <style>
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 1s ease-out;
+        }
+    </style>
 {% endblock %}
 {% block javascript %}
-    <script></script>
+    <script>
+        let allButtons = document.querySelectorAll(".button-remove-item");
+        function selectActiveFilter(el) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Get id of item
+            let id = el.getAttribute("data-id");
+            queryParams.set("id", encodeURIComponent(id));
+            // Get cart-subtotal
+            let cartSubtotal = document.getElementById("cart-subtotal");
+            let subtotal = parseFloat(cartSubtotal.getAttribute("data-subtotal"));
+            // let subtotal = parseFloat(cartSubtotal.innerText.replace("$", "").replace(",", ""));
+            queryParams.set("subtotal", encodeURIComponent(subtotal));
+            // get price of item
+            let price = parseFloat(el.getAttribute("data-price"));
+            queryParams.set("price", encodeURIComponent(price));
+            // queryParams.set("price", encodeURIComponent(el.previousElementSibling.innerText.replace("$", "").replace(",", "")));
+            // Get current number of cart-item elements
+            let cartItems = document.querySelectorAll(".cart-item");
+            queryParams.set("count", encodeURIComponent(cartItems.length));
+            // Create url for removing item
+            const removeItemUrl = "{% url 'customer_new_order_5' %}?" + queryParams.toString();
+            // Get if of button for htmx
+            let buttonId = el.getAttribute("id");
+        
+            // update hx-get attribute of date filter and tab urls
+            htmx.find(`#${buttonId}`).setAttribute("hx-delete", removeItemUrl);
+            // hx-delete="{% url 'customer_new_order_5' %}?id={{ item.order_group.id }}&subtotal={{ subtotal }}&price={{ item.price }}"
+            // force htmx to process the new hx-get attributes
+            htmx.process(`#${buttonId}`);
+            // trigger onRemoveClick event
+            htmx.trigger(el, "onRemoveClick");
+        }
+        // Add click event listener to all buttons
+        allButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                selectActiveFilter(this);
+            });
+        });
+    </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        <h3 class="text-dark mb-1">Shopping Cart</h3>
+    <div class="container-fluid mb-2">
+        <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}">Shopping Cart ({{ cart_count }})</h3>
         <div class="row">
             <div class="col">
                 {% for item in cart.values %}
-                    <div class="row">
-                        <div class="col-auto">
+                    <div class="row cart-item">
+                        <div class="col-auto mb-2">
                             <img class="img-thumbnail img-fluid"
                                 alt="Product category image"
                                 width="67"
@@ -39,26 +83,34 @@
                         </div>
                         <div class="col">
                             <h3>{{ item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
-                            <p>{{ item.order_group.user_address.formatted_address }}</p>
-                            <p>{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
+                            <p class="mb-1">{{ item.order_group.user_address.formatted_address }}</p>
+                            {% if item.order_group.end_date %}
+                                <p class="mb-1">{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
+                            {% else %}
+                                <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
+                            {% endif %}
+                            <p class="mb-1">Status: {{ item.status }}</p>
+                            {% comment %} <p>order line items: {{ item.count }} - [{{ item.status }}]</p> {% endcomment %}
                         </div>
                         <div class="col-auto">
                             <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
                         </div>
                         <div class="col-auto">
-                            <!-- TODO: Add htmx remove item -->
-                            <button class="btn btn-outline-danger" type="button">Remove</button>
+                            <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ forloop.counter }}" data-id="{{ item.order_group.id }}" data-price="{{ item.price }}" type="button" hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s">
+                                Remove
+                                <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                            </button>
                         </div>
+                        {% if not forloop.last %}
+                            <hr />
+                        {% endif %}
                     </div>
-                    {% if not forloop.last %}
-                        <hr />
-                    {% endif %}
                 {% endfor %}
             </div>
         </div>
         <div class="row" style="margin-top: 12px;">
             <div class="col">
-                <h4 class="float-end"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
+                <h4 id="cart-subtotal" class="float-end" data-subtotal="{{ subtotal }}"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
             </div>
         </div>
         <button class="btn btn-primary float-end" type="button">Checkout</button>
