@@ -86,6 +86,7 @@
                                 <th>Status</th>
                                 <th>Invoice #</th>
                                 <th>Location</th>
+                                <th>PDF</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,8 +101,10 @@
                                     </td>
                                     {% if invoice.invoice_pdf %}
                                         <td>
-                                            <a href="{{ invoice.invoice_pdf }}"><i class="fas fa-download"></i></a>
+                                            <a class="btn btn-light" href="{{ invoice.invoice_pdf }}"><i class="fas fa-download"></i></a>
                                         </td>
+                                    {% else %}
+                                        <td>-</td>
                                     {% endif %}
                                 </tr>
                             {% endfor %}

@@ -17,7 +17,7 @@
             <div class="card-header text-start py-3"></div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0" id="dataTable">
+                    <table class="table my-0 table-hover" id="dataTable">
                         <thead>
                             <tr>
                                 <th>Address</th>
@@ -28,14 +28,11 @@
                         </thead>
                         <tbody>
                             {% for user_address in page_obj %}
-                                <tr>
+                                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
                                     <td>{{ user_address.formatted_address }}</td>
                                     <td>{{ user_address.name }}</td>
                                     <td>{{ user_address.autopay }}</td>
                                     <td>{{ user_address.is_archived }}</td>
-                                    <td>
-                                        <a class="btn btn-light" role="button" href="{% url 'customer_location_detail' location_id=user_address.id %}"><i class="far fa-eye"></i></a>
-                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>

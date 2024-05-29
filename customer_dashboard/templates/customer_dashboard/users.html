@@ -17,7 +17,7 @@
             <div class="card-header py-3"></div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0" id="dataTable">
+                    <table class="table my-0 table-hover" id="dataTable">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -29,7 +29,7 @@
                         </thead>
                         <tbody>
                             {% for obj in page_obj %}
-                                <tr>
+                                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_user_detail' user_id=obj.user.id %}'">
                                     <td>
                                         <div class="d-flex flex-row">
                                             {% if obj.user.photo %}
@@ -44,9 +44,6 @@
                                     <td>{{ obj.user.type }}</td>
                                     <td class="text-center">{{ obj.meta.associated_locations }}</td>
                                     <td>{{ obj.user.date_joined }}</td>
-                                    <td>
-                                        <a class="btn btn-light" role="button" href="{% url 'customer_user_detail' user_id=obj.user.id %}"><i class="far fa-eye"></i></a>
-                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>

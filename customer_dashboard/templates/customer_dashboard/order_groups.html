@@ -69,6 +69,7 @@
                                 <th>Product</th>
                                 <th>Location</th>
                                 <th>Supplier</th>
+                                <th>View</th>
                             </tr>
                         </thead>
                         <tbody id="order-groups-results" hx-get="{{ active_orders_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody>
@@ -82,6 +83,9 @@
                                 </td>
                                 <td>
                                     <strong>Supplier</strong>
+                                </td>
+                                <td>
+                                    <strong>View</strong>
                                 </td>
                             </tr>
                         </tfoot>
