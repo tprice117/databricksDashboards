@@ -98,9 +98,11 @@
                                     <td>
                                         <a href="{% url 'customer_location_detail' location_id=invoice.user_address.id %}">{{ invoice.user_address.formatted_address }}</a>
                                     </td>
-                                    <td>
-                                        <button class="btn btn-light" type="button"><i class="far fa-eye"></i></button>
-                                    </td>
+                                    {% if invoice.invoice_pdf %}
+                                        <td>
+                                            <a href="{{ invoice.invoice_pdf }}"><i class="fas fa-download"></i></a>
+                                        </td>
+                                    {% endif %}
                                 </tr>
                             {% endfor %}
                         </tbody>
