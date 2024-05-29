@@ -7,12 +7,9 @@ import json
 import uuid
 from django.contrib import messages
 from django.contrib.auth import logout
-from urllib.parse import parse_qs, urlencode
 import datetime
-from itertools import chain
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.urls import reverse
-from rest_framework import serializers
 import logging
 
 from api.models import (
