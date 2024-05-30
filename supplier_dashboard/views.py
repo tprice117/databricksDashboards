@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from typing import List
+from typing import List, Union
 import json
 import uuid
 from django.contrib import messages
@@ -27,6 +27,7 @@ from api.models import (
     SellerInvoicePayableLineItem,
     SellerLocationMailingAddress,
 )
+from api.models.choices.user_type import UserType
 from api.utils.utils import decrypt_string
 from notifications.utils import internal_email
 from communications.intercom.utils.utils import get_json_safe_value
@@ -149,38 +150,52 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     return dashboard_chart
 
 
-def get_seller(request: HttpRequest):
-    if request.session.get("seller"):
-        seller = request.session["seller"]
-    else:
-        if request.user.is_staff:
-            # TODO: If staff, then set seller to all available sellers
-            try:
-                # Temporarily set to Hillen as default
-                seller = to_dict(
-                    Seller.objects.get(id="73937cad-c1aa-4657-af30-45c4984efbe6")
-                )
-            except Seller.DoesNotExist:
-                # Fails on DEV, so see if we can get user's seller.
-                if hasattr(request.user, "user_group") and hasattr(
-                    request.user.user_group, "seller"
-                ):
-                    seller = to_dict(request.user.user_group.seller)
-                    request.session["seller"] = seller
-                else:
-                    # Get first available seller.
-                    seller = to_dict(Seller.objects.all().first())
-            request.session["seller"] = seller
-        elif hasattr(request.user, "user_group") and hasattr(
-            request.user.user_group, "seller"
-        ):
-            seller = to_dict(request.user.user_group.seller)
-            request.session["seller"] = seller
-        else:
-            return HttpResponse("Not Allowed", status=403)
-            # return HttpResponseRedirect("/admin/login/")
+def is_impersonating(request: HttpRequest) -> bool:
+    return request.session.get("user_id") and request.session.get("user_id") != str(
+        request.user.id
+    )
 
+
+def get_seller(request: HttpRequest) -> Union[Seller, None]:
+    """Returns the current seller. This handles the case where the user is impersonating another user.
+    If the user is impersonating, it will return the seller of the impersonated user.
+    The the user is staff and is not impersonating a user, then it will return None.
+
+    Args:
+        request (HttpRequest): Current request object.
+
+    Returns:
+        [Seller, None]: Returns the Seller object or None. None means staff user.
+    """
+    if is_impersonating(request):
+        seller = Seller.objects.get(id=request.session["seller_id"])
+    elif request.user.is_staff:
+        seller = None
+    else:
+        # Normal user
+        if request.session.get("seller_id"):
+            seller = Seller.objects.get(id=request.session["seller_id"])
+        else:
+            # Cache seller id for faster lookups
+            seller = request.user.user_group.seller
+            request.session["seller_id"] = seller.id
     return seller
+
+
+def get_user(request: HttpRequest) -> User:
+    """Returns the current user. This handles the case where the user is impersonating another user.
+
+    Args:
+        request (HttpRequest): Current request object.
+
+    Returns:
+        dict: Dictionary of the User object.
+    """
+    if is_impersonating(request):
+        user = User.objects.get(id=request.session.get("user_id"))
+    else:
+        user = request.user
+    return user
 
 
 ########################
@@ -211,31 +226,53 @@ def supplier_search(request):
 
 
 @login_required(login_url="/admin/login/")
-def supplier_select(request):
-    if request.method == "POST":
-        seller_id = request.POST.get("seller_id")
-    elif request.method == "GET":
-        seller_id = request.GET.get("seller_id")
+def supplier_impersonation_start(request):
+    if request.user.is_staff:
+        if request.method == "POST":
+            # user_id = request.POST.get("user_id")
+            seller_id = request.POST.get("seller_id")
+        elif request.method == "GET":
+            # user_id = request.GET.get("user_id")
+            seller_id = request.GET.get("seller_id")
+        else:
+            return HttpResponse("Not Implemented", status=406)
+        try:
+            seller = Seller.objects.get(id=seller_id)
+            user = seller.usergroup.users.filter(type=UserType.ADMIN).first()
+            # user = User.objects.get(id=user_id)
+            request.session["user_id"] = get_json_safe_value(user.id)
+            request.session["seller_id"] = get_json_safe_value(seller_id)
+            return HttpResponseRedirect("/supplier/")
+        except Exception as e:
+            return HttpResponse("Not Found", status=404)
     else:
-        return HttpResponse("Not Implemented", status=406)
-    try:
-        seller = Seller.objects.get(id=seller_id)
-        request.session["seller"] = to_dict(seller)
-        return HttpResponseRedirect("/supplier/")
-    except Exception as e:
-        return HttpResponse("Not Found", status=404)
+        return HttpResponse("Unauthorized", status=401)
+
+
+@login_required(login_url="/admin/login/")
+def supplier_impersonation_stop(request):
+    if request.session.get("user_id"):
+        del request.session["user_id"]
+    if request.session.get("seller_id"):
+        del request.session["seller_id"]
+    if request.session.get("seller"):
+        del request.session["seller"]
+    return HttpResponseRedirect("/supplier/")
 
 
 @login_required(login_url="/admin/login/")
 def index(request):
     context = {}
-    context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    orders = Order.objects.filter(
-        order_group__seller_product_seller_location__seller_product__seller_id=context[
-            "seller"
-        ]["id"]
-    )
+    if context["seller"]:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ].id
+        )
+    else:
+        orders = Order.objects.all()
     orders = orders.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
         "order_group__user_address",
@@ -309,12 +346,15 @@ def index(request):
     context["earnings_by_category"] = final_categories
     # print(final_categories)
     context["pending_count"] = pending_count
-    seller_locations = SellerLocation.objects.filter(seller_id=context["seller"]["id"])
+    if context["seller"]:
+        seller_locations = SellerLocation.objects.filter(seller_id=context["seller"].id)
+        seller_users = User.objects.filter(user_group__seller_id=context["seller"].id)
+    else:
+        seller_locations = SellerLocation.objects.all()
+        seller_users = User.objects.filter(user_group__seller__isnull=False)
     # context["pending_count"] = orders.count()
     context["location_count"] = seller_locations.count()
-    context["user_count"] = User.objects.filter(
-        user_group__seller_id=context["seller"]["id"]
-    ).count()
+    context["user_count"] = seller_users.count()
 
     context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
 
@@ -328,47 +368,47 @@ def index(request):
 @login_required(login_url="/admin/login/")
 def profile(request):
     context = {}
-    context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
 
     if request.method == "POST":
         # NOTE: Since email is disabled, it is never POSTed,
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
-        POST_COPY["email"] = request.user.email
+        POST_COPY["email"] = context["user"].email
         form = UserForm(POST_COPY, request.FILES)
         context["form"] = form
         if form.is_valid():
             save_db = False
-            if form.cleaned_data.get("first_name") != request.user.first_name:
-                request.user.first_name = form.cleaned_data.get("first_name")
+            if form.cleaned_data.get("first_name") != context["user"].first_name:
+                context["user"].first_name = form.cleaned_data.get("first_name")
                 save_db = True
-            if form.cleaned_data.get("last_name") != request.user.last_name:
-                request.user.last_name = form.cleaned_data.get("last_name")
+            if form.cleaned_data.get("last_name") != context["user"].last_name:
+                context["user"].last_name = form.cleaned_data.get("last_name")
                 save_db = True
-            if form.cleaned_data.get("phone") != request.user.phone:
-                request.user.phone = form.cleaned_data.get("phone")
+            if form.cleaned_data.get("phone") != context["user"].phone:
+                context["user"].phone = form.cleaned_data.get("phone")
                 save_db = True
             if request.FILES.get("photo"):
-                request.user.photo = request.FILES["photo"]
+                context["user"].photo = request.FILES["photo"]
                 save_db = True
             elif request.POST.get("photo-clear") == "on":
-                request.user.photo = None
+                context["user"].photo = None
                 save_db = True
             if save_db:
-                context["user"] = request.user
-                request.user.save()
+                context["user"] = context["user"]
+                context["user"].save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
             form = UserForm(
                 initial={
-                    "first_name": request.user.first_name,
-                    "last_name": request.user.last_name,
-                    "phone": request.user.phone,
-                    "photo": request.user.photo,
-                    "email": request.user.email,
+                    "first_name": context["user"].first_name,
+                    "last_name": context["user"].last_name,
+                    "phone": context["user"].phone,
+                    "photo": context["user"].photo,
+                    "email": context["user"].email,
                 }
             )
             context["form"] = form
@@ -384,11 +424,11 @@ def profile(request):
     else:
         form = UserForm(
             initial={
-                "first_name": request.user.first_name,
-                "last_name": request.user.last_name,
-                "phone": request.user.phone,
-                "photo": request.user.photo,
-                "email": request.user.email,
+                "first_name": context["user"].first_name,
+                "last_name": context["user"].last_name,
+                "phone": context["user"].phone,
+                "photo": context["user"].photo,
+                "email": context["user"].email,
             }
         )
         context["form"] = form
@@ -398,9 +438,25 @@ def profile(request):
 @login_required(login_url="/admin/login/")
 def company(request):
     context = {}
-    context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    seller = Seller.objects.get(id=context["seller"]["id"])
+    if context["seller"]:
+        seller = context["seller"]
+    else:
+        if hasattr(request.user, "user_group") and hasattr(
+            request.user.user_group, "seller"
+        ):
+            seller = request.user.user_group.seller
+            messages.warning(
+                request, "No seller selected! Using current staff user's seller."
+            )
+        else:
+            # Get first available seller.
+            seller = Seller.objects.all().first()
+            messages.warning(
+                request, f"No seller selected! Using first seller found: [{seller.name}]."
+            )
+
     if request.method == "POST":
         try:
             save_model = None
@@ -514,9 +570,6 @@ def company(request):
                         seller_about_us_form, "Invalid SellerAboutUsForm"
                     )
             if save_model:
-                # Update seller in session and page context.
-                request.session["seller"] = to_dict(seller)
-                context["seller"] = get_seller(request)
                 save_model.save()
                 messages.success(request, "Successfully saved!")
             else:
@@ -564,7 +617,7 @@ def bookings(request):
     context = {}
     pagination_limit = 25
     page_number = 1
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     if request.GET.get("service_date", None) is not None:
         link_params["service_date"] = request.GET.get("service_date")
@@ -585,13 +638,15 @@ def bookings(request):
         ]:
             tab = Order.PENDING
         tab_status = tab.upper()
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ][
-                "id"
-            ]
-        )
+        if context["seller"]:
+            orders = Order.objects.filter(
+                order_group__seller_product_seller_location__seller_product__seller_id=context[
+                    "seller"
+                ].id
+            )
+        else:
+            orders = Order.objects.all()
+
         # orders = orders.filter(status=tab_status)
         # TODO: Check the delay for a seller with large number of orders, like Hillen.
         # if status.upper() != Order.PENDING:
@@ -673,14 +728,14 @@ def bookings(request):
         )
     else:
         # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
-        # seller = Seller.objects.get(id=context["seller"]["id"])
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ][
-                "id"
-            ]
-        )
+        if context["seller"]:
+            orders = Order.objects.filter(
+                order_group__seller_product_seller_location__seller_product__seller_id=context[
+                    "seller"
+                ].id
+            )
+        else:
+            orders = Order.objects.all()
         if link_params.get("service_date", None) is not None:
             orders = orders.filter(end_date=link_params["service_date"])
         if link_params.get("location_id", None) is not None:
@@ -749,16 +804,19 @@ def update_order_status(request, order_id, accept=True, complete=False):
                 else:
                     order.status = Order.COMPLETE
                 order.save()
-                if request.session.get("seller"):
-                    seller_id = request.session["seller"]["id"]
+                if request.session.get("seller_id"):
+                    seller_id = request.session["seller_id"]
                 else:
                     seller_id = (
                         order.order_group.seller_product_seller_location.seller_product.seller_id
                     )
                 # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
-                orders = Order.objects.filter(
-                    order_group__seller_product_seller_location__seller_product__seller_id=seller_id
-                )
+                if context["seller"]:
+                    orders = Order.objects.filter(
+                        order_group__seller_product_seller_location__seller_product__seller_id=seller_id
+                    )
+                else:
+                    orders = Order.objects.all()
                 if service_date:
                     orders = orders.filter(end_date=service_date)
                 # orders = orders.filter(Q(status=Order.SCHEDULED) | Q(status=Order.PENDING))
@@ -859,7 +917,7 @@ def update_booking_status(request, order_id):
 @login_required(login_url="/admin/login/")
 def booking_detail(request, order_id):
     context = {}
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
@@ -890,14 +948,17 @@ def payouts(request):
         page_number = request.GET.get("p")
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
-    # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    orders = Order.objects.filter(
-        order_group__seller_product_seller_location__seller_product__seller_id=context[
-            "seller"
-        ]["id"]
-    )
+    if context["seller"]:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ].id
+        )
+    else:
+        orders = Order.objects.all()
     if location_id:
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
@@ -908,7 +969,16 @@ def payouts(request):
     #     # filter orders by their payouts created_on date
     #     orders = orders.filter(payouts__created_on__date=service_date)
     orders = orders.prefetch_related("payouts", "order_line_items")
-    orders = orders.order_by("-end_date")
+    if context["seller"] is None:
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_location__seller"
+        )
+        orders = orders.order_by(
+            "order_group__seller_product_seller_location__seller_location__seller__name",
+            "-end_date",
+        )
+    else:
+        orders = orders.order_by("-end_date")
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )
@@ -923,11 +993,14 @@ def payouts(request):
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
         if service_date:
-            payouts.extend(
-                [p for p in order.payouts.filter(created_on__date=service_date)]
-            )
+            payouts_query = order.payouts.filter(created_on__date=service_date)
         else:
-            payouts.extend([p for p in order.payouts.all()])
+            payouts_query = order.payouts.all()
+        if context["seller"] is None:
+            payouts_query = payouts_query.select_related(
+                "order__order_group__seller_product_seller_location__seller_location__seller"
+            )
+        payouts.extend([p for p in order.payouts.all()])
     paginator = Paginator(payouts, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
@@ -957,6 +1030,7 @@ def payouts(request):
 def payout_invoice(request, payout_id):
     context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     payout = Payout.objects.filter(id=payout_id).select_related("order").first()
     order_line_item = payout.order.order_line_items.all().first()
@@ -978,12 +1052,11 @@ def payout_invoice(request, payout_id):
 def payout_detail(request, payout_id):
     context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     payout = None
     if not payout:
         payout = Payout.objects.get(id=payout_id)
-    context = {}
-    context["user"] = request.user
     # TODO: Check if this is a checkbook payout (this changes with LOB integration).
     if payout.checkbook_payout_id:
         context["related_payouts"] = Payout.objects.filter(
@@ -996,7 +1069,7 @@ def payout_detail(request, payout_id):
 @login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     pagination_limit = 25
     page_number = 1
@@ -1005,9 +1078,12 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    seller_locations = SellerLocation.objects.filter(
-        seller_id=request.session["seller"]["id"]
-    )
+    if context["seller"]:
+        seller_locations = SellerLocation.objects.filter(seller_id=context["seller"].id)
+        seller_locations = seller_locations.order_by("-created_on")
+    else:
+        seller_locations = SellerLocation.objects.all()
+        seller_locations = seller_locations.order_by("seller__name", "-created_on")
     paginator = Paginator(seller_locations, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
@@ -1035,12 +1111,12 @@ def locations(request):
 @login_required(login_url="/admin/login/")
 def location_detail(request, location_id):
     context = {}
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     seller_location = SellerLocation.objects.get(id=location_id)
     context["seller_location"] = seller_location
     orders = (
-        Order.objects.filter(order_group__user_id=request.user.id)
+        Order.objects.filter(order_group__user_id=context["user"].id)
         .filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
         )
@@ -1347,7 +1423,7 @@ def location_detail(request, location_id):
 @login_required(login_url="/admin/login/")
 def received_invoices(request):
     context = {}
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     pagination_limit = 25
     page_number = 1
@@ -1357,12 +1433,20 @@ def received_invoices(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    invoices = SellerInvoicePayable.objects.filter(
-        seller_location__seller_id=request.session["seller"]["id"]
-    )
+    if context["seller"]:
+        invoices = SellerInvoicePayable.objects.filter(
+            seller_location__seller_id=context["seller"].id
+        )
+    else:
+        invoices = SellerInvoicePayable.objects.all()
     if service_date:
         invoices = invoices.filter(invoice_date=service_date)
-    invoices = invoices.order_by("-invoice_date")
+    if context["seller"]:
+        invoices = invoices.select_related("seller_location")
+        invoices = invoices.order_by("-invoice_date")
+    else:
+        invoices = invoices.select_related("seller_location__seller")
+        invoices = invoices.order_by("seller_location__seller__name", "-invoice_date")
     paginator = Paginator(invoices, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
@@ -1400,7 +1484,7 @@ def received_invoices(request):
 @login_required(login_url="/admin/login/")
 def received_invoice_detail(request, invoice_id):
     context = {}
-    # context["user"] = request.user
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     invoice = SellerInvoicePayable.objects.get(id=invoice_id)
     # invoice_line_items = invoice.seller_invoice_payable_line_items.all()

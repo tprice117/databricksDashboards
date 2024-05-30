@@ -2,12 +2,22 @@
 <tbody id="booking-results">
     {% for order in status.page_obj %}
     <tr id="order_row_{{forloop.counter}}" class="clickable-row" onclick="window.location.href='{% url 'supplier_booking_detail' order_id=order.id %}'">
+        {% if request.user.is_staff %}
+            <td>{{order.order_group.seller_product_seller_location.seller_location.seller.name}}</td>
+        {% endif %}
         <td>{{order.end_date}}</td>
         <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
         </td>
         <td>{{order.order_group.user_address.formatted_address}}</td>
         <td>{{order.order_type}}</td>
         <td class="order-status-td">{{order.status}}</td>
+        {% if request.user.is_staff %}
+            {% if order.submitted_on %}
+                <td>{{order.submitted_on|timesince}}</td>
+            {% else %}
+                <td>Not Submitted</td>
+            {% endif %}
+        {% endif %}
         {% if order.status == "PENDING" %}
         <td>
             <span id="accept-button-container">
@@ -18,7 +28,7 @@
                     hx-post="{% url 'supplier_order_accept' order_id=order.id %}"
                     hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
                     hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
-                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger='confirmed'
+                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
                     onClick="event.stopPropagation();
                     Swal.fire(
                         {title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}
@@ -39,7 +49,7 @@
                     hx-post="{% url 'supplier_order_complete' order_id=order.id %}"
                     hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
                     hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
-                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger='confirmed'
+                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
                     onClick="event.stopPropagation();
                     Swal.fire(
                         {title: 'Complete Booking', text:'Has this booking been completed?', icon: 'question', confirmButtonText: 'Confirm'}
@@ -82,5 +92,5 @@
     </div>
 </div>
 {% if oob_html %}
-{{oob_html|safe}}
+    {{oob_html|safe}}
 {% endif %}
