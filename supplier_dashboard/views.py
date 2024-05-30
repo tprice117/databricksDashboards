@@ -178,7 +178,8 @@ def get_seller(request: HttpRequest) -> Union[Seller, None]:
         else:
             # Cache seller id for faster lookups
             seller = request.user.user_group.seller
-            request.session["seller_id"] = seller.id
+            request.session["seller_id"] = get_json_safe_value(seller.id)
+
     return seller
 
 
