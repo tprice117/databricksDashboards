@@ -443,16 +443,19 @@ def company(request):
     if context["seller"]:
         seller = context["seller"]
     else:
-        messages.warning(
-            request, "Seller not found, using current staff user's seller."
-        )
         if hasattr(request.user, "user_group") and hasattr(
             request.user.user_group, "seller"
         ):
             seller = request.user.user_group.seller
+            messages.warning(
+                request, "No seller selected! Using current staff user's seller."
+            )
         else:
             # Get first available seller.
             seller = Seller.objects.all().first()
+            messages.warning(
+                request, f"No seller selected! Using first seller found: [{seller.name}]."
+            )
 
     if request.method == "POST":
         try:
