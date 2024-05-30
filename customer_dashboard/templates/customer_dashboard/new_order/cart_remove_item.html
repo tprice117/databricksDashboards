@@ -1,0 +1,10 @@
+{% load humanize %}
+<!-- MESSAGES -->
+{% include 'supplier_dashboard/snippets/djangomessages.html' %}
+<!-- MESSAGES -->
+{% if cart_count %}
+    <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}" hx-swap-oob="true">Shopping Cart ({{ cart_count }})</h3>
+{% endif %}
+{% if subtotal %}
+    <h4 id="cart-subtotal" class="float-end" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
+{% endif %}

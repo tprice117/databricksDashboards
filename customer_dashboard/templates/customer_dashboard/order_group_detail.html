@@ -1,0 +1,199 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Order Group Details
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">Order Detail</h3>
+    </div>
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">{{ order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
+                        <a class="btn btn-link" role="button" href="{% url 'customer_location_detail' location_id=user_address.id %}">{{ order_group.user_address.formatted_address }}</a>
+                        <p style="margin-bottom: 0px;padding-top: 16px;">
+                            <strong>Supplier</strong>
+                        </p>
+                        <p>{{ order_group.seller_product_seller_location.seller_location.name }}</p>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Order ID</strong>
+                        </p>
+                        <p>{{ order_group.id }}</p>
+                        <p class="card-text"></p><a class="card-link" href="#"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                {% if order_group.user_address.latitude and order_group.user_address.longitude %}
+                    <gmp-map center="{{ order_group.user_address.latitude }},{{ order_group.user_address.longitude }}" zoom="14" map-id="DEMO_MAP_ID">
+                        <gmp-advanced-marker position="{{ order_group.user_address.latitude }},{{ order_group.user_address.longitude }}" title="{{ order_group.user_address.name }}"></gmp-advanced-marker>
+                    </gmp-map>
+                {% else %}
+                    <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Schedule Details</h4>
+                        <form>
+                            <div class="row">
+                                <div class="col">
+                                    <p style="margin-bottom: 0px;">
+                                        <strong>Start Date</strong>
+                                    </p>
+                                    <p>{{ order_group.start_date }}</p>
+                                    <p style="margin-bottom: 0px;">
+                                        <strong>End Date</strong>
+                                    </p>
+                                    <p>{{ order_group.end_date }}</p>
+                                    <p style="margin-bottom: 0px;">
+                                        <strong>Preferred&nbsp;Time Slot</strong>
+                                    </p>
+                                    <p>{{ order_group.time_slot }}</p>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card" style="margin-bottom: 16px;">
+                    <div class="card-body">
+                        <p style="margin-bottom: 0pc;">
+                            <strong>Access Details</strong>
+                        </p>
+                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post">
+                            {% csrf_token %}
+                            <!-- Include the hidden fields -->
+                            {% for hidden in access_form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                            <!-- Include the visible fields -->
+                            {% for field in access_form.visible_fields %}
+                                <div class="mb-3">
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <small class="text-danger">{{ field.errors }}</small>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <div class="d-flex flex-row-reverse">
+                                <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p style="margin-bottom: 0px;">
+                            <strong>Placement Details</strong>
+                        </p>
+                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post">
+                            {% csrf_token %}
+                            <!-- Include the hidden fields -->
+                            {% for hidden in placement_form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                            <!-- Include the visible fields -->
+                            {% for field in placement_form.visible_fields %}
+                                <div class="mb-3">
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <small class="text-danger">{{ field.errors }}</small>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <div class="d-flex flex-row-reverse">
+                                <button class="btn btn-primary btn-sm" type="submit" name="placement_details_button" style="margin-top: 12px;">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Service History&nbsp;</h4>
+                        <p>Past history of all services related to this Order</p>
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                        <tr>
+                                            <td>{{ order.end_date }}</td>
+                                            <td>{{ order.type }}</td>
+                                            <td>{{ order.status }}</td>
+                                            <td>
+                                                <a class="btn btn-light" role="button" href="{% url 'customer_order_detail' order_id=order.id %}"><i class="far fa-eye"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Pricing Details</h4>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Initial Delivery Fee (charged at delivery)</strong>
+                                </p>
+                                <p>
+                                    {% if order_group.delivery_fee %}
+                                        ${{ order_group.delivery_fee|floatformat:2|intcomma }}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </p>
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Removal Fee (charged on removal)</strong>
+                                </p>
+                                <p>
+                                    {% if order_group.removal_fee %}
+                                        ${{ order_group.removal_fee|floatformat:2|intcomma }}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </p>
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Included Tonnage Quantity</strong>
+                                </p>
+                                <p>{{ order_group.tonnage_quantity }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

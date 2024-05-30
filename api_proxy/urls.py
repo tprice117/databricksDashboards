@@ -160,6 +160,8 @@ urlpatterns = [
     ),
     # Supplier Dashboard.
     path("", include("supplier_dashboard.urls")),
+    # Customer Dashboard.
+    path("", include("customer_dashboard.urls")),
     # Test.
     path("test/", views.test3),
 ]

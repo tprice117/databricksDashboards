@@ -23,7 +23,9 @@ class MainProductCategory(BaseModel):
         price = None
         for main_product in main_products:
             price_from = main_product.price_from
-            if price is None or price_from < price:
+            if (price is None and price_from is not None and price_from != 0) or (
+                price_from is not None and price_from != 0 and price_from < price
+            ):
                 price = price_from
 
         return price

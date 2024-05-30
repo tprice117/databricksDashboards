@@ -1,0 +1,98 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Order Groups
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block javascript %}
+    <script>
+        const activeFilter = document.getElementById("order-group-active-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has active filter
+            const urlParams = new URLSearchParams(window.location.search);
+            const is_active = urlParams.get("active");
+            if (is_active !== null) {
+                // update date filter value
+                activeFilter.checked = is_active === "1";
+            }
+        });
+        function selectActiveFilter(el) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Check if date filter has a value
+            if (el.checked) {
+                // update current queryParams for active filter url
+                queryParams.set("active", encodeURIComponent(1));
+            } else {
+                // update current queryParams for in-active filter url
+                queryParams.set("active", encodeURIComponent(0));
+            }
+            // update date filter url with current queryParams
+            const activeFilterUrl = "{% url 'customer_order_groups' %}?" + queryParams.toString();
+        
+            // update hx-get attribute of date filter and tab urls
+            htmx.find("#order-group-active-filter").setAttribute("hx-get", activeFilterUrl);
+            // force htmx to process the new hx-get attributes
+            htmx.process("#order-group-active-filter");
+            // trigger onActiveFilter event
+            htmx.trigger(el, "onActiveFilter");
+        }
+        // Add change event listener to date filter
+        activeFilter.addEventListener("change", function () {
+            selectActiveFilter(this);
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Order Groups</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{% url 'customer_new_order' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create Order Group</a>
+        </div>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <div class="form-check form-switch">
+                    <input id="order-group-active-filter" class="form-control form-check-input" type="checkbox" checked="" hx-push-url="true" hx-target="#order-groups-results" hx-swap="outerHTML" hx-trigger="onActiveFilter" hx-indicator="#htmx-indicator-loading-status" />
+                    <label class="form-check-label" for="formCheck-4"><strong>Active Orders</strong></label>
+                </div>
+                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Location</th>
+                                <th>Supplier</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-groups-results" hx-get="{{ active_orders_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Product</strong>
+                                </td>
+                                <td>
+                                    <strong>Location</strong>
+                                </td>
+                                <td>
+                                    <strong>Supplier</strong>
+                                </td>
+                                <td>
+                                    <strong>View</strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="row invisible" id="order-groups-pagination"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
