@@ -455,7 +455,8 @@ def company(request):
             # Get first available seller.
             seller = Seller.objects.all().first()
             messages.warning(
-                request, f"No seller selected! Using first seller found: [{seller.name}]."
+                request,
+                f"No seller selected! Using first seller found: [{seller.name}].",
             )
 
     if request.method == "POST":
@@ -782,6 +783,7 @@ def bookings(request):
 @login_required(login_url="/admin/login/")
 def update_order_status(request, order_id, accept=True, complete=False):
     context = {}
+    context["seller"] = get_seller(request)
     service_date = None
     if request.method == "POST":
         if request.POST.get("queryParams", None) is not None:
@@ -805,16 +807,12 @@ def update_order_status(request, order_id, accept=True, complete=False):
                 else:
                     order.status = Order.COMPLETE
                 order.save()
-                if request.session.get("seller_id"):
-                    seller_id = request.session["seller_id"]
-                else:
-                    seller_id = (
-                        order.order_group.seller_product_seller_location.seller_product.seller_id
-                    )
                 # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
                 if context["seller"]:
                     orders = Order.objects.filter(
-                        order_group__seller_product_seller_location__seller_product__seller_id=seller_id
+                        order_group__seller_product_seller_location__seller_product__seller_id=context[
+                            "seller"
+                        ].id
                     )
                 else:
                     orders = Order.objects.all()
