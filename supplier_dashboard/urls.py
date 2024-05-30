@@ -13,7 +13,16 @@ urlpatterns = [
         name="supplier_dashboard",
     ),
     path("supplier/search/", views.supplier_search, name="supplier_search"),
-    path("supplier/select/", views.supplier_select, name="supplier_select"),
+    path(
+        "supplier/impersonation/start/",
+        views.supplier_impersonation_start,
+        name="supplier_impersonation_start",
+    ),
+    path(
+        "supplier/impersonation/stop/",
+        views.supplier_impersonation_stop,
+        name="supplier_impersonation_stop",
+    ),
     path("supplier/", views.index, name="supplier_home"),
     path("supplier/logout/", views.supplier_logout, name="supplier_logout"),
     path("supplier/profile/", views.profile, name="supplier_profile"),
