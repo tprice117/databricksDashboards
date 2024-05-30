@@ -62,6 +62,9 @@
                     <table class="table table-hover my-0" id="dataTable">
                         <thead>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Seller</th>
+                                {% endif %}
                                 <th>Location</th>
                                 <th>Amount</th>
                                 <th>Invoice ID</th>
@@ -71,6 +74,9 @@
                         <tbody>
                             {% for seller_invoice_payable in page_obj %}
                                 <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable.id %}'">
+                                    {% if request.user.is_staff %}
+                                        <td>{{ seller_invoice_payable.seller_location.seller.name }}</td>
+                                    {% endif %}
                                     <td>
                                         <img class="rounded-circle me-2" width="30" height="30" src="{% static 'supplier_dashboard/img/avatars/avatar1.jpeg' %}" />&nbsp;{{ seller_invoice_payable.seller_location.name }}
                                     </td>
@@ -82,6 +88,11 @@
                         </tbody>
                         <tfoot>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Seller</strong>
+                                    </td>
+                                {% endif %}
                                 <td>
                                     <strong>Location</strong>
                                 </td>

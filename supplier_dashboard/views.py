@@ -585,13 +585,16 @@ def bookings(request):
         ]:
             tab = Order.PENDING
         tab_status = tab.upper()
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ][
-                "id"
-            ]
-        )
+        if request.user.is_staff:
+            orders = Order.objects.all()
+        else:
+            orders = Order.objects.filter(
+                order_group__seller_product_seller_location__seller_product__seller_id=context[
+                    "seller"
+                ][
+                    "id"
+                ]
+            )
         # orders = orders.filter(status=tab_status)
         # TODO: Check the delay for a seller with large number of orders, like Hillen.
         # if status.upper() != Order.PENDING:
@@ -673,14 +676,16 @@ def bookings(request):
         )
     else:
         # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
-        # seller = Seller.objects.get(id=context["seller"]["id"])
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ][
-                "id"
-            ]
-        )
+        if request.user.is_staff:
+            orders = Order.objects.all()
+        else:
+            orders = Order.objects.filter(
+                order_group__seller_product_seller_location__seller_product__seller_id=context[
+                    "seller"
+                ][
+                    "id"
+                ]
+            )
         if link_params.get("service_date", None) is not None:
             orders = orders.filter(end_date=link_params["service_date"])
         if link_params.get("location_id", None) is not None:
@@ -756,9 +761,12 @@ def update_order_status(request, order_id, accept=True, complete=False):
                         order.order_group.seller_product_seller_location.seller_product.seller_id
                     )
                 # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
-                orders = Order.objects.filter(
-                    order_group__seller_product_seller_location__seller_product__seller_id=seller_id
-                )
+                if request.user.is_staff:
+                    orders = Order.objects.all()
+                else:
+                    orders = Order.objects.filter(
+                        order_group__seller_product_seller_location__seller_product__seller_id=seller_id
+                    )
                 if service_date:
                     orders = orders.filter(end_date=service_date)
                 # orders = orders.filter(Q(status=Order.SCHEDULED) | Q(status=Order.PENDING))
@@ -893,11 +901,16 @@ def payouts(request):
     # context["user"] = request.user
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["seller"] = get_seller(request)
-    orders = Order.objects.filter(
-        order_group__seller_product_seller_location__seller_product__seller_id=context[
-            "seller"
-        ]["id"]
-    )
+    if request.user.is_staff:
+        orders = Order.objects.all()
+    else:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ][
+                "id"
+            ]
+        )
     if location_id:
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
@@ -908,7 +921,16 @@ def payouts(request):
     #     # filter orders by their payouts created_on date
     #     orders = orders.filter(payouts__created_on__date=service_date)
     orders = orders.prefetch_related("payouts", "order_line_items")
-    orders = orders.order_by("-end_date")
+    if request.user.is_staff:
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_location__seller"
+        )
+        orders = orders.order_by(
+            "order_group__seller_product_seller_location__seller_location__seller__name",
+            "-end_date",
+        )
+    else:
+        orders = orders.order_by("-end_date")
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )
@@ -923,11 +945,14 @@ def payouts(request):
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
         if service_date:
-            payouts.extend(
-                [p for p in order.payouts.filter(created_on__date=service_date)]
-            )
+            payouts_query = order.payouts.filter(created_on__date=service_date)
         else:
-            payouts.extend([p for p in order.payouts.all()])
+            payouts_query = order.payouts.all()
+        if request.user.is_staff:
+            payouts_query = payouts_query.select_related(
+                "order__order_group__seller_product_seller_location__seller_location__seller"
+            )
+        payouts.extend([p for p in order.payouts.all()])
     paginator = Paginator(payouts, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
@@ -1005,9 +1030,14 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    seller_locations = SellerLocation.objects.filter(
-        seller_id=request.session["seller"]["id"]
-    )
+    if request.user.is_staff:
+        seller_locations = SellerLocation.objects.all()
+        seller_locations = seller_locations.order_by("seller__name", "-created_on")
+    else:
+        seller_locations = SellerLocation.objects.filter(
+            seller_id=request.session["seller"]["id"]
+        )
+        seller_locations = seller_locations.order_by("-created_on")
     paginator = Paginator(seller_locations, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
@@ -1357,12 +1387,20 @@ def received_invoices(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    invoices = SellerInvoicePayable.objects.filter(
-        seller_location__seller_id=request.session["seller"]["id"]
-    )
+    if request.user.is_staff:
+        invoices = SellerInvoicePayable.objects.all()
+    else:
+        invoices = SellerInvoicePayable.objects.filter(
+            seller_location__seller_id=request.session["seller"]["id"]
+        )
     if service_date:
         invoices = invoices.filter(invoice_date=service_date)
-    invoices = invoices.order_by("-invoice_date")
+    if request.user.is_staff:
+        invoices = invoices.select_related("seller_location__seller")
+        invoices = invoices.order_by("seller_location__seller__name", "-invoice_date")
+    else:
+        invoices = invoices.select_related("seller_location")
+        invoices = invoices.order_by("-invoice_date")
     paginator = Paginator(invoices, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj

@@ -15,6 +15,9 @@
                     <table class="table table-hover my-0" id="dataTable">
                         <thead>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Seller</th>
+                                {% endif %}
                                 <th>Name</th>
                                 <th>Address</th>
                                 <th>Payout Method</th>
@@ -25,6 +28,9 @@
                         <tbody>
                             {% for seller_location in page_obj %}
                                 <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_location_detail' location_id=seller_location.id %}'">
+                                    {% if request.user.is_staff %}
+                                        <td>{{ seller_location.seller.name }}</td>
+                                    {% endif %}
                                     <td>
                                         <img class="rounded-circle me-2"
                                             width="30"
@@ -64,6 +70,11 @@
                         </tbody>
                         <tfoot>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Seller</strong>
+                                    </td>
+                                {% endif %}
                                 <td>
                                     <strong>Name</strong>
                                 </td>

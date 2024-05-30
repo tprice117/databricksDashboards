@@ -284,17 +284,28 @@
                     <table class="table table-hover my-0" id="dataTable">
                         <thead>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Seller</th>
+                                {% endif %}
                                 <th>Service Date</th>
                                 <th>Product</th>
                                 <th>Booking Address</th>
                                 <th>Type</th>
                                 <th>Status</th>
+                                {% if request.user.is_staff %}
+                                    <th>Time Since Order</th>
+                                {% endif %}
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody id="booking-results" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status"></tbody>
                         <tfoot>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Seller</strong>
+                                    </td>
+                                {% endif %}
                                 <td>
                                     <strong>Service Date</strong>
                                 </td>
@@ -310,6 +321,11 @@
                                 <td>
                                     <strong>Status</strong>
                                 </td>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Time Since Order</strong>
+                                    </td>
+                                {% endif %}
                                 <td>
                                     <strong></strong>
                                 </td>
