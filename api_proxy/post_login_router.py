@@ -10,6 +10,8 @@ def post_login_router(request):
         return redirect(reverse("admin:index"))
     elif hasattr(request.user.user_group, "seller"):
         return redirect(reverse("supplier_bookings"))
+    elif request.user.user_group:
+        return redirect(reverse("customer_home"))
     else:
         # Show "Nothing to see here" page
         return HttpResponse("Nothing to see here")
