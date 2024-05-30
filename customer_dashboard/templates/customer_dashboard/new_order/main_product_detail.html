@@ -1,0 +1,79 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Select Options
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">New Order</h3>
+        <div class="row">
+            <div class="col">
+                <img class="img-fluid"
+                    style="border-radius: 37px;"
+                    src="{% if main_product.image_del %}
+                        {{ main_product.image_del }}
+                    {% else %}
+                        {% static 'customer_dashboard/img/dogs/image2.jpeg' %}
+                    {% endif %}" />
+            </div>
+            <div class="col">
+                <h2>{{ main_product.name }}</h2>
+                <p>
+                    <strong>{{ main_product.main_product_category.name }}</strong>
+                </p>
+                <p>{{ main_product.description }}</p>
+                <form action="{% url 'customer_new_order_4' %}" method="get" class="mb-2">
+                    <input name="product_id" type="hidden" value="{{ main_product.id }}" />
+                    <p style="margin-bottom: 0px;">Select Address</p>
+                    <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
+                        <optgroup label="Your added locations">
+                            {% for user_address in user_addresses %}
+                                <option value="{{ user_address.id }}">{{ user_address.formatted_address }} - {{ user_address.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                    {% for product_add_on in product_add_ons %}
+                        <p style="margin-bottom: 0px;">{{ product_add_on.add_on.name }}</p>
+                        <select class="form-select" name="product_add_on_choices_{{ forloop.counter }}" style="margin-bottom: 12px;">
+                            <optgroup label="{{ product_add_on.add_on.name }}">
+                                {% for product_add_on_choice in product_add_on.choices %}
+                                    <option value="{{ product_add_on_choice.id }}">{{ product_add_on_choice.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    {% endfor %}
+                    {% if main_product.has_material %}
+                        <p style="margin-bottom: 0px;">Material Type</p><small class="form-text">Hold CTRL to select multiple.</small>
+                        <select class="form-select" name="product_waste_types" style="margin-bottom: 12px;" multiple="" required>
+                            {% for product_waste_type in product_waste_types %}
+                                <option value="{{ product_waste_type.id }}">{{ product_waste_type.waste_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                    {% if main_product.has_rental %}
+                        <p style="margin-bottom: 0px;">Delivery Date</p>
+                        <input class="form-control" type="date" name="delivery_date" style="margin-bottom: 12px;" required />
+                        <p style="margin-bottom: 0px;">Removal Date (blank for recurring)</p>
+                        <input class="form-control" type="date" name="removal_date" style="margin-bottom: 12px;" />
+                        <p style="margin-bottom: 0px;">Service Frequency</p>
+                        <select class="form-select" name="service_frequency" style="margin-bottom: 12px;">
+                            <optgroup label="Service Frequency">
+                                <option value="">---------</option>
+                                {% for frequency in service_freqencies %}
+                                    <option value="{{ frequency.id }}">{{ frequency.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    {% endif %}
+                    <div class="d-flex flex-row-reverse">
+                        <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">See Pricing</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

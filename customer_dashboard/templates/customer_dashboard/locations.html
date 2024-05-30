@@ -1,0 +1,61 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Locations
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Locations</h3>
+            <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{% url 'customer_new_location' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create Location</a>
+        </div>
+        <div class="card shadow">
+            <div class="card-header text-start py-3"></div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table my-0 table-hover" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Name</th>
+                                <th>Autopay?</th>
+                                <th>Is Archived?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user_address in page_obj %}
+                                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
+                                    <td>{{ user_address.formatted_address }}</td>
+                                    <td>{{ user_address.name }}</td>
+                                    <td>{{ user_address.autopay }}</td>
+                                    <td>{{ user_address.is_archived }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Name</strong>
+                                </td>
+                                <td>
+                                    <strong>Position</strong>
+                                </td>
+                                <td>
+                                    <strong>Office</strong>
+                                </td>
+                                <td>
+                                    <strong>Age</strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% include 'customer_dashboard/snippets/pagination.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
