@@ -43,7 +43,11 @@
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
-        <h3 class="text-dark mb-4">Payouts</h3>
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Payouts</h3>
+            <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
+        </div>
+        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
         <div class="row">
             <div class="col-md-6 col-xl-3 mb-4">
                 <div class="card shadow border-start-primary py-2">

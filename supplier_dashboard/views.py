@@ -1,11 +1,10 @@
 import datetime
-import json
+import csv
 import logging
 import uuid
 from itertools import chain
 from typing import List, Union
 from urllib.parse import parse_qs, urlencode
-
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -951,6 +950,7 @@ def payouts(request):
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
     # This is an HTMX request, so respond with html snippet
+    # TODO: Add support for filtering by service_date.
     # if request.headers.get("HX-Request"):
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["user"] = get_user(request)
@@ -1010,6 +1010,7 @@ def payouts(request):
     context["page_obj"] = page_obj
 
     query_params = request.GET.copy()
+    context["download_link"] = f"/supplier/payouts/download/?{query_params.urlencode()}"
     if page_number is None:
         page_number = 1
     else:
@@ -1068,6 +1069,82 @@ def payout_detail(request, payout_id):
         )
     context["payout"] = payout
     return render(request, "supplier_dashboard/payout_detail.html", context)
+
+
+# Create view that creates csv from payout data and returns it as a download
+@login_required(login_url="/admin/login/")
+def download_payouts(request):
+    context = {}
+    if request.method == "GET":
+        location_id = request.GET.get("location_id", None)
+    service_date = request.GET.get("service_date", None)
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
+    if context["seller"]:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ].id
+        )
+    else:
+        orders = Order.objects.all()
+    if location_id:
+        orders = orders.filter(
+            order_group__seller_product_seller_location__seller_location_id=location_id
+        )
+    # TODO: Ask if filter should be here, or in the loop below.
+    # The difference is the total_paid, paid_this_week, and not_yet_paid values.
+    # if service_date:
+    #     # filter orders by their payouts created_on date
+    #     orders = orders.filter(payouts__created_on__date=service_date)
+    orders = orders.prefetch_related("payouts", "order_line_items")
+    if context["seller"] is None:
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_location__seller"
+        )
+        orders = orders.order_by(
+            "order_group__seller_product_seller_location__seller_location__seller__name",
+            "-end_date",
+        )
+    else:
+        orders = orders.order_by("-end_date")
+    payouts = []
+    for order in orders:
+        if service_date:
+            payouts_query = order.payouts.filter(created_on__date=service_date)
+        else:
+            payouts_query = order.payouts.all()
+        if context["seller"] is None:
+            payouts_query = payouts_query.select_related(
+                "order__order_group__seller_product_seller_location__seller_location__seller"
+            )
+        payouts.extend([p for p in order.payouts.all()])
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="payouts.csv"'
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "Payout ID",
+            "Order ID",
+            "Amount",
+            "Created On",
+            # "Checkbook Payout ID",
+            # "Checkbook Payout URL",
+        ]
+    )
+    for payout in payouts:
+        writer.writerow(
+            [
+                str(payout.id),
+                str(payout.order_id),
+                str(payout.amount),
+                payout.created_on.ctime(),
+                # str(payout.checkbook_payout_id),
+                # str(payout.stripe_transfer_id),
+            ]
+        )
+    return response
 
 
 @login_required(login_url="/admin/login/")
