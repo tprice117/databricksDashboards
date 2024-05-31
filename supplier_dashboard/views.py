@@ -991,6 +991,18 @@ def payouts(request):
     context["paid_this_week"] = 0
     context["not_yet_paid"] = 0
     for order in orders:
+        # Get SellerInvoicePayableLineItem for invoice_id
+        seller_invoice_payable_line_item = (
+            order.seller_invoice_payable_line_items.all().first()
+        )
+        invoice_id = None
+        if seller_invoice_payable_line_item:
+            seller_invoice_payable = (
+                seller_invoice_payable_line_item.seller_invoice_payable
+            )
+            if seller_invoice_payable:
+                invoice_id = seller_invoice_payable.supplier_invoice_id
+
         total_paid = order.total_paid_to_seller()
         context["total_paid"] += total_paid
         context["not_yet_paid"] += order.needed_payout_to_seller()
@@ -1004,7 +1016,8 @@ def payouts(request):
             payouts_query = payouts_query.select_related(
                 "order__order_group__seller_product_seller_location__seller_location__seller"
             )
-        payouts.extend([p for p in order.payouts.all()])
+        for p in payouts_query:
+            payouts.append({"invoice_id": invoice_id, "payout": p})
     paginator = Paginator(payouts, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
