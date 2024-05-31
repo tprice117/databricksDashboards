@@ -8,10 +8,9 @@ from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 
-from api.models.choices.user_type import UserType
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
@@ -19,8 +18,9 @@ from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from common.models import BaseModel
-from notifications.utils.add_email_to_queue import add_email_to_queue
+from common.models.choices.user_type import UserType
 from notifications import signals as notifications_signals
+from notifications.utils.add_email_to_queue import add_email_to_queue
 
 logger = logging.getLogger(__name__)
 

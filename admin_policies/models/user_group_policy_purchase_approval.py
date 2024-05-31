@@ -1,8 +1,8 @@
 from django.db import models
 
-from api.models.choices.user_type import UserType
 from api.models.user.user_group import UserGroup
 from common.models import BaseModel
+from common.models.choices.user_type import UserType
 
 
 class UserGroupPolicyPurchaseApproval(BaseModel):

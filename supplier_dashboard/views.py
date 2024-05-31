@@ -1,44 +1,46 @@
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-from typing import List, Union
+import datetime
 import json
+import logging
 import uuid
+from itertools import chain
+from typing import List, Union
+from urllib.parse import parse_qs, urlencode
+
 from django.contrib import messages
 from django.contrib.auth import logout
-from urllib.parse import parse_qs, urlencode
-import datetime
-from itertools import chain
-from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
-import logging
 
 from api.models import (
-    User,
     Order,
-    Seller,
     Payout,
+    Seller,
     SellerInvoicePayable,
-    SellerLocation,
     SellerInvoicePayableLineItem,
+    SellerLocation,
     SellerLocationMailingAddress,
+    User,
 )
-from api.models.choices.user_type import UserType
 from api.utils.utils import decrypt_string
-from notifications.utils import internal_email
+from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
+from notifications.utils import internal_email
+
 from .forms import (
-    UserForm,
-    SellerForm,
-    SellerCommunicationForm,
     SellerAboutUsForm,
-    SellerLocationComplianceForm,
+    SellerCommunicationForm,
+    SellerForm,
     SellerLocationComplianceAdminForm,
+    SellerLocationComplianceForm,
     SellerPayoutForm,
+    UserForm,
 )
 
 logger = logging.getLogger(__name__)
