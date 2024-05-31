@@ -87,6 +87,7 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
                 # save that user to the UserGroupApprovalUserInvite.User field.
                 self.user = User.objects.create(
                     email=self.email,
+                    username=self.email,
                     user_group_id=self.user_group_id,
                     type=UserType.MEMBER,
                 )
