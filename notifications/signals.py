@@ -1,7 +1,9 @@
+import logging
+
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.template.loader import render_to_string
-from django.conf import settings
-import logging
+
 from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils.add_email_to_queue import add_email_to_queue
 
@@ -15,21 +17,21 @@ Django Signals help: https://docs.djangoproject.com/en/5.0/topics/signals/
 """
 
 
-def get_order_status_from_choice(status: str) -> str:
-    """Get the status from Order.STATUS_CHOICES.
+# def get_order_status_from_choice(status: str) -> str:
+#     """Get the status from Order.STATUS_CHOICES.
 
-    Args:
-        status (str): The db status value.
+#     Args:
+#         status (str): The db status value.
 
-    Returns:
-        str: The human readable status.
-    """
-    from api.models import Order
+#     Returns:
+#         str: The human readable status.
+#     """
+#     from api.models import Order
 
-    for choice in Order.STATUS_CHOICES:
-        if choice[0] == status:
-            return choice[1]
-    return "Unknown"
+#     for choice in Order.STATUS_CHOICES:
+#         if choice[0] == status:
+#             return choice[1]
+#     return "Unknown"
 
 
 # ================================================#

@@ -43,23 +43,11 @@ class Order(BaseModel):
         AUTO_RENEWAL = "AUTO_RENEWAL"
         ONE_TIME = "ONE_TIME"
 
-    APPROVAL = "APPROVAL"
-    PENDING = "PENDING"
-    SCHEDULED = "SCHEDULED"
-    INPROGRESS = "IN-PROGRESS"
-    AWAITINGREQUEST = "Awaiting Request"
-    CANCELLED = "CANCELLED"
-    COMPLETE = "COMPLETE"
-
-    STATUS_CHOICES = (
-        (APPROVAL, "Approval"),
-        (PENDING, "Pending"),
-        (SCHEDULED, "Scheduled"),
-        (INPROGRESS, "In-Progress"),
-        (AWAITINGREQUEST, "Awaiting Request"),
-        (CANCELLED, "Cancelled"),
-        (COMPLETE, "Complete"),
-    )
+    class Status(models.TextChoices):
+        PENDING = "PENDING"
+        SCHEDULED = "SCHEDULED"
+        CANCELLED = "CANCELLED"
+        COMPLETE = "COMPLETE"
 
     order_group = models.ForeignKey(
         "api.OrderGroup", models.PROTECT, related_name="orders"
@@ -73,7 +61,11 @@ class Order(BaseModel):
     schedule_details = models.TextField(
         blank=True, null=True
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
     billing_comments_internal_use = models.TextField(blank=True, null=True)  # 6.6.23
     schedule_window = models.CharField(
         max_length=35,

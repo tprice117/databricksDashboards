@@ -6,11 +6,11 @@ from random import randint
 import requests
 import stripe
 from django.conf import settings
-from django.urls import reverse
 from django.db.models import Avg, Count  # F, OuterRef, Q, Subquery, Sum,
 from django.db.models.functions import Round
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django_filters import rest_framework as filters
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -1373,7 +1373,8 @@ def update_order_status(request, order_id, accept=True):
 
 
 def test3(request):
-    attempt_charge_for_past_due_invoices()
+    print(Order.objects.order_by().values("status").distinct())
+
     # BillingUtils.run_interval_based_invoicing()
     # sync_stripe_payment_methods()
     # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
