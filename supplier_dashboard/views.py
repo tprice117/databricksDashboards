@@ -5,6 +5,7 @@ import uuid
 from itertools import chain
 from typing import List, Union
 from urllib.parse import parse_qs, urlencode
+from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -940,64 +941,61 @@ def booking_detail(request, order_id):
 def payouts(request):
     context = {}
     location_id = None
-    pagination_limit = 25
-    page_number = 1
-    if request.method == "POST":
-        location_id = request.POST.get("location_id", None)
-    elif request.method == "GET":
+    if request.method == "GET":
         location_id = request.GET.get("location_id", None)
-    service_date = request.GET.get("service_date", None)
-    if request.GET.get("p", None) is not None:
-        page_number = request.GET.get("p")
-    # This is an HTMX request, so respond with html snippet
-    # TODO: Add support for filtering by service_date.
-    # if request.headers.get("HX-Request"):
-    # NOTE: Can add stuff to session if needed to speed up queries.
+    # service_date = request.GET.get("service_date", None)
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    if context["seller"]:
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ].id
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        if context["seller"]:
+            orders = Order.objects.filter(
+                order_group__seller_product_seller_location__seller_product__seller_id=context[
+                    "seller"
+                ].id
+            )
+        else:
+            orders = Order.objects.all()
+        if location_id:
+            orders = orders.filter(
+                order_group__seller_product_seller_location__seller_location_id=location_id
+            )
+        # TODO: Ask if filter should be here, or in the loop below.
+        # The difference is the total_paid, paid_this_week, and not_yet_paid values.
+        # if service_date:
+        #     # filter orders by their payouts created_on date
+        #     orders = orders.filter(payouts__created_on__date=service_date)
+        orders = orders.prefetch_related("order_line_items")
+        if context["seller"] is None:
+            orders = orders.select_related(
+                "order_group__seller_product_seller_location__seller_location__seller"
+            )
+            orders = orders.order_by(
+                "order_group__seller_product_seller_location__seller_location__seller__name",
+                "-end_date",
+            )
+        else:
+            orders = orders.order_by("-end_date")
+        sunday = datetime.date.today() - datetime.timedelta(
+            days=datetime.date.today().weekday()
         )
-    else:
-        orders = Order.objects.all()
-    if location_id:
-        orders = orders.filter(
-            order_group__seller_product_seller_location__seller_location_id=location_id
+        context["total_paid"] = 0
+        context["paid_this_week"] = 0
+        context["not_yet_paid"] = 0
+        for order in orders:
+            total_paid = order.total_paid_to_seller()
+            context["total_paid"] += total_paid
+            context["not_yet_paid"] += order.needed_payout_to_seller()
+            if order.start_date >= sunday:
+                context["paid_this_week"] += total_paid
+        return render(
+            request, "supplier_dashboard/snippets/payouts_metric_cards.html", context
         )
-    # TODO: Ask if filter should be here, or in the loop below.
-    # The difference is the total_paid, paid_this_week, and not_yet_paid values.
-    # if service_date:
-    #     # filter orders by their payouts created_on date
-    #     orders = orders.filter(payouts__created_on__date=service_date)
-    orders = orders.prefetch_related("payouts", "order_line_items")
-    if context["seller"] is None:
-        orders = orders.select_related(
-            "order_group__seller_product_seller_location__seller_location__seller"
-        )
-        orders = orders.order_by(
-            "order_group__seller_product_seller_location__seller_location__seller__name",
-            "-end_date",
-        )
-    else:
-        orders = orders.order_by("-end_date")
-    sunday = datetime.date.today() - datetime.timedelta(
-        days=datetime.date.today().weekday()
-    )
-    context["total_paid"] = 0
-    context["paid_this_week"] = 0
-    context["not_yet_paid"] = 0
-    for order in orders:
-        total_paid = order.total_paid_to_seller()
-        context["total_paid"] += total_paid
-        context["not_yet_paid"] += order.needed_payout_to_seller()
-        if order.start_date >= sunday:
-            context["paid_this_week"] += total_paid
 
     query_params = request.GET.copy()
     context["download_link"] = f"/supplier/payouts/download/?{query_params.urlencode()}"
+    context["payouts_cards_link"] = f"{reverse('supplier_payouts')}?{query_params.urlencode()}"
+    context["payouts_table_link"] = f"{reverse('supplier_payouts_table')}?{query_params.urlencode()}"
     return render(request, "supplier_dashboard/payouts.html", context)
 
 

@@ -11,6 +11,7 @@
                         </div>
                         <div class="text-dark fw-bold h5 mb-0">
                             <span>${{ not_yet_paid|stringformat:'.2f'|intcomma }}</span>
+                            <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                         </div>
                     </div>
                     <div class="col-auto">
@@ -30,6 +31,7 @@
                         </div>
                         <div class="text-dark fw-bold h5 mb-0">
                             <span>${{ paid_this_week|stringformat:'.2f'|intcomma }}</span>
+                            <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                         </div>
                     </div>
                     <div class="col-auto">
@@ -51,6 +53,7 @@
                             <div class="col-auto">
                                 <div class="text-dark fw-bold h5 mb-0 me-3">
                                     <span>${{ total_paid|stringformat:'.2f'|intcomma }}</span>
+                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </div>
                             </div>
                         </div>
