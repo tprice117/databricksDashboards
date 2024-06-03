@@ -1,0 +1,77 @@
+{% load static %}
+{% load humanize %}
+<div class="card shadow">
+    <div class="card-header py-3">
+        <div class="row">
+            <div class="col">
+                <p class="text-primary m-0 fw-bold">All Payouts</p>
+                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+            </div>
+            <div class="col">
+                <div class="col-md-6" style="margin-left: auto;">
+                    <label for="order-date-filter">Filter by date</label>
+                    <input id="order-date-filter" class="form-control" type="date" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+            <table class="table table-hover my-0" id="dataTable">
+                <thead>
+                    <tr>
+                        {% if request.user.is_staff %}
+                            <th>Seller</th>
+                        {% endif %}
+                        <th>Invoice ID</th>
+                        <th>Processed Date</th>
+                        <th>Amount</th>
+                        {% comment %} <th>Delivery Date</th>
+                        <th>Status</th> {% endcomment %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if page_obj %}
+                        {% for payout in page_obj %}
+                            <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
+                                {% if request.user.is_staff %}
+                                    <td>{{ payout.order.order_group.seller_product_seller_location.seller_location.seller.name }}</td>
+                                {% endif %}
+                                <td>{{ payout.invoice_id }}</td>
+                                <td>{{ payout.created_on }}</td>
+                                <td>{{ payout.amount }}</td>
+                                {% comment %} <td>{{ payout.new_abstract_field_for_status }}</td>
+                                <td>{{ payout.status }}</td> {% endcomment %}
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        {% if request.user.is_staff %}
+                            <td>
+                                <strong>Seller</strong>
+                            </td>
+                        {% endif %}
+                        <td>
+                            <strong>Processed Date</strong>
+                        </td>
+                        <td>
+                            <strong>Amount</strong>
+                        </td>
+                        <td>
+                            <strong>Invoice ID</strong>
+                        </td>
+                        {% comment %} <td>
+                            <strong>Delivery Date</strong>
+                        </td>
+                        <td>
+                            <strong>Status</strong>
+                        </td> {% endcomment %}
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% include 'supplier_dashboard/snippets/pagination.html' %}
+    </div>
+</div>

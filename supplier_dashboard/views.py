@@ -986,38 +986,62 @@ def payouts(request):
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )
-    payouts = []
     context["total_paid"] = 0
     context["paid_this_week"] = 0
     context["not_yet_paid"] = 0
     for order in orders:
-        # Get SellerInvoicePayableLineItem for invoice_id
-        seller_invoice_payable_line_item = (
-            order.seller_invoice_payable_line_items.all().first()
-        )
-        invoice_id = None
-        if seller_invoice_payable_line_item:
-            seller_invoice_payable = (
-                seller_invoice_payable_line_item.seller_invoice_payable
-            )
-            if seller_invoice_payable:
-                invoice_id = seller_invoice_payable.supplier_invoice_id
-
         total_paid = order.total_paid_to_seller()
         context["total_paid"] += total_paid
         context["not_yet_paid"] += order.needed_payout_to_seller()
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
-        if service_date:
-            payouts_query = order.payouts.filter(created_on__date=service_date)
-        else:
-            payouts_query = order.payouts.all()
-        if context["seller"] is None:
-            payouts_query = payouts_query.select_related(
-                "order__order_group__seller_product_seller_location__seller_location__seller"
-            )
-        for p in payouts_query:
-            payouts.append({"invoice_id": invoice_id, "payout": p})
+
+    query_params = request.GET.copy()
+    context["download_link"] = f"/supplier/payouts/download/?{query_params.urlencode()}"
+    return render(request, "supplier_dashboard/payouts.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def payouts_table(request):
+    pagination_limit = 25
+    page_number = 1
+    if request.method == "POST":
+        location_id = request.POST.get("location_id", None)
+    elif request.method == "GET":
+        location_id = request.GET.get("location_id", None)
+    service_date = request.GET.get("service_date", None)
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    context = {}
+    # NOTE: Can add stuff to session if needed to speed up queries.
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
+    if context["seller"]:
+        payouts = Payout.objects.filter(
+            order__order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ].id
+        )
+    else:
+        payouts = Payout.objects.all()
+    if location_id:
+        payouts = payouts.filter(
+            order__order_group__seller_product_seller_location__seller_location_id=location_id
+        )
+    if service_date:
+        # filter orders by their payouts created_on date
+        payouts = payouts.filter(created_on__date=service_date)
+    if context["seller"] is None:
+        payouts = payouts.select_related(
+            "order__order_group__seller_product_seller_location__seller_location__seller"
+        )
+        payouts = payouts.order_by(
+            "order__order_group__seller_product_seller_location__seller_location__seller__name",
+            "-created_on",
+        )
+    else:
+        payouts = payouts.order_by("-created_on")
+    print(payouts.count())
     paginator = Paginator(payouts, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
@@ -1041,7 +1065,7 @@ def payouts(request):
         context["page_next_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
     query_params["p"] = paginator.num_pages
     context["page_end_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
-    return render(request, "supplier_dashboard/payouts.html", context)
+    return render(request, "supplier_dashboard/snippets/payouts_table.html", context)
 
 
 @login_required(login_url="/admin/login/")
