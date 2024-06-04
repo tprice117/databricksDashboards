@@ -10,8 +10,12 @@ from api.models.user.user_address import UserAddress
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 from payment_methods.utils import DSPaymentMethods
+from django.template.loader import render_to_string
+from notifications.utils.add_email_to_queue import add_internal_email_to_queue
+import mailchimp_transactional as MailchimpTransactional
 
 logger = logging.getLogger(__name__)
+mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
 class PaymentMethod(BaseModel):
@@ -24,6 +28,8 @@ class PaymentMethod(BaseModel):
         UserGroup,
         on_delete=models.CASCADE,
     )
+    active = models.BooleanField(default=True)
+    reason = models.TextField(blank=True, null=True)
 
     @property
     def card_number(self):
@@ -128,16 +134,49 @@ class PaymentMethod(BaseModel):
                     )
                     print("stripe_payment_method created")
                 except CardError as e:
+                    # TODO: Add allowed CardErrors. An allowed error would not set the PaymentMethod to inactive.
+                    self.active = False
+                    self.reason = f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[type:{e.code}]-[param:{e.param}]"
+                    self.save()
                     logger.error(
                         f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[{e.code}]-[{e.param}]",
                         exc_info=e,
                     )
+                    self.send_internal_email(user_address)
                 except Exception as e:
                     print(e)
+                    self.active = False
+                    self.reason = f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]"
+                    self.save()
                     logger.error(
                         f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]",
                         exc_info=e,
                     )
+                    self.send_internal_email(user_address)
+
+    def send_internal_email(self, user_address: UserAddress):
+        # Send email to internal team. Only on our PROD environment.
+        if settings.ENVIRONMENT == "TEST":
+            try:
+                subject = f"Payment Method Error: {user_address.user_group.name}-{user_address.formatted_address()}"
+                payment_method_link = f"{settings.API_URL}/admin/payment_methods/paymentmethod/{str(self.id)}/change/"
+                payload = {
+                    "user_address": user_address,
+                    "reason": self.reason,
+                    "payment_method": self,
+                    "payment_method_link": payment_method_link,
+                }
+                html_content = render_to_string(
+                    "emails/internal/bad-payment-method.min.html", payload
+                )
+                add_internal_email_to_queue(
+                    from_email="system@trydownstream.com",
+                    additional_to_emails=["mwickey@trydownstream.com"],
+                    subject=subject,
+                    html_content=html_content,
+                )
+            except Exception as e:
+                logger.error(f"PaymentMethod.send_internal_email: [{e}]", exc_info=e)
 
 
 @receiver(post_save, sender=PaymentMethod)
