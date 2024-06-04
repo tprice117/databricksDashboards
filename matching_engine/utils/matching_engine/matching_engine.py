@@ -14,7 +14,7 @@ class MatchingEngine:
     def get_possible_seller_product_seller_locations(
         product: Product,
         user_address: UserAddress,
-        waste_type: WasteType | None = None,
+        waste_type: WasteType = None,
     ) -> list[SellerProductSellerLocation]:
         # Get all SellerProductSellerLocation objects that match the product.
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
