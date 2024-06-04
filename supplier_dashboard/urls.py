@@ -57,7 +57,11 @@ urlpatterns = [
         name="supplier_booking_update",
     ),
     path("supplier/payouts/", views.payouts, name="supplier_payouts"),
-    path("supplier/payouts/table/", views.payouts_table, name="supplier_payouts_table"),
+    path(
+        "supplier/payouts/metrics/",
+        views.payouts_metrics,
+        name="supplier_payouts_metrics",
+    ),
     path(
         "supplier/payouts/download/",
         views.download_payouts,

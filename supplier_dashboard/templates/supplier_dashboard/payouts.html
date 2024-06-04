@@ -6,7 +6,7 @@
 {% endblock %}
 {% block javascript %}
     <script>
-        const dateFilter = document.getElementById("order-date-filter");
+        const dateFilter = document.getElementById("payouts-date-filter");
         // listen for page load event.
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
@@ -31,11 +31,11 @@
                 queryParams.delete("service_date");
             }
             // update date filter url with current queryParams
-            const dateFilterUrl = "{% url 'supplier_payouts_table' %}?" + queryParams.toString();
+            const dateFilterUrl = "{% url 'supplier_payouts' %}?" + queryParams.toString();
             // TODO: Maybe don't reload the card metrics when date filter is changed
-            htmx.find("#order-date-filter").setAttribute("hx-get", dateFilterUrl);
+            htmx.find("#payouts-date-filter").setAttribute("hx-get", dateFilterUrl);
             // force htmx to process the new hx-get attributes
-            htmx.process("#order-date-filter");
+            htmx.process("#payouts-date-filter");
             // trigger onDateFilter event
             htmx.trigger(el, "onDateFilter");
             // redirect to date filter url
@@ -45,6 +45,23 @@
         dateFilter.addEventListener("change", function () {
             selectDate(this);
         });
+        // Every 2 seconds, check if the date filter is disabled, if it is disabled and no other .status-card, button, .form-control, .pagi-link is disabled, enable the date filter.
+        // Filter out the date filter from the list of elements to check if disabled. htmx is not doing this always here, I don't know why.
+        setInterval(() => {
+            const disabledElt = document.querySelectorAll(".status-card, button, .form-control, .pagi-link");
+            const dateFilterElt = document.getElementById("payouts-date-filter");
+            let isDisabled = Array.from(disabledElt).some((elt) => {
+                if (elt.id != dateFilterElt.id) {
+                    return elt.disabled;
+                }
+            });
+            if (dateFilterElt.disabled) {
+                if (!isDisabled) {
+                    // console.log("Enabling date filter");
+                    dateFilterElt.disabled = false;
+                }
+            }
+        }, 500);
     </script>
 {% endblock %}
 {% block content %}
@@ -65,9 +82,8 @@
                     </div>
                     <div class="col">
                         <div class="col-md-6" style="margin-left: auto;">
-                            <label for="order-date-filter">Filter by date</label>
-                            {% comment %} <input id="order-date-filter" class="form-control" type="date" /> {% endcomment %}
-                            <input id="order-date-filter" class="form-control" type="date" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="onDateFilter" hx-indicator="#htmx-indicator-loading-status" />
+                            <label for="payouts-date-filter">Filter by date</label>
+                            <input id="payouts-date-filter" class="form-control" type="date" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="onDateFilter" hx-indicator="#htmx-indicator-loading-status" />
                         </div>
                     </div>
                 </div>
