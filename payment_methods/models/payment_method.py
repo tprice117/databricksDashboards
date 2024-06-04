@@ -129,14 +129,14 @@ class PaymentMethod(BaseModel):
                     print("stripe_payment_method created")
                 except CardError as e:
                     logger.error(
-                        f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]",
-                        exc_info=e
+                        f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[{e.code}]-[{e.param}]",
+                        exc_info=e,
                     )
                 except Exception as e:
                     print(e)
                     logger.error(
                         f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]",
-                        exc_info=e
+                        exc_info=e,
                     )
 
 
