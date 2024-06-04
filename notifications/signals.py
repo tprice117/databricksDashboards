@@ -72,14 +72,14 @@ def on_order_post_save(sender, instance, created, **kwargs):
                     #     reply_to="dispatch@trydownstream.com",
                     # )
                 elif order.old_value("status") != order.status:
-                    if order.status == Order.SCHEDULED:
+                    if order.status == Order.Status.SCHEDULED:
                         order.send_customer_email_when_order_scheduled()
                     # elif (
-                    #     order.status == Order.CANCELLED
-                    #     or order.status == Order.COMPLETE
+                    #     order.status == Order.Status.CANCELLED
+                    #     or order.status == Order.Status.COMPLETE
                     # ):
                     #     subject = "Your Downstream order has been completed!"
-                    #     if order.status == Order.CANCELLED:
+                    #     if order.status == Order.Status.CANCELLED:
                     #         subject = "Your Downstream order has been cancelled"
                     #     error_status = "updated-Order"
                     #     # Order status changed

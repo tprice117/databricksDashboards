@@ -283,7 +283,7 @@ def index(request):
         "order_group__seller_product_seller_location__seller_product__product__main_product",
     )
     orders = orders.prefetch_related("payouts", "order_line_items")
-    # .filter(status=Order.PENDING)
+    # .filter(status=Order.Status.PENDING)
     context["earnings"] = 0
     earnings_by_category = {}
     pending_count = 0
@@ -302,13 +302,13 @@ def index(request):
             earnings_by_category[category] = {"amount": 0, "percent": 0}
         earnings_by_category[category]["amount"] += float(order.seller_price())
 
-        if order.status == Order.PENDING:
+        if order.status == Order.Status.PENDING:
             pending_count += 1
-        elif order.status == Order.SCHEDULED:
+        elif order.status == Order.Status.SCHEDULED:
             scheduled_count += 1
-        elif order.status == Order.COMPLETE:
+        elif order.status == Order.Status.COMPLETE:
             complete_count += 1
-        elif order.status == Order.CANCELLED:
+        elif order.status == Order.Status.CANCELLED:
             cancelled_count += 1
 
     # # Just test data here
@@ -633,14 +633,14 @@ def bookings(request):
     if request.headers.get("HX-Request"):
         query_params = request.GET.copy()
         # Ensure tab is valid. Default to PENDING if not.
-        tab = request.GET.get("tab", Order.PENDING)
+        tab = request.GET.get("tab", Order.Status.PENDING)
         if tab.upper() not in [
-            Order.PENDING,
-            Order.SCHEDULED,
-            Order.COMPLETE,
-            Order.CANCELLED,
+            Order.Status.PENDING,
+            Order.Status.SCHEDULED,
+            Order.Status.COMPLETE,
+            Order.Status.CANCELLED,
         ]:
-            tab = Order.PENDING
+            tab = Order.Status.PENDING
         tab_status = tab.upper()
         if context["seller"]:
             orders = Order.objects.filter(
@@ -653,7 +653,7 @@ def bookings(request):
 
         # orders = orders.filter(status=tab_status)
         # TODO: Check the delay for a seller with large number of orders, like Hillen.
-        # if status.upper() != Order.PENDING:
+        # if status.upper() != Order.Status.PENDING:
         #     orders = orders.filter(end_date__gt=non_pending_cutoff)
         if link_params.get("service_date", None) is not None:
             orders = orders.filter(end_date=link_params["service_date"])
@@ -678,14 +678,14 @@ def bookings(request):
         for order in orders:
             if order.status == tab_status:
                 status_orders.append(order)
-            if order.status == Order.PENDING:
+            if order.status == Order.Status.PENDING:
                 pending_count += 1
             # if order.end_date >= non_pending_cutoff:
-            elif order.status == Order.SCHEDULED:
+            elif order.status == Order.Status.SCHEDULED:
                 scheduled_count += 1
-            elif order.status == Order.COMPLETE:
+            elif order.status == Order.Status.COMPLETE:
                 complete_count += 1
-            elif order.status == Order.CANCELLED:
+            elif order.status == Order.Status.CANCELLED:
                 cancelled_count += 1
         context[
             "oob_html"
@@ -756,28 +756,28 @@ def bookings(request):
         context["complete_count"] = 0
         context["cancelled_count"] = 0
         for status in orders:
-            if status == Order.PENDING:
+            if status == Order.Status.PENDING:
                 context["pending_count"] += 1
-            elif status == Order.SCHEDULED:
+            elif status == Order.Status.SCHEDULED:
                 context["scheduled_count"] += 1
-            elif status == Order.COMPLETE:
+            elif status == Order.Status.COMPLETE:
                 context["complete_count"] += 1
-            elif status == Order.CANCELLED:
+            elif status == Order.Status.CANCELLED:
                 context["cancelled_count"] += 1
         query_params = ""
         if link_params:
             query_params = f"&{urlencode(link_params)}"
         context["status_complete_link"] = (
-            f"/supplier/bookings/?tab={Order.COMPLETE}{query_params}"
+            f"/supplier/bookings/?tab={Order.Status.COMPLETE}{query_params}"
         )
         context["status_cancelled_link"] = (
-            f"/supplier/bookings/?tab={Order.CANCELLED}{query_params}"
+            f"/supplier/bookings/?tab={Order.Status.CANCELLED}{query_params}"
         )
         context["status_scheduled_link"] = (
-            f"/supplier/bookings/?tab={Order.SCHEDULED}{query_params}"
+            f"/supplier/bookings/?tab={Order.Status.SCHEDULED}{query_params}"
         )
         context["status_pending_link"] = (
-            f"/supplier/bookings/?tab={Order.PENDING}{query_params}"
+            f"/supplier/bookings/?tab={Order.Status.PENDING}{query_params}"
         )
         return render(request, "supplier_dashboard/bookings.html", context)
 
@@ -802,12 +802,15 @@ def update_order_status(request, order_id, accept=True, complete=False):
     try:
         order = Order.objects.get(id=order_id)
         context["order"] = order
-        if order.status == Order.PENDING or order.status == Order.SCHEDULED:
+        if (
+            order.status == Order.Status.PENDING
+            or order.status == Order.Status.SCHEDULED
+        ):
             if accept or complete:
                 if accept:
-                    order.status = Order.SCHEDULED
+                    order.status = Order.Status.SCHEDULED
                 else:
-                    order.status = Order.COMPLETE
+                    order.status = Order.Status.COMPLETE
                 order.save()
                 # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
                 if context["seller"]:
@@ -820,7 +823,7 @@ def update_order_status(request, order_id, accept=True, complete=False):
                     orders = Order.objects.all()
                 if service_date:
                     orders = orders.filter(end_date=service_date)
-                # orders = orders.filter(Q(status=Order.SCHEDULED) | Q(status=Order.PENDING))
+                # orders = orders.filter(Q(status=Order.Status.SCHEDULED) | Q(status=Order.Status.PENDING))
                 # To optimize, we can use values_list to get only the status field.
                 orders = orders.values_list("status", flat=True)
                 pending_count = 0
@@ -828,14 +831,14 @@ def update_order_status(request, order_id, accept=True, complete=False):
                 complete_count = 0
                 cancelled_count = 0
                 for status in orders:
-                    if status == Order.PENDING:
+                    if status == Order.Status.PENDING:
                         pending_count += 1
                     # if order.end_date >= non_pending_cutoff:
-                    elif status == Order.SCHEDULED:
+                    elif status == Order.Status.SCHEDULED:
                         scheduled_count += 1
-                    elif status == Order.COMPLETE:
+                    elif status == Order.Status.COMPLETE:
                         complete_count += 1
-                    elif status == Order.CANCELLED:
+                    elif status == Order.Status.CANCELLED:
                         cancelled_count += 1
                 # TODO: Add toast that shows the order with a link to see it.
                 # https://getbootstrap.com/docs/5.3/components/toasts/
@@ -877,27 +880,36 @@ def update_order_status(request, order_id, accept=True, complete=False):
 @login_required(login_url="/admin/login/")
 def update_booking_status(request, order_id):
     context = {}
-    update_status = Order.PENDING
+    update_status = Order.Status.PENDING
     if request.method == "POST":
-        update_status = request.POST.get("status", Order.PENDING)
+        update_status = request.POST.get("status", Order.Status.PENDING)
     elif request.method == "GET":
-        update_status = request.GET.get("status", Order.PENDING)
+        update_status = request.GET.get("status", Order.Status.PENDING)
     try:
         order = Order.objects.get(id=order_id)
         context["order"] = order
-        if order.status == Order.PENDING and update_status == Order.SCHEDULED:
-            order.status = Order.SCHEDULED
+        if (
+            order.status == Order.Status.PENDING
+            and update_status == Order.Status.SCHEDULED
+        ):
+            order.status = Order.Status.SCHEDULED
             order.save()
             context["oob_html"] = (
                 f"""<p id="booking-status" hx-swap-oob="true">{order.status}</p>"""
             )
-        elif order.status == Order.SCHEDULED and update_status == Order.COMPLETE:
-            order.status = Order.COMPLETE
+        elif (
+            order.status == Order.Status.SCHEDULED
+            and update_status == Order.Status.COMPLETE
+        ):
+            order.status = Order.Status.COMPLETE
             order.save()
             context["oob_html"] = (
                 f"""<p id="booking-status" hx-swap-oob="true">{order.status}</p>"""
             )
-        elif order.status == Order.PENDING and update_status == Order.CANCELLED:
+        elif (
+            order.status == Order.Status.PENDING
+            and update_status == Order.Status.CANCELLED
+        ):
             # Send internal email to notify of denial.
             internal_email.supplier_denied_order(order)
     except Exception as e:
@@ -1524,7 +1536,7 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
                     order_group__seller_product_seller_location__seller_product__seller_id=supplier_id
                 ).filter(status=status.upper())
                 # TODO: Check the delay for a seller with large number of orders, like Hillen.
-                # if status.upper() != Order.PENDING:
+                # if status.upper() != Order.Status.PENDING:
                 #     orders = orders.filter(end_date__gt=non_pending_cutoff)
                 if service_date:
                     orders = orders.filter(end_date=service_date)
@@ -1551,8 +1563,8 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
                 # NOTE: To include orders in this view, simply add them to the status_list.
                 # orders = Order.objects.filter(
                 #     order_group__seller_product_seller_location__seller_product__seller_id=supplier_id
-                # ).filter(status=Order.PENDING)
-                # # .filter(Q(status=Order.PENDING) | Q(status=Order.SCHEDULED))
+                # ).filter(status=Order.Status.PENDING)
+                # # .filter(Q(status=Order.Status.PENDING) | Q(status=Order.Status.SCHEDULED))
                 # # Select related fields to reduce db queries.
                 # orders = orders.select_related(
                 #     "order_group__seller_product_seller_location__seller_product__seller",
@@ -1562,16 +1574,16 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
                 # context["status_list"].append({"name": "PENDING", "orders": orders})
                 context["seller"] = supplier
                 context["status_complete_link"] = supplier.get_dashboard_status_url(
-                    Order.COMPLETE
+                    Order.Status.COMPLETE
                 )
                 context["status_cancelled_link"] = supplier.get_dashboard_status_url(
-                    Order.CANCELLED
+                    Order.Status.CANCELLED
                 )
                 context["status_scheduled_link"] = supplier.get_dashboard_status_url(
-                    Order.SCHEDULED
+                    Order.Status.SCHEDULED
                 )
                 context["status_pending_link"] = supplier.get_dashboard_status_url(
-                    Order.PENDING
+                    Order.Status.PENDING
                 )
 
                 return render(request, "supplier_dashboard/dailydigest.html", context)

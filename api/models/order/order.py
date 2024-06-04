@@ -419,8 +419,10 @@ class Order(BaseModel):
                     > self.order_group.user_address.user_group.policy_monthly_limit.amount
                 ):
                     # Set Order status to Approval so that it is returned in api.
-                    self.status = Order.APPROVAL
-                    Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
+                    self.status = Order.Status.APPROVAL
+                    Order.objects.filter(id=self.id).update(
+                        status=Order.Status.APPROVAL
+                    )
                     UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
                     # raise ValidationError(
                     #     "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
@@ -438,8 +440,10 @@ class Order(BaseModel):
                         and self.customer_price() > user_group_purchase_approval.amount
                     ):
                         # Set Order status to Approval so that it is returned in api.
-                        self.status = Order.APPROVAL
-                        Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
+                        self.status = Order.Status.APPROVAL
+                        Order.objects.filter(id=self.id).update(
+                            status=Order.Status.APPROVAL
+                        )
                         UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
                         # raise ValidationError(
                         #     "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."

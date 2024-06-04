@@ -75,7 +75,7 @@ class UserInviteApprovalTests(TestCase):
         ).data
         print("Created User Invitation", invite_member_data)
         # Check that the order status is set to approval. This means Order requires approval.
-        self.assertEqual(invite_member_data["status"], Order.PENDING)
+        self.assertEqual(invite_member_data["status"], Order.Status.PENDING)
         # Delete after testing
         invite_admin.user.delete()
         invite_admin.delete()
@@ -159,7 +159,7 @@ class OrderApprovalTests(TestCase):
         order_admin_data = OrderSerializer(order_admin).data
         print("Created Admin Order", order_admin_data)
         # Check that the order is pending. This means Order did not require approval.
-        self.assertEqual(order_admin_data["status"], Order.PENDING)
+        self.assertEqual(order_admin_data["status"], Order.Status.PENDING)
 
         # Ensure policy is lower than order amount so that it requires approval.
         purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
@@ -180,7 +180,7 @@ class OrderApprovalTests(TestCase):
         print("============================")
         print("Created Order", order_member_data)
         # Check that the order status is set to approval. This means Order requires approval.
-        self.assertEqual(order_member_data["status"], Order.APPROVAL)
+        self.assertEqual(order_member_data["status"], Order.Status.APPROVAL)
 
         # Ensure policy is higher than order amount so that it doesn't require approval.
         purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
@@ -200,7 +200,7 @@ class OrderApprovalTests(TestCase):
         print("============================")
         print("Created Order 2", order_member2_data)
         # Check that the order status is set to approval. This means Order requires approval.
-        self.assertEqual(order_member2_data["status"], Order.PENDING)
+        self.assertEqual(order_member2_data["status"], Order.Status.PENDING)
 
         # Have the admin approve the order
 

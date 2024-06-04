@@ -1340,9 +1340,9 @@ def update_order_status(request, order_id, accept=True):
         params = decrypt_string(key)
         if str(params) == str(order_id):
             order = Order.objects.get(id=order_id)
-            if order.status == Order.PENDING:
+            if order.status == Order.Status.PENDING:
                 if accept:
-                    order.status = Order.SCHEDULED
+                    order.status = Order.Status.SCHEDULED
                     order.save()
                 else:
                     # Send internal email to notify of denial.
