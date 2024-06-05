@@ -2,20 +2,17 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
+from django.template.loader import render_to_string
 import logging
 from stripe.error import CardError
-
 from api.models import User, UserGroup
 from api.models.user.user_address import UserAddress
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 from payment_methods.utils import DSPaymentMethods
-from django.template.loader import render_to_string
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
-import mailchimp_transactional as MailchimpTransactional
 
 logger = logging.getLogger(__name__)
-mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
 class PaymentMethod(BaseModel):
@@ -134,25 +131,16 @@ class PaymentMethod(BaseModel):
                     )
                     print("stripe_payment_method created")
                 except CardError as e:
-                    # TODO: Add allowed CardErrors. An allowed error would not set the PaymentMethod to inactive.
-                    self.active = False
-                    self.reason = f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[type:{e.code}]-[param:{e.param}]"
-                    self.save()
                     logger.error(
                         f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[{e.code}]-[{e.param}]",
                         exc_info=e,
                     )
-                    self.send_internal_email(user_address)
                 except Exception as e:
                     print(e)
-                    self.active = False
-                    self.reason = f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]"
-                    self.save()
                     logger.error(
                         f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]",
                         exc_info=e,
                     )
-                    self.send_internal_email(user_address)
 
     def send_internal_email(self, user_address: UserAddress):
         # Send email to internal team. Only on our PROD environment.
