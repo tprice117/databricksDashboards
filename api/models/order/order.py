@@ -249,8 +249,8 @@ class Order(BaseModel):
             try:
                 # Create Delivery Fee OrderLineItem.
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
-                print("order_group_orders.count():", order_group_orders.count())
-                if order_group_orders.count() == 0:
+
+                if order_group_orders.count() == 1:
                     delivery_fee = 0
                     if self.order_group.seller_product_seller_location.delivery_fee:
                         delivery_fee = (
