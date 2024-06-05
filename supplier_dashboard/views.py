@@ -285,7 +285,7 @@ def index(request):
             "order_group__seller_product_seller_location__seller_product__product__main_product",
         )
         orders = orders.prefetch_related("payouts", "order_line_items")
-        # .filter(status=Order.PENDING)
+        # .filter(status=Order.Status.PENDING)
         context["earnings"] = 0
         earnings_by_category = {}
         pending_count = 0
@@ -304,13 +304,13 @@ def index(request):
                 earnings_by_category[category] = {"amount": 0, "percent": 0}
             earnings_by_category[category]["amount"] += float(order.seller_price())
 
-            if order.status == Order.PENDING:
+            if order.status == Order.Status.PENDING:
                 pending_count += 1
-            elif order.status == Order.SCHEDULED:
+            elif order.status == Order.Status.SCHEDULED:
                 scheduled_count += 1
-            elif order.status == Order.COMPLETE:
+            elif order.status == Order.Status.COMPLETE:
                 complete_count += 1
-            elif order.status == Order.CANCELLED:
+            elif order.status == Order.Status.CANCELLED:
                 cancelled_count += 1
 
         # # Just test data here
