@@ -1,7 +1,9 @@
+import logging
+
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.template.loader import render_to_string
-from django.conf import settings
-import logging
+
 from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils.add_email_to_queue import add_email_to_queue
 
@@ -15,21 +17,21 @@ Django Signals help: https://docs.djangoproject.com/en/5.0/topics/signals/
 """
 
 
-def get_order_status_from_choice(status: str) -> str:
-    """Get the status from Order.STATUS_CHOICES.
+# def get_order_status_from_choice(status: str) -> str:
+#     """Get the status from Order.STATUS_CHOICES.
 
-    Args:
-        status (str): The db status value.
+#     Args:
+#         status (str): The db status value.
 
-    Returns:
-        str: The human readable status.
-    """
-    from api.models import Order
+#     Returns:
+#         str: The human readable status.
+#     """
+#     from api.models import Order
 
-    for choice in Order.STATUS_CHOICES:
-        if choice[0] == status:
-            return choice[1]
-    return "Unknown"
+#     for choice in Order.STATUS_CHOICES:
+#         if choice[0] == status:
+#             return choice[1]
+#     return "Unknown"
 
 
 # ================================================#
@@ -70,14 +72,14 @@ def on_order_post_save(sender, instance, created, **kwargs):
                     #     reply_to="dispatch@trydownstream.com",
                     # )
                 elif order.old_value("status") != order.status:
-                    if order.status == Order.SCHEDULED:
+                    if order.status == Order.Status.SCHEDULED:
                         order.send_customer_email_when_order_scheduled()
                     # elif (
-                    #     order.status == Order.CANCELLED
-                    #     or order.status == Order.COMPLETE
+                    #     order.status == Order.Status.CANCELLED
+                    #     or order.status == Order.Status.COMPLETE
                     # ):
                     #     subject = "Your Downstream order has been completed!"
-                    #     if order.status == Order.CANCELLED:
+                    #     if order.status == Order.Status.CANCELLED:
                     #         subject = "Your Downstream order has been cancelled"
                     #     error_status = "updated-Order"
                     #     # Order status changed

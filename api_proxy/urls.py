@@ -106,7 +106,6 @@ urlpatterns = [
     path("oidc/", include("mozilla_django_oidc.urls")),
     # START: API URLs.
     path("api/", include("api_proxy.api.v1.urls")),
-    path("api/", include("admin_approvals.api.v1.urls")),
     path("api/", include(router.urls)),
     # END: API URLs.
     # Schema URLs.

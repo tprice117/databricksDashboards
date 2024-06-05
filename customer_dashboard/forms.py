@@ -1,6 +1,7 @@
 from django import forms
+
 from api.models import UserAddressType
-from api.models.choices.user_type import UserType
+from common.models.choices.user_type import UserType
 
 
 def get_all_address_types(_social_site=None):

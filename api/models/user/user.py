@@ -8,10 +8,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_delete
 
-from api.models.choices.user_type import UserType
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
+from common.models.choices.user_type import UserType
 from communications.intercom.intercom import Intercom
 from notifications.utils.internal_email import send_email_on_new_signup
 

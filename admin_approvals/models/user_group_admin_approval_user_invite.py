@@ -1,14 +1,15 @@
-from django.db import models
-from django.template.loader import render_to_string
-from notifications.utils.add_email_to_queue import add_email_to_queue
 import logging
 
-from api.models.user.user import User
+from django.db import models
+from django.template.loader import render_to_string
+
 from api.models.track_data import track_data
+from api.models.user.user import User
 from api.models.user.user_group import UserGroup
 from common.models import BaseModel
 from common.models.choices.approval_status import ApprovalStatus
-from api.models.choices.user_type import UserType
+from common.models.choices.user_type import UserType
+from notifications.utils.add_email_to_queue import add_email_to_queue
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,11 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
         null=True,
     )
     email = models.EmailField()
+    type = models.CharField(
+        max_length=255,
+        choices=UserType.choices,
+        default=UserType.ADMIN,
+    )
     status = models.CharField(
         max_length=20,
         choices=ApprovalStatus.choices,
@@ -81,6 +87,7 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
                 # save that user to the UserGroupApprovalUserInvite.User field.
                 self.user = User.objects.create(
                     email=self.email,
+                    username=self.email,
                     user_group_id=self.user_group_id,
                     type=UserType.MEMBER,
                 )
