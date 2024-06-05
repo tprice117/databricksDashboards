@@ -251,22 +251,18 @@ class Order(BaseModel):
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
 
                 if order_group_orders.count() == 1:
-                    delivery_fee = 0
                     if self.order_group.seller_product_seller_location.delivery_fee:
-                        delivery_fee = (
-                            self.order_group.seller_product_seller_location.delivery_fee
+                        OrderLineItem.objects.create(
+                            order=self,
+                            order_line_item_type=OrderLineItemType.objects.get(
+                                code="DELIVERY"
+                            ),
+                            rate=self.order_group.seller_product_seller_location.delivery_fee,
+                            quantity=1,
+                            description="Delivery Fee",
+                            platform_fee_percent=self.order_group.take_rate,
+                            is_flat_rate=True,
                         )
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=OrderLineItemType.objects.get(
-                            code="DELIVERY"
-                        ),
-                        rate=delivery_fee,
-                        quantity=1,
-                        description="Delivery Fee",
-                        platform_fee_percent=self.order_group.take_rate,
-                        is_flat_rate=True,
-                    )
 
                 # Create Removal Fee OrderLineItem.
                 if (
