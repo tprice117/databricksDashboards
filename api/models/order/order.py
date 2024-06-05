@@ -43,23 +43,11 @@ class Order(BaseModel):
         AUTO_RENEWAL = "AUTO_RENEWAL"
         ONE_TIME = "ONE_TIME"
 
-    APPROVAL = "APPROVAL"
-    PENDING = "PENDING"
-    SCHEDULED = "SCHEDULED"
-    INPROGRESS = "IN-PROGRESS"
-    AWAITINGREQUEST = "Awaiting Request"
-    CANCELLED = "CANCELLED"
-    COMPLETE = "COMPLETE"
-
-    STATUS_CHOICES = (
-        (APPROVAL, "Approval"),
-        (PENDING, "Pending"),
-        (SCHEDULED, "Scheduled"),
-        (INPROGRESS, "In-Progress"),
-        (AWAITINGREQUEST, "Awaiting Request"),
-        (CANCELLED, "Cancelled"),
-        (COMPLETE, "Complete"),
-    )
+    class Status(models.TextChoices):
+        PENDING = "PENDING"
+        SCHEDULED = "SCHEDULED"
+        CANCELLED = "CANCELLED"
+        COMPLETE = "COMPLETE"
 
     order_group = models.ForeignKey(
         "api.OrderGroup", models.PROTECT, related_name="orders"
@@ -73,7 +61,11 @@ class Order(BaseModel):
     schedule_details = models.TextField(
         blank=True, null=True
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
     billing_comments_internal_use = models.TextField(blank=True, null=True)  # 6.6.23
     schedule_window = models.CharField(
         max_length=35,
@@ -257,7 +249,8 @@ class Order(BaseModel):
             try:
                 # Create Delivery Fee OrderLineItem.
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
-                if order_group_orders.count() == 0:
+
+                if order_group_orders.count() == 1:
                     delivery_fee = 0
                     if self.order_group.seller_product_seller_location.delivery_fee:
                         delivery_fee = (
@@ -427,8 +420,10 @@ class Order(BaseModel):
                     > self.order_group.user_address.user_group.policy_monthly_limit.amount
                 ):
                     # Set Order status to Approval so that it is returned in api.
-                    self.status = Order.APPROVAL
-                    Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
+                    self.status = Order.Status.APPROVAL
+                    Order.objects.filter(id=self.id).update(
+                        status=Order.Status.APPROVAL
+                    )
                     UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
                     # raise ValidationError(
                     #     "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
@@ -446,8 +441,10 @@ class Order(BaseModel):
                         and self.customer_price() > user_group_purchase_approval.amount
                     ):
                         # Set Order status to Approval so that it is returned in api.
-                        self.status = Order.APPROVAL
-                        Order.objects.filter(id=self.id).update(status=Order.APPROVAL)
+                        self.status = Order.Status.APPROVAL
+                        Order.objects.filter(id=self.id).update(
+                            status=Order.Status.APPROVAL
+                        )
                         UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
                         # raise ValidationError(
                         #     "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."

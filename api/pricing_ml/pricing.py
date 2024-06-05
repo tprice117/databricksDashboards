@@ -1,13 +1,7 @@
-import datetime
-import decimal
 import json
-import math
-
-import googlemaps
-import numpy as np
+import logging
 import pandas as pd
 import requests
-import logging
 
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.disposal_location.disposal_location_waste_type import (
@@ -21,10 +15,10 @@ from api.models.seller.seller_product_seller_location_material_waste_type import
 )
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
+from common.utils import DistanceUtils
 
 logger = logging.getLogger(__name__)
 
-GOOGLE_MAPS_API = r"AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE"
 FRED_API = r"fa4d32f5c98c51ccb516742cf566950f"
 
 
@@ -54,37 +48,6 @@ class Price_Model:
             else None
         )
 
-    @staticmethod
-    def get_driving_distance(lat1, lon1, lat2, lon2, unit="M"):
-        """Use google maps api to calculate the driving distance between two points."""
-        gmaps = googlemaps.Client(key=GOOGLE_MAPS_API)
-        try:
-            distance = gmaps.distance_matrix(
-                (lat1, lon1), (lat2, lon2), mode="driving"
-            )["rows"][0]["elements"][0]["distance"]["value"]
-            if unit == "M":
-                return distance * 0.000621371
-            elif unit == "K":
-                return distance * 0.001
-            else:
-                return distance
-        except:
-            return np.nan
-
-    def get_euclidean_distance(self, lat1, lon1, lat2, lon2):
-        """
-        Calculate the great circle distance between two points
-        on the earth (specified in decimal degrees)
-        """
-        lat_a = math.radians(lat1)
-        lat_b = math.radians(lat2)
-        long_diff = math.radians(float(lon1) - float(lon2))
-        distance = math.sin(lat_a) * math.sin(lat_b) + math.cos(lat_a) * math.cos(
-            lat_b
-        ) * math.cos(long_diff)
-        resToMile = math.degrees(math.acos(distance)) * 69.09
-        return resToMile
-
     def getdatafred(self, fredid, apikey):
         """get data from FRED via API with item code, fredid, and apikey"""
         url = (
@@ -111,10 +74,10 @@ class Price_Model:
             # seller to buyer distance
             lat1, lon1 = customer
             lat2, lon2 = hauler
-            distance_miles = Price_Model.get_driving_distance(lat1, lon1, lat2, lon2)
+            distance_miles = DistanceUtils.get_driving_distance(lat1, lon1, lat2, lon2)
             # buyer to dump distance
             lat3, lon3 = 39.856575, -104.762587  # tower disposal site
-            distance_miles += Price_Model.get_driving_distance(lat2, lon2, lat3, lon3)
+            distance_miles += DistanceUtils.get_driving_distance(lat2, lon2, lat3, lon3)
         except:
             distance_miles = 35  # assume 35 miles if no address is given
 
@@ -193,7 +156,7 @@ class Price_Model:
 
             for seller_product_seller_location in seller_product_seller_locations:
                 # Get distance between seller and customer.
-                seller_customer_distance = Price_Model.get_driving_distance(
+                seller_customer_distance = DistanceUtils.get_driving_distance(
                     seller_product_seller_location.seller_location.latitude,
                     seller_product_seller_location.seller_location.longitude,
                     self.user_address.latitude,
@@ -298,7 +261,7 @@ class Price_Model:
 
                 # Seller to Customer distance.
                 total_distance = (
-                    Price_Model.get_driving_distance(
+                    DistanceUtils.get_driving_distance(
                         seller_product_seller_location.seller_location.latitude,
                         seller_product_seller_location.seller_location.longitude,
                         customer_latitude,
@@ -402,7 +365,7 @@ class Price_Model:
             waste_type=self.waste_type
         )
 
-        seller_customer_distance = Price_Model.get_driving_distance(
+        seller_customer_distance = DistanceUtils.get_driving_distance(
             seller_product_seller_location.seller_location.latitude,
             seller_product_seller_location.seller_location.longitude,
             self.user_address.latitude,
@@ -415,7 +378,7 @@ class Price_Model:
             disposal_location = DisposalLocation.objects.get(
                 id=disposal_location_waste_type.disposal_location
             )
-            customer_disposal_distance = self.get_euclidean_distance(
+            customer_disposal_distance = DistanceUtils.get_euclidean_distance(
                 self.user_address.latitude,
                 self.user_address.longitude,
                 disposal_location.latitude,

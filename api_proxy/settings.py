@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "common",
     "communications",
     "external_contracts",
+    "matching_engine",
     "notifications",
     "payment_methods",
     "supplier_dashboard",
