@@ -13,6 +13,13 @@ class PaymentMethodAdmin(admin.ModelAdmin):
         PaymentMethodUserInline,
         PaymentMethodUserAddressInline,
     ]
+    list_display = (
+        "id",
+        "user_id",
+        "user_group_id",
+        "active",
+    )
+    list_filter = ("active",)
 
     def get_readonly_fields(self, request, obj=None):
         # If PaymentMethod is being edited,
