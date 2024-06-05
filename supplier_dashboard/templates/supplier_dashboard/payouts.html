@@ -6,7 +6,7 @@
 {% endblock %}
 {% block javascript %}
     <script>
-        const dateFilter = document.getElementById("order-date-filter");
+        const dateFilter = document.getElementById("payouts-date-filter");
         // listen for page load event.
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
@@ -32,114 +32,58 @@
             }
             // update date filter url with current queryParams
             const dateFilterUrl = "{% url 'supplier_payouts' %}?" + queryParams.toString();
+            // TODO: Maybe don't reload the card metrics when date filter is changed
+            htmx.find("#payouts-date-filter").setAttribute("hx-get", dateFilterUrl);
+            // force htmx to process the new hx-get attributes
+            htmx.process("#payouts-date-filter");
+            // trigger onDateFilter event
+            htmx.trigger(el, "onDateFilter");
             // redirect to date filter url
-            window.location.href = dateFilterUrl;
+            // window.location.href = dateFilterUrl;
         }
         // Add change event listener to date filter
         dateFilter.addEventListener("change", function () {
             selectDate(this);
         });
+        // Every 2 seconds, check if the date filter is disabled, if it is disabled and no other .status-card, button, .form-control, .pagi-link is disabled, enable the date filter.
+        // Filter out the date filter from the list of elements to check if disabled. htmx is not doing this always here, I don't know why.
+        setInterval(() => {
+            const disabledElt = document.querySelectorAll(".status-card, button, .form-control, .pagi-link");
+            const dateFilterElt = document.getElementById("payouts-date-filter");
+            let isDisabled = Array.from(disabledElt).some((elt) => {
+                if (elt.id != dateFilterElt.id) {
+                    return elt.disabled;
+                }
+            });
+            if (dateFilterElt.disabled) {
+                if (!isDisabled) {
+                    // console.log("Enabling date filter");
+                    dateFilterElt.disabled = false;
+                }
+            }
+        }, 500);
     </script>
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
-        <h3 class="text-dark mb-4">Payouts</h3>
-        <div class="row">
-            <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-primary py-2">
-                    <div class="card-body">
-                        <div class="row align-items-center no-gutters">
-                            <div class="col me-2">
-                                <div class="text-uppercase text-primary fw-bold text-xs mb-1">
-                                    <span>PENDING</span>
-                                </div>
-                                <div class="text-dark fw-bold h5 mb-0">
-                                    <span>${{ not_yet_paid|stringformat:'.2f'|intcomma }}</span>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-clock fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-success py-2">
-                    <div class="card-body">
-                        <div class="row align-items-center no-gutters">
-                            <div class="col me-2">
-                                <div class="text-uppercase text-success fw-bold text-xs mb-1">
-                                    <span>THIS WEEK</span>
-                                </div>
-                                <div class="text-dark fw-bold h5 mb-0">
-                                    <span>${{ paid_this_week|stringformat:'.2f'|intcomma }}</span>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-info py-2">
-                    <div class="card-body">
-                        <div class="row align-items-center no-gutters">
-                            <div class="col me-2">
-                                <div class="text-uppercase text-info fw-bold text-xs mb-1">
-                                    <span>ALL Completed</span>
-                                </div>
-                                <div class="row g-0 align-items-center">
-                                    <div class="col-auto">
-                                        <div class="text-dark fw-bold h5 mb-0 me-3">
-                                            <span>${{ total_paid|stringformat:'.2f'|intcomma }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% comment %} <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-info py-2">
-                    <div class="card-body">
-                        <div class="row align-items-center no-gutters">
-                            <div class="col me-2">
-                                <div class="text-uppercase text-info fw-bold text-xs mb-1">
-                                    <span class="text-warning">NOT YET PAID</span>
-                                </div>
-                                <div class="row g-0 align-items-center">
-                                    <div class="col-auto">
-                                        <div class="text-dark fw-bold h5 mb-0 me-3">
-                                            <span>${{ not_yet_paid|stringformat:'.2f'|intcomma }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> {% endcomment %}
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Payouts</h3>
+            <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
+        </div>
+        <div hx-get="{{ payouts_cards_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-status">
+            {% include 'supplier_dashboard/snippets/payouts_metric_cards.html' %}
         </div>
         <div class="card shadow">
             <div class="card-header py-3">
                 <div class="row">
                     <div class="col">
                         <p class="text-primary m-0 fw-bold">All Payouts</p>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                     </div>
                     <div class="col">
                         <div class="col-md-6" style="margin-left: auto;">
-                            <label for="order-date-filter">Filter by date</label>
-                            <input id="order-date-filter" class="form-control" type="date" />
+                            <label for="payouts-date-filter">Filter by date</label>
+                            <input id="payouts-date-filter" class="form-control" type="date" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="onDateFilter" hx-indicator="#htmx-indicator-loading-status" />
                         </div>
                     </div>
                 </div>
@@ -152,33 +96,14 @@
                                 {% if request.user.is_staff %}
                                     <th>Seller</th>
                                 {% endif %}
+                                <th>Invoice ID</th>
                                 <th>Processed Date</th>
                                 <th>Amount</th>
-                                {% if payout.new_abstract_field_for_status %}
-                                    <th>Delivery Date</th>
-                                {% endif %}
-                                {% if payout.status %}
-                                    <th>Status</th>
-                                {% endif %}
+                                {% comment %} <th>Delivery Date</th>
+                                <th>Status</th> {% endcomment %}
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for payout in page_obj %}
-                                <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
-                                    {% if request.user.is_staff %}
-                                        <td>{{ payout.order.order_group.seller_product_seller_location.seller_location.seller.name }}</td>
-                                    {% endif %}
-                                    <td>{{ payout.created_on }}</td>
-                                    <td>{{ payout.amount }}</td>
-                                    {% if payout.new_abstract_field_for_status %}
-                                        <td>{{ payout.new_abstract_field_for_status }}</td>
-                                    {% endif %}
-                                    {% if payout.status %}
-                                        <td>{{ payout.status }}</td>
-                                    {% endif %}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
+                        <tbody id="payout-results" hx-get="{{ payouts_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody>
                         <tfoot>
                             <tr>
                                 {% if request.user.is_staff %}
@@ -192,24 +117,45 @@
                                 <td>
                                     <strong>Amount</strong>
                                 </td>
-                                {% if payout.new_abstract_field_for_status %}
-                                    <td>
-                                        <strong>Delivery Date</strong>
-                                    </td>
-                                {% endif %}
-                                {% if payout.status %}
-                                    <td>
-                                        <strong>Status</strong>
-                                    </td>
-                                {% endif %}
                                 <td>
-                                    <strong></strong>
+                                    <strong>Invoice ID</strong>
                                 </td>
+                                {% comment %} <td>
+                                    <strong>Delivery Date</strong>
+                                </td>
+                                <td>
+                                    <strong>Status</strong>
+                                </td> {% endcomment %}
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-                {% include 'supplier_dashboard/snippets/pagination.html' %}
+                <div class="row invisible" id="payouts-pagination">
+                    <div class="col-md-6 align-self-center">
+                        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
+                                </li>
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">1</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">2</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">3</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

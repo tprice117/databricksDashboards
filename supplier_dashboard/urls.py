@@ -58,6 +58,16 @@ urlpatterns = [
     ),
     path("supplier/payouts/", views.payouts, name="supplier_payouts"),
     path(
+        "supplier/payouts/metrics/",
+        views.payouts_metrics,
+        name="supplier_payouts_metrics",
+    ),
+    path(
+        "supplier/payouts/download/",
+        views.download_payouts,
+        name="supplier_payouts_download",
+    ),
+    path(
         "supplier/payout/<uuid:payout_id>/",
         views.payout_detail,
         name="supplier_payout_detail",

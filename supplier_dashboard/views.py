@@ -1,11 +1,11 @@
 import datetime
-import json
+import csv
 import logging
 import uuid
 from itertools import chain
 from typing import List, Union
 from urllib.parse import parse_qs, urlencode
-
+from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -268,101 +268,104 @@ def index(request):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    if context["seller"]:
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ].id
-        )
-    else:
-        orders = Order.objects.all()
-    orders = orders.select_related(
-        "order_group__seller_product_seller_location__seller_product__seller",
-        "order_group__user_address",
-        "order_group__user",
-        "order_group__seller_product_seller_location__seller_product__product__main_product",
-    )
-    orders = orders.prefetch_related("payouts", "order_line_items")
-    # .filter(status=Order.Status.PENDING)
-    context["earnings"] = 0
-    earnings_by_category = {}
-    pending_count = 0
-    scheduled_count = 0
-    complete_count = 0
-    cancelled_count = 0
-    earnings_by_month = [0] * 12
-    for order in orders:
-        context["earnings"] += float(order.seller_price())
-        earnings_by_month[order.end_date.month - 1] += float(order.seller_price())
-
-        category = (
-            order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
-        )
-        if category not in earnings_by_category:
-            earnings_by_category[category] = {"amount": 0, "percent": 0}
-        earnings_by_category[category]["amount"] += float(order.seller_price())
-
-        if order.status == Order.Status.PENDING:
-            pending_count += 1
-        elif order.status == Order.Status.SCHEDULED:
-            scheduled_count += 1
-        elif order.status == Order.Status.COMPLETE:
-            complete_count += 1
-        elif order.status == Order.Status.CANCELLED:
-            cancelled_count += 1
-
-    # # Just test data here
-    # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
-    # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
-    # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
-    # earnings_by_category["Concrete & Masonary"] = {
-    #     "amount": 50,
-    #     "percent": 0,
-    # }
-    # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
-    # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
-    # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
-    # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
-
-    # Sort the dictionary by the 'amount' field in descending order
-    sorted_categories = sorted(
-        earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
-    )
-
-    # Calculate the 'percent' field for each category
-    for category, data in sorted_categories:
-        if context["earnings"] == 0:
-            data["percent"] = int((data["amount"] / 1) * 100)
-        else:
-            data["percent"] = int((data["amount"] / context["earnings"]) * 100)
-
-    # Create a new category 'Other' for the categories that are not in the top 4
-    other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
-    if context["earnings"] == 0:
-        other_percent = int((other_amount / 1) * 100)
-    else:
-        other_percent = int((other_amount / context["earnings"]) * 100)
-
-    # Create the final dictionary
-    final_categories = dict(sorted_categories[:4])
-    final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
-    context["earnings_by_category"] = final_categories
-    # print(final_categories)
-    context["pending_count"] = pending_count
-    if context["seller"]:
-        seller_locations = SellerLocation.objects.filter(seller_id=context["seller"].id)
-        seller_users = User.objects.filter(user_group__seller_id=context["seller"].id)
-    else:
-        seller_locations = SellerLocation.objects.all()
-        seller_users = User.objects.filter(user_group__seller__isnull=False)
-    # context["pending_count"] = orders.count()
-    context["location_count"] = seller_locations.count()
-    context["user_count"] = seller_users.count()
-
-    context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
 
     if request.headers.get("HX-Request"):
-        context["page_title"] = "Dashboard"
+        if context["seller"]:
+            orders = Order.objects.filter(
+                order_group__seller_product_seller_location__seller_product__seller_id=context[
+                    "seller"
+                ].id
+            )
+        else:
+            orders = Order.objects.all()
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        orders = orders.prefetch_related("payouts", "order_line_items")
+        # .filter(status=Order.PENDING)
+        context["earnings"] = 0
+        earnings_by_category = {}
+        pending_count = 0
+        scheduled_count = 0
+        complete_count = 0
+        cancelled_count = 0
+        earnings_by_month = [0] * 12
+        for order in orders:
+            context["earnings"] += float(order.seller_price())
+            earnings_by_month[order.end_date.month - 1] += float(order.seller_price())
+
+            category = (
+                order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
+            )
+            if category not in earnings_by_category:
+                earnings_by_category[category] = {"amount": 0, "percent": 0}
+            earnings_by_category[category]["amount"] += float(order.seller_price())
+
+            if order.status == Order.PENDING:
+                pending_count += 1
+            elif order.status == Order.SCHEDULED:
+                scheduled_count += 1
+            elif order.status == Order.COMPLETE:
+                complete_count += 1
+            elif order.status == Order.CANCELLED:
+                cancelled_count += 1
+
+        # # Just test data here
+        # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
+        # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
+        # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
+        # earnings_by_category["Concrete & Masonary"] = {
+        #     "amount": 50,
+        #     "percent": 0,
+        # }
+        # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
+        # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
+        # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
+        # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
+
+        # Sort the dictionary by the 'amount' field in descending order
+        sorted_categories = sorted(
+            earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
+        )
+
+        # Calculate the 'percent' field for each category
+        for category, data in sorted_categories:
+            if context["earnings"] == 0:
+                data["percent"] = int((data["amount"] / 1) * 100)
+            else:
+                data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+
+        # Create a new category 'Other' for the categories that are not in the top 4
+        other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
+        if context["earnings"] == 0:
+            other_percent = int((other_amount / 1) * 100)
+        else:
+            other_percent = int((other_amount / context["earnings"]) * 100)
+
+        # Create the final dictionary
+        final_categories = dict(sorted_categories[:4])
+        final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
+        context["earnings_by_category"] = final_categories
+        # print(final_categories)
+        context["pending_count"] = pending_count
+        if context["seller"]:
+            seller_locations = SellerLocation.objects.filter(
+                seller_id=context["seller"].id
+            )
+            seller_users = User.objects.filter(
+                user_group__seller_id=context["seller"].id
+            )
+        else:
+            seller_locations = SellerLocation.objects.all()
+            seller_users = User.objects.filter(user_group__seller__isnull=False)
+        # context["pending_count"] = orders.count()
+        context["location_count"] = seller_locations.count()
+        context["user_count"] = seller_users.count()
+
+        context["chart_data"] = get_dashboard_chart_data(earnings_by_month)
         return render(request, "supplier_dashboard/snippets/dashboard.html", context)
     else:
         return render(request, "supplier_dashboard/index.html", context)
@@ -949,18 +952,100 @@ def booking_detail(request, order_id):
 @login_required(login_url="/admin/login/")
 def payouts(request):
     context = {}
-    location_id = None
     pagination_limit = 25
     page_number = 1
-    if request.method == "POST":
-        location_id = request.POST.get("location_id", None)
-    elif request.method == "GET":
-        location_id = request.GET.get("location_id", None)
-    service_date = request.GET.get("service_date", None)
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
+    location_id = None
+    if request.method == "GET":
+        location_id = request.GET.get("location_id", None)
+    service_date = request.GET.get("service_date", None)
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
     # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request"):
+        if context["seller"]:
+            payouts = Payout.objects.filter(
+                order__order_group__seller_product_seller_location__seller_product__seller_id=context[
+                    "seller"
+                ].id
+            )
+        else:
+            payouts = Payout.objects.all()
+        if location_id:
+            payouts = payouts.filter(
+                order__order_group__seller_product_seller_location__seller_location_id=location_id
+            )
+        if service_date:
+            # filter orders by their payouts created_on date
+            payouts = payouts.filter(created_on__date=service_date)
+        if context["seller"] is None:
+            payouts = payouts.select_related(
+                "order__order_group__seller_product_seller_location__seller_location__seller"
+            )
+            payouts = payouts.order_by(
+                "order__order_group__seller_product_seller_location__seller_location__seller__name",
+                "-created_on",
+            )
+        else:
+            payouts = payouts.order_by("-created_on")
+        # print(payouts.count())
+        paginator = Paginator(payouts, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        query_params = request.GET.copy()
+        context["download_link"] = (
+            f"/supplier/payouts/download/?{query_params.urlencode()}"
+        )
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = (
+            f"{reverse('supplier_payouts')}?{query_params.urlencode()}"
+        )
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"{reverse('supplier_payouts')}?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"{reverse('supplier_payouts')}?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"{reverse('supplier_payouts')}?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = (
+            f"{reverse('supplier_payouts')}?{query_params.urlencode()}"
+        )
+        return render(
+            request, "supplier_dashboard/snippets/payouts_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    context["download_link"] = f"/supplier/payouts/download/?{query_params.urlencode()}"
+    context["payouts_cards_link"] = (
+        f"{reverse('supplier_payouts_metrics')}?{query_params.urlencode()}"
+    )
+    context["payouts_table_link"] = (
+        f"{reverse('supplier_payouts')}?{query_params.urlencode()}"
+    )
+    return render(request, "supplier_dashboard/payouts.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def payouts_metrics(request):
+    if request.method == "GET":
+        location_id = request.GET.get("location_id", None)
+    service_date = request.GET.get("service_date", None)
+    context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
@@ -981,7 +1066,7 @@ def payouts(request):
     # if service_date:
     #     # filter orders by their payouts created_on date
     #     orders = orders.filter(payouts__created_on__date=service_date)
-    orders = orders.prefetch_related("payouts", "order_line_items")
+    orders = orders.prefetch_related("order_line_items")
     if context["seller"] is None:
         orders = orders.select_related(
             "order_group__seller_product_seller_location__seller_location__seller"
@@ -995,7 +1080,6 @@ def payouts(request):
     sunday = datetime.date.today() - datetime.timedelta(
         days=datetime.date.today().weekday()
     )
-    payouts = []
     context["total_paid"] = 0
     context["paid_this_week"] = 0
     context["not_yet_paid"] = 0
@@ -1005,38 +1089,9 @@ def payouts(request):
         context["not_yet_paid"] += order.needed_payout_to_seller()
         if order.start_date >= sunday:
             context["paid_this_week"] += total_paid
-        if service_date:
-            payouts_query = order.payouts.filter(created_on__date=service_date)
-        else:
-            payouts_query = order.payouts.all()
-        if context["seller"] is None:
-            payouts_query = payouts_query.select_related(
-                "order__order_group__seller_product_seller_location__seller_location__seller"
-            )
-        payouts.extend([p for p in order.payouts.all()])
-    paginator = Paginator(payouts, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
-
-    query_params = request.GET.copy()
-    if page_number is None:
-        page_number = 1
-    else:
-        page_number = int(page_number)
-
-    query_params["p"] = 1
-    context["page_start_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/supplier/payouts/?{query_params.urlencode()}"
-    return render(request, "supplier_dashboard/payouts.html", context)
+    return render(
+        request, "supplier_dashboard/snippets/payouts_metric_cards.html", context
+    )
 
 
 @login_required(login_url="/admin/login/")
@@ -1077,6 +1132,82 @@ def payout_detail(request, payout_id):
         )
     context["payout"] = payout
     return render(request, "supplier_dashboard/payout_detail.html", context)
+
+
+# Create view that creates csv from payout data and returns it as a download
+@login_required(login_url="/admin/login/")
+def download_payouts(request):
+    context = {}
+    if request.method == "GET":
+        location_id = request.GET.get("location_id", None)
+    service_date = request.GET.get("service_date", None)
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
+    if context["seller"]:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ].id
+        )
+    else:
+        orders = Order.objects.all()
+    if location_id:
+        orders = orders.filter(
+            order_group__seller_product_seller_location__seller_location_id=location_id
+        )
+    # TODO: Ask if filter should be here, or in the loop below.
+    # The difference is the total_paid, paid_this_week, and not_yet_paid values.
+    # if service_date:
+    #     # filter orders by their payouts created_on date
+    #     orders = orders.filter(payouts__created_on__date=service_date)
+    orders = orders.prefetch_related("payouts", "order_line_items")
+    if context["seller"] is None:
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_location__seller"
+        )
+        orders = orders.order_by(
+            "order_group__seller_product_seller_location__seller_location__seller__name",
+            "-end_date",
+        )
+    else:
+        orders = orders.order_by("-end_date")
+    payouts = []
+    for order in orders:
+        if service_date:
+            payouts_query = order.payouts.filter(created_on__date=service_date)
+        else:
+            payouts_query = order.payouts.all()
+        if context["seller"] is None:
+            payouts_query = payouts_query.select_related(
+                "order__order_group__seller_product_seller_location__seller_location__seller"
+            )
+        payouts.extend([p for p in order.payouts.all()])
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="payouts.csv"'
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "Payout ID",
+            "Order ID",
+            "Amount",
+            "Created On",
+            # "Checkbook Payout ID",
+            # "Checkbook Payout URL",
+        ]
+    )
+    for payout in payouts:
+        writer.writerow(
+            [
+                str(payout.id),
+                str(payout.order_id),
+                str(payout.amount),
+                payout.created_on.ctime(),
+                # str(payout.checkbook_payout_id),
+                # str(payout.stripe_transfer_id),
+            ]
+        )
+    return response
 
 
 @login_required(login_url="/admin/login/")
