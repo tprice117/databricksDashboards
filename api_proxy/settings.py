@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "admin_policies",
     "api",
     "billing",
+    "canny",
     "common",
     "communications",
     "external_contracts",
@@ -423,6 +424,9 @@ INTERCOM_ACCESS_TOKEN = env("INTERCOM_ACCESS_TOKEN")
 
 # MailChimp Access Token
 MAILCHIMP_API_KEY = env("MAILCHIMP_API_KEY")
+
+# Canny JWT Token.
+CANNY_JWT_SECRET = env("CANNY_JWT_SECRET")
 
 
 # Python Logging
