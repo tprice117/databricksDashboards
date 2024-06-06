@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load humanize %}
 {% block title %}
     Received Invoices
 {% endblock %}
@@ -80,7 +81,7 @@
                                     <td>
                                         <img class="rounded-circle me-2" width="30" height="30" src="{% static 'supplier_dashboard/img/avatars/avatar1.jpeg' %}" />&nbsp;{{ seller_invoice_payable.seller_location.name }}
                                     </td>
-                                    <td>{{ seller_invoice_payable.amount }}</td>
+                                    <td>${{ seller_invoice_payable.amount|stringformat:'.2f'|intcomma }}</td>
                                     <td>{{ seller_invoice_payable.supplier_invoice_id }}</td>
                                     <td>{{ seller_invoice_payable.invoice_date }}</td>
                                 </tr>

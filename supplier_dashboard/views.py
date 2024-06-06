@@ -88,9 +88,9 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     ]
     current_month = datetime.date.today().month
     months = []
-    for i in range(8, 1, -1):
-        months.append(all_months[(current_month - i - 1) % 12])
-        data.append(data_by_month[(current_month - i - 1) % 12])
+    for i in range(11, 0, -1):
+        months.append(all_months[(current_month - i) % 12])
+        data.append(round(data_by_month[(current_month - i) % 12], 2))
 
     dashboard_chart = {
         "type": "line",
@@ -293,9 +293,13 @@ def index(request):
         complete_count = 0
         cancelled_count = 0
         earnings_by_month = [0] * 12
+        one_year_ago = datetime.date.today() - datetime.timedelta(days=365)
         for order in orders:
             context["earnings"] += float(order.seller_price())
-            earnings_by_month[order.end_date.month - 1] += float(order.seller_price())
+            if order.end_date >= one_year_ago:
+                earnings_by_month[order.end_date.month - 1] += float(
+                    order.seller_price()
+                )
 
             category = (
                 order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
@@ -620,6 +624,7 @@ def company(request):
 
 @login_required(login_url="/admin/login/")
 def bookings(request):
+    # TODO: Add csv download to bookings as well.
     link_params = {}
     context = {}
     pagination_limit = 25
@@ -1186,18 +1191,19 @@ def download_payouts(request):
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="payouts.csv"'
     writer = csv.writer(response)
-    writer.writerow(
-        [
-            "Payout ID",
-            "Order ID",
-            "Amount",
-            "Created On",
-            # "Checkbook Payout ID",
-            # "Checkbook Payout URL",
-        ]
-    )
+    # TODO: After switching to LOB, add checkbook payout id and url.
+    if request.user.is_staff:
+        header_row = ["Seller", "Payout ID", "Order ID", "Amount", "Created On"]
+    else:
+        header_row = ["Payout ID", "Order ID", "Amount", "Created On"]
+    writer.writerow(header_row)
     for payout in payouts:
-        writer.writerow(
+        row = []
+        if request.user.is_staff:
+            row.append(
+                payout.order.order_group.seller_product_seller_location.seller_location.seller.name
+            )
+        row.extend(
             [
                 str(payout.id),
                 str(payout.order_id),
@@ -1207,6 +1213,7 @@ def download_payouts(request):
                 # str(payout.stripe_transfer_id),
             ]
         )
+        writer.writerow(row)
     return response
 
 

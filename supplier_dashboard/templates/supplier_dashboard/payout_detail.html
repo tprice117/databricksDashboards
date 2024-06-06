@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load humanize %}
 {% block title %}
     Payout Details
 {% endblock %}
@@ -13,7 +14,7 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">{{ payout.amount }}</h4>
+                        <h4 class="card-title">${{ payout.amount|stringformat:'.2f'|intcomma }}</h4>
                         <p style="margin-bottom: 0px;">
                             <strong>Associated Booking</strong>
                         </p><a href="{% url 'supplier_booking_detail' order_id=payout.order_id %}">{{ payout.order_id }}</a>
@@ -51,7 +52,7 @@
                                         {% for payout in related_payouts %}
                                             <tr>
                                                 <td>{{ payout.created_on }}</td>
-                                                <td>{{ payout.amount }}</td>
+                                                <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ payout.status }}</td>
                                                 <td>
                                                     <button class="btn btn-light" type="button"><i class="far fa-eye"></i></button>
