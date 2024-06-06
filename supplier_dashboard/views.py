@@ -620,6 +620,7 @@ def company(request):
 
 @login_required(login_url="/admin/login/")
 def bookings(request):
+    # TODO: Add csv download to bookings as well.
     link_params = {}
     context = {}
     pagination_limit = 25
@@ -1186,18 +1187,19 @@ def download_payouts(request):
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="payouts.csv"'
     writer = csv.writer(response)
-    writer.writerow(
-        [
-            "Payout ID",
-            "Order ID",
-            "Amount",
-            "Created On",
-            # "Checkbook Payout ID",
-            # "Checkbook Payout URL",
-        ]
-    )
+    # TODO: After switching to LOB, add checkbook payout id and url.
+    if request.user.is_staff:
+        header_row = ["Seller", "Payout ID", "Order ID", "Amount", "Created On"]
+    else:
+        header_row = ["Payout ID", "Order ID", "Amount", "Created On"]
+    writer.writerow(header_row)
     for payout in payouts:
-        writer.writerow(
+        row = []
+        if request.user.is_staff:
+            row.append(
+                payout.order.order_group.seller_product_seller_location.seller_location.seller.name
+            )
+        row.extend(
             [
                 str(payout.id),
                 str(payout.order_id),
@@ -1207,6 +1209,7 @@ def download_payouts(request):
                 # str(payout.stripe_transfer_id),
             ]
         )
+        writer.writerow(row)
     return response
 
 
