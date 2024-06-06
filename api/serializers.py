@@ -256,8 +256,6 @@ class UserSerializer(serializers.ModelSerializer):
     )
     type = serializers.CharField(
         required=False,
-        allow_null=True,
-        allow_blank=True,
     )
 
     def create(self, validated_data):
