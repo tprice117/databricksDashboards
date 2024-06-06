@@ -211,3 +211,6 @@ def user_pre_save(sender, instance: User, *args, **kwargs):
         # User is being created.
         instance.username = instance.email
         instance.password = str(uuid.uuid4())
+
+        if not instance.type:
+            instance.type = UserType.ADMIN
