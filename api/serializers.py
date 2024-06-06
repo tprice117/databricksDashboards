@@ -244,6 +244,11 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True,
         allow_null=True,
     )
+    password = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
 
     def create(self, validated_data):
         """

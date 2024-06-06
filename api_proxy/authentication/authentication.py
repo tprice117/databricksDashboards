@@ -43,7 +43,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
         if not id_token:
             return None
 
-        decoded_id_token = jwt.JWT().decode(id_token, None, None) if id_token else None
+        decoded_id_token = jwt.decode(id_token, None, None) if id_token else None
 
         # Check if the ID token contains the email field.
         if decoded_id_token and "email" in decoded_id_token:

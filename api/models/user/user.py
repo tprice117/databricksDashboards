@@ -6,7 +6,8 @@ import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_save
+from django.dispatch import receiver
 
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
@@ -200,3 +201,12 @@ class User(AbstractUser):
 
 
 post_delete.connect(User.post_delete, sender=User)
+
+
+@receiver(pre_save, sender=User)
+def user_pre_save(sender, instance: User, *args, **kwargs):
+    db_instance = User.objects.filter(id=instance.id).first()
+
+    if not db_instance:
+        # User is being created.
+        instance.password = str(uuid.uuid4())

@@ -108,7 +108,7 @@ urlpatterns = [
     path("api/", include("api_proxy.api.v1.urls")),
     path("api/", include(router.urls)),
     # END: API URLs.
-    # Schema URLs.
+    # START: Schema URLs.
     path("api/schema/", views.SpectacularAPIViewNoAuth.as_view(), name="schema"),
     path(
         "api/schema/redoc/",
@@ -120,6 +120,10 @@ urlpatterns = [
         views.SpectacularSwaggerViewNoAuth.as_view(url_name="schema"),
         name="swagger",
     ),
+    # END: Schema URLs.
+    # START: Canny URLs.
+    path("feedback/", include("canny.urls")),
+    # END: Canny URLs.
     # Stripe.
     path("api/payment-methods/", views.StripePaymentMethods.as_view()),
     path("api/setup-intents/", views.StripeSetupIntents.as_view()),
