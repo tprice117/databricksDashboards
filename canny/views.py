@@ -11,6 +11,10 @@ def authenticate(request):
         "name": f"{request.user.first_name} {request.user.last_name}",
     }
 
+    # Get "companyID" and "redirect" parameters from the request.
+    company_id = request.GET.get("companyID")
+    redirect_url = request.GET.get("redirect")
+
     # Generate a signed JWT token with the user data.
     jwt_token = jwt.encode(
         user_data,
@@ -23,5 +27,5 @@ def authenticate(request):
     jwt_token_string = jwt_token.decode("utf-8")
 
     return redirect(
-        f"https://canny.io/api/redirects/sso?ssoToken={jwt_token_string}&redirect=https://feedback.trydownstream.com",
+        f"https://canny.io/api/redirects/sso?companyID={company_id}&ssoToken={jwt_token_string}&redirect={redirect_url}",
     )
