@@ -87,60 +87,81 @@ class PaymentMethod(BaseModel):
         Sync the Payment Method with Stripe according to the
         UserGroup and associated UserAddresses.
         """
-        # For the Payment Method UserGroup, find any UserAddresses
-        # (Stripe Customers) that don't have the Payment Method
-        # (see the payment_method.metadata["token"]).
-        user_addresses = (
-            self.user_group.user_addresses.all() if not user_address else [user_address]
-        )
-
-        # Iterate over all UserAddresses and sync them with Stripe.
-        user_address: UserAddress
-        for user_address in user_addresses:
-            # Get all Payment Methods for the UserAddress.
-            stripe_customer_payment_methods = StripeUtils.PaymentMethod.list(
-                customer_id=user_address.stripe_customer_id,
+        if self.active:
+            # For the Payment Method UserGroup, find any UserAddresses
+            # (Stripe Customers) that don't have the Payment Method
+            # (see the payment_method.metadata["token"]).
+            user_addresses = (
+                self.user_group.user_addresses.all()
+                if not user_address
+                else [user_address]
             )
-            # Check if the Payment Method is already synced with Stripe
-            # for the UserAddress.
-            stripe_payment_method = next(
-                (
-                    method
-                    for method in stripe_customer_payment_methods
-                    if method.get("metadata", {}).get("token") == self.token
-                ),
-                None,
-            )
-            # print("stripe_payment_method": stripe_payment_method)
 
-            if stripe_payment_method:
-                print("stripe_payment_method already exists")
-            else:
-                print("stripe_payment_method DOES NOT exist")
+            # Iterate over all UserAddresses and sync them with Stripe.
+            user_address: UserAddress
+            for user_address in user_addresses:
+                # Get all Payment Methods for the UserAddress.
+                stripe_customer_payment_methods = StripeUtils.PaymentMethod.list(
+                    customer_id=user_address.stripe_customer_id,
+                )
+                # Check if the Payment Method is already synced with Stripe
+                # for the UserAddress.
+                stripe_payment_method = next(
+                    (
+                        method
+                        for method in stripe_customer_payment_methods
+                        if method.get("metadata", {}).get("token") == self.token
+                    ),
+                    None,
+                )
+                # print("stripe_payment_method": stripe_payment_method)
 
-            # If the Payment Method is not already synced with Stripe
-            # for the UserAddress, create it.
-            if not stripe_payment_method:
-                try:
-                    response = self.create_stripe_payment_method()
+                if stripe_payment_method:
+                    print("stripe_payment_method already exists")
+                else:
+                    print("stripe_payment_method DOES NOT exist", user_address.id)
 
-                    # Add the Payment Method to the UserAddress/Stripe Customer.
-                    StripeUtils.PaymentMethod.attach(
-                        payment_method_id=response["raw"],
-                        customer_id=user_address.stripe_customer_id,
-                    )
-                    print("stripe_payment_method created")
-                except CardError as e:
-                    logger.error(
-                        f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[{e.code}]-[{e.param}]",
-                        exc_info=e,
-                    )
-                except Exception as e:
-                    print(e)
-                    logger.error(
-                        f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]",
-                        exc_info=e,
-                    )
+                # If the Payment Method is not already synced with Stripe
+                # for the UserAddress, create it.
+                if not stripe_payment_method:
+                    try:
+                        response = self.create_stripe_payment_method()
+
+                        # Add the Payment Method to the UserAddress/Stripe Customer.
+                        StripeUtils.PaymentMethod.attach(
+                            payment_method_id=response["raw"],
+                            customer_id=user_address.stripe_customer_id,
+                        )
+                        print("stripe_payment_method created")
+                    except CardError as e:
+                        self.active = False
+                        self.reason = f"Invoice.attempt_pay:CardError: [user_address.id:{user_address.id}]-[{e}]-[type:{e.code}]-[param:{e.param}]"
+                        self.save()
+                        logger.error(
+                            f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[{e.code}]-[{e.param}]-[payment_method_id:{self.id}]",
+                            exc_info=e,
+                        )
+                        self.send_internal_email(user_address)
+                        break
+                    except Exception as e:
+                        print(
+                            f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]-[payment_method_id:{self.id}]"
+                        )
+                        # NOTE: There seems to be inconsistency on a BasisTheory PaymentRequired error,
+                        # sometimes it shows and other times it doesn't.
+                        # logger.info(
+                        #     f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]-[payment_method_id:{self.id}]",
+                        #     exc_info=e,
+                        # )
+                        # if hasattr(e, "body"):
+                        #     if isinstance(e.body, str) and e.body.find(
+                        #         "Invalid Payment Method"
+                        #     ):
+                        #         self.reason = f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e.body}]"
+                        #         self.active = False
+                        #         self.save()
+                        #         self.send_internal_email(user_address)
+                        #         break
 
     def send_internal_email(self, user_address: UserAddress):
         # Send email to internal team. Only on our PROD environment.
