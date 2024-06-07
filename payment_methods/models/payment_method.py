@@ -153,7 +153,7 @@ class PaymentMethod(BaseModel):
                             if isinstance(e.body, str) and e.body.find(
                                 "Invalid Payment Method"
                             ):
-                                self.reason = f"Invoice.attempt_pay:CardError: [user_address.id:{user_address.id}]-[{e.body}]"
+                                self.reason = f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e.body}]"
                                 self.active = False
                                 self.save()
                                 self.send_internal_email(user_address)
