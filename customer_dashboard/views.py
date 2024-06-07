@@ -148,10 +148,10 @@ def get_user(request: HttpRequest) -> User:
     Returns:
         dict: Dictionary of the User object.
     """
-    if request.session.get("user_id") and request.session.get("user_id") != str(
-        request.user.id
-    ):
-        user = User.objects.get(id=request.session.get("user_id"))
+    if request.session.get("customer_user_id") and request.session.get(
+        "customer_user_id"
+    ) != str(request.user.id):
+        user = User.objects.get(id=request.session.get("customer_user_id"))
     else:
         user = request.user
     return user
@@ -193,7 +193,7 @@ def customer_impersonation_start(request):
             return HttpResponse("Not Implemented", status=406)
         try:
             user = User.objects.get(id=user_id)
-            request.session["user_id"] = get_json_safe_value(user_id)
+            request.session["customer_user_id"] = get_json_safe_value(user_id)
             return HttpResponseRedirect("/customer/")
         except Exception as e:
             return HttpResponse("Not Found", status=404)
@@ -203,7 +203,7 @@ def customer_impersonation_start(request):
 
 @login_required(login_url="/admin/login/")
 def customer_impersonation_stop(request):
-    del request.session["user_id"]
+    del request.session["customer_user_id"]
     return HttpResponseRedirect("/customer/")
 
 
