@@ -25,6 +25,7 @@
                         {% static 'customer_dashboard/img/avatars/avatar1.jpeg' %}
                     {% endif %}" />&nbsp;{{ order_group.seller_product_seller_location.seller_location.name }}
             </td>
+            <td>{{ order_group.start_date }}</td>
             <td>
                 <a class="btn btn-light" role="button" href="{% url 'customer_order_group_detail' order_group_id=order_group.id %}"><i class="far fa-eye"></i></a>
             </td>
