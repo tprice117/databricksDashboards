@@ -4,7 +4,7 @@
         <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
         <ul class="navbar-nav flex-nowrap ms-auto">
             {% if request.user.is_staff %}
-                {% if request.session.user_id %}
+                {% if request.session.customer_user_id %}
                     <p class="text-center" style="margin: auto;">Impersonating User</p>
                     <a class="btn btn-link" style="margin-top:auto;margin-bottom:auto;" href="{% url 'customer_impersonation_stop' %}"><i class="fas fa-times-circle" style="color: red;"></i></a>
                 {% endif %}
