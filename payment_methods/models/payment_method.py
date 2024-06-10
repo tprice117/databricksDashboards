@@ -180,7 +180,10 @@ class PaymentMethod(BaseModel):
                 )
                 add_internal_email_to_queue(
                     from_email="system@trydownstream.com",
-                    additional_to_emails=["mwickey@trydownstream.com"],
+                    additional_to_emails=[
+                        "mwickey@trydownstream.com",
+                        "billing@trydownstream.com",
+                    ],
                     subject=subject,
                     html_content=html_content,
                 )
