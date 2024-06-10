@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "api",
     "billing",
     "canny",
+    "chat",
     "common",
     "communications",
     "external_contracts",
