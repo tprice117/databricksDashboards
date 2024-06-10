@@ -104,11 +104,27 @@
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
             // Check if query params has service_date
-            const urlParams = new URLSearchParams(window.location.search);
-            const serviceDate = urlParams.get("service_date");
+            let urlParams = new URLSearchParams(window.location.search);
+            let serviceDate = urlParams.get("service_date");
             if (serviceDate) {
                 // update date filter value
                 dateFilter.value = serviceDate;
+            }
+            // Check url for tab query param
+            let tab = urlParams.get("tab");
+            // Check if tab query param is set
+            if (tab) {
+                // Get the card with the tab query param value
+                if (tab == "COMPLETE") {
+                    tab = "COMPLETED";
+                }
+                let card = document.getElementById("bookings-tab-" + tab.toLowerCase());
+                if (card) {
+                    selectCard(card);
+                }
+            } else {
+                // Select the first card
+                selectCard(document.getElementById("bookings-tab-pending"));
             }
         });
         function selectDate(el) {
@@ -127,6 +143,7 @@
                 // remove service_date from queryParams
                 queryParams.delete("service_date");
             }
+            queryParams.delete("p");
             // update date filter url with current queryParams
             const dateFilterUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
         
@@ -170,7 +187,7 @@
         <h3 class="text-dark mb-4">My Bookings</h3>
         <div class="row">
             <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-primary py-2 status-card btn status-selected" id="bookings-tab-pending" role="tab" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
+                <div class="card shadow border-start-primary py-2 status-card btn" id="bookings-tab-pending" role="tab" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
                     <div class="card-body">
                         <div class="row align-items-center no-gutters">
                             <div class="col me-2">
@@ -298,7 +315,7 @@
                                 <th></th>
                             </tr>
                         </thead>
-                        <tbody id="booking-results" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status"></tbody>
+                        <tbody id="booking-results" hx-get="{{ status_load_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#{{ htmx_loading_id }}"></tbody>
                         <tfoot>
                             <tr>
                                 {% if request.user.is_staff %}

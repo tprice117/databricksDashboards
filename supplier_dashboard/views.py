@@ -776,6 +776,9 @@ def bookings(request):
         query_params = ""
         if link_params:
             query_params = f"&{urlencode(link_params)}"
+        context["status_pending_link"] = (
+            f"/supplier/bookings/?tab={Order.Status.PENDING}{query_params}"
+        )
         context["status_complete_link"] = (
             f"/supplier/bookings/?tab={Order.Status.COMPLETE}{query_params}"
         )
@@ -785,9 +788,24 @@ def bookings(request):
         context["status_scheduled_link"] = (
             f"/supplier/bookings/?tab={Order.Status.SCHEDULED}{query_params}"
         )
-        context["status_pending_link"] = (
-            f"/supplier/bookings/?tab={Order.Status.PENDING}{query_params}"
-        )
+        url_query_params = request.GET.copy()
+        # If current link has a tab, then load full path
+        if url_query_params.get("tab", None) is not None:
+            tab = url_query_params["tab"]
+            if tab == Order.Status.COMPLETE:
+                tab = "-completed"
+            elif tab == Order.Status.PENDING:
+                tab = ""
+            else:
+                tab = f"-{tab.lower()}"
+            context["htmx_loading_id"] = f"htmx-indicator-status{tab}"
+            context["status_load_link"] = request.get_full_path()
+        else:
+            # Else load pending tab as default
+            context["htmx_loading_id"] = "htmx-indicator-status"
+            context["status_load_link"] = (
+                f"/supplier/bookings/?tab={Order.Status.PENDING}{query_params}"
+            )
         return render(request, "supplier_dashboard/bookings.html", context)
 
 
