@@ -88,6 +88,12 @@
                         <p>
                             <a class="card-link" href="https://www.google.com/maps/place/{{ order.order_group.user_address.formatted_address|urlencode }}" target="_blank">{{ order.order_group.user_address.formatted_address }}</a>
                         </p>
+                        {% if distance %}
+                            <p style="margin-bottom: 0px;">
+                                <strong>Distance</strong>
+                            </p>
+                            <p>{{ distance|floatformat:1|intcomma }} miles</p>
+                        {% endif %}
                         <p style="margin-bottom: 0px;">
                             <strong>Access Details</strong>
                         </p>
