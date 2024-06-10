@@ -144,20 +144,24 @@ class PaymentMethod(BaseModel):
                         self.send_internal_email(user_address)
                         break
                     except Exception as e:
-                        print(e)
-                        logger.error(
-                            f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]-[payment_method_id:{self.id}]",
-                            exc_info=e,
+                        print(
+                            f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]-[payment_method_id:{self.id}]"
                         )
-                        if hasattr(e, "body"):
-                            if isinstance(e.body, str) and e.body.find(
-                                "Invalid Payment Method"
-                            ):
-                                self.reason = f"Invoice.attempt_pay:CardError: [user_address.id:{user_address.id}]-[{e.body}]"
-                                self.active = False
-                                self.save()
-                                self.send_internal_email(user_address)
-                                break
+                        # NOTE: There seems to be inconsistency on a BasisTheory PaymentRequired error,
+                        # sometimes it shows and other times it doesn't.
+                        # logger.info(
+                        #     f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e}]-[payment_method_id:{self.id}]",
+                        #     exc_info=e,
+                        # )
+                        # if hasattr(e, "body"):
+                        #     if isinstance(e.body, str) and e.body.find(
+                        #         "Invalid Payment Method"
+                        #     ):
+                        #         self.reason = f"PaymentMethod.sync_stripe_payment_method: [user_address.id:{user_address.id}]-[{e.body}]"
+                        #         self.active = False
+                        #         self.save()
+                        #         self.send_internal_email(user_address)
+                        #         break
 
     def send_internal_email(self, user_address: UserAddress):
         # Send email to internal team. Only on our PROD environment.
