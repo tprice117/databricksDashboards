@@ -124,10 +124,19 @@
                             <strong>Payout Settings</strong>
                         </p>
                         <!-- TODO: Set up Stripe integration and remove the following for first iteration -->
-                        <p>Payouts can be made by ACH (via Stripe Connect) or by check. Stripe Connect will be used, if configured, otherwise a check will be sent. Please contact us to set up Stripe.</p>
+                        <p>
+                            Payouts can be made via ACH or by check. For checks, set the payee name and address for your checks to be sent for this location. Please call us at
+                            <a style="color:#5a5c69" href="tel:+17209295661">(720) 928-5661</a> to add or edit your Direct Deposits.
+                        </p>
                         {% comment %} <p style="margin-bottom: 0px;">
                             <strong>Receive Payments by ACH (Stripe Connect)&nbsp;</strong>
                         </p><button class="btn btn-primary" type="button">Setup up Stripe Connect</button> {% endcomment %}
+                        {% if seller_location.stripe_connect_account_id %}
+                            <p style="margin-top: 16px; margin-bottom: 0px;">
+                                <strong>ACH SETUP <i class="fas fa-check" style="color: #018421;"></i></strong>
+                            </p>
+                            <p>You are currently setup to receive payments via ACH.</p>
+                        {% endif %}
                         <p style="margin-top: 16px;">
                             <strong>Receive Payments by Check</strong>
                         </p>
