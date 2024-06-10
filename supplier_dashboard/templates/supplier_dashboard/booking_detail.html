@@ -88,6 +88,12 @@
                         <p>
                             <a class="card-link" href="https://www.google.com/maps/place/{{ order.order_group.user_address.formatted_address|urlencode }}" target="_blank">{{ order.order_group.user_address.formatted_address }}</a>
                         </p>
+                        {% if distance %}
+                            <p style="margin-bottom: 0px;">
+                                <strong>Distance</strong>
+                            </p>
+                            <p>{{ distance|floatformat:1|intcomma }} miles</p>
+                        {% endif %}
                         <p style="margin-bottom: 0px;">
                             <strong>Access Details</strong>
                         </p>
@@ -300,7 +306,7 @@
                                         {% for payout in order.payouts.all %}
                                             <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
                                                 <td>{{ payout.created_on }}</td>
-                                                <td>{{ payout.amount }}</td>
+                                                <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ payout.status }}</td>
                                             </tr>
                                         {% endfor %}
@@ -326,7 +332,7 @@
                                     <tbody>
                                         {% for seller_invoice_payable_line_item in order.seller_invoice_payable_line_items.all %}
                                             <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}'">
-                                                <td>{{ seller_invoice_payable_line_item.amount }}</td>
+                                                <td>${{ seller_invoice_payable_line_item.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ seller_invoice_payable_line_item.description }}</td>
                                             </tr>
                                         {% endfor %}

@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load humanize %}
 {% block title %}
     Received Invoice Details
 {% endblock %}
@@ -13,7 +14,7 @@
             <div class="col-md-6">
                 <div class="card mb-2">
                     <div class="card-body">
-                        <h4 class="card-title">{{ seller_invoice_payable.amount }}</h4>
+                        <h4 class="card-title">${{ seller_invoice_payable.amount|stringformat:'.2f'|intcomma }}</h4>
                         <h6 class="text-muted card-subtitle mb-2">
                             Received on:
                             {{ seller_invoice_payable.created_on }}
@@ -50,7 +51,7 @@
                                                 <td>
                                                     <a href="{% url 'supplier_booking_detail' order_id=seller_invoice_payable_line_item.order_id %}">{{ seller_invoice_payable_line_item.order_id }}</a>
                                                 </td>
-                                                <td>{{ seller_invoice_payable_line_item.amount }}</td>
+                                                <td>${{ seller_invoice_payable_line_item.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ seller_invoice_payable_line_item.description }}</td>
                                             </tr>
                                         {% endfor %}

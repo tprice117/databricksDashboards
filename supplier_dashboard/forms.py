@@ -4,23 +4,20 @@ from django import forms
 class UserForm(forms.Form):
     first_name = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "John"}),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     last_name = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Doe"}),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     phone = forms.CharField(
         max_length=40,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "(000) 867-5309"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     email = forms.CharField(
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "john.doe@example.com",
                 "disabled": True,
             }
         ),
@@ -36,21 +33,15 @@ class UserForm(forms.Form):
 class SellerForm(forms.Form):
     company_name = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Awesome Co."}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     company_phone = forms.CharField(
         max_length=40,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "(000) 867-5309"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     website = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "https://www.example.com"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
         required=False,
     )
     company_logo = forms.CharField(
@@ -61,16 +52,12 @@ class SellerForm(forms.Form):
 class SellerCommunicationForm(forms.Form):
     dispatch_email = forms.EmailField(
         max_length=255,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "dispatch@company.com"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
         required=False,
     )
     dispatch_phone = forms.CharField(
         max_length=40,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "(000) 867-5309"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
         required=False,
     )
 
@@ -181,28 +168,22 @@ class SellerLocationComplianceAdminForm(forms.Form):
 class SellerPayoutForm(forms.Form):
     payee_name = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "John Doe"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     street = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "123 Main St."}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     city = forms.CharField(
         max_length=40,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Springfield"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     state = forms.CharField(
         max_length=80,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "IL"}),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     postal_code = forms.CharField(
         label="Zip Code",
         max_length=20,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "62701"}),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
