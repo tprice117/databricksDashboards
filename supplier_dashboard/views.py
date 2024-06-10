@@ -30,6 +30,7 @@ from api.models import (
 )
 from api.utils.utils import decrypt_string
 from common.models.choices.user_type import UserType
+from common.utils import DistanceUtils
 from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils import internal_email
 
@@ -951,6 +952,14 @@ def booking_detail(request, order_id):
         "payouts", "seller_invoice_payable_line_items"
     ).first()
     context["order"] = order
+    seller_location = order.order_group.seller_product_seller_location.seller_location
+    user_address = order.order_group.user_address
+    context["distance"] = DistanceUtils.get_driving_distance(
+        seller_location.latitude,
+        seller_location.longitude,
+        user_address.latitude,
+        user_address.longitude,
+    )
     return render(request, "supplier_dashboard/booking_detail.html", context)
 
 
