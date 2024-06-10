@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 from api.models import Order
 from api.models.day_of_week import DayOfWeek
@@ -8,6 +10,7 @@ from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
+from chat.models.conversation import Conversation
 from common.models import BaseModel
 from matching_engine.utils import MatchingEngine
 
@@ -21,6 +24,12 @@ class OrderGroup(BaseModel):
     )
     seller_product_seller_location = models.ForeignKey(
         SellerProductSellerLocation, models.PROTECT
+    )
+    conversation = models.ForeignKey(
+        Conversation,
+        models.CASCADE,
+        blank=True,
+        null=True,
     )
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
@@ -76,6 +85,15 @@ class OrderGroup(BaseModel):
             return True
         else:
             return False
+
+    def create_conversation(self):
+        """
+        Create a Conversation for the OrderGroup. Add all the Users in the
+        SellerProductSellerLocation.SellerLocation.Seller to the Conversation.
+        """
+        # Create a Conversation for the OrderGroup.
+        if not self.conversation:
+            Conversation.objects.create()
 
     def seller_decline(self):
         """
@@ -135,3 +153,12 @@ class OrderGroup(BaseModel):
                 # Set the OrderGroup status to CANCELLED.
                 self.status = Order.Status.CANCELLED
                 self.save()
+
+
+@receiver(pre_save, sender=OrderGroup)
+def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
+
+    # If the OrderGroup is being created, then create a Conversation for
+    # the OrderGroup.
+    if instance._state.adding:
+        instance.create_conversation()
