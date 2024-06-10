@@ -4,6 +4,7 @@ from django.views.generic.base import RedirectView
 from rest_framework import routers
 
 from api import views
+from api_proxy import post_login_router
 
 router = routers.DefaultRouter()
 router.register(
@@ -15,7 +16,6 @@ router.register(r"seller-locations", views.SellerLocationViewSet, "api")
 router.register(r"users", views.UserViewSet, "api")
 router.register(r"user-groups", views.UserGroupViewSet, "api")
 router.register(r"user-group-billings", views.UserGroupBillingViewSet, "api")
-router.register(r"user-group-legals", views.UserGroupLegalViewSet, "api")
 router.register(
     r"user-group-credit-applications", views.UserGroupCreditApplicationViewSet, "api"
 )
@@ -100,14 +100,15 @@ router.register(r"order-groups-for-seller", views.OrderGroupsForSellerViewSet, "
 router.register(r"orders-for-seller", views.OrdersForSellerViewSet, "api")
 
 urlpatterns = [
-    path("", RedirectView.as_view(url=reverse_lazy("admin:index"))),
+    # Login Redirect.
+    path("", post_login_router.post_login_router, name="post_login_router"),
     path("admin/", admin.site.urls),
     path("oidc/", include("mozilla_django_oidc.urls")),
     # START: API URLs.
     path("api/", include("api_proxy.api.v1.urls")),
     path("api/", include(router.urls)),
     # END: API URLs.
-    # Schema URLs.
+    # START: Schema URLs.
     path("api/schema/", views.SpectacularAPIViewNoAuth.as_view(), name="schema"),
     path(
         "api/schema/redoc/",
@@ -119,6 +120,10 @@ urlpatterns = [
         views.SpectacularSwaggerViewNoAuth.as_view(url_name="schema"),
         name="swagger",
     ),
+    # END: Schema URLs.
+    # START: Canny URLs.
+    path("feedback/", include("canny.urls")),
+    # END: Canny URLs.
     # Stripe.
     path("api/payment-methods/", views.StripePaymentMethods.as_view()),
     path("api/setup-intents/", views.StripeSetupIntents.as_view()),
@@ -149,6 +154,17 @@ urlpatterns = [
     ),
     # Denver Compliance Endpoint.
     path("api/exports/denver-compliance/", views.denver_compliance_report),
+    path("api/order/<uuid:order_id>/view/", views.order_status_view),
+    path(
+        "api/order/<uuid:order_id>/accept/", views.update_order_status, {"accept": True}
+    ),
+    path(
+        "api/order/<uuid:order_id>/deny/", views.update_order_status, {"accept": False}
+    ),
+    # Supplier Dashboard.
+    path("", include("supplier_dashboard.urls")),
+    # Customer Dashboard.
+    path("", include("customer_dashboard.urls")),
     # Test.
     path("test/", views.test3),
 ]

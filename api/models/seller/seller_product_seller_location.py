@@ -81,13 +81,16 @@ class SellerProductSellerLocation(BaseModel):
         # Compute the price.
         service = (
             pricing["service"]["rate"]
-            if "service" in pricing and pricing["service"]["is_flat_rate"]
+            if "service" in pricing
+            and pricing["service"]
+            and pricing["service"]["is_flat_rate"]
             else 0
         )
         rental = (
             pricing["rental"]["included_days"]
             * pricing["rental"]["price_per_day_included"]
             if "rental" in pricing
+            and pricing["rental"]
             and "price_per_day_included" in pricing["rental"]
             and "included_days" in pricing["rental"]
             else 0
@@ -96,6 +99,7 @@ class SellerProductSellerLocation(BaseModel):
             pricing["material"]["price_per_ton"]
             * pricing["material"]["tonnage_included"]
             if "material" in pricing
+            and pricing["material"]
             and "price_per_ton" in pricing["material"]
             and "tonnage_included" in pricing["material"]
             else 0

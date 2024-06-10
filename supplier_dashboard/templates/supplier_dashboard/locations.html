@@ -1,0 +1,104 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% block title %}
+    Locations
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-4">My Locations</h3>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <p class="text-primary m-0 fw-bold">All Locations</p>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table table-hover my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Seller</th>
+                                {% endif %}
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Payout Method</th>
+                                <th>Insurance</th>
+                                <th>Tax</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for seller_location in page_obj %}
+                                <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_location_detail' location_id=seller_location.id %}'">
+                                    {% if request.user.is_staff %}
+                                        <td>{{ seller_location.seller.name }}</td>
+                                    {% endif %}
+                                    <td>
+                                        <img class="rounded-circle me-2"
+                                            width="30"
+                                            height="30"
+                                            src="{% if seller.location_logo_url %}
+                                                {{ seller.location_logo_url }}
+                                            {% else %}
+                                                {% static 'supplier_dashboard/img/avatars/avatar1.jpeg' %}
+                                            {% endif %}" />{{ seller_location.name }}
+                                    </td>
+                                    <td>{{ seller_location.formatted_address }}</td>
+                                    <td>
+                                        {% if seller.stripe_connect_account_id %}
+                                            Direct Deposit
+                                        {% else %}
+                                            Check
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if seller_location.is_insurance_expiring_soon %}
+                                            <i class="fas fa-check-circle text-warning"></i> Expiring Soon
+                                        {% elif seller_location.is_insurance_compliant %}
+                                            <i class="fas fa-check-circle text-success"></i> Compliant
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-danger"></i> Insurance Verification Required
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if seller_location.is_tax_compliant %}
+                                            <i class="fas fa-check-circle text-success"></i> Compliant
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-danger"></i> Missing Tax Info
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Seller</strong>
+                                    </td>
+                                {% endif %}
+                                <td>
+                                    <strong>Name</strong>
+                                </td>
+                                <td>
+                                    <strong>Address</strong>
+                                </td>
+                                <td>
+                                    <strong>Payout Method</strong>
+                                </td>
+                                <td>
+                                    <strong>Insurance</strong>
+                                </td>
+                                <td>
+                                    <strong>Tax</strong>
+                                </td>
+                                <td>
+                                    <strong></strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% include 'supplier_dashboard/snippets/pagination.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

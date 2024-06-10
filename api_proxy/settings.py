@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") != "TEST"
 # NOTE: DRF Standardized Errors will handle uncaught exceptions if this is set to False.
 # Setting it to True will still show the Django error page on uncaught exceptions.
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -57,10 +57,16 @@ INSTALLED_APPS = [
     "admin_approvals",
     "admin_policies",
     "api",
-    "payment_methods",
-    "notifications",
     "billing",
+    "canny",
+    "common",
     "communications",
+    "external_contracts",
+    "matching_engine",
+    "notifications",
+    "payment_methods",
+    "supplier_dashboard",
+    "customer_dashboard",
     # END: Django Apps.
     "api.pricing_ml",
     "api.utils",
@@ -82,6 +88,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "common.middleware.save_author.SaveAuthorMiddleware",
 ]
 
 ROOT_URLCONF = "api_proxy.urls"
@@ -109,7 +116,7 @@ WSGI_APPLICATION = "api_proxy.wsgi.application"
 # Add 'mozilla_django_oidc' authentication backend
 AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
 
-LOGIN_REDIRECT_URL = "admin:index"
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "admin:index"
 
 # Database.
@@ -171,7 +178,18 @@ CORS_ORIGIN_ALLOW_ALL = True
 #      'http://localhost:62964',
 # ]
 
-SPECTACULAR_DESCRIPTION = '''# Introduction
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "X-Authorization-Id-Token",
+    "X-On-Behalf-Of",
+]
+
+SPECTACULAR_DESCRIPTION = """# Introduction
 
 ## Errors
 Here are the possible errors that could be returned on any api.
@@ -270,7 +288,7 @@ This is returned when the API server encounters an unexpected error. Here's how 
         }
     ]
 }
-```'''
+```"""
 
 # DRF Spectacular settings.
 SPECTACULAR_SETTINGS = {
@@ -291,11 +309,11 @@ SPECTACULAR_SETTINGS = {
         "ErrorCode429Enum": "drf_standardized_errors.openapi_serializers.ErrorCode429Enum.choices",
         "ErrorCode500Enum": "drf_standardized_errors.openapi_serializers.ErrorCode500Enum.choices",
     },
-    "POSTPROCESSING_HOOKS": ["drf_standardized_errors.openapi_hooks.postprocess_schema_enums"]
+    "POSTPROCESSING_HOOKS": [
+        "drf_standardized_errors.openapi_hooks.postprocess_schema_enums"
+    ],
 }
-DRF_STANDARDIZED_ERRORS = {
-    "ALLOWED_ERROR_STATUS_CODES": ["400", "403", "404", "429"]
-}
+DRF_STANDARDIZED_ERRORS = {"ALLOWED_ERROR_STATUS_CODES": ["400", "403", "404", "429"]}
 
 # Amazon Web Services S3 Configuration.
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
@@ -308,23 +326,25 @@ if ENVIRONMENT == "TEST":
 else:
     DEFAULT_FILE_STORAGE = "api.custom_storage.MediaStorageDev"
 
+AUTH_USER_MODEL = "api.User"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "api.authentication.CustomAuthentication",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "api_proxy.authentication.authentication.CustomOIDCAuthenticationBackend",
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
-    ),
+    ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     # "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_SCHEMA_CLASS": "drf_standardized_errors.openapi.AutoSchema",
     "COERCE_DECIMAL_TO_STRING": False,
     # "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
-    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 }
 
 if ENVIRONMENT == "TEST":
     BASE_URL = "https://app.trydownstream.com"
+    API_URL = "https://api.trydownstream.com"
+    DASHBOARD_BASE_URL = "https://portal.trydownstream.com"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
     STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_FULL_CUSTOMER_PORTAL_CONFIG")
@@ -358,6 +378,8 @@ if ENVIRONMENT == "TEST":
     LOB_CHECK_TEMPLATE_ID = "tmpl_e67263addbfe12c"
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
+    API_URL = "https://api-dev.trydownstream.com"
+    DASHBOARD_BASE_URL = "https://portal-dev.trydownstream.com"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_DEV_PUBLISHABLE_KEY")
     STRIPE_SECRET_KEY = env("STRIPE_DEV_SECRET_KEY")
     STRIPE_FULL_CUSTOMER_PORTAL_CONFIG = env("STRIPE_DEV_FULL_CUSTOMER_PORTAL_CONFIG")
@@ -411,6 +433,9 @@ INTERCOM_ACCESS_TOKEN = env("INTERCOM_ACCESS_TOKEN")
 
 # MailChimp Access Token
 MAILCHIMP_API_KEY = env("MAILCHIMP_API_KEY")
+
+# Canny JWT Token.
+CANNY_JWT_SECRET = env("CANNY_JWT_SECRET")
 
 
 # Python Logging

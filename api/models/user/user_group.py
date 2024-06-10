@@ -89,14 +89,6 @@ class UserGroup(BaseModel):
         help_text="This is the company_id in Intercom.",
     )
 
-    @property
-    def policy_monthly_limit(self):
-        return (
-            self.user_group_policy_monthly_limit
-            if hasattr(self, "user_group_policy_monthly_limit")
-            else None
-        )
-
     def __str__(self):
         return self.name
 
@@ -118,7 +110,7 @@ class UserGroup(BaseModel):
         """Return Custome Attributes to sync with Intercom"""
         custom_attributes = CustomAttributesType(
             {
-                "Seller ID": self.seller.id if self.seller else None,
+                "Seller ID": str(self.seller.id) if self.seller else None,
                 "Autopay": self.autopay,
                 "Net Terms Days": self.net_terms,
                 "Invoice Frequency in Days": self.invoice_frequency,

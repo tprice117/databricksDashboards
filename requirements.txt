@@ -25,6 +25,7 @@ django-storages==1.14
 djangorestframework==3.14.0
 drf-spectacular==0.27.2
 drf-standardized-errors[openapi]==0.13.0
+drf-writable-nested==0.7.0
 Flask==2.3.2
 googlemaps==4.10.0
 gunicorn==20.1.0
@@ -50,6 +51,7 @@ pandas==2.0.3
 pillow==10.3.0
 psycopg2-binary==2.9.6
 pycparser==2.22
+PyJWT==1.7.1
 pyOpenSSL==24.1.0
 pyparsing==3.1.1
 python-dateutil==2.8.2

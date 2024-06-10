@@ -1,8 +1,8 @@
 from django.db import models
 
-from api.models.choices.user_type import UserType
 from api.models.user.user_group import UserGroup
 from common.models import BaseModel
+from common.models.choices.user_type import UserType
 
 
 class UserGroupPolicyPurchaseApproval(BaseModel):
@@ -18,7 +18,7 @@ class UserGroupPolicyPurchaseApproval(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
         models.CASCADE,
-        related_name="user_group_policy_purchase_approvals",
+        related_name="policy_purchase_approvals",
     )
     user_type = models.CharField(
         max_length=255,
@@ -35,13 +35,8 @@ class UserGroupPolicyPurchaseApproval(BaseModel):
     )
     amount = models.IntegerField()
 
-    unique_together = ("user_group", "user_type")
+    class Meta:
+        unique_together = ("user_group", "user_type")
 
     def __str__(self):
         return f"{self.user_group.name} - {self.user_type} - {self.amount}"
-
-    # Only allow the UserType to be set to Billing Manager or Member, not Admin.
-    def save(self, *args, **kwargs):
-        if self.user_type == UserType.ADMIN:
-            raise ValueError("UserType cannot be set to Admin.")
-        super().save(*args, **kwargs)

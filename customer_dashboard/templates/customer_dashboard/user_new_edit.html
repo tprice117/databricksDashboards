@@ -1,0 +1,67 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    New User
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-4">Create/Edit User</h3>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <p class="text-primary m-0 fw-bold">User Data</p>
+            </div>
+            <div class="card-body">
+                <form action="{{ request.get_full_path }}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!-- Include the hidden fields -->
+                    {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+                    <!-- Include the visible fields -->
+                    {% for field in form.visible_fields %}
+                        {% if field.widget_type == 'checkbox' %}
+                            <div class="mb-3 form-switch">
+                                {{ field }}
+                                <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}{{ field.label_suffix }}</label>
+                                {% if field.help_text %}
+                                    <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <small class="text-danger">{{ field.errors }}</small>
+                                {% endif %}
+                                {% if field.name == 'street' %}
+                                    <div class="form-text">
+                                        <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{{ field.label_suffix }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <small class="text-danger">{{ field.errors }}</small>
+                                {% endif %}
+                                {% if field.name == 'street' %}
+                                    <div class="form-text">
+                                        <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    <div class="d-flex flex-row-reverse">
+                        <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

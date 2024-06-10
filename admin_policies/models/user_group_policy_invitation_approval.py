@@ -1,8 +1,8 @@
 from django.db import models
 
-from api.models.choices.user_type import UserType
 from api.models.user.user_group import UserGroup
 from common.models import BaseModel
+from common.models.choices.user_type import UserType
 
 
 class UserGroupPolicyInvitationApproval(BaseModel):
@@ -17,7 +17,7 @@ class UserGroupPolicyInvitationApproval(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
         models.CASCADE,
-        related_name="user_group_policy_invitation_approvals",
+        related_name="policy_invitation_approvals",
     )
     user_type = models.CharField(
         max_length=255,

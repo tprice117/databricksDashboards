@@ -1,15 +1,69 @@
-from drf_spectacular.utils import extend_schema_field, OpenApiTypes
-from typing import Union, Literal
-from .models import *
 import datetime
 import logging
+from typing import Literal, Union
 
 import stripe
 from django.conf import settings
+from drf_spectacular.utils import OpenApiTypes, extend_schema_field
+from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 
+from admin_policies.api.v1.serializers import (
+    UserGroupPolicyInvitationApprovalSerializer,
+    UserGroupPolicyMonthlyLimitSerializer,
+    UserGroupPolicyPurchaseApprovalSerializer,
+)
 from notifications.utils.internal_email import send_email_on_new_signup
 
+from .models import (
+    AddOn,
+    AddOnChoice,
+    DayOfWeek,
+    DisposalLocation,
+    DisposalLocationWasteType,
+    MainProduct,
+    MainProductAddOn,
+    MainProductCategory,
+    MainProductCategoryInfo,
+    MainProductInfo,
+    MainProductServiceRecurringFrequency,
+    MainProductWasteType,
+    Order,
+    OrderDisposalTicket,
+    OrderGroup,
+    OrderGroupMaterial,
+    OrderGroupRental,
+    OrderGroupService,
+    OrderLineItem,
+    OrderLineItemType,
+    Payout,
+    Product,
+    ProductAddOnChoice,
+    Seller,
+    SellerInvoicePayable,
+    SellerInvoicePayableLineItem,
+    SellerLocation,
+    SellerProduct,
+    SellerProductSellerLocation,
+    SellerProductSellerLocationMaterial,
+    SellerProductSellerLocationMaterialWasteType,
+    SellerProductSellerLocationRental,
+    SellerProductSellerLocationService,
+    SellerProductSellerLocationServiceRecurringFrequency,
+    ServiceRecurringFrequency,
+    Subscription,
+    TimeSlot,
+    User,
+    UserAddress,
+    UserAddressType,
+    UserGroup,
+    UserGroupBilling,
+    UserGroupCreditApplication,
+    UserGroupLegal,
+    UserSellerReview,
+    UserUserAddress,
+    WasteType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +105,8 @@ class UserAddressTypeSerializer(serializers.ModelSerializer):
 class UserAddressSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     stripe_customer_id = serializers.CharField(required=False, allow_null=True)
+    allow_saturday_delivery = serializers.BooleanField(required=False)
+    allow_sunday_delivery = serializers.BooleanField(required=False)
 
     class Meta:
         model = UserAddress
@@ -83,16 +139,44 @@ class UserGroupLegalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserGroupLegal
+        fields = [
+            "id",
+            "name",
+            "doing_business_as",
+            "structure",
+            "industry",
+            "street",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "latitude",
+            "longitude",
+        ]
+
+
+class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = UserGroupCreditApplication
         fields = "__all__"
+        read_only_fields = ["status"]
 
 
-class UserGroupSerializer(serializers.ModelSerializer):
+class UserGroupSerializer(WritableNestedModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     seller = SellerSerializer(read_only=True)
     seller_id = serializers.PrimaryKeyRelatedField(
         queryset=Seller.objects.all(), source="seller", write_only=True, allow_null=True
     )
-    legal = UserGroupLegalSerializer(read_only=True)
+    legal = UserGroupLegalSerializer(
+        allow_null=True,
+    )
+    credit_applications = UserGroupCreditApplicationSerializer(
+        many=True,
+        read_only=True,
+    )
     credit_limit_utilized = serializers.SerializerMethodField(read_only=True)
     net_terms = serializers.IntegerField(
         required=False,
@@ -105,6 +189,21 @@ class UserGroupSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     share_code = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    policy_invitation_approvals = UserGroupPolicyInvitationApprovalSerializer(
+        many=True,
+        required=False,
+        allow_null=True,
+    )
+    policy_monthly_limit = UserGroupPolicyMonthlyLimitSerializer(
+        required=False,
+        allow_null=True,
+    )
+    policy_purchase_approvals = UserGroupPolicyPurchaseApprovalSerializer(
+        many=True,
         required=False,
         allow_null=True,
     )
@@ -134,14 +233,6 @@ class UserGroupSerializer(serializers.ModelSerializer):
         return obj.credit_limit_used()
 
 
-class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-
-    class Meta:
-        model = UserGroupCreditApplication
-        fields = "__all__"
-
-
 class UserSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
@@ -152,6 +243,21 @@ class UserSerializer(serializers.ModelSerializer):
         source="user_group",
         write_only=True,
         allow_null=True,
+    )
+    username = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    password = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    type = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
     )
 
     def create(self, validated_data):
@@ -305,7 +411,7 @@ class MainProductSerializer(serializers.ModelSerializer):
         if getattr(self.Meta, "extra_fields", None):
             return expanded_fields + self.Meta.extra_fields
         else:
-            return expanded_field
+            return expanded_fields
 
 
 class MainProductWasteTypeSerializer(serializers.ModelSerializer):
@@ -329,18 +435,37 @@ class OrderSerializer(serializers.ModelSerializer):
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
     service_date = serializers.SerializerMethodField(read_only=True)
+    customer_price = serializers.SerializerMethodField(read_only=True)
+    seller_price = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
         fields = "__all__"
 
-    @extend_schema_field(Union[Literal[Order.Type.DELIVERY, Order.Type.ONE_TIME, Order.Type.REMOVAL, Order.Type.SWAP, Order.Type.AUTO_RENEWAL], None])
+    @extend_schema_field(
+        Union[
+            Literal[
+                Order.Type.DELIVERY,
+                Order.Type.ONE_TIME,
+                Order.Type.REMOVAL,
+                Order.Type.SWAP,
+                Order.Type.AUTO_RENEWAL,
+            ],
+            None,
+        ]
+    )
     def get_order_type(self, obj: Order):
         return obj.order_type
 
     @extend_schema_field(OpenApiTypes.DATE)
     def get_service_date(self, obj: Order):
         return obj.end_date
+
+    def get_customer_price(self, obj: Order):
+        return obj.customer_price()
+
+    def get_seller_price(self, obj: Order):
+        return obj.seller_price()
 
     # def get_status(self, obj):
     #     return stripe.Invoice.retrieve(

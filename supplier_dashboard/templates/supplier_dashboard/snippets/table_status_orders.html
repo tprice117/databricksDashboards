@@ -1,0 +1,96 @@
+{% load static %}
+<tbody id="booking-results">
+    {% for order in status.page_obj %}
+    <tr id="order_row_{{forloop.counter}}" class="clickable-row" onclick="window.location.href='{% url 'supplier_booking_detail' order_id=order.id %}'">
+        {% if request.user.is_staff %}
+            <td>{{order.order_group.seller_product_seller_location.seller_location.seller.name}}</td>
+        {% endif %}
+        <td>{{order.end_date}}</td>
+        <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
+        </td>
+        <td>{{order.order_group.user_address.formatted_address}}</td>
+        <td>{{order.order_type}}</td>
+        <td class="order-status-td">{{order.status}}</td>
+        {% if request.user.is_staff %}
+            {% if order.submitted_on %}
+                <td>{{order.submitted_on|timesince}}</td>
+            {% else %}
+                <td>Not Submitted</td>
+            {% endif %}
+        {% endif %}
+        {% if order.status == "PENDING" %}
+        <td>
+            <span id="accept-button-container">
+                <!-- TODO: Look at using Bootstrap modal -->
+                <!-- <button class="btn btn-success" type="button" data-bs-target="#modal-1"
+                    data-bs-toggle="modal">Accept</button> -->
+                <button type="button" class="btn btn-primary accept-button"
+                    hx-post="{% url 'supplier_order_accept' order_id=order.id %}"
+                    hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
+                    hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
+                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
+                    onClick="event.stopPropagation();
+                    Swal.fire(
+                        {title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}
+                    ).then((result)=>{
+                            if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
+                    })">
+                    Accept
+                    <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">
+                        <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
+                    </span>
+                </button>
+            </span>
+        </td>
+        {% elif order.is_past_due and order.status == "SCHEDULED" %}
+        <td>
+            <span id="accept-button-container">
+                <button type="button" class="btn btn-primary complete-button"
+                    hx-post="{% url 'supplier_order_complete' order_id=order.id %}"
+                    hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
+                    hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
+                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
+                    onClick="event.stopPropagation();
+                    Swal.fire(
+                        {title: 'Complete Booking', text:'Has this booking been completed?', icon: 'question', confirmButtonText: 'Confirm'}
+                    ).then((result)=>{
+                        if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
+                    })">
+                    Complete
+                    <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">
+                        <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
+                    </span>
+                </button>
+            </span>
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</tbody>
+<div class="row" id="bookings-pagination" hx-swap-oob="true">
+    <div class="col-md-6 align-self-center">
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </p>
+    </div>
+    <div class="col-md-6">
+        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
+                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
+                {% endif %}
+                <li class="page-item active">
+                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
+                </li>
+                {% if page_obj.has_next %}
+                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
+                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% if oob_html %}
+    {{oob_html|safe}}
+{% endif %}

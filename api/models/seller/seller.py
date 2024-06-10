@@ -1,7 +1,9 @@
 from django.db import models
+from django.conf import settings
 from multiselectfield import MultiSelectField
 
 from common.models import BaseModel
+from api.utils.utils import encrypt_string
 
 
 class Seller(BaseModel):
@@ -113,3 +115,18 @@ class Seller(BaseModel):
 
     def __str__(self):
         return self.name
+
+    @property
+    def dashboard_url(self):
+        """Returns the URL for the seller dashboard."""
+        return f"{settings.API_URL}/supplier/{self.id}/dashboard/?key={encrypt_string(str(self.id))}"
+
+    def get_dashboard_status_url(
+        self, status: str, snippet_name="accordian_status_orders", **kwargs
+    ):
+        """Returns the URL for the seller dashboard items with the specified status.
+        This works in conjunction with the supplier dashboard view since it returns a subset of the orders based on the status.
+        """
+        for key, value in kwargs.items():
+            snippet_name += f"&{key}={value}"
+        return f"/supplier/{self.id}/status/{status.lower()}/?key={encrypt_string(str(self.id))}&snippet_name={snippet_name}"

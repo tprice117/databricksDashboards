@@ -1,0 +1,72 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Payout Details
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">Payout Details</h3>
+    </div>
+    <!-- Start: 1 Row 2 Columns -->
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">${{ payout.amount|stringformat:'.2f'|intcomma }}</h4>
+                        <p style="margin-bottom: 0px;">
+                            <strong>Associated Booking</strong>
+                        </p><a href="{% url 'supplier_booking_detail' order_id=payout.order_id %}">{{ payout.order_id }}</a>
+                        <p style="margin-bottom: 0px;margin-top: 16px;">
+                            <strong>Description</strong>
+                        </p>
+                        <p>{{ payout.description }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <img class="img-fluid" alt="adobe, pdf, application" width="100" height="80" src="{% static 'supplier_dashboard/img/temp_pay_logo.png' %}" />
+            </div>
+        </div>
+    </div>
+    <!-- End: 1 Row 2 Columns -->
+    <!-- Start: 1 Row 2 Columns -->
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            {% if payout.checkbook_payout_id %}
+                                Associated Payouts
+                            {% endif %}&nbsp;
+                        </h4>
+                        <p>When we send a check, it includes payment for 1 or more Booking(s). If more than 1 Booking is included with this payout, see the other Payouts included below.</p><a class="card-link" href="#">
+                            <div class="table-responsive" style="margin-bottom: 16px;">
+                                <table class="table">
+                                    <thead>
+                                        <tr></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for payout in related_payouts %}
+                                            <tr>
+                                                <td>{{ payout.created_on }}</td>
+                                                <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
+                                                <td>{{ payout.status }}</td>
+                                                <td>
+                                                    <button class="btn btn-light" type="button"><i class="far fa-eye"></i></button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End: 1 Row 2 Columns -->
+{% endblock %}

@@ -94,9 +94,14 @@ class PayoutUtils:
                             # If the check was sent successfully, add payouts to email report data.
                             email_report_data["payouts"] = payout_response
                 except Exception as e:
-                    logger.error(f"PayoutUtils.send_payouts: [Unhandled (Checkbook)]-[{e}]", exc_info=e)
-                    email_report_data["error"] = f'''Unhandled (Checkbook) error occurred: {e} on
-                     seller_location id: {str(seller_location.id)}. Please check BetterStack logs.'''
+                    logger.error(
+                        f"PayoutUtils.send_payouts: [Unhandled (Checkbook)]-[{e}]",
+                        exc_info=e,
+                    )
+                    email_report_data[
+                        "error"
+                    ] = f"""Unhandled (Checkbook) error occurred: {e} on
+                     seller_location id: {str(seller_location.id)}. Please check BetterStack logs."""
             else:
                 # Print error message.
                 print("Cannot send payouts for SellerLocation: " + seller_location.name)
@@ -126,7 +131,7 @@ class PayoutUtils:
         return (
             Order.objects.filter(
                 end_date__lte=datetime.date.today() - datetime.timedelta(days=14),
-                status=Order.COMPLETE,
+                status=Order.Status.COMPLETE,
             )
             .annotate(
                 total_payouts=Round(
@@ -226,11 +231,17 @@ class PayoutUtils:
                 )
             except stripe.error.StripeError as stripe_error:
                 print("Stripe error occurred:", stripe_error)
-                logger.error(f"Price_Model.predict_price: [Stripe]-[{stripe_error}]", exc_info=stripe_error)
+                logger.error(
+                    f"Price_Model.predict_price: [Stripe]-[{stripe_error}]",
+                    exc_info=stripe_error,
+                )
                 return None
             except Exception as ex:
                 print("Unhandled (non-Stripe) error occurred: " + str(ex))
-                logger.error(f"Price_Model.predict_price: [Unhandled (non-Stripe)]-[{ex}]", exc_info=ex)
+                logger.error(
+                    f"Price_Model.predict_price: [Unhandled (non-Stripe)]-[{ex}]",
+                    exc_info=ex,
+                )
                 return None
 
     @staticmethod

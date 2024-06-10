@@ -8,13 +8,19 @@ from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
 
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
+from api.utils.utils import encrypt_string
 from common.models import BaseModel
+from common.models.choices.user_type import UserType
+from notifications import signals as notifications_signals
+from notifications.utils.add_email_to_queue import add_email_to_queue
 
 logger = logging.getLogger(__name__)
 
@@ -37,21 +43,11 @@ class Order(BaseModel):
         AUTO_RENEWAL = "AUTO_RENEWAL"
         ONE_TIME = "ONE_TIME"
 
-    PENDING = "PENDING"
-    SCHEDULED = "SCHEDULED"
-    INPROGRESS = "IN-PROGRESS"
-    AWAITINGREQUEST = "Awaiting Request"
-    CANCELLED = "CANCELLED"
-    COMPLETE = "COMPLETE"
-
-    STATUS_CHOICES = (
-        (PENDING, "Pending"),
-        (SCHEDULED, "Scheduled"),
-        (INPROGRESS, "In-Progress"),
-        (AWAITINGREQUEST, "Awaiting Request"),
-        (CANCELLED, "Cancelled"),
-        (COMPLETE, "Complete"),
-    )
+    class Status(models.TextChoices):
+        PENDING = "PENDING"
+        SCHEDULED = "SCHEDULED"
+        CANCELLED = "CANCELLED"
+        COMPLETE = "COMPLETE"
 
     order_group = models.ForeignKey(
         "api.OrderGroup", models.PROTECT, related_name="orders"
@@ -65,7 +61,11 @@ class Order(BaseModel):
     schedule_details = models.TextField(
         blank=True, null=True
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
     billing_comments_internal_use = models.TextField(blank=True, null=True)  # 6.6.23
     schedule_window = models.CharField(
         max_length=35,
@@ -85,8 +85,22 @@ class Order(BaseModel):
         self.__original_status = self.status
 
     @property
+    def is_past_due(self):
+        """Returns True if the Order is past due (end date is <= today), False otherwise.
+        NOTE: Maybe should add a bit of fudge due to timezone differences."""
+        return self.end_date <= timezone.now().date()
+
+    @property
     def order_type(self):
         return self.get_order_type()
+
+    @property
+    def seller_accept_order_url(self):
+        return f"{settings.API_URL}/api/order/{self.id}/accept/?key={encrypt_string(str(self.id))}"
+
+    @property
+    def seller_view_order_url(self):
+        return f"{settings.API_URL}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
 
     def customer_price(self):
         return sum(
@@ -115,66 +129,38 @@ class Order(BaseModel):
         return round(self.seller_price() - self.total_paid_to_seller(), 2)
 
     def stripe_invoice_summary_item_description(self):
-        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {str(self.id)[:5]}'
+        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type} | {str(self.id)[:5]}'
 
     def get_order_type(self):
-        # Assign variables comparing Order StartDate and EndDate to OrderGroup StartDate and EndDate.
-        order_order_group_start_date_equal = (
-            self.start_date == self.order_group.start_date
-        )
-        order_order_group_end_dates_equal = self.end_date == self.order_group.end_date
-
-        # Does the OrderGroup have a Subscription?
+        # Pre-calculate conditions
+        first_order = self.order_group.orders.order_by("created_on").first()
+        is_first_order = str(first_order.id) == str(self.id)
+        order_start_end_equal = self.start_date == self.end_date
+        order_group_start_equal = self.start_date == self.order_group.start_date
+        order_group_end_equal = self.end_date == self.order_group.end_date
         has_subscription = hasattr(self.order_group, "subscription")
-
-        # Are Order.StartDate and Order.EndDate equal?
-        order_start_end_dates_equal = self.start_date == self.end_date
-
-        # Orders in OrderGroup.
         order_count = Order.objects.filter(order_group=self.order_group).count()
 
-        # Assign variables based on Order.Type.
-        # DELIVERY: Order.StartDate == OrderGroup.StartDate AND Order.StartDate == Order.EndDate
-        # AND Order.EndDate != OrderGroup.EndDate.
-        order_type_delivery = (
-            order_order_group_start_date_equal
-            and order_start_end_dates_equal
-            and not order_order_group_end_dates_equal
-        )
-        # ONE TIME: Order.StartDate == OrderGroup.StartDate AND Order.EndDate == OrderGroup.EndDate
-        # AND OrderGroup has no Subscription.
-        order_type_one_time = (
-            order_count == 1
-            and order_order_group_start_date_equal
-            and order_order_group_end_dates_equal
-            and not has_subscription
-        )
-        # REMOVAL: Order.EndDate == OrderGroup.EndDate AND OrderGroup.Orders.Count > 1.
-        order_type_removal = order_order_group_end_dates_equal and order_count > 1
-        # SWAP: OrderGroup.Orders.Count > 1 AND Order.EndDate != OrderGroup.EndDate AND OrderGroup has no Subscription.
-        order_type_swap = (
-            order_count > 1
-            and not order_order_group_end_dates_equal
-            and not has_subscription
-        )
-        # AUTO RENEWAL: OrderGroup has Subscription and does not meet any other criteria.
-        order_type_auto_renewal = (
-            has_subscription
-            and not order_type_delivery
-            and not order_type_one_time
-            and not order_type_removal
-            and not order_type_swap
-        )
-
-        if order_type_delivery:
+        # Check order types in order of precedence
+        if (
+            order_group_start_equal
+            and order_start_end_equal
+            and not order_group_end_equal
+            and is_first_order
+        ):
             return Order.Type.DELIVERY
-        elif order_type_one_time:
+        elif (
+            order_count == 1
+            and order_group_start_equal
+            and order_group_end_equal
+            and not has_subscription
+        ):
             return Order.Type.ONE_TIME
-        elif order_type_removal:
+        elif order_group_end_equal and order_count > 1:
             return Order.Type.REMOVAL
-        elif order_type_swap:
+        elif order_count > 1 and not order_group_end_equal and not has_subscription:
             return Order.Type.SWAP
-        elif order_type_auto_renewal:
+        elif has_subscription:
             return Order.Type.AUTO_RENEWAL
         else:
             return None
@@ -256,68 +242,47 @@ class Order(BaseModel):
                 "Only 1 Order from an OrderGroup can be in the cart at a time"
             )
 
-    def save(self, *args, **kwargs):
-        self.clean()
-
-        # Send email to internal team. Only on our PROD environment.
-        if (
-            self.submitted_on != self.__original_submitted_on
-            and self.submitted_on is not None
-        ):
-            self.send_internal_order_confirmation_email()
-
-        # Send email to customer if status has changed to "Scheduled".
-        if self.status != self.__original_status and self.status == Order.SCHEDULED:
-            self.send_customer_email_when_order_scheduled()
-
-        return super(Order, self).save(*args, **kwargs)
-
-    def post_save(sender, instance, created, **kwargs):
-        order_line_items = OrderLineItem.objects.filter(order=instance)
-        # if instance.submitted_on_has_changed and order_line_items.count() == 0:
+    def add_line_items(self, created):
+        order_line_items = OrderLineItem.objects.filter(order=self)
+        # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
             try:
                 # Create Delivery Fee OrderLineItem.
-                order_group_orders = Order.objects.filter(
-                    order_group=instance.order_group
-                )
-                if order_group_orders.count() == 0:
-                    delivery_fee = 0
-                    if instance.order_group.seller_product_seller_location.delivery_fee:
-                        delivery_fee = (
-                            instance.order_group.seller_product_seller_location.delivery_fee
+                order_group_orders = Order.objects.filter(order_group=self.order_group)
+
+                if order_group_orders.count() == 1:
+                    if self.order_group.seller_product_seller_location.delivery_fee:
+                        OrderLineItem.objects.create(
+                            order=self,
+                            order_line_item_type=OrderLineItemType.objects.get(
+                                code="DELIVERY"
+                            ),
+                            rate=self.order_group.seller_product_seller_location.delivery_fee,
+                            quantity=1,
+                            description="Delivery Fee",
+                            platform_fee_percent=self.order_group.take_rate,
+                            is_flat_rate=True,
                         )
-                    OrderLineItem.objects.create(
-                        order=instance,
-                        order_line_item_type=OrderLineItemType.objects.get(
-                            code="DELIVERY"
-                        ),
-                        rate=delivery_fee,
-                        quantity=1,
-                        description="Delivery Fee",
-                        platform_fee_percent=instance.order_group.take_rate,
-                        is_flat_rate=True,
-                    )
 
                 # Create Removal Fee OrderLineItem.
                 if (
-                    instance.order_group.end_date == instance.end_date
+                    self.order_group.end_date == self.end_date
                     and order_group_orders.count() > 1
                 ):
                     removal_fee = 0
-                    if instance.order_group.seller_product_seller_location.removal_fee:
+                    if self.order_group.seller_product_seller_location.removal_fee:
                         removal_fee = (
-                            instance.order_group.seller_product_seller_location.removal_fee
+                            self.order_group.seller_product_seller_location.removal_fee
                         )
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=OrderLineItemType.objects.get(
                             code="REMOVAL"
                         ),
                         rate=removal_fee,
                         quantity=1,
                         description="Removal Fee",
-                        platform_fee_percent=instance.order_group.take_rate,
+                        platform_fee_percent=self.order_group.take_rate,
                         is_flat_rate=True,
                     )
                     # Don't add any other OrderLineItems if this is a removal.
@@ -325,81 +290,163 @@ class Order(BaseModel):
 
                 # Create OrderLineItems for newly "submitted" order.
                 # Service Price.
-                if hasattr(instance.order_group, "service"):
+                if hasattr(self.order_group, "service"):
                     order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=order_line_item_type,
-                        rate=instance.order_group.service.rate,
-                        quantity=instance.order_group.service.miles or 1,
-                        is_flat_rate=instance.order_group.service.miles is None,
-                        platform_fee_percent=instance.order_group.take_rate,
+                        rate=self.order_group.service.rate,
+                        quantity=self.order_group.service.miles or 1,
+                        is_flat_rate=self.order_group.service.miles is None,
+                        platform_fee_percent=self.order_group.take_rate,
                     )
 
                 # Rental Price.
-                if hasattr(instance.order_group, "rental"):
+                if hasattr(self.order_group, "rental"):
                     day_count = (
-                        (instance.end_date - instance.start_date).days
-                        if instance.end_date
-                        else 0
+                        (self.end_date - self.start_date).days if self.end_date else 0
                     )
                     days_over_included = (
-                        day_count - instance.order_group.rental.included_days
+                        day_count - self.order_group.rental.included_days
                     )
                     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
 
                     # Create OrderLineItem for Included Days.
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=order_line_item_type,
-                        rate=instance.order_group.rental.price_per_day_included,
-                        quantity=instance.order_group.rental.included_days,
+                        rate=self.order_group.rental.price_per_day_included,
+                        quantity=self.order_group.rental.included_days,
                         description="Included Days",
-                        platform_fee_percent=instance.order_group.take_rate,
+                        platform_fee_percent=self.order_group.take_rate,
                     )
 
                     # Create OrderLineItem for Additional Days.
                     if days_over_included > 0:
                         OrderLineItem.objects.create(
-                            order=instance,
+                            order=self,
                             order_line_item_type=order_line_item_type,
-                            rate=instance.order_group.rental.price_per_day_additional,
+                            rate=self.order_group.rental.price_per_day_additional,
                             quantity=days_over_included,
                             description="Additional Days",
-                            platform_fee_percent=instance.order_group.take_rate,
+                            platform_fee_percent=self.order_group.take_rate,
                         )
 
                 # Material Price.
-                if hasattr(instance.order_group, "material"):
+                if hasattr(self.order_group, "material"):
                     tons_over_included = (
-                        instance.order_group.tonnage_quantity or 0
-                    ) - instance.order_group.material.tonnage_included
+                        self.order_group.tonnage_quantity or 0
+                    ) - self.order_group.material.tonnage_included
                     order_line_item_type = OrderLineItemType.objects.get(
                         code="MATERIAL"
                     )
 
                     # Create OrderLineItem for Included Tons.
                     OrderLineItem.objects.create(
-                        order=instance,
+                        order=self,
                         order_line_item_type=order_line_item_type,
-                        rate=instance.order_group.material.price_per_ton,
-                        quantity=instance.order_group.material.tonnage_included,
+                        rate=self.order_group.material.price_per_ton,
+                        quantity=self.order_group.material.tonnage_included,
                         description="Included Tons",
-                        platform_fee_percent=instance.order_group.take_rate,
+                        platform_fee_percent=self.order_group.take_rate,
                     )
 
                     # Create OrderLineItem for Additional Tons.
                     if tons_over_included > 0:
                         OrderLineItem.objects.create(
-                            order=instance,
+                            order=self,
                             order_line_item_type=order_line_item_type,
-                            rate=instance.order_group.material.price_per_ton,
+                            rate=self.order_group.material.price_per_ton,
                             quantity=tons_over_included,
                             description="Additional Tons",
-                            platform_fee_percent=instance.order_group.take_rate,
+                            platform_fee_percent=self.order_group.take_rate,
                         )
+
+                # Check for any Admin Policy checks.
+                self.admin_policy_checks(orders=order_group_orders)
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
+
+    def post_save(sender, instance, created, **kwargs):
+        instance.add_line_items(created)
+        notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
+
+    def admin_policy_checks(self, orders=None):
+        """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
+
+        Args:
+            orders (Iterable, Orders): An iterable of Orders to use for policy time period.
+                                       Defaults to all orders in order group since the first day of current month.
+        """
+        # Add policy checks for UserGroupPolicyMonthlyLimit and UserGroupPolicyPurchaseApproval.
+        try:
+            from admin_approvals.models import UserGroupAdminApprovalOrder
+
+            user = self.order_group.user
+            # Admins are not subject to Order Approvals.
+            if user.type != UserType.ADMIN:
+                orders = (
+                    Order.objects.filter(order_group=self.order_group)
+                    if orders is None
+                    else orders
+                )
+                # Add policy checks for UserGroupPolicyMonthlyLimit and UserGroupPolicyPurchaseApproval.
+                # TODO: Could add policy reason field to Order (this could simply be the db model and/or name of the policy).
+                # Get all Orders for this UserGroup this month.
+                first_day_of_current_month = timezone.now().replace(day=1)
+                orders_this_month = []
+                for order in orders:
+                    if (
+                        order.submitted_on
+                        and order.submitted_on >= first_day_of_current_month
+                    ):
+                        orders_this_month.append(order)
+
+                # Calculate the total of all Orders for this UserGroup this month.
+                order_total_this_month = sum(
+                    [order.customer_price() for order in orders_this_month]
+                )
+
+                # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
+                # this Order.
+                if hasattr(
+                    self.order_group.user_address.user_group, "policy_monthly_limit"
+                ) and (
+                    order_total_this_month + self.customer_price()
+                    > self.order_group.user_address.user_group.policy_monthly_limit.amount
+                ):
+                    # Set Order status to Approval so that it is returned in api.
+                    self.status = Order.Status.APPROVAL
+                    Order.objects.filter(id=self.id).update(
+                        status=Order.Status.APPROVAL
+                    )
+                    UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
+                    # raise ValidationError(
+                    #     "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
+                    # )
+                # Check that UserGroupPolicyPurchaseApproval will not be exceeded with this Order.
+                elif hasattr(
+                    self.order_group.user_address.user_group,
+                    "policy_purchase_approvals",
+                ):
+                    user_group_purchase_approval = self.order_group.user_address.user_group.policy_purchase_approvals.filter(
+                        user_type=user.type
+                    ).first()
+                    if (
+                        user_group_purchase_approval
+                        and self.customer_price() > user_group_purchase_approval.amount
+                    ):
+                        # Set Order status to Approval so that it is returned in api.
+                        self.status = Order.Status.APPROVAL
+                        Order.objects.filter(id=self.id).update(
+                            status=Order.Status.APPROVAL
+                        )
+                        UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
+                        # raise ValidationError(
+                        #     "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
+                        # )
+        except Exception as e:
+            logger.error(f"Order.admin_policy_checks: [{e}]", exc_info=e)
 
     def send_internal_order_confirmation_email(self):
         # Send email to internal team. Only on our PROD environment.
@@ -458,7 +505,10 @@ class Order(BaseModel):
 
     def send_customer_email_when_order_scheduled(self):
         # Send email to customer when order is scheduled. Only on our PROD environment.
-        if settings.ENVIRONMENT == "TEST":
+        if (
+            settings.ENVIRONMENT == "TEST"
+            and self.order_type != Order.Type.AUTO_RENEWAL
+        ):
             try:
                 auth0_user = get_user_data(self.order_group.user.user_id)
 
@@ -475,59 +525,91 @@ class Order(BaseModel):
                         exc_info=e,
                     )
 
-                waste_type_str = "Not specified"
-                if self.order_group.waste_type:
-                    waste_type_str = self.order_group.waste_type.name
-                material_tonnage_str = "N/A"
-                if getattr(self.order_group, "material", None):
-                    material_tonnage_str = self.order_group.material.tonnage_included
-                rental_included_days = 0
-                if getattr(self.order_group, "rental", None):
-                    rental_included_days = self.order_group.rental.included_days
-
-                mailchimp.messages.send(
-                    {
-                        "message": {
-                            "headers": {
-                                "reply-to": "dispatch@trydownstream.com",
-                            },
-                            "from_name": "Downstream",
-                            "from_email": "dispatch@trydownstream.com",
-                            "to": [
-                                {"email": self.order_group.user.email},
-                                {"email": "thayes@trydownstream.com"},
-                            ],
-                            "subject": "Downstream | Order Confirmed | "
-                            + self.order_group.user_address.formatted_address(),
-                            "track_opens": True,
-                            "track_clicks": True,
-                            "html": render_to_string(
-                                "order-confirmed-email.html",
-                                {
-                                    "orderId": self.id,
-                                    "booking_url": call_to_action_url,
-                                    "main_product": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                                    "waste_type": waste_type_str,
-                                    "included_tons": material_tonnage_str,
-                                    "included_rental_days": rental_included_days,
-                                    "service_date": self.end_date,
-                                    "location_address": self.order_group.user_address.street,
-                                    "location_city": self.order_group.user_address.city,
-                                    "location_state": self.order_group.user_address.state,
-                                    "location_zip": self.order_group.user_address.postal_code,
-                                    "location_details": self.order_group.access_details
-                                    or "None",
-                                    "additional_details": self.order_group.placement_details
-                                    or "None",
-                                },
-                            ),
-                        }
-                    }
+                # Order status changed
+                subject = (
+                    "Downstream | Order Confirmed | "
+                    + self.order_group.user_address.formatted_address()
+                )
+                payload = {"order": self, "accept_url": call_to_action_url}
+                html_content = render_to_string(
+                    "notifications/emails/order-confirmed-email.min.html", payload
+                )
+                add_email_to_queue(
+                    from_email="dispatch@trydownstream.com",
+                    to_emails=[self.order_group.user.email],
+                    subject=subject,
+                    html_content=html_content,
+                    reply_to="dispatch@trydownstream.com",
                 )
             except Exception as e:
                 logger.error(
                     f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e
                 )
+
+    def log_order_state(self):
+        # Log the Order state.
+        # This is used to debug order_type None issues.
+        try:
+            first_order = self.order_group.orders.order_by("created_on").first()
+            is_first_order = first_order.id == self.id
+            order_start_end_equal = self.start_date == self.end_date
+            order_group_start_equal = self.start_date == self.order_group.start_date
+            order_group_end_equal = self.end_date == self.order_group.end_date
+            has_subscription = hasattr(self.order_group, "subscription")
+            order_count = Order.objects.filter(order_group=self.order_group).count()
+
+            logger.warning(
+                f"""Order.log_order_state: [{self.id}]
+                -[is_first_order:{is_first_order}]-[first_order.id:{first_order.id}:{type(first_order.id)}]-[self.id:{self.id}:{type(self.id)}]
+                -[first_order_id:{first_order.id}]-[order_start_end_equal:{order_start_end_equal}]
+                -[order_start_end_equal:{order_start_end_equal}]
+                -[order_group_start_equal:{order_group_start_equal}]-[order_group_end_equal:{order_group_end_equal}]
+                -[has_subscription:{has_subscription}]-[order_count:{order_count}]
+                -[status:{self.status}]-[start_date:{self.start_date}]-[end_date:{self.end_date}]
+                -[order_group.start_date:{self.order_group.start_date}]
+                -[order_group.end_date:{self.order_group.end_date}]"""
+            )
+        except Exception as e:
+            logger.error(f"Order.log_order_state: [{e}]", exc_info=e)
+
+    def send_supplier_approval_email(self):
+        # Send email to supplier. Only CC on our PROD environment.
+        bcc_emails = []
+        if settings.ENVIRONMENT == "TEST":
+            bcc_emails.append("dispatch@trydownstream.com")
+
+        try:
+            if self.order_type is None:
+                self.log_order_state()
+            is_first_order = (
+                self.order_group.orders.order_by("created_on").first().id == self.id
+            )
+            if self.order_type != Order.Type.AUTO_RENEWAL or (
+                is_first_order and self.order_type == Order.Type.AUTO_RENEWAL
+            ):
+                # If order type is none, then do not include it in the email.
+                subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
+                if self.order_type is None:
+                    subject_supplier = f"🚀 Yippee! New Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
+                # The accept button redirects to our server, which will decrypt order_id to ensure it origniated from us,
+                # then it opens the order html to allow them to select order status.
+                accept_url = f"{settings.DASHBOARD_BASE_URL}{reverse('supplier_booking_detail', kwargs={'order_id': self.id})}"
+                html_content_supplier = render_to_string(
+                    "notifications/emails/supplier_email.min.html",
+                    {"order": self, "accept_url": accept_url, "is_email": True},
+                )
+                add_email_to_queue(
+                    from_email="dispatch@trydownstream.com",
+                    to_emails=[
+                        self.order_group.seller_product_seller_location.seller_location.order_email
+                    ],
+                    bcc_emails=bcc_emails,
+                    subject=subject_supplier,
+                    html_content=html_content_supplier,
+                    reply_to="dispatch@trydownstream.com",
+                )
+        except Exception as e:
+            logger.error(f"Order.send_supplier_approval_email: [{e}]", exc_info=e)
 
     def __str__(self):
         return (
@@ -538,39 +620,3 @@ class Order(BaseModel):
 
 
 post_save.connect(Order.post_save, sender=Order)
-
-
-@receiver(pre_save, sender=Order)
-def pre_save_order(sender, instance: Order, **kwargs):
-    #  Check if Order is being created.
-    creating = not Order.objects.filter(id=instance.id).exists()
-
-    if creating:
-        # Get all Orders for this UserGroup this month.
-        orders_this_month = Order.objects.filter(
-            submitted_on__gte=datetime.datetime.now().replace(day=1),
-        )
-
-        # Calculate the total of all Orders for this UserGroup this month.
-        order_total_this_month = sum(
-            [order.customer_price() for order in orders_this_month]
-        )
-
-        # Check that UserGroupPolicyMonthlyLimit will not be exceeded with
-        # this Order.
-        if instance.order_group.user_address.user_group.policy_monthly_limit and (
-            order_total_this_month + instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_monthly_limit
-        ):
-            raise ValidationError(
-                "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
-            )
-        # Check that UserGroupPolicyPurchaseApproval will not be exceeded with
-        # this Order.
-        elif instance.order_group.user_address.user_group.policy_purchase_approval and (
-            instance.customer_price()
-            > instance.order_group.user_address.user_group.policy_purchase_approval
-        ):
-            raise ValidationError(
-                "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
-            )

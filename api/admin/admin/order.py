@@ -62,6 +62,7 @@ class OrderAdmin(admin.ModelAdmin):
     ]
     actions = [
         "send_payouts",
+        "send_supplier_approval_email",
     ]
 
     def auto_order_type(self, obj: Order):
@@ -160,6 +161,15 @@ class OrderAdmin(admin.ModelAdmin):
                                 )
 
         messages.success(request, "Successfully paid out all selected orders.")
+
+    def send_supplier_approval_email(self, request, queryset):
+        _cnt = 0
+        for order in queryset:
+            order.send_supplier_approval_email()
+            _cnt += 1
+        self.message_user(
+            request, "Successfully sent %s supplier approval emails" % (_cnt)
+        )
 
     def customer_price(self, obj):
         return round(obj.customer_price(), 2)
