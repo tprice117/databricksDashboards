@@ -941,26 +941,52 @@ def booking_detail(request, order_id):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    order = Order.objects.filter(id=order_id)
-    order = order.select_related(
-        "order_group__seller_product_seller_location__seller_product__seller",
-        "order_group__user_address",
-        "order_group__user",
-        "order_group__seller_product_seller_location__seller_product__product__main_product",
-    )
-    order = order.prefetch_related(
-        "payouts", "seller_invoice_payable_line_items"
-    ).first()
-    context["order"] = order
-    seller_location = order.order_group.seller_product_seller_location.seller_location
-    user_address = order.order_group.user_address
-    context["distance"] = DistanceUtils.get_driving_distance(
-        seller_location.latitude,
-        seller_location.longitude,
-        user_address.latitude,
-        user_address.longitude,
-    )
-    return render(request, "supplier_dashboard/booking_detail.html", context)
+    if request.headers.get("HX-Request"):
+        lat1 = request.GET.get("lat1", None)
+        lon1 = request.GET.get("lon1", None)
+        lat2 = request.GET.get("lat2", None)
+        lon2 = request.GET.get("lon2", None)
+        if lat1 and lon1 and lat2 and lon2:
+            context["distance"] = DistanceUtils.get_driving_distance(
+                lat1, lon1, lat2, lon2
+            )
+            return render(
+                request,
+                "supplier_dashboard/snippets/booking_detail_distance.html",
+                context,
+            )
+    else:
+        order = Order.objects.filter(id=order_id)
+        order = order.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        order = order.prefetch_related(
+            "payouts", "seller_invoice_payable_line_items"
+        ).first()
+        context["order"] = order
+        seller_location = (
+            order.order_group.seller_product_seller_location.seller_location
+        )
+        user_address = order.order_group.user_address
+        # context["distance"] = DistanceUtils.get_driving_distance(
+        #     seller_location.latitude,
+        #     seller_location.longitude,
+        #     user_address.latitude,
+        #     user_address.longitude,
+        # )
+        query_params = request.GET.copy()
+        query_params["lat1"] = seller_location.latitude
+        query_params["lon1"] = seller_location.longitude
+        query_params["lat2"] = user_address.latitude
+        query_params["lon2"] = user_address.longitude
+        context["distance_link"] = (
+            f"{ reverse('supplier_booking_detail', kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
+        )
+
+        return render(request, "supplier_dashboard/booking_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")
