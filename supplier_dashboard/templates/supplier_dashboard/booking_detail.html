@@ -15,7 +15,7 @@
         </div>
     </div>
     <!-- Start: 1 Row 2 Columns -->
-    <div class="container">
+    <div class="container" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
                 <div class="card">
@@ -99,6 +99,13 @@
                                 <strong>Distance</strong>
                             </p>
                             <p>{{ distance|floatformat:1|intcomma }} miles</p>
+                        {% else %}
+                            <div hx-get="{{ distance_link }}" hx-swap="outerHTML" hx-trigger="load" hx-indicator="#htmx-indicator-distance">
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Distance</strong>
+                                </p>
+                                <span class="htmx-indicator" id="htmx-indicator-distance"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                            </div>
                         {% endif %}
                         <p style="margin-bottom: 0px;">
                             <strong>Access Details</strong>
@@ -153,25 +160,29 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card">
+                {% comment %} <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Pricing Details</h4>
-                        <p style="margin-bottom: 0px;">
-                            <strong>Total</strong>
-                        </p>
-                        <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">${{ order.seller_price|floatformat:2|intcomma }}</p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
-                                    <tr></tr>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Unit/Price</th>
+                                        <th>Payment</th>
+                                        <th>Subtotal</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     {% for order_line_item in order.order_line_items.all %}
                                         <tr>
                                             <td>{{ order_line_item.order_line_item_type.name }}</td>
-                                            <td>${{ order_line_item.seller_payout_price|floatformat:2|intcomma }} per
-                                                {{ order_line_item.order_line_item_type.units }}</td>
-                                            <td>{{ order_line_item.description }}</td>
+                                            <td>
+                                                ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.order_line_item_type.units|lower }}
+                                                {% if order_line_item.description %}
+                                                    ({{ order_line_item.description|lower }})
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 &nbsp;{% if order_line_item.paid %}
                                                     Paid
@@ -179,118 +190,52 @@
                                                     Unpaid
                                                 {% endif %}
                                             </td>
+                                            <td>${{ order_line_item.seller_payout_price|floatformat:2|intcomma }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
-                {% comment %} <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Pricing Details</h4>
-                        <p style="margin-bottom: 0px;">
-                            <strong>Service</strong>
-                        </p>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$9.80 / unit @ 3.02</span></em>
-                                </p>
-                            </div>
-                            <div class="col">
-                                <p style="text-align: right;margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                </p>
-                            </div>
-                        </div>
-                        <p style="margin-bottom: 0px;">
-                            <strong>Rental</strong>
-                        </p>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$7.00 / unit @ 4 (included)</span></em>
-                                </p>
-                            </div>
-                            <div class="col">
-                                <p style="text-align: right;margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$12.00 / unit @ 3 (additional)</span></em>
-                                </p>
-                            </div>
-                            <div class="col">
-                                <p style="text-align: right;margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                </p>
-                            </div>
-                        </div>
-                        <p></p>
-                        <p style="margin-bottom: 0px;">
-                            <strong>Material</strong>
-                        </p>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$1.20 / unit @ 4 units (included)</span></em>
-                                </p>
-                            </div>
-                            <div class="col">
-                                <p style="text-align: right;margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$4.10 / unit @ 2 units</span></em>
-                                </p>
-                            </div>
-                            <div class="col">
-                                <p style="text-align: right;margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                </p>
-                            </div>
-                        </div>
-                        <p style="margin-bottom: 0px;">
-                            <strong>Fuel &amp; Fees</strong>
-                        </p>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">Delivery @ 12.3 miles</span></em>
-                                </p>
-                            </div>
-                            <div class="col">
-                                <p style="text-align: right;margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">Fuel &amp; Env. @ 11.5%</span></em>
-                                </p>
-                            </div>
-                            <div class="col">
-                                <p style="text-align: right;margin-bottom: 0px;">
-                                    <em><span style="background-color: rgb(248, 249, 252);">$250.00</span></em>
-                                </p>
-                            </div>
-                        </div>
-                        <p style="margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
-                            Total: <strong>$425.25</strong>
+                        <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
+                            Total: <strong>${{ order.seller_price|floatformat:2|intcomma }}</strong>
                         </p>
                     </div>
                 </div> {% endcomment %}
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Pricing Details</h4>
+                        {% for line_type in line_types %}
+                            <p style="margin-bottom: 0px;">
+                                <strong>{{ line_type.type.name|upper }}</strong>
+                            </p>
+                            {% for order_line_item in line_type.items %}
+                                <div class="row">
+                                    <div class="col">
+                                        <p style="margin-bottom: 0px;">
+                                            <em>
+                                                <span style="background-color: rgb(248, 249, 252);">
+                                                    ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.order_line_item_type.units|lower }}
+                                                    {% if order_line_item.description %}
+                                                        ({{ order_line_item.description|lower }})
+                                                    {% endif %}
+                                                </span>
+                                            </em>
+                                        </p>
+                                    </div>
+                                    <div class="col">
+                                        <p style="text-align: right;margin-bottom: 0px;">
+                                            <em><span style="background-color: rgb(248, 249, 252);">${{ order_line_item.seller_payout_price|floatformat:2|intcomma }}</span></em>
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <p></p>
+                        {% endfor %}
+                        <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-top-style: solid;">
+                            Total: <strong>${{ order.seller_price|floatformat:2|intcomma }}</strong>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -67,6 +67,35 @@
             border-color: var(--bs-btn-disabled-border-color);
             opacity: var(--bs-btn-disabled-opacity);
         }
+        
+        .clickable-header {
+            border: 1px dotted #007bff !important;
+            transition: background-color 0.3s ease;
+        }
+        .clickable-header:hover {
+            background-color: var(--bs-btn-hover-bg);
+            border: 1px solid #007bff !important;
+            cursor: pointer;
+        }
+        .clickable-header[disabled] {
+            color: gray;
+            cursor: not-allowed;
+        }
+        .clickable-header::after {
+            content: "";
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            margin-left: 5px;
+        }
+        .clickable-header:not([data-state^="-"]):not([data-state="0"])::after {
+            border-bottom: 5px solid black; /* Arrow up */
+        }
+        .clickable-header[data-state^="-"]::after {
+            border-top: 5px solid black; /* Arrow down */
+        }
     </style>
 {% endblock %}
 {% block javascript %}
@@ -87,6 +116,17 @@
         
             // Add the 'status-selected' class to the clicked card
             card.classList.add("status-selected");
+        
+            // Set all table filters to default
+            var headers = document.querySelectorAll(".clickable-header");
+            for (var i = 0; i < headers.length; i++) {
+                let state = headers[i].getAttribute("data-sort");
+                if (state == "end_date") {
+                    headers[i].setAttribute("data-state", "-end_date");
+                } else {
+                    headers[i].setAttribute("data-state", "0");
+                }
+            }
         }
         
         // Get all cards
@@ -104,11 +144,27 @@
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
             // Check if query params has service_date
-            const urlParams = new URLSearchParams(window.location.search);
-            const serviceDate = urlParams.get("service_date");
+            let urlParams = new URLSearchParams(window.location.search);
+            let serviceDate = urlParams.get("service_date");
             if (serviceDate) {
                 // update date filter value
                 dateFilter.value = serviceDate;
+            }
+            // Check url for tab query param
+            let tab = urlParams.get("tab");
+            // Check if tab query param is set
+            if (tab) {
+                // Get the card with the tab query param value
+                if (tab == "COMPLETE") {
+                    tab = "COMPLETED";
+                }
+                let card = document.getElementById("bookings-tab-" + tab.toLowerCase());
+                if (card) {
+                    selectCard(card);
+                }
+            } else {
+                // Select the first card
+                selectCard(document.getElementById("bookings-tab-pending"));
             }
         });
         function selectDate(el) {
@@ -127,6 +183,7 @@
                 // remove service_date from queryParams
                 queryParams.delete("service_date");
             }
+            queryParams.delete("p");
             // update date filter url with current queryParams
             const dateFilterUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
         
@@ -163,14 +220,53 @@
         dateFilter.addEventListener("change", function () {
             selectDate(this);
         });
+        
+        function selectSortHeader(header) {
+            if (header.hasAttribute("disabled")) {
+                return;
+            }
+            // Get all headers
+            var headers = document.querySelectorAll(".clickable-header");
+        
+            // Loop through all headers
+            for (var i = 0; i < headers.length; i++) {
+                // Remove the 'status-selected' class from each header
+                if (headers[i] != header) {
+                    headers[i].setAttribute("data-state", "0");
+                }
+            }
+            var state = header.getAttribute("data-state");
+            if (state == "0" || state == "-0") {
+                state = header.getAttribute("data-sort");
+            }
+            // if state starts with a minus sign, remove it, else prepend a minus sign
+            state = state.startsWith("-") ? state.slice(1) : "-" + state;
+            header.setAttribute("data-state", state);
+            let queryParams = new URLSearchParams(window.location.search);
+            queryParams.set("o", state);
+            let newUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+            htmx.find("#" + header.id).setAttribute("hx-get", newUrl);
+            let triggerId = htmx.find("#" + header.id).getAttribute("hx-trigger");
+            htmx.process("#" + header.id);
+            htmx.trigger(header, triggerId);
+        }
+        document.getElementById("service-date-sort").addEventListener("click", function (e) {
+            selectSortHeader(e.target);
+        });
+        document.getElementById("submitted-on-sort").addEventListener("click", function (e) {
+            selectSortHeader(e.target);
+        });
     </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        <h3 class="text-dark mb-4">My Bookings</h3>
+    <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link, .clickable-header">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">My Bookings</h3>
+            <a id="bookings-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
+        </div>
         <div class="row">
             <div class="col-md-6 col-xl-3 mb-4">
-                <div class="card shadow border-start-primary py-2 status-card btn status-selected" id="bookings-tab-pending" role="tab" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
+                <div class="card shadow border-start-primary py-2 status-card btn" id="bookings-tab-pending" role="tab" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-target="#booking-results" hx-trigger="click" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
                     <div class="card-body">
                         <div class="row align-items-center no-gutters">
                             <div class="col me-2">
@@ -268,6 +364,7 @@
                 <div class="row">
                     <div class="col">
                         <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                     </div>
                     <div class="col">
                         <div class="col-md-6" style="margin-left: auto;">
@@ -277,29 +374,29 @@
                     </div>
                 </div>
                 <!-- <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-status">Loading...</span> -->
-                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
                     <table class="table table-hover my-0" id="dataTable">
-                        <thead>
+                        <thead class="table-light">
                             <tr>
                                 {% if request.user.is_staff %}
                                     <th>Seller</th>
+                                    {% comment %} <th class="clickable-header" id="seller-sort" data-state="0" data-sort="order_group__seller_product_seller_location__seller_location__seller__name" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="onSellerSort" hx-indicator="#htmx-indicator-loading-status">Seller</th> {% endcomment %}
                                 {% endif %}
-                                <th>Service Date</th>
+                                <th class="clickable-header" id="service-date-sort" data-state="-end_date" data-sort="end_date" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="onServiceDateSort" hx-indicator="#htmx-indicator-loading-status">Service Date</th>
                                 <th>Product</th>
                                 <th>Booking Address</th>
                                 <th>Type</th>
                                 <th>Status</th>
                                 {% if request.user.is_staff %}
-                                    <th>Time Since Order</th>
+                                    <th class="clickable-header" id="submitted-on-sort" data-state="0" data-sort="submitted_on" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="onSubmittedOnSort" hx-indicator="#htmx-indicator-loading-status">Time Since Order</th>
                                 {% endif %}
                                 <th></th>
                             </tr>
                         </thead>
-                        <tbody id="booking-results" hx-get="{{ status_pending_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status"></tbody>
-                        <tfoot>
+                        <tbody id="booking-results" hx-get="{{ status_load_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#{{ htmx_loading_id }}"></tbody>
+                        <tfoot class="table-light">
                             <tr>
                                 {% if request.user.is_staff %}
                                     <td>
