@@ -93,7 +93,9 @@ class OrderGroup(BaseModel):
         """
         # Create a Conversation for the OrderGroup.
         if not self.conversation:
-            Conversation.objects.create()
+            print("Creating conversation")
+            self.conversation = Conversation.objects.create()
+            self.save()
 
     def seller_decline(self):
         """
@@ -161,4 +163,4 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
     # If the OrderGroup is being created, then create a Conversation for
     # the OrderGroup.
     if instance._state.adding:
-        instance.create_conversation()
+        instance.conversation = Conversation.objects.create()

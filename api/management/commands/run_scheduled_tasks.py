@@ -113,29 +113,29 @@ class Command(BaseCommand):
             replace_existing=True,
         )
 
-        # Send interval-based invoices. Run every day at 2am.
-        scheduler.add_job(
-            BillingUtils.run_interval_based_invoicing,
-            trigger=CronTrigger(
-                hour="2",
-                jitter=640,
-            ),
-            id="run_interval_based_invoicing",
-            max_instances=1,
-            replace_existing=True,
-        )
+        # # Send interval-based invoices. Run every day at 2am.
+        # scheduler.add_job(
+        #     BillingUtils.run_interval_based_invoicing,
+        #     trigger=CronTrigger(
+        #         hour="2",
+        #         jitter=640,
+        #     ),
+        #     id="run_interval_based_invoicing",
+        #     max_instances=1,
+        #     replace_existing=True,
+        # )
 
-        # Send project-end based invoices. Run every day at 3am.
-        scheduler.add_job(
-            BillingUtils.run_project_end_based_invoicing,
-            trigger=CronTrigger(
-                hour="3",
-                jitter=640,
-            ),
-            id="run_project_end_based_invoicing",
-            max_instances=1,
-            replace_existing=True,
-        )
+        # # Send project-end based invoices. Run every day at 3am.
+        # scheduler.add_job(
+        #     BillingUtils.run_project_end_based_invoicing,
+        #     trigger=CronTrigger(
+        #         hour="3",
+        #         jitter=640,
+        #     ),
+        #     id="run_project_end_based_invoicing",
+        #     max_instances=1,
+        #     replace_existing=True,
+        # )
 
         # Attempt to charge a payment method on file for all past
         # due invoices. Run every day at 5am.
