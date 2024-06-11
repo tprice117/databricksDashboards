@@ -28,8 +28,6 @@ class OrderGroup(BaseModel):
     conversation = models.ForeignKey(
         Conversation,
         models.CASCADE,
-        blank=True,
-        null=True,
     )
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)

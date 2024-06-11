@@ -1376,7 +1376,8 @@ def test3(request):
     order_groups = OrderGroup.objects.all()
 
     for order_group in order_groups:
-        order_group.create_conversation()
+        print(order_group.id)
+        # order_group.create_conversation()
 
     # BillingUtils.run_interval_based_invoicing()
     # sync_stripe_payment_methods()
