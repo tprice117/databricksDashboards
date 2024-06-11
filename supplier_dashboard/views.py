@@ -30,6 +30,7 @@ from api.models import (
     SellerLocation,
     SellerLocationMailingAddress,
     User,
+    OrderLineItemType,
 )
 from api.utils.utils import decrypt_string
 from chat.models import Conversation, Message
@@ -1108,7 +1109,21 @@ def booking_detail(request, order_id):
         context["distance_link"] = (
             f"{ reverse('supplier_booking_detail', kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
         )
-
+        line_types = {}
+        for order_line_item in order.order_line_items.all():
+            try:
+                line_types[order_line_item.order_line_item_type.code]["items"].append(
+                    order_line_item
+                )
+            except KeyError:
+                line_types[order_line_item.order_line_item_type.code] = {
+                    "type": order_line_item.order_line_item_type,
+                    "items": [order_line_item],
+                }
+        # Sort line_types by type["sort"] and put into a list
+        context["line_types"] = sorted(
+            line_types.values(), key=lambda item: item["type"].sort
+        )
         return render(request, "supplier_dashboard/booking_detail.html", context)
 
 
