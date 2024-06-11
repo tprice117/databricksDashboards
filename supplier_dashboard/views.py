@@ -37,6 +37,7 @@ from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils import internal_email
 
 from .forms import (
+    ChatMessageForm,
     SellerAboutUsForm,
     SellerCommunicationForm,
     SellerForm,
@@ -968,11 +969,21 @@ def booking_detail(request, order_id):
 @login_required(login_url="/admin/login/")
 def chat(request, conversation_id):
     if request.method == "POST":
-        message = request.POST.get("message")
+        message_form = ChatMessageForm(request.POST)
+
         conversation = Conversation.objects.get(id=conversation_id)
-        user = get_user(request)
-        new_message = Message(conversation=conversation, user=user, message=message)
-        new_message.save()
+
+        if message_form.is_valid():
+            print("Message form is valid")
+            new_message = Message(
+                conversation=conversation,
+                user=get_user(request),
+                message=message_form.cleaned_data.get("message"),
+            )
+            new_message.save()
+        else:
+            print("Message form is not valid")
+            print(message_form.errors)
 
     conversation = Conversation.objects.get(id=conversation_id)
 
@@ -989,6 +1000,7 @@ def chat(request, conversation_id):
         {
             "conversation": conversation,
             "messages": messages_sorted_most_recent,
+            "message_form": ChatMessageForm(),
         },
     )
 

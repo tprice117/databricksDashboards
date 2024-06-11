@@ -1,5 +1,7 @@
 from django import forms
 
+from chat.models import Message
+
 
 class UserForm(forms.Form):
     first_name = forms.CharField(
@@ -187,3 +189,21 @@ class SellerPayoutForm(forms.Form):
         max_length=20,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+
+
+class ChatMessageForm(forms.ModelForm):
+    message = forms.CharField(
+        label="",
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control flex-grow-1 me-2",
+                "rows": 1,
+            }
+        ),
+    )
+
+    class Meta:
+        model = Message
+        fields = [
+            "message",
+        ]
