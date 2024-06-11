@@ -15,7 +15,7 @@
         </div>
     </div>
     <!-- Start: 1 Row 2 Columns -->
-    <div class="container">
+    <div class="container" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
                 <div class="card">
@@ -99,6 +99,13 @@
                                 <strong>Distance</strong>
                             </p>
                             <p>{{ distance|floatformat:1|intcomma }} miles</p>
+                        {% else %}
+                            <div hx-get="{{ distance_link }}" hx-swap="outerHTML" hx-trigger="load" hx-indicator="#htmx-indicator-distance">
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Distance</strong>
+                                </p>
+                                <span class="htmx-indicator" id="htmx-indicator-distance"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                            </div>
                         {% endif %}
                         <p style="margin-bottom: 0px;">
                             <strong>Access Details</strong>

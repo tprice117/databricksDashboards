@@ -5,7 +5,8 @@ import uuid
 from itertools import chain
 from typing import List, Union
 from urllib.parse import parse_qs, urlencode
-
+from django.urls import reverse
+from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -18,6 +19,7 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
+import humanize
 
 from api.models import (
     Order,
@@ -635,8 +637,12 @@ def bookings(request):
     page_number = 1
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
+    ordering = ["-end_date"]
     if request.GET.get("service_date", None) is not None:
         link_params["service_date"] = request.GET.get("service_date")
+    if request.GET.get("o", None) is not None and request.GET.get("o", None) != "":
+        link_params["o"] = request.GET.get("o")  # o=-end_date.submitted_on
+        ordering = link_params["o"].split(".")
     if request.GET.get("location_id", None) is not None:
         link_params["location_id"] = request.GET.get("location_id")
     if request.GET.get("p", None) is not None:
@@ -680,7 +686,7 @@ def bookings(request):
             "order_group__seller_product_seller_location__seller_product__seller",
             "order_group__user_address",
         )
-        orders = orders.order_by("-end_date")
+        orders = orders.order_by(*ordering)
         status_orders = []
         # Return the correct counts for each status.
         pending_count = 0
@@ -699,6 +705,9 @@ def bookings(request):
                 complete_count += 1
             elif order.status == Order.Status.CANCELLED:
                 cancelled_count += 1
+
+        download_link = f"/supplier/bookings/download/?{query_params.urlencode()}"
+        context["download_link"] = download_link
         context[
             "oob_html"
         ] = f"""
@@ -706,6 +715,7 @@ def bookings(request):
         <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
         <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
         <span id="cancelled-count-badge" hx-swap-oob="true">{cancelled_count}</span>
+        <a id="bookings-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{download_link}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
         """
 
         paginator = Paginator(status_orders, pagination_limit)
@@ -779,6 +789,9 @@ def bookings(request):
         query_params = ""
         if link_params:
             query_params = f"&{urlencode(link_params)}"
+        context["status_pending_link"] = (
+            f"/supplier/bookings/?tab={Order.Status.PENDING}{query_params}"
+        )
         context["status_complete_link"] = (
             f"/supplier/bookings/?tab={Order.Status.COMPLETE}{query_params}"
         )
@@ -788,10 +801,117 @@ def bookings(request):
         context["status_scheduled_link"] = (
             f"/supplier/bookings/?tab={Order.Status.SCHEDULED}{query_params}"
         )
-        context["status_pending_link"] = (
-            f"/supplier/bookings/?tab={Order.Status.PENDING}{query_params}"
+        url_query_params = request.GET.copy()
+        context["download_link"] = (
+            f"/supplier/bookings/download/?{url_query_params.urlencode()}"
         )
+        # If current link has a tab, then load full path
+        if url_query_params.get("tab", None) is not None:
+            tab = url_query_params["tab"]
+            if tab == Order.Status.COMPLETE:
+                tab = "-completed"
+            elif tab == Order.Status.PENDING:
+                tab = ""
+            else:
+                tab = f"-{tab.lower()}"
+            context["htmx_loading_id"] = f"htmx-indicator-status{tab}"
+            context["status_load_link"] = request.get_full_path()
+        else:
+            # Else load pending tab as default
+            context["htmx_loading_id"] = "htmx-indicator-status"
+            context["status_load_link"] = (
+                f"/supplier/bookings/?tab={Order.Status.PENDING}{query_params}"
+            )
         return render(request, "supplier_dashboard/bookings.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def download_bookings(request):
+    link_params = {}
+    context = {}
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
+    ordering = ["-end_date"]
+    if request.GET.get("service_date", None) is not None:
+        link_params["service_date"] = request.GET.get("service_date")
+    if request.GET.get("o", None) is not None and request.GET.get("o", None) != "":
+        link_params["o"] = request.GET.get("o")  # o=-end_date.submitted_on
+        ordering = link_params["o"].split(".")
+    if request.GET.get("location_id", None) is not None:
+        link_params["location_id"] = request.GET.get("location_id")
+    # Ensure tab is valid. Default to PENDING if not.
+    tab = request.GET.get("tab", Order.Status.PENDING)
+    if tab.upper() not in [
+        Order.Status.PENDING,
+        Order.Status.SCHEDULED,
+        Order.Status.COMPLETE,
+        Order.Status.CANCELLED,
+    ]:
+        tab = Order.Status.PENDING
+    if context["seller"]:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_product__seller_id=context[
+                "seller"
+            ].id
+        )
+    else:
+        orders = Order.objects.all()
+
+    orders = orders.filter(status=tab)
+
+    if link_params.get("service_date", None) is not None:
+        orders = orders.filter(end_date=link_params["service_date"])
+    if link_params.get("location_id", None) is not None:
+        orders = orders.filter(
+            order_group__seller_product_seller_location__seller_location_id=link_params[
+                "location_id"
+            ]
+        )
+    # Select related fields to reduce db queries.
+    orders = orders.select_related(
+        "order_group__seller_product_seller_location__seller_product__seller",
+        "order_group__user_address",
+    )
+    orders = orders.order_by(*ordering)
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="orders_{tab.lower()}.csv"'
+    writer = csv.writer(response)
+    if request.user.is_staff:
+        header_row = [
+            "Seller",
+            "Service Date",
+            "Product",
+            "Booking Address",
+            "Type",
+            "Status",
+            "Time Since Order",
+        ]
+    else:
+        header_row = ["Service Date", "Product", "Booking Address", "Type", "Status"]
+    writer.writerow(header_row)
+    now_time = timezone.now()
+    for order in orders:
+        row = [
+            order.end_date.strftime("%Y-%m-%d"),
+            str(
+                order.order_group.seller_product_seller_location.seller_product.product.main_product.name
+            ),
+            order.order_group.user_address.formatted_address(),
+            str(order.order_type),
+            str(order.status),
+        ]
+        if request.user.is_staff:
+            row.insert(
+                0,
+                order.order_group.seller_product_seller_location.seller_location.seller.name,
+            )
+            if order.submitted_on:
+                row.append(humanize.naturaldelta(now_time - order.submitted_on))
+            else:
+                row.append("Not Submitted")
+        writer.writerow(row)
+    return response
 
 
 @login_required(login_url="/admin/login/")
@@ -944,26 +1064,52 @@ def booking_detail(request, order_id):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    order = Order.objects.filter(id=order_id)
-    order = order.select_related(
-        "order_group__seller_product_seller_location__seller_product__seller",
-        "order_group__user_address",
-        "order_group__user",
-        "order_group__seller_product_seller_location__seller_product__product__main_product",
-    )
-    order = order.prefetch_related(
-        "payouts", "seller_invoice_payable_line_items"
-    ).first()
-    context["order"] = order
-    seller_location = order.order_group.seller_product_seller_location.seller_location
-    user_address = order.order_group.user_address
-    context["distance"] = DistanceUtils.get_driving_distance(
-        seller_location.latitude,
-        seller_location.longitude,
-        user_address.latitude,
-        user_address.longitude,
-    )
-    return render(request, "supplier_dashboard/booking_detail.html", context)
+    if request.headers.get("HX-Request"):
+        lat1 = request.GET.get("lat1", None)
+        lon1 = request.GET.get("lon1", None)
+        lat2 = request.GET.get("lat2", None)
+        lon2 = request.GET.get("lon2", None)
+        if lat1 and lon1 and lat2 and lon2:
+            context["distance"] = DistanceUtils.get_driving_distance(
+                lat1, lon1, lat2, lon2
+            )
+            return render(
+                request,
+                "supplier_dashboard/snippets/booking_detail_distance.html",
+                context,
+            )
+    else:
+        order = Order.objects.filter(id=order_id)
+        order = order.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        order = order.prefetch_related(
+            "payouts", "seller_invoice_payable_line_items"
+        ).first()
+        context["order"] = order
+        seller_location = (
+            order.order_group.seller_product_seller_location.seller_location
+        )
+        user_address = order.order_group.user_address
+        # context["distance"] = DistanceUtils.get_driving_distance(
+        #     seller_location.latitude,
+        #     seller_location.longitude,
+        #     user_address.latitude,
+        #     user_address.longitude,
+        # )
+        query_params = request.GET.copy()
+        query_params["lat1"] = seller_location.latitude
+        query_params["lon1"] = seller_location.longitude
+        query_params["lat2"] = user_address.latitude
+        query_params["lon2"] = user_address.longitude
+        context["distance_link"] = (
+            f"{ reverse('supplier_booking_detail', kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
+        )
+
+        return render(request, "supplier_dashboard/booking_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")
