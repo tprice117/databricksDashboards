@@ -29,6 +29,11 @@ urlpatterns = [
     path("supplier/company/", views.company, name="supplier_company"),
     path("supplier/bookings/", views.bookings, name="supplier_bookings"),
     path(
+        "supplier/bookings/download/",
+        views.download_bookings,
+        name="supplier_bookings_download",
+    ),
+    path(
         "supplier/booking/<uuid:order_id>/",
         views.booking_detail,
         name="supplier_booking_detail",
