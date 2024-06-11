@@ -84,17 +84,6 @@ class OrderGroup(BaseModel):
         else:
             return False
 
-    def create_conversation(self):
-        """
-        Create a Conversation for the OrderGroup. Add all the Users in the
-        SellerProductSellerLocation.SellerLocation.Seller to the Conversation.
-        """
-        # Create a Conversation for the OrderGroup.
-        if not self.conversation:
-            print("Creating conversation")
-            self.conversation = Conversation.objects.create()
-            self.save()
-
     def seller_decline(self):
         """
         If the Seller can decline the OrderGroup, then:
