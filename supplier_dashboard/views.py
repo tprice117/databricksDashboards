@@ -1,5 +1,5 @@
-import datetime
 import csv
+import datetime
 import logging
 import uuid
 from itertools import chain
@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -31,12 +32,14 @@ from api.models import (
     User,
 )
 from api.utils.utils import decrypt_string
+from chat.models import Conversation, Message
 from common.models.choices.user_type import UserType
 from common.utils import DistanceUtils
 from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils import internal_email
 
 from .forms import (
+    ChatMessageForm,
     SellerAboutUsForm,
     SellerCommunicationForm,
     SellerForm,
@@ -1107,6 +1110,50 @@ def booking_detail(request, order_id):
         )
 
         return render(request, "supplier_dashboard/booking_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def chat(request, conversation_id):
+    if request.method == "POST":
+        message_form = ChatMessageForm(request.POST)
+
+        conversation = Conversation.objects.get(id=conversation_id)
+
+        if message_form.is_valid():
+            print("Message form is valid")
+            new_message = Message(
+                conversation=conversation,
+                user=get_user(request),
+                message=message_form.cleaned_data.get("message"),
+            )
+            new_message.save()
+        else:
+            print("Message form is not valid")
+            print(message_form.errors)
+
+    conversation = Conversation.objects.get(id=conversation_id)
+
+    # Create/update the last read time for the current user.
+    conversation.view_conversation(
+        current_user=get_user(request),
+    )
+
+    # Pass the messages in reverse order so that the most recent message is at the bottom of the chat.
+    messages_sorted_most_recent = conversation.messages.order_by("created_on")
+
+    # For each message, add a boolean to indicate if the message was sent by the current user.
+    for message in messages_sorted_most_recent:
+        message.sent_by_current_user = message.user == get_user(request)
+
+    return render(
+        request,
+        "supplier_dashboard/chat.html",
+        {
+            "conversation": conversation,
+            "messages": messages_sorted_most_recent,
+            "message_form": ChatMessageForm(),
+        },
+    )
 
 
 @login_required(login_url="/admin/login/")

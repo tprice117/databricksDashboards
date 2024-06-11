@@ -1,5 +1,6 @@
-from . import views
 from django.urls import path
+
+from . import views
 
 urlpatterns = [
     path(
@@ -37,6 +38,11 @@ urlpatterns = [
         "supplier/booking/<uuid:order_id>/",
         views.booking_detail,
         name="supplier_booking_detail",
+    ),
+    path(
+        "supplier/chat/<uuid:conversation_id>/",
+        views.chat,
+        name="supplier_chat",
     ),
     path(
         "supplier/order/<uuid:order_id>/accept/",
