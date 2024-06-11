@@ -23,11 +23,14 @@ class OrderGroup(BaseModel):
         related_name="order_groups",
     )
     seller_product_seller_location = models.ForeignKey(
-        SellerProductSellerLocation, models.PROTECT
+        SellerProductSellerLocation,
+        models.PROTECT,
+        related_name="order_groups",
     )
     conversation = models.ForeignKey(
         Conversation,
         models.CASCADE,
+        blank=True,
     )
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)

@@ -987,6 +987,11 @@ def chat(request, conversation_id):
 
     conversation = Conversation.objects.get(id=conversation_id)
 
+    # Create/update the last read time for the current user.
+    conversation.view_conversation(
+        current_user=get_user(request),
+    )
+
     # Pass the messages in reverse order so that the most recent message is at the bottom of the chat.
     messages_sorted_most_recent = conversation.messages.order_by("created_on")
 
