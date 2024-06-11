@@ -8,6 +8,7 @@ class OrderLineItemType(BaseModel):
     units = models.CharField(max_length=255)
     code = models.CharField(max_length=255)
     stripe_tax_code_id = models.CharField(max_length=255)
+    sort = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
