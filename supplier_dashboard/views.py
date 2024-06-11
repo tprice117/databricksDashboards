@@ -30,7 +30,7 @@ from api.models import (
     User,
 )
 from api.utils.utils import decrypt_string
-from chat.models.conversation import Conversation
+from chat.models import Conversation, Message
 from common.models.choices.user_type import UserType
 from common.utils import DistanceUtils
 from communications.intercom.utils.utils import get_json_safe_value
@@ -967,11 +967,29 @@ def booking_detail(request, order_id):
 
 @login_required(login_url="/admin/login/")
 def chat(request, conversation_id):
-    conversation = Conversation.objects.filter(id=conversation_id)
+    if request.method == "POST":
+        message = request.POST.get("message")
+        conversation = Conversation.objects.get(id=conversation_id)
+        user = get_user(request)
+        new_message = Message(conversation=conversation, user=user, message=message)
+        new_message.save()
+
+    conversation = Conversation.objects.get(id=conversation_id)
+
+    # Pass the messages in reverse order so that the most recent message is at the bottom of the chat.
+    messages_sorted_most_recent = conversation.messages.order_by("created_on")
+
+    # For each message, add a boolean to indicate if the message was sent by the current user.
+    for message in messages_sorted_most_recent:
+        message.sent_by_current_user = message.user == get_user(request)
+
     return render(
         request,
-        "supplier_dashboard/booking_detail.html",
-        {"conversation": conversation},
+        "supplier_dashboard/chat.html",
+        {
+            "conversation": conversation,
+            "messages": messages_sorted_most_recent,
+        },
     )
 
 

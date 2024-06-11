@@ -7,6 +7,7 @@ class Message(BaseModel):
     conversation = models.ForeignKey(
         "chat.Conversation",
         on_delete=models.CASCADE,
+        related_name="messages",
     )
     user = models.ForeignKey(
         "api.User",
