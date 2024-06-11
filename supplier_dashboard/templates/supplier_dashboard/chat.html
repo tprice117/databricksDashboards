@@ -50,9 +50,15 @@
                     </div>
                   {% endif %}
                 {% endfor %}
+                <form action="{% url 'supplier_chat' conversation_id=conversation.id %}" method="post">
+                  {% csrf_token %}
                   <div class="row" style="margin-top: 16px;padding-top: 16px;border-top-style: solid;border-top-color: var(--bs-primary);">
-                      <div class="col d-md-flex justify-content-md-start"><input class="flex-grow-1" type="text" style="margin-right: 12px;"><button class="btn btn-primary" type="button">Send</button></div>
+                      <div class="col d-md-flex justify-content-md-start">
+                        {{ message_form }}
+                        <button class="btn btn-primary" type="submit">Send</button>
+                      </div>
                   </div>
+                </form>
               </div>
           </div>
       </div>
