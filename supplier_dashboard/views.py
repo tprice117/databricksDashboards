@@ -1,17 +1,18 @@
-import datetime
 import csv
+import datetime
 import logging
 import uuid
 from itertools import chain
 from typing import List, Union
 from urllib.parse import parse_qs, urlencode
-from django.urls import reverse
+
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -29,6 +30,7 @@ from api.models import (
     User,
 )
 from api.utils.utils import decrypt_string
+from chat.models.conversation import Conversation
 from common.models.choices.user_type import UserType
 from common.utils import DistanceUtils
 from communications.intercom.utils.utils import get_json_safe_value
@@ -961,6 +963,16 @@ def booking_detail(request, order_id):
         user_address.longitude,
     )
     return render(request, "supplier_dashboard/booking_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def chat(request, conversation_id):
+    conversation = Conversation.objects.filter(id=conversation_id)
+    return render(
+        request,
+        "supplier_dashboard/booking_detail.html",
+        {"conversation": conversation},
+    )
 
 
 @login_required(login_url="/admin/login/")
