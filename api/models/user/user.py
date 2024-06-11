@@ -12,6 +12,8 @@ from django.dispatch import receiver
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
+from chat.models.conversation import Conversation
+from chat.models.conversation_user_last_viewed import ConversationUserLastViewed
 from common.models.choices.user_type import UserType
 from communications.intercom.intercom import Intercom
 from notifications.utils.internal_email import send_email_on_new_signup
@@ -198,6 +200,78 @@ class User(AbstractUser):
         except Exception as e:
             logger.error(f"User.intercom_sync: [{e}]", exc_info=e)
             return None
+
+    def unread_conversations_count(self):
+        return self.unread_conversations().count()
+
+    def unread_conversations(self):
+        """
+        Get Conversations related to this User.
+
+        a) If the user is_staff, they see all Conversations.
+        b) If the user is not_staff and their UserGroup has a Seller,
+           they see all Conversations for Bookings for which their Seller
+           (OrderGroup.SellerProductSellerLocation.SellerLocation.Seller)
+           is the Seller.
+        c) If the user is not_staff and their UserGroup does not have a Seller,
+           no Conversations are returned.
+        """
+        # Get ConversationUserLastViewed objects for this User.
+        conversation_user_last_vieweds = ConversationUserLastViewed.objects.filter(
+            user=self
+        )
+
+        if self.is_staff:
+            # Get all Conversations where User doesn't have a ConversationUserLastViewed
+            # or the ConversationUserLastViewed.updated_on is less than the most recent
+            # Message.created_on for the Conversation.
+            return Conversation.objects.filter(
+                messages__created_on__gt=models.Subquery(
+                    conversation_user_last_vieweds.filter(
+                        conversation=models.OuterRef("pk")
+                    )
+                    .order_by("-updated_on")
+                    .values("updated_on")[:1]
+                )
+            ).distinct()
+        elif self.user_group and self.user_group.seller:
+            # Get all Conversations for the UserGroup's Seller.
+            # order_groups = OrderGroup.objects.filter(
+            #     seller_product_seller_location__seller_location__seller=self.user_group.seller
+            # )
+
+            # Get all Conversations for the OrderGroups. Walk the reverse relationship
+            # from User to OrderGroup.
+            seller_locations = self.user_group.seller.seller_locations.all()
+
+            # Get SellerProductSellerLocations for the SellerLocations.
+            seller_product_seller_locations = []
+            for seller_location in seller_locations:
+                seller_product_seller_locations.extend(
+                    seller_location.seller_product_seller_locations.all()
+                )
+
+            # Get OrderGroups for the SellerProductSellerLocations.
+            order_groups = []
+            for seller_product_seller_location in seller_product_seller_locations:
+                order_groups.extend(seller_product_seller_location.order_groups.all())
+
+            # Select the Conversation from the OrderGroups.
+            order_group_conversations = []
+            for order_group in order_groups:
+                order_group_conversations.append(order_group.conversation)
+
+            return order_group_conversations.filter(
+                messages__created_on__gt=models.Subquery(
+                    conversation_user_last_vieweds.filter(
+                        conversation=models.OuterRef("pk")
+                    )
+                    .order_by("-updated_on")
+                    .values("updated_on")[:1]
+                )
+            ).distinct()
+        else:
+            return Conversation.objects.none()
 
 
 post_delete.connect(User.post_delete, sender=User)

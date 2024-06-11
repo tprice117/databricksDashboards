@@ -1373,11 +1373,10 @@ def update_order_status(request, order_id, accept=True):
 
 
 def test3(request):
-    order_groups = OrderGroup.objects.all()
+    users = User.objects.all()
 
-    for order_group in order_groups:
-        print(order_group.id)
-        # order_group.create_conversation()
+    for user in users:
+        print(user.unread_conversations_count())
 
     # BillingUtils.run_interval_based_invoicing()
     # sync_stripe_payment_methods()
