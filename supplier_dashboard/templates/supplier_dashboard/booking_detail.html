@@ -282,7 +282,7 @@
                                     </thead>
                                     <tbody>
                                         {% for seller_invoice_payable_line_item in order.seller_invoice_payable_line_items.all %}
-                                            <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.id %}'">
+                                            <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_received_invoice_detail' invoice_id=seller_invoice_payable_line_item.seller_invoice_payable.id %}'">
                                                 <td>${{ seller_invoice_payable_line_item.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ seller_invoice_payable_line_item.description }}</td>
                                             </tr>
