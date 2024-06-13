@@ -63,23 +63,17 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
         """Saves the object to the db if the created_by user is an ADMIN or if the UserGroup has a policy that requires approval.
         Otherwise the User is created and this object is not saved to the db."""
         old_status = self.old_value("status")
-        save_object = True
         # https://docs.djangoproject.com/en/4.2/ref/models/instances/#django.db.models.Model._state
         if self._state.adding is True:
             # Object just created
             if self.created_by.type == "ADMIN":
                 self.status = ApprovalStatus.APPROVED
-                # Admin is creating a user, so do not save the object to the db.
-                save_object = False
             elif hasattr(self.user_group, "policy_invitation_approvals"):
                 policy = self.user_group.policy_invitation_approvals.filter(
                     user_type=self.created_by.type
                 ).first()
                 if policy is not None:
                     self.status = ApprovalStatus.PENDING
-                else:
-                    # No policy exists for this user type, so do not save the object to the db.
-                    save_object = False
 
         if old_status == ApprovalStatus.PENDING:
             if self.status == ApprovalStatus.APPROVED:
@@ -115,5 +109,5 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
                 )
 
         # Only allow changes to be made if the Status == PENDING.
-        if self.old_value("status") == ApprovalStatus.PENDING and save_object:
+        if self.old_value("status") == ApprovalStatus.PENDING:
             super().save(*args, **kwargs)
