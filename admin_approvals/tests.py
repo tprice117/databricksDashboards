@@ -28,73 +28,77 @@ class UserInviteApprovalTests(TestCase):
         Create User Invite for Member User and check that a UserInvite was created, since it requires approval.
         Have the admin approve the invitation, Delete users after testing.
         """
+        factory = APIRequestFactory()
+
         # Get User with Admin Permissions
         user_admin = User.objects.get(email="wickeym@gmail.com")
-        print(user_admin.user_group_id)
-        # Get all order approvals for User
-        approvals = UserGroupAdminApprovalUserInvite.objects.filter(
-            user_group_id=user_admin.user_group_id
-        )
-        print(approvals.count())
-        approvals_all = UserGroupAdminApprovalUserInvite.objects.all()
-        print(approvals_all.count())
-        for approval in approvals_all:
-            print(
-                approval.user.email,
-                approval.user_group_id,
-            )
-
         # Get User with Member Permissions
         user_member = User.objects.get(email="mwickey@trydownstream.com")
 
-        # Create Order for Admin User
-        invite_admin = UserGroupAdminApprovalUserInvite(
-            user_group_id=user_admin.user_group_id,
-            email="wickeym@icloud.com",
-            created_by=user_admin,
+        # ===================================
+        # Create UserInvite for Admin User
+        admin_invite_params = {
+            "user_group": str(user_admin.user_group_id),
+            "email": "wickeym@icloud.com",
+            "created_by": str(user_admin.id),
+        }
+        view = UserGroupAdminApprovalUserInviteViewSet.as_view({"post": "create"})
+        request = factory.post(
+            "/api/user-address/", data=admin_invite_params, format="json"
         )
-        invite_admin.save()
-        invite_admin_data = UserGroupAdminApprovalUserInviteSerializer(
-            invite_admin
-        ).data
-        # invite_admin_id = invite_admin_data["id"]
-        print("Admin Invited/Created User", invite_admin_data)
-        added_by_admin_user = User.objects.filter(email="wickeym@icloud.com").first()
+        force_authenticate(request, user=user_admin)
+        admin_invite_response = view(request, pk=str(user_admin.id))
+        print(
+            f"Admin Invited/Created User: [{admin_invite_response.status_code}] {admin_invite_response.data}"
+        )
+
+        added_by_admin_user = User.objects.filter(
+            email=admin_invite_params["email"]
+        ).first()
         # Check that the order is pending. This means Order did not require approval.
         self.assertIsNotNone(added_by_admin_user)
-
-        # Create Order for Member User
-        invite_member = UserGroupAdminApprovalUserInvite(
-            user_group_id=user_admin.user_group_id,
-            email="wickeym@yahoo.com",
-            created_by=user_member,
-        )
-        invite_member.save()
-        invite_member_data = UserGroupAdminApprovalUserInviteSerializer(
-            invite_member
-        ).data
-        print("Created User Invitation", invite_member_data)
-        # Check that the order status is set to approval. This means Order requires approval.
-        self.assertEqual(invite_member_data["status"], Order.Status.PENDING)
         # Delete after testing
+        invite_admin = UserGroupAdminApprovalUserInvite.objects.filter(
+            id=admin_invite_response.data["id"]
+        ).first()
         invite_admin.user.delete()
         invite_admin.delete()
 
-        # List all invitation approvals for the admin user.
-        factory = APIRequestFactory()
-        view = UserGroupAdminApprovalUserInviteViewSet.as_view({"get": "list"})
+        # ===================================
+        # Create UserInvite for Member User
+        member_invite_params = {
+            "user_group": str(user_member.user_group_id),
+            "email": "wickeym@yahoo.com",
+            "created_by": str(user_member.id),
+        }
+        view = UserGroupAdminApprovalUserInviteViewSet.as_view({"post": "create"})
+        request = factory.post(
+            "/api/user-address/", data=member_invite_params, format="json"
+        )
+        force_authenticate(request, user=user_member)
+        member_invite_response = view(request, pk=str(user_member.id))
+        print(
+            f"Created User Invitation: [{member_invite_response.status_code}] {member_invite_response.data}"
+        )
 
-        request = factory.get("/api/user-group-admin-approval-user-invite/")
-        force_authenticate(request, user=user_admin)
-        response = view(request)
-        print(response.status_code, response.data)
+        # Check that the order status is set to approval. This means Order requires approval.
+        self.assertEqual(member_invite_response.data["status"], Order.Status.PENDING)
+
+        # # List all invitation approvals for the admin user.
+        # view = UserGroupAdminApprovalUserInviteViewSet.as_view({"get": "list"})
+
+        # request = factory.get("/api/user-group-admin-approval-user-invite/")
+        # force_authenticate(request, user=user_admin)
+        # response = view(request)
+        # print(response.status_code, response.data)
 
         # Have the admin approve the user invite via API
         api_params = {
-            "email": response.data[0]["email"],
+            "id": member_invite_response.data["id"],
+            "email": member_invite_response.data["email"],
             "status": ApprovalStatus.APPROVED,
-            "user_group": response.data[0]["user_group"],
-            "created_by": response.data[0]["created_by"],
+            "user_group": member_invite_response.data["user_group"],
+            "created_by": member_invite_response.data["created_by"],
         }
 
         view = UserGroupAdminApprovalUserInviteViewSet.as_view({"post": "update"})
@@ -102,17 +106,23 @@ class UserInviteApprovalTests(TestCase):
             "/api/user-group-admin-approval-user-invite/", data=api_params
         )
         force_authenticate(request, user=user_admin)
-        response = view(request, pk=invite_member_data["id"])
+        response = view(request, pk=member_invite_response.data["id"])
         print(response.status_code, response.data)
+        # 400 {'type': <ErrorType.VALIDATION_ERROR: 'validation_error'>, 'errors': [{'code': 'unique', 'detail': 'The fields user_group, email must make a unique set.', 'attr': 'non_field_errors'}]}
 
-        added_by_member_user = User.objects.filter(email="wickeym@yahoo.com").first()
+        added_by_member_user = User.objects.filter(
+            email=member_invite_params["email"]
+        ).first()
         self.assertIsNotNone(added_by_member_user)
 
         # Delete after testing
+        invite_member = UserGroupAdminApprovalUserInvite.objects.filter(
+            id=member_invite_response.data["id"]
+        ).first()
         invite_member.user.delete()
         invite_member.delete()
 
-        print("DONE")
+        print("TESTS SUCCESSFUL")
 
 
 class OrderApprovalTests(TestCase):

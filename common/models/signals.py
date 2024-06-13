@@ -23,5 +23,8 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
         instance.updated_by = authenticated_user
 
         # If creating object, set the 'created_by' field.
-        if sender.objects.filter(pk=instance.pk).exists() is False:
+        if (
+            sender.objects.filter(pk=instance.pk).exists() is False
+            and authenticated_user is not None
+        ):
             instance.created_by = authenticated_user
