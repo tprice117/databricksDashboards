@@ -5,24 +5,25 @@ import uuid
 from itertools import chain
 from typing import List, Union
 from urllib.parse import parse_qs, urlencode
-from django.urls import reverse
-from django.utils import timezone
+
+import humanize
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
-import humanize
 
 from api.models import (
     Order,
+    OrderLineItemType,
     Payout,
     Seller,
     SellerInvoicePayable,
@@ -30,8 +31,9 @@ from api.models import (
     SellerLocation,
     SellerLocationMailingAddress,
     User,
-    OrderLineItemType,
 )
+from api.models.user.user_group import UserGroup
+from api.models.user.user_seller_location import UserSellerLocation
 from api.utils.utils import decrypt_string
 from chat.models import Conversation, Message
 from common.models.choices.user_type import UserType
@@ -1948,7 +1950,77 @@ def location_detail(request, location_id):
             }
         )
 
+    # For any request type, get the current UserSellerLocation objects.
+    user_seller_locations = UserSellerLocation.objects.filter(
+        seller_location_id=location_id
+    ).select_related("user")
+
+    context["user_seller_locations"] = user_seller_locations
+
+    # Get the list of UserGroup Users that are not already associated with the SellerLocation.
+    seller = SellerLocation.objects.get(id=location_id).seller
+
+    if UserGroup.objects.filter(seller=seller).exists():
+        user_group = UserGroup.objects.get(seller=seller)
+        print(user_group)
+        context["non_associated_users"] = User.objects.filter(
+            user_group=user_group
+        ).exclude(
+            id__in=[
+                user_seller_location.user.id
+                for user_seller_location in user_seller_locations
+            ]
+        )
+
     return render(request, "supplier_dashboard/location_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_seller_location_add(request, seller_location_id, user_id):
+
+    seller_location = SellerLocation.objects.get(id=seller_location_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group.seller != seller_location.seller:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserSellerLocation.objects.create(
+            user=user,
+            seller_location=seller_location,
+        )
+        return redirect(
+            reverse(
+                "supplier_location_detail",
+                kwargs={
+                    "location_id": seller_location_id,
+                },
+            )
+        )
+
+
+@login_required(login_url="/admin/login/")
+def user_seller_location_remove(request, seller_location_id, user_id):
+
+    seller_location = SellerLocation.objects.get(id=seller_location_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group.seller != seller_location.seller:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserSellerLocation.objects.filter(
+            user=user,
+            seller_location=seller_location,
+        ).delete()
+        return redirect(
+            reverse(
+                "supplier_location_detail",
+                kwargs={
+                    "location_id": seller_location_id,
+                },
+            )
+        )
 
 
 @login_required(login_url="/admin/login/")
