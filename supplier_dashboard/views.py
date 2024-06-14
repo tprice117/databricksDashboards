@@ -727,8 +727,12 @@ def user_detail(request, user_id):
     # if request.headers.get("HX-Request"):
     user = User.objects.get(id=user_id)
     context["user"] = user
+    user_seller_locations = UserSellerLocation.objects.filter(
+        user_id=context["user"].id
+    ).select_related("user")
+
+    context["user_seller_locations"] = user_seller_locations
     if user.user_group_id:
-        context["user_addresses"] = UserAddress.objects.filter(user_id=user.id)[0:3]
         order_groups = OrderGroup.objects.filter(user_id=user.id)
         # Select related fields to reduce db queries.
         order_groups = order_groups.select_related(

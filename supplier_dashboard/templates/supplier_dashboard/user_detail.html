@@ -100,12 +100,12 @@
                                             <tr></tr>
                                         </thead>
                                         <tbody>
-                                            {% for user_address in user_addresses %}
+                                            {% for user_seller_location in user_seller_locations %}
                                                 <tr>
-                                                    <td>{{ user_address.name }}</td>
-                                                    <td>{{ user_address.formatted_address }}</td>
+                                                    <td>{{ user_seller_location.seller_location.name }}</td>
+                                                    <td>{{ user_seller_location.seller_location.formatted_address }}</td>
                                                     <td>
-                                                        <a class="btn btn-light" role="button" href="location_detail.html"><i class="far fa-eye"></i></a>
+                                                        <a class="btn btn-light" role="button" href="{% url 'supplier_location_detail' location_id=user_seller_location.seller_location.id %}"><i class="far fa-eye"></i></a>
                                                     </td>
                                                 </tr>
                                             {% endfor %}
