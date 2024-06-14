@@ -11,6 +11,7 @@ from api.models.user.user_group import UserGroup
 from common.models import BaseModel
 from common.models.choices.approval_status import ApprovalStatus
 from common.models.choices.user_type import UserType
+from common.models.signals import base_model_pre_save
 from notifications.utils.add_email_to_queue import add_email_to_queue
 
 logger = logging.getLogger(__name__)
@@ -47,11 +48,6 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
         choices=ApprovalStatus.choices,
         default=ApprovalStatus.PENDING,
     )
-    created_by = models.ForeignKey(
-        User,
-        models.CASCADE,
-        related_name="user_group_admin_approval_user_invites",
-    )
 
     class Meta:
         verbose_name = "User Invite Approval"
@@ -72,6 +68,13 @@ def pre_save_user_group_admin_approval_order(
     """
     old_status = instance.old_value("status")
 
+    # Manually call the BaseModel pre_save signal. This is necessary because
+    # by default, the pre_save signal for the BaseModel is called after the
+    # pre_save signal for the UserGroupAdminApprovalUserInvite, resulting in
+    # the created_by field not being set during this signal.
+    if issubclass(sender, BaseModel):
+        base_model_pre_save(sender, instance, **kwargs)
+
     # If old_status is not PENDING, throw an error.
     if not old_status == ApprovalStatus.PENDING:
         raise ValueError(
@@ -80,8 +83,9 @@ def pre_save_user_group_admin_approval_order(
     else:
         # The UserGroupAdminApprovalUserInvite.Status is PENDING. It's
         # either being created or updated.
+        print("Created By: ", instance.created_by)
 
-        if instance._state.adding:
+        if instance._state.adding and instance.created_by:
             is_admin = instance.created_by.type == UserType.ADMIN
             is_staff = instance.created_by.is_staff
             has_policy = (

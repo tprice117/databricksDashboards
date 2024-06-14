@@ -7,6 +7,7 @@ from common.models import BaseModel
 
 @receiver(pre_save)
 def base_model_pre_save(sender, instance: BaseModel, **kwargs):
+    print("Running base_model_pre_save")
     # Sets the 'created_by' and 'updated_by' if 'sender' is a subclass of BaseModel
     if issubclass(sender, BaseModel):
 
