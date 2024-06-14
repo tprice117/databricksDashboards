@@ -9,5 +9,8 @@ class UserSellerLocation(BaseModel):
     user = models.ForeignKey(User, models.CASCADE)
     seller_location = models.ForeignKey(SellerLocation, models.CASCADE)
 
+    class Meta:
+        unique_together = ("user", "seller_location")
+
     def __str__(self):
         return f"{self.user.email} - {self.seller_location.name}"
