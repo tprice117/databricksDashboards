@@ -43,6 +43,12 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
         choices=UserType.choices,
         default=UserType.ADMIN,
     )
+    first_name = models.CharField(
+        max_length=255,
+    )
+    last_name = models.CharField(
+        max_length=255,
+    )
     status = models.CharField(
         max_length=20,
         choices=ApprovalStatus.choices,
@@ -112,6 +118,8 @@ def pre_save_user_group_admin_approval_order(
                 username=instance.email,
                 user_group=instance.user_group,
                 type=instance.type,
+                first_name=instance.first_name,
+                last_name=instance.last_name,
             )
         elif old_status == ApprovalStatus.DECLINED:
             # If the Status changes from PENDING to DECLINED, update Status, then send email to "created_by" user with update.
