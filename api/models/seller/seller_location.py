@@ -86,17 +86,21 @@ class SellerLocation(BaseModel):
     def is_insurance_compliant(self):
         today = datetime.date.today()
         return (
-            self.gl_coi_expiration_date
-            and self.auto_coi_expiration_date
-            and self.workers_comp_coi_expiration_date
+            self.gl_coi_expiration_date is not None
+            and self.auto_coi_expiration_date is not None
+            and self.workers_comp_coi_expiration_date is not None
             and self.gl_coi_expiration_date > today
             and self.auto_coi_expiration_date > today
             and self.workers_comp_coi_expiration_date > today
         )
 
     @property
+    def is_payout_setup(self):
+        return bool(self.stripe_connect_account_id or self.payee_name)
+
+    @property
     def is_tax_compliant(self):
-        return self.stripe_connect_account_id and self.w9
+        return bool(self.stripe_connect_account_id and self.w9)
 
     def pre_save(sender, instance, *args, **kwargs):
         latitude, longitude = geocode_address(

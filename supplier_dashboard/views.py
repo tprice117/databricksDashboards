@@ -1446,33 +1446,105 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    if context["seller"]:
-        seller_locations = SellerLocation.objects.filter(seller_id=context["seller"].id)
-        seller_locations = seller_locations.order_by("-created_on")
-    else:
-        seller_locations = SellerLocation.objects.all()
-        seller_locations = seller_locations.order_by("seller__name", "-created_on")
-    paginator = Paginator(seller_locations, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        if context["seller"]:
+            seller_locations = SellerLocation.objects.filter(
+                seller_id=context["seller"].id
+            )
+            seller_locations = seller_locations.order_by("-created_on")
+        else:
+            seller_locations = SellerLocation.objects.all()
+            seller_locations = seller_locations.order_by("seller__name", "-created_on")
 
-    if page_number is None:
-        page_number = 1
-    else:
-        page_number = int(page_number)
+        seller_locations_lst = []
+        context["tab"] = tab
+        context["total_count"] = 0
+        context["insurance_missing"] = 0
+        context["insurance_expiring"] = 0
+        context["payouts_missing"] = 0
+        context["tax_missing"] = 0
+        context["fully_compliant"] = 0
+        for seller_location in seller_locations:
+            context["total_count"] += 1
+            is_insurance_compliant = seller_location.is_insurance_compliant
+            is_tax_compliant = seller_location.is_tax_compliant
+            if is_insurance_compliant and is_tax_compliant:
+                context["fully_compliant"] += 1
+                if tab == "compliant":
+                    seller_locations_lst.append(seller_location)
+            elif not is_insurance_compliant:
+                context["insurance_missing"] += 1
+                if tab == "insurance":
+                    seller_locations_lst.append(seller_location)
+            elif not is_tax_compliant:
+                context["tax_missing"] += 1
+                if tab == "tax":
+                    seller_locations_lst.append(seller_location)
+            if seller_location.is_insurance_expiring_soon:
+                context["insurance_expiring"] += 1
+                if tab == "insurance_expiring":
+                    seller_locations_lst.append(seller_location)
+            if seller_location.is_payout_setup is False:
+                context["payouts_missing"] += 1
+                if tab == "payouts":
+                    seller_locations_lst.append(seller_location)
+            if tab is None or tab == "":
+                seller_locations_lst.append(seller_location)
 
-    query_params["p"] = 1
-    context["page_start_link"] = f"/supplier/locations/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/supplier/locations/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/supplier/locations/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/supplier/locations/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+        download_link = f"/supplier/locations/download/?{query_params.urlencode()}"
+        context["download_link"] = download_link
+
+        paginator = Paginator(seller_locations_lst, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/supplier/locations/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/supplier/locations/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/supplier/locations/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/supplier/locations/?{query_params.urlencode()}"
+        return render(
+            request, "supplier_dashboard/snippets/locations_table.html", context
+        )
+
+    context["download_link"] = (
+        f"/supplier/locations/download/?{query_params.urlencode()}"
+    )
+    context["status_insurance_link"] = "/supplier/locations/?tab=insurance"
+    context["status_payouts_link"] = "/supplier/locations/?tab=payouts"
+    context["status_tax_link"] = "/supplier/locations/?tab=tax"
+    context["status_insurance_expiring_link"] = (
+        "/supplier/locations/?tab=insurance_expiring"
+    )
+    context["status_compliant_link"] = "/supplier/locations/?tab=compliant"
+    # If current link has a tab, then load full path
+    context["htmx_loading_id"] = "htmx-indicator-status"
+    if query_params.get("tab", None) is not None:
+        context["locations_load_link"] = request.get_full_path()
+    else:
+        # Else load pending tab as default
+        context["locations_load_link"] = (
+            f"{reverse('supplier_locations')}?{query_params.urlencode()}"
+        )
     return render(request, "supplier_dashboard/locations.html", context)
 
 
