@@ -83,7 +83,6 @@ def pre_save_user_group_admin_approval_order(
     else:
         # The UserGroupAdminApprovalUserInvite.Status is PENDING. It's
         # either being created or updated.
-        print("Created By: ", instance.created_by)
 
         if instance._state.adding and instance.created_by:
             is_admin = instance.created_by.type == UserType.ADMIN
