@@ -189,8 +189,7 @@
                                             <td>{{ user_seller_location.user.full_name }}</td>
                                             <td>{{ user_seller_location.user.email }}</td>
                                             <td>
-                                                <a class="btn btn-light" role="button"><i class="far fa-eye"></i></a>
-                                                {% comment %} <a class="btn btn-light" role="button" href="{% url 'supplier_user_detail' user_id=user_seller_location.user.id %}"><i class="far fa-eye"></i></a> {% endcomment %}
+                                                <a class="btn btn-light" role="button" href="{% url 'supplier_user_detail' user_id=user_seller_location.user.id %}"><i class="far fa-eye"></i></a>
                                             </td>
                                             <td>
                                                 <a class="btn btn-danger" role="button" href="{% url 'supplier_location_remove_user' seller_location_id=seller_location.id user_id=user_seller_location.user.id %}"><i class="far fa-trash-alt"></i></a>
@@ -247,13 +246,11 @@
                                         <td>{{ user.full_name }}</td>
                                         <td>{{ user.email }}</td>
                                         <td>
-                                            <td>
-                                                <a class="btn btn-light" role="button" href="{% url 'supplier_location_add_user' seller_location_id=seller_location.id user_id=user.id %}">
-                                                    <i class="far fa-plus-square"></i>
-                                                </a>
-                                            </td>
-                                            {% comment %} <td><a class="btn btn-light" role="button" href="user_detail.html"><i class="far fa-plus-square"></i></a></td> {% endcomment %}
+                                            <a class="btn btn-light" role="button" href="{% url 'supplier_location_add_user' seller_location_id=seller_location.id user_id=user.id %}"><i class="far fa-plus-square"></i></a>
                                         </td>
+                                        {% comment %} <td>
+                                            <a class="btn btn-light" role="button" href="user_detail.html"><i class="far fa-plus-square"></i></a>
+                                        </td> {% endcomment %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -272,7 +269,9 @@
                 <div class="modal-body">
                     <p>This will not delete the User, but they will no longer be able to see this Location.</p>
                 </div>
-                <div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">No, don't remove</button><button class="btn btn-danger" type="button">Yes, remove them</button></div>
+                <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">No, don't remove</button><button class="btn btn-danger" type="button">Yes, remove them</button>
+                </div>
             </div>
         </div>
     </div>

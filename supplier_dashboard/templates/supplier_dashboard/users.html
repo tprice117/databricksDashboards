@@ -1,0 +1,75 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Users
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Users</h3>
+            <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{% url 'supplier_new_user' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create User</a>
+        </div>
+        <div class="card shadow">
+            <div class="card-header py-3"></div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table my-0 table-hover" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Associated Locations</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for obj in page_obj %}
+                                <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_user_detail' user_id=obj.user.id %}'">
+                                    <td>
+                                        <div class="d-flex flex-row">
+                                            {% if obj.user.photo %}
+                                                <img class="border rounded-circle img-profile" style="height: 2rem; width: 2rem;" src="{{ obj.user.photo.url }}" />
+                                            {% else %}
+                                                <span class="border rounded-circle img-profile" style="height: 2rem; width: 2rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+                                            {% endif %}
+                                            <div class="align-self-center ms-2">{{ obj.user.full_name }}</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ obj.user.email }}</td>
+                                    <td>{{ obj.user.type }}</td>
+                                    <td class="text-center">{{ obj.meta.associated_locations }}</td>
+                                    <td>{{ obj.user.date_joined }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Name</strong>
+                                </td>
+                                <td>
+                                    <strong>Email</strong>
+                                </td>
+                                <td>
+                                    <strong>Type</strong>
+                                </td>
+                                <td>
+                                    <strong>Associated Locations</strong>
+                                </td>
+                                <td>
+                                    <strong>Created</strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% include 'supplier_dashboard/snippets/pagination.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
