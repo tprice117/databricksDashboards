@@ -246,13 +246,11 @@
                                         <td>{{ user.full_name }}</td>
                                         <td>{{ user.email }}</td>
                                         <td>
-                                            <td>
-                                                <a class="btn btn-light" role="button" href="{% url 'supplier_location_add_user' seller_location_id=seller_location.id user_id=user.id %}"><i class="far fa-plus-square"></i></a>
-                                            </td>
-                                            {% comment %} <td>
-                                                <a class="btn btn-light" role="button" href="user_detail.html"><i class="far fa-plus-square"></i></a>
-                                            </td> {% endcomment %}
+                                            <a class="btn btn-light" role="button" href="{% url 'supplier_location_add_user' seller_location_id=seller_location.id user_id=user.id %}"><i class="far fa-plus-square"></i></a>
                                         </td>
+                                        {% comment %} <td>
+                                            <a class="btn btn-light" role="button" href="user_detail.html"><i class="far fa-plus-square"></i></a>
+                                        </td> {% endcomment %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
