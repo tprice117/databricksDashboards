@@ -76,7 +76,7 @@ def pre_save_user_group_admin_approval_order(
         base_model_pre_save(sender, instance, **kwargs)
 
     # If old_status is not PENDING, throw an error.
-    if not old_status == ApprovalStatus.PENDING:
+    if not instance._state.adding and not old_status == ApprovalStatus.PENDING:
         raise ValueError(
             f"UserGroupAdminApprovalUserInvite cannot be updated once the Status is not PENDING. Current Status: {old_status}"
         )
