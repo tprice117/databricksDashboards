@@ -920,6 +920,9 @@ def bookings(request):
                     "seller"
                 ].id
             )
+
+            if not request.user.is_staff:
+                orders = orders.filter(submitted_on__isnull=False)
         else:
             orders = Order.objects.all()
 
