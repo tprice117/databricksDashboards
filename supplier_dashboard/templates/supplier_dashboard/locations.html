@@ -27,7 +27,10 @@
 {% endblock %}
 {% block content %}
     <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link, .clickable-header, .form-select">
-        <h3 class="text-dark mb-4">My Locations</h3>
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">My Locations</h3>
+            <a id="locations-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
+        </div>
         {% if request.user.is_staff %}
             <div class="row">
                 <div class="col">

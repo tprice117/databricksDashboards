@@ -19,10 +19,14 @@
                 </td>
                 <td>{{ seller_location.formatted_address }}</td>
                 <td>
-                    {% if seller.stripe_connect_account_id %}
-                        Direct Deposit
+                    {% if seller_location.is_payout_setup %}
+                        {% if seller_location.stripe_connect_account_id %}
+                            Direct Deposit
+                        {% else %}
+                            Check
+                        {% endif %}
                     {% else %}
-                        Check
+                        <i class="fas fa-times-circle text-danger"></i> Setup Required
                     {% endif %}
                 </td>
                 <td>
@@ -70,7 +74,7 @@
         </nav>
     </div>
 </div>
-{% comment %} <a id="locations-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a> {% endcomment %}
+<a id="locations-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
 {% if request.user.is_staff %}
 <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'supplier_locations' %}" hx-target="#location-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-status" hx-swap-oob="true">
     <option value="" {% if not tab or tab == '' %} selected{% endif %}>

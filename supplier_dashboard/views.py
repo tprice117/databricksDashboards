@@ -1443,9 +1443,8 @@ def locations(request):
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
-    # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
+    # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
         if context["seller"]:
@@ -1546,6 +1545,98 @@ def locations(request):
             f"{reverse('supplier_locations')}?{query_params.urlencode()}"
         )
     return render(request, "supplier_dashboard/locations.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def download_locations(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
+    tab = request.GET.get("tab", None)
+    if context["seller"]:
+        seller_locations = SellerLocation.objects.filter(seller_id=context["seller"].id)
+        seller_locations = seller_locations.order_by("-created_on")
+    else:
+        seller_locations = SellerLocation.objects.all()
+        seller_locations = seller_locations.order_by("seller__name", "-created_on")
+
+    seller_locations_lst = []
+    for seller_location in seller_locations:
+        is_insurance_compliant = seller_location.is_insurance_compliant
+        is_tax_compliant = seller_location.is_tax_compliant
+        if is_insurance_compliant and is_tax_compliant:
+            if tab == "compliant":
+                seller_locations_lst.append(seller_location)
+        elif not is_insurance_compliant:
+            if tab == "insurance":
+                seller_locations_lst.append(seller_location)
+        elif not is_tax_compliant:
+            if tab == "tax":
+                seller_locations_lst.append(seller_location)
+        if seller_location.is_insurance_expiring_soon:
+            if tab == "insurance_expiring":
+                seller_locations_lst.append(seller_location)
+        if seller_location.is_payout_setup is False:
+            if tab == "payouts":
+                seller_locations_lst.append(seller_location)
+        if tab is None or tab == "":
+            seller_locations_lst.append(seller_location)
+
+    response = HttpResponse(content_type="text/csv")
+    if tab is None or tab == "":
+        tab = "all"
+    response["Content-Disposition"] = f'attachment; filename="locations_{tab}.csv"'
+    writer = csv.writer(response)
+    if request.user.is_staff:
+        header_row = [
+            "Seller",
+            "Name",
+            "Address",
+            "Payout Method",
+            "Insurance",
+            "Tax",
+            "Created On",
+        ]
+    else:
+        header_row = [
+            "Name",
+            "Address",
+            "Payout Method",
+            "Insurance",
+            "Tax",
+            "Created On",
+        ]
+    writer.writerow(header_row)
+    for seller_location in seller_locations_lst:
+        row = []
+        if request.user.is_staff:
+            row.append(seller_location.seller.name)
+        payout_method = "Unset"
+        if seller_location.is_payout_setup:
+            if seller_location.stripe_connect_account_id:
+                payout_method = "Direct Deposit"
+            else:
+                payout_method = "Check"
+        insurance_status = "Insurance Verification Required"
+        if seller_location.is_insurance_expiring_soon:
+            insurance_status = "Expiring Soon"
+        elif seller_location.is_insurance_compliant:
+            insurance_status = "Compliant"
+        tax_status = "Missing Tax Info"
+        if seller_location.is_tax_compliant:
+            tax_status = "Compliant"
+        row.extend(
+            [
+                str(seller_location.name),
+                seller_location.formatted_address,
+                payout_method,
+                insurance_status,
+                tax_status,
+                seller_location.created_on.ctime(),
+            ]
+        )
+        writer.writerow(row)
+    return response
 
 
 @login_required(login_url="/admin/login/")
