@@ -90,6 +90,11 @@ urlpatterns = [
     ),
     path("supplier/locations/", views.locations, name="supplier_locations"),
     path(
+        "supplier/locations/download/",
+        views.download_locations,
+        name="supplier_locations_download",
+    ),
+    path(
         "supplier/location/<uuid:location_id>/",
         views.location_detail,
         name="supplier_location_detail",

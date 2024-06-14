@@ -1,0 +1,99 @@
+{% load static %}
+{% load humanize %}
+<tbody id="location-results">
+    {% if page_obj %}
+        {% for seller_location in page_obj %}
+            <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_location_detail' location_id=seller_location.id %}'">
+                {% if request.user.is_staff %}
+                    <td>{{ seller_location.seller.name }}</td>
+                {% endif %}
+                <td>
+                    <img class="rounded-circle me-2"
+                        width="30"
+                        height="30"
+                        src="{% if seller.location_logo_url %}
+                            {{ seller.location_logo_url }}
+                        {% else %}
+                            {% static 'supplier_dashboard/img/avatars/avatar1.jpeg' %}
+                        {% endif %}" />{{ seller_location.name }}
+                </td>
+                <td>{{ seller_location.formatted_address }}</td>
+                <td>
+                    {% if seller_location.is_payout_setup %}
+                        {% if seller_location.stripe_connect_account_id %}
+                            Direct Deposit
+                        {% else %}
+                            Check
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-times-circle text-danger"></i> Setup Required
+                    {% endif %}
+                </td>
+                <td>
+                    {% if seller_location.is_insurance_expiring_soon %}
+                        <i class="fas fa-check-circle text-warning"></i> Expiring Soon
+                    {% elif seller_location.is_insurance_compliant %}
+                        <i class="fas fa-check-circle text-success"></i> Compliant
+                    {% else %}
+                        <i class="fas fa-times-circle text-danger"></i> Insurance Verification Required
+                    {% endif %}
+                </td>
+                <td>
+                    {% if seller_location.is_tax_compliant %}
+                        <i class="fas fa-check-circle text-success"></i> Compliant
+                    {% else %}
+                        <i class="fas fa-times-circle text-danger"></i> Missing Tax Info
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+</tbody>
+<div class="row" id="locations-pagination" hx-swap-oob="true">
+    <div class="col-md-6 align-self-center">
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </p>
+    </div>
+    <div class="col-md-6">
+        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
+                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
+                {% endif %}
+                <li class="page-item active">
+                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
+                </li>
+                {% if page_obj.has_next %}
+                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
+                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+<a id="locations-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
+{% if request.user.is_staff %}
+<select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'supplier_locations' %}" hx-target="#location-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-status" hx-swap-oob="true">
+    <option value="" {% if not tab or tab == '' %} selected{% endif %}>
+        Filter Data By <span id="total-count-badge">({{ total_count }})</span>
+    </option>
+    <option value="insurance"{% if tab == 'insurance' %} selected{% endif %}>
+        Missing Insurance Details <span id="insurance-count-badge">({{ insurance_missing }})</span>
+    </option>
+    <option value="payouts"{% if tab == 'payouts' %} selected{% endif %}>
+        Missing Payout Details <span id="payouts-count-badge">({{ payouts_missing }})</span>
+    </option>
+    <option value="tax"{% if tab == 'tax' %} selected{% endif %}>
+        Missing Tax Details <span id="tax-count-badge">({{ tax_missing }})</span>
+    </option>
+    <option value="insurance_expiring"{% if tab == 'insurance_expiring' %} selected{% endif %}>
+        Insurance Expiring in Next 60 days <span id="insurance_expiring-count-badge">({{ insurance_expiring }})</span>
+    </option>
+    <option value="compliant"{% if tab == 'compliant' %} selected{% endif %}>
+        Fully Compliant <span id="compliant-count-badge">({{ fully_compliant }})</span>
+    </option>
+</select>
+{% endif %}
