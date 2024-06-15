@@ -28,6 +28,13 @@ urlpatterns = [
     path("supplier/logout/", views.supplier_logout, name="supplier_logout"),
     path("supplier/profile/", views.profile, name="supplier_profile"),
     path("supplier/company/", views.company, name="supplier_company"),
+    path("supplier/users/", views.users, name="supplier_users"),
+    path(
+        "supplier/user/<uuid:user_id>/",
+        views.user_detail,
+        name="supplier_user_detail",
+    ),
+    path("supplier/user/new/", views.new_user, name="supplier_new_user"),
     path("supplier/bookings/", views.bookings, name="supplier_bookings"),
     path(
         "supplier/bookings/download/",
@@ -98,6 +105,16 @@ urlpatterns = [
         "supplier/location/<uuid:location_id>/",
         views.location_detail,
         name="supplier_location_detail",
+    ),
+    path(
+        "supplier/location/<uuid:seller_location_id>/user/<uuid:user_id>/",
+        views.user_seller_location_add,
+        name="supplier_location_add_user",
+    ),
+    path(
+        "supplier/location/<uuid:seller_location_id>/user/<uuid:user_id>/remove/",
+        views.user_seller_location_remove,
+        name="supplier_location_remove_user",
     ),
     path(
         "supplier/received_invoices/",

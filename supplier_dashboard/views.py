@@ -5,24 +5,25 @@ import uuid
 from itertools import chain
 from typing import List, Union
 from urllib.parse import parse_qs, urlencode
-from django.urls import reverse
-from django.utils import timezone
+
+import humanize
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
-import humanize
 
 from api.models import (
     Order,
+    OrderGroup,
     Payout,
     Seller,
     SellerInvoicePayable,
@@ -30,8 +31,10 @@ from api.models import (
     SellerLocation,
     SellerLocationMailingAddress,
     User,
-    OrderLineItemType,
+    UserAddress,
 )
+from api.models.user.user_group import UserGroup
+from api.models.user.user_seller_location import UserSellerLocation
 from api.utils.utils import decrypt_string
 from chat.models import Conversation, Message
 from common.models.choices.user_type import UserType
@@ -253,7 +256,7 @@ def supplier_impersonation_start(request):
             request.session["user_id"] = get_json_safe_value(user.id)
             request.session["seller_id"] = get_json_safe_value(seller_id)
             return HttpResponseRedirect("/supplier/")
-        except Exception as e:
+        except Exception:
             return HttpResponse("Not Found", status=404)
     else:
         return HttpResponse("Unauthorized", status=401)
@@ -393,7 +396,7 @@ def profile(request):
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
         POST_COPY["email"] = context["user"].email
-        form = UserForm(POST_COPY, request.FILES)
+        form = UserForm(POST_COPY, request.FILES, auth_user=context["user"])
         context["form"] = form
         if form.is_valid():
             save_db = False
@@ -405,6 +408,9 @@ def profile(request):
                 save_db = True
             if form.cleaned_data.get("phone") != context["user"].phone:
                 context["user"].phone = form.cleaned_data.get("phone")
+                save_db = True
+            if form.cleaned_data.get("type") != context["user"].type:
+                context["user"].type = form.cleaned_data.get("type")
                 save_db = True
             if request.FILES.get("photo"):
                 context["user"].photo = request.FILES["photo"]
@@ -426,7 +432,9 @@ def profile(request):
                     "phone": context["user"].phone,
                     "photo": context["user"].photo,
                     "email": context["user"].email,
-                }
+                    "type": context["user"].type,
+                },
+                auth_user=context["user"],
             )
             context["form"] = form
             # return HttpResponse("", status=200)
@@ -446,7 +454,9 @@ def profile(request):
                 "phone": context["user"].phone,
                 "photo": context["user"].photo,
                 "email": context["user"].email,
-            }
+                "type": context["user"].type,
+            },
+            auth_user=context["user"],
         )
         context["form"] = form
     return render(request, "supplier_dashboard/profile.html", context)
@@ -465,7 +475,8 @@ def company(request):
         ):
             seller = request.user.user_group.seller
             messages.warning(
-                request, "No seller selected! Using current staff user's seller."
+                request,
+                f"No seller selected! Using current staff user's seller [{seller.name}].",
             )
         else:
             # Get first available seller.
@@ -630,8 +641,250 @@ def company(request):
 
 
 @login_required(login_url="/admin/login/")
+def users(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
+    if context["seller"]:
+        seller = context["seller"]
+    else:
+        if hasattr(request.user, "user_group") and hasattr(
+            request.user.user_group, "seller"
+        ):
+            seller = request.user.user_group.seller
+            messages.warning(
+                request,
+                f"No seller selected! Using current staff user's seller [{seller.name}].",
+            )
+        else:
+            # Get first available seller.
+            seller = Seller.objects.all().first()
+            messages.warning(
+                request,
+                f"No seller selected! Using first seller found: [{seller.name}].",
+            )
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    # user_id = request.GET.get("user_id", None)
+    date = request.GET.get("date", None)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    query_params = request.GET.copy()
+    users = User.objects.filter(user_group_id=context["user"].user_group_id)
+    if date:
+        users = users.filter(date_joined__date=date)
+    users = users.order_by("-date_joined")
+
+    user_lst = []
+    for user in users:
+        user_dict = {}
+        user_dict["user"] = user
+        user_dict["meta"] = {
+            "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
+        }
+        user_lst.append(user_dict)
+
+    paginator = Paginator(user_lst, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = (
+        f"{reverse('supplier_users')}?{query_params.urlencode()}"
+    )
+    query_params["p"] = page_number
+    context["page_current_link"] = (
+        f"{reverse('supplier_users')}?{query_params.urlencode()}"
+    )
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = f"{reverse('supplier_users')}?{query_params.urlencode()}"
+    return render(request, "supplier_dashboard/users.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_detail(request, user_id):
+    context = {}
+    auth_user = get_user(request)
+    context["seller"] = get_seller(request)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    user = User.objects.get(id=user_id)
+    context["user"] = user
+    user_seller_locations = UserSellerLocation.objects.filter(
+        user_id=context["user"].id
+    ).select_related("user")
+
+    context["user_seller_locations"] = user_seller_locations
+    if user.user_group_id:
+        order_groups = OrderGroup.objects.filter(user_id=user.id)
+        # Select related fields to reduce db queries.
+        order_groups = order_groups.select_related(
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product",
+            # "user_address",
+        )
+        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.order_by("-end_date")
+
+        today = datetime.date.today()
+        context["active_orders"] = []
+        context["past_orders"] = []
+        for order_group in order_groups:
+            if order_group.end_date and order_group.end_date < today:
+                if len(context["past_orders"]) < 2:
+                    context["past_orders"].append(order_group)
+            else:
+                if len(context["active_orders"]) < 2:
+                    context["active_orders"].append(order_group)
+            # Only show the first 2 active and past order_groups.
+            if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
+                break
+
+    if request.method == "POST":
+        # NOTE: Since email is disabled, it is never POSTed,
+        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
+        POST_COPY = request.POST.copy()
+        POST_COPY["email"] = user.email
+        form = UserForm(POST_COPY, request.FILES, auth_user=auth_user, user=user)
+        context["form"] = form
+        if form.is_valid():
+            save_db = False
+            if form.cleaned_data.get("first_name") != user.first_name:
+                user.first_name = form.cleaned_data.get("first_name")
+                save_db = True
+            if form.cleaned_data.get("last_name") != user.last_name:
+                user.last_name = form.cleaned_data.get("last_name")
+                save_db = True
+            if form.cleaned_data.get("phone") != user.phone:
+                user.phone = form.cleaned_data.get("phone")
+                save_db = True
+            if form.cleaned_data.get("type") != user.type:
+                user.type = form.cleaned_data.get("type")
+                save_db = True
+            if request.FILES.get("photo"):
+                user.photo = request.FILES["photo"]
+                save_db = True
+            elif request.POST.get("photo-clear") == "on":
+                user.photo = None
+                save_db = True
+            if save_db:
+                context["user"] = user
+                user.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
+            form = UserForm(
+                initial={
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "phone": user.phone,
+                    "photo": user.photo,
+                    "email": user.email,
+                    "type": user.type,
+                },
+                auth_user=auth_user,
+                user=user,
+            )
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            # if request.headers.get("HX-Request"):
+            return render(request, "supplier_dashboard/user_detail.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+    else:
+        form = UserForm(
+            initial={
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "phone": user.phone,
+                "photo": user.photo,
+                "email": user.email,
+                "type": user.type,
+            },
+            auth_user=auth_user,
+            user=user,
+        )
+        context["form"] = form
+
+    return render(request, "supplier_dashboard/user_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_user(request):
+    context = {}
+    # TODO: Only allow admin to create new users.
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
+    if request.method == "POST":
+        try:
+            save_model = None
+            POST_COPY = request.POST.copy()
+            # POST_COPY["email"] = user.email
+            form = UserForm(POST_COPY, request.FILES, auth_user=context["user"])
+            context["form"] = form
+            context["form"].fields["email"].disabled = False
+            if form.is_valid():
+                first_name = form.cleaned_data.get("first_name")
+                last_name = form.cleaned_data.get("last_name")
+                phone = form.cleaned_data.get("phone")
+                email = form.cleaned_data.get("email")
+                user_type = form.cleaned_data.get("type")
+                user = User(
+                    user_group_id=context["user"].user_group_id,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    type=user_type,
+                )
+                if phone:
+                    user.phone = phone
+                if request.FILES.get("photo"):
+                    user.photo = request.FILES["photo"]
+                save_model = user
+            else:
+                raise InvalidFormError(form, "Invalid UserForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return HttpResponseRedirect(reverse("supplier_users"))
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+    else:
+        context["form"] = UserForm(auth_user=context["user"])
+        context["form"].fields["email"].required = True
+        context["form"].fields["email"].disabled = False
+
+    return render(request, "supplier_dashboard/user_new_edit.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def bookings(request):
-    # TODO: Add csv download to bookings as well.
     link_params = {}
     context = {}
     pagination_limit = 25
@@ -667,6 +920,9 @@ def bookings(request):
                     "seller"
                 ].id
             )
+
+            if not request.user.is_staff:
+                orders = orders.filter(submitted_on__isnull=False)
         else:
             orders = Order.objects.all()
 
@@ -1948,7 +2204,77 @@ def location_detail(request, location_id):
             }
         )
 
+    # For any request type, get the current UserSellerLocation objects.
+    user_seller_locations = UserSellerLocation.objects.filter(
+        seller_location_id=location_id
+    ).select_related("user")
+
+    context["user_seller_locations"] = user_seller_locations
+
+    # Get the list of UserGroup Users that are not already associated with the SellerLocation.
+    seller = SellerLocation.objects.get(id=location_id).seller
+
+    if UserGroup.objects.filter(seller=seller).exists():
+        user_group = UserGroup.objects.get(seller=seller)
+        print(user_group)
+        context["non_associated_users"] = User.objects.filter(
+            user_group=user_group
+        ).exclude(
+            id__in=[
+                user_seller_location.user.id
+                for user_seller_location in user_seller_locations
+            ]
+        )
+
     return render(request, "supplier_dashboard/location_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_seller_location_add(request, seller_location_id, user_id):
+
+    seller_location = SellerLocation.objects.get(id=seller_location_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group.seller != seller_location.seller:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserSellerLocation.objects.create(
+            user=user,
+            seller_location=seller_location,
+        )
+        return redirect(
+            reverse(
+                "supplier_location_detail",
+                kwargs={
+                    "location_id": seller_location_id,
+                },
+            )
+        )
+
+
+@login_required(login_url="/admin/login/")
+def user_seller_location_remove(request, seller_location_id, user_id):
+
+    seller_location = SellerLocation.objects.get(id=seller_location_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group.seller != seller_location.seller:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserSellerLocation.objects.filter(
+            user=user,
+            seller_location=seller_location,
+        ).delete()
+        return redirect(
+            reverse(
+                "supplier_location_detail",
+                kwargs={
+                    "location_id": seller_location_id,
+                },
+            )
+        )
 
 
 @login_required(login_url="/admin/login/")

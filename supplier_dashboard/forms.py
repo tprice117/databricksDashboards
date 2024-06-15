@@ -1,6 +1,7 @@
 from django import forms
 
 from chat.models import Message
+from common.models.choices.user_type import UserType
 
 
 class UserForm(forms.Form):
@@ -15,21 +16,54 @@ class UserForm(forms.Form):
     phone = forms.CharField(
         max_length=40,
         widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
+    )
+    type = forms.ChoiceField(
+        choices=UserType.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     email = forms.CharField(
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "disabled": True,
-            }
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
         required=False,
+        disabled=True,
     )
     photo = forms.ImageField(
         label="Profile Picture",
         widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
         required=False,
     )
+
+    def __init__(self, *args, **kwargs):
+        auth_user = kwargs.pop("auth_user", None)
+        user = kwargs.pop("user", None)
+        super(UserForm, self).__init__(*args, **kwargs)
+        if auth_user and user and not auth_user.is_staff:
+            # if auth_user.type is lower than user.type, then disable the type field.
+            if auth_user.type == UserType.BILLING:
+                if user.type == UserType.ADMIN:
+                    self.fields["type"].disabled = True
+                else:
+                    self.fields["type"].choices = [
+                        (UserType.BILLING, UserType.BILLING),
+                        (UserType.MEMBER, UserType.MEMBER),
+                    ]
+            elif auth_user.type == UserType.MEMBER:
+                if user.type == UserType.BILLING or user.type == UserType.ADMIN:
+                    self.fields["type"].disabled = True
+                else:
+                    self.fields["type"].choices = [
+                        (UserType.MEMBER, UserType.MEMBER),
+                    ]
+        elif auth_user:
+            if auth_user.type == UserType.BILLING:
+                self.fields["type"].choices = [
+                    (UserType.BILLING, UserType.BILLING),
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
+            elif auth_user.type == UserType.MEMBER:
+                self.fields["type"].choices = [
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
 
 
 class SellerForm(forms.Form):

@@ -7,6 +7,7 @@ from common.models import BaseModel
 
 @receiver(pre_save)
 def base_model_pre_save(sender, instance: BaseModel, **kwargs):
+    print("Running base_model_pre_save")
     # Sets the 'created_by' and 'updated_by' if 'sender' is a subclass of BaseModel
     if issubclass(sender, BaseModel):
 
@@ -23,5 +24,8 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
         instance.updated_by = authenticated_user
 
         # If creating object, set the 'created_by' field.
-        if sender.objects.filter(pk=instance.pk).exists() is False:
+        if (
+            sender.objects.filter(pk=instance.pk).exists() is False
+            and authenticated_user is not None
+        ):
             instance.created_by = authenticated_user
