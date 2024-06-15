@@ -1,46 +1,49 @@
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-from typing import List
 import ast
+import datetime
 import json
+import logging
 import uuid
+from typing import List
+
 from django.contrib import messages
 from django.contrib.auth import logout
-import datetime
-from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
-from api.pricing_ml import pricing
-import logging
 
 from api.models import (
+    AddOn,
+    MainProduct,
+    MainProductAddOn,
+    MainProductCategory,
+    MainProductCategoryInfo,
+    MainProductInfo,
+    MainProductServiceRecurringFrequency,
+    MainProductWasteType,
+    Order,
+    OrderGroup,
+    Product,
+    ProductAddOnChoice,
+    SellerLocation,
+    SellerProduct,
+    SellerProductSellerLocation,
+    ServiceRecurringFrequency,
+    Subscription,
     User,
     UserAddress,
     UserAddressType,
-    Order,
-    Subscription,
-    OrderGroup,
-    MainProductCategory,
-    MainProduct,
-    MainProductInfo,
-    MainProductAddOn,
-    MainProductCategoryInfo,
-    MainProductServiceRecurringFrequency,
-    MainProductWasteType,
-    Product,
-    AddOn,
-    ProductAddOnChoice,
-    SellerProductSellerLocation,
-    SellerProduct,
-    SellerLocation,
-    ServiceRecurringFrequency,
 )
-from billing.models import Invoice
+from api.models.user.user_user_address import UserUserAddress
+from api.pricing_ml import pricing
 from api.utils.utils import decrypt_string
-from notifications.utils import internal_email
+from billing.models import Invoice
+from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
+from notifications.utils import internal_email
 
-from .forms import UserForm, AccessDetailsForm, PlacementDetailsForm, UserAddressForm
+from .forms import AccessDetailsForm, PlacementDetailsForm, UserAddressForm, UserForm
 
 logger = logging.getLogger(__name__)
 
@@ -1056,7 +1059,81 @@ def location_detail(request, location_id):
             }
         )
 
+    # For any request type, get the current UserUserAddress objects.
+    user_user_addresses = (
+        UserUserAddress.objects.filter(user_address_id=location_id)
+        .exclude(user__type=UserType.ADMIN)
+        .select_related("user")
+    )
+
+    context["user_user_addresses"] = user_user_addresses
+
+    # Get the list of UserGroup Users that are not already associated with the SellerLocation.
+    if user_address.user_group:
+        context["non_associated_users"] = User.objects.filter(
+            user_group=user_address.user_group,
+        ).exclude(
+            id__in=[
+                user_user_address.user.id for user_user_address in user_user_addresses
+            ],
+            
+        ).exclude(type=UserType.ADMIN,)
+
+        # Get ADMIN users for this UserGroup.
+        context["admin_users"] = User.objects.filter(
+            user_group_id=user_address.user_group,
+            type=UserType.ADMIN,
+        )
+
     return render(request, "customer_dashboard/location_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def customer_location_user_add(request, user_address_id, user_id):
+
+    user_address = UserAddress.objects.get(id=user_address_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group != user_address.user_group:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserUserAddress.objects.create(
+            user=user,
+            user_address=user_address,
+        )
+        return redirect(
+            reverse(
+                "customer_location_detail",
+                kwargs={
+                    "location_id": user_address_id,
+                },
+            )
+        )
+
+
+@login_required(login_url="/admin/login/")
+def customer_location_user_remove(request, user_address_id, user_id):
+
+    user_address = UserAddress.objects.get(id=user_address_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group != user_address.user_group:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserUserAddress.objects.filter(
+            user=user,
+            user_address=user_address,
+        ).delete()
+        return redirect(
+            reverse(
+                "customer_location_detail",
+                kwargs={
+                    "location_id": user_address_id,
+                },
+            )
+        )
 
 
 @login_required(login_url="/admin/login/")
