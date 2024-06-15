@@ -108,12 +108,12 @@ urlpatterns = [
     ),
     path(
         "supplier/location/<uuid:seller_location_id>/user/<uuid:user_id>/",
-        views.user_seller_location_add,
+        views.seller_location_user_add,
         name="supplier_location_add_user",
     ),
     path(
         "supplier/location/<uuid:seller_location_id>/user/<uuid:user_id>/remove/",
-        views.user_seller_location_remove,
+        views.seller_location_user_remove,
         name="supplier_location_remove_user",
     ),
     path(

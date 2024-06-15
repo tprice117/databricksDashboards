@@ -1,5 +1,6 @@
-from . import views
 from django.urls import path
+
+from . import views
 
 urlpatterns = [
     path("customer/search/", views.customer_search, name="customer_search"),
@@ -24,6 +25,16 @@ urlpatterns = [
         "customer/location/<uuid:location_id>/",
         views.location_detail,
         name="customer_location_detail",
+    ),
+    path(
+        "customer/location/<uuid:user_address_id>/user/<uuid:user_id>/",
+        views.customer_location_user_add,
+        name="customer_location_user_add",
+    ),
+    path(
+        "customer/location/<uuid:user_address_id>/user/<uuid:user_id>/remove/",
+        views.customer_location_user_remove,
+        name="customer_location_user_remove",
     ),
     path("customer/location/new/", views.new_location, name="customer_new_location"),
     path("customer/users/", views.users, name="customer_users"),

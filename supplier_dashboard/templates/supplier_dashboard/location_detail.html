@@ -177,7 +177,7 @@
                         <div>
                             <h4>Users<button class="btn btn-primary float-end" type="button" data-bs-target="#user-seller-location-add-modal" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Add</button></h4>
                         </div>
-                        <p>Users with access to this Location.</p><a class="card-link" href="#"></a>
+                        <p><b>Users with access to this Location.</b></p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
@@ -195,6 +195,29 @@
                                                 <a class="btn btn-danger" role="button" href="{% url 'supplier_location_remove_user' seller_location_id=seller_location.id user_id=user_seller_location.user.id %}"><i class="far fa-trash-alt"></i></a>
                                             </td>
                                         </tr>
+                                    {% empty %}
+                                    <p>No Users</p>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p><b>Admin Users with access to all Locations</b></p>
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for admin_user in admin_users %}
+                                        <tr>
+                                            <td>{{ admin_user.full_name }}</td>
+                                            <td>{{ admin_user.email }}</td>
+                                            <td>
+                                                <a class="btn btn-light" role="button" href="{% url 'supplier_user_detail' user_id=admin_user.id %}"><i class="far fa-eye"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                    <p>No Admin Users</p>
                                     {% endfor %}
                                 </tbody>
                             </table>

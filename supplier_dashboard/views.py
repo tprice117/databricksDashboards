@@ -2205,9 +2205,11 @@ def location_detail(request, location_id):
         )
 
     # For any request type, get the current UserSellerLocation objects.
-    user_seller_locations = UserSellerLocation.objects.filter(
-        seller_location_id=location_id
-    ).select_related("user")
+    user_seller_locations = (
+        UserSellerLocation.objects.filter(seller_location_id=location_id)
+        .exclude(user__type=UserType.ADMIN)
+        .select_related("user")
+    )
 
     context["user_seller_locations"] = user_seller_locations
 
@@ -2216,21 +2218,31 @@ def location_detail(request, location_id):
 
     if UserGroup.objects.filter(seller=seller).exists():
         user_group = UserGroup.objects.get(seller=seller)
-        print(user_group)
-        context["non_associated_users"] = User.objects.filter(
-            user_group=user_group
-        ).exclude(
-            id__in=[
-                user_seller_location.user.id
-                for user_seller_location in user_seller_locations
-            ]
+
+        context["non_associated_users"] = (
+            User.objects.filter(user_group=user_group)
+            .exclude(
+                id__in=[
+                    user_seller_location.user.id
+                    for user_seller_location in user_seller_locations
+                ],
+            )
+            .exclude(
+                type=UserType.ADMIN,
+            )
+        )
+
+        # Get ADMIN users for this UserGroup.
+        context["admin_users"] = User.objects.filter(
+            user_group_id=user_group,
+            type=UserType.ADMIN,
         )
 
     return render(request, "supplier_dashboard/location_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")
-def user_seller_location_add(request, seller_location_id, user_id):
+def seller_location_user_add(request, seller_location_id, user_id):
 
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
@@ -2254,7 +2266,7 @@ def user_seller_location_add(request, seller_location_id, user_id):
 
 
 @login_required(login_url="/admin/login/")
-def user_seller_location_remove(request, seller_location_id, user_id):
+def seller_location_user_remove(request, seller_location_id, user_id):
 
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
