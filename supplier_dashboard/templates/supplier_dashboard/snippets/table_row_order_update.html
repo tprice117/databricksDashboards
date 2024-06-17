@@ -2,12 +2,22 @@
 <tr id="order_row_{{forloop.counter}}" 
     class="clickable-row" onclick="window.location.href='{% url 'supplier_booking_detail' order_id=order.id %}'"
     _="on load transition my opacity to 0.3 over 1.5 seconds then remove me">
+    {% if request.user.is_staff %}
+        <td>{{order.order_group.seller_product_seller_location.seller_location.seller.name}}</td>
+    {% endif %}
     <td>{{order.end_date}}</td>
     <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
     </td>
     <td>{{order.order_group.user_address.formatted_address}}</td>
     <td>{{order.order_type}}</td>
     <td class="order-status-td">{{order.status}}</td>
+    {% if request.user.is_staff %}
+        {% if order.submitted_on %}
+            <td>{{order.submitted_on|timesince}}</td>
+        {% else %}
+            <td>Not Submitted</td>
+        {% endif %}
+    {% endif %}
     {% if order.status == "PENDING" %}
     <td>
         <span id="accept-button-container">
