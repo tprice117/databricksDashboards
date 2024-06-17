@@ -93,6 +93,7 @@ def pre_save_user_group_admin_approval_order(
 
         if instance._state.adding and instance.created_by:
             is_admin = instance.created_by.type == UserType.ADMIN
+            print("Created By Type: ", instance.created_by.type)
             print("Is Admin: ", is_admin)
             is_staff = instance.created_by.is_staff
             print("Is Staff: ", is_staff)
