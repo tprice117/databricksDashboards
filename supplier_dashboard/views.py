@@ -211,6 +211,190 @@ def get_user(request: HttpRequest) -> User:
     return user
 
 
+def get_seller_user_objects(request: HttpRequest, user: User, seller: Seller):
+    """Returns the users for the current seller.
+
+    If user is:
+        - staff, then all users for all of sellers are returned.
+        - not staff
+            - is admin, then return all users for the seller.
+            - not admin, then only users in the logged in user's user group.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        seller (Seller): Seller object.
+
+    Returns:
+        QuerySet[User]: The users queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        seller_users = User.objects.filter(user_group_id=user.user_group_id)
+    else:
+        if seller:
+            seller_users = User.objects.filter(user_group__seller_id=seller.id)
+        else:
+            seller_users = User.objects.filter(user_group__seller__isnull=False)
+    return seller_users
+
+
+def get_booking_objects(request: HttpRequest, user: User, seller: Seller):
+    """Returns the orders for the current seller.
+
+    If user is:
+        - staff, then all orders for all of sellers are returned.
+        - not staff
+            - is admin, then return all orders for the seller.
+            - not admin, then only orders for the seller locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        seller (Seller): Seller object.
+
+    Returns:
+        QuerySet[Order]: The orders queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        seller_location_ids = (
+            UserSellerLocation.objects.filter(user_id=user.id)
+            .select_related("seller_location")
+            .values_list("seller_location_id", flat=True)
+        )
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_location__in=seller_location_ids
+        )
+        orders = orders.filter(submitted_on__isnull=False)
+    else:
+        if seller:
+            orders = Order.objects.filter(
+                order_group__seller_product_seller_location__seller_product__seller_id=seller.id
+            )
+
+            if not request.user.is_staff:
+                orders = orders.filter(submitted_on__isnull=False)
+        else:
+            orders = Order.objects.all()
+    return orders
+
+
+def get_payout_objects(request: HttpRequest, user: User, seller: Seller):
+    """Returns the payouts for the current seller.
+
+    If user is:
+        - staff, then all payouts for all of sellers are returned.
+        - not staff
+            - is admin, then return all payouts for the seller.
+            - not admin, then only payouts for the seller locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        seller (Seller): Seller object.
+
+    Returns:
+        QuerySet[Payout]: The payouts queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        seller_location_ids = (
+            UserSellerLocation.objects.filter(user_id=user.id)
+            .select_related("seller_location")
+            .values_list("seller_location_id", flat=True)
+        )
+        payouts = Payout.objects.filter(
+            order__order_group__seller_product_seller_location__seller_location__in=seller_location_ids
+        )
+    else:
+        if seller:
+            payouts = Payout.objects.filter(
+                order__order_group__seller_product_seller_location__seller_product__seller_id=seller.id
+            )
+        else:
+            payouts = Payout.objects.all()
+    return payouts
+
+
+def get_location_objects(request: HttpRequest, user: User, seller: Seller):
+    """Returns the locations for the current seller.
+
+    If user is:
+        - staff, then all locations for all of sellers are returned.
+        - not staff
+            - is admin, then return all locations for the seller.
+            - not admin, then only locations for the seller locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        seller (Seller): Seller object.
+
+    Returns:
+        QuerySet[Location]: The locations queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_seller_locations = UserSellerLocation.objects.filter(
+            user_id=user.id
+        ).select_related("seller_location")
+        user_seller_locations = user_seller_locations.order_by(
+            "-seller_location__created_on"
+        )
+        seller_locations = [
+            user_seller_location.seller_location
+            for user_seller_location in user_seller_locations
+        ]
+    else:
+        if seller:
+            seller_locations = SellerLocation.objects.filter(seller_id=seller.id)
+            seller_locations = seller_locations.order_by("-created_on")
+        else:
+            seller_locations = SellerLocation.objects.all()
+            seller_locations = seller_locations.order_by("seller__name", "-created_on")
+    return seller_locations
+
+
+def get_recieved_invoice_objects(request: HttpRequest, user: User, seller: Seller):
+    """Returns the invoices for the current seller.
+
+    If user is:
+        - staff, then all invoices for all of sellers are returned.
+        - not staff
+            - is admin, then return all invoices for the seller.
+            - not admin, then only invoices for the seller locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        seller (Seller): Seller object.
+
+    Returns:
+        QuerySet[SellerInvoicePayable]: The invoices queryset.
+    """
+
+    if not user.is_staff and user.type != UserType.ADMIN:
+        seller_location_ids = (
+            UserSellerLocation.objects.filter(user_id=user.id)
+            .select_related("seller_location")
+            .values_list("seller_location_id", flat=True)
+        )
+        invoices = SellerInvoicePayable.objects.filter(
+            seller_location__in=seller_location_ids
+        )
+    else:
+        if seller:
+            invoices = SellerInvoicePayable.objects.filter(
+                seller_location__seller_id=seller.id
+            )
+        else:
+            invoices = SellerInvoicePayable.objects.all()
+    if request.user.is_staff:
+        invoices = invoices.select_related("seller_location__seller")
+        invoices = invoices.order_by("seller_location__seller__name", "-invoice_date")
+    else:
+        invoices = invoices.select_related("seller_location")
+        invoices = invoices.order_by("-invoice_date")
+    return invoices
+
+
 ########################
 # Page views
 ########################
@@ -252,9 +436,17 @@ def supplier_impersonation_start(request):
         try:
             seller = Seller.objects.get(id=seller_id)
             user = seller.usergroup.users.filter(type=UserType.ADMIN).first()
+            if not user:
+                raise User.DoesNotExist
             # user = User.objects.get(id=user_id)
             request.session["user_id"] = get_json_safe_value(user.id)
             request.session["seller_id"] = get_json_safe_value(seller_id)
+            return HttpResponseRedirect("/supplier/")
+        except User.DoesNotExist:
+            messages.error(
+                request,
+                "No admin user found for seller. Seller must have at least one admin user.",
+            )
             return HttpResponseRedirect("/supplier/")
         except Exception:
             return HttpResponse("Not Found", status=404)
@@ -280,14 +472,7 @@ def index(request):
     context["seller"] = get_seller(request)
 
     if request.headers.get("HX-Request"):
-        if context["seller"]:
-            orders = Order.objects.filter(
-                order_group__seller_product_seller_location__seller_product__seller_id=context[
-                    "seller"
-                ].id
-            )
-        else:
-            orders = Order.objects.all()
+        orders = get_booking_objects(request, context["user"], context["seller"])
         orders = orders.select_related(
             "order_group__seller_product_seller_location__seller_product__seller",
             "order_group__user_address",
@@ -365,18 +550,17 @@ def index(request):
         context["earnings_by_category"] = final_categories
         # print(final_categories)
         context["pending_count"] = pending_count
-        if context["seller"]:
-            seller_locations = SellerLocation.objects.filter(
-                seller_id=context["seller"].id
-            )
-            seller_users = User.objects.filter(
-                user_group__seller_id=context["seller"].id
-            )
-        else:
-            seller_locations = SellerLocation.objects.all()
-            seller_users = User.objects.filter(user_group__seller__isnull=False)
+        seller_locations = get_location_objects(
+            request, context["user"], context["seller"]
+        )
+        seller_users = get_seller_user_objects(
+            request, context["user"], context["seller"]
+        )
         # context["pending_count"] = orders.count()
-        context["location_count"] = seller_locations.count()
+        if isinstance(seller_locations, list):
+            context["location_count"] = len(seller_locations)
+        else:
+            context["location_count"] = seller_locations.count()
         context["user_count"] = seller_users.count()
 
         context["chart_data"] = get_dashboard_chart_data(earnings_by_month)
@@ -645,24 +829,7 @@ def users(request):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    if context["seller"]:
-        seller = context["seller"]
-    else:
-        if hasattr(request.user, "user_group") and hasattr(
-            request.user.user_group, "seller"
-        ):
-            seller = request.user.user_group.seller
-            messages.warning(
-                request,
-                f"No seller selected! Using current staff user's seller [{seller.name}].",
-            )
-        else:
-            # Get first available seller.
-            seller = Seller.objects.all().first()
-            messages.warning(
-                request,
-                f"No seller selected! Using first seller found: [{seller.name}].",
-            )
+
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -672,7 +839,7 @@ def users(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    users = User.objects.filter(user_group_id=context["user"].user_group_id)
+    users = get_seller_user_objects(request, context["user"], context["seller"])
     if date:
         users = users.filter(date_joined__date=date)
     users = users.order_by("-date_joined")
@@ -785,7 +952,6 @@ def user_detail(request, user_id):
                 user.photo = None
                 save_db = True
             if save_db:
-                context["user"] = user
                 user.save()
                 messages.success(request, "Successfully saved!")
             else:
@@ -901,6 +1067,7 @@ def bookings(request):
         link_params["location_id"] = request.GET.get("location_id")
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
+    orders = get_booking_objects(request, context["user"], context["seller"])
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         query_params = request.GET.copy()
@@ -914,18 +1081,6 @@ def bookings(request):
         ]:
             tab = Order.Status.PENDING
         tab_status = tab.upper()
-        if context["seller"]:
-            orders = Order.objects.filter(
-                order_group__seller_product_seller_location__seller_product__seller_id=context[
-                    "seller"
-                ].id
-            )
-
-            if not request.user.is_staff:
-                orders = orders.filter(submitted_on__isnull=False)
-        else:
-            orders = Order.objects.all()
-
         # orders = orders.filter(status=tab_status)
         # TODO: Check the delay for a seller with large number of orders, like Hillen.
         # if status.upper() != Order.Status.PENDING:
@@ -1011,14 +1166,6 @@ def bookings(request):
         )
     else:
         # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
-        if context["seller"]:
-            orders = Order.objects.filter(
-                order_group__seller_product_seller_location__seller_product__seller_id=context[
-                    "seller"
-                ].id
-            )
-        else:
-            orders = Order.objects.all()
         if link_params.get("service_date", None) is not None:
             orders = orders.filter(end_date=link_params["service_date"])
         if link_params.get("location_id", None) is not None:
@@ -1105,14 +1252,7 @@ def download_bookings(request):
         Order.Status.CANCELLED,
     ]:
         tab = Order.Status.PENDING
-    if context["seller"]:
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ].id
-        )
-    else:
-        orders = Order.objects.all()
+    orders = get_booking_objects(request, context["user"], context["seller"])
 
     orders = orders.filter(status=tab)
 
@@ -1174,6 +1314,7 @@ def download_bookings(request):
 @login_required(login_url="/admin/login/")
 def update_order_status(request, order_id, accept=True, complete=False):
     context = {}
+    context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     service_date = None
     if request.method == "POST":
@@ -1202,14 +1343,9 @@ def update_order_status(request, order_id, accept=True, complete=False):
                     order.status = Order.Status.COMPLETE
                 order.save()
                 # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
-                if context["seller"]:
-                    orders = Order.objects.filter(
-                        order_group__seller_product_seller_location__seller_product__seller_id=context[
-                            "seller"
-                        ].id
-                    )
-                else:
-                    orders = Order.objects.all()
+                orders = get_booking_objects(
+                    request, context["user"], context["seller"]
+                )
                 if service_date:
                     orders = orders.filter(end_date=service_date)
                 # orders = orders.filter(Q(status=Order.Status.SCHEDULED) | Q(status=Order.Status.PENDING))
@@ -1442,14 +1578,7 @@ def payouts(request):
     context["seller"] = get_seller(request)
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
-        if context["seller"]:
-            payouts = Payout.objects.filter(
-                order__order_group__seller_product_seller_location__seller_product__seller_id=context[
-                    "seller"
-                ].id
-            )
-        else:
-            payouts = Payout.objects.all()
+        payouts = get_payout_objects(request, context["user"], context["seller"])
         if location_id:
             payouts = payouts.filter(
                 order__order_group__seller_product_seller_location__seller_location_id=location_id
@@ -1457,7 +1586,7 @@ def payouts(request):
         if service_date:
             # filter orders by their payouts created_on date
             payouts = payouts.filter(created_on__date=service_date)
-        if context["seller"] is None:
+        if request.user.is_staff:
             payouts = payouts.select_related(
                 "order__order_group__seller_product_seller_location__seller_location__seller"
             )
@@ -1522,19 +1651,13 @@ def payouts(request):
 def payouts_metrics(request):
     if request.method == "GET":
         location_id = request.GET.get("location_id", None)
-    service_date = request.GET.get("service_date", None)
+    # service_date = request.GET.get("service_date", None)
     context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    if context["seller"]:
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ].id
-        )
-    else:
-        orders = Order.objects.all()
+    orders = get_booking_objects(request, context["user"], context["seller"])
+
     if location_id:
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
@@ -1545,7 +1668,7 @@ def payouts_metrics(request):
     #     # filter orders by their payouts created_on date
     #     orders = orders.filter(payouts__created_on__date=service_date)
     orders = orders.prefetch_related("order_line_items")
-    if context["seller"] is None:
+    if request.user.is_staff:
         orders = orders.select_related(
             "order_group__seller_product_seller_location__seller_location__seller"
         )
@@ -1621,14 +1744,7 @@ def download_payouts(request):
     service_date = request.GET.get("service_date", None)
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    if context["seller"]:
-        orders = Order.objects.filter(
-            order_group__seller_product_seller_location__seller_product__seller_id=context[
-                "seller"
-            ].id
-        )
-    else:
-        orders = Order.objects.all()
+    orders = get_booking_objects(request, context["user"], context["seller"])
     if location_id:
         orders = orders.filter(
             order_group__seller_product_seller_location__seller_location_id=location_id
@@ -1639,7 +1755,7 @@ def download_payouts(request):
     #     # filter orders by their payouts created_on date
     #     orders = orders.filter(payouts__created_on__date=service_date)
     orders = orders.prefetch_related("payouts", "order_line_items")
-    if context["seller"] is None:
+    if request.user.is_staff:
         orders = orders.select_related(
             "order_group__seller_product_seller_location__seller_location__seller"
         )
@@ -1655,7 +1771,7 @@ def download_payouts(request):
             payouts_query = order.payouts.filter(created_on__date=service_date)
         else:
             payouts_query = order.payouts.all()
-        if context["seller"] is None:
+        if request.user.is_staff:
             payouts_query = payouts_query.select_related(
                 "order__order_group__seller_product_seller_location__seller_location__seller"
             )
@@ -1703,14 +1819,9 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
-        if context["seller"]:
-            seller_locations = SellerLocation.objects.filter(
-                seller_id=context["seller"].id
-            )
-            seller_locations = seller_locations.order_by("-created_on")
-        else:
-            seller_locations = SellerLocation.objects.all()
-            seller_locations = seller_locations.order_by("seller__name", "-created_on")
+        seller_locations = get_location_objects(
+            request, context["user"], context["seller"]
+        )
 
         seller_locations_lst = []
         context["tab"] = tab
@@ -1809,12 +1920,7 @@ def download_locations(request):
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     tab = request.GET.get("tab", None)
-    if context["seller"]:
-        seller_locations = SellerLocation.objects.filter(seller_id=context["seller"].id)
-        seller_locations = seller_locations.order_by("-created_on")
-    else:
-        seller_locations = SellerLocation.objects.all()
-        seller_locations = seller_locations.order_by("seller__name", "-created_on")
+    seller_locations = get_location_objects(request, context["user"], context["seller"])
 
     seller_locations_lst = []
     for seller_location in seller_locations:
@@ -2302,20 +2408,11 @@ def received_invoices(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    if context["seller"]:
-        invoices = SellerInvoicePayable.objects.filter(
-            seller_location__seller_id=context["seller"].id
-        )
-    else:
-        invoices = SellerInvoicePayable.objects.all()
+    invoices = get_recieved_invoice_objects(request, context["user"], context["seller"])
+
     if service_date:
         invoices = invoices.filter(invoice_date=service_date)
-    if context["seller"]:
-        invoices = invoices.select_related("seller_location")
-        invoices = invoices.order_by("-invoice_date")
-    else:
-        invoices = invoices.select_related("seller_location__seller")
-        invoices = invoices.order_by("seller_location__seller__name", "-invoice_date")
+
     paginator = Paginator(invoices, pagination_limit)
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
