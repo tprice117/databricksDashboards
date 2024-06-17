@@ -4,7 +4,7 @@ from django.views.generic.base import RedirectView
 from rest_framework import routers
 
 from api import views
-from api_proxy import post_login_router
+from api_proxy import login_router
 
 router = routers.DefaultRouter()
 router.register(
@@ -101,7 +101,8 @@ router.register(r"orders-for-seller", views.OrdersForSellerViewSet, "api")
 
 urlpatterns = [
     # Login Redirect.
-    path("", post_login_router.post_login_router, name="post_login_router"),
+    path("", login_router.post_login_router, name="post_login_router"),
+    path("admin/login/", login_router.login_view, name="login"),
     path("admin/", admin.site.urls),
     path("oidc/", include("mozilla_django_oidc.urls")),
     # START: API URLs.
