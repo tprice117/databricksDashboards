@@ -3,7 +3,7 @@
     <script>
         document.body.addEventListener("htmx:afterSettle", function (event) {
             let dropdownMenu = document.querySelector(".navbar-search-dropdown");
-            if (dropdownMenu.classList.contains("show")) {
+            if (dropdownMenu && dropdownMenu.classList.contains("show")) {
                 let input = document.querySelector('input[name="search"]');
                 if (input) {
                     input.focus();
