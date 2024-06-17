@@ -80,6 +80,7 @@ def pre_save_user_group_admin_approval_order(
     # the created_by field not being set during this signal.
     if issubclass(sender, BaseModel):
         base_model_pre_save(sender, instance, **kwargs)
+    print("Created By: ", instance.created_by)
 
     # If old_status is not PENDING, throw an error.
     if not instance._state.adding and not old_status == ApprovalStatus.PENDING:
@@ -92,7 +93,9 @@ def pre_save_user_group_admin_approval_order(
 
         if instance._state.adding and instance.created_by:
             is_admin = instance.created_by.type == UserType.ADMIN
+            print("Is Admin: ", is_admin)
             is_staff = instance.created_by.is_staff
+            print("Is Staff: ", is_staff)
             has_policy = (
                 hasattr(instance.user_group, "policy_invitation_approvals")
                 and instance.user_group.policy_invitation_approvals.filter(
@@ -100,6 +103,7 @@ def pre_save_user_group_admin_approval_order(
                 ).first()
                 is not None
             )
+            print("Has Policy: ", has_policy)
 
             if is_admin or is_staff or not has_policy:
                 # If the UserGroupAdminApprovalUserInvite is being created by an ADMIN
