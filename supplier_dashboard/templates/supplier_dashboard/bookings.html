@@ -253,9 +253,12 @@
         document.getElementById("service-date-sort").addEventListener("click", function (e) {
             selectSortHeader(e.target);
         });
-        document.getElementById("submitted-on-sort").addEventListener("click", function (e) {
-            selectSortHeader(e.target);
-        });
+        let submittedOnSort = document.getElementById("submitted-on-sort");
+        if (submittedOnSort) {
+            submittedOnSort.addEventListener("click", function (e) {
+                selectSortHeader(e.target);
+            });
+        }
     </script>
 {% endblock %}
 {% block content %}
