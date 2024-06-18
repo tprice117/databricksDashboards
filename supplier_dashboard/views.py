@@ -1847,7 +1847,7 @@ def locations(request):
                 context["tax_missing"] += 1
                 if tab == "tax":
                     seller_locations_lst.append(seller_location)
-            if seller_location.is_insurance_expiring_soon:
+            if is_insurance_compliant and seller_location.is_insurance_expiring_soon:
                 context["insurance_expiring"] += 1
                 if tab == "insurance_expiring":
                     seller_locations_lst.append(seller_location)
@@ -1935,7 +1935,7 @@ def download_locations(request):
         elif not is_tax_compliant:
             if tab == "tax":
                 seller_locations_lst.append(seller_location)
-        if seller_location.is_insurance_expiring_soon:
+        if is_insurance_compliant and seller_location.is_insurance_expiring_soon:
             if tab == "insurance_expiring":
                 seller_locations_lst.append(seller_location)
         if seller_location.is_payout_setup is False:
@@ -1980,10 +1980,33 @@ def download_locations(request):
             else:
                 payout_method = "Check"
         insurance_status = "Insurance Verification Required"
-        if seller_location.is_insurance_expiring_soon:
-            insurance_status = "Expiring Soon"
-        elif seller_location.is_insurance_compliant:
-            insurance_status = "Compliant"
+        if seller_location.is_insurance_compliant:
+            if seller_location.is_insurance_expiring_soon:
+                if (
+                    seller_location.gl_coi_expiration_date
+                    < seller_location.auto_coi_expiration_date
+                    and seller_location.gl_coi_expiration_date
+                    < seller_location.workers_comp_coi_expiration_date
+                ):
+                    insurance_status = f'Expiring Soon | {seller_location.gl_coi_expiration_date.strftime("%Y-%m-%d")} (GL)'
+                elif (
+                    seller_location.auto_coi_expiration_date
+                    < seller_location.gl_coi_expiration_date
+                    and seller_location.auto_coi_expiration_date
+                    < seller_location.workers_comp_coi_expiration_date
+                ):
+                    insurance_status = f'Expiring Soon | {seller_location.auto_coi_expiration_date.strftime("%Y-%m-%d")} (Auto)'
+                elif (
+                    seller_location.workers_comp_coi_expiration_date
+                    < seller_location.gl_coi_expiration_date
+                    and seller_location.workers_comp_coi_expiration_date
+                    < seller_location.auto_coi_expiration_date
+                ):
+                    insurance_status = f'Expiring Soon | {seller_location.workers_comp_coi_expiration_date.strftime("%Y-%m-%d")} (Workers Comp)'
+                else:
+                    insurance_status = f'Expiring Soon | {seller_location.workers_comp_coi_expiration_date.strftime("%Y-%m-%d")} (All)'
+            else:
+                insurance_status = "Compliant"
         tax_status = "Missing Tax Info"
         if seller_location.is_tax_compliant:
             tax_status = "Compliant"
