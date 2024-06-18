@@ -30,10 +30,12 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if seller_location.is_insurance_expiring_soon %}
-                        <i class="fas fa-check-circle text-warning"></i> Expiring Soon
-                    {% elif seller_location.is_insurance_compliant %}
-                        <i class="fas fa-check-circle text-success"></i> Compliant
+                    {% if seller_location.is_insurance_compliant %}
+                        {% if seller_location.is_insurance_expiring_soon %}
+                            <i class="fas fa-check-circle text-warning"></i> Expiring Soon
+                        {% else %}
+                            <i class="fas fa-check-circle text-success"></i> Compliant
+                        {% endif %}
                     {% else %}
                         <i class="fas fa-times-circle text-danger"></i> Insurance Verification Required
                     {% endif %}

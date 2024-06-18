@@ -64,20 +64,20 @@ class SellerLocation(BaseModel):
 
     @property
     def is_insurance_expiring_soon(self):
-        """Returns true if any of the insurance policies are expiring within 30 days.
+        """Returns true if any of the insurance policies are expiring within 60 days.
         NOTE: Null expiration dates will not trigger this, that case is considered non compliant.
         """
         today = datetime.date.today()
+        grace_date = today + datetime.timedelta(days=60)
         if (
             self.gl_coi_expiration_date
             and self.auto_coi_expiration_date
             and self.workers_comp_coi_expiration_date
         ):
             return (
-                self.gl_coi_expiration_date < today + datetime.timedelta(days=30)
-                or self.auto_coi_expiration_date < today + datetime.timedelta(days=30)
-                or self.workers_comp_coi_expiration_date
-                < today + datetime.timedelta(days=30)
+                (today <= self.gl_coi_expiration_date <= grace_date)
+                or (today <= self.auto_coi_expiration_date <= grace_date)
+                or (today <= self.workers_comp_coi_expiration_date <= grace_date)
             )
         else:
             return False
