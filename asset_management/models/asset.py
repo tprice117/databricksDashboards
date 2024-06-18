@@ -10,7 +10,6 @@ from asset_management.models.asset_model import AssetModel
 from common.models import BaseModel
 
 
-@track_data("seller_location")
 class Asset(BaseModel):
     seller_location = models.ForeignKey(
         SellerLocation,
@@ -37,10 +36,11 @@ class Asset(BaseModel):
 def asset_pre_save(sender, instance: Asset, **kwargs):
     # If the asset is being updated and the seller location has changed, ensure both
     # SellerLocation instances are associated with the same seller.
-    if not instance._state.adding and instance.has_changed("seller_location"):
-        old_seller_location = instance.old_value("seller_location")
-        new_seller_location = instance.seller_location.seller
-        if old_seller_location != new_seller_location:
+    if not instance._state.adding:
+        # Get the old Asset instance.
+        old_asset = Asset.objects.get(pk=instance.pk)
+
+        if old_asset.seller_location.seller != instance.seller_location.seller:
             raise ValidationError(
                 "The new SellerLocation must be associated with the same Seller."
             )

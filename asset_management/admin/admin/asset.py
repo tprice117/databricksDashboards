@@ -22,8 +22,9 @@ class AssetAdmin(admin.ModelAdmin):
         "serial_number",
     )
     autocomplete_fields = [
-        "model",
         "seller_location",
+        "main_product",
+        "model",
     ]
     inlines = [
         AssetHoursInline,

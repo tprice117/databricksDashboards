@@ -13,6 +13,10 @@ class AssetHours(BaseModel):
     )
     hours = models.IntegerField()
 
+    class Meta:
+        verbose_name = "Asset Hours"
+        verbose_name_plural = "Asset Hours"
+
     def clean(self):
         super().clean()
 
