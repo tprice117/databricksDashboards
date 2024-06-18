@@ -654,8 +654,10 @@ def company(request):
     if context["seller"]:
         seller = context["seller"]
     else:
-        if hasattr(request.user, "user_group") and hasattr(
-            request.user.user_group, "seller"
+        if (
+            hasattr(request.user, "user_group")
+            and hasattr(request.user.user_group, "seller")
+            and request.user.user_group.seller
         ):
             seller = request.user.user_group.seller
             messages.warning(
@@ -999,8 +1001,8 @@ def user_detail(request, user_id):
 
 @login_required(login_url="/admin/login/")
 def new_user(request):
+    # TODO: Add a form to select one or more SellerLocations to associate the user with.
     context = {}
-    # TODO: Only allow admin to create new users.
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     if request.method == "POST":
@@ -1042,6 +1044,11 @@ def new_user(request):
             for field in e.form.errors:
                 e.form[field].field.widget.attrs["class"] += " is-invalid"
     else:
+        if context["seller"] is None:
+            messages.warning(
+                request,
+                f"No seller selected! This user would be added to your own UserGroup. {context['user'].user_group.name}",
+            )
         context["form"] = UserForm(auth_user=context["user"])
         context["form"].fields["email"].required = True
         context["form"].fields["email"].disabled = False
