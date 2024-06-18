@@ -4,6 +4,7 @@
     _="on load transition my opacity to 0.3 over 1.5 seconds then remove me">
     {% if request.user.is_staff %}
         <td>{{order.order_group.seller_product_seller_location.seller_location.seller.name}}</td>
+        <td>{{order.order_group.user.full_name}}</td>
     {% endif %}
     <td>{{order.end_date}}</td>
     <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
