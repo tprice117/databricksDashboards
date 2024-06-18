@@ -68,25 +68,16 @@ class SellerLocation(BaseModel):
         NOTE: Null expiration dates will not trigger this, that case is considered non compliant.
         """
         today = datetime.date.today()
-        grace_date = today - datetime.timedelta(days=60)
+        grace_date = today + datetime.timedelta(days=60)
         if (
             self.gl_coi_expiration_date
             and self.auto_coi_expiration_date
             and self.workers_comp_coi_expiration_date
         ):
             return (
-                (
-                    self.gl_coi_expiration_date >= grace_date
-                    and today <= self.gl_coi_expiration_date
-                )
-                or (
-                    self.auto_coi_expiration_date >= grace_date
-                    and today <= self.auto_coi_expiration_date
-                )
-                or (
-                    self.workers_comp_coi_expiration_date >= grace_date
-                    and today <= self.workers_comp_coi_expiration_date
-                )
+                (today <= self.gl_coi_expiration_date <= grace_date)
+                or (today <= self.auto_coi_expiration_date <= grace_date)
+                or (today <= self.workers_comp_coi_expiration_date <= grace_date)
             )
         else:
             return False
