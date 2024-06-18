@@ -385,7 +385,7 @@
                             <tr>
                                 {% if request.user.is_staff %}
                                     <th>Seller</th>
-                                    <th>User</th>
+                                    <th>Created By</th>
                                     {% comment %} <th class="clickable-header" id="seller-sort" data-state="0" data-sort="order_group__seller_product_seller_location__seller_location__seller__name" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="onSellerSort" hx-indicator="#htmx-indicator-loading-status">Seller</th> {% endcomment %}
                                 {% endif %}
                                 <th class="clickable-header" id="service-date-sort" data-state="-end_date" data-sort="end_date" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="onServiceDateSort" hx-indicator="#htmx-indicator-loading-status">Service Date</th>
@@ -407,7 +407,7 @@
                                         <strong>Seller</strong>
                                     </td>
                                     <td>
-                                        <strong>User</strong>
+                                        <strong>Created By</strong>
                                     </td>
                                 {% endif %}
                                 <td>
