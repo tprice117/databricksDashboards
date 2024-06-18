@@ -9,10 +9,7 @@ class AssetModelAdmin(admin.ModelAdmin):
         "name",
         "asset_model__name",
     ]
-    list_display = (
-        "asset_make__name",
-        "name",
-    )
+    list_display = ("__str__",)
 
     def has_module_permission(self, request):
         return False
