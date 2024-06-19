@@ -1025,6 +1025,7 @@ def new_user(request):
                     last_name=last_name,
                     email=email,
                     type=user_type,
+                    redirect_url="/supplier/",
                 )
                 if phone:
                     user.phone = phone

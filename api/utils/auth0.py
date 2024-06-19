@@ -107,10 +107,10 @@ def invite_user(user):
                 {
                     "message": {
                         "headers": {
-                            "reply-to": "dispatch@trydownstream.com",
+                            "reply-to": "support@trydownstream.com",
                         },
                         "from_name": "Downstream",
-                        "from_email": "dispatch@trydownstream.com",
+                        "from_email": "support@trydownstream.com",
                         "to": [
                             {"email": user.email},
                         ],

@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.conf import settings
 
 
 def post_login_router(request):
@@ -33,3 +34,16 @@ def login_view(request):
         return response
     else:
         return render(request, "admin/login.html")
+
+
+def login_redirect_view(request):
+    """Auth0 Tenant Login URI points here. Redirect to the correct page after login."""
+    if request.user.is_anonymous:
+        return redirect(settings.BASE_URL)
+    else:
+        if request.user.redirect_url:
+            # TODO: Test this, but maybe it redirect_url should be deleted after use, so that subsequent
+            # logins don't perform this, allowing the user to return to the last page they were on, on login.
+            return redirect(request.user.redirect_url)
+        else:
+            return redirect(settings.BASE_URL)
