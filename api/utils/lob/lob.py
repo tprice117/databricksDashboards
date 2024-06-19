@@ -11,6 +11,7 @@ check = lob.sendPhysicalCheck(
 )
 ```
 """
+
 from typing import List, Union, Literal
 from dataclasses import dataclass
 import logging
@@ -42,32 +43,35 @@ if settings.ENVIRONMENT == "TEST":
 
 
 @dataclass
-class CheckResponse():
+class CheckResponse:
     from dataclasses import dataclass
+
     id: str  # Checkbook ID
     check_number: int  # Check number
 
 
 @dataclass
-class CheckErrorResponse():
+class CheckErrorResponse:
     status_code: int
     message: str
 
 
 @dataclass
-class CheckRemittanceHTMLResponse():
+class CheckRemittanceHTMLResponse:
     html: str
     description: str
     is_attachment: bool
 
 
 @dataclass
-class CheckRemittanceVariableResponse():
+class CheckRemittanceVariableResponse:
     merge_variables: MergeVariables
     description: str
 
 
-def get_check_remittance_page_html(remittance_advice: List[str], top_padding="3.65") -> str:
+def get_check_remittance_page_html(
+    remittance_advice: List[str], top_padding="3.65"
+) -> str:
     """Get the HTML for a single remittance advice page.
 
     Args:
@@ -77,7 +81,7 @@ def get_check_remittance_page_html(remittance_advice: List[str], top_padding="3.
     Returns:
         str: HTML for a single remittance advice page.
     """
-    return f'''<div style="padding-top:{top_padding}in; padding-left: .12in; padding-right: .12in; font-family: Thicccboi,Arial,sans-serif; font-size: 11pt; width: 8.5in; height:11in;">
+    return f"""<div style="padding-top:{top_padding}in; padding-left: .12in; padding-right: .12in; font-family: Thicccboi,Arial,sans-serif; font-size: 11pt; width: 8.5in; height:11in;">
     <h2 style="text-align: center; font-size: 1.8em;">Remittance Advice</h2>
     <table style="border-collapse: separate; width: 100%; border-radius: 10px; border: solid #ddd 1px; padding: 3px;">
         <thead>
@@ -92,11 +96,15 @@ def get_check_remittance_page_html(remittance_advice: List[str], top_padding="3.
             {''.join(remittance_advice) if remittance_advice else '<td colspan="4">No orders found.</td>'}
         </tbody>
     </table>
-    '''
+    """
 
 
 def get_check_remittance_item_html(
-    seller_invoice_id: str, total: str, description: str, end_date: str, line_background="#ffffff"
+    seller_invoice_id: str,
+    total: str,
+    description: str,
+    end_date: str,
+    line_background="#ffffff",
 ) -> str:
     """Get the HTML for a single remittance advice item.
 
@@ -110,15 +118,17 @@ def get_check_remittance_item_html(
     Returns:
         str: Complete HTML for a single remittance advice item.
     """
-    return f'''<tr style="background-color: {line_background};">
+    return f"""<tr style="background-color: {line_background};">
             <td style="border-left: none; padding: 7px;">{seller_invoice_id}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{total}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{description[:64]} this is a long description</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{end_date}</td></tr>
-            '''
+            """
 
 
-def get_check_remittance_html(seller_invoice_str: str, orders: List[Order]) -> CheckRemittanceHTMLResponse:
+def get_check_remittance_html(
+    seller_invoice_str: str, orders: List[Order]
+) -> CheckRemittanceHTMLResponse:
     """Get the HTML for the remittance advice on the check. If there are more than 6 orders, the remittance advice
     will be an attachment. If there are 6 or fewer orders, the remittance advice will be added to the check bottom.
     check_bottom must conform to the size in this template:
@@ -155,14 +165,17 @@ def get_check_remittance_html(seller_invoice_str: str, orders: List[Order]) -> C
             get_check_remittance_item_html(
                 seller_invoice_str,
                 f"${float(order.seller_price() - total_paid_to_seller):.2f}",
-                description, order.end_date.strftime("%d/%m/%Y"),
-                line_background=line_background
+                description,
+                order.end_date.strftime("%d/%m/%Y"),
+                line_background=line_background,
             )
         )
         line_background = "#ffffff" if line_background == "#e6fafa" else "#e6fafa"
 
         if i % 13 == 0 and i != 0:
-            remittance_advice_html += get_check_remittance_page_html(remittance_advice, top_padding=".12")
+            remittance_advice_html += get_check_remittance_page_html(
+                remittance_advice, top_padding=".12"
+            )
             remittance_advice = []
 
     if len(orders) > CHECK_BOTTOM_ITEM_LIMIT:
@@ -176,14 +189,20 @@ def get_check_remittance_html(seller_invoice_str: str, orders: List[Order]) -> C
         # If there are less than 6 orders, add padding to the top of the remittance advice because this
         # will be attached to the check bottom. If there are more than 6 orders, the remittance advice will
         # be a separate attachment, so do not add the padding.
-        remittance_advice_html += get_check_remittance_page_html(remittance_advice, top_padding=top_padding)
+        remittance_advice_html += get_check_remittance_page_html(
+            remittance_advice, top_padding=top_padding
+        )
 
     return CheckRemittanceHTMLResponse(
-        html=remittance_advice_html, is_attachment=is_attachment, description=description
+        html=remittance_advice_html,
+        is_attachment=is_attachment,
+        description=description,
     )
 
 
-def get_check_remittance_variable(seller_invoice_str: str, orders: List[Order]) -> CheckRemittanceHTMLResponse:
+def get_check_remittance_variable(
+    seller_invoice_str: str, orders: List[Order]
+) -> CheckRemittanceHTMLResponse:
     """Get merge variables for the remittance advice on the check. This assumes that the remittance advice will be
     added as an attachment to the check and will use a template already in Lob.com.
     API Docs on templates: https://help.lob.com/print-and-mail/designing-mail-creatives/dynamic-personalization
@@ -196,9 +215,7 @@ def get_check_remittance_variable(seller_invoice_str: str, orders: List[Order]) 
         CheckRemittanceHTMLResponse: The merge variables for the remittance advice. Description is the description of
                                      the last order in the remittance advice.
     """
-    remittance_advice = {
-        "pages": []
-    }
+    remittance_advice = {"pages": []}
     page = {"invoices": []}
     description = ""
 
@@ -212,12 +229,14 @@ def get_check_remittance_variable(seller_invoice_str: str, orders: List[Order]) 
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
         # Add invoice to remittance advice page.
-        page["invoices"].append({
-            "id": seller_invoice_str,
-            "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
-            "description": description,
-            "date": order.end_date.strftime("%d/%m/%Y"),
-        })
+        page["invoices"].append(
+            {
+                "id": seller_invoice_str,
+                "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
+                "description": description,
+                "date": order.end_date.strftime("%d/%m/%Y"),
+            }
+        )
         # Only add 16 invoices per page.
         if i % CHECK_ATTACHMENT_PAGE_LIMIT == 0 and i != 0:
             remittance_advice["pages"].append(page)
@@ -228,16 +247,18 @@ def get_check_remittance_variable(seller_invoice_str: str, orders: List[Order]) 
         remittance_advice["pages"].append(page)
 
     return CheckRemittanceVariableResponse(
-        merge_variables=MergeVariables(**remittance_advice),
-        description=description
+        merge_variables=MergeVariables(**remittance_advice), description=description
     )
 
 
 class Lob:
 
     def __init__(
-        self, from_address_id: str = None, bank_id: str = None, check_logo: str = None,
-        default_download_app_qr: QrCode = None
+        self,
+        from_address_id: str = None,
+        bank_id: str = None,
+        check_logo: str = None,
+        default_download_app_qr: QrCode = None,
     ):
         # Create check object.
         # Defining the host is optional and defaults to https://api.lob.com/v1
@@ -246,9 +267,15 @@ class Lob:
             host=settings.LOB_API_HOST,
             username=settings.LOB_API_KEY,
         )
-        self.from_address_id = from_address_id if from_address_id is not None else "adr_4f5ca93c6bf5896b"
+        self.from_address_id = (
+            from_address_id if from_address_id is not None else "adr_4f5ca93c6bf5896b"
+        )
         self.bank_id = bank_id if bank_id is not None else DEFAULT_BANK_ID
-        self.check_logo = check_logo if check_logo is not None else "https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e48a5fa7bd074602c6206_Downstream%20D%20-%20Dark-p-500.png"
+        self.check_logo = (
+            check_logo
+            if check_logo is not None
+            else "https://assets-global.website-files.com/632d7c6afd27f7e6217dc2a8/648e48a5fa7bd074602c6206_Downstream%20D%20-%20Dark-p-500.png"
+        )
         if default_download_app_qr is not None:
             self.default_download_app_qr = default_download_app_qr
         else:
@@ -258,11 +285,15 @@ class Lob:
                 width="1",
                 top=".12",
                 right=".12",
-                pages="back"  # pages="front,back" for both sides
+                pages="back",  # pages="front,back" for both sides
             )
 
     def sendPhysicalCheck(
-        self, seller_location: SellerLocation, amount: float, orders: List[Order], bank_id=DEFAULT_BANK_ID
+        self,
+        seller_location: SellerLocation,
+        amount: float,
+        orders: List[Order],
+        bank_id=DEFAULT_BANK_ID,
     ) -> Union[Check, CheckErrorResponse]:
         """Sends a physical check to a seller. Returns check number on success or None on failure.
         Checks can't be sent internationally, country must be US.
@@ -278,7 +309,9 @@ class Lob:
         """
         try:
             # Get SellerInvoicePayable
-            seller_invoice_payable = SellerInvoicePayable.objects.filter(seller_location_id=seller_location.id).first()
+            seller_invoice_payable = SellerInvoicePayable.objects.filter(
+                seller_location_id=seller_location.id
+            ).first()
             seller_invoice_str = "No Invoice Provided"
             if seller_invoice_payable:
                 seller_invoice_str = seller_invoice_payable.supplier_invoice_id
@@ -304,22 +337,28 @@ class Lob:
                     address_state=seller_location.mailing_address.state,
                     address_zip=seller_location.mailing_address.postal_code,
                 ),
-                use_type=ChkUseType('operational'),
-                mail_type="usps_first_class"
+                use_type=ChkUseType("operational"),
+                mail_type="usps_first_class",
             )
 
             # Add Remittance Advice as an attachment if more than 6 orders.
             if len(orders) > CHECK_BOTTOM_ITEM_LIMIT:
                 # Add merge variables for remittance advice, which will be an attachment using a template.
-                check_remittance_merge = get_check_remittance_variable(seller_invoice_str, orders)
+                check_remittance_merge = get_check_remittance_variable(
+                    seller_invoice_str, orders
+                )
                 check_editable.merge_variables = check_remittance_merge.merge_variables
                 check_editable.attachment = settings.LOB_CHECK_TEMPLATE_ID
-                check_editable.message = f'''Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice of {len(orders)} items.'''
-                check_editable.description = f"{len(orders)} items - {check_remittance_merge.description[:100]}"
+                check_editable.message = f"""Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice of {len(orders)} items."""
+                check_editable.description = (
+                    f"{len(orders)} items - {check_remittance_merge.description[:100]}"
+                )
             else:
                 # Add Remittance Advice to check bottom if 6 or fewer orders.
                 check_remittance = get_check_remittance_html(seller_invoice_str, orders)
-                check_editable.description = f"{len(orders)} items - {check_remittance.description[:100]}"
+                check_editable.description = (
+                    f"{len(orders)} items - {check_remittance.description[:100]}"
+                )
                 if len(check_remittance.html) > 10000:
                     raise ValueError("Check remittance advice html is too long.")
                 # Only message or check_bottom can be used
@@ -343,8 +382,12 @@ class Lob:
             return CheckErrorResponse(status_code=e.status, message=e.reason)
 
     def add_bank_account(
-        self, description: str, routing_number: str, account_number: str, signatory: str,
-        account_type: Union[Literal['company'], Literal['individual']] = 'company'
+        self,
+        description: str,
+        routing_number: str,
+        account_number: str,
+        signatory: str,
+        account_type: Union[Literal["company"], Literal["individual"]] = "company",
     ) -> str:
         """Add a bank account to Lob for sending checks.
 
@@ -379,10 +422,14 @@ class Lob:
             raise
 
     def send_postcard(
-        self, description: str, front: str, back: str, to: AddressEditable,
+        self,
+        description: str,
+        front: str,
+        back: str,
+        to: AddressEditable,
         merge_variables: MergeVariables = None,
-        use_type: Union[Literal['marketing'], Literal['operational']] = 'marketing',
-        qr_code: QrCode = None
+        use_type: Union[Literal["marketing"], Literal["operational"]] = "marketing",
+        qr_code: QrCode = None,
     ):
         """Send a postcard to a recipient.
         API docs: https://docs.lob.com/#tag/Postcards/operation/postcard_create
