@@ -1,6 +1,9 @@
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.test import Client, TestCase
+from django.conf import settings
+from api.utils.lob import Lob, AddressEditable, CountryExtended, MergeVariables
+from api.models import Order
 
 # import json
 # test xgboost_pricing.py module
@@ -43,7 +46,7 @@ class Pricetest(TestCase):
 #         self.client = Client()
 #         self.add_user_url = reverse('add_user')
 #         self.valid_data = {
-#             'first_name' : 'John', 
+#             'first_name' : 'John',
 #             'last_name':'Smith',
 #             'user_id' : 'johnsmith1',
 #             'phone' : '303-555-5555',
@@ -54,7 +57,7 @@ class Pricetest(TestCase):
 #             'device_token' : '12345',
 #         }
 #         self.invalid_data = {
-#             'first_name' : 'John', 
+#             'first_name' : 'John',
 #             'last_name':'Smith',
 #             # 'user_id' : 'johnsmith1',
 #             'phone' : '303-555-5555',
@@ -87,16 +90,26 @@ class CrudTests(TestCase):
 
     def test_all_models(self):
         # Get all models in the app
-        models = [model for model in apps.get_models() if not model._meta.app_label.startswith('django')]
+        models = [
+            model
+            for model in apps.get_models()
+            if not model._meta.app_label.startswith("django")
+        ]
 
         # Get all models in the app excluding django_admin models
-        models = [model for model in apps.get_models() if not model._meta.app_label.startswith('django_admin')]
+        models = [
+            model
+            for model in apps.get_models()
+            if not model._meta.app_label.startswith("django_admin")
+        ]
 
         # Loop through all models
         for model in models:
             # Check if the model has any required fields
             required_fields = model._meta.fields
-            required_fields = [field for field in required_fields if not field.blank and not field.null]
+            required_fields = [
+                field for field in required_fields if not field.blank and not field.null
+            ]
 
             if required_fields:
                 # Skip testing this model if it has required fields
@@ -112,28 +125,124 @@ class CrudTests(TestCase):
             logs = LogEntry.objects.filter(content_type=content_type)
 
             # Test GET all instances
-            response = self.client.get(f'/{model._meta.verbose_name_plural}/')
+            response = self.client.get(f"/{model._meta.verbose_name_plural}/")
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
             # Test GET single instance
-            response = self.client.get(f'/{model._meta.verbose_name_plural}/{instance.id}/')
+            response = self.client.get(
+                f"/{model._meta.verbose_name_plural}/{instance.id}/"
+            )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
             # Test POST
-            data = {'name': 'New instance'}
-            response = self.client.post(f'/{model._meta.verbose_name_plural}/', data=data)
+            data = {"name": "New instance"}
+            response = self.client.post(
+                f"/{model._meta.verbose_name_plural}/", data=data
+            )
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
             # Test PUT
-            data = {'name': 'Updated instance'}
-            response = self.client.put(f'/{model._meta.verbose_name_plural}/{instance.id}/', data=data)
+            data = {"name": "Updated instance"}
+            response = self.client.put(
+                f"/{model._meta.verbose_name_plural}/{instance.id}/", data=data
+            )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
             # Test that no logs were created for django_admin actions
             for log in logs:
                 if log.action_flag == DELETION and log.object_id == str(instance.id):
                     # Handle the case where a record was deleted
-                    self.fail(f'Deleted {model._meta.verbose_name} was logged in django_admin')
+                    self.fail(
+                        f"Deleted {model._meta.verbose_name} was logged in django_admin"
+                    )
                 elif log.action_flag != DELETION and log.object_id == str(instance.id):
                     # Handle the case where a record was added or changed
                     pass
+
+
+class LobTests(TestCase):
+
+    def test_send_check(self):
+        if settings.ENVIRONMENT == "TEST":
+            self.fail(
+                "This test cannot be run in the PRODUCTION environment, because it would actually send a check. Please run this test in DEV."
+            )
+
+        lob = Lob()
+        order = Order.objects.exclude(
+            order_group__seller_product_seller_location__seller_location__mailing_address=None
+        ).first()
+
+        # Compute total amount to be sent.
+        amount_to_send = order.needed_payout_to_seller()
+        if amount_to_send < 0.01:
+            amount_to_send = 225.55
+        orders = [
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+            order,
+        ]
+
+        print("Test attaching remittance advice to check bottom")
+        check = lob.sendPhysicalCheck(
+            seller_location=order.order_group.seller_product_seller_location.seller_location,
+            amount=amount_to_send,
+            orders=orders[:5],
+        )
+        self.assertIsNotNone(check.id)
+        self.assertEqual(check.object, "check")
+        print(check.url)
+
+        print("Test attaching remittance advice as attachment")
+        check = lob.sendPhysicalCheck(
+            seller_location=order.order_group.seller_product_seller_location.seller_location,
+            amount=amount_to_send,
+            orders=orders,
+        )
+        self.assertIsNotNone(check.id)
+        self.assertEqual(check.object, "check")
+        print(check.url)
+
+    def test_send_postcard(self):
+        if settings.ENVIRONMENT == "TEST":
+            self.fail(
+                "This test cannot be run in the PRODUCTION environment, because it would actually send a postcard. Please run this test in DEV."
+            )
+
+        lob = Lob()
+        description = "Michael Test Postcard"
+        to = AddressEditable(
+            name="Michael Wickey",
+            address_line1="62171 Middle Colon Rd",
+            address_line2="",
+            address_city="Burr Oak",
+            address_state="MI",
+            address_zip="49030",
+            address_country=CountryExtended("US"),
+        )
+        front = "<html style='padding: 1in; font-size: 50; font-family: Thicccboi,Arial,sans-serif; color: #038480;'>Front HTML for {{name}}</html>"
+        back = "<html style='padding: .375in; font-size: 20;'>Back HTML for {{name}}<br>Scan the QR code to get our App!</html>"
+        merge_variables = MergeVariables(name="Michael")
+        postcard = lob.send_postcard(
+            description, front, back, to, merge_variables=merge_variables
+        )
+        self.assertIsNotNone(postcard.id)
+        self.assertEqual(postcard.object, "postcard")
+        print(postcard.url)

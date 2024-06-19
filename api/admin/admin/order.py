@@ -22,7 +22,7 @@ from api.models import (
     SellerLocation,
     UserAddress,
 )
-from api.utils.checkbook_io import CheckbookIO
+from api.utils.lob import Lob, CheckErrorResponse
 
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -134,23 +134,31 @@ class OrderAdmin(admin.ModelAdmin):
 
                 # Send payout via Checkbook.
                 if amount_to_send > 0:
-                    check_number = CheckbookIO().sendPhysicalCheck(
+                    # Send one check for all orders.
+                    check_response = Lob().sendPhysicalCheck(
                         seller_location=seller_location,
                         amount=amount_to_send,
                         orders=orders_for_seller_location,
                     )
-
-                # Save Payout for each order.
-                for order in orders_for_seller_location:
-                    payout_diff = self.seller_price(order) - self.total_paid_to_seller(
-                        order
-                    )
-                    if payout_diff > 0:
-                        Payout.objects.create(
-                            order=order,
-                            amount=payout_diff,
-                            checkbook_payout_id=check_number,
+                    if isinstance(check_response, CheckErrorResponse):
+                        messages.error(
+                            request,
+                            f'''Checkbook error occurred:
+                             [{check_response.status_code}]-{check_response.message} on
+                             seller_location id: {str(seller_location.id)}. Please check BetterStack logs.''',
                         )
+                    else:
+                        # Save Payout for each order.
+                        for order in orders_for_seller_location:
+                            payout_diff = self.seller_price(order) - self.total_paid_to_seller(
+                                order
+                            )
+                            if payout_diff > 0:
+                                Payout.objects.create(
+                                    order=order,
+                                    amount=payout_diff,
+                                    lob_check_id=check_response.id,
+                                )
 
         messages.success(request, "Successfully paid out all selected orders.")
 
