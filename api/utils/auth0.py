@@ -1,4 +1,5 @@
 from uuid import uuid4
+from urllib.parse import urlencode
 from django.conf import settings
 import requests
 import mailchimp_transactional as MailchimpTransactional
@@ -99,6 +100,14 @@ def get_password_change_url(user_id: str):
 def invite_user(user):
     if user.user_id is not None:
         password_change_url = get_password_change_url(user.user_id)
+        if password_change_url.find("?") == -1:
+            password_change_url = (
+                f"{password_change_url}?{urlencode({'state': user.email})}"
+            )
+        else:
+            password_change_url = (
+                f"{password_change_url}&{urlencode({'state': user.email})}"
+            )
 
         # Send User Invite Email to user.
         try:
