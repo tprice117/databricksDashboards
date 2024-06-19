@@ -2,6 +2,7 @@ from django.http import HttpResponse, HttpRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.conf import settings
+from api.models import User
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,15 @@ def login_redirect_view(request: HttpRequest):
     """Auth0 Tenant Login URI points here. Redirect to the correct page after login."""
     query_params = request.GET.copy()
     post_params = request.POST.copy()
+    if "state" in query_params:
+        logger.info(
+            f"State in url: {request} headers:[{request.headers}], query_params:[{query_params}], post_params:[{post_params}], cookies:[{request.COOKIES}]"
+        )
+        user = User.objects.get(pk=query_params["state"])
+        if user.redirect_url:
+            return redirect(user.redirect_url)
+        else:
+            return redirect(settings.BASE_URL)
     if request.user.is_anonymous:
         logger.info(
             f"User is anonymous: {request} headers:[{request.headers}], query_params:[{query_params}], post_params:[{post_params}], cookies:[{request.COOKIES}]"
