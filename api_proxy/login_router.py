@@ -42,7 +42,7 @@ def login_view(request):
 
 
 def register_account_view(request: HttpRequest):
-    key = request.query_params.get("key", "")
+    key = request.GET.get("key", "")
     try:
         user_id = decrypt_string(key)
         user = User.objects.get(id=user_id)
