@@ -4,6 +4,7 @@
     <tr id="order_row_{{forloop.counter}}" class="clickable-row" onclick="window.location.href='{% url 'supplier_booking_detail' order_id=order.id %}'">
         {% if request.user.is_staff %}
             <td>{{order.order_group.seller_product_seller_location.seller_location.seller.name}}</td>
+            <td>{% if order.order_group.created_by %}{{ order.order_group.created_by.full_name }}{% else %}N/A{% endif %}</td>
         {% endif %}
         <td>{{order.end_date}}</td>
         <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
@@ -18,51 +19,53 @@
                 <td>Not Submitted</td>
             {% endif %}
         {% endif %}
-        {% if order.status == "PENDING" %}
-        <td>
-            <span id="accept-button-container">
-                <!-- TODO: Look at using Bootstrap modal -->
-                <!-- <button class="btn btn-success" type="button" data-bs-target="#modal-1"
-                    data-bs-toggle="modal">Accept</button> -->
-                <button type="button" class="btn btn-primary accept-button"
-                    hx-post="{% url 'supplier_order_accept' order_id=order.id %}"
-                    hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
-                    hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
-                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
-                    onClick="event.stopPropagation();
-                    Swal.fire(
-                        {title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}
-                    ).then((result)=>{
+        {% if order.submitted_on %}
+            {% if order.status == "PENDING" %}
+            <td>
+                <span id="accept-button-container">
+                    <!-- TODO: Look at using Bootstrap modal -->
+                    <!-- <button class="btn btn-success" type="button" data-bs-target="#modal-1"
+                        data-bs-toggle="modal">Accept</button> -->
+                    <button type="button" class="btn btn-primary accept-button"
+                        hx-post="{% url 'supplier_order_accept' order_id=order.id %}"
+                        hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
+                        hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
+                        hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
+                        onClick="event.stopPropagation();
+                        Swal.fire(
+                            {title: 'Accept Booking', text:'You can fulfill this booking on the date and location listed.', icon: 'question', confirmButtonText: 'Confirm'}
+                        ).then((result)=>{
+                                if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
+                        })">
+                        Accept
+                        <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">
+                            <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
+                        </span>
+                    </button>
+                </span>
+            </td>
+            {% elif order.is_past_due and order.status == "SCHEDULED" %}
+            <td>
+                <span id="accept-button-container">
+                    <button type="button" class="btn btn-primary complete-button"
+                        hx-post="{% url 'supplier_order_complete' order_id=order.id %}"
+                        hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
+                        hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
+                        hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
+                        onClick="event.stopPropagation();
+                        Swal.fire(
+                            {title: 'Complete Booking', text:'Has this booking been completed?', icon: 'question', confirmButtonText: 'Confirm'}
+                        ).then((result)=>{
                             if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
-                    })">
-                    Accept
-                    <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">
-                        <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
-                    </span>
-                </button>
-            </span>
-        </td>
-        {% elif order.is_past_due and order.status == "SCHEDULED" %}
-        <td>
-            <span id="accept-button-container">
-                <button type="button" class="btn btn-primary complete-button"
-                    hx-post="{% url 'supplier_order_complete' order_id=order.id %}"
-                    hx-vals='{"loopcount": "{{forloop.counter}}", "queryParams": "{{ request.GET.urlencode }}"}'
-                    hx-swap="outerHTML" hx-target="#order_row_{{forloop.counter}}"
-                    hx-indicator="#htmx-indicator{{forloop.counter}}" hx-trigger="confirmed"
-                    onClick="event.stopPropagation();
-                    Swal.fire(
-                        {title: 'Complete Booking', text:'Has this booking been completed?', icon: 'question', confirmButtonText: 'Confirm'}
-                    ).then((result)=>{
-                        if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
-                    })">
-                    Complete
-                    <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">
-                        <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
-                    </span>
-                </button>
-            </span>
-        </td>
+                        })">
+                        Complete
+                        <span class="htmx-indicator" id="htmx-indicator{{forloop.counter}}">
+                            <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" />
+                        </span>
+                    </button>
+                </span>
+            </td>
+            {% endif %}
         {% endif %}
     </tr>
     {% endfor %}
