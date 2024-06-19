@@ -15,10 +15,6 @@ class Asset(BaseModel):
         SellerLocation,
         on_delete=models.PROTECT,
     )
-    main_product = models.ForeignKey(
-        MainProduct,
-        on_delete=models.PROTECT,
-    )
     model = models.ForeignKey(
         AssetModel,
         on_delete=models.PROTECT,
