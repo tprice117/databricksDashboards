@@ -102,6 +102,10 @@ router.register(r"orders-for-seller", views.OrdersForSellerViewSet, "api")
 urlpatterns = [
     # Login Redirect.
     path("", login_router.post_login_router, name="post_login_router"),
+    path("login/redirect/", login_router.login_redirect_view, name="login_redirect"),
+    path(
+        "register/account/", login_router.register_account_view, name="register_account"
+    ),
     path("admin/login/", login_router.login_view, name="login"),
     path("admin/", admin.site.urls),
     path("oidc/", include("mozilla_django_oidc.urls")),

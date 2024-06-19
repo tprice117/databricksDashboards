@@ -10,6 +10,7 @@ class PayoutInline(admin.TabularInline):
         "description",
         "stripe_transfer_id",
         "checkbook_payout_id",
+        "lob_check_id",
     )
     show_change_link = True
     extra = 0

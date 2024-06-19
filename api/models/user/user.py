@@ -73,6 +73,15 @@ class User(AbstractUser):
         max_length=255, blank=True, null=True
     )
     terms_accepted = models.DateTimeField(blank=True, null=True)
+    # This is used in the Auth0 login process to redirect the user to a specific page after login.
+    # THis is helpful in the account creation process to redirect the user to the correct
+    # page after login (supplier, customer webapp).
+    redirect_url = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="URL to redirect to after Auth0 login (defaults to webapp settings.BASE_URL).",
+    )
 
     def __str__(self):
         return self.email

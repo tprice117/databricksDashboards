@@ -98,7 +98,11 @@ def get_password_change_url(user_id: str):
 
 def invite_user(user):
     if user.user_id is not None:
-        password_change_url = get_password_change_url(user.user_id)
+        # password_change_url = get_password_change_url(user.user_id)
+        if user.redirect_url is not None:
+            from api.utils.utils import encrypt_string
+
+            password_change_url = f"{settings.DASHBOARD_BASE_URL}/register/account/?key={encrypt_string(str(user.id))}"
 
         # Send User Invite Email to user.
         try:
@@ -107,10 +111,10 @@ def invite_user(user):
                 {
                     "message": {
                         "headers": {
-                            "reply-to": "dispatch@trydownstream.com",
+                            "reply-to": "support@trydownstream.com",
                         },
                         "from_name": "Downstream",
-                        "from_email": "dispatch@trydownstream.com",
+                        "from_email": "support@trydownstream.com",
                         "to": [
                             {"email": user.email},
                         ],
