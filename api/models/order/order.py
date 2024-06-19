@@ -203,6 +203,11 @@ class Order(BaseModel):
     def clean(self):
         super().clean()
 
+        # Ensure submitted_on is not NULL if status is not PENDING.
+        if self.status != Order.Status.PENDING and not self.submitted_on:
+            raise ValidationError(
+                "Submitted On (which means Order has been checked out) must be set if status is not PENDING"
+            )
         # Ensure end_date is on or after start_date.
         if self.start_date > self.end_date:
             raise ValidationError("Start date must be on or before end date")
