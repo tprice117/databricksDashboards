@@ -375,7 +375,7 @@ if ENVIRONMENT == "TEST":
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_PROD_TOKEN")
     # https://docs.lob.com/#tag/Authentication/API-Keys
     LOB_API_HOST = "https://api.lob.com/v1"
-    LOB_API_KEY = env("LOB_DEV_API_KEY")
+    LOB_API_KEY = env("LOB_API_KEY")
     LOB_PUB_API_KEY = env("LOB_DEV_PUB_API_KEY")
     LOB_CHECK_TEMPLATE_ID = "tmpl_e67263addbfe12c"
 else:
