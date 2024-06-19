@@ -47,7 +47,7 @@ def login_redirect_view(request: HttpRequest):
     user_id = request.session.get("user_id", None)
     if request.user.is_anonymous:
         logger.info(
-            f"User is anonymous: {request} headers:[{request.headers}], query_params:[{query_params}], post_params:[{post_params}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
+            f"User is anonymous: {request} headers:[{request.headers}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
         )
         if user_id:
             user = User.objects.get(id=user_id)
@@ -55,7 +55,7 @@ def login_redirect_view(request: HttpRequest):
                 return redirect(user.redirect_url)
     else:
         logger.info(
-            f"User is authenticated: {request.user.redirect_url}-{request} headers:[{request.headers}], query_params:[{query_params}], post_params:[{post_params}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
+            f"User is authenticated: {request.user.redirect_url}-{request} headers:[{request.headers}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
         )
         if request.user.redirect_url:
             # TODO: Test this, but maybe it redirect_url should be deleted after use, so that subsequent
