@@ -238,7 +238,9 @@ def get_seller_user_objects(request: HttpRequest, user: User, seller: Seller):
     return seller_users
 
 
-def get_booking_objects(request: HttpRequest, user: User, seller: Seller):
+def get_booking_objects(
+    request: HttpRequest, user: User, seller: Seller, exclude_in_cart=True
+):
     """Returns the orders for the current seller.
 
     If user is:
@@ -264,17 +266,15 @@ def get_booking_objects(request: HttpRequest, user: User, seller: Seller):
         orders = Order.objects.filter(
             order_group__seller_product_seller_location__seller_location__in=seller_location_ids
         )
-        orders = orders.filter(submitted_on__isnull=False)
     else:
         if seller:
             orders = Order.objects.filter(
                 order_group__seller_product_seller_location__seller_product__seller_id=seller.id
             )
-
-            if not request.user.is_staff:
-                orders = orders.filter(submitted_on__isnull=False)
         else:
             orders = Order.objects.all()
+    if exclude_in_cart:
+        orders = orders.filter(submitted_on__isnull=False)
     return orders
 
 
@@ -1074,9 +1074,12 @@ def bookings(request):
         link_params["location_id"] = request.GET.get("location_id")
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
-    orders = get_booking_objects(request, context["user"], context["seller"])
+
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
+        orders = get_booking_objects(
+            request, context["user"], context["seller"], exclude_in_cart=False
+        )
         query_params = request.GET.copy()
         # Ensure tab is valid. Default to PENDING if not.
         tab = request.GET.get("tab", Order.Status.PENDING)
@@ -1085,6 +1088,7 @@ def bookings(request):
             Order.Status.SCHEDULED,
             Order.Status.COMPLETE,
             Order.Status.CANCELLED,
+            "CART",
         ]:
             tab = Order.Status.PENDING
         tab_status = tab.upper()
@@ -1112,10 +1116,16 @@ def bookings(request):
         scheduled_count = 0
         complete_count = 0
         cancelled_count = 0
+        cart_count = 0
         for order in orders:
-            if order.status == tab_status:
+            if order.submitted_on is None:
+                if tab_status == "CART":
+                    status_orders.append(order)
+            elif order.status == tab_status:
                 status_orders.append(order)
-            if order.status == Order.Status.PENDING:
+            if order.submitted_on is None:
+                cart_count += 1
+            elif order.status == Order.Status.PENDING:
                 pending_count += 1
             # if order.end_date >= non_pending_cutoff:
             elif order.status == Order.Status.SCHEDULED:
@@ -1134,6 +1144,7 @@ def bookings(request):
         <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
         <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
         <span id="cancelled-count-badge" hx-swap-oob="true">{cancelled_count}</span>
+        <span id="cart-count-badge" hx-swap-oob="true">{cart_count}</span>
         <a id="bookings-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{download_link}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
         """
 
@@ -1172,6 +1183,7 @@ def bookings(request):
             request, "supplier_dashboard/snippets/table_status_orders.html", context
         )
     else:
+        orders = get_booking_objects(request, context["user"], context["seller"])
         # non_pending_cutoff = datetime.date.today() - datetime.timedelta(days=60)
         if link_params.get("service_date", None) is not None:
             orders = orders.filter(end_date=link_params["service_date"])
@@ -1212,6 +1224,7 @@ def bookings(request):
         context["status_scheduled_link"] = (
             f"/supplier/bookings/?tab={Order.Status.SCHEDULED}{query_params}"
         )
+        context["status_cart_link"] = f"/supplier/bookings/?tab=CART{query_params}"
         url_query_params = request.GET.copy()
         context["download_link"] = (
             f"/supplier/bookings/download/?{url_query_params.urlencode()}"
@@ -1257,11 +1270,18 @@ def download_bookings(request):
         Order.Status.SCHEDULED,
         Order.Status.COMPLETE,
         Order.Status.CANCELLED,
+        "CART",
     ]:
         tab = Order.Status.PENDING
-    orders = get_booking_objects(request, context["user"], context["seller"])
 
-    orders = orders.filter(status=tab)
+    if tab.upper() == "CART":
+        orders = get_booking_objects(
+            request, context["user"], context["seller"], exclude_in_cart=False
+        )
+    else:
+        orders = get_booking_objects(request, context["user"], context["seller"])
+
+        orders = orders.filter(status=tab)
 
     if link_params.get("service_date", None) is not None:
         orders = orders.filter(end_date=link_params["service_date"])
@@ -1296,6 +1316,8 @@ def download_bookings(request):
     writer.writerow(header_row)
     now_time = timezone.now()
     for order in orders:
+        if tab.upper() == "CART" and order.submitted_on is not None:
+            continue
         row = [
             order.end_date.strftime("%Y-%m-%d"),
             str(
