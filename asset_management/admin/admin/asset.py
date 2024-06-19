@@ -16,14 +16,12 @@ class AssetAdmin(admin.ModelAdmin):
     ]
     list_display = (
         "seller_location",
-        "main_product",
         "year",
         "model",
         "serial_number",
     )
     autocomplete_fields = [
         "seller_location",
-        "main_product",
         "model",
     ]
     inlines = [
