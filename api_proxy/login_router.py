@@ -1,8 +1,9 @@
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.conf import settings
 from api.models import User
+from api.utils.utils import decrypt_string
+from api.utils.auth0 import get_password_change_url
 import logging
 
 logger = logging.getLogger(__name__)
@@ -40,31 +41,17 @@ def login_view(request):
         return render(request, "admin/login.html")
 
 
-def login_redirect_view(request: HttpRequest):
-    """Auth0 Tenant Login URI points here. Redirect to the correct page after login."""
-    query_params = request.GET.copy()
-    post_params = request.POST.copy()
-    if "state" in query_params:
-        logger.info(
-            f"State in url: {request} headers:[{request.headers}], query_params:[{query_params}], post_params:[{post_params}], cookies:[{request.COOKIES}]"
-        )
-        user = User.objects.get(pk=query_params["state"])
-        if user.redirect_url:
-            return redirect(user.redirect_url)
+def register_account_view(request: HttpRequest):
+    key = request.query_params.get("key", "")
+    try:
+        user_id = decrypt_string(key)
+        user = User.objects.get(id=user_id)
+        if user.user_id is not None:
+            password_change_url = get_password_change_url(user.user_id)
+            payload = {"url": password_change_url}
+            return render(request, "user-invite-email.html", payload)
         else:
-            return redirect(settings.BASE_URL)
-    if request.user.is_anonymous:
-        logger.info(
-            f"User is anonymous: {request} headers:[{request.headers}], query_params:[{query_params}], post_params:[{post_params}], cookies:[{request.COOKIES}]"
-        )
-        return redirect(settings.BASE_URL)
-    else:
-        logger.info(
-            f"User is authenticated: {request.user.redirect_url}-{request} headers:[{request.headers}], query_params:[{query_params}], post_params:[{post_params}], cookies:[{request.COOKIES}]"
-        )
-        if request.user.redirect_url:
-            # TODO: Test this, but maybe it redirect_url should be deleted after use, so that subsequent
-            # logins don't perform this, allowing the user to return to the last page they were on, on login.
-            return redirect(request.user.redirect_url)
-        else:
-            return redirect(settings.BASE_URL)
+            raise Exception("User ID is None")
+    except Exception as e:
+        logger.error(f"register_account_view: [{e}]", exc_info=e)
+        return HttpResponse("Server Error, please contact support@trydownstream.com")
