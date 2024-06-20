@@ -1589,7 +1589,7 @@ def chat(request, conversation_id):
         "supplier_dashboard/chat.html",
         {
             "conversation": conversation,
-            "messages": messages_sorted_most_recent,
+            "chat": messages_sorted_most_recent,
             "message_form": ChatMessageForm(),
         },
     )
