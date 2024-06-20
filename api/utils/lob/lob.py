@@ -377,9 +377,12 @@ class Lob:
             print("Exception when calling ChecksApi->create: %s\n" % e)
             logger.error(f"Lob.sendPhysicalCheck.api: [{e}]", exc_info=e)
             return CheckErrorResponse(status_code=e.status, message=e.body)
+        except lob_python.ApiValueError as e:
+            logger.error(f"Lob.sendPhysicalCheck.ApiValueError: [{e}]", exc_info=e)
+            return CheckErrorResponse(status_code=400, message=str(e))
         except Exception as e:
             logger.error(f"Lob.sendPhysicalCheck: [{e}]", exc_info=e)
-            return CheckErrorResponse(status_code=e.status, message=e.reason)
+            return CheckErrorResponse(status_code=500, message=str(e))
 
     def add_bank_account(
         self,
