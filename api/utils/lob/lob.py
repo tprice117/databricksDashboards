@@ -330,7 +330,7 @@ class Lob:
                     address_zip="75034",
                 ),
                 to=AddressDomestic(
-                    name=seller_location.payee_name,
+                    name=str(seller_location.payee_name)[:40],
                     address_line1=seller_location.mailing_address.street,
                     address_line2="",
                     address_city=seller_location.mailing_address.city,
