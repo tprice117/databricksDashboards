@@ -43,7 +43,7 @@ def login_view(request):
 
 def login_redirect_view(request: HttpRequest):
     """Auth0 Tenant Login URI points here. Redirect to the correct page after login.
-    Default to the settings.BASE_URL if no redirect_url is set."""
+    Default to the {settings.BASE_URL}/login if no redirect_url is set."""
     user_id = request.session.get("user_id", None)
     if request.user.is_anonymous:
         logger.info(
@@ -55,13 +55,13 @@ def login_redirect_view(request: HttpRequest):
                 return redirect(user.redirect_url)
     else:
         logger.info(
-            f"User is authenticated: {request.user.redirect_url}-{request} headers:[{request.headers}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
+            f"User is authenticated: redirect_url:{request.user.redirect_url}-{request} headers:[{request.headers}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
         )
         if request.user.redirect_url:
             # TODO: Test this, but maybe it redirect_url should be deleted after use, so that subsequent
             # logins don't perform this, allowing the user to return to the last page they were on, on login.
             return redirect(request.user.redirect_url)
-    return redirect(settings.BASE_URL)
+    return redirect(f"{settings.BASE_URL}/login")
 
 
 def register_account_view(request: HttpRequest):
