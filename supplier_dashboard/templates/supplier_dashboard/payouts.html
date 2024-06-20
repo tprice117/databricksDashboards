@@ -99,6 +99,9 @@
                                 <th>Invoice ID</th>
                                 <th>Processed Date</th>
                                 <th>Amount</th>
+                                {% if request.user.is_staff %}
+                                    <th>Payment Method</th>
+                                {% endif %}
                                 {% comment %} <th>Delivery Date</th>
                                 <th>Status</th> {% endcomment %}
                             </tr>
@@ -120,6 +123,11 @@
                                 <td>
                                     <strong>Invoice ID</strong>
                                 </td>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Payment Method</strong>
+                                    </td>
+                                {% endif %}
                                 {% comment %} <td>
                                     <strong>Delivery Date</strong>
                                 </td>

@@ -12,7 +12,7 @@
     <div class="container">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
                         <h4 class="card-title">${{ payout.amount|stringformat:'.2f'|intcomma }}</h4>
                         <p style="margin-bottom: 0px;">
@@ -24,17 +24,6 @@
                         <p>{{ payout.description }}</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-6" hx-get="{% url 'supplier_payout_invoice' payout_id=payout.id %}" hx-trigger="load" hx-indicator="#htmx-indicator-status">
-                <span class="htmx-indicator" id="htmx-indicator-status">Loading Invoice <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-            </div>
-        </div>
-    </div>
-    <!-- End: 1 Row 2 Columns -->
-    <!-- Start: 1 Row 2 Columns -->
-    <div class="container">
-        <div class="row" style="padding-bottom: 24px;">
-            <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
@@ -65,6 +54,9 @@
                         </a>
                     </div>
                 </div>
+            </div>
+            <div class="col-md-6" hx-get="{% url 'supplier_payout_invoice' payout_id=payout.id %}" hx-trigger="load" hx-indicator="#htmx-indicator-status">
+                <span class="htmx-indicator" id="htmx-indicator-status">Loading Invoice <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
         </div>
     </div>
