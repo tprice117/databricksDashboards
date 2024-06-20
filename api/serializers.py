@@ -773,7 +773,43 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderGroup
-        fields = "__all__"
+        fields = (
+            "id",
+            "user",
+            "user_id",
+            "user_address",
+            "user_address_id",
+            "seller_product_seller_location",
+            "seller_product_seller_location_id",
+            "waste_type",
+            "waste_type_id",
+            "time_slot",
+            "time_slot_id",
+            "service_recurring_frequency",
+            "service_recurring_frequency_id",
+            "preferred_service_days",
+            "preferred_service_day_ids",
+            "service",
+            "rental",
+            "material",
+            "orders",
+            "active",
+            "created_on",
+            "updated_on",
+            "is_deleted",
+            "access_details",
+            "placement_details",
+            "start_date",
+            "end_date",
+            "take_rate",
+            "tonnage_quantity",
+            "delivery_fee",
+            "removal_fee",
+            "created_by",
+            "updated_by",
+            "conversation",
+            "status",
+        )
 
     def create(self, validated_data):
         service_data = validated_data.pop("service")
