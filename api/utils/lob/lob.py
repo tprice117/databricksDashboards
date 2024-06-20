@@ -121,7 +121,7 @@ def get_check_remittance_item_html(
     return f"""<tr style="background-color: {line_background};">
             <td style="border-left: none; padding: 7px;">{seller_invoice_id}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{total}</td>
-            <td style="border-left: 1px solid #ddd; padding: 7px;">{description[:64]} this is a long description</td>
+            <td style="border-left: 1px solid #ddd; padding: 7px;">{description[:90]}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{end_date}</td></tr>
             """
 
@@ -330,7 +330,7 @@ class Lob:
                     address_zip="75034",
                 ),
                 to=AddressDomestic(
-                    name=seller_location.payee_name,
+                    name=str(seller_location.payee_name)[:40],
                     address_line1=seller_location.mailing_address.street,
                     address_line2="",
                     address_city=seller_location.mailing_address.city,
@@ -377,9 +377,12 @@ class Lob:
             print("Exception when calling ChecksApi->create: %s\n" % e)
             logger.error(f"Lob.sendPhysicalCheck.api: [{e}]", exc_info=e)
             return CheckErrorResponse(status_code=e.status, message=e.body)
+        except lob_python.ApiValueError as e:
+            logger.error(f"Lob.sendPhysicalCheck.ApiValueError: [{e}]", exc_info=e)
+            return CheckErrorResponse(status_code=400, message=str(e))
         except Exception as e:
             logger.error(f"Lob.sendPhysicalCheck: [{e}]", exc_info=e)
-            return CheckErrorResponse(status_code=e.status, message=e.reason)
+            return CheckErrorResponse(status_code=500, message=str(e))
 
     def add_bank_account(
         self,
