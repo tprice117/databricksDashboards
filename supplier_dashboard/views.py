@@ -1019,6 +1019,8 @@ def new_user(request):
                 phone = form.cleaned_data.get("phone")
                 email = form.cleaned_data.get("email")
                 user_type = form.cleaned_data.get("type")
+                # TODO: This is supposed to be creating a UserInvite, so that we
+                # can keep track of invites.
                 user = User(
                     user_group_id=context["user"].user_group_id,
                     first_name=first_name,
@@ -1621,7 +1623,7 @@ def payouts(request):
                 "order__order_group__seller_product_seller_location__seller_location__seller"
             )
             payouts = payouts.order_by(
-                "order__order_group__seller_product_seller_location__seller_location__seller__name",
+                # "order__order_group__seller_product_seller_location__seller_location__seller__name",
                 "-created_on",
             )
         else:
