@@ -32,18 +32,18 @@ def post_login_router(request):
 
 
 def login_view(request):
-    """Override Django's default login view to redirect to the correct page after login."""
+    """Override Django's default login view and set the query param `next`
+    as a session variable, so that on post login redirect the correct page is loaded."""
     next_url = request.GET.get("next", None)
     if next_url:
-        response = render(request, "admin/login.html")
         request.session["next"] = next_url
-        return response
-    else:
-        return render(request, "admin/login.html")
+    # Grab the oidc_authentication_init and redirect directly to it instead of rendering the login page.
+    return redirect(reverse("oidc_authentication_init"))
 
 
 def login_redirect_view(request: HttpRequest):
-    """Auth0 Tenant Login URI points here. Redirect to the correct page after login."""
+    """Auth0 Tenant Login URI points here. Redirect to the correct page after login.
+    Default to the {settings.BASE_URL}/login if no redirect_url is set."""
     user_id = request.session.get("user_id", None)
     if request.user.is_anonymous:
         logger.info(
@@ -55,13 +55,13 @@ def login_redirect_view(request: HttpRequest):
                 return redirect(user.redirect_url)
     else:
         logger.info(
-            f"User is authenticated: {request.user.redirect_url}-{request} headers:[{request.headers}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
+            f"User is authenticated: redirect_url:{request.user.redirect_url}-{request} headers:[{request.headers}], cookies:[{request.COOKIES}], user_id:[{user_id}]"
         )
         if request.user.redirect_url:
             # TODO: Test this, but maybe it redirect_url should be deleted after use, so that subsequent
             # logins don't perform this, allowing the user to return to the last page they were on, on login.
             return redirect(request.user.redirect_url)
-    return redirect(settings.BASE_URL)
+    return redirect(f"{settings.BASE_URL}/login")
 
 
 def register_account_view(request: HttpRequest):
@@ -71,10 +71,8 @@ def register_account_view(request: HttpRequest):
         user = User.objects.get(id=user_id)
         if user.user_id is not None:
             password_change_url = get_password_change_url(user.user_id)
-            payload = {"url": password_change_url}
-            response = render(request, "user-invite-email.html", payload)
             request.session["user_id"] = str(user.id)
-            return response
+            return redirect(password_change_url)
         else:
             raise Exception("User ID is None")
     except Exception as e:
