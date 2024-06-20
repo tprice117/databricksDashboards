@@ -121,7 +121,7 @@ def get_check_remittance_item_html(
     return f"""<tr style="background-color: {line_background};">
             <td style="border-left: none; padding: 7px;">{seller_invoice_id}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{total}</td>
-            <td style="border-left: 1px solid #ddd; padding: 7px;">{description[:64]} this is a long description</td>
+            <td style="border-left: 1px solid #ddd; padding: 7px;">{description[:90]}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{end_date}</td></tr>
             """
 
