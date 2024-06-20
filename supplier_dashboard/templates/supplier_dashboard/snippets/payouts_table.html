@@ -10,6 +10,15 @@
                 <td>{{ payout.invoice_id }}</td>
                 <td>{{ payout.created_on }}</td>
                 <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
+                {% if request.user.is_staff %}
+                    <td>
+                        {% if payout.is_check %}
+                            Check
+                        {% else %}
+                            Stripe
+                        {% endif %}
+                    </td>
+                {% endif %}
                 {% comment %} <td>{{ payout.new_abstract_field_for_status }}</td>
                 <td>{{ payout.status }}</td> {% endcomment %}
             </tr>

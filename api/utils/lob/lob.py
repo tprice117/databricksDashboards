@@ -384,6 +384,26 @@ class Lob:
             logger.error(f"Lob.sendPhysicalCheck: [{e}]", exc_info=e)
             return CheckErrorResponse(status_code=500, message=str(e))
 
+    def get_check(self, check_id: str) -> Union[Check, None]:
+        """Get a check by ID.
+
+        Args:
+            check_id (str): The ID of the check.
+
+        Returns:
+            Union[Check, None]: The check object on success or None on failure.
+        """
+        try:
+            with ApiClient(self.configuration) as api_client:
+                api = ChecksApi(api_client)
+                check = api.get(check_id)
+                return check
+        except lob_python.ApiException as e:
+            logger.error(f"Lob.get_check.api: [{e}]", exc_info=e)
+        except Exception as e:
+            logger.error(f"Lob.get_check: [{e}]", exc_info=e)
+        return None
+
     def add_bank_account(
         self,
         description: str,

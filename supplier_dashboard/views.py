@@ -1019,6 +1019,8 @@ def new_user(request):
                 phone = form.cleaned_data.get("phone")
                 email = form.cleaned_data.get("email")
                 user_type = form.cleaned_data.get("type")
+                # TODO: This is supposed to be creating a UserInvite, so that we
+                # can keep track of invites.
                 user = User(
                     user_group_id=context["user"].user_group_id,
                     first_name=first_name,
@@ -1587,7 +1589,7 @@ def chat(request, conversation_id):
         "supplier_dashboard/chat.html",
         {
             "conversation": conversation,
-            "messages": messages_sorted_most_recent,
+            "chat": messages_sorted_most_recent,
             "message_form": ChatMessageForm(),
         },
     )
@@ -1621,7 +1623,7 @@ def payouts(request):
                 "order__order_group__seller_product_seller_location__seller_location__seller"
             )
             payouts = payouts.order_by(
-                "order__order_group__seller_product_seller_location__seller_location__seller__name",
+                # "order__order_group__seller_product_seller_location__seller_location__seller__name",
                 "-created_on",
             )
         else:
@@ -1732,16 +1734,31 @@ def payout_invoice(request, payout_id):
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     payout = Payout.objects.filter(id=payout_id).select_related("order").first()
-    order_line_item = payout.order.order_line_items.all().first()
-    context["is_pdf"] = False
-    if order_line_item:
-        # TODO: Add support for check once LOB is integrated.
-        stripe_invoice = order_line_item.get_invoice()
-        if stripe_invoice:
-            # hosted_invoice_url
-            context["hosted_invoice_url"] = stripe_invoice.hosted_invoice_url
-            context["invoice_pdf"] = stripe_invoice.invoice_pdf
+    if payout.lob_check_id:
+        context["is_lob"] = True
+        check = payout.get_check()
+        if check:
+            context["invoice_pdf"] = check.url
+            context["thumbnails"] = []
+            if check.thumbnails:
+                for thumbnail in check.thumbnails:
+                    context["thumbnails"].append(thumbnail["large"])
             context["is_pdf"] = True
+            context["expected_delivery_date"] = (
+                check.expected_delivery_date
+            )  # datetime.date
+            context["send_date"] = check.send_date  # datetime.datetime
+            context["tracking_number"] = check.tracking_number
+    # order_line_item = payout.order.order_line_items.all().first()
+    # context["is_pdf"] = False
+    # if order_line_item:
+    #     # TODO: Add support for check once LOB is integrated.
+    #     stripe_invoice = order_line_item.get_invoice()
+    #     if stripe_invoice:
+    #         # hosted_invoice_url
+    #         context["hosted_invoice_url"] = stripe_invoice.hosted_invoice_url
+    #         context["invoice_pdf"] = stripe_invoice.invoice_pdf
+    #         context["is_pdf"] = True
     return render(
         request, "supplier_dashboard/snippets/payout_detail_invoice.html", context
     )
@@ -1753,13 +1770,14 @@ def payout_detail(request, payout_id):
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    payout = None
-    if not payout:
-        payout = Payout.objects.get(id=payout_id)
-    # TODO: Check if this is a checkbook payout (this changes with LOB integration).
+    payout = Payout.objects.get(id=payout_id)
     if payout.checkbook_payout_id:
         context["related_payouts"] = Payout.objects.filter(
             checkbook_payout_id=payout.checkbook_payout_id
+        )
+    elif payout.lob_check_id:
+        context["related_payouts"] = Payout.objects.filter(
+            lob_check_id=payout.lob_check_id
         )
     context["payout"] = payout
     return render(request, "supplier_dashboard/payout_detail.html", context)
