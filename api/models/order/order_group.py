@@ -16,6 +16,12 @@ from matching_engine.utils import MatchingEngine
 
 
 class OrderGroup(BaseModel):
+    class Status(models.TextChoices):
+        PENDING = "PENDING"
+        IN_PROGRESS = "IN-PROGRESS"
+        INVOICED = "INVOICED"
+        PAST_DUE = "PAST DUE"
+
     user = models.ForeignKey("api.User", models.PROTECT)
     user_address = models.ForeignKey(
         UserAddress,
@@ -53,6 +59,37 @@ class OrderGroup(BaseModel):
 
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
+
+    @property
+    def status(self):
+        # Get all Orders for this OrderGroup.
+        orders = self.orders.all()
+
+        # Get any OrderLineItems that are Paid = False and stripe_invoice_line_item_id is not None.
+        unpaid_invoiced_order_line_items = []
+        for order in orders:
+            for order_line_item in order.order_line_items.all():
+                if (
+                    order_line_item.stripe_invoice_line_item_id
+                    and not order_line_item.paid
+                ):
+                    unpaid_invoiced_order_line_items.append(order_line_item)
+
+        # If there are any unpaid invoiced OrderLineItems, then the OrderGroup is INVOICED.
+        if len(unpaid_invoiced_order_line_items) > 0:
+            return OrderGroup.Status.INVOICED
+
+        # Sort Orders by EndDate (most recent first).
+        orders = orders.order_by("-end_date")
+
+        # If there are no Orders, then the OrderGroup is PENDING.
+        order_group_status = OrderGroup.Status.PENDING
+        for order in orders:
+            if order.status == Order.Status.SCHEDULED:
+                order_group_status = OrderGroup.Status.IN_PROGRESS
+                break
+
+        return order_group_status
 
     def update_pricing(self):
         """
