@@ -2,7 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Booking Details
+    Chat
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
@@ -13,45 +13,48 @@
             <div class="col flex-grow-1 mb-4">
                 <div class="card shadow m-auto border-start-primary py-2">
                     <div class="card-body">
-                        {% for message in chat %}
-                            {% if message.sent_by_current_user %}
-                                <div class="row align-items-center no-gutters" style="margin-top: 24px;">
-                                    <div class="col-8 ms-auto me-2">
-                                        <div class="card" style="background: var(--bs-secondary-border-subtle);color: var(--bs-primary-text-emphasis);">
-                                            <div class="card-body">
-                                                <p class="card-text">{{ message.message }}</p>
+                        <span class="d-none" id="htmx-chat-get" hx-get="{% url 'supplier_chat' conversation_id=conversation.id %}?last={{ last_message_time|urlencode }}" hx-trigger="every 5s" hx-swap="beforeend" hx-target="#booking-chat"></span>
+                        <div id="booking-chat">
+                            {% for message in chat %}
+                                {% if message.sent_by_current_user %}
+                                    <div class="row align-items-center no-gutters" style="margin-top: 24px;">
+                                        <div class="col-8 ms-auto me-2">
+                                            <div class="card" style="background: var(--bs-secondary-border-subtle);color: var(--bs-primary-text-emphasis);">
+                                                <div class="card-body">
+                                                    <p class="card-text">{{ message.message }}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="row float-end">
-                                            <div class="col">
-                                                <small class="form-text">{{ message.user.first_name }} {{ message.user.last_name }}&nbsp;&nbsp;</small>
-                                                {% if message.user.photo %}
-                                                    <img class="rounded-circle" width="100" height="80" style="width: 20px;height: 20px;" src="{{ message.user.photo.url }}" />
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% else %}
-                                <div class="row align-items-center no-gutters" style="margin-top: 24px;">
-                                    <div class="col-8 me-2">
-                                        <div class="card" style="background: var(--bs-primary-bg-subtle);color: var(--bs-primary-text-emphasis);">
-                                            <div class="card-body">
-                                                <p class="card-text">{{ message.message }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="row float-end">
-                                            <div class="col">
-                                                <small class="form-text">{{ message.user.first_name }} {{ message.user.last_name }}&nbsp;&nbsp;</small>
-                                                {% if message.user.photo %}
-                                                    <img class="rounded-circle" width="100" height="80" style="width: 20px;height: 20px;" src="{{ message.user.photo.url }}" />
-                                                {% endif %}
+                                            <div class="row float-end">
+                                                <div class="col">
+                                                    <small class="form-text">{{ message.user.first_name }} {{ message.user.last_name }}&nbsp;&nbsp;</small>
+                                                    {% if message.user.photo %}
+                                                        <img class="rounded-circle" width="100" height="80" style="width: 20px;height: 20px;" src="{{ message.user.photo.url }}" />
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
+                                {% else %}
+                                    <div class="row align-items-center no-gutters" style="margin-top: 24px;">
+                                        <div class="col-8 me-2">
+                                            <div class="card" style="background: var(--bs-primary-bg-subtle);color: var(--bs-primary-text-emphasis);">
+                                                <div class="card-body">
+                                                    <p class="card-text">{{ message.message }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="row float-end">
+                                                <div class="col">
+                                                    <small class="form-text">{{ message.user.first_name }} {{ message.user.last_name }}&nbsp;&nbsp;</small>
+                                                    {% if message.user.photo %}
+                                                        <img class="rounded-circle" width="100" height="80" style="width: 20px;height: 20px;" src="{{ message.user.photo.url }}" />
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
                         <form action="{% url 'supplier_chat' conversation_id=conversation.id %}" method="post">
                             {% csrf_token %}
                             <div class="row" style="margin-top: 16px;padding-top: 16px;border-top-style: solid;border-top-color: var(--bs-primary);">
