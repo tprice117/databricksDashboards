@@ -15,6 +15,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -1019,6 +1020,8 @@ def new_user(request):
                 phone = form.cleaned_data.get("phone")
                 email = form.cleaned_data.get("email")
                 user_type = form.cleaned_data.get("type")
+                # TODO: This is supposed to be creating a UserInvite, so that we
+                # can keep track of invites.
                 user = User(
                     user_group_id=context["user"].user_group_id,
                     first_name=first_name,
@@ -1551,6 +1554,9 @@ def booking_detail(request, order_id):
 
 @login_required(login_url="/admin/login/")
 def chat(request, conversation_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["seller"] = get_seller(request)
     if request.method == "POST":
         message_form = ChatMessageForm(request.POST)
 
@@ -1560,7 +1566,7 @@ def chat(request, conversation_id):
             print("Message form is valid")
             new_message = Message(
                 conversation=conversation,
-                user=get_user(request),
+                user=context["user"],
                 message=message_form.cleaned_data.get("message"),
             )
             new_message.save()
@@ -1572,7 +1578,7 @@ def chat(request, conversation_id):
 
     # Create/update the last read time for the current user.
     conversation.view_conversation(
-        current_user=get_user(request),
+        current_user=context["user"],
     )
 
     # Pass the messages in reverse order so that the most recent message is at the bottom of the chat.
@@ -1580,17 +1586,44 @@ def chat(request, conversation_id):
 
     # For each message, add a boolean to indicate if the message was sent by the current user.
     for message in messages_sorted_most_recent:
-        message.sent_by_current_user = message.user == get_user(request)
+        message.sent_by_current_user = message.user == context["user"]
 
-    return render(
-        request,
-        "supplier_dashboard/chat.html",
-        {
-            "conversation": conversation,
-            "messages": messages_sorted_most_recent,
-            "message_form": ChatMessageForm(),
-        },
-    )
+    context["conversation"] = conversation
+    context["chat"] = messages_sorted_most_recent
+    context["message_form"] = ChatMessageForm()
+    last_message = messages_sorted_most_recent.last()
+    context["last_message_time"] = None
+    if last_message:
+        context["last_message_time"] = last_message.created_on.isoformat()
+    # context["chat_link"] = f"/supplier/chat/{conversation_id}/"
+
+    if request.headers.get("HX-Request"):
+        last_message_ts = request.GET.get("last")
+        if last_message_ts:
+            last_message_time = parse_datetime(last_message_ts)
+            if last_message_time:
+                new_messages = conversation.messages.filter(
+                    created_on__gt=last_message_time
+                )
+                new_messages_sorted = new_messages.order_by("created_on")
+                for message in new_messages_sorted:
+                    message.sent_by_current_user = message.user == context["user"]
+                context["chat"] = new_messages_sorted
+                if new_messages_sorted.exists():
+                    last_message = new_messages_sorted.last()
+                    context["last_message_time"] = last_message.created_on.isoformat()
+                    return render(
+                        request,
+                        "supplier_dashboard/snippets/chat_messages.html",
+                        context,
+                    )
+            return HttpResponse("", status=204)
+        else:
+            return render(
+                request, "supplier_dashboard/snippets/chat_messages.html", context
+            )
+    else:
+        return render(request, "supplier_dashboard/chat.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -1621,7 +1654,7 @@ def payouts(request):
                 "order__order_group__seller_product_seller_location__seller_location__seller"
             )
             payouts = payouts.order_by(
-                "order__order_group__seller_product_seller_location__seller_location__seller__name",
+                # "order__order_group__seller_product_seller_location__seller_location__seller__name",
                 "-created_on",
             )
         else:
@@ -1732,16 +1765,31 @@ def payout_invoice(request, payout_id):
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
     payout = Payout.objects.filter(id=payout_id).select_related("order").first()
-    order_line_item = payout.order.order_line_items.all().first()
-    context["is_pdf"] = False
-    if order_line_item:
-        # TODO: Add support for check once LOB is integrated.
-        stripe_invoice = order_line_item.get_invoice()
-        if stripe_invoice:
-            # hosted_invoice_url
-            context["hosted_invoice_url"] = stripe_invoice.hosted_invoice_url
-            context["invoice_pdf"] = stripe_invoice.invoice_pdf
+    if payout.lob_check_id:
+        context["is_lob"] = True
+        check = payout.get_check()
+        if check:
+            context["invoice_pdf"] = check.url
+            context["thumbnails"] = []
+            if check.thumbnails:
+                for thumbnail in check.thumbnails:
+                    context["thumbnails"].append(thumbnail["large"])
             context["is_pdf"] = True
+            context["expected_delivery_date"] = (
+                check.expected_delivery_date
+            )  # datetime.date
+            context["send_date"] = check.send_date  # datetime.datetime
+            context["tracking_number"] = check.tracking_number
+    # order_line_item = payout.order.order_line_items.all().first()
+    # context["is_pdf"] = False
+    # if order_line_item:
+    #     # TODO: Add support for check once LOB is integrated.
+    #     stripe_invoice = order_line_item.get_invoice()
+    #     if stripe_invoice:
+    #         # hosted_invoice_url
+    #         context["hosted_invoice_url"] = stripe_invoice.hosted_invoice_url
+    #         context["invoice_pdf"] = stripe_invoice.invoice_pdf
+    #         context["is_pdf"] = True
     return render(
         request, "supplier_dashboard/snippets/payout_detail_invoice.html", context
     )
@@ -1753,13 +1801,14 @@ def payout_detail(request, payout_id):
     # NOTE: Can add stuff to session if needed to speed up queries.
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    payout = None
-    if not payout:
-        payout = Payout.objects.get(id=payout_id)
-    # TODO: Check if this is a checkbook payout (this changes with LOB integration).
+    payout = Payout.objects.get(id=payout_id)
     if payout.checkbook_payout_id:
         context["related_payouts"] = Payout.objects.filter(
             checkbook_payout_id=payout.checkbook_payout_id
+        )
+    elif payout.lob_check_id:
+        context["related_payouts"] = Payout.objects.filter(
+            lob_check_id=payout.lob_check_id
         )
     context["payout"] = payout
     return render(request, "supplier_dashboard/payout_detail.html", context)
