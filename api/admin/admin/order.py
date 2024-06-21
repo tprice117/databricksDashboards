@@ -143,22 +143,25 @@ class OrderAdmin(admin.ModelAdmin):
                     if isinstance(check_response, CheckErrorResponse):
                         messages.error(
                             request,
-                            f'''Checkbook error occurred:
+                            f"""Checkbook error occurred:
                              [{check_response.status_code}]-{check_response.message} on
-                             seller_location id: {str(seller_location.id)}. Please check BetterStack logs.''',
+                             seller_location id: {str(seller_location.id)}. Please check BetterStack logs.""",
                         )
                     else:
                         # Save Payout for each order.
                         for order in orders_for_seller_location:
-                            payout_diff = self.seller_price(order) - self.total_paid_to_seller(
+                            payout_diff = self.seller_price(
                                 order
-                            )
+                            ) - self.total_paid_to_seller(order)
                             if payout_diff > 0:
-                                Payout.objects.create(
+                                payout = Payout(
                                     order=order,
                                     amount=payout_diff,
                                     lob_check_id=check_response.id,
                                 )
+                                if check_response.check_number:
+                                    payout.check_number = check_response.check_number
+                                payout.save()
 
         messages.success(request, "Successfully paid out all selected orders.")
 
