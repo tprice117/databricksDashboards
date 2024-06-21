@@ -200,6 +200,19 @@ def get_check_remittance_html(
     )
 
 
+def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> str:
+    """Get invoice_id for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
+    seller_invoice_payable_line_item = (
+        order.order.seller_invoice_payable_line_items.all().first()
+    )
+    invoice_id = default_invoice_id
+    if seller_invoice_payable_line_item:
+        seller_invoice_payable = seller_invoice_payable_line_item.seller_invoice_payable
+        if seller_invoice_payable:
+            invoice_id = seller_invoice_payable.supplier_invoice_id
+    return invoice_id
+
+
 def get_check_remittance_variable(
     seller_invoice_str: str, orders: List[Order]
 ) -> CheckRemittanceHTMLResponse:
@@ -229,9 +242,10 @@ def get_check_remittance_variable(
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
         # Add invoice to remittance advice page.
+        invoice_id = get_invoice_id(order, default_invoice_id=seller_invoice_str)
         page["invoices"].append(
             {
-                "id": seller_invoice_str,
+                "id": invoice_id,
                 "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
                 "description": description,
                 "date": order.end_date.strftime("%d/%m/%Y"),
