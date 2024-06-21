@@ -230,8 +230,12 @@ class ChatMessageForm(forms.ModelForm):
         label="",
         widget=forms.Textarea(
             attrs={
+                "id": "chat-message-input",
                 "class": "form-control flex-grow-1 me-2",
                 "rows": 1,
+                "oninput": "autoResize(this)",
+                "tabindex": "0",
+                "style": "height: 92px; overflow-y: hidden;",
             }
         ),
     )
