@@ -28,8 +28,15 @@
         });
     </script>
 {% endblock %}
-{% block css %}
+{% block stylesheet %}
     <style>
+        #booking-chat {
+            min-height: 100px;
+            border-top: 1px dotted gray;
+            overflow: hidden;
+            max-height: 65vh;
+            overflow-y: scroll;
+        }
         #chat-message-input {
             box-sizing: border-box;
             width: 100%;
@@ -49,7 +56,7 @@
         </div>
         <div class="row">
             <div class="col flex-grow-1 mb-4">
-                <div class="card shadow m-auto border-start-primary py-2">
+                <div class="card shadow m-auto border-start-primary py-2" style="max-width: 850px;">
                     <div class="card-body">
                         <span class="d-none" id="htmx-chat-get" hx-get="{% url 'supplier_chat' conversation_id=conversation.id %}?last={{ last_message_time|urlencode }}" hx-trigger="every 5s" hx-swap="beforeend" hx-target="#booking-chat"></span>
                         <div id="booking-chat">
