@@ -516,6 +516,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class PayoutSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    check_number = serializers.IntegerField(required=False, allow_null=True)
 
     class Meta:
         model = Payout

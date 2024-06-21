@@ -10,6 +10,7 @@ class PayoutAdmin(admin.ModelAdmin):
         "id",
         "order",
         "checkbook_payout_id",
+        "check_number",
         "stripe_transfer_id",
         "lob_check_id",
         "amount",

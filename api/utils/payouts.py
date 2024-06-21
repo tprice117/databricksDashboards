@@ -87,9 +87,11 @@ class PayoutUtils:
                     if payout_response:
                         if isinstance(payout_response, CheckErrorResponse):
                             # If there was an error sending the check, add error message to email report data.
-                            email_report_data["error"] = f'''Checkbook error occurred:
+                            email_report_data[
+                                "error"
+                            ] = f"""Checkbook error occurred:
                              [{payout_response.status_code}]-{payout_response.message} on
-                             seller_location id: {str(seller_location.id)}. Please check BetterStack logs.'''
+                             seller_location id: {str(seller_location.id)}. Please check BetterStack logs."""
                         else:
                             # If the check was sent successfully, add payouts to email report data.
                             email_report_data["payouts"] = payout_response
@@ -295,11 +297,14 @@ class PayoutUtils:
                     # Save Payout for each order.
                     payouts = []
                     for order in orders:
-                        payout = Payout.objects.create(
+                        payout = Payout(
                             order=order,
                             amount=order.needed_payout_to_seller(),
                             lob_check_id=check_response.id,
                         )
+                        if check_response.check_number:
+                            payout.check_number = check_response.check_number
+                        payout.save()
                         payouts.append(payout)
 
                     return payouts
