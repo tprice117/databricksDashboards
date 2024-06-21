@@ -69,6 +69,19 @@ class CheckRemittanceVariableResponse:
     description: str
 
 
+def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> str:
+    """Get invoice_id for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
+    seller_invoice_payable_line_item = (
+        order.order.seller_invoice_payable_line_items.all().first()
+    )
+    invoice_id = default_invoice_id
+    if seller_invoice_payable_line_item:
+        seller_invoice_payable = seller_invoice_payable_line_item.seller_invoice_payable
+        if seller_invoice_payable:
+            invoice_id = seller_invoice_payable.supplier_invoice_id
+    return invoice_id
+
+
 def get_check_remittance_page_html(
     remittance_advice: List[str], top_padding="3.65"
 ) -> str:
@@ -160,10 +173,10 @@ def get_check_remittance_html(
             + " | "
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
-
+        invoice_id = get_invoice_id(order, default_invoice_id=seller_invoice_str)
         remittance_advice.append(
             get_check_remittance_item_html(
-                seller_invoice_str,
+                invoice_id,
                 f"${float(order.seller_price() - total_paid_to_seller):.2f}",
                 description,
                 order.end_date.strftime("%d/%m/%Y"),
@@ -198,19 +211,6 @@ def get_check_remittance_html(
         is_attachment=is_attachment,
         description=description,
     )
-
-
-def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> str:
-    """Get invoice_id for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
-    seller_invoice_payable_line_item = (
-        order.order.seller_invoice_payable_line_items.all().first()
-    )
-    invoice_id = default_invoice_id
-    if seller_invoice_payable_line_item:
-        seller_invoice_payable = seller_invoice_payable_line_item.seller_invoice_payable
-        if seller_invoice_payable:
-            invoice_id = seller_invoice_payable.supplier_invoice_id
-    return invoice_id
 
 
 def get_check_remittance_variable(
