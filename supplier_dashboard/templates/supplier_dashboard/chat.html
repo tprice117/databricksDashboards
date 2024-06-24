@@ -4,6 +4,51 @@
 {% block title %}
     Chat
 {% endblock %}
+{% block javascript %}
+    <script>
+        // Function to scroll to the bottom
+        function scrollToBottom() {
+            console.log("scrollToBottom");
+            let responseElement = document.getElementById("booking-chat");
+            responseElement.scrollTop = responseElement.scrollHeight;
+            // Scroll to the bottom of the page
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        
+        function autoResize(textarea) {
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + 10 + "px";
+        }
+        
+        // Initial call to set the initial height
+        document.addEventListener("DOMContentLoaded", function () {
+            var textarea = document.getElementById("chat-message-input");
+            autoResize(textarea);
+            scrollToBottom();
+        });
+    </script>
+{% endblock %}
+{% block stylesheet %}
+    <style>
+        #booking-chat {
+            min-height: 100px;
+            border-top: 1px dotted gray;
+            overflow: hidden;
+            max-height: 65vh;
+            overflow-y: scroll;
+        }
+        #chat-message-input {
+            box-sizing: border-box;
+            width: 100%;
+            resize: none;
+            overflow: hidden;
+            min-height: 60px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+        }
+    </style>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         <div class="d-sm-flex justify-content-between align-items-center mb-4">
@@ -11,7 +56,7 @@
         </div>
         <div class="row">
             <div class="col flex-grow-1 mb-4">
-                <div class="card shadow m-auto border-start-primary py-2">
+                <div class="card shadow m-auto border-start-primary py-2" style="max-width: 850px;">
                     <div class="card-body">
                         <span class="d-none" id="htmx-chat-get" hx-get="{% url 'supplier_chat' conversation_id=conversation.id %}?last={{ last_message_time|urlencode }}" hx-trigger="every 5s" hx-swap="beforeend" hx-target="#booking-chat"></span>
                         <div id="booking-chat">
