@@ -592,6 +592,11 @@ class Order(BaseModel):
             if self.order_type != Order.Type.AUTO_RENEWAL or (
                 is_first_order and self.order_type == Order.Type.AUTO_RENEWAL
             ):
+                # Import here to avoid circular import.
+                from api.models.user.user_seller_location import (
+                    UserSellerLocation,
+                )  # noqa
+
                 # If order type is none, then do not include it in the email.
                 subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
                 if self.order_type is None:
@@ -603,11 +608,19 @@ class Order(BaseModel):
                     "notifications/emails/supplier_email.min.html",
                     {"order": self, "accept_url": accept_url, "is_email": True},
                 )
+                user_seller_locations = UserSellerLocation.objects.filter(
+                    seller_location_id=self.order_group.seller_product_seller_location.seller_location.id
+                ).select_related("user")
+                to_emails = [
+                    self.order_group.seller_product_seller_location.seller_location.order_email
+                ]
+                for user_seller_location in user_seller_locations:
+                    if user_seller_location.user.email not in to_emails:
+                        to_emails.append(user_seller_location.user.email)
+
                 add_email_to_queue(
                     from_email="dispatch@trydownstream.com",
-                    to_emails=[
-                        self.order_group.seller_product_seller_location.seller_location.order_email
-                    ],
+                    to_emails=to_emails,
                     bcc_emails=bcc_emails,
                     subject=subject_supplier,
                     html_content=html_content_supplier,
