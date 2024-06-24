@@ -121,6 +121,14 @@ class Order(BaseModel):
         )
         return round(seller_price, 2)
 
+    @property
+    def take_rate(self):
+        seller_price = self.seller_price()
+        customer_price = self.customer_price()
+        if seller_price == 0:
+            return 0
+        return round(((customer_price - seller_price) / seller_price) * 100, 2)
+
     def total_paid_to_seller(self):
         total_paid_to_seller = sum([payout.amount for payout in self.payouts.all()])
         return round(total_paid_to_seller, 2)
