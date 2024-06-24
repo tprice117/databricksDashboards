@@ -169,7 +169,7 @@
     </div>
     <!-- End: 1 Row 2 Columns -->
     <!-- Start: 1 Row 2 Columns -->
-    <div class="container">
+    <div class="container" hx-disabled-elt=".status-card, button, .form-control, .pagi-link, .clickable-header">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
                 <div class="card">
@@ -177,7 +177,9 @@
                         <div>
                             <h4>Users<button class="btn btn-primary float-end" type="button" data-bs-target="#user-seller-location-add-modal" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Add</button></h4>
                         </div>
-                        <p><b>Users with access to this Location.</b></p>
+                        <p>
+                            <b>Users with access to this Location.</b>
+                        </p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
@@ -196,32 +198,49 @@
                                             </td>
                                         </tr>
                                     {% empty %}
-                                    <p>No Users</p>
+                                        <p>No Users</p>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        <p><b>Admin Users with access to all Locations</b></p>
+                        <p>
+                            <b>Admin Users with access to all Locations</b>
+                        </p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
-                                    <tr></tr>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Notifications</th>
+                                        <th>View</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                    {% for admin_user in admin_users %}
+                                    {% for location_admin in location_admins %}
                                         <tr>
-                                            <td>{{ admin_user.full_name }}</td>
-                                            <td>{{ admin_user.email }}</td>
+                                            <td>{{ location_admin.user.full_name }}</td>
+                                            <td>{{ location_admin.user.email }}</td>
                                             <td>
-                                                <a class="btn btn-light" role="button" href="{% url 'supplier_user_detail' user_id=admin_user.id %}"><i class="far fa-eye"></i></a>
+                                                {% if location_admin.notify %}
+                                                    <button class="btn btn-light" type="button" hx-target="closest td" hx-get="{% url 'supplier_location_remove_user' seller_location_id=seller_location.id user_id=location_admin.user.id %}"><i class="fas fa-bell"></i><span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                                                {% else %}
+                                                    <button class="btn btn-light" type="button" hx-target="closest td" hx-get="{% url 'supplier_location_add_user' seller_location_id=seller_location.id user_id=location_admin.user.id %}"><i class="fas fa-bell-slash"></i><span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a class="btn btn-light" role="button" href="{% url 'supplier_user_detail' user_id=location_admin.user.id %}"><i class="far fa-eye"></i></a>
                                             </td>
                                         </tr>
                                     {% empty %}
-                                    <p>No Admin Users</p>
+                                        <p>No Admin Users</p>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                    <div class="card-footer">
+                        <p>Tap the bell to toggle booking notifications for an Admin.</p>
                     </div>
                 </div>
             </div>
@@ -257,7 +276,7 @@
                     <h4 class="modal-title">Add Users to this Location</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Select a user(s) to give them permissions to view this Location.</p>
+                    <p>Select a user(s) to give them permissions to view and receive booking notifications for this Location.</p>
                     <div class="table-responsive" style="margin-bottom: 16px;">
                         <table class="table">
                             <thead>
@@ -271,9 +290,6 @@
                                         <td>
                                             <a class="btn btn-light" role="button" href="{% url 'supplier_location_add_user' seller_location_id=seller_location.id user_id=user.id %}"><i class="far fa-plus-square"></i></a>
                                         </td>
-                                        {% comment %} <td>
-                                            <a class="btn btn-light" role="button" href="user_detail.html"><i class="far fa-plus-square"></i></a>
-                                        </td> {% endcomment %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
