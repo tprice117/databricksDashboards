@@ -24,6 +24,9 @@ from .seller_product_seller_location_material_waste_type import (
 from .seller_product_seller_location_rental import (
     SellerProductSellerLocationRentalAdmin,
 )
+from .seller_product_seller_location_rental_multi_step import (
+    SellerProductSellerLocationRentalMultiStepAdmin,
+)
 from .seller_product_seller_location_service import (
     SellerProductSellerLocationServiceAdmin,
 )

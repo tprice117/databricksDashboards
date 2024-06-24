@@ -7,6 +7,7 @@ from django.urls import path
 from api.admin.inlines import (
     SellerProductSellerLocationMaterialInline,
     SellerProductSellerLocationRentalInline,
+    SellerProductSellerLocationRentalMultiStepInline,
     SellerProductSellerLocationServiceInline,
 )
 from api.forms import CsvImportForm
@@ -29,6 +30,7 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
     inlines = [
         SellerProductSellerLocationServiceInline,
         SellerProductSellerLocationRentalInline,
+        SellerProductSellerLocationRentalMultiStepInline,
         SellerProductSellerLocationMaterialInline,
     ]
 
