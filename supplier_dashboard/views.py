@@ -1314,6 +1314,9 @@ def download_bookings(request):
             "Type",
             "Status",
             "Time Since Order",
+            "Supplier Price",
+            "Customer Price",
+            "Take Rate",
         ]
     else:
         header_row = ["Service Date", "Product", "Booking Address", "Type", "Status"]
@@ -1340,6 +1343,9 @@ def download_bookings(request):
                 row.append(humanize.naturaldelta(now_time - order.submitted_on))
             else:
                 row.append("Not Submitted")
+            row.append("${:,.2f}".format(order.seller_price()))
+            row.append("${:,.2f}".format(order.customer_price()))
+            row.append(f"{order.take_rate}%")
         writer.writerow(row)
     return response
 
