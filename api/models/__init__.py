@@ -40,6 +40,9 @@ from .seller.seller_product_seller_location_material_waste_type import (
 from .seller.seller_product_seller_location_rental import (
     SellerProductSellerLocationRental,
 )
+from .seller.seller_product_seller_location_rental_multi_step import (
+    SellerProductSellerLocationRentalMultiStep,
+)
 from .seller.seller_product_seller_location_service import (
     SellerProductSellerLocationService,
 )
