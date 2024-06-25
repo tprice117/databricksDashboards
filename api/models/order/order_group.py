@@ -38,6 +38,13 @@ class OrderGroup(BaseModel):
         models.CASCADE,
         blank=True,
     )
+    # https://developers.intercom.com/docs/build-an-integration/learn-more/rest-apis/identifiers-and-urls/
+    intercom_id = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text="The Intercom ID of the Conversation object.",
+    )
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
@@ -191,3 +198,6 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
     # the OrderGroup.
     if instance._state.adding:
         instance.conversation = Conversation.objects.create()
+        # TODO: Create a Conversation in Intercom for the OrderGroup.
+    # TODO: On OrderGroup complete, maybe close the Conversation in Intercom.
+    # https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/manageconversation
