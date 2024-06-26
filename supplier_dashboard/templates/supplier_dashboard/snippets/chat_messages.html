@@ -59,7 +59,6 @@
         </div>
     {% endif %}
 {% endfor %}
-<span class="d-none" id="htmx-chat-get" hx-get="{% url 'supplier_chat' order_id=order.id %}?last={{ last_message_time|urlencode }}" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="#booking-chat" hx-swap-oob="true"></span>
 {% if message_form %}
     <form id="booking-chat-form" action="{% url 'supplier_chat' order_id=order.id %}" method="post" hx-boost="true" hx-target="#booking-chat" hx-swap="innerHTML" enctype="multipart/form-data" hx-disabled-elt="button" hx-swap-oob="true">
         {% csrf_token %}
