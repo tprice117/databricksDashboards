@@ -1588,12 +1588,13 @@ def parse_intercom_conversation(conversation_data: dict, user: User):
             # if part["author"]["id"] == user.intercom_id:
             #     resp["sent_by_current_user"] = True
             conversation.append(resp)
+    # print(f"{user.email}: read {conversation_data['read']}")
     return conversation
 
 
 def get_intercom_conversation(conversation_id: str, user: User):
     get_conversation_url = f"https://api.intercom.io/conversations/{conversation_id}"
-    query = {"display_as": "plaintext"}
+    query = {}  # {"display_as": "plaintext"}
     response = requests.get(
         get_conversation_url, headers=IntercomUtils.headers, params=query
     )
@@ -1620,14 +1621,14 @@ def chat(request, order_id):
     order = Order.objects.filter(id=order_id).select_related("order_group").first()
     context["order"] = order
     if request.method == "POST":
-        message_form = ChatMessageForm(request.POST)
-        if message_form.is_valid():
+        context["message_form"] = ChatMessageForm(request.POST)
+        if context["message_form"].is_valid():
             payload = {
                 "intercom_user_id": context["user"].intercom_id,
                 "message_type": "comment",
                 "type": "user",
-                "body": message_form.cleaned_data.get("message"),
-                "display_as": "plaintext",
+                "body": context["message_form"].cleaned_data.get("message"),
+                # "display_as": "plaintext",
             }
 
             conversation_url = (
@@ -1642,6 +1643,7 @@ def chat(request, order_id):
             context["chat"] = parse_intercom_conversation(
                 conversation_data, context["user"]
             )
+            context["message_form"] = ChatMessageForm()
             if request.headers.get("HX-Request"):
                 return render(
                     request,
@@ -1652,12 +1654,12 @@ def chat(request, order_id):
                 return render(request, "supplier_dashboard/chat.html", context)
         else:
             print("Message form is not valid")
-            print(message_form.errors)
+            print(context["message_form"].errors)
 
     if order.order_group.intercom_id is None:
         # Create a new conversation.
         # TODO: Maybe put this on the OrderGroup model
-        subject = f"🚀 New SWAP Downstream Booking! [{order.order_group.user_address.formatted_address()}]-[{order.id}]."
+        subject = f"🚀 New SWAP { order.order_group.seller_product_seller_location.seller_product.product.main_product.name } Downstream Booking! [{order.order_group.user_address.formatted_address()}]-[{order.id}]."
         body = f"{subject} This is a chat between Seller and Client. - Michael Wickey Intercom Test"
         payload = {
             "message_type": "in_app",
@@ -1703,7 +1705,18 @@ def chat(request, order_id):
     context["chat"] = get_intercom_conversation(
         order.order_group.intercom_id, context["user"]
     )
+    # Get last message time and check to see if query param last is the same, if it is, then return empty 204.
+    context["last_message_time"] = None
+    if context["chat"]:
+        context["chat"][-1]
+        context["last_message_time"] = str(
+            context["chat"][-1]["created_at"].timestamp()
+        )
     if request.headers.get("HX-Request"):
+        last_message_ts = request.GET.get("last")
+        if last_message_ts and context["last_message_time"]:
+            if last_message_ts == context["last_message_time"]:
+                return HttpResponse(status=204)
         return render(
             request,
             "supplier_dashboard/snippets/chat_messages.html",

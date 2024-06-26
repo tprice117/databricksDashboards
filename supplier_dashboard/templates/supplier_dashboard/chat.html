@@ -26,6 +26,9 @@
             autoResize(textarea);
             scrollToBottom();
         });
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            scrollToBottom();
+        });
     </script>
 {% endblock %}
 {% block stylesheet %}
@@ -46,6 +49,20 @@
             padding: 10px;
             font-size: 16px;
             border: 1px solid #ccc;
+        }
+        .intercom-container {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: box-shadow 0.1s ease;
+            margin: 8px 0;
+            box-shadow: 0 0 4px transparent;
+        }
+        .intercom-container > img {
+            border-radius: 8px 8px 0 0;
+            width: 100%;
+            height: auto;
         }
     </style>
 {% endblock %}
@@ -77,9 +94,7 @@
                                     <div class="row align-items-center no-gutters" style="margin-top: 24px;">
                                         <div class="col-8 mx-auto">
                                             <div class="card" style="background: var(--bs-warning-border-subtle);color: var(--bs-primary-text-emphasis);">
-                                                <div class="card-body">
-                                                    <p class="card-text">{{ message.body }}</p>
-                                                </div>
+                                                <div class="card-body">{{ message.body|safe }}</div>
                                             </div>
                                             <div class="row float-end">
                                                 <div class="col">
@@ -96,14 +111,12 @@
                                     <div class="row align-items-center no-gutters" style="margin-top: 24px;">
                                         <div class="col-8 ms-auto me-2">
                                             <div class="card" style="background: var(--bs-secondary-border-subtle);color: var(--bs-primary-text-emphasis);">
-                                                <div class="card-body">
-                                                    <p class="card-text">{{ message.body }}</p>
-                                                </div>
+                                                <div class="card-body">{{ message.body|safe }}</div>
                                             </div>
                                             <div class="row float-end">
                                                 <div class="col">
                                                     <small class="form-text">{{ message.created_at|timesince }} ago&nbsp;&nbsp;</small>
-                                                    <small class="form-text">{{ message.author }}&nbsp;&nbsp;</small>
+                                                    <small class="form-text">Me&nbsp;&nbsp;</small>
                                                     {% if message.photo %}
                                                         <img class="rounded-circle" width="100" height="80" style="width: 20px;height: 20px;" src="{{ message.photo.url }}" />
                                                     {% endif %}
@@ -115,9 +128,7 @@
                                     <div class="row align-items-center no-gutters" style="margin-top: 24px;">
                                         <div class="col-8 me-2">
                                             <div class="card" style="background: var(--bs-primary-bg-subtle);color: var(--bs-primary-text-emphasis);">
-                                                <div class="card-body">
-                                                    <p class="card-text">{{ message.body }}</p>
-                                                </div>
+                                                <div class="card-body">{{ message.body|safe }}</div>
                                             </div>
                                             <div class="row float-end">
                                                 <div class="col">
@@ -133,12 +144,15 @@
                                 {% endif %}
                             {% endfor %}
                         </div>
-                        <form action="{% url 'supplier_chat' order_id=order.id %}" method="post">
+                        <form id="booking-chat-form" action="{% url 'supplier_chat' order_id=order.id %}" method="post" hx-boost="true" hx-target="#booking-chat" hx-swap="innerHTML" enctype="multipart/form-data" hx-disabled-elt="button">
                             {% csrf_token %}
                             <div class="row" style="margin-top: 16px;padding-top: 16px;border-top-style: solid;border-top-color: var(--bs-primary);">
                                 <div class="col d-md-flex justify-content-md-start">
                                     {{ message_form }}
-                                    <button class="btn btn-primary" type="submit">Send</button>
+                                    <button class="btn btn-primary" type="submit">
+                                        Send
+                                        <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span>
+                                    </button>
                                 </div>
                             </div>
                         </form>
