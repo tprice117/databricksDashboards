@@ -47,7 +47,7 @@ urlpatterns = [
         name="supplier_booking_detail",
     ),
     path(
-        "supplier/chat/<uuid:conversation_id>/",
+        "supplier/booking/<uuid:order_id>/chat/",
         views.chat,
         name="supplier_chat",
     ),
