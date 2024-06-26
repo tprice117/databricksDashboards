@@ -44,6 +44,7 @@ class Order(BaseModel):
         ONE_TIME = "ONE_TIME"
 
     class Status(models.TextChoices):
+        APPROVAL = "APPROVAL"
         PENDING = "PENDING"
         SCHEDULED = "SCHEDULED"
         CANCELLED = "CANCELLED"
