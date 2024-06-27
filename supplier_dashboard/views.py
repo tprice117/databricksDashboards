@@ -1575,7 +1575,13 @@ def parse_intercom_conversation(conversation_data: dict, user: User):
         }
     ]
     for part in conversation_data["conversation_parts"]["conversation_parts"]:
-        if part["part_type"] == "comment" and not part["redacted"]:
+        if (
+            part["part_type"] == "comment"
+            or (
+                part["body"]
+                and (part["part_type"] == "open" or part["part_type"] == "close")
+            )
+        ) and not part["redacted"]:
             resp = {
                 "author": part["author"]["name"],
                 "body": part["body"],
@@ -1585,16 +1591,16 @@ def parse_intercom_conversation(conversation_data: dict, user: User):
                 "is_admin": part["author"]["type"] == "admin",
                 "sent_by_current_user": part["author"]["id"] == user.intercom_id,
             }
-            # if part["author"]["id"] == user.intercom_id:
-            #     resp["sent_by_current_user"] = True
             conversation.append(resp)
     # print(f"{user.email}: read {conversation_data['read']}")
     return conversation
 
 
-def get_intercom_conversation(conversation_id: str, user: User):
+def get_intercom_conversation(conversation_id: str, user: User, plain=False):
     get_conversation_url = f"https://api.intercom.io/conversations/{conversation_id}"
     query = {}  # {"display_as": "plaintext"}
+    if plain:
+        query["display_as"] = "plaintext"
     response = requests.get(
         get_conversation_url, headers=IntercomUtils.headers, params=query
     )
@@ -1613,12 +1619,118 @@ def get_intercom_conversation(conversation_id: str, user: User):
 
 
 @login_required(login_url="/admin/login/")
-def chat(request, order_id):
+def set_intercom_messages_read(request: HttpRequest):
+    user = get_user(request)
+    url = "https://api.intercom.io/contacts/" + user.intercom_id
+    payload = {"last_seen_at": timezone.now().timestamp()}
+    response = requests.put(url, json=payload, headers=IntercomUtils.headers)
+    data = response.json()
+    print(data)
+    return render(request, "supplier_dashboard/snippets/nav_bar_messages_badge.html")
+
+
+@login_required(login_url="/admin/login/")
+def get_intercom_unread_conversations(request: HttpRequest):
+    user = get_user(request)
+    context = {"user": user}
+    # TODO: After order groups go into complete status, mark the conversation as closed.
+    # url = "https://api.intercom.io/contacts/" + user.intercom_id
+    # response = requests.get(url, headers=IntercomUtils.headers)
+
+    # person_data = response.json()
+    # # print(person_data)
+    # if person_data["last_seen_at"] is None:
+    #     person_data["last_seen_at"] = int(timezone.now().timestamp()) - 86400
+    # else:
+    #     person_data["last_seen_at"] = timezone.datetime.fromtimestamp(
+    #         person_data["last_seen_at"], tz=timezone.utc
+    #     )
+    # TODO: As soon as the chat window is opened or the news icon dropdown is opened, mark the user as seen.
+    # payload = {"last_seen_at": timezone.now().timestamp()}
+    # response = requests.put(url, json=payload, headers=IntercomUtils.headers)
+    # data = response.json()
+    # print(data)
+
+    url = "https://api.intercom.io/conversations/search"
+
+    payload = {
+        # "query": {"field": "contact_ids", "operator": "=", "value": user.intercom_id}
+        "query": {
+            "operator": "AND",
+            "value": [
+                # {"field": "read", "operator": "=", "value": "false"},
+                {"field": "open", "operator": "=", "value": True},
+                # {
+                #     "field": "updated_at",
+                #     "operator": ">",
+                #     "value": person_data["last_seen_at"],
+                # },
+                {"field": "contact_ids", "operator": "=", "value": user.intercom_id},
+            ],
+        }
+    }
+    # conversation.updated_at>person.last_seen_at
+    response = requests.post(url, json=payload, headers=IntercomUtils.headers)
+
+    conversations_data = response.json()
+    context["updates"] = []
+    # Search doesn't return the full conversation, so we need to get each one.
+    for conversation_data in conversations_data["conversations"]:
+        conversation = get_intercom_conversation(
+            conversation_data["id"], user, plain=True
+        )
+        order_id = (
+            Order.objects.filter(order_group__intercom_id=conversation_data["id"])
+            .values("id")
+            .first()
+        )
+        if order_id:
+            context["updates"].append(
+                {
+                    "message": conversation[-1],
+                    "order_id": order_id["id"],
+                }
+            )
+        else:
+            context["updates"].append(
+                {
+                    "message": conversation[-1],
+                    "conversation_id": conversation_data["id"],
+                }
+            )
+    return render(
+        request,
+        "supplier_dashboard/snippets/nav_dropdown_messages.html",
+        context,
+    )
+
+
+def attach_users_conversation(users: List[User], order_group: OrderGroup):
+    # Attach the parties to the conversation
+    csturl = (
+        "https://api.intercom.io/conversations/"
+        + order_group.intercom_id
+        + "/customers"
+    )
+    # admin is Zach
+    payload = {"admin_id": "5761714"}
+    for user in users:
+        payload["customer"] = {"intercom_user_id": user.intercom_id}
+        response = requests.post(csturl, json=payload, headers=IntercomUtils.headers)
+        data = response.json()
+
+
+@login_required(login_url="/admin/login/")
+def chat(request, order_id=None, conversation_id=None):
     # https://app.intercom.com/a/inbox/d7p5ghkg/inbox/shared/all/conversation/206666400017045?view=List
+    # https://app.intercom.com/a/inbox/d7p5ghkg/inbox/shared/all/conversation/206666400017155?view=List
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    order = Order.objects.filter(id=order_id).select_related("order_group").first()
+    order = None
+    if order_id:
+        order = Order.objects.filter(id=order_id).select_related("order_group").first()
+        conversation_id = order.order_group.intercom_id
     context["order"] = order
     if request.method == "POST":
         context["message_form"] = ChatMessageForm(request.POST)
@@ -1632,9 +1744,7 @@ def chat(request, order_id):
             }
 
             conversation_url = (
-                "https://api.intercom.io/conversations/"
-                + order.order_group.intercom_id
-                + "/reply"
+                "https://api.intercom.io/conversations/" + conversation_id + "/reply"
             )
             response = requests.post(
                 conversation_url, headers=IntercomUtils.headers, json=payload
@@ -1644,6 +1754,14 @@ def chat(request, order_id):
                 conversation_data, context["user"]
             )
             context["message_form"] = ChatMessageForm()
+            if order:
+                context["get_chat_url"] = reverse(
+                    "supplier_booking_chat", kwargs={"order_id": order.id}
+                )
+            else:
+                context["get_chat_url"] = reverse(
+                    "supplier_chat", kwargs={"conversation_id": conversation_id}
+                )
             if request.headers.get("HX-Request"):
                 return render(
                     request,
@@ -1656,7 +1774,7 @@ def chat(request, order_id):
             print("Message form is not valid")
             print(context["message_form"].errors)
 
-    if order.order_group.intercom_id is None:
+    if order and order.order_group.intercom_id is None:
         # Create a new conversation.
         # TODO: Maybe put this on the OrderGroup model
         subject = f"🚀 New SWAP { order.order_group.seller_product_seller_location.seller_product.product.main_product.name } Downstream Booking! [{order.order_group.user_address.formatted_address()}]-[{order.id}]."
@@ -1677,40 +1795,44 @@ def chat(request, order_id):
         conversation_id = data["conversation_id"]
         order.order_group.intercom_id = conversation_id
         order.order_group.save()
-        # Attach the two parties to the conversation
-        csturl = (
-            "https://api.intercom.io/conversations/" + conversation_id + "/customers"
+        # Attach the all parties to the conversation
+        # TODO: Attach everyone with access to this location
+        # user_seller_locations = UserSellerLocation.objects.filter(
+        #     seller_location_id=order.order_group.seller_product_seller_location.seller_location_id
+        # ).select_related("user")
+        # # Get ADMIN users for this UserGroup.
+        # admin_users = User.objects.filter(
+        #     user_group_id=context["user"].user_group_id,
+        #     type=UserType.ADMIN,
+        # )
+        attach_users_conversation(
+            [context["user"], order.order_group.user], order.order_group
         )
-
-        payload = {
-            "admin_id": "5761714",  # Zach
-            "customer": {
-                "intercom_user_id": context["user"].intercom_id,
-                "customer": {"intercom_user_id": order.order_group.user.intercom_id},
-            },
-        }
-        response = requests.post(csturl, json=payload, headers=IntercomUtils.headers)
-        data = response.json()
         # Add Booking tag to conversation
-        tagurl = (
-            "https://api.intercom.io/conversations/"
-            + order.order_group.intercom_id
-            + "/tags"
-        )
+        tagurl = "https://api.intercom.io/conversations/" + conversation_id + "/tags"
         payload = {"id": "7634085", "admin_id": "5761714"}
         response = requests.post(tagurl, json=payload, headers=IntercomUtils.headers)
         data = response.json()
 
     context["message_form"] = ChatMessageForm()
-    context["chat"] = get_intercom_conversation(
-        order.order_group.intercom_id, context["user"]
-    )
+    context["chat"] = get_intercom_conversation(conversation_id, context["user"])
     # Get last message time and check to see if query param last is the same, if it is, then return empty 204.
     context["last_message_time"] = None
     if context["chat"]:
         context["chat"][-1]
         context["last_message_time"] = str(
             context["chat"][-1]["created_at"].timestamp()
+        )
+
+    query_params = request.GET.copy()
+    query_params["last"] = context["last_message_time"]
+    if order:
+        context["get_chat_url"] = (
+            f"{ reverse('supplier_booking_chat', kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
+        )
+    else:
+        context["get_chat_url"] = context["get_chat_url"] = (
+            f"{ reverse('supplier_chat', kwargs={'conversation_id': conversation_id}) }?{query_params.urlencode()}"
         )
     if request.headers.get("HX-Request"):
         last_message_ts = request.GET.get("last")

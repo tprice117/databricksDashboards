@@ -62,7 +62,7 @@
     {% endif %}
 {% endfor %}
 {% if message_form %}
-    <form id="booking-chat-form" action="{% url 'supplier_chat' order_id=order.id %}" method="post" hx-boost="true" hx-target="#booking-chat" hx-swap="innerHTML" enctype="multipart/form-data" hx-disabled-elt="button" hx-swap-oob="true">
+    <form id="booking-chat-form" action="{{ get_chat_url }}" method="post" hx-boost="true" hx-target="#booking-chat" hx-swap="innerHTML" enctype="multipart/form-data" hx-disabled-elt="button" hx-swap-oob="true">
         {% csrf_token %}
         <div class="row" style="margin-top: 16px;padding-top: 16px;border-top-style: solid;border-top-color: var(--bs-primary);">
             <div class="col d-md-flex justify-content-md-start">

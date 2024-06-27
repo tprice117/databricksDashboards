@@ -47,7 +47,17 @@ urlpatterns = [
         name="supplier_booking_detail",
     ),
     path(
+        "supplier/messages/unread/",
+        views.get_intercom_unread_conversations,
+        name="supplier_unread_conversations",
+    ),
+    path(
         "supplier/booking/<uuid:order_id>/chat/",
+        views.chat,
+        name="supplier_booking_chat",
+    ),
+    path(
+        "supplier/chat/<str:conversation_id>/",
         views.chat,
         name="supplier_chat",
     ),
