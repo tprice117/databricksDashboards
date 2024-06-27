@@ -76,7 +76,7 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        {% comment %} <span class="d-none" id="htmx-chat-get" hx-get="{{ get_chat_url }}" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="#booking-chat"></span> {% endcomment %}
+                        <span class="d-none" id="htmx-chat-get" hx-get="{{ get_chat_url }}" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="#booking-chat"></span>
                         <div id="booking-chat">
                             {% for message in chat %}
                                 {% if message.is_admin %}
