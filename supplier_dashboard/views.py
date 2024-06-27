@@ -1634,18 +1634,13 @@ def get_intercom_unread_conversations(request: HttpRequest):
     user = get_user(request)
     context = {"user": user}
     # TODO: After order groups go into complete status, mark the conversation as closed.
-    # url = "https://api.intercom.io/contacts/" + user.intercom_id
-    # response = requests.get(url, headers=IntercomUtils.headers)
-
-    # person_data = response.json()
-    # # print(person_data)
-    # if person_data["last_seen_at"] is None:
-    #     person_data["last_seen_at"] = int(timezone.now().timestamp()) - 86400
-    # else:
-    #     person_data["last_seen_at"] = timezone.datetime.fromtimestamp(
-    #         person_data["last_seen_at"], tz=timezone.utc
-    #     )
-    # TODO: As soon as the chat window is opened or the news icon dropdown is opened, mark the user as seen.
+    url = "https://api.intercom.io/contacts/" + user.intercom_id
+    response = requests.get(url, headers=IntercomUtils.headers)
+    person_data = response.json()
+    # print(person_data)
+    if person_data["last_seen_at"] is None:
+        person_data["last_seen_at"] = int(timezone.now().timestamp()) - 86400
+    # TODO: Wait to update last_seen_at until after they open the chat window
     # payload = {"last_seen_at": timezone.now().timestamp()}
     # response = requests.put(url, json=payload, headers=IntercomUtils.headers)
     # data = response.json()
@@ -1660,11 +1655,11 @@ def get_intercom_unread_conversations(request: HttpRequest):
             "value": [
                 # {"field": "read", "operator": "=", "value": "false"},
                 {"field": "open", "operator": "=", "value": True},
-                # {
-                #     "field": "updated_at",
-                #     "operator": ">",
-                #     "value": person_data["last_seen_at"],
-                # },
+                {
+                    "field": "updated_at",
+                    "operator": ">",
+                    "value": person_data["last_seen_at"],
+                },
                 {"field": "contact_ids", "operator": "=", "value": user.intercom_id},
             ],
         }
@@ -1727,6 +1722,12 @@ def chat(request, order_id=None, conversation_id=None):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
+    # Update User so that Intercom knows they are active.
+    requests.put(
+        "https://api.intercom.io/contacts/" + context["user"].intercom_id,
+        json={"last_seen_at": timezone.now().timestamp()},
+        headers=IntercomUtils.headers,
+    )
     order = None
     if order_id:
         order = Order.objects.filter(id=order_id).select_related("order_group").first()
@@ -1795,26 +1796,27 @@ def chat(request, order_id=None, conversation_id=None):
         conversation_id = data["conversation_id"]
         order.order_group.intercom_id = conversation_id
         order.order_group.save()
-        # Attach the all parties to the conversation
-        # TODO: Attach everyone with access to this location
-        # user_seller_locations = UserSellerLocation.objects.filter(
-        #     seller_location_id=order.order_group.seller_product_seller_location.seller_location_id
-        # ).select_related("user")
-        # # Get ADMIN users for this UserGroup.
-        # admin_users = User.objects.filter(
-        #     user_group_id=context["user"].user_group_id,
-        #     type=UserType.ADMIN,
-        # )
-        attach_users_conversation(
-            [context["user"], order.order_group.user], order.order_group
+        # Attach the all parties, with access to this location, to the conversation
+        user_seller_locations = UserSellerLocation.objects.filter(
+            seller_location_id=order.order_group.seller_product_seller_location.seller_location_id
+        ).select_related("user")
+        # Get ADMIN users for this UserGroup.
+        admin_users = User.objects.filter(
+            user_group_id=context["user"].user_group_id,
+            type=UserType.ADMIN,
         )
+        attach_users = [context["user"], order.order_group.user]
+        for user_seller_location in user_seller_locations:
+            attach_users.append(user_seller_location.user)
+        for admin_user in admin_users:
+            attach_users.append(admin_user)
+        attach_users_conversation(attach_users, order.order_group)
         # Add Booking tag to conversation
         tagurl = "https://api.intercom.io/conversations/" + conversation_id + "/tags"
         payload = {"id": "7634085", "admin_id": "5761714"}
         response = requests.post(tagurl, json=payload, headers=IntercomUtils.headers)
         data = response.json()
 
-    context["message_form"] = ChatMessageForm()
     context["chat"] = get_intercom_conversation(conversation_id, context["user"])
     # Get last message time and check to see if query param last is the same, if it is, then return empty 204.
     context["last_message_time"] = None
@@ -1845,6 +1847,7 @@ def chat(request, order_id=None, conversation_id=None):
             context,
         )
     else:
+        context["message_form"] = ChatMessageForm()
         return render(request, "supplier_dashboard/chat.html", context)
 
 
