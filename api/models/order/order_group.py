@@ -1,8 +1,11 @@
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+import logging
+from django.conf import settings
 
 from api.models import Order
+from api.models.user.user_seller_location import UserSellerLocation
 from api.models.day_of_week import DayOfWeek
 from api.models.order.order_group_seller_decline import OrderGroupSellerDecline
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
@@ -13,6 +16,9 @@ from api.models.waste_type import WasteType
 from chat.models.conversation import Conversation
 from common.models import BaseModel
 from matching_engine.utils import MatchingEngine
+from communications.intercom.conversation import Conversation as IntercomConversation
+
+logger = logging.getLogger(__name__)
 
 
 class OrderGroup(BaseModel):
@@ -189,6 +195,52 @@ class OrderGroup(BaseModel):
                 # Set the OrderGroup status to CANCELLED.
                 self.status = Order.Status.CANCELLED
                 self.save()
+
+    def create_chat(self, user_intercom_id: str, order: Order):
+        """
+        Create an Intercom Conversation for the OrderGroup.
+        If the OrderGroup has an intercom_id, then reply to the conversation with new Order information.
+        """
+        if order.order_type is None:
+            subject = f"🚀 New { self.seller_product_seller_location.seller_product.product.main_product.name } Downstream Booking at {self.user_address.formatted_address()} | [{self.id}]."
+        else:
+            subject = f"🚀 New {order.order_type} on { self.seller_product_seller_location.seller_product.product.main_product.name } Downstream Booking at {self.user_address.formatted_address()} | [{self.id}]."
+        if self.intercom_id:
+            try:
+                body = subject
+                if settings.ENVIRONMENT != "TEST":
+                    body = f"{body} - Michael Wickey Intercom Test"
+                # TODO: Only send the message if this is a new Order and is not yet in the chat
+                # IntercomConversation.admin_reply(
+                #     self.intercom_id, user_intercom_id, body
+                # )
+            except Exception as e:
+                logger.error(f"create_chat:reply {e}", exc_info=e)
+        else:
+            try:
+                body = f"{subject} This is a chat between Seller and Client."
+                if settings.ENVIRONMENT != "TEST":
+                    body = f"{body} - Michael Wickey Intercom Test"
+                message_data = IntercomConversation.send_message(
+                    user_intercom_id, subject, body
+                )
+                conversation_id = message_data["conversation_id"]
+                self.intercom_id = conversation_id
+                self.save()
+                # Attach the all parties, with access to this location, to the conversation
+                user_seller_locations = UserSellerLocation.objects.filter(
+                    seller_location_id=self.seller_product_seller_location.seller_location_id
+                ).select_related("user")
+                attach_users = [user_intercom_id, self.user.intercom_id]
+                for user_seller_location in user_seller_locations:
+                    attach_users.append(user_seller_location.user.intercom_id)
+                IntercomConversation.attach_users_conversation(
+                    attach_users, self.intercom_id
+                )
+                # Add Booking tag to conversation
+                IntercomConversation.attach_booking_tag(conversation_id)
+            except Exception as e:
+                logger.error(f"create_chat:reply {e}", exc_info=e)
 
 
 @receiver(pre_save, sender=OrderGroup)
