@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class Conversation:
 
-    ADMIN_ID = "5761714"  # Zach
+    ADMIN_ID = "7376407"  # Danica
 
     class Tags(Enum):
         BOOKING = "7634085"
