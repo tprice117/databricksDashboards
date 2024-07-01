@@ -47,7 +47,7 @@
             <li class="nav-item dropdown no-arrow mx-1">
                 <div class="nav-item dropdown no-arrow">
                     <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><span id="nav-messages-count" class="badge bg-danger badge-counter"></span><i class="fas fa-envelope fa-fw"></i></a>
-                    <span class="d-none" hx-get="{% url 'supplier_unread_conversations' %}" hx-trigger="load delay100:ms" hx-swap="innerHTML" hx-target="#nav-messages"></span>
+                    <span class="d-none" hx-get="{% url 'supplier_unread_conversations' %}" hx-trigger="load delay:100ms" hx-swap="innerHTML" hx-target="#nav-messages"></span>
                     <div id="nav-messages" class="dropdown-menu dropdown-menu-end dropdown-list animated--grow-in">
                         <h6 class="dropdown-header">alerts center</h6>
                     </div>
