@@ -2749,8 +2749,9 @@ def intercom_new_conversation_webhook(request):
     logger.warning(
         f"intercom_new_conversation_webhook: data:[{request.data}]-META:[{request.META}]"
     )
-    if request.META.get("REMOTE_ADDR") not in whitelisted_ips:
-        return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+    # 'HTTP_DO_CONNECTING_IP': '34.197.76.213', 'HTTP_X_FORWARDED_FOR': '34.197.76.213,34.197.76.213,172.70.174.238'
+    # if request.META.get("REMOTE_ADDR") not in whitelisted_ips:
+    #     return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
     try:
         find_str = "🚀 Yippee!"
         conversation_id = request.data.get("data", {}).get("item", {}).get("id")
