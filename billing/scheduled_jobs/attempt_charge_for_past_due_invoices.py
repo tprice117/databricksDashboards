@@ -9,6 +9,9 @@ def attempt_charge_for_past_due_invoices():
     """
     invoices = StripeUtils.Invoice.get_all()
 
+    # Get the date 14 days ago.
+    two_weeks_ago = datetime.datetime.now() - datetime.timedelta(days=14)
+
     # Filter for only past due invoices.
     past_due_invoices = list(
         filter(
@@ -16,7 +19,7 @@ def attempt_charge_for_past_due_invoices():
             and invoice["amount_remaining"] > 0
             and (
                 invoice["due_date"] is None
-                or invoice["due_date"] < datetime.datetime.now().timestamp()
+                or invoice["due_date"] < two_weeks_ago.timestamp()
             ),
             invoices,
         )
