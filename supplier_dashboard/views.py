@@ -1310,6 +1310,7 @@ def download_bookings(request):
     if request.user.is_staff:
         header_row = [
             "Seller",
+            "Created By",
             "Service Date",
             "Product",
             "Booking Address",
@@ -1337,10 +1338,11 @@ def download_bookings(request):
             str(order.status),
         ]
         if request.user.is_staff:
-            row.insert(
-                0,
-                order.order_group.seller_product_seller_location.seller_location.seller.name,
-            )
+            row.insert(0, f"{order.order_group}")
+            created_by_str = "N/A"
+            if order.order_group.created_by:
+                created_by_str = order.order_group.created_by.full_name
+            row.insert(1, created_by_str)
             if order.submitted_on:
                 row.append(humanize.naturaldelta(now_time - order.submitted_on))
             else:
