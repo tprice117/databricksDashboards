@@ -75,3 +75,6 @@
         </div>
     </form>
 {% endif %}
+{% if get_chat_url %}
+    <span class="d-none" id="htmx-chat-get" hx-get="{{ get_chat_url }}" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="#booking-chat" hx-swap-oob="true"></span>
+{% endif %}
