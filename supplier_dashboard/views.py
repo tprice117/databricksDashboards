@@ -16,6 +16,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -2721,3 +2723,81 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
             "notifications/emails/failover_email_us.html",
             {"subject": f"Supplier%20Digest%20Error%20%5B{supplier_id}%5D"},
         )
+
+
+def parse_order_id(s):
+    start = s.rfind("[") + 1
+    end = s.find("]", start)
+    if start > 0 and end > 0:
+        return s[start:end]
+    else:
+        return None
+
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([])
+def intercom_new_conversation_webhook(request):
+    whitelisted_ips = [
+        "34.231.68.152",
+        "34.197.76.213",
+        "35.171.78.91",
+        "35.169.138.21",
+        "52.70.27.159",
+        "52.44.63.161",
+    ]
+    logger.warning(
+        f"intercom_new_conversation_webhook: data:[{request.data}]-META:[{request.META}]"
+    )
+    if request.META.get("REMOTE_ADDR") not in whitelisted_ips:
+        return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+    try:
+        find_str = "🚀 Yippee!"
+        conversation_id = request.data.get("data", {}).get("item", {}).get("id")
+        subject = (
+            request.data.get("data", {})
+            .get("item", {})
+            .get("source", {})
+            .get("subject", "")
+        )
+        if find_str in subject:
+            order_id = parse_order_id(subject)
+            if order_id:
+                logger.warning(
+                    f"intercom_new_conversation_webhook: subject:[{subject}]-order_id:[{order_id}]-conversation_id:[{conversation_id}]"
+                )
+                # order = Order.objects.get(id=order_id)
+                # order.order_group.intercom_id = conversation_id
+                # order.order_group.save()
+                # # Attach the all parties, with access to this location, to the conversation
+                # user_seller_locations = UserSellerLocation.objects.filter(
+                #     seller_location_id=order.order_group.seller_product_seller_location.seller_location_id
+                # ).select_related("user")
+                # user_intercom_id = order.order_group.user.intercom_id
+                # seller_user = (
+                #     User.objects.filter(
+                #         user_group__seller=order.order_group.seller_product_seller_location.seller_location.seller
+                #     )
+                #     .filter(type=UserType.ADMIN)
+                #     .first()
+                # )
+                # attach_users = [user_intercom_id]
+                # if not user_seller_locations.exists() and seller_user is not None:
+                #     attach_users.append(seller_user.intercom_id)
+                # for user_seller_location in user_seller_locations:
+                #     attach_users.append(user_seller_location.user.intercom_id)
+                # IntercomConversation.attach_users_conversation(
+                #     attach_users, order.order_group.intercom_id
+                # )
+                # # Add Booking tag to conversation
+                # IntercomConversation.attach_booking_tag(conversation_id)
+            else:
+                logger.error(
+                    f"intercom_new_conversation_webhook: Order ID not found in subject[{subject}]"
+                )
+    except Exception as e:
+        logger.error(
+            f"intercom_new_conversation_webhook: [{e}]-data[{request.data}]", exc_info=e
+        )
+        return Response("error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return Response("OK", status=status.HTTP_200_OK)
