@@ -139,4 +139,9 @@ urlpatterns = [
     path(
         "supplier/messages/clear/", views.messages_clear, name="supplier_messages_clear"
     ),
+    path(
+        "supplier/conversation/new/webhook/",
+        views.intercom_new_conversation_webhook,
+        name="supplier_conversation_new_webhook",
+    ),
 ]
