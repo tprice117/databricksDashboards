@@ -72,7 +72,7 @@ class CheckRemittanceVariableResponse:
 def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> str:
     """Get invoice_id for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
     seller_invoice_payable_line_item = (
-        order.order.seller_invoice_payable_line_items.all().first()
+        order.seller_invoice_payable_line_items.all().first()
     )
     invoice_id = default_invoice_id
     if seller_invoice_payable_line_item:
