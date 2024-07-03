@@ -354,7 +354,7 @@ class Contact:
                 )
                 order_id = (
                     get_order_model()
-                    .objects.filter(order_group__intercom_id=conversation_data["id"])
+                    .objects.filter(intercom_id=conversation_data["id"])
                     .values("id")
                     .first()
                 )

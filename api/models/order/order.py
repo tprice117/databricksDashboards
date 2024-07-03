@@ -21,10 +21,38 @@ from common.models import BaseModel
 from common.models.choices.user_type import UserType
 from notifications import signals as notifications_signals
 from notifications.utils.add_email_to_queue import add_email_to_queue
+from communications.intercom.conversation import Conversation as IntercomConversation
 
 logger = logging.getLogger(__name__)
 
 mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
+
+USER_MODEL = None
+USER_SELLER_LOCATION_MODEL = None
+
+
+def get_our_user_model():
+    """This function returns the Lob object. If the Lob object does not exist, it creates a new one.
+    This just makes so Lob is not reinstatiated every time it is called.
+    This also avoid the circular import issue."""
+    global USER_MODEL
+    if USER_MODEL is None:
+        from api.models.user.user import User as USER_MODEL
+
+    return USER_MODEL
+
+
+def get_user_seller_location_model():
+    """This function returns the Lob object. If the Lob object does not exist, it creates a new one.
+    This just makes so Lob is not reinstatiated every time it is called.
+    This also avoid the circular import issue."""
+    global USER_SELLER_LOCATION_MODEL
+    if USER_SELLER_LOCATION_MODEL is None:
+        from api.models.user.user_seller_location import (
+            UserSellerLocation as USER_SELLER_LOCATION_MODEL,
+        )
+
+    return USER_SELLER_LOCATION_MODEL
 
 
 @track_data(
@@ -66,6 +94,19 @@ class Order(BaseModel):
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
+    )
+    # https://developers.intercom.com/docs/build-an-integration/learn-more/rest-apis/identifiers-and-urls/
+    intercom_id = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text="Conversation between Seller and Admin.",
+    )
+    custmer_intercom_id = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text="Conversation between Seller and Customer.",
     )
     billing_comments_internal_use = models.TextField(blank=True, null=True)  # 6.6.23
     schedule_window = models.CharField(
@@ -601,12 +642,9 @@ class Order(BaseModel):
             if self.order_type != Order.Type.AUTO_RENEWAL or (
                 is_first_order and self.order_type == Order.Type.AUTO_RENEWAL
             ):
-                # Import here to avoid circular import.
-                from api.models.user.user_seller_location import (
-                    UserSellerLocation,
-                )  # noqa
-
                 # If order type is none, then do not include it in the email.
+                # NOTE: If this subject line is changed, then also update
+                # supplier_dashboard.views.intercom_new_conversation_webhook to correctly identify this email.
                 subject_supplier = f"🚀 Yippee! New {self.order_type} Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
                 if self.order_type is None:
                     subject_supplier = f"🚀 Yippee! New Downstream Booking Landed! [{self.order_group.user_address.formatted_address()}]-[{str(self.id)}]"
@@ -617,9 +655,13 @@ class Order(BaseModel):
                     "notifications/emails/supplier_email.min.html",
                     {"order": self, "accept_url": accept_url, "is_email": True},
                 )
-                user_seller_locations = UserSellerLocation.objects.filter(
-                    seller_location_id=self.order_group.seller_product_seller_location.seller_location.id
-                ).select_related("user")
+                user_seller_locations = (
+                    get_user_seller_location_model()
+                    .objects.filter(
+                        seller_location_id=self.order_group.seller_product_seller_location.seller_location.id
+                    )
+                    .select_related("user")
+                )
                 to_emails = [
                     self.order_group.seller_product_seller_location.seller_location.order_email
                 ]
@@ -637,6 +679,122 @@ class Order(BaseModel):
                 )
         except Exception as e:
             logger.error(f"Order.send_supplier_approval_email: [{e}]", exc_info=e)
+
+    def close_admin_chat(self, message=None):
+        if self.intercom_id:
+            try:
+                IntercomConversation.close(self.intercom_id)
+            except Exception as e:
+                logger.error(f"close_admin_chat: [{e}]", exc_info=e)
+
+    def create_admin_chat(self, conversation_id: str):
+        """
+        Create an Intercom Conversation for the Order between the Seller and the Admin.
+        """
+        if self.intercom_id and self.intercom_id != conversation_id:
+            try:
+                logger.warning(
+                    f"create_admin_chat:close previous chat: old chat:[{self.intercom_id}]-new:[{conversation_id}]"
+                )
+                # Close the previous chat
+                IntercomConversation.close(self.intercom_id)
+            except Exception as e:
+                logger.error(f"create_admin_chat:close previous chat: {e}", exc_info=e)
+        try:
+            self.intercom_id = conversation_id
+            self.save()
+            # Attach the all parties, with access to this location, to the conversation
+            user_seller_locations = (
+                get_user_seller_location_model()
+                .objects.filter(
+                    seller_location_id=self.order_group.seller_product_seller_location.seller_location_id
+                )
+                .select_related("user")
+            )
+            seller_user = (
+                get_our_user_model()
+                .objects.filter(
+                    user_group__seller=self.order_group.seller_product_seller_location.seller_location.seller
+                )
+                .filter(type=UserType.ADMIN)
+                .first()
+            )
+            attach_users = []
+            if not user_seller_locations.exists() and seller_user is not None:
+                attach_users.append(seller_user.intercom_id)
+            for user_seller_location in user_seller_locations:
+                attach_users.append(user_seller_location.user.intercom_id)
+            if attach_users:
+                IntercomConversation.attach_users_conversation(
+                    attach_users, self.intercom_id
+                )
+            else:
+                logger.error(
+                    f"create_admin_chat:attach_users: no users found for seller_location_id:[{self.order_group.seller_product_seller_location.seller_location_id}]"
+                )
+
+            # Add Booking tag to conversation
+            IntercomConversation.attach_booking_tag(conversation_id)
+        except Exception as e:
+            logger.error(f"create_admin_chat:reply {e}", exc_info=e)
+
+    def create_customer_chat(self, user_intercom_id: str):
+        """
+        Create an Intercom Conversation for the Order between the Seller and the Customer.
+        """
+        if self.order_type is None:
+            subject = f"Downstream Booking: { self.order_group.seller_product_seller_location.seller_product.product.main_product.name } at {self.order_group.user_address.formatted_address()} | reference ID: {self.id}."
+        else:
+            subject = f"Downstream Booking: {self.order_type} on { self.order_group.seller_product_seller_location.seller_product.product.main_product.name } at {self.order_group.user_address.formatted_address()} | reference ID: {self.id}."
+        if self.custmer_intercom_id:
+            try:
+                body = subject
+                if settings.ENVIRONMENT != "TEST":
+                    body = f"{body} - Michael Wickey Intercom Test"
+                # TODO: Only send the message if this is a new Order and is not yet in the chat
+                # html_content_supplier = render_to_string(
+                #     "supplier_dashboard/new_order_chat.html",
+                #     {"order": order},
+                # )
+                # IntercomConversation.admin_reply(
+                #     self.custmer_intercom_id, user_intercom_id, html_content_supplier
+                # )
+            except Exception as e:
+                logger.error(f"create_customer_chat:reply {e}", exc_info=e)
+        else:
+            try:
+                body = f"{subject} This is a chat between Seller and Client."
+                if settings.ENVIRONMENT != "TEST":
+                    body = f"{body} - Michael Wickey Intercom Test"
+                html_content_supplier = render_to_string(
+                    "supplier_dashboard/new_order_chat.html",
+                    {"order": self},
+                )
+                message_data = IntercomConversation.send_message(
+                    user_intercom_id, subject, html_content_supplier
+                )
+                conversation_id = message_data["conversation_id"]
+                self.custmer_intercom_id = conversation_id
+                self.save()
+                # Attach the all parties, with access to this location, to the conversation
+                # TODO: Attach customers from UserUserAddresses
+                user_seller_locations = (
+                    get_user_seller_location_model()
+                    .objects.filter(
+                        seller_location_id=self.order_group.seller_product_seller_location.seller_location_id
+                    )
+                    .select_related("user")
+                )
+                attach_users = [user_intercom_id, self.order_group.user.intercom_id]
+                for user_seller_location in user_seller_locations:
+                    attach_users.append(user_seller_location.user.intercom_id)
+                IntercomConversation.attach_users_conversation(
+                    attach_users, self.custmer_intercom_id
+                )
+                # Add Booking tag to conversation
+                IntercomConversation.attach_booking_tag(conversation_id)
+            except Exception as e:
+                logger.error(f"create_customer_chat:reply {e}", exc_info=e)
 
     def __str__(self):
         return (

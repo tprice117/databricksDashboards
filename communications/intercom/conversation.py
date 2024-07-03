@@ -59,11 +59,11 @@ class Conversation:
         https://developers.intercom.com/docs/references/rest-api/api.intercom.io/messages/createmessage
         """
         payload = {
-            "message_type": "in_app",
+            "message_type": "email",  # in_app, email
             "subject": subject,
             "body": message,
-            "template": "plain",
-            "from": {"type": "admin", "id": Conversation.ADMIN_ID},  # Zach
+            "template": "personal",  # personal, plain
+            "from": {"type": "admin", "id": Conversation.ADMIN_ID},
             "to": {"type": "user", "id": user_intercom_id},
             "create_conversation_without_contact_reply": True,
         }
@@ -206,7 +206,28 @@ class Conversation:
             return response.json()
         else:
             logger.error(
-                f"Company.admin_read: conversation_id:[{conversation_id}], response:{response.status_code}-[{response.content}]"
+                f"Conversation.admin_read: conversation_id:[{conversation_id}], response:{response.status_code}-[{response.content}]"
+            )
+
+    @staticmethod
+    def close(conversation_id: str, message: str = None):
+        """Close the conversation.
+        https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/manageconversation
+        """
+        url = "https://api.intercom.io/conversations/" + conversation_id + "/parts"
+        payload = {
+            "message_type": "close",
+            "type": "admin",
+            "admin_id": Conversation.ADMIN_ID,
+        }
+        if message:
+            payload["body"] = message
+        response = requests.post(url, json=payload, headers=IntercomUtils.headers)
+        if response.status_code < 400:
+            return response.json()
+        else:
+            logger.error(
+                f"Conversation.close: conversation_id:[{conversation_id}], response:{response.status_code}-[{response.content}]"
             )
 
     @staticmethod
@@ -217,7 +238,6 @@ class Conversation:
         csturl = (
             "https://api.intercom.io/conversations/" + conversation_id + "/customers"
         )
-        # admin is Zach
         payload = {"admin_id": Conversation.ADMIN_ID}
         for intercom_id in user_intercom_ids:
             payload["customer"] = {"intercom_user_id": intercom_id}
@@ -235,7 +255,6 @@ class Conversation:
         """Detach users from a conversation.
         https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/detachcontactfromconversation
         """
-        # admin is Zach
         payload = {"admin_id": Conversation.ADMIN_ID}
         for intercom_id in user_intercom_ids:
             url = (

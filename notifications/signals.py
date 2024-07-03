@@ -74,6 +74,7 @@ def on_order_post_save(sender, instance, created, **kwargs):
                 elif order.old_value("status") != order.status:
                     if order.status == Order.Status.SCHEDULED:
                         order.send_customer_email_when_order_scheduled()
+                        order.close_admin_chat(message="Order has been scheduled.")
                     # elif (
                     #     order.status == Order.Status.CANCELLED
                     #     or order.status == Order.Status.COMPLETE
