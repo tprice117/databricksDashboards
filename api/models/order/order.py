@@ -728,6 +728,10 @@ class Order(BaseModel):
                 IntercomConversation.attach_users_conversation(
                     attach_users, self.intercom_id
                 )
+                # Detach the Downstream Sender user from the conversation so that converation is between admin and seller.
+                IntercomConversation.detach_users_conversation(
+                    ["65f84e6bfc65b05f40b1e556"], self.intercom_id
+                )
             else:
                 logger.error(
                     f"create_admin_chat:attach_users: no users found for seller_location_id:[{self.order_group.seller_product_seller_location.seller_location_id}]"
