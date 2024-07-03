@@ -42,7 +42,7 @@ def user_seller_location_post_save(
     orders = get_all_active_orders_with_conversations(instance.seller_location)
     for order in orders:
         IntercomConversation.attach_users_conversation(
-            [instance.user], order.intercom_id
+            [instance.user.intercom_id], order.intercom_id
         )
 
 
@@ -54,5 +54,5 @@ def user_seller_location_post_delete(
     orders = get_all_active_orders_with_conversations(instance.seller_location)
     for order in orders:
         IntercomConversation.detach_users_conversation(
-            [instance.user], order.intercom_id
+            [instance.user.intercom_id], order.intercom_id
         )
