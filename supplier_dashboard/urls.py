@@ -47,9 +47,31 @@ urlpatterns = [
         name="supplier_booking_detail",
     ),
     path(
-        "supplier/chat/<uuid:conversation_id>/",
+        "supplier/messages/unread/",
+        views.get_intercom_unread_conversations,
+        name="supplier_unread_conversations",
+    ),
+    path(
+        "supplier/booking/<uuid:order_id>/chat/",
+        views.chat,
+        name="supplier_booking_chat",
+    ),
+    path(
+        "supplier/chat/<str:conversation_id>/",
         views.chat,
         name="supplier_chat",
+    ),
+    path(
+        "supplier/booking/<uuid:order_id>/customer/chat/",
+        views.chat,
+        {"is_customer": True},
+        name="supplier_booking_customer_chat",
+    ),
+    path(
+        "supplier/chat/<str:conversation_id>/customer/",
+        views.chat,
+        {"is_customer": True},
+        name="supplier_customer_chat",
     ),
     path(
         "supplier/order/<uuid:order_id>/accept/",
@@ -128,5 +150,10 @@ urlpatterns = [
     ),
     path(
         "supplier/messages/clear/", views.messages_clear, name="supplier_messages_clear"
+    ),
+    path(
+        "supplier/conversation/new/webhook/",
+        views.intercom_new_conversation_webhook,
+        name="supplier_conversation_new_webhook",
     ),
 ]

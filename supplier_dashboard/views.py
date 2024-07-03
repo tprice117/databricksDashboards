@@ -16,6 +16,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -37,7 +39,6 @@ from api.models import (
 from api.models.user.user_group import UserGroup
 from api.models.user.user_seller_location import UserSellerLocation
 from api.utils.utils import decrypt_string
-from chat.models import Conversation, Message
 from common.models.choices.user_type import UserType
 from common.utils import DistanceUtils
 from communications.intercom.utils.utils import get_json_safe_value
@@ -53,6 +54,9 @@ from .forms import (
     SellerPayoutForm,
     UserForm,
 )
+
+from communications.intercom.contact import Contact as IntercomContact
+from communications.intercom.conversation import Conversation as IntercomConversation
 
 logger = logging.getLogger(__name__)
 
@@ -1308,6 +1312,7 @@ def download_bookings(request):
     if request.user.is_staff:
         header_row = [
             "Seller",
+            "Created By",
             "Service Date",
             "Product",
             "Booking Address",
@@ -1335,10 +1340,11 @@ def download_bookings(request):
             str(order.status),
         ]
         if request.user.is_staff:
-            row.insert(
-                0,
-                order.order_group.seller_product_seller_location.seller_location.seller.name,
-            )
+            row.insert(0, f"{order.order_group}")
+            created_by_str = "N/A"
+            if order.order_group.created_by:
+                created_by_str = order.order_group.created_by.full_name
+            row.insert(1, created_by_str)
             if order.submitted_on:
                 row.append(humanize.naturaldelta(now_time - order.submitted_on))
             else:
@@ -1559,76 +1565,121 @@ def booking_detail(request, order_id):
 
 
 @login_required(login_url="/admin/login/")
-def chat(request, conversation_id):
+def set_intercom_messages_read(request: HttpRequest):
+    user = get_user(request)
+    # Update User so that Intercom knows they are active.
+    IntercomContact.set_last_seen(user.intercom_id)
+    return render(request, "supplier_dashboard/snippets/nav_bar_messages_badge.html")
+
+
+@login_required(login_url="/admin/login/")
+def get_intercom_unread_conversations(request: HttpRequest):
+    user = get_user(request)
+    context = {"user": user}
+    # TODO: We could add these to the session/local cache and only remove them when the user clicks on the message.
+    # TODO: After order groups go into complete status, mark the conversation as closed.
+    # TODO: Wait to update last_seen_at until after they open the chat window
+    context["updates"] = IntercomContact.unread_messages(user.intercom_id)
+    return render(
+        request,
+        "supplier_dashboard/snippets/nav_dropdown_messages.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def chat(request, order_id=None, conversation_id=None, is_customer=False):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
+    # Update User so that Intercom knows they are active.
+    IntercomContact.set_last_seen(context["user"].intercom_id)
+    order = None
+    if order_id:
+        order = Order.objects.filter(id=order_id).select_related("order_group").first()
+        if is_customer:
+            chat_url = "supplier_booking_customer_chat"
+            conversation_id = order.custmer_intercom_id
+        else:
+            chat_url = "supplier_booking_chat"
+            conversation_id = order.intercom_id
+    else:
+        if is_customer:
+            chat_url = "supplier_customer_chat"
+        else:
+            chat_url = "supplier_chat"
+    context["order"] = order
     if request.method == "POST":
-        message_form = ChatMessageForm(request.POST)
-
-        conversation = Conversation.objects.get(id=conversation_id)
-
-        if message_form.is_valid():
-            print("Message form is valid")
-            new_message = Message(
-                conversation=conversation,
-                user=context["user"],
-                message=message_form.cleaned_data.get("message"),
+        context["message_form"] = ChatMessageForm(request.POST)
+        if context["message_form"].is_valid():
+            context["chat"] = IntercomConversation.reply(
+                conversation_id,
+                context["user"].intercom_id,
+                context["message_form"].cleaned_data.get("message"),
             )
-            new_message.save()
+            context["message_form"] = ChatMessageForm()
+            if order:
+                context["get_chat_url"] = reverse(
+                    chat_url, kwargs={"order_id": order.id}
+                )
+            else:
+                context["get_chat_url"] = reverse(
+                    chat_url, kwargs={"conversation_id": conversation_id}
+                )
+            if request.headers.get("HX-Request"):
+                return render(
+                    request,
+                    "supplier_dashboard/snippets/chat_messages.html",
+                    context,
+                )
+            else:
+                return render(request, "supplier_dashboard/chat.html", context)
         else:
             print("Message form is not valid")
-            print(message_form.errors)
+            print(context["message_form"].errors)
 
-    conversation = Conversation.objects.get(id=conversation_id)
+    if order:
+        # Create a new conversation if one doesn't exist or reply to an existing one with new order information.
+        if is_customer:
+            if not order.custmer_intercom_id:
+                order.create_customer_chat(context["user"].intercom_id)
+        else:
+            if not order.intercom_id and conversation_id:
+                order.create_admin_chat(conversation_id)
 
-    # Create/update the last read time for the current user.
-    conversation.view_conversation(
-        current_user=context["user"],
+    context["chat"] = IntercomConversation.get(
+        conversation_id, context["user"].intercom_id
     )
-
-    # Pass the messages in reverse order so that the most recent message is at the bottom of the chat.
-    messages_sorted_most_recent = conversation.messages.order_by("created_on")
-
-    # For each message, add a boolean to indicate if the message was sent by the current user.
-    for message in messages_sorted_most_recent:
-        message.sent_by_current_user = message.user == context["user"]
-
-    context["conversation"] = conversation
-    context["chat"] = messages_sorted_most_recent
-    context["message_form"] = ChatMessageForm()
-    last_message = messages_sorted_most_recent.last()
+    # Get last message time and check to see if query param last is the same, if it is, then return empty 204.
     context["last_message_time"] = None
-    if last_message:
-        context["last_message_time"] = last_message.created_on.isoformat()
-    # context["chat_link"] = f"/supplier/chat/{conversation_id}/"
+    if context["chat"]:
+        context["chat"][-1]
+        context["last_message_time"] = str(
+            context["chat"][-1]["created_at"].timestamp()
+        )
 
+    query_params = request.GET.copy()
+    query_params["last"] = context["last_message_time"]
+    if order:
+        context["get_chat_url"] = (
+            f"{ reverse(chat_url, kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
+        )
+    else:
+        context["get_chat_url"] = context["get_chat_url"] = (
+            f"{ reverse(chat_url, kwargs={'conversation_id': conversation_id}) }?{query_params.urlencode()}"
+        )
     if request.headers.get("HX-Request"):
         last_message_ts = request.GET.get("last")
-        if last_message_ts:
-            last_message_time = parse_datetime(last_message_ts)
-            if last_message_time:
-                new_messages = conversation.messages.filter(
-                    created_on__gt=last_message_time
-                )
-                new_messages_sorted = new_messages.order_by("created_on")
-                for message in new_messages_sorted:
-                    message.sent_by_current_user = message.user == context["user"]
-                context["chat"] = new_messages_sorted
-                if new_messages_sorted.exists():
-                    last_message = new_messages_sorted.last()
-                    context["last_message_time"] = last_message.created_on.isoformat()
-                    return render(
-                        request,
-                        "supplier_dashboard/snippets/chat_messages.html",
-                        context,
-                    )
-            return HttpResponse("", status=204)
-        else:
-            return render(
-                request, "supplier_dashboard/snippets/chat_messages.html", context
-            )
+        if last_message_ts and context["last_message_time"]:
+            if last_message_ts == context["last_message_time"]:
+                return HttpResponse(status=204)
+        return render(
+            request,
+            "supplier_dashboard/snippets/chat_messages.html",
+            context,
+        )
     else:
+        context["message_form"] = ChatMessageForm()
         return render(request, "supplier_dashboard/chat.html", context)
 
 
@@ -2687,3 +2738,64 @@ def supplier_digest_dashboard(request, supplier_id, status: str = None):
             "notifications/emails/failover_email_us.html",
             {"subject": f"Supplier%20Digest%20Error%20%5B{supplier_id}%5D"},
         )
+
+
+def parse_order_id(s):
+    start = s.rfind("[") + 1
+    end = s.find("]", start)
+    if start > 0 and end > 0:
+        return s[start:end]
+    else:
+        return None
+
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([])
+def intercom_new_conversation_webhook(request):
+    whitelisted_ips = [
+        "34.231.68.152",
+        "34.197.76.213",
+        "35.171.78.91",
+        "35.169.138.21",
+        "52.70.27.159",
+        "52.44.63.161",
+    ]
+    # Extract ip from 'HTTP_X_FORWARDED_FOR': '34.197.76.213,34.197.76.213,172.70.174.238', or 'HTTP_DO_CONNECTING_IP': '34.197.76.213'
+    if request.META.get("HTTP_DO_CONNECTING_IP") not in whitelisted_ips:
+        logger.warning(
+            f"intercom_new_conversation_webhook:INVALID IP: data:[{request.data}]-META:[{request.META}]"
+        )
+        # return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+    try:
+        find_str = "🚀 Yippee! New"
+        conversation_id = request.data.get("data", {}).get("item", {}).get("id")
+        subject = (
+            request.data.get("data", {})
+            .get("item", {})
+            .get("source", {})
+            .get("subject", "")
+        )
+        if find_str in subject:
+            order_id = parse_order_id(subject)
+            if order_id:
+                logger.info(
+                    f"intercom_new_conversation_webhook: subject:[{subject}]-order_id:[{order_id}]-conversation_id:[{conversation_id}]"
+                )
+                order = Order.objects.get(id=order_id)
+                order.create_admin_chat(conversation_id)
+            else:
+                logger.error(
+                    f"intercom_new_conversation_webhook: Order ID not found in subject[{subject}]"
+                )
+    except Order.DoesNotExist as e:
+        logger.error(
+            f"intercom_new_conversation_webhook: Order not found for order_id[{order_id}]",
+            exc_info=e,
+        )
+    except Exception as e:
+        logger.error(
+            f"intercom_new_conversation_webhook: [{e}]-data[{request.data}]", exc_info=e
+        )
+        return Response("error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return Response("OK", status=status.HTTP_200_OK)

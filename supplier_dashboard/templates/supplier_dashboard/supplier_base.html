@@ -103,6 +103,58 @@
         .clickable-row:hover {
             cursor: pointer;
         }
+
+        .table-header-title {
+            display: flex;
+            align-items: center; /* Optional: Align items vertically in the center */
+        }
+        .intercom-container {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: box-shadow 0.1s ease;
+            margin: 8px 0;
+            box-shadow: 0 0 4px transparent;
+        }
+        .intercom-container > img {
+            border-radius: 8px 8px 0 0;
+            width: 100%;
+            height: auto;
+        }
+        .intercom-interblocks-link-content-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .intercom-interblocks-link-author {
+            font-size: 12px;
+            color: #6c757d;
+            display: flex;
+            justify-content: end;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .intercom-interblocks-link-author-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .intercom-interblocks-link-author-summary {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .intercom-interblocks-link-author-avatar-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+        .intercom-interblocks-link-author-name {
+            font-weight: 600;
+        }
         
     </style>
 </head>
@@ -127,7 +179,7 @@
                 </div>
             </div>
             {% include 'supplier_dashboard/footer.html' %}
-        </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+        {% comment %} </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a> {% endcomment %}
     </div>
     <div class="modal fade" role="dialog" tabindex="-1" id="modal-1">
         <div class="modal-dialog" role="document">
@@ -166,6 +218,58 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
     <script src="{% static 'supplier_dashboard/js/bs-init.js' %}"></script>
     <script src="{% static 'supplier_dashboard/js/theme.js' %}"></script>
+    {% if user and user.intercom_id %}
+        <script>
+            // https://developers.intercom.com/installing-intercom/web/installation/
+            // https://developers.intercom.com/installing-intercom/web/methods/
+            function reloadIntercom() {
+                if (window.Intercom) {
+                    if (window.intercomSettings && window.intercomSettings.user_id != "{{ user.intercom_id|escapejs }}") {
+                        window.Intercom('shutdown');
+                        console.log(window.intercomSettings.user_id, "{{ user.intercom_id|escapejs }}");
+                        console.log('1. Intercom user_id changed');
+                    }
+                }
+
+                window.intercomSettings = {
+                    api_base: "https://api-iam.intercom.io",
+                    app_id: "d7p5ghkg",
+                    name: "{{ user.full_name|escapejs }}", // Full name
+                    user_id: "{{ user.intercom_id|escapejs }}", // a UUID for your user
+                    email: "{{ user.email|escapejs }}", // the email for your user
+                    created_at: "{{ user.date_joined|date:"U" }}" // Signup date as a Unix timestamp
+                };
+                // We pre-filled your app ID in the widget URL: 'https://widget.intercom.io/widget/d7p5ghkg'
+                (function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic('reattach_activator');ic('update',w.intercomSettings);}else{var d=document;var i=function(){i.c(arguments);};i.q=[];i.c=function(args){i.q.push(args);};w.Intercom=i;var l=function(){var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://widget.intercom.io/widget/d7p5ghkg';var x=d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);};if(document.readyState==='complete'){l();}else if(w.attachEvent){w.attachEvent('onload',l);}else{w.addEventListener('load',l,false);}}})();
+            }
+            reloadIntercom();
+        </script>
+    {% elif request.user.intercom_id %}
+        <script>
+            console.warn('USING Request.user!');
+            function reloadIntercom() {
+                if (window.Intercom) {
+                    if (window.intercomSettings && window.intercomSettings.user_id != "{{ request.user.intercom_id|escapejs }}") {
+                        window.Intercom('shutdown');
+                        console.log(window.intercomSettings.user_id, "{{ request.user.intercom_id|escapejs }}");
+                        console.log('2. Intercom user_id changed');
+                    }
+                }
+
+                window.intercomSettings = {
+                    api_base: "https://api-iam.intercom.io",
+                    app_id: "d7p5ghkg",
+                    name: "{{ request.user.full_name|escapejs }}", // Full name
+                    user_id: "{{ request.user.intercom_id|escapejs }}", // a UUID for your user
+                    email: "{{ request.user.email|escapejs }}", // the email for your user
+                    created_at: "{{ request.user.date_joined|date:"U" }}" // Signup date as a Unix timestamp
+                };
+                // We pre-filled your app ID in the widget URL: 'https://widget.intercom.io/widget/d7p5ghkg'
+                (function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic('reattach_activator');ic('update',w.intercomSettings);}else{var d=document;var i=function(){i.c(arguments);};i.q=[];i.c=function(args){i.q.push(args);};w.Intercom=i;var l=function(){var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://widget.intercom.io/widget/d7p5ghkg';var x=d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);};if(document.readyState==='complete'){l();}else if(w.attachEvent){w.attachEvent('onload',l);}else{w.addEventListener('load',l,false);}}})();
+            }
+            reloadIntercom();
+        </script>
+    {% endif %}
     {% block javascript %}{% endblock %}
 </body>
 

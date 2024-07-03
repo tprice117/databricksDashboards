@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+import logging
+from django.conf import settings
 
 from api.models import Order
 from api.models.day_of_week import DayOfWeek
@@ -13,6 +15,8 @@ from api.models.waste_type import WasteType
 from chat.models.conversation import Conversation
 from common.models import BaseModel
 from matching_engine.utils import MatchingEngine
+
+logger = logging.getLogger(__name__)
 
 
 class OrderGroup(BaseModel):
@@ -191,3 +195,6 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
     # the OrderGroup.
     if instance._state.adding:
         instance.conversation = Conversation.objects.create()
+        # TODO: Create a Conversation in Intercom for the OrderGroup.
+    # TODO: On OrderGroup complete, maybe close the Conversation in Intercom.
+    # https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/manageconversation

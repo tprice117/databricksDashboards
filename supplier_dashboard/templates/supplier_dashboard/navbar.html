@@ -13,7 +13,7 @@
     </script>
 {% endblock %}
 <nav class="navbar navbar-expand bg-white shadow mb-4 topbar static-top navbar-light">
-    <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+    <div class="container-fluid">
         <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
         <ul class="navbar-nav flex-nowrap ms-auto">
             {% if request.user.is_staff %}
@@ -26,7 +26,7 @@
                 {% endif %}
                 <li class="nav-item dropdown no-arrow">
                     <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
-                    <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in navbar-search-dropdown" aria-labelledby="searchDropdown">
+                    <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in navbar-search-dropdown" aria-labelledby="searchDropdown" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
                         <h3>Search Sellers<span class="htmx-indicator" id="htmx-indicator-seller-search"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></h3>
                         <input class="form-control" type="search" name="search" placeholder="Begin Typing To Search Users..." hx-post="{% url 'supplier_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#search-results" hx-indicator="#htmx-indicator-seller-search" />
 
@@ -44,6 +44,16 @@
                     </div>
                 </li>
             {% endif %}
+            <li class="nav-item dropdown no-arrow mx-1">
+                <div class="nav-item dropdown no-arrow">
+                    <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><span id="nav-messages-count" class="badge bg-danger badge-counter"></span><i class="fas fa-envelope fa-fw"></i></a>
+                    <span class="d-none" hx-get="{% url 'supplier_unread_conversations' %}" hx-trigger="load delay:100ms" hx-swap="innerHTML" hx-target="#nav-messages"></span>
+                    <div id="nav-messages" class="dropdown-menu dropdown-menu-end dropdown-list animated--grow-in">
+                        <h6 class="dropdown-header">alerts center</h6>
+                    </div>
+                </div>
+                <div class="shadow dropdown-list dropdown-menu dropdown-menu-end" aria-labelledby="alertsDropdown"></div>
+            </li>
             <div class="d-none d-sm-block topbar-divider"></div>
             {% include 'supplier_dashboard/snippets/profile_dropdown.html' %}
         </ul>
