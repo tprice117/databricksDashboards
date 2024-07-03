@@ -62,6 +62,18 @@ urlpatterns = [
         name="supplier_chat",
     ),
     path(
+        "supplier/booking/<uuid:order_id>/customer/chat/",
+        views.chat,
+        {"is_customer": True},
+        name="supplier_booking_customer_chat",
+    ),
+    path(
+        "supplier/chat/<str:conversation_id>/customer/",
+        views.chat,
+        {"is_customer": True},
+        name="supplier_customer_chat",
+    ),
+    path(
         "supplier/order/<uuid:order_id>/accept/",
         views.update_order_status,
         {"accept": True},

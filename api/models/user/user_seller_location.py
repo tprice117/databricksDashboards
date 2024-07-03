@@ -28,7 +28,7 @@ def get_all_active_orders_with_conversations(seller_location: SellerLocation):
             order_group__seller_product_seller_location__seller_location_id=seller_location.id
         )
         .filter(Q(status=Order.Status.PENDING) | Q(status=Order.Status.SCHEDULED))
-        .filter(order_group__intercom_id__isnull=False)
+        .filter(intercom_id__isnull=False)
         .distinct("order_group")
         .select_related("order_group")
     )
@@ -42,7 +42,7 @@ def user_seller_location_post_save(
     orders = get_all_active_orders_with_conversations(instance.seller_location)
     for order in orders:
         IntercomConversation.attach_users_conversation(
-            [instance.user], order.order_group.intercom_id
+            [instance.user], order.intercom_id
         )
 
 
@@ -54,5 +54,5 @@ def user_seller_location_post_delete(
     orders = get_all_active_orders_with_conversations(instance.seller_location)
     for order in orders:
         IntercomConversation.detach_users_conversation(
-            [instance.user], order.order_group.intercom_id
+            [instance.user], order.intercom_id
         )

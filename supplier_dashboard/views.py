@@ -1588,7 +1588,7 @@ def get_intercom_unread_conversations(request: HttpRequest):
 
 
 @login_required(login_url="/admin/login/")
-def chat(request, order_id=None, conversation_id=None):
+def chat(request, order_id=None, conversation_id=None, is_customer=False):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
@@ -1597,7 +1597,17 @@ def chat(request, order_id=None, conversation_id=None):
     order = None
     if order_id:
         order = Order.objects.filter(id=order_id).select_related("order_group").first()
-        conversation_id = order.order_group.intercom_id
+        if is_customer:
+            chat_url = "supplier_booking_customer_chat"
+            conversation_id = order.custmer_intercom_id
+        else:
+            chat_url = "supplier_booking_chat"
+            conversation_id = order.intercom_id
+    else:
+        if is_customer:
+            chat_url = "supplier_customer_chat"
+        else:
+            chat_url = "supplier_chat"
     context["order"] = order
     if request.method == "POST":
         context["message_form"] = ChatMessageForm(request.POST)
@@ -1610,11 +1620,11 @@ def chat(request, order_id=None, conversation_id=None):
             context["message_form"] = ChatMessageForm()
             if order:
                 context["get_chat_url"] = reverse(
-                    "supplier_booking_chat", kwargs={"order_id": order.id}
+                    chat_url, kwargs={"order_id": order.id}
                 )
             else:
                 context["get_chat_url"] = reverse(
-                    "supplier_chat", kwargs={"conversation_id": conversation_id}
+                    chat_url, kwargs={"conversation_id": conversation_id}
                 )
             if request.headers.get("HX-Request"):
                 return render(
@@ -1630,7 +1640,12 @@ def chat(request, order_id=None, conversation_id=None):
 
     if order:
         # Create a new conversation if one doesn't exist or reply to an existing one with new order information.
-        order.order_group.create_chat(context["user"].intercom_id, order)
+        if is_customer:
+            if not order.custmer_intercom_id:
+                order.create_customer_chat(context["user"].intercom_id)
+        else:
+            if not order.intercom_id and conversation_id:
+                order.create_admin_chat(conversation_id)
 
     context["chat"] = IntercomConversation.get(
         conversation_id, context["user"].intercom_id
@@ -1647,11 +1662,11 @@ def chat(request, order_id=None, conversation_id=None):
     query_params["last"] = context["last_message_time"]
     if order:
         context["get_chat_url"] = (
-            f"{ reverse('supplier_booking_chat', kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
+            f"{ reverse(chat_url, kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
         )
     else:
         context["get_chat_url"] = context["get_chat_url"] = (
-            f"{ reverse('supplier_chat', kwargs={'conversation_id': conversation_id}) }?{query_params.urlencode()}"
+            f"{ reverse(chat_url, kwargs={'conversation_id': conversation_id}) }?{query_params.urlencode()}"
         )
     if request.headers.get("HX-Request"):
         last_message_ts = request.GET.get("last")
@@ -2746,14 +2761,14 @@ def intercom_new_conversation_webhook(request):
         "52.70.27.159",
         "52.44.63.161",
     ]
-    logger.warning(
-        f"intercom_new_conversation_webhook: data:[{request.data}]-META:[{request.META}]"
-    )
-    # 'HTTP_DO_CONNECTING_IP': '34.197.76.213', 'HTTP_X_FORWARDED_FOR': '34.197.76.213,34.197.76.213,172.70.174.238'
-    # if request.META.get("REMOTE_ADDR") not in whitelisted_ips:
-    #     return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+    # Extract ip from 'HTTP_X_FORWARDED_FOR': '34.197.76.213,34.197.76.213,172.70.174.238', or 'HTTP_DO_CONNECTING_IP': '34.197.76.213'
+    if request.META.get("HTTP_DO_CONNECTING_IP") not in whitelisted_ips:
+        logger.warning(
+            f"intercom_new_conversation_webhook:INVALID IP: data:[{request.data}]-META:[{request.META}]"
+        )
+        # return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
     try:
-        find_str = "🚀 Yippee!"
+        find_str = "🚀 Yippee! New"
         conversation_id = request.data.get("data", {}).get("item", {}).get("id")
         subject = (
             request.data.get("data", {})
@@ -2764,38 +2779,20 @@ def intercom_new_conversation_webhook(request):
         if find_str in subject:
             order_id = parse_order_id(subject)
             if order_id:
-                logger.warning(
+                logger.info(
                     f"intercom_new_conversation_webhook: subject:[{subject}]-order_id:[{order_id}]-conversation_id:[{conversation_id}]"
                 )
-                # order = Order.objects.get(id=order_id)
-                # order.order_group.intercom_id = conversation_id
-                # order.order_group.save()
-                # # Attach the all parties, with access to this location, to the conversation
-                # user_seller_locations = UserSellerLocation.objects.filter(
-                #     seller_location_id=order.order_group.seller_product_seller_location.seller_location_id
-                # ).select_related("user")
-                # user_intercom_id = order.order_group.user.intercom_id
-                # seller_user = (
-                #     User.objects.filter(
-                #         user_group__seller=order.order_group.seller_product_seller_location.seller_location.seller
-                #     )
-                #     .filter(type=UserType.ADMIN)
-                #     .first()
-                # )
-                # attach_users = [user_intercom_id]
-                # if not user_seller_locations.exists() and seller_user is not None:
-                #     attach_users.append(seller_user.intercom_id)
-                # for user_seller_location in user_seller_locations:
-                #     attach_users.append(user_seller_location.user.intercom_id)
-                # IntercomConversation.attach_users_conversation(
-                #     attach_users, order.order_group.intercom_id
-                # )
-                # # Add Booking tag to conversation
-                # IntercomConversation.attach_booking_tag(conversation_id)
+                order = Order.objects.get(id=order_id)
+                order.create_admin_chat(conversation_id)
             else:
                 logger.error(
                     f"intercom_new_conversation_webhook: Order ID not found in subject[{subject}]"
                 )
+    except Order.DoesNotExist as e:
+        logger.error(
+            f"intercom_new_conversation_webhook: Order not found for order_id[{order_id}]",
+            exc_info=e,
+        )
     except Exception as e:
         logger.error(
             f"intercom_new_conversation_webhook: [{e}]-data[{request.data}]", exc_info=e

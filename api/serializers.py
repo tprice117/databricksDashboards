@@ -437,6 +437,8 @@ class OrderSerializer(serializers.ModelSerializer):
     service_date = serializers.SerializerMethodField(read_only=True)
     customer_price = serializers.SerializerMethodField(read_only=True)
     seller_price = serializers.SerializerMethodField(read_only=True)
+    intercom_id = serializers.CharField(required=False, allow_null=True)
+    custmer_intercom_id = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = Order
