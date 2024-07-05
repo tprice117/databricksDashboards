@@ -24,23 +24,19 @@ def get_all_address_types(_social_site=None):
 class UserForm(forms.Form):
     first_name = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "John"}),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     last_name = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Doe"}),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
     phone = forms.CharField(
         max_length=40,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "(000) 867-5309"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
         required=False,
     )
     email = forms.CharField(
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "john.doe@example.com"}
-        ),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
         disabled=True,
         required=False,
     )
@@ -72,7 +68,6 @@ class PlacementDetailsForm(forms.Form):
         widget=forms.Textarea(
             attrs={
                 "class": "form-control",
-                "placeholder": "Placement details for delivery",
                 "rows": 3,
             }
         )
@@ -85,8 +80,7 @@ class UserAddressForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "Home",
-                "autocomplete": "name",
+                "autocomplete": "organization",
             }
         ),
     )
@@ -100,7 +94,6 @@ class UserAddressForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "1234 Main St",
                 "autocomplete": "street-address",
             }
         )
@@ -110,7 +103,6 @@ class UserAddressForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "Anytown",
                 "autocomplete": "address-level2",
             }
         ),
@@ -118,7 +110,7 @@ class UserAddressForm(forms.Form):
     state = forms.CharField(
         max_length=80,
         widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "CA", "autocomplete": "name"}
+            attrs={"class": "form-control", "autocomplete": "address-level1"}
         ),
     )
     postal_code = forms.CharField(
@@ -126,7 +118,6 @@ class UserAddressForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "90210",
                 "autocomplete": "postal-code",
             }
         ),
@@ -169,7 +160,6 @@ class UserAddressForm(forms.Form):
         widget=forms.Textarea(
             attrs={
                 "class": "form-control",
-                "placeholder": "Access details for this location",
                 "rows": 3,
             }
         ),
