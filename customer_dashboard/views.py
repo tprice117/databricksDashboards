@@ -1441,8 +1441,19 @@ def new_location(request):
     context = {}
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
-    # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
+    if not context["user_group"]:
+        if hasattr(request.user, "user_group") and request.user.user_group:
+            messages.warning(
+                request,
+                f"No customer selected! Using current staff user group [{request.user.user_group}].",
+            )
+        else:
+            # Get first available UserGroup.
+            user_group = UserGroup.objects.all().first()
+            messages.warning(
+                request,
+                f"No customer selected! Using first user group found: [{user_group.name}].",
+            )
 
     if request.method == "POST":
         try:
@@ -1666,8 +1677,19 @@ def new_user(request):
     # TODO: Only allow admin to create new users.
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
-    # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
+    if not context["user_group"]:
+        if hasattr(request.user, "user_group") and request.user.user_group:
+            messages.warning(
+                request,
+                f"No customer selected! Using current staff user group [{request.user.user_group}].",
+            )
+        else:
+            # Get first available UserGroup.
+            user_group = UserGroup.objects.all().first()
+            messages.warning(
+                request,
+                f"No customer selected! Using first user group found: [{user_group.name}].",
+            )
 
     if request.method == "POST":
         try:
