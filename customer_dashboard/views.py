@@ -1060,30 +1060,47 @@ def location_detail(request, location_id):
         )
 
     # For any request type, get the current UserUserAddress objects.
-    user_user_addresses = (
-        UserUserAddress.objects.filter(user_address_id=location_id)
-        .exclude(user__type=UserType.ADMIN)
-        .select_related("user")
-    )
+    user_user_addresses = UserUserAddress.objects.filter(
+        user_address_id=location_id
+    ).select_related("user")
 
-    context["user_user_addresses"] = user_user_addresses
+    user_user_location_normal = []
+    user_user_location_normal_ids = []
+    user_user_location_admin_users = []
+    for user_user_address in user_user_addresses:
+        if user_user_address.user.type == UserType.ADMIN:
+            user_user_location_admin_users.append(user_user_address.user.id)
+        else:
+            user_user_location_normal.append(user_user_address)
+            user_user_location_normal_ids.append(user_user_address.user.id)
+
+    context["user_user_addresses"] = user_user_location_normal
 
     # Get the list of UserGroup Users that are not already associated with the SellerLocation.
     if user_address.user_group:
-        context["non_associated_users"] = User.objects.filter(
-            user_group=user_address.user_group,
-        ).exclude(
-            id__in=[
-                user_user_address.user.id for user_user_address in user_user_addresses
-            ],
-            
-        ).exclude(type=UserType.ADMIN,)
+        context["non_associated_users"] = (
+            User.objects.filter(
+                user_group=user_address.user_group,
+            )
+            .exclude(
+                id__in=user_user_location_normal_ids,
+            )
+            .exclude(
+                type=UserType.ADMIN,
+            )
+        )
 
         # Get ADMIN users for this UserGroup.
-        context["admin_users"] = User.objects.filter(
-            user_group_id=user_address.user_group,
+        admin_users = User.objects.filter(
+            user_group_id=user_address.user_group.id,
             type=UserType.ADMIN,
         )
+        context["location_admins"] = []
+        for user in admin_users:
+            if user.id in user_user_location_admin_users:
+                context["location_admins"].append({"user": user, "notify": True})
+            else:
+                context["location_admins"].append({"user": user, "notify": False})
 
     return render(request, "customer_dashboard/location_detail.html", context)
 
@@ -1102,14 +1119,24 @@ def customer_location_user_add(request, user_address_id, user_id):
             user=user,
             user_address=user_address,
         )
-        return redirect(
-            reverse(
-                "customer_location_detail",
-                kwargs={
-                    "location_id": user_address_id,
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "customer_dashboard/snippets/user_user_address_row.html",
+                {
+                    "location_admin": {"user": user, "notify": True},
+                    "user_address": user_address,
                 },
             )
-        )
+        else:
+            return redirect(
+                reverse(
+                    "customer_location_detail",
+                    kwargs={
+                        "location_id": user_address_id,
+                    },
+                )
+            )
 
 
 @login_required(login_url="/admin/login/")
@@ -1126,14 +1153,24 @@ def customer_location_user_remove(request, user_address_id, user_id):
             user=user,
             user_address=user_address,
         ).delete()
-        return redirect(
-            reverse(
-                "customer_location_detail",
-                kwargs={
-                    "location_id": user_address_id,
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "customer_dashboard/snippets/user_user_address_row.html",
+                {
+                    "location_admin": {"user": user, "notify": False},
+                    "user_address": user_address,
                 },
             )
-        )
+        else:
+            return redirect(
+                reverse(
+                    "customer_location_detail",
+                    kwargs={
+                        "location_id": user_address_id,
+                    },
+                )
+            )
 
 
 @login_required(login_url="/admin/login/")
