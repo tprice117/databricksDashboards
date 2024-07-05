@@ -952,6 +952,12 @@ def location_detail(request, location_id):
             if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
                 break
         # TODO: Maybe store these orders for this user in local cache so that, if see all is tapped, it will be faster.
+        context["invoices"] = []
+        invoices = Invoice.objects.filter(
+            user_address_id=context["user_address"].id
+        ).order_by("-due_date")
+        if invoices.exists():
+            context["invoices"] = invoices[:5]
 
     if request.method == "POST":
         try:
@@ -1456,10 +1462,13 @@ def invoices(request):
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
     date = request.GET.get("date", None)
+    location_id = request.GET.get("location_id", None)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
     invoices = Invoice.objects.filter(user_address__user_id=context["user"].id)
+    if location_id:
+        invoices = invoices.filter(user_address_id=location_id)
     if date:
         invoices = invoices.filter(due_date__date=date)
     invoices = invoices.order_by("-due_date")
