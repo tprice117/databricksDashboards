@@ -23,19 +23,4 @@ class Migration(migrations.Migration):
                 ],
             ),
         ),
-        migrations.AlterField(
-            model_name="order",
-            name="status",
-            field=models.CharField(
-                choices=[
-                    ("APPROVAL", "Approval"),
-                    ("PENDING", "Pending"),
-                    ("SCHEDULED", "Scheduled"),
-                    ("CANCELLED", "Cancelled"),
-                    ("COMPLETE", "Complete"),
-                ],
-                default="PENDING",
-                max_length=20,
-            ),
-        ),
     ]
