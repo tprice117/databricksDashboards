@@ -1,0 +1,8 @@
+{% load static %}
+<td>
+    {% if location_admin.notify %}
+        <button class="btn btn-light" type="button" hx-target="closest td" hx-get="{% url 'customer_location_user_remove' user_address_id=user_address.id user_id=location_admin.user.id %}"><i class="fas fa-bell"></i><span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+    {% else %}
+        <button class="btn btn-light" type="button" hx-target="closest td" hx-get="{% url 'customer_location_user_add' user_address_id=user_address.id user_id=location_admin.user.id %}"><i class="fas fa-bell-slash"></i><span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+    {% endif %}
+</td>

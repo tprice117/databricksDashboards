@@ -1,13 +1,26 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from common.models import BaseModel
+from common.utils.get_file_path import get_file_path
 
 
 class MainProductCategory(BaseModel):
+    def validate_file_extension(value):
+        if not value.name.endswith(".svg"):
+            raise ValidationError("Only .svg files are allowed.")
+
     name = models.CharField(max_length=80)
     description = models.TextField(blank=True, null=True)
     image = models.TextField(blank=True, null=True)
-    icon = models.TextField(blank=True, null=True)
+    icon = models.FileField(
+        upload_to=get_file_path,
+        blank=True,
+        null=True,
+        validators=[
+            validate_file_extension,
+        ],
+    )
     sort = models.IntegerField()
     main_product_category_code = models.CharField(max_length=255, blank=True, null=True)
 

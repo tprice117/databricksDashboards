@@ -25,6 +25,10 @@
                     href="{% url 'customer_new_order' %}"><i class="fas fa-cart-plus"></i><span>Start New
                         Order</span></a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.resolver_match.url_name == 'customer_cart' %} active{% endif %}"
+                    href="{% url 'customer_cart' %}"><i class="fas fa-shopping-cart"></i><span>Cart</span></a>
+            </li>
             <li class="nav-item"></li>
             <li class="nav-item">
                 <a class="nav-link{% if request.resolver_match.url_name == 'customer_order_groups' %} active{% endif %}"
