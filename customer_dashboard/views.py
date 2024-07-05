@@ -3,7 +3,7 @@ import datetime
 import json
 import logging
 import uuid
-from typing import List
+from typing import List, Union
 
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -32,6 +32,7 @@ from api.models import (
     ServiceRecurringFrequency,
     Subscription,
     User,
+    UserGroup,
     UserAddress,
     UserAddressType,
 )
@@ -142,6 +143,43 @@ def get_dashboard_chart_data(data_by_month: List[int]):
     return dashboard_chart
 
 
+def is_impersonating(request: HttpRequest) -> bool:
+    return request.session.get("customer_user_id") and request.session.get(
+        "customer_user_id"
+    ) != str(request.user.id)
+
+
+def get_user_group(request: HttpRequest) -> Union[UserGroup, None]:
+    """Returns the current UserGroup. This handles the case where the user is impersonating another user.
+    If the user is impersonating, it will return the UserGroup of the impersonated user.
+    The the user is staff and is not impersonating a user, then it will return None.
+
+    Args:
+        request (HttpRequest): Current request object.
+
+    Returns:
+        [UserGroup, None]: Returns the UserGroup object or None. None means staff user.
+    """
+    if is_impersonating(request):
+        user_group = UserGroup.objects.get(id=request.session["customer_user_group_id"])
+    elif request.user.is_staff:
+        user_group = None
+    else:
+        # Normal user
+        if request.session.get("customer_user_group_id"):
+            user_group = UserGroup.objects.get(
+                id=request.session["customer_user_group_id"]
+            )
+        else:
+            # Cache user_group id for faster lookups
+            user_group = request.user.user_group
+            request.session["customer_user_group_id"] = get_json_safe_value(
+                user_group.id
+            )
+
+    return user_group
+
+
 def get_user(request: HttpRequest) -> User:
     """Returns the current user. This handles the case where the user is impersonating another user.
 
@@ -151,13 +189,185 @@ def get_user(request: HttpRequest) -> User:
     Returns:
         dict: Dictionary of the User object.
     """
-    if request.session.get("customer_user_id") and request.session.get(
-        "customer_user_id"
-    ) != str(request.user.id):
+    if is_impersonating(request):
         user = User.objects.get(id=request.session.get("customer_user_id"))
     else:
         user = request.user
     return user
+
+
+def get_user_group_user_objects(
+    request: HttpRequest, user: User, user_group: UserGroup
+):
+    """Returns the users for the current UserGroup.
+
+    If user is:
+        - staff, then all users for all of UserGroups are returned.
+        - not staff
+            - is admin, then return all users for the UserGroup.
+            - not admin, then only users in the logged in user's user group.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object.
+
+    Returns:
+        QuerySet[User]: The users queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        users = User.objects.filter(user_group_id=user.user_group_id)
+    else:
+        if user_group:
+            users = User.objects.filter(user_group_id=user_group.id)
+        else:
+            users = User.objects.filter(user_group__isnull=False)
+    return users
+
+
+def get_booking_objects(
+    request: HttpRequest, user: User, user_group: UserGroup, exclude_in_cart=True
+):
+    """Returns the orders for the current UserGroup.
+
+    If user is:
+        - staff, then all orders for all of UserGroups are returned.
+        - not staff
+            - is admin, then return all orders for the UserGroup.
+            - not admin, then only orders for the UserGroup locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object.
+
+    Returns:
+        QuerySet[Order]: The orders queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_location_ids = (
+            UserUserAddress.objects.filter(user_id=user.id)
+            .select_related("user_address")
+            .values_list("user_address_id", flat=True)
+        )
+        orders = Order.objects.filter(
+            order_group__user_address__in=user_user_location_ids
+        )
+    else:
+        if user_group:
+            orders = Order.objects.filter(
+                order_group__user__user_group_id=user_group.id
+            )
+        else:
+            orders = Order.objects.all()
+    if exclude_in_cart:
+        orders = orders.filter(submitted_on__isnull=False)
+    return orders
+
+
+def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGroup):
+    """Returns the order_groups for the current UserGroup.
+
+    If user is:
+        - staff, then all order_groups for all of UserGroups are returned.
+        - not staff
+            - is admin, then return all order_groups for the UserGroup.
+            - not admin, then only order_groups for the UserGroup locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object.
+
+    Returns:
+        QuerySet[OrderGroup]: The order_groups queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_location_ids = (
+            UserUserAddress.objects.filter(user_id=user.id)
+            .select_related("user_address")
+            .values_list("user_address_id", flat=True)
+        )
+        order_groups = OrderGroup.objects.filter(
+            user_address__in=user_user_location_ids
+        )
+    else:
+        if user_group:
+            order_groups = OrderGroup.objects.filter(user__user_group_id=user_group.id)
+        else:
+            order_groups = OrderGroup.objects.all()
+    return order_groups
+
+
+def get_location_objects(request: HttpRequest, user: User, user_group: UserGroup):
+    """Returns the locations for the current UserGroup.
+
+    If user is:
+        - staff, then all locations for all of UserGroups are returned.
+        - not staff
+            - is admin, then return all locations for the UserGroup.
+            - not admin, then only locations for the UserGroup locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object.
+
+    Returns:
+        QuerySet[Location]: The locations queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_locations = UserUserAddress.objects.filter(
+            user_id=user.id
+        ).select_related("user_address")
+        user_user_locations = user_user_locations.order_by("-user_address__created_on")
+        locations = [
+            user_user_location.user_address
+            for user_user_location in user_user_locations
+        ]
+    else:
+        if user_group:
+            locations = UserAddress.objects.filter(user_group_id=user_group.id)
+            locations = locations.order_by("-created_on")
+        else:
+            locations = UserAddress.objects.all()
+            locations = locations.order_by("name", "-created_on")
+    return locations
+
+
+def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup):
+    """Returns the invoices for the current user_group.
+
+    If user is:
+        - staff, then all invoices for all of user_groups are returned.
+        - not staff
+            - is admin, then return all invoices for the user_group.
+            - not admin, then only invoices for the user_group locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object.
+
+    Returns:
+        QuerySet[Invoice]: The invoices queryset.
+    """
+
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_location_ids = (
+            UserUserAddress.objects.filter(user_id=user.id)
+            .select_related("user_address")
+            .values_list("user_address_id", flat=True)
+        )
+        invoices = Invoice.objects.filter(user_address__in=user_user_location_ids)
+    else:
+        if user_group:
+            invoices = Invoice.objects.filter(
+                user_address__user__user_group_id=user_group.id
+            )
+        else:
+            invoices = Invoice.objects.all()
+    return invoices
 
 
 ########################
@@ -176,11 +386,11 @@ def customer_search(request):
     if request.method == "POST":
         search = request.POST.get("search")
         try:
-            user_id = uuid.UUID(search)
-            users = User.objects.filter(id=user_id)
+            user_group_id = uuid.UUID(search)
+            user_groups = UserGroup.objects.filter(id=user_group_id)
         except ValueError:
-            users = User.objects.filter(email__icontains=search)
-        context["users"] = users
+            user_groups = UserGroup.objects.filter(name__icontains=search)
+        context["user_groups"] = user_groups
 
     return render(request, "customer_dashboard/snippets/user_search_list.html", context)
 
@@ -189,16 +399,34 @@ def customer_search(request):
 def customer_impersonation_start(request):
     if request.user.is_staff:
         if request.method == "POST":
-            user_id = request.POST.get("user_id")
+            user_group_id = request.POST.get("user_group_id")
         elif request.method == "GET":
-            user_id = request.GET.get("user_id")
+            user_group_id = request.GET.get("user_group_id")
         else:
             return HttpResponse("Not Implemented", status=406)
         try:
-            user = User.objects.get(id=user_id)
-            request.session["customer_user_id"] = get_json_safe_value(user_id)
+            user_group = UserGroup.objects.get(id=user_group_id)
+            user = user_group.users.filter(type=UserType.ADMIN).first()
+            if not user:
+                messages.warning(
+                    request,
+                    "No admin user found for UserGroup. UserGroup should have at least one admin user.",
+                )
+                user = user_group.users.first()
+            if not user:
+                raise User.DoesNotExist
+            request.session["customer_user_group_id"] = get_json_safe_value(
+                user_group.id
+            )
+            request.session["customer_user_id"] = get_json_safe_value(user.id)
             return HttpResponseRedirect("/customer/")
-        except Exception as e:
+        except User.DoesNotExist:
+            messages.error(
+                request,
+                "No admin user found for UserGroup. UserGroup must have at least one admin user.",
+            )
+            return HttpResponseRedirect("/customer/")
+        except Exception:
             return HttpResponse("Not Found", status=404)
     else:
         return HttpResponse("Unauthorized", status=401)
@@ -206,7 +434,10 @@ def customer_impersonation_start(request):
 
 @login_required(login_url="/admin/login/")
 def customer_impersonation_stop(request):
-    del request.session["customer_user_id"]
+    if request.session.get("customer_user_id"):
+        del request.session["customer_user_id"]
+    if request.session.get("customer_user_group_id"):
+        del request.session["customer_user_group_id"]
     return HttpResponseRedirect("/customer/")
 
 
@@ -214,94 +445,101 @@ def customer_impersonation_stop(request):
 def index(request):
     context = {}
     context["user"] = get_user(request)
-    orders = Order.objects.filter(order_group__user_id=context["user"].id)
-    orders = orders.select_related(
-        "order_group__seller_product_seller_location__seller_product__seller",
-        "order_group__user_address",
-        "order_group__user",
-        "order_group__seller_product_seller_location__seller_product__product__main_product",
-    )
-    orders = orders.prefetch_related("payouts", "order_line_items")
-    # .filter(status=Order.Status.PENDING)
-    context["earnings"] = 0
-    earnings_by_category = {}
-    pending_count = 0
-    scheduled_count = 0
-    complete_count = 0
-    cancelled_count = 0
-    earnings_by_month = [0] * 12
-    one_year_ago = datetime.date.today() - datetime.timedelta(days=365)
-    for order in orders:
-        context["earnings"] += float(order.customer_price())
-        if order.end_date >= one_year_ago:
-            earnings_by_month[order.end_date.month - 1] += float(order.customer_price())
-
-        category = (
-            order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
-        )
-        if category not in earnings_by_category:
-            earnings_by_category[category] = {"amount": 0, "percent": 0}
-        earnings_by_category[category]["amount"] += float(order.customer_price())
-
-        if order.status == Order.Status.PENDING:
-            pending_count += 1
-        elif order.status == Order.Status.SCHEDULED:
-            scheduled_count += 1
-        elif order.status == Order.Status.COMPLETE:
-            complete_count += 1
-        elif order.status == Order.Status.CANCELLED:
-            cancelled_count += 1
-
-    # # Just test data here
-    # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
-    # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
-    # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
-    # earnings_by_category["Concrete & Masonary"] = {
-    #     "amount": 50,
-    #     "percent": 0,
-    # }
-    # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
-    # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
-    # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
-    # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
-
-    # Sort the dictionary by the 'amount' field in descending order
-    sorted_categories = sorted(
-        earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
-    )
-
-    # Calculate the 'percent' field for each category
-    for category, data in sorted_categories:
-        if context["earnings"] == 0:
-            data["percent"] = int((data["amount"] / 1) * 100)
-        else:
-            data["percent"] = int((data["amount"] / context["earnings"]) * 100)
-
-    # Create a new category 'Other' for the categories that are not in the top 4
-    other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
-    if context["earnings"] == 0:
-        other_percent = int((other_amount / 1) * 100)
-    else:
-        other_percent = int((other_amount / context["earnings"]) * 100)
-
-    # Create the final dictionary
-    final_categories = dict(sorted_categories[:4])
-    final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
-    context["earnings_by_category"] = final_categories
-    # print(final_categories)
-    context["pending_count"] = pending_count
-    # context["pending_count"] = orders.count()
-    context["location_count"] = UserAddress.objects.filter(
-        user_id=context["user"].id
-    ).count()
-    context["user_count"] = User.objects.filter(
-        user_group_id=context["user"].user_group_id
-    ).count()
-
-    context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
-
+    context["user_group"] = get_user_group(request)
     if request.headers.get("HX-Request"):
-        context["page_title"] = "Dashboard"
+        orders = get_booking_objects(request, context["user"], context["user_group"])
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        orders = orders.prefetch_related("payouts", "order_line_items")
+        # .filter(status=Order.Status.PENDING)
+        context["earnings"] = 0
+        earnings_by_category = {}
+        pending_count = 0
+        scheduled_count = 0
+        complete_count = 0
+        cancelled_count = 0
+        earnings_by_month = [0] * 12
+        one_year_ago = datetime.date.today() - datetime.timedelta(days=365)
+        for order in orders:
+            context["earnings"] += float(order.customer_price())
+            if order.end_date >= one_year_ago:
+                earnings_by_month[order.end_date.month - 1] += float(
+                    order.customer_price()
+                )
+
+            category = (
+                order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
+            )
+            if category not in earnings_by_category:
+                earnings_by_category[category] = {"amount": 0, "percent": 0}
+            earnings_by_category[category]["amount"] += float(order.customer_price())
+
+            if order.status == Order.Status.PENDING:
+                pending_count += 1
+            elif order.status == Order.Status.SCHEDULED:
+                scheduled_count += 1
+            elif order.status == Order.Status.COMPLETE:
+                complete_count += 1
+            elif order.status == Order.Status.CANCELLED:
+                cancelled_count += 1
+
+        # # Just test data here
+        # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
+        # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
+        # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
+        # earnings_by_category["Concrete & Masonary"] = {
+        #     "amount": 50,
+        #     "percent": 0,
+        # }
+        # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
+        # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
+        # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
+        # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
+
+        # Sort the dictionary by the 'amount' field in descending order
+        sorted_categories = sorted(
+            earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
+        )
+
+        # Calculate the 'percent' field for each category
+        for category, data in sorted_categories:
+            if context["earnings"] == 0:
+                data["percent"] = int((data["amount"] / 1) * 100)
+            else:
+                data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+
+        # Create a new category 'Other' for the categories that are not in the top 4
+        other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
+        if context["earnings"] == 0:
+            other_percent = int((other_amount / 1) * 100)
+        else:
+            other_percent = int((other_amount / context["earnings"]) * 100)
+
+        # Create the final dictionary
+        final_categories = dict(sorted_categories[:4])
+        final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
+        context["earnings_by_category"] = final_categories
+        # print(final_categories)
+        context["pending_count"] = pending_count
+        # context["pending_count"] = orders.count()
+        locations = get_location_objects(
+            request, context["user"], context["user_group"]
+        )
+        if isinstance(locations, list):
+            context["location_count"] = len(locations)
+        else:
+            context["location_count"] = locations.count()
+        location_users = get_user_group_user_objects(
+            request, context["user"], context["user_group"]
+        )
+        context["user_count"] = location_users.count()
+        context["chart_data"] = get_dashboard_chart_data(earnings_by_month)
+        # context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
+
         return render(request, "customer_dashboard/snippets/dashboard.html", context)
     else:
         return render(request, "customer_dashboard/index.html", context)
@@ -311,6 +549,7 @@ def index(request):
 def new_order(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     main_product_categories = MainProductCategory.objects.all().order_by("sort")
     context["main_product_categories"] = main_product_categories
 
@@ -335,6 +574,7 @@ def new_order_category_price(request, category_id):
 def new_order_2(request, category_id):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     main_product_category = MainProductCategory.objects.filter(id=category_id)
     main_product_category = main_product_category.prefetch_related("main_products")
     main_product_category = main_product_category.first()
@@ -356,6 +596,7 @@ def new_order_2(request, category_id):
 def new_order_3(request, product_id):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related("main_product_category")
     main_product = main_product.first()
@@ -372,8 +613,9 @@ def new_order_3(request, product_id):
         context["product_add_ons"].append(
             {"add_on": add_on, "choices": add_on.addonchoice_set.all()}
         )
-    user_addresses = UserAddress.objects.filter(user_id=context["user"].id)
-    context["user_addresses"] = user_addresses
+    context["user_addresses"] = get_location_objects(
+        request, context["user"], context["user_group"]
+    )
     context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
     return render(
         request, "customer_dashboard/new_order/main_product_detail.html", context
@@ -408,6 +650,7 @@ def get_pricing(
 def new_order_4(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     product_id = request.GET.get("product_id")
     user_address = request.GET.get("user_address")
     product_add_on_choices = []
@@ -479,6 +722,7 @@ def new_order_4(request):
 def new_order_5(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     context["cart"] = {}
     if request.method == "POST":
         # Create the order group and orders.
@@ -571,11 +815,13 @@ def new_order_5(request):
     context["subtotal"] = 0
     context["cart_count"] = 0
     # Pull all orders with submitted_on = None and show them in the cart.
-    orders = (
-        Order.objects.filter(order_group__user_id=context["user"].id)
-        .filter(submitted_on__isnull=True)
-        .order_by("-order_group__start_date")
+    orders = get_booking_objects(
+        request, context["user"], context["user_group"], exclude_in_cart=False
     )
+    orders = orders.filter(submitted_on__isnull=True)
+    orders = orders.prefetch_related("order_line_items")
+    orders = orders.order_by("-order_group__start_date")
+
     if not orders:
         messages.error(request, "Your cart is empty.")
     else:
@@ -609,6 +855,7 @@ def new_order_5(request):
 def new_order_6(request, order_group_id):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     count, deleted_objs = OrderGroup.objects.filter(id=order_group_id).delete()
     if count:
         messages.success(request, "Order removed from cart.")
@@ -622,6 +869,7 @@ def profile(request):
     context = {}
     user = get_user(request)
     context["user"] = user
+    context["user_group"] = get_user_group(request)
 
     if request.method == "POST":
         # NOTE: Since email is disabled, it is never POSTed,
@@ -696,6 +944,7 @@ def profile(request):
 def my_order_groups(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -713,7 +962,9 @@ def my_order_groups(request):
         if user_id:
             order_groups = OrderGroup.objects.filter(user_id=user_id)
         else:
-            order_groups = OrderGroup.objects.filter(user_id=context["user"].id)
+            order_groups = get_order_group_objects(
+                request, context["user"], context["user_group"]
+            )
 
         if date:
             order_groups = order_groups.filter(end_date=date)
@@ -786,6 +1037,7 @@ def my_order_groups(request):
 def order_group_detail(request, order_group_id):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     # order.order_group.user_address.access_details
@@ -869,6 +1121,7 @@ def order_group_detail(request, order_group_id):
 def order_detail(request, order_id):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
@@ -886,6 +1139,7 @@ def order_detail(request, order_id):
 def locations(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -893,7 +1147,9 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    user_addresses = UserAddress.objects.filter(user_id=context["user"].id)
+    user_addresses = get_location_objects(
+        request, context["user"], context["user_group"]
+    )
 
     paginator = Paginator(user_addresses, pagination_limit)
     page_obj = paginator.get_page(page_number)
@@ -923,6 +1179,7 @@ def locations(request):
 def location_detail(request, location_id):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     user_address = UserAddress.objects.get(id=location_id)
@@ -1183,6 +1440,7 @@ def customer_location_user_remove(request, user_address_id, user_id):
 def new_location(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
 
@@ -1250,6 +1508,7 @@ def new_location(request):
 def users(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -1259,7 +1518,7 @@ def users(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    users = User.objects.filter(user_group_id=context["user"].user_group_id)
+    users = get_user_group_user_objects(request, context["user"], context["user_group"])
     if date:
         users = users.filter(date_joined__date=date)
     users = users.order_by("-date_joined")
@@ -1304,6 +1563,7 @@ def user_detail(request, user_id):
     # if request.headers.get("HX-Request"):
     user = User.objects.get(id=user_id)
     context["user"] = user
+    context["user_group"] = get_user_group(request)
     if user.user_group_id:
         context["user_addresses"] = UserAddress.objects.filter(user_id=user.id)[0:3]
         order_groups = OrderGroup.objects.filter(user_id=user.id)
@@ -1405,6 +1665,7 @@ def new_user(request):
     context = {}
     # TODO: Only allow admin to create new users.
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
 
@@ -1457,6 +1718,7 @@ def new_user(request):
 def invoices(request):
     context = {}
     context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -1466,7 +1728,7 @@ def invoices(request):
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    invoices = Invoice.objects.filter(user_address__user_id=context["user"].id)
+    invoices = get_invoice_objects(request, context["user"], context["user_group"])
     if location_id:
         invoices = invoices.filter(user_address_id=location_id)
     if date:
@@ -1479,7 +1741,7 @@ def invoices(request):
     for invoice in invoices:
         context["total_paid"] += invoice.amount_paid
         context["total_open"] += invoice.amount_remaining
-        if invoice.due_date.date() > today:
+        if invoice.due_date and invoice.due_date.date() > today:
             context["past_due"] += invoice.amount_remaining
 
     paginator = Paginator(invoices, pagination_limit)
