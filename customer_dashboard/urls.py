@@ -84,6 +84,11 @@ urlpatterns = [
         name="customer_new_order_5",
     ),
     path(
+        "customer/cart/",
+        views.new_order_5,
+        name="customer_cart",
+    ),
+    path(
         "customer/order/new/cart/<uuid:order_group_id>/remove/",
         views.new_order_6,
         name="customer_new_order_6_remove",

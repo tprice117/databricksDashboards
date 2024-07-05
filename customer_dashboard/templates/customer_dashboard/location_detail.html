@@ -86,6 +86,43 @@
                     <div class="col-md-12 mb-2">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title">Invoices</h4>
+                                <div class="table-responsive" style="margin-bottom: 16px;">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Due Date</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Invoice #</th>
+                                                <th>PDF</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for invoice in invoices %}
+                                                <tr>
+                                                    <td>{{ invoice.due_date }}</td>
+                                                    <td>${{ invoice.total|stringformat:'.2f'|intcomma }}</td>
+                                                    <td>{{ invoice.status }}</td>
+                                                    <td>{{ invoice.invoice_id }}</td>
+                                                    {% if invoice.invoice_pdf %}
+                                                        <td>
+                                                            <a class="btn btn-light" href="{{ invoice.invoice_pdf }}"><i class="fas fa-download"></i></a>
+                                                        </td>
+                                                    {% else %}
+                                                        <td>-</td>
+                                                    {% endif %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div><a href="{% url 'customer_invoices' %}?location_id={{ user_address.id }}">See All Invoices for this Location</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 mb-2">
+                        <div class="card">
+                            <div class="card-body">
                                 <h4 class="card-title">Past Orders</h4>
                                 <div class="table-responsive" style="margin-bottom: 16px;">
                                     <table class="table">
@@ -145,7 +182,9 @@
                         <div>
                             <h4>Users<button class="btn btn-primary float-end" type="button" data-bs-target="#user-user-address-add-modal" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Add</button></h4>
                         </div>
-                        <p><b>Users with access to this Location</b></p>
+                        <p>
+                            <b>Users with access to this Location</b>
+                        </p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
@@ -160,7 +199,7 @@
                                                 <a class="btn btn-light" role="button" href="{% url 'customer_user_detail' user_id=user_user_address.user.id %}"><i class="far fa-eye"></i></a>
                                             </td>
                                             <td>
-                                                <a class="btn btn-danger" role="button" href="{% url 'customer_location_user_remove' user_address_id=user_user_address.user_address.id user_id=user_user_address.user.id %}"><i class="far fa-trash-alt"></i></a>
+                                                <a class="btn btn-danger" role="button" href="{% url 'customer_location_user_remove' user_address_id=user_address.id user_id=user_user_address.user.id %}"><i class="far fa-trash-alt"></i></a>
                                             </td>
                                         </tr>
                                     {% empty %}
@@ -169,23 +208,35 @@
                                 </tbody>
                             </table>
                         </div>
-                        <p><b>Admin Users with access to all Locations</b></p>
+                        <p>
+                            <b>Admin Users with access to all Locations</b>
+                        </p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
-                                    <tr></tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Notifications</th>
+                                    <th>View</th>
                                 </thead>
                                 <tbody>
-                                    {% for admin_user in admin_users %}
+                                    {% for location_admin in location_admins %}
                                         <tr>
-                                            <td>{{ admin_user.full_name }}</td>
-                                            <td>{{ admin_user.email }}</td>
+                                            <td>{{ location_admin.user.full_name }}</td>
+                                            <td>{{ location_admin.user.email }}</td>
                                             <td>
-                                                <a class="btn btn-light" role="button" href="{% url 'customer_user_detail' user_id=admin_user.id %}"><i class="far fa-eye"></i></a>
+                                                <a class="btn btn-light" role="button" href="{% url 'customer_user_detail' user_id=location_admin.user.id %}"><i class="far fa-eye"></i></a>
+                                            </td>
+                                            <td>
+                                                {% if location_admin.notify %}
+                                                    <button class="btn btn-light" type="button" hx-target="closest td" hx-get="{% url 'customer_location_user_remove' user_address_id=user_address.id user_id=location_admin.user.id %}"><i class="fas fa-bell"></i><span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                                                {% else %}
+                                                    <button class="btn btn-light" type="button" hx-target="closest td" hx-get="{% url 'customer_location_user_add' user_address_id=user_address.id user_id=location_admin.user.id %}"><i class="fas fa-bell-slash"></i><span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                                                {% endif %}
                                             </td>
                                         </tr>
                                     {% empty %}
-                                    <p>No Admin Users</p>
+                                        <p>No Admin Users</p>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -202,7 +253,7 @@
                     <h4 class="modal-title">Add Users to this Location</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Select a user(s) to give them permissions to view this Location.</p>
+                    <p>Select a user(s) to give them permissions to view and receive notifications for this Location.</p>
                     <div class="table-responsive" style="margin-bottom: 16px;">
                         <table class="table">
                             <thead>
@@ -216,9 +267,6 @@
                                         <td>
                                             <a class="btn btn-light" role="button" href="{% url 'customer_location_user_add' user_address_id=user_address.id user_id=user.id %}"><i class="far fa-plus-square"></i></a>
                                         </td>
-                                        {% comment %} <td>
-                                            <a class="btn btn-light" role="button" href="user_detail.html"><i class="far fa-plus-square"></i></a>
-                                        </td> {% endcomment %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
