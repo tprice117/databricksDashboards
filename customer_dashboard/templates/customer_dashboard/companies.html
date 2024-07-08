@@ -1,0 +1,141 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Companies
+{% endblock %}
+{% block javascript %}
+    <script>
+        const searchFilter = document.getElementById("companies-search-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has service_date
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceDate = urlParams.get("q");
+            if (serviceDate) {
+                // update date filter value
+                searchFilter.value = serviceDate;
+            }
+        });
+        function selectDate(el) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Check if date filter has a value
+            if (el.value) {
+                // update current queryParams for date filter url
+                let urlencodeDate = encodeURIComponent(el.value);
+                queryParams.set("q", urlencodeDate);
+            } else {
+                // remove service_date from queryParams
+                queryParams.delete("q");
+            }
+            // update date filter url with current queryParams
+            const searchFilterUrl = "{% url 'supplier_payouts' %}?" + queryParams.toString();
+            // TODO: Maybe don't reload the card metrics when date filter is changed
+            htmx.find("#companies-search-filter").setAttribute("hx-get", searchFilterUrl);
+            // force htmx to process the new hx-get attributes
+            htmx.process("#companies-search-filter");
+            // trigger onSearchFilter event
+            htmx.trigger(el, "onSearchFilter");
+            // redirect to date filter url
+            // window.location.href = searchFilterUrl;
+        }
+        // Add change event listener to date filter
+        searchFilter.addEventListener("change", function () {
+            selectDate(this);
+        });
+        // Every 2 seconds, check if the date filter is disabled, if it is disabled and no other .status-card, button, .form-control, .pagi-link is disabled, enable the date filter.
+        // Filter out the date filter from the list of elements to check if disabled. htmx is not doing this always here, I don't know why.
+        setInterval(() => {
+            const disabledElt = document.querySelectorAll(".status-card, button, .form-control, .pagi-link");
+            const dateFilterElt = document.getElementById("companies-search-filter");
+            let isDisabled = Array.from(disabledElt).some((elt) => {
+                if (elt.id != dateFilterElt.id) {
+                    return elt.disabled;
+                }
+            });
+            if (dateFilterElt.disabled) {
+                if (!isDisabled) {
+                    // console.log("Enabling date filter");
+                    dateFilterElt.disabled = false;
+                }
+            }
+        }, 500);
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div>
+            <h3 class="text-dark mb-4">Companies<button class="btn btn-primary float-end" type="button">New Company</button></h3>
+        </div>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col">
+                        <p class="text-primary m-0 fw-bold">Companies [ list of comanies where UserGroup.Seller == NULL ]</p>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="companies-search-filter">Filter by name</label>
+                            {% comment %} <input id="companies-search-filter" class="form-control" type="search" name="search" placeholder="Search Customers..." hx-post="{% url 'customer_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#company-results" hx-indicator="#htmx-indicator-loading-status" /> {% endcomment %}
+                            {% comment %} <input id="companies-search-filter" class="form-control" type="date" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="onInputFilter" hx-indicator="#htmx-indicator-loading-status" /> {% endcomment %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table table-hover my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>User Count</th>
+                                <th>Net Terms</th>
+                                <th>Invoice Frequency</th>
+                                <th>Credit Limit</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        {% comment %} <tbody id="company-results" hx-get="{{ payouts_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody> {% endcomment %}
+                        <tbody>
+                            {% for user_group in page_obj %}
+                                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_company_detail' user_group_id=user_group.id %}'">
+                                    <td>{{ user_group.name }}</td>
+                                    <td>{{ user_group.users.count }}</td>
+                                    <td>{{ user_group.net_terms }}</td>
+                                    <td>{{ user_group.invoice_frequency }}</td>
+                                    <td>{{ user_group.tax_exempt_status }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Name</strong>
+                                </td>
+                                <td>
+                                    <strong>User Count</strong>
+                                </td>
+                                <td>
+                                    <strong>Net Terms</strong>
+                                </td>
+                                <td>
+                                    <strong>Invoice Frequency</strong>
+                                </td>
+                                <td>
+                                    <strong>Credit Limit</strong>
+                                </td>
+                                <td>
+                                    <strong></strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% include 'customer_dashboard/snippets/pagination.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
