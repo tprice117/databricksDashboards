@@ -44,7 +44,13 @@ from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils import internal_email
 
-from .forms import AccessDetailsForm, PlacementDetailsForm, UserAddressForm, UserForm
+from .forms import (
+    AccessDetailsForm,
+    PlacementDetailsForm,
+    UserAddressForm,
+    UserForm,
+    UserGroupForm,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1869,9 +1875,126 @@ def companies(request):
 def company_detail(request, user_group_id):
     context = {}
     context["user"] = get_user(request)
-    context["user_group"] = get_user_group(request)
+    # context["user_group"] = get_user_group(request)
     user_group = UserGroup.objects.filter(id=user_group_id)
     user_group = user_group.prefetch_related("users", "user_addresses")
-    context["user_group"] = user_group.first()
+    user_group = user_group.first()
+    context["user_group"] = user_group
+    if request.method == "POST":
+        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
+        context["form"] = form
+        if form.is_valid():
+            save_db = False
+            if form.cleaned_data.get("name") != user_group.name:
+                user_group.name = form.cleaned_data.get("name")
+                save_db = True
+            if form.cleaned_data.get("pay_later") != user_group.pay_later:
+                user_group.pay_later = form.cleaned_data.get("pay_later")
+                save_db = True
+            if form.cleaned_data.get("autopay") != user_group.autopay:
+                user_group.autopay = form.cleaned_data.get("autopay")
+                save_db = True
+            if form.cleaned_data.get("net_terms") != user_group.net_terms:
+                user_group.net_terms = form.cleaned_data.get("net_terms")
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_frequency")
+                != user_group.invoice_frequency
+            ):
+                user_group.invoice_frequency = form.cleaned_data.get(
+                    "invoice_frequency"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_day_of_month")
+                != user_group.invoice_day_of_month
+            ):
+                user_group.invoice_day_of_month = form.cleaned_data.get(
+                    "invoice_day_of_month"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_at_project_completion")
+                != user_group.invoice_at_project_completion
+            ):
+                user_group.invoice_at_project_completion = form.cleaned_data.get(
+                    "invoice_at_project_completion"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("credit_line_limit")
+                != user_group.credit_line_limit
+            ):
+                user_group.credit_line_limit = form.cleaned_data.get(
+                    "credit_line_limit"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("compliance_status")
+                != user_group.compliance_status
+            ):
+                user_group.compliance_status = form.cleaned_data.get(
+                    "compliance_status"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("tax_exempt_status")
+                != user_group.tax_exempt_status
+            ):
+                user_group.tax_exempt_status = form.cleaned_data.get(
+                    "tax_exempt_status"
+                )
+                save_db = True
+
+            if save_db:
+                context["user_group"] = user_group
+                user_group.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # Reload the form with the updated data since disabled fields do not POST.
+            form = UserGroupForm(
+                initial={
+                    "name": user_group.name,
+                    "pay_later": user_group.pay_later,
+                    "autopay": user_group.autopay,
+                    "net_terms": user_group.net_terms,
+                    "invoice_frequency": user_group.invoice_frequency,
+                    "invoice_day_of_month": user_group.invoice_day_of_month,
+                    "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                    "share_code": user_group.share_code,
+                    "credit_line_limit": user_group.credit_line_limit,
+                    "compliance_status": user_group.compliance_status,
+                    "tax_exempt_status": user_group.tax_exempt_status,
+                },
+                user=context["user"],
+            )
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            # if request.headers.get("HX-Request"):
+            return render(request, "customer_dashboard/company_detail.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+    else:
+        context["form"] = UserGroupForm(
+            initial={
+                "name": user_group.name,
+                "pay_later": user_group.pay_later,
+                "autopay": user_group.autopay,
+                "net_terms": user_group.net_terms,
+                "invoice_frequency": user_group.invoice_frequency,
+                "invoice_day_of_month": user_group.invoice_day_of_month,
+                "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                "share_code": user_group.share_code,
+                "credit_line_limit": user_group.credit_line_limit,
+                "compliance_status": user_group.compliance_status,
+                "tax_exempt_status": user_group.tax_exempt_status,
+            },
+            user=context["user"],
+        )
 
     return render(request, "customer_dashboard/company_detail.html", context)
