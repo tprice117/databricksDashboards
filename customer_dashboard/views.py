@@ -1872,13 +1872,32 @@ def companies(request):
 
 
 @login_required(login_url="/admin/login/")
-def company_detail(request, user_group_id):
+def company_detail(request, user_group_id=None):
     context = {}
     context["user"] = get_user(request)
-    # context["user_group"] = get_user_group(request)
-    user_group = UserGroup.objects.filter(id=user_group_id)
-    user_group = user_group.prefetch_related("users", "user_addresses")
-    user_group = user_group.first()
+    if not user_group_id:
+        user_group = get_user_group(request)
+        if not user_group:
+            if hasattr(request.user, "user_group") and request.user.user_group:
+                user_group = request.user.user_group
+                messages.warning(
+                    request,
+                    f"No customer selected! Using current staff user group [{request.user.user_group}].",
+                )
+            else:
+                # Get first available UserGroup.
+                user_group = UserGroup.objects.all().first()
+                messages.warning(
+                    request,
+                    f"No customer selected! Using first user group found: [{user_group.name}].",
+                )
+        else:
+            user_group = user_group.prefetch_related("users", "user_addresses")
+            user_group = user_group.first()
+    else:
+        user_group = UserGroup.objects.filter(id=user_group_id)
+        user_group = user_group.prefetch_related("users", "user_addresses")
+        user_group = user_group.first()
     context["user_group"] = user_group
     if request.method == "POST":
         form = UserGroupForm(request.POST, request.FILES, user=context["user"])
