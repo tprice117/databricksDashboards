@@ -59,7 +59,7 @@
                                 <tbody>
                                     {% for user in user_group.users.all %}
                                         <tr class="clickable-row" onclick="window.location.href='{% url 'customer_user_detail' user_id=user.id %}'">
-                                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                            <td>{{ user.full_name }}</td>
                                             <td>{{ user.email }}</td>
                                             <td>
                                                 <a class="btn btn-danger" role="button" href="user_detail.html" onclick="event.stopPropagation();" data-bs-target="#modal-4" data-bs-toggle="modal"><i class="far fa-trash-alt"></i></a>

@@ -1819,33 +1819,49 @@ def companies(request):
     # location_id = request.GET.get("location_id", None)
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
-        pass
+        query_params = request.GET.copy()
+        # invoices = get_invoice_objects(request, context["user"], context["user_group"])
+        user_groups = UserGroup.objects.filter(seller__isnull=True)
+        if search_q:
+            # https://docs.djangoproject.com/en/4.2/topics/db/search/
+            user_groups = user_groups.filter(name__icontains=search_q)
+        user_groups = user_groups.order_by("name")
+
+        paginator = Paginator(user_groups, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/companies/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/customer/companies/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/customer/companies/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/customer/companies/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/companies/?{query_params.urlencode()}"
+        return render(
+            request, "customer_dashboard/snippets/companies_table.html", context
+        )
+
     query_params = request.GET.copy()
-    # invoices = get_invoice_objects(request, context["user"], context["user_group"])
-    user_groups = UserGroup.objects.filter(seller__isnull=True)
-    user_groups = user_groups.order_by("name")
-
-    paginator = Paginator(user_groups, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
-
-    if page_number is None:
-        page_number = 1
-    else:
-        page_number = int(page_number)
-
-    query_params["p"] = 1
-    context["page_start_link"] = f"/customer/companies/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/customer/companies/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/customer/companies/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/customer/companies/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/customer/companies/?{query_params.urlencode()}"
+    context["companies_table_link"] = (
+        f"{reverse('customer_companies')}?{query_params.urlencode()}"
+    )
     return render(request, "customer_dashboard/companies.html", context)
 
 
