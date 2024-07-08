@@ -16,6 +16,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.db import IntegrityError
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import (
@@ -1051,6 +1052,19 @@ def new_user(request):
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
                 e.form[field].field.widget.attrs["class"] += " is-invalid"
+        except IntegrityError as e:
+            if "unique constraint" in str(e):
+                messages.error(request, "User with that email already exists.")
+            else:
+                messages.error(
+                    request, "Error saving, please contact us if this continues."
+                )
+                messages.error(request, e)
+        except Exception as e:
+            messages.error(
+                request, "Error saving, please contact us if this continues."
+            )
+            messages.error(request, f"Database IntegrityError:[{e}]")
     else:
         if context["seller"] is None:
             messages.warning(
