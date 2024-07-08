@@ -1516,6 +1516,21 @@ def new_location(request):
 
 
 @login_required(login_url="/admin/login/")
+def user_associated_locations(request, user_id):
+    context = {}
+    context["associated_locations"] = UserAddress.objects.filter(
+        user_id=user_id
+    ).count()
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request,
+        "customer_dashboard/snippets/user_associated_locations_count.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
 def users(request):
     context = {}
     context["user"] = get_user(request)
@@ -1538,9 +1553,10 @@ def users(request):
     for user in users:
         user_dict = {}
         user_dict["user"] = user
-        user_dict["meta"] = {
-            "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
-        }
+        # NOTE: Load these asynchonously with HTMX to speed up the page load.
+        # user_dict["meta"] = {
+        #     "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
+        # }
         user_lst.append(user_dict)
 
     paginator = Paginator(user_lst, pagination_limit)

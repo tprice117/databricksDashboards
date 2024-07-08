@@ -42,7 +42,13 @@
                                     </td>
                                     <td>{{ obj.user.email }}</td>
                                     <td>{{ obj.user.type }}</td>
-                                    <td class="text-center">{{ obj.meta.associated_locations }}</td>
+                                    {% if obj.meta and obj.meta.associated_locations %}
+                                        <td class="text-center">{{ obj.meta.associated_locations }}</td>
+                                    {% else %}
+                                        <td class="text-center" hx-get="{% url 'customer_user_associated_locations' user_id=obj.user.id %}" hx-trigger="load" hx-swap="outerHTML">
+                                            <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                        </td>
+                                    {% endif %}
                                     <td>{{ obj.user.date_joined }}</td>
                                 </tr>
                             {% endfor %}

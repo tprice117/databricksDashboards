@@ -39,6 +39,11 @@ urlpatterns = [
     path("customer/location/new/", views.new_location, name="customer_new_location"),
     path("customer/users/", views.users, name="customer_users"),
     path(
+        "customer/user/<uuid:user_id>/associated_locations/",
+        views.user_associated_locations,
+        name="customer_user_associated_locations",
+    ),
+    path(
         "customer/user/<uuid:user_id>/",
         views.user_detail,
         name="customer_user_detail",
