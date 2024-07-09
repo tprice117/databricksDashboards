@@ -5,7 +5,128 @@
     New User
 {% endblock %}
 {% block stylesheet %}
-    <style></style>
+    <style>
+        .my-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content {
+            display: block;
+            position: absolute;
+            background-color: #f1f1f1;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        
+        .dropdown-content div {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+        }
+        
+        .dropdown-content div:hover {
+            background-color: #ddd;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .my-dropdown-item {
+            cursor: pointer;
+        }
+        .autocomplete-active {
+            background-color: DodgerBlue !important;
+            color: #ffffff;
+        }
+    </style>
+{% endblock %}
+{% block javascript %}
+    <script>
+        // Autocomplete for seller search
+        // Helped by: https://www.w3schools.com/howto/howto_js_autocomplete.asp
+        var currentFocus;
+        let sellerInput = document.getElementById("seller-search");
+        
+        function removeAutocompleteDropdown() {
+            let dropdownItems = document.querySelectorAll(".my-dropdown-item");
+            dropdownItems.forEach(function (item) {
+                item.remove();
+            });
+        }
+        function addActive(x) {
+            /*a function to classify an item as "active":*/
+            if (!x) return false;
+            /*start by removing the "active" class on all items:*/
+            removeActive(x);
+            if (currentFocus >= x.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = x.length - 1;
+            /*add class "autocomplete-active":*/
+            x[currentFocus].classList.add("autocomplete-active");
+        }
+        function removeActive(x) {
+            /*a function to remove the "active" class from all autocomplete items:*/
+            for (var i = 0; i < x.length; i++) {
+                x[i].classList.remove("autocomplete-active");
+            }
+        }
+        /*execute a function when someone clicks in the document:*/
+        document.addEventListener("click", function (e) {
+            if (e.target != sellerInput) {
+                removeAutocompleteDropdown();
+            }
+        });
+        function addSellerAutocompleteListeners() {
+            currentFocus = -1;
+            let dropdownItems = document.querySelectorAll(".my-dropdown-item");
+            dropdownItems.forEach(function (item) {
+                item.addEventListener("click", function () {
+                    // Update the display field with the seller's name
+                    document.getElementById("seller-search").value = item.getAttribute("data-name");
+                    // Update the hidden field with the seller's ID
+                    document.getElementById("sellerId").value = item.getAttribute("data-id");
+                    removeAutocompleteDropdown();
+                });
+            });
+        }
+        
+        sellerInput.addEventListener("keydown", function (e) {
+            var x = document.getElementById("seller-search-results");
+            if (x) x = x.getElementsByTagName("div");
+            if (x) {
+                if (e.keyCode == 40) {
+                    /*If the arrow DOWN key is pressed, increase the currentFocus variable:*/
+                    currentFocus++;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 38) {
+                    /*If the arrow UP key is pressed, decrease the currentFocus variable:*/
+                    currentFocus--;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        /*and simulate a click on the "active" item:*/
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            }
+        });
+        
+        // listen for page load event.
+        document.addEventListener("DOMContentLoaded", function () {
+            addSellerAutocompleteListeners();
+        });
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            addSellerAutocompleteListeners();
+        });
+    </script>
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
@@ -15,7 +136,16 @@
                 <p class="text-primary m-0 fw-bold">User Data</p>
             </div>
             <div class="card-body">
-                <form action="{{ request.get_full_path }}" method="post" enctype="multipart/form-data">
+                {% if not seller and user.is_staff %}
+                    <div class="dropdown mb-3">
+                        <label for="companies-search-filter" class="form-label">Select Seller <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+                        <input id="seller-search" form="userForm" class="form-control" autocomplete="off" type="search" name="search" required="true" hx-post="{% url 'supplier_search_selection' %}" hx-trigger="input changed delay:500ms, search" hx-target="#seller-search-results" hx-indicator="#htmx-indicator-loading" />
+                        <!-- Hidden input field for seller ID -->
+                        <input id="sellerId" type="hidden" name="sellerId" form="userForm" />
+                        <div class="dropdown-content" id="seller-search-results"></div>
+                    </div>
+                {% endif %}
+                <form id="userForm" action="{{ request.get_full_path }}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <!-- Include the hidden fields -->
                     {% for hidden in form.hidden_fields %}

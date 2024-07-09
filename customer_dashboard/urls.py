@@ -4,10 +4,16 @@ from . import views
 
 urlpatterns = [
     path("customer/search/", views.customer_search, name="customer_search"),
+    path(
+        "customer/search/selection/",
+        views.customer_search,
+        {"is_selection": True},
+        name="customer_search_selection",
+    ),
     path("customer/", views.index, name="customer_home"),
     path("customer/logout/", views.customer_logout, name="customer_logout"),
     path("customer/profile/", views.profile, name="customer_profile"),
-    path("customer/company/", views.profile, name="customer_company"),
+    path("customer/company/", views.company_detail, name="customer_company"),
     path("customer/order/add/", views.index, name="customer_new_order"),
     path("customer/order_groups/", views.my_order_groups, name="customer_order_groups"),
     path(
@@ -39,12 +45,23 @@ urlpatterns = [
     path("customer/location/new/", views.new_location, name="customer_new_location"),
     path("customer/users/", views.users, name="customer_users"),
     path(
+        "customer/user/<uuid:user_id>/associated_locations/",
+        views.user_associated_locations,
+        name="customer_user_associated_locations",
+    ),
+    path(
         "customer/user/<uuid:user_id>/",
         views.user_detail,
         name="customer_user_detail",
     ),
     path("customer/user/new/", views.new_user, name="customer_new_user"),
     path("customer/invoices/", views.invoices, name="customer_invoices"),
+    path("customer/companies/", views.companies, name="customer_companies"),
+    path(
+        "customer/company/<uuid:user_group_id>/",
+        views.company_detail,
+        name="customer_company_detail",
+    ),
     path(
         "customer/impersonation/start/",
         views.customer_impersonation_start,

@@ -1,0 +1,110 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Companies
+{% endblock %}
+{% block javascript %}
+    <script>
+        const searchFilter = document.getElementById("companies-search-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has service_date
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceDate = urlParams.get("q");
+            if (serviceDate) {
+                // update date filter value
+                searchFilter.value = serviceDate;
+            }
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div>
+            <h3 class="text-dark mb-4">Companies<button class="btn btn-primary float-end" type="button">New Company</button></h3>
+        </div>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col">
+                        <p class="text-primary m-0 fw-bold">Companies [ list of comanies where UserGroup.Seller == NULL ]</p>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="companies-search-filter">Filter by name</label>
+                            <input id="companies-search-filter" class="form-control" type="search" name="q" hx-push-url="true" hx-get="{% url 'customer_companies' %}" hx-trigger="input changed delay:500ms, search" hx-target="#company-results" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table table-hover my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>User Count</th>
+                                <th>Net Terms</th>
+                                <th>Invoice Frequency</th>
+                                <th>Credit Limit</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="company-results" hx-get="{{ companies_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <strong>Name</strong>
+                                </td>
+                                <td>
+                                    <strong>User Count</strong>
+                                </td>
+                                <td>
+                                    <strong>Net Terms</strong>
+                                </td>
+                                <td>
+                                    <strong>Invoice Frequency</strong>
+                                </td>
+                                <td>
+                                    <strong>Credit Limit</strong>
+                                </td>
+                                <td>
+                                    <strong></strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="row invisible" id="companies-pagination">
+                    <div class="col-md-6 align-self-center">
+                        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
+                                </li>
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">1</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">2</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">3</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

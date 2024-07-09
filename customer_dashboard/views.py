@@ -12,6 +12,7 @@ from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.db import IntegrityError
 
 from api.models import (
     AddOn,
@@ -44,7 +45,13 @@ from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from notifications.utils import internal_email
 
-from .forms import AccessDetailsForm, PlacementDetailsForm, UserAddressForm, UserForm
+from .forms import (
+    AccessDetailsForm,
+    PlacementDetailsForm,
+    UserAddressForm,
+    UserForm,
+    UserGroupForm,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -381,7 +388,7 @@ def customer_logout(request):
 
 
 @login_required(login_url="/admin/login/")
-def customer_search(request):
+def customer_search(request, is_selection=False):
     context = {}
     if request.method == "POST":
         search = request.POST.get("search")
@@ -392,7 +399,16 @@ def customer_search(request):
             user_groups = UserGroup.objects.filter(name__icontains=search)
         context["user_groups"] = user_groups
 
-    return render(request, "customer_dashboard/snippets/user_search_list.html", context)
+    if is_selection:
+        return render(
+            request,
+            "customer_dashboard/snippets/user_group_search_selection.html",
+            context,
+        )
+    else:
+        return render(
+            request, "customer_dashboard/snippets/user_search_list.html", context
+        )
 
 
 @login_required(login_url="/admin/login/")
@@ -1516,6 +1532,21 @@ def new_location(request):
 
 
 @login_required(login_url="/admin/login/")
+def user_associated_locations(request, user_id):
+    context = {}
+    context["associated_locations"] = UserAddress.objects.filter(
+        user_id=user_id
+    ).count()
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request,
+        "customer_dashboard/snippets/user_associated_locations_count.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
 def users(request):
     context = {}
     context["user"] = get_user(request)
@@ -1538,9 +1569,10 @@ def users(request):
     for user in users:
         user_dict = {}
         user_dict["user"] = user
-        user_dict["meta"] = {
-            "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
-        }
+        # NOTE: Load these asynchonously with HTMX to speed up the page load.
+        # user_dict["meta"] = {
+        #     "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
+        # }
         user_lst.append(user_dict)
 
     paginator = Paginator(user_lst, pagination_limit)
@@ -1677,19 +1709,6 @@ def new_user(request):
     # TODO: Only allow admin to create new users.
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
-    if not context["user_group"]:
-        if hasattr(request.user, "user_group") and request.user.user_group:
-            messages.warning(
-                request,
-                f"No customer selected! Using current staff user group [{request.user.user_group}].",
-            )
-        else:
-            # Get first available UserGroup.
-            user_group = UserGroup.objects.all().first()
-            messages.warning(
-                request,
-                f"No customer selected! Using first user group found: [{user_group.name}].",
-            )
 
     if request.method == "POST":
         try:
@@ -1699,14 +1718,23 @@ def new_user(request):
             form = UserForm(POST_COPY, request.FILES)
             context["form"] = form
             context["form"].fields["email"].disabled = False
+            # Default to the current user's UserGroup.
+            user_group_id = context["user"].user_group_id
+            if not context["user_group"] and context["user"].is_staff:
+                usergroup_id = request.POST.get("usergroupId")
+                if usergroup_id:
+                    user_group = UserGroup.objects.get(id=usergroup_id)
+                    user_group_id = user_group.id
             if form.is_valid():
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
                 phone = form.cleaned_data.get("phone")
                 email = form.cleaned_data.get("email")
                 user_type = form.cleaned_data.get("type")
+                # TODO: This is supposed to be creating a UserInvite, so that we
+                # can keep track of invites.
                 user = User(
-                    user_group_id=context["user"].user_group_id,
+                    user_group_id=user_group_id,
                     first_name=first_name,
                     last_name=last_name,
                     email=email,
@@ -1729,6 +1757,19 @@ def new_user(request):
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
                 e.form[field].field.widget.attrs["class"] += " is-invalid"
+        except IntegrityError as e:
+            if "unique constraint" in str(e):
+                messages.error(request, "User with that email already exists.")
+            else:
+                messages.error(
+                    request, "Error saving, please contact us if this continues."
+                )
+                messages.error(request, f"Database IntegrityError:[{e}]")
+        except Exception as e:
+            messages.error(
+                request, "Error saving, please contact us if this continues."
+            )
+            messages.error(request, e)
     else:
         context["form"] = UserForm()
         context["form"].fields["email"].disabled = False
@@ -1788,3 +1829,210 @@ def invoices(request):
     query_params["p"] = paginator.num_pages
     context["page_end_link"] = f"/customer/invoices/?{query_params.urlencode()}"
     return render(request, "customer_dashboard/invoices.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def companies(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    search_q = request.GET.get("q", None)
+    # location_id = request.GET.get("location_id", None)
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        query_params = request.GET.copy()
+        # invoices = get_invoice_objects(request, context["user"], context["user_group"])
+        user_groups = UserGroup.objects.filter(seller__isnull=True)
+        if search_q:
+            # https://docs.djangoproject.com/en/4.2/topics/db/search/
+            user_groups = user_groups.filter(name__icontains=search_q)
+        user_groups = user_groups.order_by("name")
+
+        paginator = Paginator(user_groups, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/companies/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/customer/companies/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/customer/companies/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/customer/companies/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/companies/?{query_params.urlencode()}"
+        return render(
+            request, "customer_dashboard/snippets/companies_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    context["companies_table_link"] = (
+        f"{reverse('customer_companies')}?{query_params.urlencode()}"
+    )
+    return render(request, "customer_dashboard/companies.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def company_detail(request, user_group_id=None):
+    context = {}
+    context["user"] = get_user(request)
+    if not user_group_id:
+        user_group = get_user_group(request)
+        if not user_group:
+            if hasattr(request.user, "user_group") and request.user.user_group:
+                user_group = request.user.user_group
+                messages.warning(
+                    request,
+                    f"No customer selected! Using current staff user group [{request.user.user_group}].",
+                )
+            else:
+                # Get first available UserGroup.
+                user_group = UserGroup.objects.all().first()
+                messages.warning(
+                    request,
+                    f"No customer selected! Using first user group found: [{user_group.name}].",
+                )
+        else:
+            user_group = user_group.prefetch_related("users", "user_addresses")
+            user_group = user_group.first()
+    else:
+        user_group = UserGroup.objects.filter(id=user_group_id)
+        user_group = user_group.prefetch_related("users", "user_addresses")
+        user_group = user_group.first()
+    context["user_group"] = user_group
+    if request.method == "POST":
+        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
+        context["form"] = form
+        if form.is_valid():
+            save_db = False
+            if form.cleaned_data.get("name") != user_group.name:
+                user_group.name = form.cleaned_data.get("name")
+                save_db = True
+            if form.cleaned_data.get("pay_later") != user_group.pay_later:
+                user_group.pay_later = form.cleaned_data.get("pay_later")
+                save_db = True
+            if form.cleaned_data.get("autopay") != user_group.autopay:
+                user_group.autopay = form.cleaned_data.get("autopay")
+                save_db = True
+            if form.cleaned_data.get("net_terms") != user_group.net_terms:
+                user_group.net_terms = form.cleaned_data.get("net_terms")
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_frequency")
+                != user_group.invoice_frequency
+            ):
+                user_group.invoice_frequency = form.cleaned_data.get(
+                    "invoice_frequency"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_day_of_month")
+                != user_group.invoice_day_of_month
+            ):
+                user_group.invoice_day_of_month = form.cleaned_data.get(
+                    "invoice_day_of_month"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_at_project_completion")
+                != user_group.invoice_at_project_completion
+            ):
+                user_group.invoice_at_project_completion = form.cleaned_data.get(
+                    "invoice_at_project_completion"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("credit_line_limit")
+                != user_group.credit_line_limit
+            ):
+                user_group.credit_line_limit = form.cleaned_data.get(
+                    "credit_line_limit"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("compliance_status")
+                != user_group.compliance_status
+            ):
+                user_group.compliance_status = form.cleaned_data.get(
+                    "compliance_status"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("tax_exempt_status")
+                != user_group.tax_exempt_status
+            ):
+                user_group.tax_exempt_status = form.cleaned_data.get(
+                    "tax_exempt_status"
+                )
+                save_db = True
+
+            if save_db:
+                context["user_group"] = user_group
+                user_group.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # Reload the form with the updated data since disabled fields do not POST.
+            form = UserGroupForm(
+                initial={
+                    "name": user_group.name,
+                    "pay_later": user_group.pay_later,
+                    "autopay": user_group.autopay,
+                    "net_terms": user_group.net_terms,
+                    "invoice_frequency": user_group.invoice_frequency,
+                    "invoice_day_of_month": user_group.invoice_day_of_month,
+                    "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                    "share_code": user_group.share_code,
+                    "credit_line_limit": user_group.credit_line_limit,
+                    "compliance_status": user_group.compliance_status,
+                    "tax_exempt_status": user_group.tax_exempt_status,
+                },
+                user=context["user"],
+            )
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            # if request.headers.get("HX-Request"):
+            return render(request, "customer_dashboard/company_detail.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+    else:
+        context["form"] = UserGroupForm(
+            initial={
+                "name": user_group.name,
+                "pay_later": user_group.pay_later,
+                "autopay": user_group.autopay,
+                "net_terms": user_group.net_terms,
+                "invoice_frequency": user_group.invoice_frequency,
+                "invoice_day_of_month": user_group.invoice_day_of_month,
+                "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                "share_code": user_group.share_code,
+                "credit_line_limit": user_group.credit_line_limit,
+                "compliance_status": user_group.compliance_status,
+                "tax_exempt_status": user_group.tax_exempt_status,
+            },
+            user=context["user"],
+        )
+
+    return render(request, "customer_dashboard/company_detail.html", context)

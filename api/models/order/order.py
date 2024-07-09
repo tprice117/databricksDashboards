@@ -576,7 +576,7 @@ class Order(BaseModel):
                 except Exception as e:
                     call_to_action_url = "https://app.trydownstream.com/orders"
                     logger.warning(
-                        f"Order.send_customer_email_when_order_scheduled: [Use default: {call_to_action_url}]-[{e}]",
+                        f"Order.send_customer_email_when_order_scheduled: [Use default: {call_to_action_url}]-auth0_user:[{auth0_user}]-[{e}]",
                         exc_info=e,
                     )
 
