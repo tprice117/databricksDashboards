@@ -412,7 +412,7 @@ def supplier_logout(request):
 
 
 @login_required(login_url="/admin/login/")
-def supplier_search(request):
+def supplier_search(request, is_selection=False):
     context = {}
     if request.method == "POST":
         search = request.POST.get("search")
@@ -423,9 +423,14 @@ def supplier_search(request):
             sellers = Seller.objects.filter(name__icontains=search)
         context["sellers"] = sellers
 
-    return render(
-        request, "supplier_dashboard/snippets/seller_search_list.html", context
-    )
+    if is_selection:
+        return render(
+            request, "supplier_dashboard/snippets/seller_search_selection.html", context
+        )
+    else:
+        return render(
+            request, "supplier_dashboard/snippets/seller_search_list.html", context
+        )
 
 
 @login_required(login_url="/admin/login/")
@@ -1019,6 +1024,13 @@ def new_user(request):
             form = UserForm(POST_COPY, request.FILES, auth_user=context["user"])
             context["form"] = form
             context["form"].fields["email"].disabled = False
+            # Default to the current user's UserGroup.
+            user_group_id = context["user"].user_group_id
+            if not context["seller"] and context["user"].is_staff:
+                seller_id = request.POST.get("sellerId")
+                if seller_id:
+                    user_group = UserGroup.objects.get(seller_id=seller_id)
+                    user_group_id = user_group.id
             if form.is_valid():
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
@@ -1028,7 +1040,7 @@ def new_user(request):
                 # TODO: This is supposed to be creating a UserInvite, so that we
                 # can keep track of invites.
                 user = User(
-                    user_group_id=context["user"].user_group_id,
+                    user_group_id=user_group_id,
                     first_name=first_name,
                     last_name=last_name,
                     email=email,
@@ -1059,18 +1071,18 @@ def new_user(request):
                 messages.error(
                     request, "Error saving, please contact us if this continues."
                 )
-                messages.error(request, e)
+                messages.error(request, f"Database IntegrityError:[{e}]")
+        except UserGroup.DoesNotExist:
+            messages.error(
+                request,
+                "Seller does not have a UserGroup, one must be created first.",
+            )
         except Exception as e:
             messages.error(
                 request, "Error saving, please contact us if this continues."
             )
-            messages.error(request, f"Database IntegrityError:[{e}]")
+            messages.error(request, e)
     else:
-        if context["seller"] is None:
-            messages.warning(
-                request,
-                f"No seller selected! This user would be added to your own UserGroup. {context['user'].user_group.name}",
-            )
         context["form"] = UserForm(auth_user=context["user"])
         context["form"].fields["email"].required = True
         context["form"].fields["email"].disabled = False

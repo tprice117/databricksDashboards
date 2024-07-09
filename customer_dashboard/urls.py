@@ -4,6 +4,12 @@ from . import views
 
 urlpatterns = [
     path("customer/search/", views.customer_search, name="customer_search"),
+    path(
+        "customer/search/selection/",
+        views.customer_search,
+        {"is_selection": True},
+        name="customer_search_selection",
+    ),
     path("customer/", views.index, name="customer_home"),
     path("customer/logout/", views.customer_logout, name="customer_logout"),
     path("customer/profile/", views.profile, name="customer_profile"),

@@ -1,0 +1,5 @@
+{% for user_group in user_groups %}
+    <div class="my-dropdown-item" data-name="{{ user_group.name }}" data-id="{{ user_group.id }}">
+        <strong>{{ user_group.name }}</strong>
+    </div>
+{% endfor %}

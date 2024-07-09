@@ -12,6 +12,7 @@ from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.db import IntegrityError
 
 from api.models import (
     AddOn,
@@ -387,7 +388,7 @@ def customer_logout(request):
 
 
 @login_required(login_url="/admin/login/")
-def customer_search(request):
+def customer_search(request, is_selection=False):
     context = {}
     if request.method == "POST":
         search = request.POST.get("search")
@@ -398,7 +399,16 @@ def customer_search(request):
             user_groups = UserGroup.objects.filter(name__icontains=search)
         context["user_groups"] = user_groups
 
-    return render(request, "customer_dashboard/snippets/user_search_list.html", context)
+    if is_selection:
+        return render(
+            request,
+            "customer_dashboard/snippets/user_group_search_selection.html",
+            context,
+        )
+    else:
+        return render(
+            request, "customer_dashboard/snippets/user_search_list.html", context
+        )
 
 
 @login_required(login_url="/admin/login/")
@@ -1699,19 +1709,6 @@ def new_user(request):
     # TODO: Only allow admin to create new users.
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
-    if not context["user_group"]:
-        if hasattr(request.user, "user_group") and request.user.user_group:
-            messages.warning(
-                request,
-                f"No customer selected! Using current staff user group [{request.user.user_group}].",
-            )
-        else:
-            # Get first available UserGroup.
-            user_group = UserGroup.objects.all().first()
-            messages.warning(
-                request,
-                f"No customer selected! Using first user group found: [{user_group.name}].",
-            )
 
     if request.method == "POST":
         try:
@@ -1721,14 +1718,23 @@ def new_user(request):
             form = UserForm(POST_COPY, request.FILES)
             context["form"] = form
             context["form"].fields["email"].disabled = False
+            # Default to the current user's UserGroup.
+            user_group_id = context["user"].user_group_id
+            if not context["user_group"] and context["user"].is_staff:
+                usergroup_id = request.POST.get("usergroupId")
+                if usergroup_id:
+                    user_group = UserGroup.objects.get(id=usergroup_id)
+                    user_group_id = user_group.id
             if form.is_valid():
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
                 phone = form.cleaned_data.get("phone")
                 email = form.cleaned_data.get("email")
                 user_type = form.cleaned_data.get("type")
+                # TODO: This is supposed to be creating a UserInvite, so that we
+                # can keep track of invites.
                 user = User(
-                    user_group_id=context["user"].user_group_id,
+                    user_group_id=user_group_id,
                     first_name=first_name,
                     last_name=last_name,
                     email=email,
@@ -1751,6 +1757,19 @@ def new_user(request):
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
                 e.form[field].field.widget.attrs["class"] += " is-invalid"
+        except IntegrityError as e:
+            if "unique constraint" in str(e):
+                messages.error(request, "User with that email already exists.")
+            else:
+                messages.error(
+                    request, "Error saving, please contact us if this continues."
+                )
+                messages.error(request, f"Database IntegrityError:[{e}]")
+        except Exception as e:
+            messages.error(
+                request, "Error saving, please contact us if this continues."
+            )
+            messages.error(request, e)
     else:
         context["form"] = UserForm()
         context["form"].fields["email"].disabled = False
