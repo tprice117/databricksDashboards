@@ -49,6 +49,15 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
     last_name = models.CharField(
         max_length=255,
     )
+    # This is used in the Auth0 login process to redirect the user to a specific page after login.
+    # This is helpful in the account creation process to redirect the user to the correct
+    # page after login (supplier, customer webapp).
+    redirect_url = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="URL to redirect to after Auth0 login (defaults to webapp settings.BASE_URL).",
+    )
     status = models.CharField(
         max_length=20,
         choices=ApprovalStatus.choices,
@@ -125,6 +134,7 @@ def pre_save_user_group_admin_approval_order(
                 type=instance.type,
                 first_name=instance.first_name,
                 last_name=instance.last_name,
+                redirect_url=instance.redirect_url,
             )
         elif old_status == ApprovalStatus.DECLINED:
             # If the Status changes from PENDING to DECLINED, update Status, then send email to "created_by" user with update.
