@@ -102,9 +102,9 @@
                                         <tr class="clickable-row" onclick="window.location.href='{% url 'customer_user_detail' user_id=user.id %}'">
                                             <td>{{ user.full_name }}</td>
                                             <td>{{ user.email }}</td>
-                                            <td>
+                                            {% comment %} <td>
                                                 <a class="btn btn-danger" role="button" href="user_detail.html" onclick="event.stopPropagation();" data-bs-target="#modal-4" data-bs-toggle="modal"><i class="far fa-trash-alt"></i></a>
-                                            </td>
+                                            </td> {% endcomment %}
                                         </tr>
                                     {% endfor %}
                                 </tbody>
