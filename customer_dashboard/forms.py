@@ -51,6 +51,57 @@ class UserForm(forms.Form):
     )
 
 
+class UserInviteForm(forms.Form):
+    first_name = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    last_name = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    email = forms.CharField(
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=True,
+    )
+    type = forms.ChoiceField(
+        choices=UserType.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        auth_user = kwargs.pop("auth_user", None)
+        user = kwargs.pop("user", None)
+        super(UserInviteForm, self).__init__(*args, **kwargs)
+        if auth_user and user and not auth_user.is_staff:
+            # if auth_user.type is lower than user.type, then disable the type field.
+            if auth_user.type == UserType.BILLING:
+                if user.type == UserType.ADMIN:
+                    self.fields["type"].disabled = True
+                else:
+                    self.fields["type"].choices = [
+                        (UserType.BILLING, UserType.BILLING),
+                        (UserType.MEMBER, UserType.MEMBER),
+                    ]
+            elif auth_user.type == UserType.MEMBER:
+                if user.type == UserType.BILLING or user.type == UserType.ADMIN:
+                    self.fields["type"].disabled = True
+                else:
+                    self.fields["type"].choices = [
+                        (UserType.MEMBER, UserType.MEMBER),
+                    ]
+        elif auth_user:
+            if auth_user.type == UserType.BILLING:
+                self.fields["type"].choices = [
+                    (UserType.BILLING, UserType.BILLING),
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
+            elif auth_user.type == UserType.MEMBER:
+                self.fields["type"].choices = [
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
+
+
 class AccessDetailsForm(forms.Form):
     access_details = forms.CharField(
         widget=forms.Textarea(
