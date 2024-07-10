@@ -39,11 +39,10 @@ from api.models import (
 )
 from api.models.user.user_user_address import UserUserAddress
 from api.pricing_ml import pricing
-from api.utils.utils import decrypt_string
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
-from notifications.utils import internal_email
+from admin_approvals.models import UserGroupAdminApprovalUserInvite
 
 from .forms import (
     AccessDetailsForm,
@@ -51,6 +50,7 @@ from .forms import (
     UserAddressForm,
     UserForm,
     UserGroupForm,
+    UserInviteForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,6 +65,12 @@ class InvalidFormError(Exception):
 
     def __str__(self):
         return self.msg
+
+
+class UserAlreadyExistsError(Exception):
+    """Exception raised if User already exists."""
+
+    pass
 
 
 def get_dashboard_chart_data(data_by_month: List[int]):
@@ -1710,14 +1716,17 @@ def new_user(request):
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
 
+    if context["user"].type != UserType.ADMIN:
+        messages.error(request, "Only admins can create new users.")
+        return HttpResponseRedirect(reverse("customer_users"))
+
     if request.method == "POST":
         try:
             save_model = None
             POST_COPY = request.POST.copy()
             # POST_COPY["email"] = user.email
-            form = UserForm(POST_COPY, request.FILES)
+            form = UserInviteForm(POST_COPY, request.FILES, auth_user=context["user"])
             context["form"] = form
-            context["form"].fields["email"].disabled = False
             # Default to the current user's UserGroup.
             user_group_id = context["user"].user_group_id
             if not context["user_group"] and context["user"].is_staff:
@@ -1728,31 +1737,30 @@ def new_user(request):
             if form.is_valid():
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
-                phone = form.cleaned_data.get("phone")
                 email = form.cleaned_data.get("email")
                 user_type = form.cleaned_data.get("type")
-                # TODO: This is supposed to be creating a UserInvite, so that we
-                # can keep track of invites.
-                user = User(
-                    user_group_id=user_group_id,
-                    first_name=first_name,
-                    last_name=last_name,
-                    email=email,
-                    type=user_type,
-                )
-                if phone:
-                    user.phone = phone
-                if request.FILES.get("photo"):
-                    user.photo = request.FILES["photo"]
-                save_model = user
+                # Check if email is already in use.
+                if email and User.objects.filter(email=email.casefold()).exists():
+                    raise UserAlreadyExistsError()
+                else:
+                    user_invite = UserGroupAdminApprovalUserInvite(
+                        user_group_id=user_group_id,
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        type=user_type,
+                    )
+                    save_model = user_invite
             else:
-                raise InvalidFormError(form, "Invalid UserForm")
+                raise InvalidFormError(form, "Invalid UserInviteForm")
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             return HttpResponseRedirect(reverse("customer_users"))
+        except UserAlreadyExistsError:
+            messages.error(request, "User with that email already exists.")
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
@@ -1771,8 +1779,7 @@ def new_user(request):
             )
             messages.error(request, e)
     else:
-        context["form"] = UserForm()
-        context["form"].fields["email"].disabled = False
+        context["form"] = UserInviteForm(auth_user=context["user"])
 
     return render(request, "customer_dashboard/user_new_edit.html", context)
 
