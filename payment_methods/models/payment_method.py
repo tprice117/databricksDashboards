@@ -135,7 +135,7 @@ class PaymentMethod(BaseModel):
                         print("stripe_payment_method created")
                     except CardError as e:
                         self.active = False
-                        self.reason = f"Invoice.attempt_pay:CardError: [user_address.id:{user_address.id}]-[{e}]-[type:{e.code}]-[param:{e.param}]"
+                        self.reason = f"sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[type:{e.code}]-[param:{e.param}]"
                         self.save()
                         logger.error(
                             f"PaymentMethod.sync_stripe_payment_method:CardError: [user_address.id:{user_address.id}]-[{e}]-[{e.code}]-[{e.param}]-[payment_method_id:{self.id}]",

@@ -55,7 +55,7 @@
     </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid mb-2">
+    <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
         <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}">Shopping Cart ({{ cart_count }})</h3>
         <div class="row">
             <div class="col">

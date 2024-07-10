@@ -179,7 +179,7 @@ def get_check_remittance_html(
                 invoice_id,
                 f"${float(order.seller_price() - total_paid_to_seller):.2f}",
                 description,
-                order.end_date.strftime("%d/%m/%Y"),
+                order.end_date.strftime("%m/%d/%Y"),
                 line_background=line_background,
             )
         )
@@ -248,7 +248,7 @@ def get_check_remittance_variable(
                 "id": invoice_id,
                 "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
                 "description": description,
-                "date": order.end_date.strftime("%d/%m/%Y"),
+                "date": order.end_date.strftime("%m/%d/%Y"),
             }
         )
         # Only add 16 invoices per page.

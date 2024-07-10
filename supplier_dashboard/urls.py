@@ -15,6 +15,12 @@ urlpatterns = [
     ),
     path("supplier/search/", views.supplier_search, name="supplier_search"),
     path(
+        "supplier/search/selection/",
+        views.supplier_search,
+        {"is_selection": True},
+        name="supplier_search_selection",
+    ),
+    path(
         "supplier/impersonation/start/",
         views.supplier_impersonation_start,
         name="supplier_impersonation_start",
