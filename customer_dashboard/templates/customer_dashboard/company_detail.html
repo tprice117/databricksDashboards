@@ -11,7 +11,7 @@
     <div class="container">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6 mb-2">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
                         {% comment %} <h4 class="card-title">***edit UserGroup form***</h4> {% endcomment %}
                         <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post">
@@ -57,35 +57,6 @@
                         </form>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Locations&nbsp;</h4>
-                        <p>Locations for this Company</p>
-                        <div class="table-responsive" style="margin-bottom: 16px;">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr></tr>
-                                </thead>
-                                <tbody>
-                                    {% for user_address in user_group.user_addresses.all %}
-                                        <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
-                                            <td>{{ user_address.name }}</td>
-                                            <td>{{ user_address.formatted_address }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="row" style="padding-bottom: 24px;">
-            <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
                         <div>
@@ -113,7 +84,29 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Locations&nbsp;</h4>
+                        <p>Locations for this Company</p>
+                        <div class="table-responsive" style="margin-bottom: 16px;">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr></tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_address in user_group.user_addresses.all %}
+                                        <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
+                                            <td>{{ user_address.name }}</td>
+                                            <td>{{ user_address.formatted_address }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

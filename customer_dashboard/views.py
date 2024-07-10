@@ -1917,9 +1917,6 @@ def company_detail(request, user_group_id=None):
                     request,
                     f"No customer selected! Using first user group found: [{user_group.name}].",
                 )
-        else:
-            user_group = user_group.prefetch_related("users", "user_addresses")
-            user_group = user_group.first()
     else:
         user_group = UserGroup.objects.filter(id=user_group_id)
         user_group = user_group.prefetch_related("users", "user_addresses")
