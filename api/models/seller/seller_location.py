@@ -96,7 +96,7 @@ class SellerLocation(BaseModel):
 
     @property
     def is_payout_setup(self):
-        return bool(self.stripe_connect_account_id or self.payee_name)
+        return bool(self.stripe_connect_account_id or (self.payee_name and self.street))
 
     @property
     def is_tax_compliant(self):

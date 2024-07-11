@@ -46,8 +46,18 @@
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
                 <div class="card">
+                    {% if not seller_location.is_insurance_compliant or not seller_location.is_tax_compliant %}
+                        <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle"></span>
+                    {% elif seller_location.is_insurance_expiring_soon %}
+                        <span class="position-absolute top-0 start-100 translate-middle p-2 bg-warning border border-light rounded-circle"></span>
+                    {% endif %}
                     <div class="card-body">
                         <h4 class="card-title">Compliance Details</h4>
+                        {% if not seller_location.is_insurance_compliant %}
+                            <p class="fw-bold fst-italic text-danger">* Please add insurance details.</p>
+                        {% elif seller_location.is_insurance_expiring_soon %}
+                            <p class="fw-bold fst-italic text-warning">* Insurance is expiring soon, please update.</p>
+                        {% endif %}
                         <form action="{% url 'supplier_location_detail' location_id=seller_location.id %}" method="post" enctype="multipart/form-data">
                             {% csrf_token %}
                             <!-- Include the hidden fields -->
@@ -102,8 +112,14 @@
             </div>
             <div class="col-md-6">
                 <div class="card">
+                    {% if not seller_location.is_payout_setup %}
+                        <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle"></span>
+                    {% endif %}
                     <div class="card-body">
                         <h4 class="card-title">Payout Details</h4>
+                        {% if not seller_location.is_payout_setup %}
+                            <p class="fw-bold fst-italic text-danger">* To receive payouts for bookings at this location, please set up your payout details.</p>
+                        {% endif %}
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table table-hover">
                                 <thead>

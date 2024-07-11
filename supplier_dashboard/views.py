@@ -575,6 +575,13 @@ def index(request):
         seller_users = get_seller_user_objects(
             request, context["user"], context["seller"]
         )
+        if is_impersonating(request):
+            context["seller_locations_without_payout_info"] = []
+            for seller_location in seller_locations:
+                if not seller_location.is_payout_setup:
+                    context["seller_locations_without_payout_info"].append(
+                        seller_location
+                    )
         # context["pending_count"] = orders.count()
         if isinstance(seller_locations, list):
             context["location_count"] = len(seller_locations)
