@@ -29,7 +29,11 @@
                         </thead>
                         <tbody>
                             {% for obj in page_obj %}
+                                {% if not user.is_staff and user.type != 'ADMIN' %}
+                                <tr>
+                                {% else %}
                                 <tr class="clickable-row" onclick="window.location.href='{% url 'customer_user_detail' user_id=obj.user.id %}'">
+                                {% endif %}
                                     <td>
                                         <div class="d-flex flex-row">
                                             {% if obj.user.photo %}
