@@ -1843,6 +1843,8 @@ def companies(request):
     context = {}
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
