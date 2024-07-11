@@ -89,18 +89,88 @@
         </div>
     </div>
 </div>
+
+{% if seller_locations_without_payout_info %}
+    <div class="row">
+        <div class="col-lg-7 col-xl-8 col-xxl-12">
+            <div class="card shadow mb-4">
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ seller_locations_without_payout_info|length }}
+                    <span class="visually-hidden">unread messages</span>
+                </span>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="text-primary fw-bold m-0">Please add payment information to these locations to recieve Payouts</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="margin-bottom: 16px;">
+                        <table class="table table-hover">
+                            <thead>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Payout Method</th>
+                                <th>Insurance</th>
+                                <th>Tax</th>
+                            </thead>
+                            <tbody>
+                                {% for seller_location in seller_locations_without_payout_info %}
+                                    <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_location_detail' location_id=seller_location.id %}'">
+                                        <td>{{ seller_location.name }}</td>
+                                        <td>{{ seller_location.formatted_address }}</td>
+                                        <td>
+                                            {% if seller_location.is_payout_setup %}
+                                                {% if seller_location.stripe_connect_account_id %}
+                                                    Direct Deposit
+                                                {% else %}
+                                                    Check
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger"></i> Setup Required
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if seller_location.is_insurance_compliant %}
+                                                {% if seller_location.is_insurance_expiring_soon %}
+                                                    <i class="fas fa-check-circle text-warning"></i> Expiring Soon
+                                                {% else %}
+                                                    <i class="fas fa-check-circle text-success"></i> Compliant
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger"></i> Insurance Verification Required
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if seller_location.is_tax_compliant %}
+                                                <i class="fas fa-check-circle text-success"></i> Compliant
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger"></i> Missing Tax Info
+                                            {% endif %}
+                                        </td>
+                                        {% comment %} <td>
+                                            <a cclass="btn btn-light" role="button" href="{% url 'supplier_location_detail' location_id=seller_location.id %}"><i class="far fa-eye"></i></a>
+                                        </td> {% endcomment %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
 <div class="row">
     <div class="col-lg-7 col-xl-8 col-xxl-12">
         <div class="card shadow mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="text-primary fw-bold m-0">Earnings by Month</h6>
+                {% comment %}
                 <div class="dropdown no-arrow">
                     <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
                     <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
                         <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
                         <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
                     </div>
-                </div>
+                </div> {% endcomment %}
             </div>
             <div class="card-body">
                 <div class="chart-area">
