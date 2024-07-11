@@ -1843,6 +1843,8 @@ def companies(request):
     context = {}
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -1902,6 +1904,8 @@ def company_detail(request, user_group_id=None):
     context = {}
     context["user"] = get_user(request)
     if not user_group_id:
+        if request.user.type != UserType.ADMIN:
+            return HttpResponseRedirect(reverse("customer_home"))
         user_group = get_user_group(request)
         if not user_group:
             if hasattr(request.user, "user_group") and request.user.user_group:
@@ -1918,6 +1922,8 @@ def company_detail(request, user_group_id=None):
                     f"No customer selected! Using first user group found: [{user_group.name}].",
                 )
     else:
+        if not request.user.is_staff:
+            return HttpResponseRedirect(reverse("customer_home"))
         user_group = UserGroup.objects.filter(id=user_group_id)
         user_group = user_group.prefetch_related("users", "user_addresses")
         user_group = user_group.first()
