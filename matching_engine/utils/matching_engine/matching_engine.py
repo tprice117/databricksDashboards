@@ -7,6 +7,15 @@ from api.models.seller.seller_product_seller_location_material_waste_type import
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
 from common.utils import DistanceUtils
+from functools import lru_cache
+
+
+@lru_cache(maxsize=500)  # Set maxsize=None for an unbounded cache
+def does_main_product_waste_type_exist(seller_product_seller_location):
+    main_product_waste_types = MainProductWasteType.objects.filter(
+        main_product_id=seller_product_seller_location.seller_product.product.main_product_id,
+    )
+    return main_product_waste_types.exists()
 
 
 class MatchingEngine:
@@ -20,6 +29,12 @@ class MatchingEngine:
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
             seller_product__product=product,
         )
+        # Select related fields to reduce the number of queries.
+        seller_product_seller_locations = (
+            seller_product_seller_locations.select_related(
+                "seller_product__product", "seller_location"
+            )
+        )
 
         # For each SellerProductSellerLocation, check if the ServiceRadius covers the UserAddress.
         matches = []
@@ -30,16 +45,17 @@ class MatchingEngine:
                 user_address,
             )
 
-            # Does the SellerProductSellerLocation match the WasteType of the Product?
-            matches_waste_type = (
-                MatchingEngine._seller_product_seller_location_matches_waste_type(
-                    seller_product_seller_location,
-                    waste_type,
+            if within_service_radius:
+                # Does the SellerProductSellerLocation match the WasteType of the Product?
+                matches_waste_type = (
+                    MatchingEngine._seller_product_seller_location_matches_waste_type(
+                        seller_product_seller_location,
+                        waste_type,
+                    )
                 )
-            )
 
-            if within_service_radius and matches_waste_type:
-                matches.append(seller_product_seller_location)
+                if matches_waste_type:
+                    matches.append(seller_product_seller_location)
 
         return matches
 
@@ -126,27 +142,39 @@ class MatchingEngine:
         seller_product_seller_location: SellerProductSellerLocation,
         user_address: UserAddress,
     ):
-        distance = DistanceUtils.get_driving_distance(
+        # First check euclidean distance, since it should always be less than the driving distance.
+        euclidean_distance = DistanceUtils.get_euclidean_distance(
             lat1=seller_product_seller_location.seller_location.latitude,
             lon1=seller_product_seller_location.seller_location.longitude,
             lat2=user_address.latitude,
             lon2=user_address.longitude,
         )
-
-        return float(distance) < float(
+        seller_location_radius = float(
             seller_product_seller_location.service_radius or 0
         )
+
+        if float(euclidean_distance) < seller_location_radius:
+            # We found a potential match, now check the driving distance.
+            distance = DistanceUtils.get_driving_distance(
+                lat1=seller_product_seller_location.seller_location.latitude,
+                lon1=seller_product_seller_location.seller_location.longitude,
+                lat2=user_address.latitude,
+                lon2=user_address.longitude,
+            )
+
+            return float(distance) < seller_location_radius
+        return False
 
     def _seller_product_seller_location_matches_waste_type(
         seller_product_seller_location: SellerProductSellerLocation,
         waste_type: WasteType,
     ):
-        main_product_waste_types = MainProductWasteType.objects.filter(
-            main_product=seller_product_seller_location.seller_product.product.main_product,
+        main_product_waste_types_exist = does_main_product_waste_type_exist(
+            seller_product_seller_location
         )
 
         # Get Material Waste Types for the SellerProductSellerLocation.
-        if main_product_waste_types.count() > 0 and hasattr(
+        if main_product_waste_types_exist and hasattr(
             seller_product_seller_location, "material"
         ):
             material_waste_types = SellerProductSellerLocationMaterialWasteType.objects.filter(
@@ -155,7 +183,7 @@ class MatchingEngine:
         else:
             material_waste_types = None
 
-        return main_product_waste_types.count() == 0 or (
+        return main_product_waste_types_exist is False or (
             material_waste_types
             and material_waste_types.filter(
                 main_product_waste_type__waste_type=waste_type,

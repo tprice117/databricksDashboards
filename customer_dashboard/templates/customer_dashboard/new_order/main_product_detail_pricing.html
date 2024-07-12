@@ -13,7 +13,7 @@
         <div class="row">
             <div class="col">
                 {% for item in seller_product_locations %}
-                    <div class="row">
+                    <div class="row mb-4">
                         <div class="col-auto">
                             <img class="img-thumbnail img-fluid"
                                 alt="Seller logo"
@@ -45,11 +45,12 @@
                                 <input name="service_frequency" type="hidden" value="{{ service_frequency }}" />
                                 <input name="delivery_date" type="hidden" value="{{ delivery_date }}" />
                                 <input name="removal_date" type="hidden" value="{{ removal_date }}" />
-                                <div class="d-flex flex-row-reverse">
+                                <div class="d-flex justify-content-center">
                                     <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">Add to Cart</button>
                                 </div>
                             </form>
-                            {% comment %} <a class="btn btn-primary" role="button" href="cart.html">Add to Cart</a> {% endcomment %}
+                            <button class="btn btn-link mt-2" type="button" data-bs-target="#modal-price-details-{{ forloop.counter }}" data-bs-toggle="modal">Pricing Details</button>
+                            {% include 'customer_dashboard/snippets/price_details_modal.html' %}
                         </div>
                     </div>
                     {% if not forloop.first %}

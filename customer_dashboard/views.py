@@ -25,6 +25,7 @@ from api.models import (
     MainProductWasteType,
     Order,
     OrderGroup,
+    OrderLineItemType,
     Product,
     ProductAddOnChoice,
     SellerLocation,
@@ -43,6 +44,7 @@ from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
+from matching_engine.utils.matching_engine.matching_engine import MatchingEngine
 
 from .forms import (
     AccessDetailsForm,
@@ -668,13 +670,154 @@ def get_pricing(
     return price_mod.get_prices(seller_product_seller_locations)
 
 
+def get_seller_product_location_line_items(
+    seller_product_seller_location: SellerProductSellerLocation,
+    delivery_date,
+    removal_date,
+):
+    line_items = []
+    # TODO: Update this to the actual platform fee. Defaulting to 30% for now, like OrderGroup.
+    platform_fee_percent = 30.0
+    # Add the delivery fee
+    # if order_group_orders.count() == 1:
+    if seller_product_seller_location.delivery_fee:
+        seller_payout_price = round(
+            (float(seller_product_seller_location.delivery_fee) or 0) * (1 or 0), 2
+        )
+        customer_price = round(
+            seller_payout_price * (1 + (platform_fee_percent / 100)), 2
+        )
+        line_items.append(
+            {
+                "type": OrderLineItemType.objects.get(code="DELIVERY"),
+                "items": [
+                    {
+                        "description": "Delivery Fee",
+                        "quantity": 1,
+                        "platform_fee_percent": platform_fee_percent,
+                        "rate": seller_product_seller_location.delivery_fee,
+                        "is_flat_rate": True,
+                        "seller_payout_price": seller_payout_price,
+                        "customer_price": customer_price,
+                    }
+                ],
+            }
+        )
+    # Create Removal Fee OrderLineItem.
+    if delivery_date == removal_date:
+        removal_fee = 0
+        if seller_product_seller_location.removal_fee:
+            removal_fee = float(seller_product_seller_location.removal_fee)
+        seller_payout_price = round((removal_fee or 0) * (1 or 0), 2)
+        customer_price = round(
+            seller_payout_price * (1 + (platform_fee_percent / 100)), 2
+        )
+        line_items.append(
+            {
+                "type": OrderLineItemType.objects.get(code="REMOVAL"),
+                "items": [
+                    {
+                        "description": "Removal Fee",
+                        "quantity": 1,
+                        "platform_fee_percent": platform_fee_percent,
+                        "rate": removal_fee,
+                        "is_flat_rate": True,
+                        "seller_payout_price": seller_payout_price,
+                        "customer_price": customer_price,
+                    }
+                ],
+            }
+        )
+        # Don't add any other OrderLineItems if this is a removal.
+    else:
+        pass
+        # Create OrderLineItems for newly "submitted" order.
+        # TODO: Where do I find this: Service Price.
+        # if hasattr(self.order_group, "service"):
+        #     line_items.append(
+        #         {
+        #             "type": OrderLineItemType.objects.get(code="SERVICE").name,
+        #             "quantity": self.order_group.service.miles or 1,
+        #             "rate": self.order_group.service.rate,
+        #             "platform_fee_percent": platform_fee_percent,
+        #             "is_flat_rate": self.order_group.service.miles is None
+        #         }
+        #     )
+
+        # TODO: Where do I find this: Rental Price.
+        # if hasattr(self.order_group, "rental"):
+        #     day_count = (
+        #         (self.end_date - self.start_date).days if self.end_date else 0
+        #     )
+        #     days_over_included = (
+        #         day_count - self.order_group.rental.included_days
+        #     )
+        #     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
+        #     # Create OrderLineItem for Included Days.
+        #     line_items.append(
+        #         {
+        #             "type": order_line_item_type,
+        #             "rate": self.order_group.rental.price_per_day_included,
+        #             "quantity": self.order_group.rental.included_days,
+        #             "description": "Included Days",
+        #             "platform_fee_percent": self.order_group.take_rate,
+        #         }
+        #     )
+        #     # Create OrderLineItem for Additional Days.
+        #     if days_over_included > 0:
+        #         line_items.append(
+        #             {
+        #                 "type": order_line_item_type,
+        #                 "rate": self.order_group.rental.price_per_day_additional,
+        #                 "quantity": days_over_included,
+        #                 "description": "Additional Days",
+        #                 "platform_fee_percent": self.order_group.take_rate,
+        #             }
+        #         )
+
+        # TODO: Where do I find this: Material Price.
+        # if hasattr(self.order_group, "material"):
+        #     tons_over_included = (
+        #         self.order_group.tonnage_quantity or 0
+        #     ) - self.order_group.material.tonnage_included
+        #     order_line_item_type = OrderLineItemType.objects.get(
+        #         code="MATERIAL"
+        #     )
+
+        #     # Create OrderLineItem for Included Tons.
+        #     line_items.append(
+        #         {
+        #             "type": order_line_item_type,
+        #             "rate": self.order_group.material.price_per_ton,
+        #             "quantity": self.order_group.material.tonnage_included,
+        #             "description": "Included Tons",
+        #             "platform_fee_percent": self.order_group.take_rate,
+        #         }
+        #     )
+
+        #     # Create OrderLineItem for Additional Tons.
+        #     if tons_over_included > 0:
+        #         line_items.append(
+        #             {
+        #                 "type": order_line_item_type,
+        #                 "rate": self.order_group.material.price_per_ton,
+        #                 "quantity": tons_over_included,
+        #                 "description": "Additional Tons",
+        #                 "platform_fee_percent": self.order_group.take_rate,
+        #             }
+        #         )
+    return line_items
+
+
 @login_required(login_url="/admin/login/")
 def new_order_4(request):
+    # import time
+    # start_time = time.time()
     context = {}
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
     product_id = request.GET.get("product_id")
-    user_address = request.GET.get("user_address")
+    user_address_id = request.GET.get("user_address")
     product_add_on_choices = []
     for key, value in request.GET.items():
         if key.startswith("product_add_on_choices"):
@@ -684,12 +827,14 @@ def new_order_4(request):
     delivery_date = request.GET.get("delivery_date")
     removal_date = request.GET.get("removal_date")
     context["product_id"] = product_id
-    context["user_address"] = user_address
+    context["user_address"] = user_address_id
     context["product_waste_types"] = product_waste_types
     context["product_add_on_choices"] = product_add_on_choices
     context["service_frequency"] = service_frequency
     context["delivery_date"] = delivery_date
     context["removal_date"] = removal_date
+    # step_time = time.time()
+    # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
     main_product_waste_type = MainProductWasteType.objects.filter(
         id=product_waste_types[0]
@@ -711,27 +856,43 @@ def new_order_4(request):
         messages.error(request, "Product not found.")
         return HttpResponseRedirect(reverse("customer_new_order"))
 
-    # We know the product the user wants
-    seller_product_locations = SellerProductSellerLocation.objects.filter(
-        seller_product__product_id=context["product"].id
+    # step_time = time.time()
+    # print(f"Find Product: {step_time - start_time}")
+    # We know the product the user wants, so now find the seller locations that offer the product.
+    user_address_obj = UserAddress.objects.filter(id=user_address_id).first()
+    seller_product_locations = (
+        MatchingEngine.get_possible_seller_product_seller_locations(
+            context["product"],
+            user_address_obj,
+            main_product_waste_type.waste_type,
+        )
     )
+    # step_time = time.time()
+    # print(f"Find Seller Locations: {step_time - start_time}")
 
     # if request.method == "POST":
     context["seller_product_locations"] = []
     for seller_product_location in seller_product_locations:
-        if hasattr(seller_product_location, "seller_location"):
-            seller_d = {}
-            seller_d["seller_product_location"] = seller_product_location
-            pricing_data = get_pricing(
-                context["product"].id,
-                user_address,
-                main_product_waste_type.waste_type_id,
-                seller_location_id=seller_product_location.seller_location_id,
-            )
+        seller_d = {}
+        seller_d["seller_product_location"] = seller_product_location
+        pricing_data = get_pricing(
+            context["product"].id,
+            user_address_id,
+            main_product_waste_type.waste_type_id,
+            seller_location_id=seller_product_location.seller_location_id,
+        )
+        seller_d["price"] = 0
+        if pricing_data["service"]["rate"]:
             seller_d["price"] = float(pricing_data["service"]["rate"])
-            context["seller_product_locations"].append(seller_d)
-            break
+        seller_d["line_types"] = get_seller_product_location_line_items(
+            seller_product_location,
+            context["delivery_date"],
+            context["removal_date"],
+        )
+        context["seller_product_locations"].append(seller_d)
 
+    # step_time = time.time()
+    # print(f"Get Prices: {step_time - start_time}")
     # context["seller_locations"] = seller_product_location.first().seller_location
     return render(
         request,
