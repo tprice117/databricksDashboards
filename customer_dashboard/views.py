@@ -25,6 +25,7 @@ from api.models import (
     MainProductWasteType,
     Order,
     OrderGroup,
+    OrderLineItemType,
     Product,
     ProductAddOnChoice,
     SellerLocation,
@@ -668,6 +669,145 @@ def get_pricing(
     return price_mod.get_prices(seller_product_seller_locations)
 
 
+def get_seller_product_location_line_items(
+    seller_product_seller_location: SellerProductSellerLocation,
+    delivery_date,
+    removal_date,
+):
+    line_items = []
+    # TODO: Update this to the actual platform fee. Defaulting to 30% for now, like OrderGroup.
+    platform_fee_percent = 30.0
+    # Add the delivery fee
+    # if order_group_orders.count() == 1:
+    if seller_product_seller_location.delivery_fee:
+        seller_payout_price = round(
+            (float(seller_product_seller_location.delivery_fee) or 0) * (1 or 0), 2
+        )
+        customer_price = round(
+            seller_payout_price * (1 + (platform_fee_percent / 100)), 2
+        )
+        line_items.append(
+            {
+                "type": OrderLineItemType.objects.get(code="DELIVERY"),
+                "items": [
+                    {
+                        "description": "Delivery Fee",
+                        "quantity": 1,
+                        "platform_fee_percent": platform_fee_percent,
+                        "rate": seller_product_seller_location.delivery_fee,
+                        "is_flat_rate": True,
+                        "seller_payout_price": seller_payout_price,
+                        "customer_price": customer_price,
+                    }
+                ],
+            }
+        )
+    # Create Removal Fee OrderLineItem.
+    if delivery_date == removal_date:
+        removal_fee = 0
+        if seller_product_seller_location.removal_fee:
+            removal_fee = float(seller_product_seller_location.removal_fee)
+        seller_payout_price = round((removal_fee or 0) * (1 or 0), 2)
+        customer_price = round(
+            seller_payout_price * (1 + (platform_fee_percent / 100)), 2
+        )
+        line_items.append(
+            {
+                "type": OrderLineItemType.objects.get(code="REMOVAL"),
+                "items": [
+                    {
+                        "description": "Removal Fee",
+                        "quantity": 1,
+                        "platform_fee_percent": platform_fee_percent,
+                        "rate": removal_fee,
+                        "is_flat_rate": True,
+                        "seller_payout_price": seller_payout_price,
+                        "customer_price": customer_price,
+                    }
+                ],
+            }
+        )
+        # Don't add any other OrderLineItems if this is a removal.
+    else:
+        pass
+        # Create OrderLineItems for newly "submitted" order.
+        # TODO: Where do I find this: Service Price.
+        # if hasattr(self.order_group, "service"):
+        #     line_items.append(
+        #         {
+        #             "type": OrderLineItemType.objects.get(code="SERVICE").name,
+        #             "quantity": self.order_group.service.miles or 1,
+        #             "rate": self.order_group.service.rate,
+        #             "platform_fee_percent": platform_fee_percent,
+        #             "is_flat_rate": self.order_group.service.miles is None
+        #         }
+        #     )
+
+        # TODO: Where do I find this: Rental Price.
+        # if hasattr(self.order_group, "rental"):
+        #     day_count = (
+        #         (self.end_date - self.start_date).days if self.end_date else 0
+        #     )
+        #     days_over_included = (
+        #         day_count - self.order_group.rental.included_days
+        #     )
+        #     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
+        #     # Create OrderLineItem for Included Days.
+        #     line_items.append(
+        #         {
+        #             "type": order_line_item_type,
+        #             "rate": self.order_group.rental.price_per_day_included,
+        #             "quantity": self.order_group.rental.included_days,
+        #             "description": "Included Days",
+        #             "platform_fee_percent": self.order_group.take_rate,
+        #         }
+        #     )
+        #     # Create OrderLineItem for Additional Days.
+        #     if days_over_included > 0:
+        #         line_items.append(
+        #             {
+        #                 "type": order_line_item_type,
+        #                 "rate": self.order_group.rental.price_per_day_additional,
+        #                 "quantity": days_over_included,
+        #                 "description": "Additional Days",
+        #                 "platform_fee_percent": self.order_group.take_rate,
+        #             }
+        #         )
+
+        # TODO: Where do I find this: Material Price.
+        # if hasattr(self.order_group, "material"):
+        #     tons_over_included = (
+        #         self.order_group.tonnage_quantity or 0
+        #     ) - self.order_group.material.tonnage_included
+        #     order_line_item_type = OrderLineItemType.objects.get(
+        #         code="MATERIAL"
+        #     )
+
+        #     # Create OrderLineItem for Included Tons.
+        #     line_items.append(
+        #         {
+        #             "type": order_line_item_type,
+        #             "rate": self.order_group.material.price_per_ton,
+        #             "quantity": self.order_group.material.tonnage_included,
+        #             "description": "Included Tons",
+        #             "platform_fee_percent": self.order_group.take_rate,
+        #         }
+        #     )
+
+        #     # Create OrderLineItem for Additional Tons.
+        #     if tons_over_included > 0:
+        #         line_items.append(
+        #             {
+        #                 "type": order_line_item_type,
+        #                 "rate": self.order_group.material.price_per_ton,
+        #                 "quantity": tons_over_included,
+        #                 "description": "Additional Tons",
+        #                 "platform_fee_percent": self.order_group.take_rate,
+        #             }
+        #         )
+    return line_items
+
+
 @login_required(login_url="/admin/login/")
 def new_order_4(request):
     context = {}
@@ -728,9 +868,15 @@ def new_order_4(request):
                 main_product_waste_type.waste_type_id,
                 seller_location_id=seller_product_location.seller_location_id,
             )
-            seller_d["price"] = float(pricing_data["service"]["rate"])
+            seller_d["price"] = 0
+            if pricing_data["service"]["rate"]:
+                seller_d["price"] = float(pricing_data["service"]["rate"])
+            seller_d["line_types"] = get_seller_product_location_line_items(
+                seller_product_location,
+                context["delivery_date"],
+                context["removal_date"],
+            )
             context["seller_product_locations"].append(seller_d)
-            break
 
     # context["seller_locations"] = seller_product_location.first().seller_location
     return render(
