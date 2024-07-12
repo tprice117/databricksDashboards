@@ -44,6 +44,7 @@ from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
+from matching_engine.utils.matching_engine.matching_engine import MatchingEngine
 
 from .forms import (
     AccessDetailsForm,
@@ -810,11 +811,13 @@ def get_seller_product_location_line_items(
 
 @login_required(login_url="/admin/login/")
 def new_order_4(request):
+    # import time
+    # start_time = time.time()
     context = {}
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
     product_id = request.GET.get("product_id")
-    user_address = request.GET.get("user_address")
+    user_address_id = request.GET.get("user_address")
     product_add_on_choices = []
     for key, value in request.GET.items():
         if key.startswith("product_add_on_choices"):
@@ -824,12 +827,14 @@ def new_order_4(request):
     delivery_date = request.GET.get("delivery_date")
     removal_date = request.GET.get("removal_date")
     context["product_id"] = product_id
-    context["user_address"] = user_address
+    context["user_address"] = user_address_id
     context["product_waste_types"] = product_waste_types
     context["product_add_on_choices"] = product_add_on_choices
     context["service_frequency"] = service_frequency
     context["delivery_date"] = delivery_date
     context["removal_date"] = removal_date
+    # step_time = time.time()
+    # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
     main_product_waste_type = MainProductWasteType.objects.filter(
         id=product_waste_types[0]
@@ -851,33 +856,43 @@ def new_order_4(request):
         messages.error(request, "Product not found.")
         return HttpResponseRedirect(reverse("customer_new_order"))
 
-    # We know the product the user wants
-    seller_product_locations = SellerProductSellerLocation.objects.filter(
-        seller_product__product_id=context["product"].id
+    # step_time = time.time()
+    # print(f"Find Product: {step_time - start_time}")
+    # We know the product the user wants, so now find the seller locations that offer the product.
+    user_address_obj = UserAddress.objects.filter(id=user_address_id).first()
+    seller_product_locations = (
+        MatchingEngine.get_possible_seller_product_seller_locations(
+            context["product"],
+            user_address_obj,
+            main_product_waste_type.waste_type,
+        )
     )
+    # step_time = time.time()
+    # print(f"Find Seller Locations: {step_time - start_time}")
 
     # if request.method == "POST":
     context["seller_product_locations"] = []
     for seller_product_location in seller_product_locations:
-        if hasattr(seller_product_location, "seller_location"):
-            seller_d = {}
-            seller_d["seller_product_location"] = seller_product_location
-            pricing_data = get_pricing(
-                context["product"].id,
-                user_address,
-                main_product_waste_type.waste_type_id,
-                seller_location_id=seller_product_location.seller_location_id,
-            )
-            seller_d["price"] = 0
-            if pricing_data["service"]["rate"]:
-                seller_d["price"] = float(pricing_data["service"]["rate"])
-            seller_d["line_types"] = get_seller_product_location_line_items(
-                seller_product_location,
-                context["delivery_date"],
-                context["removal_date"],
-            )
-            context["seller_product_locations"].append(seller_d)
+        seller_d = {}
+        seller_d["seller_product_location"] = seller_product_location
+        pricing_data = get_pricing(
+            context["product"].id,
+            user_address_id,
+            main_product_waste_type.waste_type_id,
+            seller_location_id=seller_product_location.seller_location_id,
+        )
+        seller_d["price"] = 0
+        if pricing_data["service"]["rate"]:
+            seller_d["price"] = float(pricing_data["service"]["rate"])
+        seller_d["line_types"] = get_seller_product_location_line_items(
+            seller_product_location,
+            context["delivery_date"],
+            context["removal_date"],
+        )
+        context["seller_product_locations"].append(seller_d)
 
+    # step_time = time.time()
+    # print(f"Get Prices: {step_time - start_time}")
     # context["seller_locations"] = seller_product_location.first().seller_location
     return render(
         request,
