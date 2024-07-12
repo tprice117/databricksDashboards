@@ -24,7 +24,8 @@ class DistanceUtils:
         except:
             return np.nan
 
-    def get_euclidean_distance(self, lat1, lon1, lat2, lon2):
+    @staticmethod
+    def get_euclidean_distance(lat1, lon1, lat2, lon2):
         """
         Calculate the great circle distance between two points
         on the earth (specified in decimal degrees)
