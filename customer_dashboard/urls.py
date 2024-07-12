@@ -10,6 +10,11 @@ urlpatterns = [
         {"is_selection": True},
         name="customer_search_selection",
     ),
+    path(
+        "customer/user_address/search/",
+        views.user_address_search,
+        name="customer_user_address_search",
+    ),
     path("customer/", views.index, name="customer_home"),
     path("customer/logout/", views.customer_logout, name="customer_logout"),
     path("customer/profile/", views.profile, name="customer_profile"),

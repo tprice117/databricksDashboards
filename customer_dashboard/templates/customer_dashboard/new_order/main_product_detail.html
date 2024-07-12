@@ -7,6 +7,90 @@
 {% block stylesheet %}
     <style></style>
 {% endblock %}
+{% block javascript %}
+    <script>
+        // Autocomplete for Customer/UserGroup search
+        // Helped by: https://www.w3schools.com/howto/howto_js_autocomplete.asp
+        var currentFocus;
+        let usergroupInput = document.getElementById("user_address-search");
+        
+        function removeAutocompleteDropdown() {
+            let dropdownItems = document.querySelectorAll(".my-dropdown-item");
+            dropdownItems.forEach(function (item) {
+                item.remove();
+            });
+        }
+        function addActive(x) {
+            /*a function to classify an item as "active":*/
+            if (!x) return false;
+            /*start by removing the "active" class on all items:*/
+            removeActive(x);
+            if (currentFocus >= x.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = x.length - 1;
+            /*add class "autocomplete-active":*/
+            x[currentFocus].classList.add("autocomplete-active");
+        }
+        function removeActive(x) {
+            /*a function to remove the "active" class from all autocomplete items:*/
+            for (var i = 0; i < x.length; i++) {
+                x[i].classList.remove("autocomplete-active");
+            }
+        }
+        /*execute a function when someone clicks in the document:*/
+        document.addEventListener("click", function (e) {
+            if (e.target != usergroupInput) {
+                removeAutocompleteDropdown();
+            }
+        });
+        function addUsergroupAutocompleteListeners() {
+            currentFocus = -1;
+            let dropdownItems = document.querySelectorAll(".my-dropdown-item");
+            dropdownItems.forEach(function (item) {
+                item.addEventListener("click", function () {
+                    // Update the display field with the user_address's name
+                    document.getElementById("user_address-search").value = item.getAttribute("data-name");
+                    // Update the hidden field with the user_address's ID
+                    document.getElementById("user_address").value = item.getAttribute("data-id");
+                    removeAutocompleteDropdown();
+                });
+            });
+        }
+        
+        usergroupInput.addEventListener("keydown", function (e) {
+            var x = document.getElementById("user_address-search-results");
+            if (x) x = x.getElementsByTagName("div");
+            if (x) {
+                if (e.keyCode == 40) {
+                    /*If the arrow DOWN key is pressed, increase the currentFocus variable:*/
+                    currentFocus++;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 38) {
+                    /*If the arrow UP key is pressed, decrease the currentFocus variable:*/
+                    currentFocus--;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        /*and simulate a click on the "active" item:*/
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            }
+        });
+        
+        // listen for page load event.
+        document.addEventListener("DOMContentLoaded", function () {
+            addUsergroupAutocompleteListeners();
+        });
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            addUsergroupAutocompleteListeners();
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         <h3 class="text-dark mb-1">New Order</h3>
@@ -28,14 +112,24 @@
                 <p>{{ main_product.description }}</p>
                 <form action="{% url 'customer_new_order_4' %}" method="get" class="mb-2">
                     <input name="product_id" type="hidden" value="{{ main_product.id }}" />
-                    <p style="margin-bottom: 0px;">Select Address</p>
-                    <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
-                        <optgroup label="Your added locations">
-                            {% for user_address in user_addresses %}
-                                <option value="{{ user_address.id }}">{{ user_address.formatted_address }} - {{ user_address.name }}</option>
-                            {% endfor %}
-                        </optgroup>
-                    </select>
+                    {% if user_addresses|length < 20 %}
+                        <label for="user_address" class="form-label">Select Address</label>
+                        <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
+                            <optgroup label="Your added locations">
+                                {% for user_address in user_addresses %}
+                                    <option value="{{ user_address.id }}">{{ user_address.name }} | {{ user_address.formatted_address }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    {% else %}
+                        <div class="dropdown mb-3">
+                            <label for="user_address-search" class="form-label">Search Address <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+                            <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" hx-post="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
+                            <!-- Hidden input field for user_address ID -->
+                            <input id="user_address" type="hidden" name="user_address" />
+                            <div class="dropdown-content" id="user_address-search-results"></div>
+                        </div>
+                    {% endif %}
                     {% for product_add_on in product_add_ons %}
                         <p style="margin-bottom: 0px;">{{ product_add_on.add_on.name }}</p>
                         <select class="form-select" name="product_add_on_choices_{{ forloop.counter }}" style="margin-bottom: 12px;">

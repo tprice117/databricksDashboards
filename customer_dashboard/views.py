@@ -13,6 +13,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.db import IntegrityError
+from django.db.models import Q
 
 from api.models import (
     AddOn,
@@ -591,6 +592,25 @@ def new_order_category_price(request, category_id):
     # if request.headers.get("HX-Request"):
     return render(
         request, "customer_dashboard/snippets/category_price_from.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def user_address_search(request):
+    context = {}
+    if request.method == "POST":
+        search = request.POST.get("q")
+        try:
+            user_address_id = uuid.UUID(search)
+            user_addresses = UserAddress.objects.filter(id=user_address_id)
+        except ValueError:
+            user_addresses = UserAddress.objects.filter(Q(name__icontains=search) | Q(street__icontains=search) | Q(city__icontains=search) | Q(state__icontains=search) | Q(postal_code__icontains=search))
+        context["user_addresses"] = user_addresses
+
+    return render(
+        request,
+        "customer_dashboard/snippets/user_address_search_selection.html",
+        context,
     )
 
 
