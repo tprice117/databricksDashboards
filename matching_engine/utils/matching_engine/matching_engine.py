@@ -83,7 +83,9 @@ class MatchingEngine:
         order_group_has_rental = hasattr(order_group, "rental")
         order_group_has_material = hasattr(order_group, "material")
 
-        for seller_product_seller_location in possible_seller_product_seller_locations:
+        for (
+            seller_product_seller_location
+        ) in seller_product_seller_locations_within_service_radius:
             seller_product_seller_location_has_rental = hasattr(
                 seller_product_seller_location, "rental"
             )
