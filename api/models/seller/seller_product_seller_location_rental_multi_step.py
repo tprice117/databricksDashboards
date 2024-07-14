@@ -42,6 +42,9 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
         null=True,
     )
 
+    def is_complete(self):
+        return self.hour or self.day or self.week or self.two_weeks or self.month
+
     @property
     def effective_day_rate(self):
         """
@@ -102,18 +105,14 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
         return hours * float(self.hour) if self.hour else None
 
     def get_price_base_days(self, hours: int):
-        print("------------------")
-        print("Hours: ", hours)
         price, remaining_hours = self._get_price_base(
             hours=hours,
             hours_per_interval=24,
             effective_interval_rate=self.effective_day_rate,
         )
-        print("Price Before Remaining Hours: ", price)
-        print("Remaining Hours: ", remaining_hours)
+
         if remaining_hours > 0:
             price += remaining_hours * float(self.hour)
-        print("Price After Remaining Hours: ", price)
 
         return price
 
@@ -176,6 +175,9 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
             A tuple containing the rental price (decimal) and the chosen pricing tier
             (e.g., "Hourly", "Daily", "Weekly", "Monthly").
         """
+        if duration > 0:
+            return Exception("The Duration must be positive.")
+
         # Get the total number of hours.
         hours = duration.total_seconds() / 3600
 
