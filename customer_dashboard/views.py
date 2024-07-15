@@ -42,6 +42,7 @@ from api.models import (
 from api.models.user.user_user_address import UserUserAddress
 from api.pricing_ml import pricing
 from billing.models import Invoice
+from payment_methods.models import PaymentMethod
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
@@ -1122,6 +1123,11 @@ def checkout(request, user_address_id):
     context["subtotal"] = 0
     context["cart_count"] = 0
     context["pre_tax_subtotal"] = 0
+    if context["user_group"]:
+        payment_methods = PaymentMethod.objects.filter(active=True).filter(user_group_id=context["user_group"].id)
+    else:
+        payment_methods = PaymentMethod.objects.filter(active=True).filter(user_id=context["user"].id)
+    context["payment_methods"] = payment_methods
     for order in orders:
         try:
             customer_price = order.customer_price()
