@@ -47,11 +47,11 @@
             htmx.trigger(el, "onRemoveClick");
         }
         // Add click event listener to all buttons
-        allButtons.forEach(function (button) {
+        {% comment %} allButtons.forEach(function (button) {
             button.addEventListener("click", function () {
                 selectActiveFilter(this);
             });
-        });
+        }); {% endcomment %}
     </script>
 {% endblock %}
 {% block content %}
@@ -124,7 +124,13 @@
                                                             </div>
                                                             <div class="col-auto">
                                                                 {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#modal-1" data-bs-toggle="modal">Remove</button> {% endcomment %}
-                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" type="button" hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s">
+                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" type="button" hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
+                                                                    onClick="event.stopPropagation();
+                                                                    Swal.fire(
+                                                                        {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
+                                                                    ).then((result)=>{
+                                                                        if(result.isConfirmed){selectActiveFilter(this);}
+                                                                    })">
                                                                     Remove
                                                                     <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                                                 </button>
