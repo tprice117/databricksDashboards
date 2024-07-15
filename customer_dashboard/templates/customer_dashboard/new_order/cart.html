@@ -15,7 +15,7 @@
 {% block javascript %}
     <script>
         let allButtons = document.querySelectorAll(".button-remove-item");
-        function selectActiveFilter(el) {
+        function removeItemFromCart(el) {
             // Get current query params.
             let queryParams = new URLSearchParams(window.location.search);
             // Get id of item
@@ -30,6 +30,11 @@
             let price = parseFloat(el.getAttribute("data-price"));
             queryParams.set("price", encodeURIComponent(price));
             // queryParams.set("price", encodeURIComponent(el.previousElementSibling.innerText.replace("$", "").replace(",", "")));
+            // get count of items in address group
+            let groupcountId = el.getAttribute("data-countid");
+            let addressOrderCountEl = document.getElementById(groupcountId);
+            let addressOrderCount = parseInt(addressOrderCountEl.getAttribute("data-count"));
+            queryParams.set("groupcount", encodeURIComponent(addressOrderCount));
             // Get current number of cart-item elements
             let cartItems = document.querySelectorAll(".cart-item");
             queryParams.set("count", encodeURIComponent(cartItems.length));
@@ -49,7 +54,7 @@
         // Add click event listener to all buttons
         {% comment %} allButtons.forEach(function (button) {
             button.addEventListener("click", function () {
-                selectActiveFilter(this);
+                removeItemFromCart(this);
             });
         }); {% endcomment %}
     </script>
@@ -66,7 +71,7 @@
                             <div>
                                 <span>{{ cart_address.address.formatted_address }}</span> - 
                                 <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-                                <span class="badge text-bg-secondary ms-2 me-2">{{ cart_address.orders|length }} item{{ cart_address.orders|length|pluralize }}</span>
+                                <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.orders|length }}">{{ cart_address.orders|length }} item{{ cart_address.orders|length|pluralize }}</span>
                             </div>
                             <div class="ms-auto align-items-end">
                                 {% if user.is_staff %}<span class="ms-2">[{{ cart_address.address.user_group.name }}]</span>{% endif %}
@@ -124,12 +129,14 @@
                                                             </div>
                                                             <div class="col-auto">
                                                                 {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#modal-1" data-bs-toggle="modal">Remove</button> {% endcomment %}
-                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" type="button" hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
+                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" type="button"
+                                                                    data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" data-countid="count-{{ cart_address.address.id }}"
+                                                                    hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
                                                                     onClick="event.stopPropagation();
                                                                     Swal.fire(
                                                                         {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
                                                                     ).then((result)=>{
-                                                                        if(result.isConfirmed){selectActiveFilter(this);}
+                                                                        if(result.isConfirmed){removeItemFromCart(this);}
                                                                     })">
                                                                     Remove
                                                                     <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>

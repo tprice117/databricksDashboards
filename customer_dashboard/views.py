@@ -998,6 +998,7 @@ def new_order_5(request):
         subtotal = request.GET.get("subtotal")
         cart_count = request.GET.get("count")
         customer_price = request.GET.get("price")
+        groupcount = request.GET.get("groupcount")
         order_group = OrderGroup.objects.filter(id=order_group_id).first()
         if customer_price:
             customer_price = float(customer_price)
@@ -1012,10 +1013,13 @@ def new_order_5(request):
                 # del_subtotal += order.customer_price()
                 order.delete()
             order_group.delete()
+            context["user_address"] = order_group.user_address_id
         if subtotal:
             context["subtotal"] = float(subtotal) - float(customer_price)
         if cart_count:
             context["cart_count"] = int(cart_count) - 1
+        if groupcount:
+            context["groupcount"] = int(groupcount) - 1
         if order_group:
             messages.success(request, "Order removed from cart.")
         else:
