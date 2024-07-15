@@ -433,11 +433,13 @@ def customer_impersonation_start(request):
             user_group = UserGroup.objects.get(id=user_group_id)
             user = user_group.users.filter(type=UserType.ADMIN).first()
             if not user:
+                user = user_group.users.first()
+                if not user:
+                    raise User.DoesNotExist
                 messages.warning(
                     request,
                     "No admin user found for UserGroup. UserGroup should have at least one admin user.",
                 )
-                user = user_group.users.first()
             if not user:
                 raise User.DoesNotExist
             request.session["customer_user_group_id"] = get_json_safe_value(
@@ -604,7 +606,13 @@ def user_address_search(request):
             user_address_id = uuid.UUID(search)
             user_addresses = UserAddress.objects.filter(id=user_address_id)
         except ValueError:
-            user_addresses = UserAddress.objects.filter(Q(name__icontains=search) | Q(street__icontains=search) | Q(city__icontains=search) | Q(state__icontains=search) | Q(postal_code__icontains=search))
+            user_addresses = UserAddress.objects.filter(
+                Q(name__icontains=search)
+                | Q(street__icontains=search)
+                | Q(city__icontains=search)
+                | Q(state__icontains=search)
+                | Q(postal_code__icontains=search)
+            )
         context["user_addresses"] = user_addresses
 
     return render(
