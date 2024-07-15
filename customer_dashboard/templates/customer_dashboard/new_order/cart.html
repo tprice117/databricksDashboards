@@ -55,69 +55,106 @@
     </script>
 {% endblock %}
 {% block content %}
+{% comment %} <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show{% else %}collapsed{% endif %}" {% endcomment %}
     <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
         <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}">Shopping Cart ({{ cart_count }})</h3>
-        <div class="row">
-            <div class="col">
-                {% for item in cart.values %}
-                    <div class="row cart-item">
-                        <div class="col-auto mb-2">
-                            <img class="img-thumbnail img-fluid"
-                                alt="Product category image"
-                                width="67"
-                                height="96"
-                                src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image %}
-                                    {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image }}
-                                {% else %}
-                                    {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
-                                {% endif %}" />
-                            <img class="img-thumbnail img-fluid"
-                                alt="Product image"
-                                width="138"
-                                height="95"
-                                src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
-                                    {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
-                                {% else %}
-                                    {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
-                                {% endif %}" />
+        <div class="accordion" role="tablist" id="accordion-1">
+            {% for cart_address in cart.values %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" role="tab">
+                        <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="accordion-1 .item-{{ forloop.counter }}">
+                            <div>
+                                <span>{{ cart_address.address.formatted_address }}</span> - 
+                                <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+                                <span class="badge text-bg-secondary ms-2 me-2">{{ cart_address.orders|length }} item{{ cart_address.orders|length|pluralize }}</span>
+                            </div>
+                            <div class="ms-auto align-items-end">
+                                {% if user.is_staff %}<span class="ms-2">[{{ cart_address.address.user_group.name }}]</span>{% endif %}
+                            </div>
+                        </button>
+                    </h2>
+                    <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show{% else %}collapsed{% endif %}"
+                        role="tabpanel"
+                        data-bs-parent="#accordion-1">
+                        <div class="accordion-body">
+                            {% for cart_item in cart_address.orders.values %}
+                                <div class="row cart-item mb-2">
+                                    <div class="col">
+                                        <div class="card" style="background: var(--bs-card-cap-bg);">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <div class="row">
+                                                            <div class="col-auto">
+                                                                <img class="img-thumbnail img-fluid"
+                                                                    alt="Product category image"
+                                                                    width="67"
+                                                                    height="96"
+                                                                    src="{% if cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image %}
+                                                                        {{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image }}
+                                                                    {% else %}
+                                                                        {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
+                                                                    {% endif %}" />
+                                                                <img class="img-thumbnail img-fluid"
+                                                                    alt="Product image"
+                                                                    width="138"
+                                                                    height="95"
+                                                                    src="{% if cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                                        {{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                                    {% else %}
+                                                                        {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
+                                                                    {% endif %}" />
+                                                            </div>
+                                                            <div class="col">
+                                                                <h3>{{ order_group.spsl.sp.product.main_product.name }}</h3>
+                                                                <h3>{{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
+                                                                {% if cart_item.order_group.end_date %}
+                                                                    <p class="mb-1">{{ cart_item.order_group.start_date }} to {{ cart_item.order_group.end_date }}</p>
+                                                                {% else %}
+                                                                    {% if cart_item.order_group.service_recurring_frequency %}
+                                                                        <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }} and recurring {{ cart_item.order_group.service_recurring_frequency.name|lower }}</p>
+                                                                    {% else %}
+                                                                        <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }}</p>
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                                <p class="mb-1">Status: {{ cart_item.status }}</p>
+                                                                {% comment %} <p>order line items: {{ cart_item.count }} - [{{ cart_item.status }}]</p> {% endcomment %}
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <p class="text-end">${{ cart_item.price|floatformat:2|intcomma }}</p>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#modal-1" data-bs-toggle="modal">Remove</button> {% endcomment %}
+                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" type="button" hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s">
+                                                                    Remove
+                                                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <div class="row mb-2">
+                                <div class="col">
+                                    <a class="btn btn-primary float-end" role="button" style="margin-top: 10px;" href="checkout.html">Checkout</a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col">
-                            <h3>{{ item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
-                            <p class="mb-1">{{ item.order_group.user_address.formatted_address }}</p>
-                            {% if item.order_group.end_date %}
-                                <p class="mb-1">{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
-                            {% else %}
-                                {% if item.order_group.service_recurring_frequency %}
-                                    <p class="mb-1">Subscription starts on {{ item.order_group.start_date }} and recurring {{ item.order_group.service_recurring_frequency.name|lower }}</p>
-                                {% else %}
-                                    <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
-                                {% endif %}
-                            {% endif %}
-                            <p class="mb-1">Status: {{ item.status }}</p>
-                            {% comment %} <p>order line items: {{ item.count }} - [{{ item.status }}]</p> {% endcomment %}
-                        </div>
-                        <div class="col-auto">
-                            <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ forloop.counter }}" data-id="{{ item.order_group.id }}" data-price="{{ item.price }}" type="button" hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s">
-                                Remove
-                                <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                            </button>
-                        </div>
-                        {% if not forloop.last %}
-                            <hr />
-                        {% endif %}
                     </div>
-                {% endfor %}
-            </div>
+                </div>
+            {% endfor %}
         </div>
         <div class="row" style="margin-top: 12px;">
             <div class="col">
                 <h4 id="cart-subtotal" class="float-end" data-subtotal="{{ subtotal }}"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
             </div>
         </div>
-        <button class="btn btn-primary float-end" type="button">Checkout</button>
+    </div>
+    <div class="container-fluid mb-1">
     </div>
 {% endblock %}
 {% block modals %}

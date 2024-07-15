@@ -1036,22 +1036,42 @@ def new_order_5(request):
     if not orders:
         messages.error(request, "Your cart is empty.")
     else:
-        # Get unique order group objects from the orders
+        # Get unique order group objects from the orders and place them in address buckets.
         for order in orders:
             try:
                 customer_price = order.customer_price()
-                context["cart"][order.order_group.id]["price"] += customer_price
-                context["cart"][order.order_group.id]["count"] += 1
-                context["cart"][order.order_group.id]["status"] = order.status
+                if context["cart"].get(order.order_group.user_address_id, None) is None:
+                    context["cart"][order.order_group.user_address_id] = {
+                        "address": order.order_group.user_address,
+                        "total": 0,
+                        "orders": {},
+                    }
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group_id
+                ]["price"] += customer_price
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ]["count"] += 1
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ]["status"] = order.status
+                context["cart"][order.order_group.user_address_id][
+                    "total"
+                ] += customer_price
                 context["subtotal"] += customer_price
             except KeyError:
                 customer_price = order.customer_price()
-                context["cart"][order.order_group.id] = {
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ] = {
                     "order_group": order.order_group,
                     "price": customer_price,
                     "count": 1,
                     "status": order.status,
                 }
+                context["cart"][order.order_group.user_address_id][
+                    "total"
+                ] += customer_price
                 context["subtotal"] += customer_price
                 context["cart_count"] += 1
 
