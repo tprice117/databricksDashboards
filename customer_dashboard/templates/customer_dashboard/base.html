@@ -104,6 +104,44 @@
         .clickable-row:hover {
             cursor: pointer;
         }
+
+        /* Autocomplete CSS */
+        .my-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content {
+            display: block;
+            position: absolute;
+            background-color: #f1f1f1;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        
+        .dropdown-content div {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+        }
+        
+        .dropdown-content div:hover {
+            background-color: #ddd;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .my-dropdown-item {
+            cursor: pointer;
+        }
+        .autocomplete-active {
+            background-color: DodgerBlue !important;
+            color: #ffffff;
+        }
     </style>
 </head>
 
@@ -135,6 +173,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
     <script src="{% static 'customer_dashboard/js/bs-init.js' %}"></script>
     <script src="{% static 'customer_dashboard/js/theme.js' %}"></script>
+    <script>
+        function selectCustomerPopup(event) {
+            Swal.fire({
+                title: "Attention",
+                text: "Please select a customer to begin a new order.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Yes",
+                cancelButtonText: "Cancel",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Open the Bootstrap dropdown dropdown-toggle
+                    setTimeout(() => {
+                        let dropdownToggle = document.querySelector(".dropdown-toggle");
+                        if (dropdownToggle) {
+                            dropdownToggle.click();
+                        }
+                        let dropdownMenu = document.querySelector(".navbar-search-dropdown");
+                        if (dropdownMenu && dropdownMenu.classList.contains("show")) {
+                            let input = document.querySelector('input[name="search"]');
+                            if (input) {
+                                input.focus();
+                            }
+                        }
+                    }, 100);
+                }
+            });
+        }
+    </script>
     {% block javascript %}{% endblock %}
 </body>
 

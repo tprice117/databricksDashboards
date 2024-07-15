@@ -13,6 +13,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.db import IntegrityError
+from django.db.models import Q
 
 from api.models import (
     AddOn,
@@ -432,11 +433,13 @@ def customer_impersonation_start(request):
             user_group = UserGroup.objects.get(id=user_group_id)
             user = user_group.users.filter(type=UserType.ADMIN).first()
             if not user:
+                user = user_group.users.first()
+                if not user:
+                    raise User.DoesNotExist
                 messages.warning(
                     request,
                     "No admin user found for UserGroup. UserGroup should have at least one admin user.",
                 )
-                user = user_group.users.first()
             if not user:
                 raise User.DoesNotExist
             request.session["customer_user_group_id"] = get_json_safe_value(
@@ -591,6 +594,31 @@ def new_order_category_price(request, category_id):
     # if request.headers.get("HX-Request"):
     return render(
         request, "customer_dashboard/snippets/category_price_from.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def user_address_search(request):
+    context = {}
+    if request.method == "POST":
+        search = request.POST.get("q")
+        try:
+            user_address_id = uuid.UUID(search)
+            user_addresses = UserAddress.objects.filter(id=user_address_id)
+        except ValueError:
+            user_addresses = UserAddress.objects.filter(
+                Q(name__icontains=search)
+                | Q(street__icontains=search)
+                | Q(city__icontains=search)
+                | Q(state__icontains=search)
+                | Q(postal_code__icontains=search)
+            )
+        context["user_addresses"] = user_addresses
+
+    return render(
+        request,
+        "customer_dashboard/snippets/user_address_search_selection.html",
+        context,
     )
 
 
@@ -1008,22 +1036,42 @@ def new_order_5(request):
     if not orders:
         messages.error(request, "Your cart is empty.")
     else:
-        # Get unique order group objects from the orders
+        # Get unique order group objects from the orders and place them in address buckets.
         for order in orders:
             try:
                 customer_price = order.customer_price()
-                context["cart"][order.order_group.id]["price"] += customer_price
-                context["cart"][order.order_group.id]["count"] += 1
-                context["cart"][order.order_group.id]["status"] = order.status
+                if context["cart"].get(order.order_group.user_address_id, None) is None:
+                    context["cart"][order.order_group.user_address_id] = {
+                        "address": order.order_group.user_address,
+                        "total": 0,
+                        "orders": {},
+                    }
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group_id
+                ]["price"] += customer_price
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ]["count"] += 1
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ]["status"] = order.status
+                context["cart"][order.order_group.user_address_id][
+                    "total"
+                ] += customer_price
                 context["subtotal"] += customer_price
             except KeyError:
                 customer_price = order.customer_price()
-                context["cart"][order.order_group.id] = {
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ] = {
                     "order_group": order.order_group,
                     "price": customer_price,
                     "count": 1,
                     "status": order.status,
                 }
+                context["cart"][order.order_group.user_address_id][
+                    "total"
+                ] += customer_price
                 context["subtotal"] += customer_price
                 context["cart_count"] += 1
 

@@ -4,46 +4,6 @@
 {% block title %}
     New User
 {% endblock %}
-{% block stylesheet %}
-    <style>
-        .my-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .dropdown-content {
-            display: block;
-            position: absolute;
-            background-color: #f1f1f1;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-            z-index: 1;
-        }
-        
-        .dropdown-content div {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            cursor: pointer;
-        }
-        
-        .dropdown-content div:hover {
-            background-color: #ddd;
-        }
-        
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
-        .my-dropdown-item {
-            cursor: pointer;
-        }
-        .autocomplete-active {
-            background-color: DodgerBlue !important;
-            color: #ffffff;
-        }
-    </style>
-{% endblock %}
 {% block javascript %}
     <script>
         // Autocomplete for Customer/UserGroup search
@@ -136,9 +96,9 @@
                 <p class="text-primary m-0 fw-bold">User Data</p>
             </div>
             <div class="card-body">
-                {% if not usergroup and user.is_staff %}
+                {% if not user_group and user.is_staff %}
                     <div class="dropdown mb-3">
-                        <label for="companies-search-filter" class="form-label">Select Customer <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+                        <label for="usergroup-search" class="form-label">Select Customer <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
                         <input id="usergroup-search" form="userForm" class="form-control" autocomplete="off" type="search" name="search" required="true" hx-post="{% url 'customer_search_selection' %}" hx-trigger="input changed delay:500ms, search" hx-target="#usergroup-search-results" hx-indicator="#htmx-indicator-loading" />
                         <!-- Hidden input field for usergroup ID -->
                         <input id="usergroupId" type="hidden" name="usergroupId" form="userForm" />
