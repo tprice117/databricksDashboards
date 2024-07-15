@@ -1124,9 +1124,22 @@ def checkout(request, user_address_id):
     context["cart_count"] = 0
     context["pre_tax_subtotal"] = 0
     if context["user_group"]:
-        payment_methods = PaymentMethod.objects.filter(active=True).filter(user_group_id=context["user_group"].id)
+        payment_methods = PaymentMethod.objects.filter(active=True).filter(
+            user_group_id=context["user_group"].id
+        )
     else:
-        payment_methods = PaymentMethod.objects.filter(active=True).filter(user_id=context["user"].id)
+        if context["user_address"].user_group_id:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_group_id=context["user_address"].user_group_id
+            )
+        elif context["user_address"].user_id:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_id=context["user_address"].user_id
+            )
+        else:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_id=context["user"].id
+            )
     context["payment_methods"] = payment_methods
     for order in orders:
         try:
