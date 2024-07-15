@@ -111,6 +111,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAddress
         fields = "__all__"
+        read_only_fields = ("user_group",)
         validators = []
 
 

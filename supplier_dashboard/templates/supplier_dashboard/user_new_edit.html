@@ -138,7 +138,7 @@
             <div class="card-body">
                 {% if not seller and user.is_staff %}
                     <div class="dropdown mb-3">
-                        <label for="companies-search-filter" class="form-label">Select Seller <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+                        <label for="seller-search" class="form-label">Select Seller <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
                         <input id="seller-search" form="userForm" class="form-control" autocomplete="off" type="search" name="search" required="true" hx-post="{% url 'supplier_search_selection' %}" hx-trigger="input changed delay:500ms, search" hx-target="#seller-search-results" hx-indicator="#htmx-indicator-loading" />
                         <!-- Hidden input field for seller ID -->
                         <input id="sellerId" type="hidden" name="sellerId" form="userForm" />

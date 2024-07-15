@@ -6,6 +6,7 @@ from api.models.user.user import User
 from api.models.user.user_address_type import UserAddressType
 from api.models.user.user_group import UserGroup
 from api.utils.google_maps import geocode_address
+from common.middleware.save_author import get_request
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 
@@ -82,13 +83,14 @@ class UserAddress(BaseModel):
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
 
+        # Populate the UserAddress, if exists. Set the [user_group] based on the [user].
+        instance.user_group = instance.user.user_group
+
         # Populate Stripe Customer ID, if not already populated.
         if not instance.stripe_customer_id:
-            print("TEST")
             customer = StripeUtils.Customer.create()
             instance.stripe_customer_id = customer.id
         else:
-            print("TEST2")
             customer = StripeUtils.Customer.get(instance.stripe_customer_id)
 
         # Get "name" for UserGroup/B2C user.
@@ -99,7 +101,7 @@ class UserAddress(BaseModel):
             name=user_group_name + " | " + instance.formatted_address(),
             email=(
                 instance.user_group.billing.email
-                if hasattr(instance.user_group, "billing")
+                if instance.user_group and hasattr(instance.user_group, "billing")
                 else (instance.user.email if instance.user else None)
             ),
             # phone = instance.user_group.billing.phone if hasattr(instance.user_group, 'billing') else instance.user.phone,
@@ -116,22 +118,22 @@ class UserAddress(BaseModel):
             address={
                 "line1": (
                     instance.user_group.billing.street
-                    if hasattr(instance.user_group, "billing")
+                    if instance.user_group and hasattr(instance.user_group, "billing")
                     else instance.street
                 ),
                 "city": (
                     instance.user_group.billing.city
-                    if hasattr(instance.user_group, "billing")
+                    if instance.user_group and hasattr(instance.user_group, "billing")
                     else instance.city
                 ),
                 "state": (
                     instance.user_group.billing.state
-                    if hasattr(instance.user_group, "billing")
+                    if instance.user_group and hasattr(instance.user_group, "billing")
                     else instance.state
                 ),
                 "postal_code": (
                     instance.user_group.billing.postal_code
-                    if hasattr(instance.user_group, "billing")
+                    if instance.user_group and hasattr(instance.user_group, "billing")
                     else instance.postal_code
                 ),
                 "country": "US",
@@ -148,7 +150,7 @@ class UserAddress(BaseModel):
             },
             tax_exempt=(
                 instance.user_group.tax_exempt_status
-                if hasattr(instance.user_group, "billing")
+                if instance.user_group and hasattr(instance.user_group, "billing")
                 else UserGroup.TaxExemptStatus.NONE
             ),
         )

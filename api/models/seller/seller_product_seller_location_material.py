@@ -5,6 +5,7 @@ from api.models.main_product.main_product_waste_type import MainProductWasteType
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
 )
+from api.models.waste_type import WasteType
 from common.models import BaseModel
 
 
@@ -17,6 +18,20 @@ class SellerProductSellerLocationMaterial(BaseModel):
 
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
+
+    def is_complete(self):
+        return len(self.waste_types) > 0
+
+    def get_price(
+        self,
+        waste_type: WasteType,
+        quantity: float,
+    ) -> float:
+        if self.waste_types.filter(waste_type=waste_type).exists():
+            material_waste_type = self.waste_types.filter(waste_type=waste_type).first()
+            return quantity * material_waste_type.price_per_ton
+        else:
+            return 0
 
     def post_save(sender, instance, created, **kwargs):
         # Ensure all material waste type recurring frequencies are created. Only execute on create.

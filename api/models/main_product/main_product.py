@@ -34,6 +34,8 @@ class MainProduct(BaseModel):
     main_product_code = models.CharField(max_length=255, blank=True, null=True)
     has_service = models.BooleanField(default=False)
     has_rental = models.BooleanField(default=False)
+    has_rental_one_step = models.BooleanField(default=False)
+    has_rental_multi_step = models.BooleanField(default=False)
     has_material = models.BooleanField(default=False)
 
     def __str__(self):
