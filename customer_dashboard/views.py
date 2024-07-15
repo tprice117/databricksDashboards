@@ -1054,7 +1054,7 @@ def new_order_5(request):
                 ]["count"] += 1
                 context["cart"][order.order_group.user_address_id]["orders"][
                     order.order_group.id
-                ]["status"] = order.status
+                ]["order_type"] = order.order_type
                 context["cart"][order.order_group.user_address_id][
                     "total"
                 ] += customer_price
@@ -1067,7 +1067,7 @@ def new_order_5(request):
                     "order_group": order.order_group,
                     "price": customer_price,
                     "count": 1,
-                    "status": order.status,
+                    "order_type": order.order_type,
                 }
                 context["cart"][order.order_group.user_address_id][
                     "total"

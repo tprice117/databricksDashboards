@@ -2,7 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Select Supplier
+    Cart
 {% endblock %}
 {% block stylesheet %}
     <style>
@@ -106,7 +106,6 @@
                                                                     {% endif %}" />
                                                             </div>
                                                             <div class="col">
-                                                                <h3>{{ order_group.spsl.sp.product.main_product.name }}</h3>
                                                                 <h3>{{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
                                                                 {% if cart_item.order_group.end_date %}
                                                                     <p class="mb-1">{{ cart_item.order_group.start_date }} to {{ cart_item.order_group.end_date }}</p>
@@ -117,7 +116,7 @@
                                                                         <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }}</p>
                                                                     {% endif %}
                                                                 {% endif %}
-                                                                <p class="mb-1">Status: {{ cart_item.status }}</p>
+                                                                <p class="mb-1">Order Type: {{ cart_item.order_type }}</p>
                                                                 {% comment %} <p>order line items: {{ cart_item.count }} - [{{ cart_item.status }}]</p> {% endcomment %}
                                                             </div>
                                                             <div class="col-auto">
@@ -140,7 +139,7 @@
                             {% endfor %}
                             <div class="row mb-2">
                                 <div class="col">
-                                    <a class="btn btn-primary float-end" role="button" style="margin-top: 10px;" href="checkout.html">Checkout</a>
+                                    <a class="btn btn-primary float-end" role="button" style="margin-top: 10px;" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
                                 </div>
                             </div>
                         </div>
