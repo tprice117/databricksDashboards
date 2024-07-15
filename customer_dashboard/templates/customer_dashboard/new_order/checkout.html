@@ -106,13 +106,13 @@
         <div class="card" style="margin-top: 20px;">
             <div class="card-body">
                 <h4 class="card-title">Select Payment Method (using Payment Methods for the User Group)</h4>
-                {% for payemnt_method in payment_methods %}
+                {% for payment_method in payment_methods %}
                     <div class="card">
                         <div class="card-body">
                             <div></div>
                             <div class="row">
                                 <div class="col">
-                                    <h4 style="margin-bottom: 0px;">{{ payemnt_method.card_brand }} XXXX{% if payemnt_method.card_number %}{{ payemnt_method.card_number|slice:"-4:" }}{% endif %}</h4>
+                                    <h4 style="margin-bottom: 0px;">{% if payment_method.card_brand %}{{ payment_method.card_brand }}{% else %}Card{% endif %} XXXX{% if payment_method.card_number %}{{ payment_method.card_number|slice:"-4:" }}{% endif %}</h4>
                                 </div>
                                 <div class="col">
                                     <p class="text-end" style="margin-bottom: 0px;">Expires {{ payment_method.card_exp_month }}/{{ payment_method.card_exp_year }}</p>
