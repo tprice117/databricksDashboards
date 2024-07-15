@@ -1105,6 +1105,50 @@ def new_order_6(request, order_group_id):
 
 
 @login_required(login_url="/admin/login/")
+def checkout(request, user_address_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
+    context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+    # Get all orders in the cart for this user_address_id.
+    orders = Order.objects.filter(
+        order_group__user_address_id=user_address_id,
+        submitted_on__isnull=True,
+    )
+    orders = orders.prefetch_related("order_line_items")
+    orders = orders.order_by("-order_group__start_date")
+    context["cart"] = {}
+    context["discounts"] = 0
+    context["subtotal"] = 0
+    context["cart_count"] = 0
+    context["pre_tax_subtotal"] = 0
+    for order in orders:
+        try:
+            customer_price = order.customer_price()
+            context["cart"][order.order_group_id]["price"] += customer_price
+            context["cart"][order.order_group.id]["count"] += 1
+            context["cart"][order.order_group.id]["order_type"] = order.order_type
+            context["cart"]["total"] += customer_price
+            context["subtotal"] += customer_price
+        except KeyError:
+            customer_price = order.customer_price()
+            context["cart"][order.order_group.id] = {
+                "order_group": order.order_group,
+                "price": customer_price,
+                "count": 1,
+                "order_type": order.order_type,
+            }
+            context["subtotal"] += customer_price
+            context["cart_count"] += 1
+
+    return render(
+        request,
+        "customer_dashboard/new_order/checkout.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
 def profile(request):
     context = {}
     user = get_user(request)
