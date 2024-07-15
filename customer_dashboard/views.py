@@ -1111,6 +1111,14 @@ def checkout(request, user_address_id):
     context["user"] = get_user(request)
     context["user_group"] = get_user_group(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+
+    if request.method == "POST":
+        # Save access details to the user address.
+        if request.POST.get("access_details") != context["user_address"].access_details:
+            context["user_address"].access_details = request.POST.get("access_details")
+            context["user_address"].save()
+            messages.success(request, "Access details saved.")
+
     # Get all orders in the cart for this user_address_id.
     orders = Order.objects.filter(
         order_group__user_address_id=user_address_id,

@@ -100,7 +100,7 @@
             <div class="card-body">
                 <h4 class="card-title">Access Details</h4>
                 <h6 class="text-muted card-subtitle mb-2">Let the suppliers know how to access your property/job site once they arrive</h6>
-                <textarea class="form-control"></textarea>
+                <textarea form="checkoutForm" class="form-control" name="access_details">{% if user_address.access_details %}{{ user_address.access_details }}{% endif %}</textarea>
             </div>
         </div>
         <div class="card" style="margin-top: 20px;">
@@ -122,7 +122,13 @@
                     </div>
                 {% endfor %}
             </div>
-        </div><button class="btn btn-primary float-end" type="button" style="margin-top: 10px;">Checkout</button>
+        </div>
+        <form id="checkoutForm" action="{{ request.get_full_path }}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="subtotal" value="{{ subtotal }}">
+            {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
+            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" style="margin-top: 10px;">Checkout</button>
+        </form>
     </div>
 {% endblock %}
 {% block modals %}
