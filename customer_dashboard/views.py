@@ -42,6 +42,7 @@ from api.models import (
 from api.models.user.user_user_address import UserUserAddress
 from api.pricing_ml import pricing
 from billing.models import Invoice
+from payment_methods.models import PaymentMethod
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
@@ -677,17 +678,17 @@ def new_order_3(request, product_id):
 def get_pricing(
     product_id: uuid.UUID,
     user_address_id: uuid.UUID,
-    waste_type_id: uuid.UUID,
+    waste_type_id: uuid.UUID = None,
     seller_location_id: uuid.UUID = None,
 ):
-    price_mod = pricing.Price_Model(
-        data={
-            "seller_location": seller_location_id,
-            "product": product_id,
-            "user_address": user_address_id,
-            "waste_type": waste_type_id,
-        }
-    )
+    price_data = {
+        "seller_location": seller_location_id,
+        "product": product_id,
+        "user_address": user_address_id,
+    }
+    if waste_type_id:
+        price_data["waste_type"] = waste_type_id
+    price_mod = pricing.Price_Model(data=price_data)
 
     # Get SellerLocations that offer the product.
     seller_products = SellerProduct.objects.filter(product_id=product_id)
@@ -864,9 +865,14 @@ def new_order_4(request):
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
-    main_product_waste_type = MainProductWasteType.objects.filter(
-        id=product_waste_types[0]
-    ).first()
+    waste_type = None
+    waste_type_id = None
+    if product_waste_types:
+        main_product_waste_type = MainProductWasteType.objects.filter(
+            id=product_waste_types[0]
+        ).first()
+        waste_type = main_product_waste_type.waste_type
+        waste_type_id = waste_type.id
 
     products = Product.objects.filter(main_product_id=product_id)
     # Find the products that have the waste types and add ons.
@@ -892,7 +898,7 @@ def new_order_4(request):
         MatchingEngine.get_possible_seller_product_seller_locations(
             context["product"],
             user_address_obj,
-            main_product_waste_type.waste_type,
+            waste_type,
         )
     )
     # step_time = time.time()
@@ -906,7 +912,7 @@ def new_order_4(request):
         pricing_data = get_pricing(
             context["product"].id,
             user_address_id,
-            main_product_waste_type.waste_type_id,
+            waste_type_id=waste_type_id,
             seller_location_id=seller_product_location.seller_location_id,
         )
         seller_d["price"] = 0
@@ -993,6 +999,7 @@ def new_order_5(request):
         subtotal = request.GET.get("subtotal")
         cart_count = request.GET.get("count")
         customer_price = request.GET.get("price")
+        groupcount = request.GET.get("groupcount")
         order_group = OrderGroup.objects.filter(id=order_group_id).first()
         if customer_price:
             customer_price = float(customer_price)
@@ -1007,10 +1014,13 @@ def new_order_5(request):
                 # del_subtotal += order.customer_price()
                 order.delete()
             order_group.delete()
+            context["user_address"] = order_group.user_address_id
         if subtotal:
             context["subtotal"] = float(subtotal) - float(customer_price)
         if cart_count:
             context["cart_count"] = int(cart_count) - 1
+        if groupcount:
+            context["groupcount"] = int(groupcount) - 1
         if order_group:
             messages.success(request, "Order removed from cart.")
         else:
@@ -1054,7 +1064,7 @@ def new_order_5(request):
                 ]["count"] += 1
                 context["cart"][order.order_group.user_address_id]["orders"][
                     order.order_group.id
-                ]["status"] = order.status
+                ]["order_type"] = order.order_type
                 context["cart"][order.order_group.user_address_id][
                     "total"
                 ] += customer_price
@@ -1067,7 +1077,7 @@ def new_order_5(request):
                     "order_group": order.order_group,
                     "price": customer_price,
                     "count": 1,
-                    "status": order.status,
+                    "order_type": order.order_type,
                 }
                 context["cart"][order.order_group.user_address_id][
                     "total"
@@ -1093,6 +1103,76 @@ def new_order_6(request, order_group_id):
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
     return HttpResponseRedirect(reverse("customer_new_order"))
+
+
+@login_required(login_url="/admin/login/")
+def checkout(request, user_address_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["user_group"] = get_user_group(request)
+    context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+
+    if request.method == "POST":
+        # Save access details to the user address.
+        if request.POST.get("access_details") != context["user_address"].access_details:
+            context["user_address"].access_details = request.POST.get("access_details")
+            context["user_address"].save()
+            messages.success(request, "Access details saved.")
+
+    # Get all orders in the cart for this user_address_id.
+    orders = Order.objects.filter(
+        order_group__user_address_id=user_address_id,
+        submitted_on__isnull=True,
+    )
+    orders = orders.prefetch_related("order_line_items")
+    orders = orders.order_by("-order_group__start_date")
+    context["cart"] = {}
+    context["discounts"] = 0
+    context["subtotal"] = 0
+    context["cart_count"] = 0
+    context["pre_tax_subtotal"] = 0
+    if context["user_group"]:
+        payment_methods = PaymentMethod.objects.filter(active=True).filter(
+            user_group_id=context["user_group"].id
+        )
+    else:
+        if context["user_address"].user_group_id:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_group_id=context["user_address"].user_group_id
+            )
+        elif context["user_address"].user_id:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_id=context["user_address"].user_id
+            )
+        else:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_id=context["user"].id
+            )
+    context["payment_methods"] = payment_methods
+    for order in orders:
+        try:
+            customer_price = order.customer_price()
+            context["cart"][order.order_group_id]["price"] += customer_price
+            context["cart"][order.order_group.id]["count"] += 1
+            context["cart"][order.order_group.id]["order_type"] = order.order_type
+            context["cart"]["total"] += customer_price
+            context["subtotal"] += customer_price
+        except KeyError:
+            customer_price = order.customer_price()
+            context["cart"][order.order_group.id] = {
+                "order_group": order.order_group,
+                "price": customer_price,
+                "count": 1,
+                "order_type": order.order_type,
+            }
+            context["subtotal"] += customer_price
+            context["cart_count"] += 1
+
+    return render(
+        request,
+        "customer_dashboard/new_order/checkout.html",
+        context,
+    )
 
 
 @login_required(login_url="/admin/login/")

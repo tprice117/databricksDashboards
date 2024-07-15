@@ -8,3 +8,6 @@
 {% if subtotal %}
     <h4 id="cart-subtotal" class="float-end" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
 {% endif %}
+{% if user_address and groupcount %}
+    <span id="count-{{ user_address }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ groupcount }}" hx-swap-oob="true">{{ groupcount }} item{{ groupcount|pluralize }}</span>
+{% endif %}
