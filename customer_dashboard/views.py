@@ -677,17 +677,17 @@ def new_order_3(request, product_id):
 def get_pricing(
     product_id: uuid.UUID,
     user_address_id: uuid.UUID,
-    waste_type_id: uuid.UUID,
+    waste_type_id: uuid.UUID = None,
     seller_location_id: uuid.UUID = None,
 ):
-    price_mod = pricing.Price_Model(
-        data={
-            "seller_location": seller_location_id,
-            "product": product_id,
-            "user_address": user_address_id,
-            "waste_type": waste_type_id,
-        }
-    )
+    price_data = {
+        "seller_location": seller_location_id,
+        "product": product_id,
+        "user_address": user_address_id,
+    }
+    if waste_type_id:
+        price_data["waste_type"] = waste_type_id
+    price_mod = pricing.Price_Model(data=price_data)
 
     # Get SellerLocations that offer the product.
     seller_products = SellerProduct.objects.filter(product_id=product_id)
@@ -864,9 +864,14 @@ def new_order_4(request):
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
-    main_product_waste_type = MainProductWasteType.objects.filter(
-        id=product_waste_types[0]
-    ).first()
+    waste_type = None
+    waste_type_id = None
+    if product_waste_types:
+        main_product_waste_type = MainProductWasteType.objects.filter(
+            id=product_waste_types[0]
+        ).first()
+        waste_type = main_product_waste_type.waste_type
+        waste_type_id = waste_type.id
 
     products = Product.objects.filter(main_product_id=product_id)
     # Find the products that have the waste types and add ons.
@@ -892,7 +897,7 @@ def new_order_4(request):
         MatchingEngine.get_possible_seller_product_seller_locations(
             context["product"],
             user_address_obj,
-            main_product_waste_type.waste_type,
+            waste_type,
         )
     )
     # step_time = time.time()
@@ -906,7 +911,7 @@ def new_order_4(request):
         pricing_data = get_pricing(
             context["product"].id,
             user_address_id,
-            main_product_waste_type.waste_type_id,
+            waste_type_id=waste_type_id,
             seller_location_id=seller_product_location.seller_location_id,
         )
         seller_d["price"] = 0
