@@ -177,7 +177,8 @@ def get_user_group(request: HttpRequest) -> Union[UserGroup, None]:
     Returns:
         [UserGroup, None]: Returns the UserGroup object or None. None means staff user.
     """
-    if is_impersonating(request):
+
+    if is_impersonating(request) and request.session["customer_user_group_id"]:
         user_group = UserGroup.objects.get(id=request.session["customer_user_group_id"])
     elif request.user.is_staff:
         user_group = None
@@ -227,7 +228,7 @@ def get_user_group_user_objects(
     Args:
         request (HttpRequest): Request object from the view.
         user (User): User object.
-        user_group (UserGroup): UserGroup object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
 
     Returns:
         QuerySet[User]: The users queryset.
@@ -235,10 +236,14 @@ def get_user_group_user_objects(
     if not user.is_staff and user.type != UserType.ADMIN:
         users = User.objects.filter(user_group_id=user.user_group_id)
     else:
-        if user_group:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all users that have a non null UserGroup.
+            users = User.objects.filter(user_group__isnull=False)
+        elif user_group:
             users = User.objects.filter(user_group_id=user_group.id)
         else:
-            users = User.objects.filter(user_group__isnull=False)
+            # Individual user.
+            users = User.objects.filter(id=user.id)
     return users
 
 
@@ -256,7 +261,7 @@ def get_booking_objects(
     Args:
         request (HttpRequest): Request object from the view.
         user (User): User object.
-        user_group (UserGroup): UserGroup object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
 
     Returns:
         QuerySet[Order]: The orders queryset.
@@ -271,12 +276,16 @@ def get_booking_objects(
             order_group__user_address__in=user_user_location_ids
         )
     else:
-        if user_group:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all orders.
+            orders = Order.objects.all()
+        elif user_group:
             orders = Order.objects.filter(
                 order_group__user__user_group_id=user_group.id
             )
         else:
-            orders = Order.objects.all()
+            # Individual user. Get all orders for the user.
+            orders = Order.objects.filter(order_group__user_id=user.id)
     if exclude_in_cart:
         orders = orders.filter(submitted_on__isnull=False)
     return orders
@@ -294,7 +303,7 @@ def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGr
     Args:
         request (HttpRequest): Request object from the view.
         user (User): User object.
-        user_group (UserGroup): UserGroup object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
 
     Returns:
         QuerySet[OrderGroup]: The order_groups queryset.
@@ -309,10 +318,14 @@ def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGr
             user_address__in=user_user_location_ids
         )
     else:
-        if user_group:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all order_groups.
+            order_groups = OrderGroup.objects.all()
+        elif user_group:
             order_groups = OrderGroup.objects.filter(user__user_group_id=user_group.id)
         else:
-            order_groups = OrderGroup.objects.all()
+            # Individual user. Get all orders for the user.
+            order_groups = OrderGroup.objects.filter(user_id=user.id)
     return order_groups
 
 
@@ -328,7 +341,7 @@ def get_location_objects(request: HttpRequest, user: User, user_group: UserGroup
     Args:
         request (HttpRequest): Request object from the view.
         user (User): User object.
-        user_group (UserGroup): UserGroup object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
 
     Returns:
         QuerySet[Location]: The locations queryset.
@@ -343,12 +356,17 @@ def get_location_objects(request: HttpRequest, user: User, user_group: UserGroup
             for user_user_location in user_user_locations
         ]
     else:
-        if user_group:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all locations.
+            locations = UserAddress.objects.all()
+            locations = locations.order_by("name", "-created_on")
+        elif user_group:
             locations = UserAddress.objects.filter(user_group_id=user_group.id)
             locations = locations.order_by("-created_on")
         else:
-            locations = UserAddress.objects.all()
-            locations = locations.order_by("name", "-created_on")
+            # Individual user. Get all locations for the user.
+            locations = UserAddress.objects.filter(user_id=user.id)
+            locations = locations.order_by("-created_on")
     return locations
 
 
@@ -364,7 +382,7 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
     Args:
         request (HttpRequest): Request object from the view.
         user (User): User object.
-        user_group (UserGroup): UserGroup object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
 
     Returns:
         QuerySet[Invoice]: The invoices queryset.
@@ -378,12 +396,16 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
         )
         invoices = Invoice.objects.filter(user_address__in=user_user_location_ids)
     else:
-        if user_group:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all invoices.
+            invoices = Invoice.objects.all()
+        elif user_group:
             invoices = Invoice.objects.filter(
                 user_address__user__user_group_id=user_group.id
             )
         else:
-            invoices = Invoice.objects.all()
+            # Individual user. Get all invoices for the user.
+            invoices = Invoice.objects.filter(user_address__user_id=user.id)
     return invoices
 
 
@@ -403,11 +425,19 @@ def customer_search(request, is_selection=False):
     if request.method == "POST":
         search = request.POST.get("search")
         try:
-            user_group_id = uuid.UUID(search)
-            user_groups = UserGroup.objects.filter(id=user_group_id)
+            search_id = uuid.UUID(search)
+            user_groups = UserGroup.objects.filter(id=search_id)
+            users = User.objects.filter(id=search_id)
         except ValueError:
-            user_groups = UserGroup.objects.filter(name__icontains=search)
+            isearch = search.casefold()
+            user_groups = UserGroup.objects.filter(name__icontains=isearch)
+            users = User.objects.filter(
+                Q(first_name__icontains=isearch)
+                | Q(last_name__icontains=isearch)
+                | Q(email__icontains=isearch)
+            )
         context["user_groups"] = user_groups
+        context["users"] = users
 
     if is_selection:
         return render(
@@ -426,13 +456,22 @@ def customer_impersonation_start(request):
     if request.user.is_staff:
         if request.method == "POST":
             user_group_id = request.POST.get("user_group_id")
+            user_id = request.GET.get("user_id")
         elif request.method == "GET":
             user_group_id = request.GET.get("user_group_id")
+            user_id = request.GET.get("user_id")
         else:
             return HttpResponse("Not Implemented", status=406)
         try:
-            user_group = UserGroup.objects.get(id=user_group_id)
-            user = user_group.users.filter(type=UserType.ADMIN).first()
+            user = None
+            if user_group_id:
+                user_group = UserGroup.objects.get(id=user_group_id)
+                user = user_group.users.filter(type=UserType.ADMIN).first()
+            elif user_id:
+                user = User.objects.get(id=user_id)
+                # user_group = user.user_group
+                # if user_group:
+                #     user_group_id = user_group.id
             if not user:
                 user = user_group.users.first()
                 if not user:
@@ -444,7 +483,7 @@ def customer_impersonation_start(request):
             if not user:
                 raise User.DoesNotExist
             request.session["customer_user_group_id"] = get_json_safe_value(
-                user_group.id
+                user_group_id
             )
             request.session["customer_user_id"] = get_json_safe_value(user.id)
             return HttpResponseRedirect("/customer/")
@@ -473,6 +512,7 @@ def customer_impersonation_stop(request):
 def index(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     if request.headers.get("HX-Request"):
         orders = get_booking_objects(request, context["user"], context["user_group"])
@@ -577,6 +617,7 @@ def index(request):
 def new_order(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     main_product_categories = MainProductCategory.objects.all().order_by("sort")
     context["main_product_categories"] = main_product_categories
@@ -627,6 +668,7 @@ def user_address_search(request):
 def new_order_2(request, category_id):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     main_product_category = MainProductCategory.objects.filter(id=category_id)
     main_product_category = main_product_category.prefetch_related("main_products")
@@ -649,7 +691,10 @@ def new_order_2(request, category_id):
 def new_order_3(request, product_id):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
+    # TODO: Add a button that allows adding an address.
+    # The button could open a modal that allows adding an address.
     main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related("main_product_category")
     main_product = main_product.first()
@@ -844,6 +889,7 @@ def new_order_4(request):
     # start_time = time.time()
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     product_id = request.GET.get("product_id")
     user_address_id = request.GET.get("user_address")
@@ -939,6 +985,7 @@ def new_order_4(request):
 def new_order_5(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     context["cart"] = {}
     if request.method == "POST":
@@ -1096,6 +1143,7 @@ def new_order_5(request):
 def new_order_6(request, order_group_id):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     count, deleted_objs = OrderGroup.objects.filter(id=order_group_id).delete()
     if count:
@@ -1109,6 +1157,7 @@ def new_order_6(request, order_group_id):
 def checkout(request, user_address_id):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
 
@@ -1180,6 +1229,7 @@ def profile(request):
     context = {}
     user = get_user(request)
     context["user"] = user
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
 
     if request.method == "POST":
@@ -1255,6 +1305,7 @@ def profile(request):
 def my_order_groups(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
@@ -1348,6 +1399,7 @@ def my_order_groups(request):
 def order_group_detail(request, order_group_id):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
@@ -1432,6 +1484,7 @@ def order_group_detail(request, order_group_id):
 def order_detail(request, order_id):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
@@ -1450,6 +1503,7 @@ def order_detail(request, order_id):
 def locations(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
@@ -1490,6 +1544,7 @@ def locations(request):
 def location_detail(request, location_id):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
@@ -1751,20 +1806,14 @@ def customer_location_user_remove(request, user_address_id, user_id):
 def new_location(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
-    if not context["user_group"]:
-        if hasattr(request.user, "user_group") and request.user.user_group:
-            messages.warning(
-                request,
-                f"No customer selected! Using current staff user group [{request.user.user_group}].",
-            )
-        else:
-            # Get first available UserGroup.
-            user_group = UserGroup.objects.all().first()
-            messages.warning(
-                request,
-                f"No customer selected! Using first user group found: [{user_group.name}].",
-            )
+    # If staff user and not impersonating, then warn that no customer is selected.
+    if request.user.is_staff and not is_impersonating(request):
+        messages.warning(
+            request,
+            f"No customer selected! Location would be added to your account [{request.user.email}].",
+        )
 
     if request.method == "POST":
         try:
@@ -1845,6 +1894,7 @@ def user_associated_locations(request, user_id):
 def users(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
@@ -2001,10 +2051,11 @@ def user_detail(request, user_id):
 @login_required(login_url="/admin/login/")
 def new_user(request):
     context = {}
-    # TODO: Only allow admin to create new users.
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
 
+    # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
         messages.error(request, "Only admins can create new users.")
         return HttpResponseRedirect(reverse("customer_users"))
@@ -2018,7 +2069,7 @@ def new_user(request):
             context["form"] = form
             # Default to the current user's UserGroup.
             user_group_id = context["user"].user_group_id
-            if not context["user_group"] and context["user"].is_staff:
+            if not context["user_group"] and request.user.is_staff:
                 usergroup_id = request.POST.get("usergroupId")
                 if usergroup_id:
                     user_group = UserGroup.objects.get(id=usergroup_id)
@@ -2032,14 +2083,29 @@ def new_user(request):
                 if email and User.objects.filter(email=email.casefold()).exists():
                     raise UserAlreadyExistsError()
                 else:
-                    user_invite = UserGroupAdminApprovalUserInvite(
-                        user_group_id=user_group_id,
-                        first_name=first_name,
-                        last_name=last_name,
-                        email=email,
-                        type=user_type,
-                    )
-                    save_model = user_invite
+                    if user_group_id:
+                        user_invite = UserGroupAdminApprovalUserInvite(
+                            user_group_id=user_group_id,
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            type=user_type,
+                        )
+                        save_model = user_invite
+                    elif request.user.is_staff:
+                        # directly create the user
+                        user = User(
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            type=user_type,
+                        )
+                        save_model = user
+                        messages.success(request, "Directly created user.")
+                    else:
+                        raise ValueError(
+                            f"User:[{context['user'].id}]-UserGroup:[{user_group_id}]-invite attempt:[{email}]"
+                        )
             else:
                 raise InvalidFormError(form, "Invalid UserInviteForm")
             if save_model:
@@ -2077,6 +2143,7 @@ def new_user(request):
 def invoices(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     pagination_limit = 25
     page_number = 1
@@ -2131,6 +2198,7 @@ def invoices(request):
 def companies(request):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
@@ -2192,6 +2260,7 @@ def companies(request):
 def company_detail(request, user_group_id=None):
     context = {}
     context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
     if not user_group_id:
         if request.user.type != UserType.ADMIN:
             return HttpResponseRedirect(reverse("customer_home"))
