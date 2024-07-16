@@ -15,26 +15,24 @@
         <td colspan="2">No companies found</td>
     </tr>
 {% endfor %}
-{% if users %}
+<tr>
+    <td colspan="2">
+        <strong>Users</strong>
+    </td>
+</tr>
+{% for user in users %}
     <tr>
-        <td colspan="2">
-            <strong>Users</strong>
+        <td>
+            USER: {{ user.full_name }} - {{ user.email }}{% if user.user_group %}
+                - {{ user.user_group.name }}
+            {% endif %}
+        </td>
+        <td>
+            <span id="accept-button-container"><a class="btn btn-success" href="{% url 'customer_impersonation_start' %}?user_id={{ user.id }}">Select</a></span>
         </td>
     </tr>
-    {% for user in users %}
-        <tr>
-            <td>
-                USER: {{ user.full_name }} - {{ user.email }}{% if user.user_group %}
-                    - {{ user.user_group.name }}
-                {% endif %}
-            </td>
-            <td>
-                <span id="accept-button-container"><a class="btn btn-success" href="{% url 'customer_impersonation_start' %}?user_id={{ user.id }}">Select</a></span>
-            </td>
-        </tr>
-    {% empty %}
-        <tr>
-            <td colspan="2">No users found</td>
-        </tr>
-    {% endfor %}
-{% endif %}
+{% empty %}
+    <tr>
+        <td colspan="2">No users found</td>
+    </tr>
+{% endfor %}
