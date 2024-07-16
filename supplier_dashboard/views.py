@@ -424,6 +424,9 @@ def supplier_search(request, is_selection=False):
     context = {}
     if request.method == "POST":
         search = request.POST.get("search")
+        search = search.strip()
+        if not search:
+            return HttpResponse(status=204)
         try:
             seller_id = uuid.UUID(search)
             sellers = Seller.objects.filter(id=seller_id)

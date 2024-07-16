@@ -424,6 +424,9 @@ def customer_search(request, is_selection=False):
     context = {}
     if request.method == "POST":
         search = request.POST.get("search")
+        search = search.strip()
+        if not search:
+            return HttpResponse(status=204)
         try:
             search_id = uuid.UUID(search)
             user_groups = UserGroup.objects.filter(id=search_id)
@@ -644,6 +647,9 @@ def user_address_search(request):
     context = {}
     if request.method == "POST":
         search = request.POST.get("q")
+        search = search.strip()
+        if not search:
+            return HttpResponse(status=204)
         try:
             user_address_id = uuid.UUID(search)
             user_addresses = UserAddress.objects.filter(id=user_address_id)
