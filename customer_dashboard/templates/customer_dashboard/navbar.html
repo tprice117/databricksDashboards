@@ -18,10 +18,14 @@
         <ul class="navbar-nav flex-nowrap ms-auto">
             {% if request.user.is_staff %}
                 {% if user_group %}
-                    <p class="text-center" style="margin: auto;">{{ user_group.name }} |&nbsp;</p>
+                    <p class="text-center fw-bold" style="margin: auto;">{{ user_group.name }} |&nbsp;</p>
+                {% elif request.session.customer_user_id %}
+                    <p class="text-center" style="margin: auto;">
+                        <span class="fst-italic">{{ user.user_group.name }}</span>&nbsp;|&nbsp;
+                    </p>
                 {% endif %}
                 {% if request.session.customer_user_id %}
-                    <p class="text-center" style="margin: auto;">Impersonating User</p>
+                    <p class="text-center fw-bold" style="margin: auto;">Impersonating {{ user.first_name }}</p>
                     <a class="btn btn-link" style="margin-top:auto;margin-bottom:auto;" href="{% url 'customer_impersonation_stop' %}"><i class="fas fa-times-circle" style="color: red;"></i></a>
                 {% endif %}
                 <li class="nav-item dropdown no-arrow">

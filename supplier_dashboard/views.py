@@ -424,6 +424,9 @@ def supplier_search(request, is_selection=False):
     context = {}
     if request.method == "POST":
         search = request.POST.get("search")
+        search = search.strip()
+        if not search:
+            return HttpResponse(status=204)
         try:
             seller_id = uuid.UUID(search)
             sellers = Seller.objects.filter(id=seller_id)
@@ -1043,7 +1046,7 @@ def new_user(request):
             context["form"] = form
             # Default to the current user's UserGroup.
             user_group_id = context["user"].user_group_id
-            if not context["seller"] and context["user"].is_staff:
+            if not context["seller"] and request.user.is_staff:
                 seller_id = request.POST.get("sellerId")
                 if seller_id:
                     user_group = UserGroup.objects.get(seller_id=seller_id)
