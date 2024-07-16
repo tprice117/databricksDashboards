@@ -19,7 +19,7 @@
                 <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
             </li>
             <li class="nav-item">
-                {% if not user_group and user.is_staff %}
+                {% if user.is_staff and not is_impersonating %}
                     <button class="nav-link" role="button" onclick="selectCustomerPopup(event);"><i class="fas fa-cart-plus"></i>Start New Order</button>
                 {% else %}
                     <a class="nav-link{% if request.resolver_match.url_name == 'customer_new_order' %} active{% endif %}" href="{% url 'customer_new_order' %}"><i class="fas fa-cart-plus"></i><span>Start New Order</span></a>
