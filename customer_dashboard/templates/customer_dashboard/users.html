@@ -20,6 +20,9 @@
                     <table class="table my-0 table-hover" id="dataTable">
                         <thead>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Company</th>
+                                {% endif %}
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Type</th>
@@ -33,6 +36,13 @@
                                 <tr>
                                 {% else %}
                                 <tr class="clickable-row" onclick="window.location.href='{% url 'customer_user_detail' user_id=obj.user.id %}'">
+                                {% endif %}
+                                {% if request.user.is_staff %}
+                                    {% if obj.user.user_group %}
+                                        <td>{{ obj.user.user_group.name }}</td>
+                                    {% else %}
+                                        <td>Individual</td>
+                                    {% endif %}
                                 {% endif %}
                                     <td>
                                         <div class="d-flex flex-row">
