@@ -1,13 +1,14 @@
+from typing import Optional
+
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.waste_type import WasteType
-from pricing_engine.pricing_engine import PricingEngine
 
 
 class MaterialPrice:
     @staticmethod
     def get_price(
         seller_product_seller_location: SellerProductSellerLocation,
-        waste_type: WasteType | None,
+        waste_type: Optional[WasteType],
     ):
         """
         This method computes the material price based on the SellerProductSellerLocation's
@@ -22,7 +23,12 @@ class MaterialPrice:
         if (
             seller_product_seller_location.seller_product.product.main_product.has_material
         ):
+            included_tonnage_quantity = (
+                seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity
+            )
+            if included_tonnage_quantity is None:
+                included_tonnage_quantity = 0
             return seller_product_seller_location.material.get_price(
                 waste_type=waste_type,
-                quantity=seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity,
+                quantity=included_tonnage_quantity,
             )
