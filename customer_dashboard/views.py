@@ -220,7 +220,7 @@ def get_user_group_user_objects(
     """Returns the users for the current UserGroup.
 
     If user is:
-        - staff, then all users for all of UserGroups are returned.
+        - staff, then all users are returned.
         - not staff
             - is admin, then return all users for the UserGroup.
             - not admin, then only users in the logged in user's user group.
@@ -237,8 +237,8 @@ def get_user_group_user_objects(
         users = User.objects.filter(user_group_id=user.user_group_id)
     else:
         if request.user.is_staff and not is_impersonating(request):
-            # Global View: Get all users that have a non null UserGroup.
-            users = User.objects.filter(user_group__isnull=False)
+            # Global View: Get all users.
+            users = User.objects.all()
         elif user_group:
             users = User.objects.filter(user_group_id=user_group.id)
         else:
