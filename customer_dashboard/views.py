@@ -48,6 +48,8 @@ from communications.intercom.utils.utils import get_json_safe_value
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from matching_engine.utils.matching_engine.matching_engine import MatchingEngine
 
+# from pricing_engine.pricing_engine import PricingEngine
+
 from .forms import (
     AccessDetailsForm,
     PlacementDetailsForm,
@@ -957,6 +959,9 @@ def new_order_4(request):
     # print(f"Find Seller Locations: {step_time - start_time}")
 
     # if request.method == "POST":
+    # start_date = datetime.datetime.strptime(delivery_date, "%Y-%m-%d")
+    # if removal_date:
+    #     end_date = datetime.datetime.strptime(removal_date, "%Y-%m-%d")
     context["seller_product_locations"] = []
     for seller_product_location in seller_product_locations:
         seller_d = {}
@@ -2410,3 +2415,76 @@ def company_detail(request, user_group_id=None):
         )
 
     return render(request, "customer_dashboard/company_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_company(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+    context["user_group"] = None
+    if request.method == "POST":
+        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
+        context["user_form"] = UserForm(request.POST, request.FILES)
+        context["user_form"].fields["email"].disabled = False
+        context["form"] = form
+        if form.is_valid():
+            # Create New UserGroup
+            user_group = UserGroup(
+                name=form.cleaned_data.get("name"),
+                pay_later=form.cleaned_data.get("pay_later"),
+                autopay=form.cleaned_data.get("autopay"),
+                net_terms=form.cleaned_data.get("net_terms"),
+                invoice_frequency=form.cleaned_data.get("invoice_frequency"),
+                invoice_day_of_month=form.cleaned_data.get("invoice_day_of_month"),
+                invoice_at_project_completion=form.cleaned_data.get(
+                    "invoice_at_project_completion"
+                ),
+                credit_line_limit=form.cleaned_data.get("credit_line_limit"),
+                compliance_status=form.cleaned_data.get("compliance_status"),
+                tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
+            )
+            context["user_group"] = user_group
+            user_group.save()
+            if context["user_form"].is_valid():
+                # Create New User
+                email = context["user_form"].cleaned_data.get("email")
+                if User.objects.filter(email=email.casefold()).exists():
+                    user = User.objects.get(email=email.casefold())
+                    if user.user_group:
+                        messages.error(
+                            request,
+                            f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
+                        )
+                    else:
+                        user.user_group = user_group
+                        user.save()
+                        messages.success(request, "Successfully saved!")
+                        return HttpResponseRedirect(reverse("customer_companies"))
+                else:
+                    user = User(
+                        first_name=context["user_form"].cleaned_data.get("first_name"),
+                        last_name=context["user_form"].cleaned_data.get("last_name"),
+                        email=context["user_form"].cleaned_data.get("email"),
+                        type=context["user_form"].cleaned_data.get("type"),
+                        user_group=user_group,
+                    )
+                    user.save()
+                    messages.success(request, "Successfully saved!")
+                    return HttpResponseRedirect(reverse("customer_companies"))
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            messages.error(
+                request, "Error saving, please contact us if this continues."
+            )
+    else:
+        context["form"] = UserGroupForm(user=context["user"])
+        context["user_form"] = UserForm()
+        context["user_form"].fields["email"].required = True
+        context["user_form"].fields["email"].disabled = False
+
+    return render(request, "customer_dashboard/company_new.html", context)
