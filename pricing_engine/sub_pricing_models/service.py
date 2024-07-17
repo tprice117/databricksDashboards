@@ -1,12 +1,10 @@
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.user.user_address import UserAddress
-from pricing_engine.pricing_engine import PricingEngine
 
 
 class ServicePrice:
     @staticmethod
     def get_price(
-        self,
         user_address: UserAddress,
         seller_product_seller_location: SellerProductSellerLocation,
     ):
