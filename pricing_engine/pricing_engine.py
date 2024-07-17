@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.user.user_address import UserAddress
@@ -12,8 +13,8 @@ class PricingEngine:
         user_address: UserAddress,
         seller_product_seller_location: SellerProductSellerLocation,
         start_date: datetime.datetime,
-        end_date: datetime.datetime | None,
-        waste_type: WasteType | None,
+        end_date: Optional[datetime.datetime],
+        waste_type: Optional[WasteType],
     ):
         """
         This method calls the sub-classes to compute the total price based on

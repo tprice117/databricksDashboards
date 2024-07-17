@@ -1,4 +1,5 @@
 import datetime
+from typing import Union
 
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 
@@ -9,7 +10,7 @@ class RentalPrice:
         seller_product_seller_location: SellerProductSellerLocation,
         start_date: datetime.datetime,
         end_date: datetime.datetime,
-    ) -> float | None:
+    ) -> Union[float, None]:
         """
         This method computes the rental price based the SellerProductSellerLocation's
         (and related MainProduct) rental pricing structure.
@@ -17,8 +18,8 @@ class RentalPrice:
         Returns:
           The rental price (float)
         """
-        if end_date > start_date:
-            return Exception("End Date must be after the Start Date.")
+        if start_date < end_date:
+            raise Exception("End Date must be after the Start Date.")
 
         price = 0
 

@@ -27,8 +27,12 @@ class SellerProductSellerLocationMaterial(BaseModel):
         waste_type: WasteType,
         quantity: float,
     ) -> float:
-        if self.waste_types.filter(waste_type=waste_type).exists():
-            material_waste_type = self.waste_types.filter(waste_type=waste_type).first()
+        if self.waste_types.filter(
+            main_product_waste_type__waste_type=waste_type
+        ).exists():
+            material_waste_type = self.waste_types.filter(
+                main_product_waste_type__waste_type=waste_type
+            ).first()
             return quantity * material_waste_type.price_per_ton
         else:
             return 0

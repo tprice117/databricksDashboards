@@ -74,7 +74,7 @@
                                 <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.orders|length }}">{{ cart_address.orders|length }} item{{ cart_address.orders|length|pluralize }}</span>
                             </div>
                             <div class="ms-auto align-items-end">
-                                {% if user.is_staff %}<span class="ms-2">[{{ cart_address.address.user_group.name }}]</span>{% endif %}
+                                {% if user.is_staff %}<span class="ms-2">[{% if cart_address.address.user_group.name %}{{ cart_address.address.user_group.name }}{% else %}USER: {{ cart_address.address.user.full_name }}{% endif %}]</span>{% endif %}
                             </div>
                         </button>
                     </h2>
