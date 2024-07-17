@@ -1,5 +1,5 @@
-import datetime
 from datetime import timedelta
+from math import ceil
 
 from django.db import models
 
@@ -38,10 +38,10 @@ class SellerProductSellerLocationRentalOneStep(BaseModel):
         return self.rate
 
     def get_price(self, duration: timedelta):
-        if duration > 0:
-            return Exception("The Duration must be positive.")
+        if duration < timedelta(0):
+            raise Exception("The Duration must be positive.")
 
         # Get the quanity of 28 day periods for the rental.
-        periods = math.ceil(duration.days / 28)
+        periods = ceil(duration.days / 28)
 
         return self.rate * periods
