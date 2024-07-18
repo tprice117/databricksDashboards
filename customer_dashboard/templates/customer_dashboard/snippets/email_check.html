@@ -26,3 +26,13 @@
     <label for="id_last_name" class="form-label">Last name:</label>
     <input type="text" autocomplete="off" name="last_name" class="form-control" maxlength="255" required="" id="id_last_name" value="{{ last_name }}" />
 </div>
+{% if types %}
+    <div class="mb-3">
+        <label for="id_type" class="form-label">Type</label>
+        <select name="type" class="form-select" id="id_type">
+            {% for option in types %}
+                <option value="{{ option.0 }}"{% if type and type == option.0 %} selected{% endif %}>{{ option.1 }}</option>
+            {% endfor %}
+        </select>
+    </div>
+{% endif %}

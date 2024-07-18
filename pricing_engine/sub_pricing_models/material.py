@@ -27,7 +27,7 @@ class MaterialPrice:
                 seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity
             )
             if included_tonnage_quantity is None:
-                included_tonnage_quantity = 0
+                included_tonnage_quantity = 2
             return seller_product_seller_location.material.get_price(
                 waste_type=waste_type,
                 quantity=included_tonnage_quantity,

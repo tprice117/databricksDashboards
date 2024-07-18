@@ -52,7 +52,20 @@ class PricingEngine:
             else 0
         )
 
-        return service + rental + material
+        return {
+            "service": service,
+            "rental": rental,
+            "material": material,
+            "total": service + rental + material,
+            "delivery": PricingEngine.get_delivery_price(
+                user_address=user_address,
+                seller_product_seller_location=seller_product_seller_location,
+            ),
+            "removal": PricingEngine.get_removal_price(
+                user_address=user_address,
+                seller_product_seller_location=seller_product_seller_location,
+            ),  
+        }
 
     @staticmethod
     def get_delivery_price(
