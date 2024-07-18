@@ -2448,7 +2448,7 @@ def user_email_check(request):
                     context["first_name"] = user.first_name
                     context["last_name"] = user.last_name
         except ValidationError as e:
-            context["error"] = f"Invalid email address: [{e}]"
+            context["error"] = f"{e}"
             context["css_class"] = "form-error"
 
     # Assume htmx request
