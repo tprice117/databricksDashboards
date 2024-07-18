@@ -20,3 +20,4 @@ class ServicePrice:
         Returns:
           The service price (float)
         """
+        return 0
