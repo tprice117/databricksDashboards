@@ -461,12 +461,15 @@ def customer_search(request, is_selection=False):
 @login_required(login_url="/admin/login/")
 def customer_impersonation_start(request):
     if request.user.is_staff:
+        redirect_url = reverse("customer_home")
         if request.method == "POST":
             user_group_id = request.POST.get("user_group_id")
-            user_id = request.GET.get("user_id")
+            user_id = request.POST.get("user_id")
+            redirect_url = request.GET.get("redirect_url")
         elif request.method == "GET":
             user_group_id = request.GET.get("user_group_id")
             user_id = request.GET.get("user_id")
+            redirect_url = request.GET.get("redirect_url")
         else:
             return HttpResponse("Not Implemented", status=406)
         try:
@@ -493,7 +496,7 @@ def customer_impersonation_start(request):
                 user_group_id
             )
             request.session["customer_user_id"] = get_json_safe_value(user.id)
-            return HttpResponseRedirect("/customer/")
+            return HttpResponseRedirect(redirect_url)
         except User.DoesNotExist:
             messages.error(
                 request,
@@ -2415,13 +2418,14 @@ def company_detail(request, user_group_id=None):
             },
             user=context["user"],
         )
-
+        context["types"] = context["user"].get_allowed_user_types()
     return render(request, "customer_dashboard/company_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")
 def user_email_check(request):
     context = {}
+    context["user"] = get_user(request)
     context["help_msg"] = ""
     context["css_class"] = "form-valid"
     if request.method == "POST":
@@ -2429,6 +2433,10 @@ def user_email_check(request):
         context["phone"] = request.POST.get("phone")
         context["first_name"] = request.POST.get("first_name")
         context["last_name"] = request.POST.get("last_name")
+        context["last_name"] = request.POST.get("last_name")
+        context["type"] = request.POST.get("type")
+        if context["type"]:
+            context["types"] = context["user"].get_allowed_user_types()
     else:
         return HttpResponse("Invalid request method.", status=400)
     if context["email"]:
@@ -2447,6 +2455,7 @@ def user_email_check(request):
                     context["phone"] = user.phone
                     context["first_name"] = user.first_name
                     context["last_name"] = user.last_name
+                    context["type"] = user.type
         except ValidationError as e:
             context["error"] = f"{e}"
             context["css_class"] = "form-error"
@@ -2538,3 +2547,75 @@ def new_company(request):
         context["form"] = UserGroupForm(user=context["user"])
 
     return render(request, "customer_dashboard/company_new.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def company_new_user(request, user_group_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = UserGroup.objects.get(id=user_group_id)
+
+    # Only allow admin to create new users.
+    if context["user"].type != UserType.ADMIN:
+        messages.error(request, "Only admins can create new users.")
+        return HttpResponseRedirect(request.get_full_path())
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            POST_COPY = request.POST.copy()
+            # POST_COPY["email"] = user.email
+            form = UserInviteForm(POST_COPY, request.FILES, auth_user=context["user"])
+            context["form"] = form
+            if form.is_valid():
+                context["first_name"] = form.cleaned_data.get("first_name")
+                context["last_name"] = form.cleaned_data.get("last_name")
+                context["email"] = form.cleaned_data.get("email")
+                context["type"] = form.cleaned_data.get("type")
+                context["types"] = context["user"].get_allowed_user_types()
+                # Check if email is already in use.
+                if (
+                    context["email"]
+                    and User.objects.filter(email=context["email"].casefold()).exists()
+                ):
+                    user = User.objects.get(email=context["email"].casefold())
+                    if user.user_group:
+                        raise UserAlreadyExistsError()
+                    else:
+                        user.user_group = context["user_group"]
+                        save_model = user
+                else:
+                    user_invite = UserGroupAdminApprovalUserInvite(
+                        user_group_id=context["user_group"].id,
+                        first_name=context["first_name"],
+                        last_name=context["last_name"],
+                        email=context["email"],
+                        type=context["type"],
+                    )
+                    save_model = user_invite
+            else:
+                raise InvalidFormError(form, "Invalid UserInviteForm")
+            if save_model:
+                save_model.save()
+                context["form_msg"] = "Successfully saved!"
+                context["first_name"] = context["last_name"] = context["email"] = (
+                    context["type"]
+                ) = ""
+        except UserAlreadyExistsError:
+            context["form_error"] = "User with that email already exists."
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            context["form_error"] = ""
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                context["form_error"] += f"{field}: {e.form[field].errors}"
+        except Exception as e:
+            context["form_error"] = (
+                "Error saving, please contact us if this continues: [{e}]."
+            )
+            messages.error(request, e)
+    else:
+        context["types"] = context["user"].get_allowed_user_types()
+
+    return render(request, "customer_dashboard/snippets/company_new_user.html", context)

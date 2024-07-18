@@ -282,6 +282,20 @@ class User(AbstractUser):
         else:
             return Conversation.objects.none()
 
+    def get_allowed_user_types(self):
+        user_types = UserType.choices
+        if not self.is_staff:
+            if self.type == UserType.BILLING:
+                user_types = [
+                    (UserType.BILLING, UserType.BILLING),
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
+            elif self.type == UserType.MEMBER:
+                user_types = [
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
+        return user_types
+
 
 post_delete.connect(User.post_delete, sender=User)
 
