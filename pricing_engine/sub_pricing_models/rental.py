@@ -18,7 +18,7 @@ class RentalPrice:
         Returns:
           The rental price (float)
         """
-        if start_date < end_date:
+        if end_date < start_date:
             raise Exception("End Date must be after the Start Date.")
 
         price = 0
