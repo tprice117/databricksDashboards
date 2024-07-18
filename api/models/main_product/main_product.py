@@ -70,4 +70,6 @@ class MainProduct(BaseModel):
 def pre_save_main_product(sender, instance: MainProduct, **kwargs):
     # Ensure that if [has_material] is True, [included_tonnage_quantity] is not None.
     if instance.has_material and instance.included_tonnage_quantity is None:
-        raise ValueError("MainProduct must have included tonnage quantity.")
+        raise ValueError(
+            "MainProduct must have included tonnage quantity since [has_material] is True."
+        )
