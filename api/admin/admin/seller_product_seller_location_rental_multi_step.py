@@ -2,7 +2,7 @@ import logging
 from datetime import timedelta
 
 from django.contrib import admin
-from django.utils.html import mark_safe
+from django.utils.html import format_html
 
 from api.models.seller.seller_product_seller_location_rental_multi_step import (
     SellerProductSellerLocationRentalMultiStep,
@@ -39,6 +39,6 @@ class SellerProductSellerLocationRentalMultiStepAdmin(admin.ModelAdmin):
             f"{day} {'day' if day == 1 else 'days'}: ${obj.calculate_rental_price(duration=timedelta(days=day)):.2f}"
             for day in range(1, 31)
         ]
-        return mark_safe("<br/>".join(prices))
+        return format_html("<br/>".join(prices))
 
     formatted_pricing_table.short_description = "Price Table"
