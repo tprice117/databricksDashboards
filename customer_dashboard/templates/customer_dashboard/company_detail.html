@@ -76,7 +76,11 @@
                 <div class="card">
                     <div class="card-body">
                         <div>
-                            <h4>Users&nbsp;<button class="btn btn-primary float-end" type="button" data-bs-target="#new-user-modal-s" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Add</button></h4>
+                            {% if request.user.is_staff and not is_impersonating %}
+                                <h4>Users&nbsp;<button class="btn btn-primary float-end" type="button" data-bs-target="#new-user-modal-s" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Add</button></h4>
+                            {% else %}
+                                <h4>Users&nbsp;<a class="btn btn-primary float-end" type="button" href="{% url 'customer_new_user' %}"><i class="far fa-plus-square"></i>&nbsp;Add</a></h4>
+                            {% endif %}
                             {% comment %}Uncomment following line to be able to add users directly here{% endcomment %}
                             {% comment %} <h4>Users&nbsp;<a class="btn btn-primary float-end" type="button" data-bs-target="#new-user-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#new-user-modal" hx-get="{% url 'customer_new_company_user' user_group_id=user_group.id %}"><i class="far fa-plus-square"></i>&nbsp;Add <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a></h4> {% endcomment %}
                         </div>
@@ -136,7 +140,7 @@
                     <h4 class="modal-title">Add User</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    {% if request.user.is_staff %}
+                    {% if request.user.is_staff and not is_impersonating %}
                         <p>Tapping the impersonate button will first impersonate this Company and then take you to the Users page where you can add users.</p>
                     {% else %}
                         <p>Tapping the Add User button will take you to the correct page.</p>
@@ -144,7 +148,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button>
-                    {% if request.user.is_staff %}
+                    {% if request.user.is_staff and not is_impersonating %}
                         <a class="btn btn-primary" href="{% url 'customer_impersonation_start' %}?user_group_id={{ user_group.id }}&redirect_url={% url 'customer_new_user' %}">Impersonate</a>
                     {% else %}
                         <a class="btn btn-primary" href="{% url 'customer_new_user' %}">Add User</a>
