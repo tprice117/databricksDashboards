@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 from api.models.main_product.main_product_category import MainProductCategory
 from common.models import BaseModel
@@ -62,3 +64,10 @@ class MainProduct(BaseModel):
                 price = price_from
 
         return price
+
+
+@receiver(pre_save, sender=MainProduct)
+def pre_save_main_product(sender, instance: MainProduct, **kwargs):
+    # Ensure that if [has_material] is True, [included_tonnage_quantity] is not None.
+    if instance.has_material and instance.included_tonnage_quantity is None:
+        raise ValueError("MainProduct must have included tonnage quantity.")
