@@ -61,6 +61,8 @@ urlpatterns = [
     ),
     path("customer/user/new/", views.new_user, name="customer_new_user"),
     path("customer/invoices/", views.invoices, name="customer_invoices"),
+    path("customer/company/new/", views.new_company, name="customer_new_company"),
+    path("customer/email/check/", views.user_email_check, name="customer_email_check"),
     path("customer/companies/", views.companies, name="customer_companies"),
     path(
         "customer/company/<uuid:user_group_id>/",

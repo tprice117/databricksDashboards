@@ -14,6 +14,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.db import IntegrityError
 from django.db.models import Q
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
 from api.models import (
     AddOn,
@@ -47,6 +49,8 @@ from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from matching_engine.utils.matching_engine.matching_engine import MatchingEngine
+
+# from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
     AccessDetailsForm,
@@ -957,6 +961,9 @@ def new_order_4(request):
     # print(f"Find Seller Locations: {step_time - start_time}")
 
     # if request.method == "POST":
+    # start_date = datetime.datetime.strptime(delivery_date, "%Y-%m-%d")
+    # if removal_date:
+    #     end_date = datetime.datetime.strptime(removal_date, "%Y-%m-%d")
     context["seller_product_locations"] = []
     for seller_product_location in seller_product_locations:
         seller_d = {}
@@ -2410,3 +2417,124 @@ def company_detail(request, user_group_id=None):
         )
 
     return render(request, "customer_dashboard/company_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_email_check(request):
+    context = {}
+    context["help_msg"] = ""
+    context["css_class"] = "form-valid"
+    if request.method == "POST":
+        context["email"] = request.POST.get("email")
+        context["phone"] = request.POST.get("phone")
+        context["first_name"] = request.POST.get("first_name")
+        context["last_name"] = request.POST.get("last_name")
+    else:
+        return HttpResponse("Invalid request method.", status=400)
+    if context["email"]:
+        try:
+            validate_email(context["email"])
+            if User.objects.filter(email=context["email"].casefold()).exists():
+                user = User.objects.get(email=context["email"].casefold())
+                if user.user_group:
+                    context["error"] = (
+                        f"User [{context['email']}] already exists in UserGroup [{user.user_group.name}]."
+                    )
+                    context["css_class"] = "form-error"
+                else:
+                    context["help_msg"] = "Found existing user with that email."
+                    context["email"] = user.email
+                    context["phone"] = user.phone
+                    context["first_name"] = user.first_name
+                    context["last_name"] = user.last_name
+        except ValidationError as e:
+            context["error"] = f"{e}"
+            context["css_class"] = "form-error"
+
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request,
+        "customer_dashboard/snippets/email_check.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_company(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+    context["user_group"] = None
+    context["help_msg"] = "Enter new or existing user email."
+    if request.method == "POST":
+        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
+        POST_COPY = request.POST.copy()
+        if request.POST.get("type"):
+            context["type"] = request.POST.get("type")
+        else:
+            POST_COPY["type"] = UserType.ADMIN
+        context["user_form"] = UserForm(POST_COPY, request.FILES)
+        context["user_form"].fields["email"].disabled = False
+        context["email"] = request.POST.get("email")
+        context["phone"] = request.POST.get("phone")
+        context["first_name"] = request.POST.get("first_name")
+        context["last_name"] = request.POST.get("last_name")
+        context["form"] = form
+        if form.is_valid():
+            # Create New UserGroup
+            user_group = UserGroup(
+                name=form.cleaned_data.get("name"),
+                pay_later=form.cleaned_data.get("pay_later"),
+                autopay=form.cleaned_data.get("autopay"),
+                net_terms=form.cleaned_data.get("net_terms"),
+                invoice_frequency=form.cleaned_data.get("invoice_frequency"),
+                invoice_day_of_month=form.cleaned_data.get("invoice_day_of_month"),
+                invoice_at_project_completion=form.cleaned_data.get(
+                    "invoice_at_project_completion"
+                ),
+                credit_line_limit=form.cleaned_data.get("credit_line_limit"),
+                compliance_status=form.cleaned_data.get("compliance_status"),
+                tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
+            )
+            context["user_group"] = user_group
+            user_group.save()
+            if context["user_form"].is_valid():
+                # Create New User
+                email = context["user_form"].cleaned_data.get("email")
+                if User.objects.filter(email=email.casefold()).exists():
+                    user = User.objects.get(email=email.casefold())
+                    if user.user_group:
+                        messages.error(
+                            request,
+                            f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
+                        )
+                    else:
+                        user.user_group = user_group
+                        user.save()
+                        messages.success(request, "Successfully saved!")
+                        return HttpResponseRedirect(reverse("customer_companies"))
+                else:
+                    user = User(
+                        first_name=context["user_form"].cleaned_data.get("first_name"),
+                        last_name=context["user_form"].cleaned_data.get("last_name"),
+                        email=context["user_form"].cleaned_data.get("email"),
+                        type=context["user_form"].cleaned_data.get("type"),
+                        user_group=user_group,
+                    )
+                    user.save()
+                    messages.success(request, "Successfully saved!")
+                    return HttpResponseRedirect(reverse("customer_companies"))
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            messages.error(
+                request, "Error saving, please contact us if this continues."
+            )
+    else:
+        context["form"] = UserGroupForm(user=context["user"])
+
+    return render(request, "customer_dashboard/company_new.html", context)
