@@ -175,8 +175,8 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
             A tuple containing the rental price (decimal) and the chosen pricing tier
             (e.g., "Hourly", "Daily", "Weekly", "Monthly").
         """
-        if duration > 0:
-            return Exception("The Duration must be positive.")
+        if duration < timedelta(0):
+            raise Exception("The Duration must be positive.")
 
         # Get the total number of hours.
         hours = duration.total_seconds() / 3600
