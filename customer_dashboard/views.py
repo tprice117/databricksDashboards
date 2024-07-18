@@ -14,6 +14,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.db import IntegrityError
 from django.db.models import Q
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
 from api.models import (
     AddOn,
@@ -2418,6 +2420,47 @@ def company_detail(request, user_group_id=None):
 
 
 @login_required(login_url="/admin/login/")
+def user_email_check(request):
+    context = {}
+    context["help_msg"] = ""
+    context["css_class"] = "form-valid"
+    if request.method == "POST":
+        context["email"] = request.POST.get("email")
+        context["phone"] = request.POST.get("phone")
+        context["first_name"] = request.POST.get("first_name")
+        context["last_name"] = request.POST.get("last_name")
+    else:
+        return HttpResponse("Invalid request method.", status=400)
+    if context["email"]:
+        try:
+            validate_email(context["email"])
+            if User.objects.filter(email=context["email"].casefold()).exists():
+                user = User.objects.get(email=context["email"].casefold())
+                if user.user_group:
+                    context["error"] = (
+                        f"User [{context['email']}] already exists in UserGroup [{user.user_group.name}]."
+                    )
+                    context["css_class"] = "form-error"
+                else:
+                    context["help_msg"] = "Found existing user with that email."
+                    context["email"] = user.email
+                    context["phone"] = user.phone
+                    context["first_name"] = user.first_name
+                    context["last_name"] = user.last_name
+        except ValidationError as e:
+            context["error"] = f"Invalid email address: [{e}]"
+            context["css_class"] = "form-error"
+
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request,
+        "customer_dashboard/snippets/email_check.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
 def new_company(request):
     context = {}
     context["user"] = get_user(request)
@@ -2425,10 +2468,20 @@ def new_company(request):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
     context["user_group"] = None
+    context["help_msg"] = "Enter new or existing user email."
     if request.method == "POST":
         form = UserGroupForm(request.POST, request.FILES, user=context["user"])
-        context["user_form"] = UserForm(request.POST, request.FILES)
+        POST_COPY = request.POST.copy()
+        if request.POST.get("type"):
+            context["type"] = request.POST.get("type")
+        else:
+            POST_COPY["type"] = UserType.ADMIN
+        context["user_form"] = UserForm(POST_COPY, request.FILES)
         context["user_form"].fields["email"].disabled = False
+        context["email"] = request.POST.get("email")
+        context["phone"] = request.POST.get("phone")
+        context["first_name"] = request.POST.get("first_name")
+        context["last_name"] = request.POST.get("last_name")
         context["form"] = form
         if form.is_valid():
             # Create New UserGroup
@@ -2483,8 +2536,5 @@ def new_company(request):
             )
     else:
         context["form"] = UserGroupForm(user=context["user"])
-        context["user_form"] = UserForm()
-        context["user_form"].fields["email"].required = True
-        context["user_form"].fields["email"].disabled = False
 
     return render(request, "customer_dashboard/company_new.html", context)
