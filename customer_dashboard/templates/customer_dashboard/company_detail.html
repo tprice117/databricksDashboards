@@ -4,6 +4,22 @@
 {% block title %}
     Company Details
 {% endblock %}
+{% block javascript %}
+    <script>
+        const checkoutModal = document.getElementById("new-user-modal");
+        let itemChanged = false;
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            itemChanged = true;
+        });
+        checkoutModal.addEventListener("hidden.bs.modal", (event) => {
+            if (itemChanged) {
+                // reload the page to reflect the changes
+                location.reload();
+            }
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         <h3 class="text-dark mb-1">Company Details</h3>
@@ -60,7 +76,9 @@
                 <div class="card">
                     <div class="card-body">
                         <div>
-                            <h4>Users&nbsp;<button class="btn btn-primary float-end" type="button" data-bs-target="#modal-3" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Add</button></h4>
+                            <h4>Users&nbsp;<button class="btn btn-primary float-end" type="button" data-bs-target="#new-user-modal-s" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Add</button></h4>
+                            {% comment %}Uncomment following line to be able to add users directly here{% endcomment %}
+                            {% comment %} <h4>Users&nbsp;<a class="btn btn-primary float-end" type="button" data-bs-target="#new-user-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#new-user-modal" hx-get="{% url 'customer_new_company_user' user_group_id=user_group.id %}"><i class="far fa-plus-square"></i>&nbsp;Add <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a></h4> {% endcomment %}
                         </div>
                         <hr />
                         <div class="table-responsive" style="margin-bottom: 16px;">
@@ -111,16 +129,25 @@
     </div>
 {% endblock %}
 {% block modals %}
-    <div class="modal fade" role="dialog" tabindex="-1" id="modal-3">
+    <div class="modal fade" role="dialog" tabindex="-1" id="new-user-modal-s">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">Add User</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Add User Form here</p>
+                    <p>Tapping the impersonate button will first impersonate this Company and then take you to the Users page where you can add users.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <a class="btn btn-primary" href="{% url 'customer_impersonation_start' %}?user_group_id={{ user_group.id }}&redirect_url={% url 'customer_new_user' %}">Impersonate</a>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" id="new-user-modal" style="display: none;" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content"></div>
         </div>
     </div>
     <div class="modal fade" role="dialog" tabindex="-1" id="modal-4">
