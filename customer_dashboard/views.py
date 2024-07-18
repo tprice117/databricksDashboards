@@ -49,8 +49,7 @@ from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from matching_engine.utils.matching_engine.matching_engine import MatchingEngine
-
-# from pricing_engine.pricing_engine import PricingEngine
+from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
     AccessDetailsForm,
@@ -465,11 +464,13 @@ def customer_impersonation_start(request):
         if request.method == "POST":
             user_group_id = request.POST.get("user_group_id")
             user_id = request.POST.get("user_id")
-            redirect_url = request.GET.get("redirect_url")
+            if request.POST.get("redirect_url"):
+                redirect_url = request.GET.get("redirect_url")
         elif request.method == "GET":
             user_group_id = request.GET.get("user_group_id")
             user_id = request.GET.get("user_id")
-            redirect_url = request.GET.get("redirect_url")
+            if request.GET.get("redirect_url"):
+                redirect_url = request.GET.get("redirect_url")
         else:
             return HttpResponse("Not Implemented", status=406)
         try:
@@ -965,12 +966,16 @@ def new_order_4(request):
 
     # if request.method == "POST":
     # start_date = datetime.datetime.strptime(delivery_date, "%Y-%m-%d")
+    # end_date = None
     # if removal_date:
     #     end_date = datetime.datetime.strptime(removal_date, "%Y-%m-%d")
     context["seller_product_locations"] = []
     for seller_product_location in seller_product_locations:
         seller_d = {}
         seller_d["seller_product_location"] = seller_product_location
+        # pricing_data = PricingEngine.get_price(
+        #     user_address_obj, seller_product_location, start_date, end_date, waste_type
+        # )
         pricing_data = get_pricing(
             context["product"].id,
             user_address_id,
