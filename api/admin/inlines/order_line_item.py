@@ -27,6 +27,7 @@ class OrderLineItemInlineForm(forms.ModelForm):
             "is_paid",
             "stripe_invoice_line_item_id",
         )
+        raw_id_fields = ("order_line_item_type",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

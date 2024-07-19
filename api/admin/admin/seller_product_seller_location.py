@@ -12,6 +12,9 @@ from api.admin.inlines import (
 )
 from api.forms import CsvImportForm
 from api.models import SellerLocation, SellerProduct, SellerProductSellerLocation
+from api.admin.filters.seller_product_seller_location_seller.rental_mode_filter import (
+    RentalModeFilter,
+)
 
 
 @admin.register(SellerProductSellerLocation)
@@ -22,10 +25,12 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
         "seller_product__product__main_product__name",
     ]
     list_display = ("seller_product", "seller_location", "get_seller")
+    raw_id_fields = ("created_by", "updated_by")
     autocomplete_fields = ["seller_product", "seller_location"]
     list_filter = (
         "seller_product__product__main_product__main_product_category",
         "seller_location__seller",
+        RentalModeFilter,
     )
     inlines = [
         SellerProductSellerLocationServiceInline,

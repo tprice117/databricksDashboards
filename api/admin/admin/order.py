@@ -49,6 +49,7 @@ class OrderAdmin(admin.ModelAdmin):
         "total_invoiced_from_seller",
         "seller_invoice_status",
     )
+    raw_id_fields = ("order_group", "created_by", "updated_by")
     list_filter = (
         "status",
         CreatedDateFilter,

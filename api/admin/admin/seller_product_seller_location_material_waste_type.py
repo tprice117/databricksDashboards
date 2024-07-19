@@ -19,6 +19,12 @@ logger = logging.getLogger(__name__)
 class SellerProductSellerLocationMaterialWasteTypeAdmin(admin.ModelAdmin):
     change_list_template = "admin/entities/seller_product_seller_location_material_waste_type_changelist.html"
 
+    raw_id_fields = (
+        "seller_product_seller_location_material",
+        "created_by",
+        "updated_by",
+    )
+
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [

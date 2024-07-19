@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 @admin.register(SellerProductSellerLocationRental)
 class SellerProductSellerLocationRentalAdmin(admin.ModelAdmin):
-    pass
+    raw_id_fields = (
+        "seller_product_seller_location",
+        "created_by",
+        "updated_by",
+    )
 
     change_list_template = (
         "admin/entities/seller_product_seller_location_rental_changelist.html"
