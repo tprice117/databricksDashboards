@@ -273,7 +273,7 @@
                                     {% for order in orders %}
                                         <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_booking_detail' order_id=order.id %}'">
                                             <td>{{ order.end_date }}</td>
-                                            <td>{{ order.type }}</td>
+                                            <td>{{ order.order_type }}</td>
                                             <td>{{ order.status }}</td>
                                         </tr>
                                     {% endfor %}

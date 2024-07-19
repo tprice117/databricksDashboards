@@ -1437,7 +1437,7 @@ def order_group_detail(request, order_group_id):
     context["order_group"] = order_group
     user_address = order_group.user_address
     context["user_address"] = user_address
-    context["orders"] = order_group.orders.all()
+    context["orders"] = order_group.orders.all().order_by("-end_date")
 
     if request.method == "POST":
         try:
@@ -2484,72 +2484,82 @@ def new_company(request):
     context["user_group"] = None
     context["help_msg"] = "Enter new or existing user email."
     if request.method == "POST":
-        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
-        POST_COPY = request.POST.copy()
-        if request.POST.get("type"):
-            context["type"] = request.POST.get("type")
-        else:
-            POST_COPY["type"] = UserType.ADMIN
-        context["user_form"] = UserForm(POST_COPY, request.FILES)
-        context["user_form"].fields["email"].disabled = False
-        context["email"] = request.POST.get("email")
-        context["phone"] = request.POST.get("phone")
-        context["first_name"] = request.POST.get("first_name")
-        context["last_name"] = request.POST.get("last_name")
-        context["form"] = form
-        if form.is_valid():
-            # Create New UserGroup
-            user_group = UserGroup(
-                name=form.cleaned_data.get("name"),
-                pay_later=form.cleaned_data.get("pay_later"),
-                autopay=form.cleaned_data.get("autopay"),
-                net_terms=form.cleaned_data.get("net_terms"),
-                invoice_frequency=form.cleaned_data.get("invoice_frequency"),
-                invoice_day_of_month=form.cleaned_data.get("invoice_day_of_month"),
-                invoice_at_project_completion=form.cleaned_data.get(
-                    "invoice_at_project_completion"
-                ),
-                credit_line_limit=form.cleaned_data.get("credit_line_limit"),
-                compliance_status=form.cleaned_data.get("compliance_status"),
-                tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
-            )
-            context["user_group"] = user_group
-            user_group.save()
-            if context["user_form"].is_valid():
-                # Create New User
-                email = context["user_form"].cleaned_data.get("email")
-                if User.objects.filter(email=email.casefold()).exists():
-                    user = User.objects.get(email=email.casefold())
-                    if user.user_group:
-                        messages.error(
-                            request,
-                            f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
-                        )
+        try:
+            form = UserGroupForm(request.POST, request.FILES, user=request.user)
+            POST_COPY = request.POST.copy()
+            if request.POST.get("type"):
+                context["type"] = request.POST.get("type")
+            else:
+                POST_COPY["type"] = UserType.ADMIN
+            context["user_form"] = UserForm(POST_COPY, request.FILES)
+            context["user_form"].fields["email"].disabled = False
+            context["email"] = request.POST.get("email")
+            context["phone"] = request.POST.get("phone")
+            context["first_name"] = request.POST.get("first_name")
+            context["last_name"] = request.POST.get("last_name")
+            context["form"] = form
+            if form.is_valid():
+                # Create New UserGroup
+                user_group = UserGroup(
+                    name=form.cleaned_data.get("name"),
+                    pay_later=form.cleaned_data.get("pay_later"),
+                    autopay=form.cleaned_data.get("autopay"),
+                    net_terms=form.cleaned_data.get("net_terms"),
+                    invoice_frequency=form.cleaned_data.get("invoice_frequency"),
+                    invoice_day_of_month=form.cleaned_data.get("invoice_day_of_month"),
+                    invoice_at_project_completion=form.cleaned_data.get(
+                        "invoice_at_project_completion"
+                    ),
+                    credit_line_limit=form.cleaned_data.get("credit_line_limit"),
+                    compliance_status=form.cleaned_data.get("compliance_status"),
+                    tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
+                )
+                context["user_group"] = user_group
+                user_group.save()
+                if context["user_form"].is_valid():
+                    # Create New User
+                    email = context["user_form"].cleaned_data.get("email")
+                    if User.objects.filter(email=email.casefold()).exists():
+                        user = User.objects.get(email=email.casefold())
+                        if user.user_group:
+                            messages.error(
+                                request,
+                                f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
+                            )
+                        else:
+                            user.user_group = user_group
+                            user.save()
+                            messages.success(request, "Successfully saved!")
+                            return HttpResponseRedirect(reverse("customer_companies"))
                     else:
-                        user.user_group = user_group
+                        user = User(
+                            first_name=context["user_form"].cleaned_data.get(
+                                "first_name"
+                            ),
+                            last_name=context["user_form"].cleaned_data.get(
+                                "last_name"
+                            ),
+                            email=context["user_form"].cleaned_data.get("email"),
+                            type=context["user_form"].cleaned_data.get("type"),
+                            user_group=user_group,
+                        )
                         user.save()
                         messages.success(request, "Successfully saved!")
                         return HttpResponseRedirect(reverse("customer_companies"))
-                else:
-                    user = User(
-                        first_name=context["user_form"].cleaned_data.get("first_name"),
-                        last_name=context["user_form"].cleaned_data.get("last_name"),
-                        email=context["user_form"].cleaned_data.get("email"),
-                        type=context["user_form"].cleaned_data.get("type"),
-                        user_group=user_group,
-                    )
-                    user.save()
-                    messages.success(request, "Successfully saved!")
-                    return HttpResponseRedirect(reverse("customer_companies"))
-        else:
-            # This will let bootstrap know to highlight the fields with errors.
-            for field in form.errors:
-                form[field].field.widget.attrs["class"] += " is-invalid"
+            else:
+                # This will let bootstrap know to highlight the fields with errors.
+                for field in form.errors:
+                    form[field].field.widget.attrs["class"] += " is-invalid"
+                messages.error(
+                    request, "Error saving, please contact us if this continues."
+                )
+        except Exception as e:
             messages.error(
-                request, "Error saving, please contact us if this continues."
+                request, f"Error saving, please contact us if this continues. [{e}]"
             )
+            logger.error(f"new_company: [{e}]", exc_info=e)
     else:
-        context["form"] = UserGroupForm(user=context["user"])
+        context["form"] = UserGroupForm(user=request.user)
 
     return render(request, "customer_dashboard/company_new.html", context)
 

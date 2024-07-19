@@ -146,7 +146,7 @@
                                     {% for order in orders %}
                                         <tr>
                                             <td>{{ order.end_date }}</td>
-                                            <td>{{ order.type }}</td>
+                                            <td>{{ order.order_type }}</td>
                                             <td>{{ order.status }}</td>
                                             <td>
                                                 <a class="btn btn-light" role="button" href="{% url 'customer_order_detail' order_id=order.id %}"><i class="far fa-eye"></i></a>
