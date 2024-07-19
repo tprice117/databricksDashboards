@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 @admin.register(SellerProductSellerLocationRentalMultiStep)
 class SellerProductSellerLocationRentalMultiStepAdmin(admin.ModelAdmin):
+    raw_id_fields = (
+        "seller_product_seller_location",
+        "created_by",
+        "updated_by",
+    )
     fields = (
         "hour",
         "day",
