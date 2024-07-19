@@ -1437,7 +1437,7 @@ def order_group_detail(request, order_group_id):
     context["order_group"] = order_group
     user_address = order_group.user_address
     context["user_address"] = user_address
-    context["orders"] = order_group.orders.all()
+    context["orders"] = order_group.orders.all().order_by("-end_date")
 
     if request.method == "POST":
         try:
