@@ -19,6 +19,12 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
         SellerProductSellerLocationMaterialWasteTypeInline,
     ]
 
+    raw_id_fields = (
+        "seller_product_seller_location",
+        "created_by",
+        "updated_by",
+    )
+
     change_list_template = (
         "admin/entities/seller_product_seller_location_material_changelist.html"
     )

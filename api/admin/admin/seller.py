@@ -30,6 +30,7 @@ class SellerAdmin(admin.ModelAdmin):
     list_filter = [
         SellerAdminTasksFilter,
     ]
+    raw_id_fields = ("created_by", "updated_by")
 
     change_list_template = "admin/entities/seller_changelist.html"
 

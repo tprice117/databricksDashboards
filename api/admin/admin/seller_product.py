@@ -14,6 +14,13 @@ class SellerProductAdmin(admin.ModelAdmin):
     list_display = ("product", "seller")
     list_filter = ("product__main_product__main_product_category", "seller")
 
+    raw_id_fields = (
+        "product",
+        "seller",
+        "created_by",
+        "updated_by",
+    )
+
     change_list_template = "admin/entities/seller_product_changelist.html"
 
     def get_urls(self):

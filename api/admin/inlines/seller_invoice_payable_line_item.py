@@ -11,3 +11,4 @@ class SellerInvoicePayableLineItemInline(admin.TabularInline):
     ]
     show_change_link = True
     extra = 0
+    raw_id_fields = ("order",)

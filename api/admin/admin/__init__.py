@@ -27,6 +27,9 @@ from .seller_product_seller_location_rental import (
 from .seller_product_seller_location_rental_multi_step import (
     SellerProductSellerLocationRentalMultiStepAdmin,
 )
+from .seller_product_seller_location_rental_one_step import (
+    SellerProductSellerLocationRentalOneStepAdmin,
+)
 from .seller_product_seller_location_service import (
     SellerProductSellerLocationServiceAdmin,
 )

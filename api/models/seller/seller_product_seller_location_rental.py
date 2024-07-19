@@ -35,8 +35,8 @@ class SellerProductSellerLocationRental(BaseModel):
         self,
         duration: timedelta,
     ):
-        if duration > 0:
-            return Exception("The Duration must be positive.")
+        if duration < timedelta(0):
+            raise Exception("The Duration must be positive.")
 
         # Included day price (always charged).
         included_price = self.included_days * self.price_per_day_included
