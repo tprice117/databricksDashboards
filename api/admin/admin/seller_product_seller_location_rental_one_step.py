@@ -21,7 +21,11 @@ class SellerProductSellerLocationRentalOneStepAdmin(admin.ModelAdmin):
         "updated_on",
         "created_on",
     )
-    raw_id_fields = ("seller_product_seller_location",)
+    raw_id_fields = (
+        "seller_product_seller_location",
+        "created_by",
+        "updated_by",
+    )
     fields = (
         "seller_product_seller_location",
         "rate",

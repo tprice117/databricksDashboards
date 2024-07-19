@@ -63,6 +63,7 @@ class UserGroupAdmin(admin.ModelAdmin):
     actions = [
         "create_invoices",
     ]
+    raw_id_fields = ("seller", "created_by", "updated_by")
 
     change_list_template = "admin/entities/user_group_changelist.html"
 

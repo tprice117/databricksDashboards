@@ -14,3 +14,4 @@ class SellerProductSellerLocationRentalMultiStepInline(admin.StackedInline):
         "two_weeks",
         "month",
     )
+    raw_id_fields = ("seller_product_seller_location", "created_by", "updated_by")

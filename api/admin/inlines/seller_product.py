@@ -8,3 +8,4 @@ class SellerProductInline(admin.TabularInline):
     fields = ("product",)
     show_change_link = True
     extra = 0
+    raw_id_fields = ("product",)

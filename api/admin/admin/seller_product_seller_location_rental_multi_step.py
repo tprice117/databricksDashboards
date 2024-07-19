@@ -19,6 +19,7 @@ class SellerProductSellerLocationRentalMultiStepAdmin(admin.ModelAdmin):
         "updated_by",
     )
     fields = (
+        "seller_product_seller_location",
         "hour",
         "day",
         "week",
@@ -27,7 +28,11 @@ class SellerProductSellerLocationRentalMultiStepAdmin(admin.ModelAdmin):
         "formatted_pricing_table",
         "updated_on",
     )
-    readonly_fields = ("formatted_pricing_table", "updated_on")
+    readonly_fields = (
+        "seller_product_seller_location",
+        "formatted_pricing_table",
+        "updated_on",
+    )
 
     def formatted_pricing_table(self, obj: SellerProductSellerLocationRentalMultiStep):
         """
