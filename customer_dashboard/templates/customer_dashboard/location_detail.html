@@ -104,7 +104,7 @@
                                                     <td>{{ invoice.due_date }}</td>
                                                     <td>${{ invoice.total|stringformat:'.2f'|intcomma }}</td>
                                                     <td>{{ invoice.status }}</td>
-                                                    <td>{{ invoice.invoice_id }}</td>
+                                                    <td>{{ invoice.number }}</td>
                                                     {% if invoice.invoice_pdf %}
                                                         <td>
                                                             <a class="btn btn-light" href="{{ invoice.invoice_pdf }}"><i class="fas fa-download"></i></a>

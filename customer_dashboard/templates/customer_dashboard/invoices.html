@@ -95,7 +95,7 @@
                                     <td>{{ invoice.due_date }}</td>
                                     <td>${{ invoice.total|stringformat:'.2f'|intcomma }}</td>
                                     <td>{{ invoice.status }}</td>
-                                    <td>{{ invoice.invoice_id }}</td>
+                                    <td>{{ invoice.number }}</td>
                                     <td>
                                         <a href="{% url 'customer_location_detail' location_id=invoice.user_address.id %}">{{ invoice.user_address.formatted_address }}</a>
                                     </td>
