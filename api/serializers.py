@@ -13,6 +13,7 @@ from admin_policies.api.v1.serializers import (
     UserGroupPolicyMonthlyLimitSerializer,
     UserGroupPolicyPurchaseApprovalSerializer,
 )
+from api.models.main_product.main_product_tag import MainProductTag
 from notifications.utils.internal_email import send_email_on_new_signup
 
 from .models import (
@@ -394,10 +395,19 @@ class MainProductInfoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class MainProductTagSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = MainProductTag
+        fields = "__all__"
+
+
 class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product_category = MainProductCategorySerializer(read_only=True)
     main_product_infos = MainProductInfoSerializer(many=True, read_only=True)
+    tags = MainProductTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = MainProduct
