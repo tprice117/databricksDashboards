@@ -3,6 +3,7 @@ from .add_on_choice import AddOnChoiceAdmin
 from .main_product import MainProductAdmin
 from .main_product_category import MainProductCategoryAdmin
 from .main_product_info import MainProductInfoAdmin
+from .main_product_tag import MainProductTagAdmin
 from .main_product_waste_type import MainProductWasteTypeAdmin
 from .order import OrderAdmin
 from .order_disposal_ticket import OrderDisposalTicketAdmin

@@ -7,8 +7,8 @@ from common.utils.get_file_path import get_file_path
 
 class MainProductCategory(BaseModel):
     def validate_file_extension(value):
-        if not value.name.endswith(".svg"):
-            raise ValidationError("Only .svg files are allowed.")
+        if not value.name.endswith(".png"):
+            raise ValidationError("Only .png files are allowed.")
 
     name = models.CharField(max_length=80)
     description = models.TextField(blank=True, null=True)

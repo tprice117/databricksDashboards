@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from api.models.main_product.main_product_category import MainProductCategory
+from api.models.main_product.main_product_tag import MainProductTag
 from common.models import BaseModel
 
 
@@ -18,6 +19,11 @@ class MainProduct(BaseModel):
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
     sort = models.IntegerField()
+    tags = models.ManyToManyField(
+        MainProductTag,
+        related_name="tags",
+        blank=True,
+    )
     included_tonnage_quantity = models.DecimalField(
         max_digits=18, decimal_places=0, blank=True, null=True
     )

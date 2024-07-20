@@ -11,6 +11,7 @@ from .main_product.main_product_info import MainProductInfo
 from .main_product.main_product_service_recurring_frequency import (
     MainProductServiceRecurringFrequency,
 )
+from .main_product.main_product_tag import MainProductTag
 from .main_product.main_product_waste_type import MainProductWasteType
 from .main_product.product import Product
 from .main_product.product_add_on_choice import ProductAddOnChoice
@@ -40,11 +41,11 @@ from .seller.seller_product_seller_location_material_waste_type import (
 from .seller.seller_product_seller_location_rental import (
     SellerProductSellerLocationRental,
 )
-from .seller.seller_product_seller_location_rental_one_step import (
-    SellerProductSellerLocationRentalOneStep,
-)
 from .seller.seller_product_seller_location_rental_multi_step import (
     SellerProductSellerLocationRentalMultiStep,
+)
+from .seller.seller_product_seller_location_rental_one_step import (
+    SellerProductSellerLocationRentalOneStep,
 )
 from .seller.seller_product_seller_location_service import (
     SellerProductSellerLocationService,

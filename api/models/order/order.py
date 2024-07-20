@@ -20,7 +20,10 @@ from api.utils.utils import encrypt_string
 from common.models import BaseModel
 from common.models.choices.user_type import UserType
 from notifications import signals as notifications_signals
-from notifications.utils.add_email_to_queue import add_email_to_queue
+from notifications.utils.add_email_to_queue import (
+    add_email_to_queue,
+    add_internal_email_to_queue,
+)
 from communications.intercom.conversation import Conversation as IntercomConversation
 
 logger = logging.getLogger(__name__)
@@ -668,15 +671,31 @@ class Order(BaseModel):
                 for user_seller_location in user_seller_locations:
                     if user_seller_location.user.email not in to_emails:
                         to_emails.append(user_seller_location.user.email)
-
-                add_email_to_queue(
-                    from_email="dispatch@trydownstream.com",
-                    to_emails=to_emails,
-                    bcc_emails=bcc_emails,
-                    subject=subject_supplier,
-                    html_content=html_content_supplier,
-                    reply_to="dispatch@trydownstream.com",
-                )
+                # If no emails found, then send to internal team and log error.
+                if not to_emails:
+                    logger.error(
+                        f"Order.send_supplier_approval_email: no emails found for seller_location_id:[{self.order_group.seller_product_seller_location.seller_location.id}]-[{self.order_group.user_address.formatted_address()}]-[order_id:{str(self.id)}]"
+                    )
+                    subject_supplier = f"{subject_supplier} - No emails found!"
+                    add_internal_email_to_queue(
+                        from_email="dispatch@trydownstream.com",
+                        subject=subject_supplier,
+                        html_content=html_content_supplier,
+                        additional_to_emails=[
+                            "mwickey@trydownstream.com",
+                        ],
+                        bcc_emails=bcc_emails,
+                        reply_to="dispatch@trydownstream.com",
+                    )
+                else:
+                    add_email_to_queue(
+                        from_email="dispatch@trydownstream.com",
+                        to_emails=to_emails,
+                        bcc_emails=bcc_emails,
+                        subject=subject_supplier,
+                        html_content=html_content_supplier,
+                        reply_to="dispatch@trydownstream.com",
+                    )
         except Exception as e:
             logger.error(f"Order.send_supplier_approval_email: [{e}]", exc_info=e)
 
