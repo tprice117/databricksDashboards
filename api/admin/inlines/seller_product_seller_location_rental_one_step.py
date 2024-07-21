@@ -1,5 +1,3 @@
-from django.contrib import admin
-
 from api.models import SellerProductSellerLocationRentalOneStep
 from common.admin import BaseModelStackedInline
 
