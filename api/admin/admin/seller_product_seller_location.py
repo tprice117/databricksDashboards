@@ -11,6 +11,7 @@ from api.admin.inlines import (
     SellerProductSellerLocationMaterialInline,
     SellerProductSellerLocationRentalInline,
     SellerProductSellerLocationRentalMultiStepInline,
+    SellerProductSellerLocationRentalOneStepInline,
     SellerProductSellerLocationServiceInline,
     SellerProductSellerLocationServiceTimesPerWeekInline,
 )
@@ -34,6 +35,7 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
         RentalModeFilter,
     )
     inlines = [
+        SellerProductSellerLocationRentalOneStepInline,
         SellerProductSellerLocationRentalInline,
         SellerProductSellerLocationRentalMultiStepInline,
         SellerProductSellerLocationServiceInline,
