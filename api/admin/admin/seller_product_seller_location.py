@@ -17,10 +17,11 @@ from api.admin.inlines import (
 )
 from api.forms import CsvImportForm
 from api.models import SellerLocation, SellerProduct, SellerProductSellerLocation
+from common.admin.admin.base_admin import BaseModelAdmin
 
 
 @admin.register(SellerProductSellerLocation)
-class SellerProductSellerLocationAdmin(admin.ModelAdmin):
+class SellerProductSellerLocationAdmin(BaseModelAdmin):
     search_fields = [
         "seller_location__name",
         "seller_location__seller__name",
@@ -42,6 +43,7 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
         SellerProductSellerLocationServiceTimesPerWeekInline,
         SellerProductSellerLocationMaterialInline,
     ]
+    readonly_fields = BaseModelAdmin.readonly_fields
 
     @admin.display(description="Seller")
     def get_seller(self, obj):
