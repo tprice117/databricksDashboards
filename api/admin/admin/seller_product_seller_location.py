@@ -51,6 +51,45 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
         "admin/entities/seller_product_seller_location_changelist.html"
     )
 
+    def change_view(
+        self,
+        request,
+        object_id,
+        form_url="",
+        extra_context=None,
+    ):
+        """
+        Dynamically change inlines based on the Pricing Model configuration
+        of the Main Product.
+        """
+        obj = self.model.objects.filter(pk=object_id).first()
+
+        # Begin with no inlines and add them based on the Pricing Model.
+        self.inlines = []
+
+        if obj:
+            main_product = obj.seller_product.product.main_product
+            if main_product.has_rental_one_step:
+                self.inlines += [SellerProductSellerLocationRentalOneStepInline]
+            if main_product.has_rental:
+                # Represents the "RentalTwoStep" pricing model.
+                self.inlines += [SellerProductSellerLocationRentalInline]
+            if main_product.has_rental_multi_step:
+                self.inlines += [SellerProductSellerLocationRentalMultiStepInline]
+            if main_product.has_service:
+                self.inlines += [SellerProductSellerLocationServiceInline]
+            if main_product.has_service_times_per_week:
+                self.inlines += [SellerProductSellerLocationServiceTimesPerWeekInline]
+            if main_product.has_material:
+                self.inlines += [SellerProductSellerLocationMaterialInline]
+
+        return super().change_view(
+            request,
+            object_id,
+            form_url=form_url,
+            extra_context=extra_context,
+        )
+
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
