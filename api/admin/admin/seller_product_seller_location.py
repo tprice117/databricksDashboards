@@ -4,17 +4,18 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 
+from api.admin.filters.seller_product_seller_location_seller.rental_mode_filter import (
+    RentalModeFilter,
+)
 from api.admin.inlines import (
     SellerProductSellerLocationMaterialInline,
     SellerProductSellerLocationRentalInline,
     SellerProductSellerLocationRentalMultiStepInline,
     SellerProductSellerLocationServiceInline,
+    SellerProductSellerLocationServiceTimesPerWeekInline,
 )
 from api.forms import CsvImportForm
 from api.models import SellerLocation, SellerProduct, SellerProductSellerLocation
-from api.admin.filters.seller_product_seller_location_seller.rental_mode_filter import (
-    RentalModeFilter,
-)
 
 
 @admin.register(SellerProductSellerLocation)
@@ -33,9 +34,10 @@ class SellerProductSellerLocationAdmin(admin.ModelAdmin):
         RentalModeFilter,
     )
     inlines = [
-        SellerProductSellerLocationServiceInline,
         SellerProductSellerLocationRentalInline,
         SellerProductSellerLocationRentalMultiStepInline,
+        SellerProductSellerLocationServiceInline,
+        SellerProductSellerLocationServiceTimesPerWeekInline,
         SellerProductSellerLocationMaterialInline,
     ]
 

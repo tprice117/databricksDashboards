@@ -34,5 +34,8 @@ from .seller_product_seller_location_service import (
 from .seller_product_seller_location_service_recurring_frequency import (
     SellerProductSellerLocationServiceRecurringFrequencyInline,
 )
+from .seller_product_seller_location_service_times_per_week import (
+    SellerProductSellerLocationServiceTimesPerWeekInline,
+)
 from .subscription import SubscriptionInline
 from .user import *

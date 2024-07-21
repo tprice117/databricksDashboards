@@ -128,6 +128,14 @@ class SellerProductSellerLocation(BaseModel):
             else True
         )
 
+        # Service.
+        service_times_per_week_complete = (
+            hasattr(self, "service_times_per_week")
+            and self.service_times_per_week.is_complete()
+            if self.seller_product.product.main_product.has_service_times_per_week
+            else True
+        )
+
         # Material.
         material_is_complete = (
             hasattr(self, "material") and self.material.is_complete()
@@ -139,6 +147,7 @@ class SellerProductSellerLocation(BaseModel):
             rental_one_step_complete
             and rental_two_step_complete
             and rental_multi_step_complete
+            and service_times_per_week_complete
             and material_is_complete
         )
 
