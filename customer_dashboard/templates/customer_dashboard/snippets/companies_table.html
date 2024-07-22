@@ -27,7 +27,7 @@
             {% endif %}
         </tr>
     </thead>
-    <tbody id="company-results">
+    <tbody>
         {% if page_obj %}
             {% for user_group in page_obj %}
                 <tr class="clickable-row" onclick="window.location.href='{% url 'customer_company_detail' user_group_id=user_group.id %}'">
