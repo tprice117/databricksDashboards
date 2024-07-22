@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from api.models.main_product.main_product_category import MainProductCategory
+from api.models.main_product.main_product_tag import MainProductTag
 from common.models import BaseModel
 
 
@@ -18,6 +19,11 @@ class MainProduct(BaseModel):
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
     sort = models.IntegerField()
+    tags = models.ManyToManyField(
+        MainProductTag,
+        related_name="tags",
+        blank=True,
+    )
     included_tonnage_quantity = models.DecimalField(
         max_digits=18, decimal_places=0, blank=True, null=True
     )
@@ -34,10 +40,15 @@ class MainProduct(BaseModel):
         max_digits=18, decimal_places=0, blank=True, null=True
     )
     main_product_code = models.CharField(max_length=255, blank=True, null=True)
-    has_service = models.BooleanField(default=False)
+
+    # Pricing Model Configuration.
+    # 'has_rental` is the legacy pricing model. It should be
+    # changed to 'RentalTwoStep' at some point.
     has_rental = models.BooleanField(default=False)
     has_rental_one_step = models.BooleanField(default=False)
     has_rental_multi_step = models.BooleanField(default=False)
+    has_service = models.BooleanField(default=False)
+    has_service_times_per_week = models.BooleanField(default=False)
     has_material = models.BooleanField(default=False)
 
     def __str__(self):

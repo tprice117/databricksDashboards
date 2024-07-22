@@ -3,6 +3,7 @@ from .add_on_choice import AddOnChoiceAdmin
 from .main_product import MainProductAdmin
 from .main_product_category import MainProductCategoryAdmin
 from .main_product_info import MainProductInfoAdmin
+from .main_product_tag import MainProductTagAdmin
 from .main_product_waste_type import MainProductWasteTypeAdmin
 from .order import OrderAdmin
 from .order_disposal_ticket import OrderDisposalTicketAdmin
@@ -18,21 +19,22 @@ from .seller_product_seller_location import SellerProductSellerLocationAdmin
 from .seller_product_seller_location_material import (
     SellerProductSellerLocationMaterialAdmin,
 )
-from .seller_product_seller_location_material_waste_type import (
-    SellerProductSellerLocationMaterialWasteTypeAdmin,
-)
-from .seller_product_seller_location_rental import (
-    SellerProductSellerLocationRentalAdmin,
-)
-from .seller_product_seller_location_rental_multi_step import (
-    SellerProductSellerLocationRentalMultiStepAdmin,
-)
-from .seller_product_seller_location_rental_one_step import (
-    SellerProductSellerLocationRentalOneStepAdmin,
-)
-from .seller_product_seller_location_service import (
-    SellerProductSellerLocationServiceAdmin,
-)
+
+# from .seller_product_seller_location_material_waste_type import (
+#     SellerProductSellerLocationMaterialWasteTypeAdmin,
+# )
+# from .seller_product_seller_location_rental import (
+#     SellerProductSellerLocationRentalAdmin,
+# )
+# from .seller_product_seller_location_rental_multi_step import (
+#     SellerProductSellerLocationRentalMultiStepAdmin,
+# )
+# from .seller_product_seller_location_rental_one_step import (
+#     SellerProductSellerLocationRentalOneStepAdmin,
+# )
+# from .seller_product_seller_location_service import (
+#     SellerProductSellerLocationServiceAdmin,
+# )
 from .user import UserAdmin
 from .user_address import UserAddressAdmin
 from .user_group import UserGroupAdmin
