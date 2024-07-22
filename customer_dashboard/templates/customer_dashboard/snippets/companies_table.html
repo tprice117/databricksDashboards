@@ -1,18 +1,81 @@
 {% load static %}
 {% load humanize %}
-<tbody id="company-results">
-    {% if page_obj %}
-        {% for user_group in page_obj %}
-            <tr class="clickable-row" onclick="window.location.href='{% url 'customer_company_detail' user_group_id=user_group.id %}'">
-                <td>{{ user_group.name }}</td>
-                <td>{{ user_group.users.count }}</td>
-                <td>{{ user_group.net_terms }}</td>
-                <td>{{ user_group.invoice_frequency }}</td>
-                <td>{{ user_group.credit_line_limit }}</td>
-            </tr>
-        {% endfor %}
-    {% endif %}
-</tbody>
+{% if request.user.is_staff and help_text %}
+    <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
+{% endif %}
+
+<table class="table table-hover my-0" id="company-results">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>User Count</th>
+            <th>Net Terms</th>
+            <th>Invoice Frequency</th>
+            <th>Credit Limit</th>
+            {% if request.user.is_staff %}
+                {% if tab == 'active' %}
+                    <th>Last Order End</th>
+                {% elif tab == 'churned' %}
+                    <th>Last Order End</th>
+                    <th>Change</th>
+                {% elif tab == 'fully_churned' %}
+                    <th>Last Order End</th>
+                    <th>Change</th>
+                {% else %}
+                    <th>Created On</th>
+                {% endif %}
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody id="company-results">
+        {% if page_obj %}
+            {% for user_group in page_obj %}
+                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_company_detail' user_group_id=user_group.id %}'">
+                    <td>{{ user_group.name }}</td>
+                    <td>{{ user_group.users.count }}</td>
+                    <td>{{ user_group.net_terms }}</td>
+                    <td>{{ user_group.invoice_frequency }}</td>
+                    <td>{{ user_group.credit_line_limit }}</td>
+                    {% if request.user.is_staff %}
+                        {% if tab == 'active' %}
+                            <td>{{ user_group.last_order }}</td>
+                        {% elif tab == 'churned' %}
+                            <td>{{ user_group.last_order }}</td>
+                            <td>${{ user_group.change|floatformat:2|intcomma }}</td>
+                        {% elif tab == 'fully_churned' %}
+                            <td>{{ user_group.last_order }}</td>
+                            <td>${{ user_group.change|floatformat:2|intcomma }}</td>
+                        {% else %}
+                            <td>{{ user_group.created_on }}</td>
+                        {% endif %}
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th>Name</th>
+            <th>User Count</th>
+            <th>Net Terms</th>
+            <th>Invoice Frequency</th>
+            <th>Credit Limit</th>
+            {% if request.user.is_staff %}
+                {% if tab == 'active' %}
+                    <th>Last Order End</th>
+                {% elif tab == 'churned' %}
+                    <th>Last Order End</th>
+                    <th>Change</th>
+                {% elif tab == 'fully_churned' %}
+                    <th>Last Order End</th>
+                    <th>Change</th>
+                {% else %}
+                    <th>Created On</th>
+                {% endif %}
+            {% endif %}
+        </tr>
+    </tfoot>
+</table>
 <div class="row" id="companies-pagination" hx-swap-oob="true">
     <div class="col-md-6 align-self-center">
         <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
@@ -38,3 +101,23 @@
         </nav>
     </div>
 </div>
+
+{% if request.user.is_staff %}
+    <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_companies' %}" hx-target="#company-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-swap-oob="true">
+        <option value=""{% if not tab or tab == '' %} selected{% endif %}>
+            Filter Data By
+        </option>
+        <option value="new"{% if tab == 'new' %} selected{% endif %}>
+            New (created in last 30 days)
+        </option>
+        <option value="active"{% if tab == 'active' %} selected{% endif %}>
+            Active Companies
+        </option>
+        <option value="churned"{% if tab == 'churned' %} selected{% endif %}>
+            Churning
+        </option>
+        <option value="fully_churned"{% if tab == 'fully_churned' %} selected{% endif %}>
+            Fully Churned
+        </option>
+    </select>
+{% endif %}
