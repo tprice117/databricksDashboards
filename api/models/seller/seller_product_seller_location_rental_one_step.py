@@ -34,9 +34,13 @@ class SellerProductSellerLocationRentalOneStep(BaseModel):
         null=True,
     )
 
-    @property
-    def is_complete(self):
-        return self.rate
+    def _is_complete(self):
+        return self.rate and self.rate > 0
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
 
     def get_price(self, duration: timedelta):
         if duration < timedelta(0):

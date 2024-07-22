@@ -19,9 +19,13 @@ class SellerProductSellerLocationMaterial(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
-    @property
-    def is_complete(self):
-        return len(self.waste_types) > 0
+    def _is_complete(self):
+        return len(self.waste_types.all()) > 0
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
 
     def get_price(
         self,

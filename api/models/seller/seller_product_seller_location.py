@@ -1,3 +1,4 @@
+from django.contrib import admin
 from django.db import models
 from django.db.models.signals import post_save
 
@@ -110,8 +111,7 @@ class SellerProductSellerLocation(BaseModel):
     def __str__(self):
         return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
 
-    @property
-    def is_complete(self):
+    def _is_complete(self):
         # Rental.
         rental_one_step_complete = (
             hasattr(self, "rental_one_step") and self.rental_one_step.is_complete
@@ -151,6 +151,11 @@ class SellerProductSellerLocation(BaseModel):
             and service_times_per_week_complete
             and material_is_complete
         )
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
 
     def post_save(sender, instance, created, **kwargs):
         # Create/delete Service.
