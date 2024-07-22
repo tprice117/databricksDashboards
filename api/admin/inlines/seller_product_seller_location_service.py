@@ -6,5 +6,17 @@ class SellerProductSellerLocationServiceInline(BaseModelStackedInline):
     model = SellerProductSellerLocationService
     show_change_link = True
     extra = 0
-    readonly_fields = BaseModelStackedInline.readonly_fields
-    raw_id_fields = ("seller_product_seller_location", "created_by", "updated_by")
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "price_per_mile",
+                    "flat_rate_price",
+                    "_is_complete",
+                ]
+            },
+        ),
+        BaseModelStackedInline.audit_fieldset,
+    ]
+    readonly_fields = BaseModelStackedInline.readonly_fields + ["_is_complete"]

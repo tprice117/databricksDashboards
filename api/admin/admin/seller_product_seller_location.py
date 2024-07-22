@@ -4,9 +4,6 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 
-from api.admin.filters.seller_product_seller_location_seller.rental_mode_filter import (
-    RentalModeFilter,
-)
 from api.admin.inlines import (
     SellerProductSellerLocationMaterialInline,
     SellerProductSellerLocationRentalInline,
@@ -27,14 +24,37 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin):
         "seller_location__seller__name",
         "seller_product__product__main_product__name",
     ]
-    list_display = ("seller_product", "seller_location", "get_seller", "is_complete")
-    raw_id_fields = ("created_by", "updated_by")
+    list_display = (
+        "seller_product",
+        "seller_location",
+        "get_seller",
+        "_is_complete",
+    )
     autocomplete_fields = ["seller_product", "seller_location"]
     list_filter = (
         "seller_product__product__main_product__main_product_category",
         "seller_location__seller",
-        RentalModeFilter,
     )
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "seller_product",
+                    "seller_location",
+                    "active",
+                    "min_price",
+                    "max_price",
+                    "service_radius",
+                    "delivery_fee",
+                    "removal_fee",
+                    "fuel_environmental_markup",
+                    "_is_complete",
+                ]
+            },
+        ),
+        BaseModelAdmin.audit_fieldset,
+    ]
     inlines = [
         SellerProductSellerLocationRentalOneStepInline,
         SellerProductSellerLocationRentalInline,
@@ -43,7 +63,7 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin):
         SellerProductSellerLocationServiceTimesPerWeekInline,
         SellerProductSellerLocationMaterialInline,
     ]
-    readonly_fields = BaseModelAdmin.readonly_fields
+    readonly_fields = BaseModelAdmin.readonly_fields + ["_is_complete"]
 
     @admin.display(description="Seller")
     def get_seller(self, obj):
@@ -52,6 +72,11 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin):
     change_list_template = (
         "admin/entities/seller_product_seller_location_changelist.html"
     )
+
+    def is_active_display(self):
+        return self.is_active
+
+    is_active_display.boolean = True
 
     def change_view(
         self,
