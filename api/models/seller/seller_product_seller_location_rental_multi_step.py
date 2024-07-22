@@ -42,6 +42,7 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
         null=True,
     )
 
+    @property
     def is_complete(self):
         return self.hour or self.day or self.week or self.two_weeks or self.month
 

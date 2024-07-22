@@ -54,6 +54,7 @@ class SellerProductSellerLocationServiceTimesPerWeek(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
+    @property
     def is_complete(self):
         return (
             self.one_time_per_week

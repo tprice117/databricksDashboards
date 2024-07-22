@@ -19,6 +19,7 @@ class SellerProductSellerLocationMaterial(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
+    @property
     def is_complete(self):
         return len(self.waste_types) > 0
 
