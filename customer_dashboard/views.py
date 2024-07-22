@@ -42,6 +42,7 @@ from api.models import (
     UserAddressType,
 )
 from api.models.user.user_user_address import UserUserAddress
+from api.models.user.user_group import CompanyUtils
 from api.pricing_ml import pricing
 from billing.models import Invoice
 from payment_methods.models import PaymentMethod
@@ -2231,8 +2232,6 @@ def companies(request):
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
     search_q = request.GET.get("q", None)
-    cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
-    churn_date = datetime.date.today() - datetime.timedelta(days=60)
     # location_id = request.GET.get("location_id", None)
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
@@ -2241,99 +2240,22 @@ def companies(request):
         query_params = request.GET.copy()
 
         if tab == "new":
-            user_groups = UserGroup.objects.filter(seller__isnull=True)
-            if search_q:
-                # https://docs.djangoproject.com/en/4.2/topics/db/search/
-                user_groups = user_groups.filter(name__icontains=search_q)
-            # Get all created in the last 30 days.
-            user_groups = user_groups.filter(created_on__gte=cutoff_date)
-            user_groups = user_groups.order_by("-created_on")
+            user_groups = CompanyUtils.get_new(search_q=search_q)
             context["help_text"] = "New Companies created in the last 30 days."
         elif tab == "active":
-            # Active Companies is user group on an order within date range (or within last 30 days if no range)
-            orders = Order.objects.filter(end_date__gte=cutoff_date)
-            if search_q:
-                orders = orders.filter(
-                    order_group__user__user_group__name__icontains=search_q
-                )
-            orders.select_related("order_group__user__user_group")
-            orders = orders.distinct("order_group__user__user_group")
-            orders = orders.order_by("order_group__user__user_group", "-end_date")
-            user_groups = []
-            for order in orders:
-                setattr(order.order_group.user.user_group, "last_order", order.end_date)
-                user_groups.append(order.order_group.user.user_group)
-            # sort based on user_group.created_on
-            user_groups = sorted(user_groups, key=lambda x: x.last_order, reverse=True)
+            user_groups = CompanyUtils.get_active(search_q=search_q)
             context["help_text"] = "Active Companies with orders in the last 30 days."
             pagination_limit = 100
         elif tab == "churned" or tab == "fully_churned":
-            import time
-
-            start_time = time.time()
-            # Churning = sum of all order.customer total for orders within the date range for a given User Group
-            # is less than the sum of the previous date range (or within last 30 days if no range)
-            # ie. If I select (1) Today to last Wednesday, it will look from (2) last Wednesday to 2 Wednesdays ago
-            # to compare the sums. If the sum of order totals for range 1 is less than range 2. That’s “churning”.
-            #
-            # Fully Churned = user group is not an active company within the date range, but was 30 days prior
-            # to the date range (or within last 30 days if no range)
-            orders = Order.objects.filter(end_date__gte=churn_date)
-            if search_q:
-                orders = orders.filter(
-                    order_group__user__user_group__name__icontains=search_q
-                )
-            orders.select_related("order_group__user__user_group")
-            orders = orders.prefetch_related("order_line_items")
-            print(orders.count())
-            step_time = time.time()
-            print(f"Query count: {step_time - start_time}")
-            user_groups_d = {}
-            for order in orders:
-                ugid = order.order_group.user.user_group_id
-                if ugid not in user_groups_d:
-                    user_groups_d[ugid] = {
-                        "count": 1,
-                        "total_old": 0,
-                        "total_new": 0,
-                        "user_group": order.order_group.user.user_group,
-                        "last_order": order.end_date,
-                    }
-                user_groups_d[ugid]["count"] += 1
-                if order.end_date < cutoff_date:
-                    user_groups_d[ugid]["total_old"] += order.customer_price()
-                else:
-                    user_groups_d[ugid]["total_new"] += order.customer_price()
-                if order.end_date > user_groups_d[ugid]["last_order"]:
-                    user_groups_d[ugid]["last_order"] = order.end_date
-                if len(user_groups_d) == 10:
-                    break
-            step_time = time.time()
-            print(f"Loop orders: {step_time - start_time}")
-
-            user_groups = []
-            for ugid, data in user_groups_d.items():
-                if data["total_old"] > data["total_new"]:
-                    setattr(
-                        data["user_group"],
-                        "change",
-                        data["total_new"] - data["total_old"],
-                    )
-                    if tab == "fully_churned":
-                        if data["total_new"] == 0:
-                            user_groups.append(data["user_group"])
-                    else:
-                        user_groups.append(data["user_group"])
-            step_time = time.time()
-            print(f"Filter churning: {step_time - start_time}")
-            # Sort by change
-            user_groups = sorted(user_groups, key=lambda x: x.change)
-            step_time = time.time()
-            print(f"Sort: {step_time - start_time}")
+            cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+            churn_date = datetime.date.today() - datetime.timedelta(days=60)
+            user_groups = CompanyUtils.get_churning(
+                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+            )
             pagination_limit = len(user_groups)
             if tab == "fully_churned":
                 context["help_text"] = (
-                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 days
+                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
                 )
