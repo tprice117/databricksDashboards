@@ -110,27 +110,36 @@ class SellerProductSellerLocation(BaseModel):
     def __str__(self):
         return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
 
+    @property
     def is_complete(self):
         # Rental.
         rental_one_step_complete = (
-            hasattr(self, "rental_one_step") and self.rental_one_step.is_complete()
+            hasattr(self, "rental_one_step") and self.rental_one_step.is_complete
             if self.seller_product.product.main_product.has_rental_one_step
             else True
         )
         rental_two_step_complete = (
-            hasattr(self, "rental") and self.rental.is_complete()
+            hasattr(self, "rental") and self.rental.is_complete
             if self.seller_product.product.main_product.has_rental
             else True
         )
         rental_multi_step_complete = (
-            hasattr(self, "rental_multi_step") and self.rental_multi_step.is_complete()
+            hasattr(self, "rental_multi_step") and self.rental_multi_step.is_complete
             if self.seller_product.product.main_product.has_rental_multi_step
+            else True
+        )
+
+        # Service.
+        service_times_per_week_complete = (
+            hasattr(self, "service_times_per_week")
+            and self.service_times_per_week.is_complete
+            if self.seller_product.product.main_product.has_service_times_per_week
             else True
         )
 
         # Material.
         material_is_complete = (
-            hasattr(self, "material") and self.material.is_complete()
+            hasattr(self, "material") and self.material.is_complete
             if self.seller_product.product.main_product.has_material
             else True
         )
@@ -139,6 +148,7 @@ class SellerProductSellerLocation(BaseModel):
             rental_one_step_complete
             and rental_two_step_complete
             and rental_multi_step_complete
+            and service_times_per_week_complete
             and material_is_complete
         )
 

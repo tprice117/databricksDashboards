@@ -34,6 +34,7 @@ class SellerProductSellerLocationRentalOneStep(BaseModel):
         null=True,
     )
 
+    @property
     def is_complete(self):
         return self.rate
 

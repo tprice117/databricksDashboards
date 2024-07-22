@@ -28,11 +28,17 @@ from .seller_product_seller_location_rental import (
 from .seller_product_seller_location_rental_multi_step import (
     SellerProductSellerLocationRentalMultiStepInline,
 )
+from .seller_product_seller_location_rental_one_step import (
+    SellerProductSellerLocationRentalOneStepInline,
+)
 from .seller_product_seller_location_service import (
     SellerProductSellerLocationServiceInline,
 )
 from .seller_product_seller_location_service_recurring_frequency import (
     SellerProductSellerLocationServiceRecurringFrequencyInline,
+)
+from .seller_product_seller_location_service_times_per_week import (
+    SellerProductSellerLocationServiceTimesPerWeekInline,
 )
 from .subscription import SubscriptionInline
 from .user import *

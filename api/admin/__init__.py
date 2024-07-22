@@ -17,7 +17,6 @@ from .admin import (
     SellerProductAdmin,
     SellerProductSellerLocationAdmin,
     SellerProductSellerLocationMaterialAdmin,
-    SellerProductSellerLocationServiceAdmin,
     UserAddressAdmin,
     UserAdmin,
     UserGroupAdmin,

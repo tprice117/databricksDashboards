@@ -19,21 +19,22 @@ from .seller_product_seller_location import SellerProductSellerLocationAdmin
 from .seller_product_seller_location_material import (
     SellerProductSellerLocationMaterialAdmin,
 )
-from .seller_product_seller_location_material_waste_type import (
-    SellerProductSellerLocationMaterialWasteTypeAdmin,
-)
-from .seller_product_seller_location_rental import (
-    SellerProductSellerLocationRentalAdmin,
-)
-from .seller_product_seller_location_rental_multi_step import (
-    SellerProductSellerLocationRentalMultiStepAdmin,
-)
-from .seller_product_seller_location_rental_one_step import (
-    SellerProductSellerLocationRentalOneStepAdmin,
-)
-from .seller_product_seller_location_service import (
-    SellerProductSellerLocationServiceAdmin,
-)
+
+# from .seller_product_seller_location_material_waste_type import (
+#     SellerProductSellerLocationMaterialWasteTypeAdmin,
+# )
+# from .seller_product_seller_location_rental import (
+#     SellerProductSellerLocationRentalAdmin,
+# )
+# from .seller_product_seller_location_rental_multi_step import (
+#     SellerProductSellerLocationRentalMultiStepAdmin,
+# )
+# from .seller_product_seller_location_rental_one_step import (
+#     SellerProductSellerLocationRentalOneStepAdmin,
+# )
+# from .seller_product_seller_location_service import (
+#     SellerProductSellerLocationServiceAdmin,
+# )
 from .user import UserAdmin
 from .user_address import UserAddressAdmin
 from .user_group import UserGroupAdmin

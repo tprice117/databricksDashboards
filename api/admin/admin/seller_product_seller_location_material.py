@@ -29,6 +29,9 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
         "admin/entities/seller_product_seller_location_material_changelist.html"
     )
 
+    def has_module_permission(self, request):
+        return False
+
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [

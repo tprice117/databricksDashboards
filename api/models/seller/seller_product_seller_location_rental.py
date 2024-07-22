@@ -28,6 +28,7 @@ class SellerProductSellerLocationRental(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
+    @property
     def is_complete(self):
         return self.price_per_day_included and self.price_per_day_additional
 

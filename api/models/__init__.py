@@ -53,6 +53,9 @@ from .seller.seller_product_seller_location_service import (
 from .seller.seller_product_seller_location_service_recurring_frequency import (
     SellerProductSellerLocationServiceRecurringFrequency,
 )
+from .seller.seller_product_seller_location_service_times_per_week import (
+    SellerProductSellerLocationServiceTimesPerWeek,
+)
 from .service_recurring_freqency import ServiceRecurringFrequency
 from .time_slot import TimeSlot
 from .user.user import User
