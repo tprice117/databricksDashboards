@@ -18,6 +18,17 @@
                 searchFilter.value = serviceDate;
             }
         });
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Create url with current query params.
+            const searchCompaniesUrl = "{% url 'customer_companies' %}?" + queryParams.toString();
+            // update hx-get attribute of search filter input.
+            htmx.find("#companies-search-filter").setAttribute("hx-get", searchCompaniesUrl);
+            // force htmx to process the new hx-get attribute
+            htmx.process("#companies-search-filter");
+        });
     </script>
 {% endblock %}
 {% block content %}
