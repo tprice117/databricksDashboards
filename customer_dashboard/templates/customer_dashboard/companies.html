@@ -22,6 +22,8 @@
         document.body.addEventListener("htmx:afterSettle", function (event) {
             // Get current query params.
             let queryParams = new URLSearchParams(window.location.search);
+            // Remove q query param before attaching to htmx search input.
+            queryParams.delete("q");
             // Create url with current query params.
             const searchCompaniesUrl = "{% url 'customer_companies' %}?" + queryParams.toString();
             // update hx-get attribute of search filter input.

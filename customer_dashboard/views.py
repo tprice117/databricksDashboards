@@ -42,7 +42,8 @@ from api.models import (
     UserAddressType,
 )
 from api.models.user.user_user_address import UserUserAddress
-from api.models.user.user_group import CompanyUtils
+from api.models.user.user_group import CompanyUtils as UserGroupUtils
+from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.pricing_ml import pricing
 from billing.models import Invoice
 from payment_methods.models import PaymentMethod
@@ -333,7 +334,9 @@ def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGr
     return order_groups
 
 
-def get_location_objects(request: HttpRequest, user: User, user_group: UserGroup):
+def get_location_objects(
+    request: HttpRequest, user: User, user_group: UserGroup, search_q: str = None
+):
     """Returns the locations for the current UserGroup.
 
     If user is:
@@ -346,6 +349,7 @@ def get_location_objects(request: HttpRequest, user: User, user_group: UserGroup
         request (HttpRequest): Request object from the view.
         user (User): User object.
         user_group (UserGroup): UserGroup object. NOTE: May be None.
+        search_q (str): [Optional] Search query string.
 
     Returns:
         QuerySet[Location]: The locations queryset.
@@ -354,6 +358,14 @@ def get_location_objects(request: HttpRequest, user: User, user_group: UserGroup
         user_user_locations = UserUserAddress.objects.filter(
             user_id=user.id
         ).select_related("user_address")
+        if search_q:
+            user_user_locations = user_user_locations.filter(
+                Q(user_address__name__icontains=search_q)
+                | Q(user_address__street__icontains=search_q)
+                | Q(user_address__city__icontains=search_q)
+                | Q(user_address__state__icontains=search_q)
+                | Q(user_address__postal_code__icontains=search_q)
+            )
         user_user_locations = user_user_locations.order_by("-user_address__created_on")
         locations = [
             user_user_location.user_address
@@ -371,6 +383,14 @@ def get_location_objects(request: HttpRequest, user: User, user_group: UserGroup
             # Individual user. Get all locations for the user.
             locations = UserAddress.objects.filter(user_id=user.id)
             locations = locations.order_by("-created_on")
+        if search_q:
+            locations = locations.filter(
+                Q(name__icontains=search_q)
+                | Q(street__icontains=search_q)
+                | Q(city__icontains=search_q)
+                | Q(state__icontains=search_q)
+                | Q(postal_code__icontains=search_q)
+            )
     return locations
 
 
@@ -1531,34 +1551,84 @@ def locations(request):
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
+    search_q = request.GET.get("q", None)
+    # location_id = request.GET.get("location_id", None)
     # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
+        query_params = request.GET.copy()
+
+        if request.user.is_staff and tab == "new":
+            user_addresses = UserAddressUtils.get_new(search_q=search_q)
+            context["help_text"] = "New Companies created in the last 30 days."
+        elif request.user.is_staff and tab == "active":
+            user_addresses = UserAddressUtils.get_active(search_q=search_q)
+            context["help_text"] = "Active Companies with orders in the last 30 days."
+            pagination_limit = 100
+        elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
+            cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+            churn_date = datetime.date.today() - datetime.timedelta(days=60)
+            user_addresses = UserAddressUtils.get_churning(
+                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+            )
+            pagination_limit = len(user_addresses)
+            if tab == "fully_churned":
+                context["help_text"] = (
+                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+            else:
+                context["help_text"] = (
+                    f"""Churning Companies are those with a smaller revenue when compared to the previous
+                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+        else:
+            user_addresses = get_location_objects(
+                request, context["user"], context["user_group"], search_q=search_q
+            )
+
+        paginator = Paginator(user_addresses, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/locations/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/customer/locations/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/customer/locations/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/customer/locations/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/locations/?{query_params.urlencode()}"
+        return render(
+            request, "customer_dashboard/snippets/locations_table.html", context
+        )
+
     query_params = request.GET.copy()
-    user_addresses = get_location_objects(
-        request, context["user"], context["user_group"]
-    )
-
-    paginator = Paginator(user_addresses, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
-
-    if page_number is None:
-        page_number = 1
+    if query_params.get("tab", None) is not None:
+        context["locations_table_link"] = request.get_full_path()
     else:
-        page_number = int(page_number)
-
-    query_params["p"] = 1
-    context["page_start_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/customer/locations/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/customer/locations/?{query_params.urlencode()}"
+        # Else load pending tab as default
+        context["locations_table_link"] = (
+            f"{reverse('customer_companies')}?{query_params.urlencode()}"
+        )
     return render(request, "customer_dashboard/locations.html", context)
 
 
@@ -2240,16 +2310,16 @@ def companies(request):
         query_params = request.GET.copy()
 
         if tab == "new":
-            user_groups = CompanyUtils.get_new(search_q=search_q)
+            user_groups = UserGroupUtils.get_new(search_q=search_q)
             context["help_text"] = "New Companies created in the last 30 days."
         elif tab == "active":
-            user_groups = CompanyUtils.get_active(search_q=search_q)
+            user_groups = UserGroupUtils.get_active(search_q=search_q)
             context["help_text"] = "Active Companies with orders in the last 30 days."
             pagination_limit = 100
         elif tab == "churned" or tab == "fully_churned":
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
             churn_date = datetime.date.today() - datetime.timedelta(days=60)
-            user_groups = CompanyUtils.get_churning(
+            user_groups = UserGroupUtils.get_churning(
                 search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
             )
             pagination_limit = len(user_groups)
