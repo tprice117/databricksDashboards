@@ -33,6 +33,14 @@
             htmx.find("#location-search-filter").setAttribute("hx-get", searchLocationsUrl);
             // force htmx to process the new hx-get attribute
             htmx.process("#location-search-filter");
+        
+            // Add event listener to table filter options
+            const tableFilterOptions = document.getElementById("table-filter-options");
+            if (tableFilterOptions) {
+                tableFilterOptions.addEventListener("change", function () {
+                    searchFilter.value = "";
+                });
+            }
         });
     </script>
 {% endblock %}

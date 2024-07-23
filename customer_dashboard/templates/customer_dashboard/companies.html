@@ -30,6 +30,14 @@
             htmx.find("#companies-search-filter").setAttribute("hx-get", searchCompaniesUrl);
             // force htmx to process the new hx-get attribute
             htmx.process("#companies-search-filter");
+        
+            // Add event listener to table filter options
+            const tableFilterOptions = document.getElementById("table-filter-options");
+            if (tableFilterOptions) {
+                tableFilterOptions.addEventListener("change", function () {
+                    searchFilter.value = "";
+                });
+            }
         });
     </script>
 {% endblock %}
