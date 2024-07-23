@@ -24,6 +24,23 @@ class MainProduct(BaseModel):
         related_name="tags",
         blank=True,
     )
+
+    # # Mark Up Configuration.
+    # default_take_rate = models.DecimalField(
+    #     max_digits=18,
+    #     decimal_places=2,
+    #     blank=True,
+    #     null=True,
+    #     help_text="Default mark up for this product (ex: 35%)",
+    # )
+    # minimum_take_rate = models.DecimalField(
+    #     max_digits=18,
+    #     decimal_places=2,
+    #     blank=True,
+    #     null=True,
+    #     help_text="Minimum take rate for this product (ex: 10%)",
+    # )
+
     included_tonnage_quantity = models.DecimalField(
         max_digits=18, decimal_places=0, blank=True, null=True
     )
