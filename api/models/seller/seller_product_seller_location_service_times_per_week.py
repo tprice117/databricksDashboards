@@ -54,8 +54,7 @@ class SellerProductSellerLocationServiceTimesPerWeek(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
-    @property
-    def is_complete(self):
+    def _is_complete(self):
         return (
             self.one_time_per_week
             or self.two_times_per_week
@@ -63,6 +62,11 @@ class SellerProductSellerLocationServiceTimesPerWeek(BaseModel):
             or self.four_times_per_week
             or self.five_times_per_week
         )
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
 
     def get_price(
         self,

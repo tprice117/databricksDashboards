@@ -29,6 +29,10 @@ class PricingEngine:
           A dictionary containing the total price broken down into service, rental,
           and material costs.
         """
+        # Ensure the SellerProductSellerLocation is completely configured.
+        if not seller_product_seller_location.is_complete:
+            return None
+
         # Service price.
         service = ServicePrice.get_price(
             user_address=user_address,
@@ -64,7 +68,7 @@ class PricingEngine:
             "removal": PricingEngine.get_removal_price(
                 user_address=user_address,
                 seller_product_seller_location=seller_product_seller_location,
-            ),  
+            ),
         }
 
     @staticmethod

@@ -6,12 +6,20 @@ class SellerProductSellerLocationRentalMultiStepInline(BaseModelStackedInline):
     model = SellerProductSellerLocationRentalMultiStep
     show_change_link = True
     extra = 0
-    fields = (
-        "hour",
-        "day",
-        "week",
-        "two_weeks",
-        "month",
-    )
-    readonly_fields = BaseModelStackedInline.readonly_fields
-    raw_id_fields = ("seller_product_seller_location", "created_by", "updated_by")
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "hour",
+                    "day",
+                    "week",
+                    "two_weeks",
+                    "month",
+                    "_is_complete",
+                ]
+            },
+        ),
+        BaseModelStackedInline.audit_fieldset,
+    ]
+    readonly_fields = BaseModelStackedInline.readonly_fields + ["_is_complete"]

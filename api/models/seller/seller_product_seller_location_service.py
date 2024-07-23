@@ -26,6 +26,14 @@ class SellerProductSellerLocationService(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
+    def _is_complete(self):
+        return self.price_per_mile is not None or self.flat_rate_price is not None
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
+
     def post_save(sender, instance, created, **kwargs):
         # Ensure all service recurring frequencies are created.
         for (

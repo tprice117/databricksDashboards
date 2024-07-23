@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from api.models.main_product.main_product_waste_type import MainProductWasteType
 from api.models.main_product.product import Product
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
@@ -7,7 +9,6 @@ from api.models.seller.seller_product_seller_location_material_waste_type import
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
 from common.utils import DistanceUtils
-from functools import lru_cache
 
 
 @lru_cache(maxsize=500)  # Set maxsize=None for an unbounded cache
@@ -45,7 +46,7 @@ class MatchingEngine:
                 user_address,
             )
 
-            if within_service_radius:
+            if seller_product_seller_location.is_complete and within_service_radius:
                 # Does the SellerProductSellerLocation match the WasteType of the Product?
                 matches_waste_type = (
                     MatchingEngine._seller_product_seller_location_matches_waste_type(

@@ -29,8 +29,21 @@ class SellerProductSellerLocationRental(BaseModel):
         return self.seller_product_seller_location.seller_location.name
 
     @property
-    def is_complete(self):
-        return self.price_per_day_included and self.price_per_day_additional
+    def base_price(self):
+        return self.price_per_day_included * self.included_days
+
+    def _is_complete(self) -> bool:
+        return (
+            self.price_per_day_included is not None
+            and self.price_per_day_included > 0
+            and self.price_per_day_additional is not None
+            and self.price_per_day_additional > 0
+        )
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
 
     def get_price(
         self,
