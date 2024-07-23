@@ -28,6 +28,10 @@ class SellerProductSellerLocationRental(BaseModel):
     def __str__(self):
         return self.seller_product_seller_location.seller_location.name
 
+    @property
+    def base_price(self):
+        return self.price_per_day_included * self.included_days
+
     def _is_complete(self) -> bool:
         return (
             self.price_per_day_included is not None

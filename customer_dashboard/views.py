@@ -8,15 +8,16 @@ from typing import List, Union
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.core.validators import validate_email
+from django.db import IntegrityError
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.db import IntegrityError
-from django.db.models import Q
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 
+from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
     AddOn,
     MainProduct,
@@ -37,20 +38,20 @@ from api.models import (
     ServiceRecurringFrequency,
     Subscription,
     User,
-    UserGroup,
     UserAddress,
     UserAddressType,
+    UserGroup,
 )
 from api.models.user.user_user_address import UserUserAddress
+from api.models.waste_type import WasteType
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.pricing_ml import pricing
 from billing.models import Invoice
-from payment_methods.models import PaymentMethod
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
-from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from matching_engine.utils.matching_engine.matching_engine import MatchingEngine
+from payment_methods.models import PaymentMethod
 from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
@@ -975,13 +976,15 @@ def new_order_4(request):
     # print(f"Find Product: {step_time - start_time}")
     # We know the product the user wants, so now find the seller locations that offer the product.
     user_address_obj = UserAddress.objects.filter(id=user_address_id).first()
-    seller_product_locations = (
+    seller_product_seller_locations = (
         MatchingEngine.get_possible_seller_product_seller_locations(
             context["product"],
             user_address_obj,
             waste_type,
         )
     )
+    print("Seller Product Seller Locations")
+    print(seller_product_seller_locations)
     # step_time = time.time()
     # print(f"Find Seller Locations: {step_time - start_time}")
 
@@ -990,28 +993,36 @@ def new_order_4(request):
     # end_date = None
     # if removal_date:
     #     end_date = datetime.datetime.strptime(removal_date, "%Y-%m-%d")
-    context["seller_product_locations"] = []
-    for seller_product_location in seller_product_locations:
+    context["seller_product_seller_locations"] = []
+    for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
-        seller_d["seller_product_location"] = seller_product_location
+        seller_d["seller_product_seller_location"] = seller_product_seller_location
         # pricing_data = PricingEngine.get_price(
         #     user_address_obj, seller_product_location, start_date, end_date, waste_type
         # )
-        pricing_data = get_pricing(
-            context["product"].id,
-            user_address_id,
-            waste_type_id=waste_type_id,
-            seller_location_id=seller_product_location.seller_location_id,
+        seller_d["price_data"] = PricingEngine.get_price(
+            user_address=UserAddress.objects.get(
+                id=user_address_id,
+            ),
+            seller_product_seller_location=seller_product_seller_location,
+            start_date=datetime.datetime.strptime(delivery_date, "%Y-%m-%d"),
+            end_date=(
+                datetime.datetime.strptime(removal_date, "%Y-%m-%d")
+                if removal_date
+                else None
+            ),
+            waste_type=(
+                WasteType.objects.get(id=waste_type_id) if waste_type_id else None
+            ),
         )
-        seller_d["price"] = 0
-        if pricing_data["service"]["rate"]:
-            seller_d["price"] = float(pricing_data["service"]["rate"])
+        print("Price Data")
+        print(seller_d["price_data"])
         seller_d["line_types"] = get_seller_product_location_line_items(
-            seller_product_location,
+            seller_product_seller_location,
             context["delivery_date"],
             context["removal_date"],
         )
-        context["seller_product_locations"].append(seller_d)
+        context["seller_product_seller_locations"].append(seller_d)
 
     # step_time = time.time()
     # print(f"Get Prices: {step_time - start_time}")
