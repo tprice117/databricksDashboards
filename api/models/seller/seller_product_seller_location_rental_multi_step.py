@@ -43,7 +43,13 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
     )
 
     def _is_complete(self):
-        return self.hour or self.day or self.week or self.two_weeks or self.month
+        return (
+            self.hour is not None
+            or self.day is not None
+            or self.week is not None
+            or self.two_weeks is not None
+            or self.month is not None
+        )
 
     # This is a workaround to make the is_complete property to display in the admin
     # as the default Django boolean icons.
@@ -169,7 +175,7 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
 
         return price, remaining_hours
 
-    def calculate_rental_price(self, duration: timedelta):
+    def get_price(self, duration: timedelta):
         """
         Calculates the most cost-efficient rental price based on duration (hours or days).
 

@@ -19,3 +19,10 @@ class SellerProductSellerLocationMaterialWasteType(BaseModel):
             "seller_product_seller_location_material",
             "main_product_waste_type",
         )
+
+    @property
+    def base_price(self):
+        return (
+            self.price_per_ton
+            * self.seller_product_seller_location_material.seller_product_seller_location.main_product.included_tonnage_quantity
+        )

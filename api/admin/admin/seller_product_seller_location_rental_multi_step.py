@@ -40,13 +40,13 @@ class SellerProductSellerLocationRentalMultiStepAdmin(admin.ModelAdmin):
         """
         # Prices for 1 to 23 hours.
         prices = [
-            f"{hour} {'hour' if hour == 1 else 'hours'}: ${obj.calculate_rental_price(duration=timedelta(hours=hour)):.2f}"
+            f"{hour} {'hour' if hour == 1 else 'hours'}: ${obj.get_price(duration=timedelta(hours=hour)):.2f}"
             for hour in range(1, 24)
         ]
 
         # Prices for 1 to 30 days.
         prices += [
-            f"{day} {'day' if day == 1 else 'days'}: ${obj.calculate_rental_price(duration=timedelta(days=day)):.2f}"
+            f"{day} {'day' if day == 1 else 'days'}: ${obj.get_price(duration=timedelta(days=day)):.2f}"
             for day in range(1, 31)
         ]
         return format_html("<br/>".join(prices))
