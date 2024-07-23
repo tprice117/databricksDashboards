@@ -1602,10 +1602,10 @@ def locations(request):
 
         if request.user.is_staff and tab == "new":
             user_addresses = UserAddressUtils.get_new(search_q=search_q)
-            context["help_text"] = "New Companies created in the last 30 days."
+            context["help_text"] = "New locations created in the last 30 days."
         elif request.user.is_staff and tab == "active":
             user_addresses = UserAddressUtils.get_active(search_q=search_q)
-            context["help_text"] = "Active Companies with orders in the last 30 days."
+            context["help_text"] = "Active locations with orders in the last 30 days."
             pagination_limit = 100  # Create large limit due to long request time
         elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
@@ -1616,13 +1616,13 @@ def locations(request):
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
                 context["help_text"] = (
-                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
                 )
             else:
                 context["help_text"] = (
-                    f"""Churning Companies are those with a smaller revenue when compared to the previous
+                    f"""Churning locations are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
                 )
@@ -2045,13 +2045,15 @@ def users(request):
 
         if request.user.is_staff and tab == "new":
             users = UserUtils.get_new(search_q=search_q)
-            context["help_text"] = "New Companies created in the last 30 days."
+            context["help_text"] = "New users created in the last 30 days."
         elif request.user.is_staff and tab == "loggedin":
             users = UserUtils.get_loggedin(search_q=search_q)
-            context["help_text"] = "Get all users who have logged in, in the last 30 days."
+            context["help_text"] = (
+                "Get all users who have logged in, in the last 30 days."
+            )
         elif request.user.is_staff and tab == "active":
             users = UserUtils.get_active(search_q=search_q)
-            context["help_text"] = "Active Companies with orders in the last 30 days."
+            context["help_text"] = "Active users with orders in the last 30 days."
             pagination_limit = 100  # Create large limit due to long request time
         elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
@@ -2062,13 +2064,13 @@ def users(request):
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
                 context["help_text"] = (
-                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
                 )
             else:
                 context["help_text"] = (
-                    f"""Churning Companies are those with a smaller revenue when compared to the previous
+                    f"""Churning users are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
                 )
