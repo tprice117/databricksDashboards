@@ -27,7 +27,9 @@ class SellerProductSellerLocationService(BaseModel):
         return self.seller_product_seller_location.seller_location.name
 
     def _is_complete(self):
-        return self.price_per_mile is not None or self.flat_rate_price is not None
+        return (self.price_per_mile is not None and self.price_per_mile > 0) or (
+            self.flat_rate_price is not None and self.flat_rate_price > 0
+        )
 
     # This is a workaround to make the is_complete property to display in the admin
     # as the default Django boolean icons.
