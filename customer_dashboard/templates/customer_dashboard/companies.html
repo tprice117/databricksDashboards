@@ -18,6 +18,19 @@
                 searchFilter.value = serviceDate;
             }
         });
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Remove q query param before attaching to htmx search input.
+            queryParams.delete("q");
+            // Create url with current query params.
+            const searchCompaniesUrl = "{% url 'customer_companies' %}?" + queryParams.toString();
+            // update hx-get attribute of search filter input.
+            htmx.find("#companies-search-filter").setAttribute("hx-get", searchCompaniesUrl);
+            // force htmx to process the new hx-get attribute
+            htmx.process("#companies-search-filter");
+        });
     </script>
 {% endblock %}
 {% block content %}
@@ -28,11 +41,24 @@
                 <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{% url 'customer_new_company' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;New Company</a>
             </div>
         </div>
+        {% if request.user.is_staff %}
+            <div class="row">
+                <div class="col">
+                    <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_companies' %}" hx-target="#company-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+                        <option value="" selected>Filter Data By</option>
+                        <option value="new">New (created in last 30 days)</option>
+                        <option value="active">Active Companies</option>
+                        <option value="churned">Churning</option>
+                        <option value="fully_churned">Fully Churned</option>
+                    </select>
+                </div>
+            </div>
+        {% endif %}
         <div class="card shadow">
             <div class="card-header py-3">
                 <div class="row">
                     <div class="col">
-                        <p class="text-primary m-0 fw-bold">Companies [ list of comanies where UserGroup.Seller == NULL ]</p>
+                        <p class="text-primary m-0 fw-bold" id="table-title">Companies [ list of comanies where UserGroup.Seller == NULL ]</p>
                         <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                     </div>
                     <div class="col">
@@ -45,7 +71,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table table-hover my-0" id="dataTable">
+                    <table class="table table-hover my-0" id="company-results" hx-get="{{ companies_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -53,30 +79,42 @@
                                 <th>Net Terms</th>
                                 <th>Invoice Frequency</th>
                                 <th>Credit Limit</th>
-                                <th></th>
+                                {% if request.user.is_staff %}
+                                    {% if tab == 'active' %}
+                                        <th>Last Order End</th>
+                                    {% elif tab == 'churned' %}
+                                        <th>Last Order End</th>
+                                        <th>Change</th>
+                                    {% elif tab == 'fully_churned' %}
+                                        <th>Last Order End</th>
+                                        <th>Change</th>
+                                    {% else %}
+                                        <th>Created On</th>
+                                    {% endif %}
+                                {% endif %}
                             </tr>
                         </thead>
-                        <tbody id="company-results" hx-get="{{ companies_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody>
+                        <tbody></tbody>
                         <tfoot>
                             <tr>
-                                <td>
-                                    <strong>Name</strong>
-                                </td>
-                                <td>
-                                    <strong>User Count</strong>
-                                </td>
-                                <td>
-                                    <strong>Net Terms</strong>
-                                </td>
-                                <td>
-                                    <strong>Invoice Frequency</strong>
-                                </td>
-                                <td>
-                                    <strong>Credit Limit</strong>
-                                </td>
-                                <td>
-                                    <strong></strong>
-                                </td>
+                                <th>Name</th>
+                                <th>User Count</th>
+                                <th>Net Terms</th>
+                                <th>Invoice Frequency</th>
+                                <th>Credit Limit</th>
+                                {% if request.user.is_staff %}
+                                    {% if tab == 'active' %}
+                                        <th>Last Order End</th>
+                                    {% elif tab == 'churned' %}
+                                        <th>Last Order End</th>
+                                        <th>Change</th>
+                                    {% elif tab == 'fully_churned' %}
+                                        <th>Last Order End</th>
+                                        <th>Change</th>
+                                    {% else %}
+                                        <th>Created On</th>
+                                    {% endif %}
+                                {% endif %}
                             </tr>
                         </tfoot>
                     </table>

@@ -4,14 +4,13 @@
     <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
 {% endif %}
 
-<table class="table table-hover my-0" id="company-results">
+<table class="table table-hover my-0" id="location-results">
     <thead>
         <tr>
+            <th>Address</th>
             <th>Name</th>
-            <th>User Count</th>
-            <th>Net Terms</th>
-            <th>Invoice Frequency</th>
-            <th>Credit Limit</th>
+            <th>Autopay?</th>
+            <th>Is Archived?</th>
             {% if request.user.is_staff %}
                 {% if tab == 'active' %}
                     <th>Last Order End</th>
@@ -29,24 +28,23 @@
     </thead>
     <tbody>
         {% if page_obj %}
-            {% for user_group in page_obj %}
-                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_company_detail' user_group_id=user_group.id %}'">
-                    <td>{{ user_group.name }}</td>
-                    <td>{{ user_group.users.count }}</td>
-                    <td>{{ user_group.net_terms }}</td>
-                    <td>{{ user_group.invoice_frequency }}</td>
-                    <td>{{ user_group.credit_line_limit }}</td>
+            {% for user_address in page_obj %}
+                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
+                    <td>{{ user_address.formatted_address }}</td>
+                    <td>{{ user_address.name }}</td>
+                    <td>{{ user_address.autopay }}</td>
+                    <td>{{ user_address.is_archived }}</td>
                     {% if request.user.is_staff %}
                         {% if tab == 'active' %}
-                            <td>{{ user_group.last_order }}</td>
+                            <td>{{ user_address.last_order }}</td>
                         {% elif tab == 'churned' %}
-                            <td>{{ user_group.last_order }}</td>
-                            <td>${{ user_group.change|floatformat:2|intcomma }}</td>
+                            <td>{{ user_address.last_order }}</td>
+                            <td>${{ user_address.change|floatformat:2|intcomma }}</td>
                         {% elif tab == 'fully_churned' %}
-                            <td>{{ user_group.last_order }}</td>
-                            <td>${{ user_group.change|floatformat:2|intcomma }}</td>
+                            <td>{{ user_address.last_order }}</td>
+                            <td>${{ user_address.change|floatformat:2|intcomma }}</td>
                         {% else %}
-                            <td>{{ user_group.created_on }}</td>
+                            <td>{{ user_address.created_on }}</td>
                         {% endif %}
                     {% endif %}
                 </tr>
@@ -55,11 +53,10 @@
     </tbody>
     <tfoot>
         <tr>
+            <th>Address</th>
             <th>Name</th>
-            <th>User Count</th>
-            <th>Net Terms</th>
-            <th>Invoice Frequency</th>
-            <th>Credit Limit</th>
+            <th>Autopay?</th>
+            <th>Is Archived?</th>
             {% if request.user.is_staff %}
                 {% if tab == 'active' %}
                     <th>Last Order End</th>
@@ -76,7 +73,7 @@
         </tr>
     </tfoot>
 </table>
-<div class="row" id="companies-pagination" hx-swap-oob="true">
+<div class="row" id="locations-pagination" hx-swap-oob="true">
     <div class="col-md-6 align-self-center">
         <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
             Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
@@ -87,15 +84,15 @@
         <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
             <ul class="pagination">
                 {% if page_obj.has_previous %}
-                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
-                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
+                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
+                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
                 {% endif %}
                 <li class="page-item active">
-                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
+                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
                 </li>
                 {% if page_obj.has_next %}
-                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
-                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
+                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
+                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
                 {% endif %}
             </ul>
         </nav>
@@ -103,7 +100,7 @@
 </div>
 
 {% if request.user.is_staff %}
-    <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_companies' %}" hx-target="#company-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-swap-oob="true">
+    <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_locations' %}" hx-target="#location-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-swap-oob="true">
         <option value=""{% if not tab or tab == '' %} selected{% endif %}>
             Filter Data By
         </option>
@@ -111,7 +108,7 @@
             New (created in last 30 days)
         </option>
         <option value="active"{% if tab == 'active' %} selected{% endif %}>
-            Active Companies
+            Active Locations
         </option>
         <option value="churned"{% if tab == 'churned' %} selected{% endif %}>
             Churning

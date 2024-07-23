@@ -1,10 +1,14 @@
+import datetime
+from typing import List
 from django.db import models
 from django.db.models.signals import pre_save
+from django.db.models import Q
 
 from api.models.track_data import track_data
 from api.models.user.user import User
 from api.models.user.user_address_type import UserAddressType
 from api.models.user.user_group import UserGroup
+from api.models.order.order import Order
 from api.utils.google_maps import geocode_address
 from common.middleware.save_author import get_request
 from common.models import BaseModel
@@ -157,3 +161,146 @@ class UserAddress(BaseModel):
 
 
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
+
+
+class CompanyUtils:
+    """This class contains utility methods for the Companies. This is used in the Customer Admin Portal."""
+
+    @staticmethod
+    def get_new(address_q=None, search_q: str = None):
+        """Get all user addresses created in the last 30 days."""
+        cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+        address_q = UserAddress.objects.filter(created_on__gte=cutoff_date)
+        if search_q:
+            # https://docs.djangoproject.com/en/4.2/topics/db/search/
+            address_q = address_q.filter(
+                Q(name__icontains=search_q)
+                | Q(street__icontains=search_q)
+                | Q(city__icontains=search_q)
+                | Q(state__icontains=search_q)
+                | Q(postal_code__icontains=search_q)
+            )
+        address_q = address_q.order_by("-created_on")
+        return address_q
+
+    @staticmethod
+    def get_active(search_q: str = None) -> List[UserGroup]:
+        """Get all active companies.
+        This returns all companies that have at least one active order in the last 30 days.
+        """
+        cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+        # Active Companies is user group on an order within date range (or within last 30 days if no range)
+        orders = Order.objects.filter(end_date__gte=cutoff_date)
+        if search_q:
+            orders = orders.filter(
+                Q(order_group__user_address__name__icontains=search_q)
+                | Q(order_group__user_address__street__icontains=search_q)
+                | Q(order_group__user_address__city__icontains=search_q)
+                | Q(order_group__user_address__state__icontains=search_q)
+                | Q(order_group__user_address__postal_code__icontains=search_q)
+            )
+
+        orders.select_related("order_group__user_address")
+        orders = orders.distinct("order_group__user_address")
+        orders = orders.order_by("order_group__user_address", "-end_date")
+        user_addresses = []
+        for order in orders:
+            setattr(order.order_group.user_address, "last_order", order.end_date)
+            user_addresses.append(order.order_group.user_address)
+        # sort based on user_address.created_on
+        user_addresses = sorted(
+            user_addresses, key=lambda x: x.last_order, reverse=True
+        )
+        return user_addresses
+
+    @staticmethod
+    def get_churning(
+        search_q: str = None,
+        tab: str = None,
+        old_date: datetime.date = None,
+        new_date: datetime.date = None,
+    ) -> List[UserGroup]:
+        """Get all churning companies.
+        -
+        if tab is "fully_churned" then Get all fully churned companies.
+        Fully Churned = user group is not an active company within the date range, but was 30 days prior
+        to the date range (or within last 30 days if no range)
+        -
+        if tab is "churning" then Get all churning companies.
+        Companies that had orders in the previous 30 day period, but no orders in the last 30 day period.
+
+        return: List of UserGroup objects
+        """
+        import time
+
+        if old_date is None:
+            old_date = datetime.date.today() - datetime.timedelta(days=60)
+        if new_date is None:
+            new_date = datetime.date.today() - datetime.timedelta(days=30)
+
+        start_time = time.time()
+        # Churning = sum of all order.customer total for orders within the date range for a given User Group
+        # is less than the sum of the previous date range (or within last 30 days if no range)
+        # ie. If I select (1) Today to last Wednesday, it will look from (2) last Wednesday to 2 Wednesdays ago
+        # to compare the sums. If the sum of order totals for range 1 is less than range 2. That’s “churning”.
+        #
+        # Fully Churned = user group is not an active company within the date range, but was 30 days prior
+        # to the date range (or within last 30 days if no range)
+        orders = Order.objects.filter(end_date__gte=old_date)
+        if search_q:
+            orders = orders.filter(
+                Q(order_group__user_address__name__icontains=search_q)
+                | Q(order_group__user_address__street__icontains=search_q)
+                | Q(order_group__user_address__city__icontains=search_q)
+                | Q(order_group__user_address__state__icontains=search_q)
+                | Q(order_group__user_address__postal_code__icontains=search_q)
+            )
+        orders.select_related("order_group__user_address")
+        orders = orders.prefetch_related("order_line_items")
+        print(orders.count())
+        step_time = time.time()
+        print(f"Query count: {step_time - start_time}")
+        user_addresses_d = {}
+        for order in orders:
+            ugid = order.order_group.user_address_id
+            if ugid not in user_addresses_d:
+                user_addresses_d[ugid] = {
+                    "count": 1,
+                    "total_old": 0,
+                    "total_new": 0,
+                    "user_address": order.order_group.user_address,
+                    "last_order": order.end_date,
+                }
+            user_addresses_d[ugid]["count"] += 1
+            if order.end_date < new_date:
+                user_addresses_d[ugid]["total_old"] += order.customer_price()
+            else:
+                user_addresses_d[ugid]["total_new"] += order.customer_price()
+            if order.end_date > user_addresses_d[ugid]["last_order"]:
+                user_addresses_d[ugid]["last_order"] = order.end_date
+            # if len(user_addresses_d) == 10:
+            #     break
+        step_time = time.time()
+        print(f"Loop orders: {step_time - start_time}")
+
+        user_addresses = []
+        for ugid, data in user_addresses_d.items():
+            if data["total_old"] > data["total_new"]:
+                setattr(data["user_address"], "last_order", data["last_order"])
+                setattr(
+                    data["user_address"],
+                    "change",
+                    data["total_new"] - data["total_old"],
+                )
+                if tab == "fully_churned":
+                    if data["total_new"] == 0:
+                        user_addresses.append(data["user_address"])
+                else:
+                    user_addresses.append(data["user_address"])
+        step_time = time.time()
+        print(f"Filter churning: {step_time - start_time}")
+        # Sort by change
+        user_addresses = sorted(user_addresses, key=lambda x: x.change)
+        step_time = time.time()
+        print(f"Sort: {step_time - start_time}")
+        return user_addresses
