@@ -2398,7 +2398,6 @@ def companies(request):
             context["help_text"] = "Active Companies with orders in the last 30 days."
             pagination_limit = 100
         elif tab == "churned" or tab == "fully_churned":
-            # TODO: Add percent change
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
             churn_date = datetime.date.today() - datetime.timedelta(days=60)
             user_groups = UserGroupUtils.get_churning(
