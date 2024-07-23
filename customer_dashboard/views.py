@@ -46,6 +46,7 @@ from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_address import CompanyUtils as UserAddressUtils
+from api.models.user.user import CompanyUtils as UserUtils
 from api.pricing_ml import pricing
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
@@ -221,7 +222,7 @@ def get_user(request: HttpRequest) -> User:
 
 
 def get_user_group_user_objects(
-    request: HttpRequest, user: User, user_group: UserGroup
+    request: HttpRequest, user: User, user_group: UserGroup, search_q: str = None
 ):
     """Returns the users for the current UserGroup.
 
@@ -250,6 +251,12 @@ def get_user_group_user_objects(
         else:
             # Individual user.
             users = User.objects.filter(id=user.id)
+    if search_q:
+        users = users.filter(
+            Q(first_name__icontains=search_q)
+            | Q(last_name__icontains=search_q)
+            | Q(email__icontains=search_q)
+        )
     return users
 
 
@@ -1553,6 +1560,29 @@ def order_detail(request, order_id):
 
 
 @login_required(login_url="/admin/login/")
+def company_last_order(request):
+    context = {}
+    user_address_id = request.GET.get("user_address_id", None)
+    user_group_id = request.GET.get("user_group_id", None)
+    user_id = request.GET.get("user_id", None)
+    if user_address_id:
+        orders = Order.objects.filter(order_group__user_address_id=user_address_id)
+    elif user_group_id:
+        orders = Order.objects.filter(order_group__user__user_group_id=user_group_id)
+    elif user_id:
+        orders = Order.objects.filter(order_group__user_id=user_id)
+    else:
+        return HttpRequest(status=204)
+
+    orders = orders.order_by("-end_date").first()
+    context["last_order"] = orders
+    # Assume htmx request, so only return html snippet
+    return render(
+        request, "customer_dashboard/snippets/company_last_order_col.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
     context["user"] = get_user(request)
@@ -1572,27 +1602,27 @@ def locations(request):
 
         if request.user.is_staff and tab == "new":
             user_addresses = UserAddressUtils.get_new(search_q=search_q)
-            context["help_text"] = "New Companies created in the last 30 days."
+            context["help_text"] = "New locations created in the last 30 days."
         elif request.user.is_staff and tab == "active":
             user_addresses = UserAddressUtils.get_active(search_q=search_q)
-            context["help_text"] = "Active Companies with orders in the last 30 days."
-            pagination_limit = 100
+            context["help_text"] = "Active locations with orders in the last 30 days."
+            pagination_limit = 100  # Create large limit due to long request time
         elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
             churn_date = datetime.date.today() - datetime.timedelta(days=60)
             user_addresses = UserAddressUtils.get_churning(
                 search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
             )
-            pagination_limit = len(user_addresses)
+            pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
                 context["help_text"] = (
-                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
                 )
             else:
                 context["help_text"] = (
-                    f"""Churning Companies are those with a smaller revenue when compared to the previous
+                    f"""Churning locations are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
                 )
@@ -2005,45 +2035,85 @@ def users(request):
         page_number = request.GET.get("p")
     user_id = request.GET.get("user_id", None)
     date = request.GET.get("date", None)
+    search_q = request.GET.get("q", None)
+    # location_id = request.GET.get("location_id", None)
     # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
+        query_params = request.GET.copy()
+
+        if request.user.is_staff and tab == "new":
+            users = UserUtils.get_new(search_q=search_q)
+            context["help_text"] = "New users created in the last 30 days."
+        elif request.user.is_staff and tab == "loggedin":
+            users = UserUtils.get_loggedin(search_q=search_q)
+            context["help_text"] = (
+                "Get all users who have logged in, in the last 30 days."
+            )
+        elif request.user.is_staff and tab == "active":
+            users = UserUtils.get_active(search_q=search_q)
+            context["help_text"] = "Active users with orders in the last 30 days."
+            pagination_limit = 100  # Create large limit due to long request time
+        elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
+            cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+            churn_date = datetime.date.today() - datetime.timedelta(days=60)
+            users = UserUtils.get_churning(
+                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+            )
+            pagination_limit = 200  # Create large limit due to long request time.
+            if tab == "fully_churned":
+                context["help_text"] = (
+                    f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+            else:
+                context["help_text"] = (
+                    f"""Churning users are those with a smaller revenue when compared to the previous
+                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+        else:
+            users = get_user_group_user_objects(
+                request, context["user"], context["user_group"], search_q=search_q
+            )
+            if date:
+                users = users.filter(date_joined__date=date)
+            users = users.order_by("-date_joined")
+
+        paginator = Paginator(users, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/users/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = f"/customer/users/?{query_params.urlencode()}"
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = f"/customer/users/?{query_params.urlencode()}"
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = f"/customer/users/?{query_params.urlencode()}"
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/users/?{query_params.urlencode()}"
+        return render(request, "customer_dashboard/snippets/users_table.html", context)
+
     query_params = request.GET.copy()
-    users = get_user_group_user_objects(request, context["user"], context["user_group"])
-    if date:
-        users = users.filter(date_joined__date=date)
-    users = users.order_by("-date_joined")
-
-    user_lst = []
-    for user in users:
-        user_dict = {}
-        user_dict["user"] = user
-        # NOTE: Load these asynchonously with HTMX to speed up the page load.
-        # user_dict["meta"] = {
-        #     "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
-        # }
-        user_lst.append(user_dict)
-
-    paginator = Paginator(user_lst, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
-
-    if page_number is None:
-        page_number = 1
+    if query_params.get("tab", None) is not None:
+        context["users_table_link"] = request.get_full_path()
     else:
-        page_number = int(page_number)
+        # Else load pending tab as default
+        context["users_table_link"] = (
+            f"{reverse('customer_users')}?{query_params.urlencode()}"
+        )
 
-    query_params["p"] = 1
-    context["page_start_link"] = f"/customer/users/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/customer/users/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/customer/users/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/customer/users/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/customer/users/?{query_params.urlencode()}"
     return render(request, "customer_dashboard/users.html", context)
 
 

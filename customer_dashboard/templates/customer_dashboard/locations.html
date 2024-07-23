@@ -33,6 +33,14 @@
             htmx.find("#location-search-filter").setAttribute("hx-get", searchLocationsUrl);
             // force htmx to process the new hx-get attribute
             htmx.process("#location-search-filter");
+        
+            // Add event listener to table filter options
+            const tableFilterOptions = document.getElementById("table-filter-options");
+            if (tableFilterOptions) {
+                tableFilterOptions.addEventListener("change", function () {
+                    searchFilter.value = "";
+                });
+            }
         });
     </script>
 {% endblock %}
@@ -76,29 +84,27 @@
                         <thead>
                             <tr>
                                 <th>Address</th>
-                                <th>Name</th>
-                                <th>Autopay?</th>
-                                <th>Is Archived?</th>
+                                <th>Company</th>
+                                {% if request.user.is_staff %}
+                                    {% if tab == 'active' %}
+                                        <th>Last Order</th>
+                                    {% elif tab == 'churned' %}
+                                        <th>Last Order</th>
+                                        <th>Change</th>
+                                    {% elif tab == 'fully_churned' %}
+                                        <th>Last Order</th>
+                                        <th>Change</th>
+                                    {% else %}
+                                        <th>Last Order</th>
+                                        <th>Created On</th>
+                                    {% endif %}
+                                {% else %}
+                                    <th>Autopay?</th>
+                                    <th>Is Archived?</th>
+                                {% endif %}
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for user_address in page_obj %}
-                                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
-                                    <td>{{ user_address.formatted_address }}</td>
-                                    <td>{{ user_address.name }}</td>
-                                    <td>{{ user_address.autopay }}</td>
-                                    <td>{{ user_address.is_archived }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th>Address</th>
-                                <th>Name</th>
-                                <th>Autopay?</th>
-                                <th>Is Archived?</th>
-                            </tr>
-                        </tfoot>
+                        <tbody></tbody>
                     </table>
                 </div>
                 <div class="row invisible" id="locations-pagination">

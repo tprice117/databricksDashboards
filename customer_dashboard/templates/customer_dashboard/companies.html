@@ -30,6 +30,14 @@
             htmx.find("#companies-search-filter").setAttribute("hx-get", searchCompaniesUrl);
             // force htmx to process the new hx-get attribute
             htmx.process("#companies-search-filter");
+        
+            // Add event listener to table filter options
+            const tableFilterOptions = document.getElementById("table-filter-options");
+            if (tableFilterOptions) {
+                tableFilterOptions.addEventListener("change", function () {
+                    searchFilter.value = "";
+                });
+            }
         });
     </script>
 {% endblock %}
@@ -81,12 +89,12 @@
                                 <th>Credit Limit</th>
                                 {% if request.user.is_staff %}
                                     {% if tab == 'active' %}
-                                        <th>Last Order End</th>
+                                        <th>Last Order</th>
                                     {% elif tab == 'churned' %}
-                                        <th>Last Order End</th>
+                                        <th>Last Order</th>
                                         <th>Change</th>
                                     {% elif tab == 'fully_churned' %}
-                                        <th>Last Order End</th>
+                                        <th>Last Order</th>
                                         <th>Change</th>
                                     {% else %}
                                         <th>Created On</th>
@@ -104,12 +112,12 @@
                                 <th>Credit Limit</th>
                                 {% if request.user.is_staff %}
                                     {% if tab == 'active' %}
-                                        <th>Last Order End</th>
+                                        <th>Last Order</th>
                                     {% elif tab == 'churned' %}
-                                        <th>Last Order End</th>
+                                        <th>Last Order</th>
                                         <th>Change</th>
                                     {% elif tab == 'fully_churned' %}
-                                        <th>Last Order End</th>
+                                        <th>Last Order</th>
                                         <th>Change</th>
                                     {% else %}
                                         <th>Created On</th>
