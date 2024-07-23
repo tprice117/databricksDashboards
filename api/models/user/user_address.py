@@ -175,7 +175,7 @@ class CompanyUtils:
         return round(percentage_change)
 
     @staticmethod
-    def get_new(address_q=None, search_q: str = None):
+    def get_new(search_q: str = None):
         """Get all user addresses created in the last 30 days."""
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         address_q = UserAddress.objects.filter(created_on__gte=cutoff_date)

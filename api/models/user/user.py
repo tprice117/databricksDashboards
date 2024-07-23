@@ -1,6 +1,8 @@
 import logging
 import threading
 import uuid
+import datetime
+from typing import List
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
@@ -8,9 +10,12 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
+from django.db.models import Q
+from django.utils import timezone
 
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
+from api.models.order.order import Order
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
 from chat.models.conversation import Conversation
 from chat.models.conversation_user_last_viewed import ConversationUserLastViewed
@@ -311,3 +316,172 @@ def user_pre_save(sender, instance: User, *args, **kwargs):
 
         if not instance.type:
             instance.type = UserType.ADMIN
+
+
+class CompanyUtils:
+    """This class contains utility methods for the Companies. This is used in the Customer Admin Portal."""
+
+    @staticmethod
+    def calculate_percentage_change(old_value, new_value):
+        if old_value == 0:
+            # Handle the case where the old value is 0 to avoid division by zero
+            return "Undefined"  # Or handle it in a way that makes sense for your application
+        percentage_change = ((new_value - old_value) / old_value) * 100
+        return round(percentage_change)
+
+    @staticmethod
+    def get_new(search_q: str = None):
+        """Get all users created in the last 30 days."""
+        cutoff_time = timezone.now() - datetime.timedelta(days=30)
+        users_q = User.objects.filter(date_joined__gte=cutoff_time)
+        if search_q:
+            # https://docs.djangoproject.com/en/4.2/topics/db/search/
+            users_q = users_q.filter(
+                Q(first_name__icontains=search_q)
+                | Q(last_name__icontains=search_q)
+                | Q(email__icontains=search_q)
+            )
+        users_q = users_q.order_by("-date_joined")
+        return users_q
+
+    @staticmethod
+    def get_loggedin(search_q: str = None):
+        """Get all users who have logged in, in the last 30 days."""
+        cutoff_time = timezone.now() - datetime.timedelta(days=30)
+        users_q = User.objects.filter(last_login__gte=cutoff_time)
+        if search_q:
+            # https://docs.djangoproject.com/en/4.2/topics/db/search/
+            users_q = users_q.filter(
+                Q(first_name__icontains=search_q)
+                | Q(last_name__icontains=search_q)
+                | Q(email__icontains=search_q)
+            )
+        users_q = users_q.order_by("-date_joined")
+        return users_q
+
+    @staticmethod
+    def get_active(search_q: str = None) -> List[UserGroup]:
+        """Get all active buyers.
+        This returns all users who have an order in the last 30 days.
+        """
+        cutoff_time = timezone.now() - datetime.timedelta(days=30)
+        # Active Companies is user group on an order within date range (or within last 30 days if no range)
+        orders = Order.objects.filter(end_date__gte=cutoff_time)
+        if search_q:
+            orders = orders.filter(
+                Q(order_group__user__first_name__icontains=search_q)
+                | Q(order_group__user__last_name__icontains=search_q)
+                | Q(order_group__user__email__icontains=search_q)
+            )
+
+        orders.select_related("order_group__user")
+        orders = orders.distinct("order_group__user")
+        orders = orders.order_by("order_group__user", "-end_date")
+        users = []
+        for order in orders:
+            setattr(order.order_group.user, "last_order", order.end_date)
+            users.append(order.order_group.user)
+        # sort based on users.created_on
+        users = sorted(users, key=lambda x: x.last_order, reverse=True)
+        return users
+
+    @staticmethod
+    def get_churning(
+        search_q: str = None,
+        tab: str = None,
+        old_date: datetime.date = None,
+        new_date: datetime.date = None,
+    ) -> List[User]:
+        """Get all churning buyers.
+        -
+        if tab is "fully_churned" then Get all fully churned buyers.
+        Fully Churned = user group is not an active company within the date range, but was 30 days prior
+        to the date range (or within last 30 days if no range)
+        -
+        if tab is "churning" then Get all churning buyers.
+        Buyers that had orders in the previous 30 day period, but no orders in the last 30 day period.
+
+        return: List of User objects
+        """
+        import time
+
+        if old_date is None:
+            old_date = datetime.date.today() - datetime.timedelta(days=60)
+        if new_date is None:
+            new_date = datetime.date.today() - datetime.timedelta(days=30)
+
+        start_time = time.time()
+        orders = Order.objects.filter(end_date__gte=old_date)
+        if search_q:
+            orders = orders.filter(
+                Q(order_group__user__first_name__icontains=search_q)
+                | Q(order_group__user__last_name__icontains=search_q)
+                | Q(order_group__user__email__icontains=search_q)
+            )
+        orders.select_related("order_group__user")
+        orders = orders.prefetch_related("order_line_items")
+        print(orders.count())
+        step_time = time.time()
+        print(f"Query count: {step_time - start_time}")
+        users_d = {}
+        for order in orders:
+            ugid = order.order_group.user_id
+            if ugid not in users_d:
+                users_d[ugid] = {
+                    "count": 1,
+                    "count_old": 0,
+                    "count_new": 0,
+                    "total_old": 0,
+                    "total_new": 0,
+                    "user": order.order_group.user,
+                    "last_order": order.end_date,
+                }
+            users_d[ugid]["count"] += 1
+            if order.end_date < new_date:
+                users_d[ugid]["total_old"] += order.customer_price()
+                users_d[ugid]["count_old"] += 1
+            else:
+                users_d[ugid]["total_new"] += order.customer_price()
+                users_d[ugid]["count_new"] += 1
+            if order.end_date > users_d[ugid]["last_order"]:
+                users_d[ugid]["last_order"] = order.end_date
+            # if len(users_d) == 10:
+            #     break
+        step_time = time.time()
+        print(f"Loop orders: {step_time - start_time}")
+
+        users = []
+        for ugid, data in users_d.items():
+            if data["total_old"] > data["total_new"]:
+                setattr(data["user"], "last_order", data["last_order"])
+                setattr(data["user"], "count_old", data["count_old"])
+                setattr(data["user"], "count_new", data["count_new"])
+                setattr(
+                    data["user"],
+                    "percent_change",
+                    CompanyUtils.calculate_percentage_change(
+                        data["total_old"], data["total_new"]
+                    ),
+                )
+                setattr(
+                    data["user"],
+                    "total_spend",
+                    data["total_new"] + data["total_old"],
+                )
+                setattr(
+                    data["user"],
+                    "change",
+                    data["total_new"] - data["total_old"],
+                )
+                if tab == "fully_churned":
+                    if data["total_new"] == 0:
+                        users.append(data["user"])
+                else:
+                    users.append(data["user"])
+        step_time = time.time()
+        print(f"Filter churning: {step_time - start_time}")
+        # Sort by change
+        users = sorted(users, key=lambda x: x.change)
+        step_time = time.time()
+        print(f"Sort: {step_time - start_time}")
+        return users
