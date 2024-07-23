@@ -31,6 +31,11 @@ urlpatterns = [
         views.order_detail,
         name="customer_order_detail",
     ),
+    path(
+        "customer/company/last_order/",
+        views.company_last_order,
+        name="customer_company_last_order",
+    ),
     path("customer/locations/", views.locations, name="customer_locations"),
     path(
         "customer/location/<uuid:location_id>/",

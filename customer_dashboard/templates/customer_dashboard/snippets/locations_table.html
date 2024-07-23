@@ -8,21 +8,22 @@
     <thead>
         <tr>
             <th>Address</th>
-            <th>Name</th>
-            <th>Autopay?</th>
-            <th>Is Archived?</th>
+            <th>Company</th>
             {% if request.user.is_staff %}
                 {% if tab == 'active' %}
-                    <th>Last Order End</th>
-                {% elif tab == 'churned' %}
-                    <th>Last Order End</th>
-                    <th>Change</th>
-                {% elif tab == 'fully_churned' %}
-                    <th>Last Order End</th>
-                    <th>Change</th>
+                    <th class="header-sort-icon-down">Last Order</th>
+                {% elif tab == 'churned' or tab == 'fully_churned' %}
+                    <th>Last Order</th>
+                    <th>Total Spend</th>
+                    <th class="header-sort-icon-down">Change</th>
+                    <th>Percentage</th>
                 {% else %}
-                    <th>Created On</th>
+                    <th>Last Order</th>
+                    <th class="header-sort-icon-down">Created On</th>
                 {% endif %}
+            {% else %}
+                <th>Autopay?</th>
+                <th>Is Archived?</th>
             {% endif %}
         </tr>
     </thead>
@@ -31,21 +32,28 @@
             {% for user_address in page_obj %}
                 <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
                     <td>{{ user_address.formatted_address }}</td>
-                    <td>{{ user_address.name }}</td>
-                    <td>{{ user_address.autopay }}</td>
-                    <td>{{ user_address.is_archived }}</td>
+                    <td>{{ user_address.user_group.name }}</td>
                     {% if request.user.is_staff %}
                         {% if tab == 'active' %}
                             <td>{{ user_address.last_order }}</td>
-                        {% elif tab == 'churned' %}
+                        {% elif tab == 'churned' or tab == 'fully_churned' %}
                             <td>{{ user_address.last_order }}</td>
+                            <td>${{ user_address.total_spend|floatformat:2|intcomma }}</td>
                             <td>${{ user_address.change|floatformat:2|intcomma }}</td>
-                        {% elif tab == 'fully_churned' %}
-                            <td>{{ user_address.last_order }}</td>
-                            <td>${{ user_address.change|floatformat:2|intcomma }}</td>
+                            <td>{{ user_address.percent_change }}%</td>
                         {% else %}
+                            {% if user_address.last_order %}
+                                <td>{{ user_address.last_order }}</td>
+                            {% else %}
+                                <td class="text-center" hx-get="{% url 'customer_company_last_order' %}?user_address_id={{ user_address.id }}" hx-trigger="load" hx-swap="outerHTML">
+                                    <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </td>
+                            {% endif %}
                             <td>{{ user_address.created_on }}</td>
                         {% endif %}
+                    {% else %}
+                        <td>{{ user_address.autopay }}</td>
+                        <td>{{ user_address.is_archived }}</td>
                     {% endif %}
                 </tr>
             {% endfor %}
@@ -54,21 +62,22 @@
     <tfoot>
         <tr>
             <th>Address</th>
-            <th>Name</th>
-            <th>Autopay?</th>
-            <th>Is Archived?</th>
+            <th>Company</th>
             {% if request.user.is_staff %}
                 {% if tab == 'active' %}
-                    <th>Last Order End</th>
-                {% elif tab == 'churned' %}
-                    <th>Last Order End</th>
+                    <th>Last Order</th>
+                {% elif tab == 'churned' or tab == 'fully_churned' %}
+                    <th>Last Order</th>
+                    <th>Total Spend</th>
                     <th>Change</th>
-                {% elif tab == 'fully_churned' %}
-                    <th>Last Order End</th>
-                    <th>Change</th>
+                    <th>Percentage</th>
                 {% else %}
+                    <th>Last Order</th>
                     <th>Created On</th>
                 {% endif %}
+            {% else %}
+                <th>Autopay?</th>
+                <th>Is Archived?</th>
             {% endif %}
         </tr>
     </tfoot>
@@ -102,19 +111,19 @@
 {% if request.user.is_staff %}
     <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_locations' %}" hx-target="#location-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-swap-oob="true">
         <option value=""{% if not tab or tab == '' %} selected{% endif %}>
-            Filter Data By
+            Filter Data By{% if not tab or tab == '' %} [count: {{ page_obj.paginator.count }}]{% endif %}
         </option>
         <option value="new"{% if tab == 'new' %} selected{% endif %}>
-            New (created in last 30 days)
+            New (created in last 30 days){% if tab == 'new' %} [count: {{ page_obj.paginator.count }}]{% endif %}
         </option>
         <option value="active"{% if tab == 'active' %} selected{% endif %}>
-            Active Locations
+            Active Locations{% if tab == 'active' %} [count: {{ page_obj.paginator.count }}]{% endif %}
         </option>
         <option value="churned"{% if tab == 'churned' %} selected{% endif %}>
-            Churning
+            Churning{% if tab == 'churned' %} [count: {{ page_obj.paginator.count }}]{% endif %}
         </option>
         <option value="fully_churned"{% if tab == 'fully_churned' %} selected{% endif %}>
-            Fully Churned
+            Fully Churned{% if tab == 'fully_churned' %} [count: {{ page_obj.paginator.count }}]{% endif %}
         </option>
     </select>
 {% endif %}

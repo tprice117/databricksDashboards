@@ -186,6 +186,14 @@ class CompanyUtils:
     """This class contains utility methods for the Companies. This is used in the Customer Admin Portal."""
 
     @staticmethod
+    def calculate_percentage_change(old_value, new_value):
+        if old_value == 0:
+            # Handle the case where the old value is 0 to avoid division by zero
+            return "Undefined"  # Or handle it in a way that makes sense for your application
+        percentage_change = ((new_value - old_value) / old_value) * 100
+        return round(percentage_change)
+
+    @staticmethod
     def get_new(search_q: str = None):
         """Get all companies created in the last 30 days."""
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
@@ -270,6 +278,8 @@ class CompanyUtils:
             if ugid not in user_groups_d:
                 user_groups_d[ugid] = {
                     "count": 1,
+                    "count_old": 0,
+                    "count_new": 0,
                     "total_old": 0,
                     "total_new": 0,
                     "user_group": order.order_group.user.user_group,
@@ -278,8 +288,10 @@ class CompanyUtils:
             user_groups_d[ugid]["count"] += 1
             if order.end_date < new_date:
                 user_groups_d[ugid]["total_old"] += order.customer_price()
+                user_groups_d[ugid]["count_old"] += 1
             else:
                 user_groups_d[ugid]["total_new"] += order.customer_price()
+                user_groups_d[ugid]["count_new"] += 1
             if order.end_date > user_groups_d[ugid]["last_order"]:
                 user_groups_d[ugid]["last_order"] = order.end_date
             # if len(user_groups_d) == 10:
@@ -291,6 +303,20 @@ class CompanyUtils:
         for ugid, data in user_groups_d.items():
             if data["total_old"] > data["total_new"]:
                 setattr(data["user_group"], "last_order", data["last_order"])
+                setattr(data["user_group"], "count_old", data["count_old"])
+                setattr(data["user_group"], "count_new", data["count_new"])
+                setattr(
+                    data["user_group"],
+                    "percent_change",
+                    CompanyUtils.calculate_percentage_change(
+                        data["total_old"], data["total_new"]
+                    ),
+                )
+                setattr(
+                    data["user_group"],
+                    "total_spend",
+                    data["total_new"] + data["total_old"],
+                )
                 setattr(
                     data["user_group"],
                     "change",

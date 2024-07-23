@@ -1542,6 +1542,26 @@ def order_detail(request, order_id):
 
 
 @login_required(login_url="/admin/login/")
+def company_last_order(request):
+    context = {}
+    user_address_id = request.GET.get("user_address_id", None)
+    user_group_id = request.GET.get("user_group_id", None)
+    if user_address_id:
+        orders = Order.objects.filter(order_group__user_address_id=user_address_id)
+    elif user_group_id:
+        orders = Order.objects.filter(order_group__user__user_group_id=user_group_id)
+    else:
+        return HttpRequest(status=204)
+
+    orders = orders.order_by("-end_date").first()
+    context["last_order"] = orders
+    # Assume htmx request, so only return html snippet
+    return render(
+        request, "customer_dashboard/snippets/company_last_order_col.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
     context["user"] = get_user(request)
@@ -1565,14 +1585,14 @@ def locations(request):
         elif request.user.is_staff and tab == "active":
             user_addresses = UserAddressUtils.get_active(search_q=search_q)
             context["help_text"] = "Active Companies with orders in the last 30 days."
-            pagination_limit = 100
+            pagination_limit = 100  # Create large limit due to long request time
         elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
             churn_date = datetime.date.today() - datetime.timedelta(days=60)
             user_addresses = UserAddressUtils.get_churning(
                 search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
             )
-            pagination_limit = len(user_addresses)
+            pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
                 context["help_text"] = (
                     f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
@@ -2317,6 +2337,7 @@ def companies(request):
             context["help_text"] = "Active Companies with orders in the last 30 days."
             pagination_limit = 100
         elif tab == "churned" or tab == "fully_churned":
+            # TODO: Add percent change
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
             churn_date = datetime.date.today() - datetime.timedelta(days=60)
             user_groups = UserGroupUtils.get_churning(
