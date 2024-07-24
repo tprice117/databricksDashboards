@@ -27,6 +27,17 @@ urlpatterns = [
         name="customer_order_group_detail",
     ),
     path(
+        "customer/order_group/<uuid:order_group_id>/swap/",
+        views.order_group_swap,
+        name="customer_order_group_swap",
+    ),
+    path(
+        "customer/order_group/<uuid:order_group_id>/removal/",
+        views.order_group_swap,
+        {"is_removal": True},
+        name="customer_order_group_removal",
+    ),
+    path(
         "customer/order/<uuid:order_id>/",
         views.order_detail,
         name="customer_order_detail",
