@@ -1,7 +1,18 @@
+import datetime
 from django import forms
+from django.core.exceptions import ValidationError
 
 from api.models import UserAddressType, UserGroup
 from common.models.choices.user_type import UserType
+
+
+def validate_start_date(value):
+    allowed_start_date = datetime.date.today()
+    if value < datetime.date.today():
+        raise ValidationError(
+            "Start date must be equal to or greater than today: %(allowed_start_date)s",
+            params={"allowed_start_date": allowed_start_date},
+        )
 
 
 def get_all_address_types(_social_site=None):
@@ -289,3 +300,58 @@ class UserGroupForm(forms.Form):
             self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
             self.fields["tax_exempt_status"].disabled = True
+
+
+class OrderGroupSwapForm(forms.Form):
+    order_group_id = forms.CharField(
+        widget=forms.HiddenInput(),
+    )
+    order_group_start_date = forms.DateField(
+        widget=forms.HiddenInput(),
+    )
+    swap_date = forms.DateField(
+        validators=[validate_start_date],
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "min": datetime.date.today(),
+            }
+        ),
+    )
+    schedule_window = forms.ChoiceField(
+        choices=[
+            ("Morning (7am-11am)", "Morning (7am-11am)"),
+            ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
+            ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
+        ],
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    # is_removal = forms.BooleanField(
+    #     initial=False,
+    #     widget=forms.CheckboxInput(
+    #         attrs={"class": "form-check-input", "role": "switch"}
+    #     ),
+    #     required=False,
+    # )
+
+    # NOTE: Below is an example of how to validate against a dynamic swap_date field.
+    # def __init__(self, *args, **kwargs):
+    #     super(OrderGroupSwapForm, self).__init__(*args, **kwargs)
+    #     # Set min attribute for swap_date input
+    #     self.fields["swap_date"].widget.attrs["min"] = self.initial.get(
+    #         "order_group_start_date"
+    #     )
+
+    # def clean_swap_date(self):
+    #     # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
+    #     swap_date = self.cleaned_data["swap_date"]
+    #     order_group_start_date = self.cleaned_data["order_group_start_date"]
+    #     if swap_date < order_group_start_date:
+    #         raise ValidationError(
+    #             "Start date must be after the order group start date: %(allowed_start_date)s",
+    #             params={"allowed_start_date": order_group_start_date},
+    #         )
+
+    #     # Always return a value to use as the new cleaned data, even if this method didn't change it.
+    #     return swap_date

@@ -62,6 +62,7 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
+    OrderGroupSwapForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -738,6 +739,8 @@ def new_order_3(request, product_id):
     context["user_group"] = get_user_group(request)
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
+    # TODO: Coming soon: In product selection screen and end date is always required.
+    # Add checkbox directly after: estimated end date.
     main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related("main_product_category")
     main_product = main_product.first()
@@ -1090,12 +1093,7 @@ def new_order_5(request):
         order_group.save()
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
         # The first order of an order group always gets the same start and end date.
-        # if not removal_date:
-        #     removal_date = delivery_date
-        order = Order(
-            order_group=order_group, start_date=delivery_date, end_date=delivery_date
-        )
-        order.save()
+        order = order_group.create_delivery(delivery_date)
         # context["cart"][order_group.id] = {
         #     "order_group": order_group,
         #     "price": order.customer_price()
@@ -1362,6 +1360,66 @@ def profile(request):
 
 
 @login_required(login_url="/admin/login/")
+def order_group_swap(request, order_group_id, is_removal=False):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+
+    order_group = OrderGroup.objects.filter(id=order_group_id).first()
+    context["order_group"] = order_group
+    context["is_removal"] = is_removal
+    if is_removal:
+        context["submit_link"] = reverse(
+            "customer_order_group_removal",
+            kwargs={
+                "order_group_id": order_group_id,
+            },
+        )
+    else:
+        context["submit_link"] = reverse(
+            "customer_order_group_swap",
+            kwargs={
+                "order_group_id": order_group_id,
+            },
+        )
+
+    if request.method == "POST":
+        try:
+            form = OrderGroupSwapForm(request.POST, request.FILES)
+            context["form"] = form
+            if form.is_valid():
+                swap_date = form.cleaned_data.get("swap_date")
+                schedule_window = form.cleaned_data.get("schedule_window")
+                # is_removal = form.cleaned_data.get("is_removal")
+                # Create the Order object.
+                if is_removal:
+                    order_group.create_removal(swap_date, schedule_window)
+                else:
+                    order_group.create_swap(swap_date, schedule_window)
+                context["form_msg"] = "Successfully saved!"
+            else:
+                raise InvalidFormError(form, "Invalid UserInviteForm")
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+        except Exception as e:
+            context["form_error"] = (
+                f"Error saving, please contact us if this continues: [{e}]."
+            )
+    else:
+        context["form"] = OrderGroupSwapForm(
+            initial={
+                "order_group_id": order_group.id,
+                "order_group_start_date": order_group.start_date,
+            }
+        )
+
+    return render(request, "customer_dashboard/snippets/order_group_swap.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def my_order_groups(request):
     context = {}
     context["user"] = get_user(request)
@@ -1378,6 +1436,7 @@ def my_order_groups(request):
         is_active = int(request.GET.get("active", 1))
     except ValueError:
         is_active = 1
+    context["is_active"] = bool(is_active)
     query_params = request.GET.copy()
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
@@ -2814,7 +2873,7 @@ def company_new_user(request, user_group_id):
                 context["form_error"] += f"{field}: {e.form[field].errors}"
         except Exception as e:
             context["form_error"] = (
-                "Error saving, please contact us if this continues: [{e}]."
+                f"Error saving, please contact us if this continues: [{e}]."
             )
             messages.error(request, e)
     else:

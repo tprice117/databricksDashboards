@@ -187,6 +187,101 @@ class OrderGroup(BaseModel):
                 self.status = Order.Status.CANCELLED
                 self.save()
 
+    def create_delivery(self, delivery_date, schedule_window: str = None) -> Order:
+        """Create a delivery or a one time for the OrderGroup.
+
+        Args:
+            delivery_date (date/date str): The delivery date.
+            schedule_window (str): The preferred time window for the delivery.
+
+        Returns:
+            Order: Returns the delivery order object.
+        """
+        orders = self.orders.order_by("-created_on")
+        if orders.count() == 0:
+            order_group_start_equal = delivery_date == self.start_date
+            if not order_group_start_equal:
+                raise Exception(
+                    f"Cannot create a delivery because Order has a different start date than OrderGroup [{delivery_date}!={self.start_date}]."
+                )
+            delivery_order = Order(
+                order_group=self,
+                start_date=delivery_date,
+                end_date=delivery_date,
+            )
+            if schedule_window:
+                delivery_order.schedule_window = schedule_window
+            delivery_order.save()
+        else:
+            raise Exception(
+                "Cannot create a delivery because OrderGroup already has an order, create swap instead."
+            )
+        return delivery_order
+
+    def create_swap(self, swap_date, schedule_window: str = None) -> Order:
+        """Create a swap for the OrderGroup.
+
+        Args:
+            swap_date (date/date str): The swap/service date.
+            schedule_window (str): The preferred time window for the swap.
+
+        Raises:
+            Exception: Raises an exception if this is the first order in the OrderGroup.
+
+        Returns:
+            Order: Returns the swap order object.
+        """
+        orders = self.orders.order_by("-created_on")
+        if orders.count() == 0:
+            raise Exception(
+                "Cannot create a swap as first order for OrderGroup, create delivery instead."
+            )
+        else:
+            last_order = orders.first()
+            swap_order = Order(
+                order_group=self, start_date=last_order.end_date, end_date=swap_date
+            )
+            if schedule_window:
+                swap_order.schedule_window = schedule_window
+            swap_order.save()
+        return swap_order
+
+    def create_removal(self, removal_date, schedule_window: str = None) -> Order:
+        """Create a removal for the OrderGroup. This ends the OrderGroup
+        i.e. This ends this current service rental.
+
+        Args:
+            removal_date (date/date str): The removal date.
+            schedule_window (str): The preferred time window for the removal.
+
+        Raises:
+            Exception: Raises an exception if this is the first order in the OrderGroup.
+
+        Returns:
+            Order: Returns the removal order object.
+        """
+        orders = self.orders.order_by("-created_on")
+        if orders.count() == 0:
+            raise Exception(
+                "Cannot create a removal as first order for OrderGroup, create delivery instead."
+            )
+        else:
+            last_order = orders.first()
+            if last_order.order_type == Order.Type.REMOVAL:
+                raise Exception(
+                    f"Cannot create a removal because last order is already a removal, set for {last_order.end_date}."
+                )
+            self.end_date = removal_date
+            self.save()
+
+            removal_order = Order(
+                order_group=self, start_date=last_order.end_date, end_date=removal_date
+            )
+            if schedule_window:
+                removal_order.schedule_window = schedule_window
+            removal_order.save()
+        return removal_order
+
 
 @receiver(pre_save, sender=OrderGroup)
 def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):

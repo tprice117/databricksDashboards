@@ -57,13 +57,13 @@
             <div class="card-header py-3">
                 <div class="form-check form-switch">
                     <input id="order-group-active-filter" class="form-control form-check-input" type="checkbox" checked="" hx-push-url="true" hx-target="#order-groups-results" hx-swap="outerHTML" hx-trigger="onActiveFilter" hx-indicator="#htmx-indicator-loading-status" />
-                    <label class="form-check-label" for="formCheck-4"><strong>Active Orders</strong></label>
+                    <label class="form-check-label" for="order-group-active-filter"><strong>Active Orders</strong></label>
                 </div>
                 <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0" id="dataTable">
+                    <table class="table my-0" id="order-groups-results" hx-get="{{ active_orders_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
                         <thead>
                             <tr>
                                 <th>Product</th>
@@ -73,30 +73,28 @@
                                 <th>View</th>
                             </tr>
                         </thead>
-                        <tbody id="order-groups-results" hx-get="{{ active_orders_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody>
+                        <tbody></tbody>
                         <tfoot>
                             <tr>
-                                <td>
-                                    <strong>Product</strong>
-                                </td>
-                                <td>
-                                    <strong>Location</strong>
-                                </td>
-                                <td>
-                                    <strong>Supplier</strong>
-                                </td>
-                                <td>
-                                    <strong>Start Date</strong>
-                                </td>
-                                <td>
-                                    <strong>View</strong>
-                                </td>
+                                <th>Product</th>
+                                <th>Location</th>
+                                <th>Supplier</th>
+                                <th>Start Date</th>
+                                <th>View</th>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
                 <div class="row invisible" id="order-groups-pagination"></div>
             </div>
+        </div>
+    </div>
+{% endblock %}
+{% block modals %}
+    <div class="modal fade" role="dialog" tabindex="-1" id="order-swap-modal" style="display: none;" tabindex="-1" aria-hidden="true">
+        <span class="htmx-indicator1" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        <div class="modal-dialog" role="document">
+            <div class="modal-content"></div>
         </div>
     </div>
 {% endblock %}
