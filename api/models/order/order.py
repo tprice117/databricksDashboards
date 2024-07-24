@@ -665,11 +665,20 @@ class Order(BaseModel):
                     )
                     .select_related("user")
                 )
-                to_emails = [
+                # Get all emails for this seller_location_id.
+                # Ensure all emails are non empty and unique.
+                to_emails = []
+                if (
                     self.order_group.seller_product_seller_location.seller_location.order_email
-                ]
+                ):
+                    to_emails.append(
+                        self.order_group.seller_product_seller_location.seller_location.order_email
+                    )
                 for user_seller_location in user_seller_locations:
-                    if user_seller_location.user.email not in to_emails:
+                    if (
+                        user_seller_location.user.email
+                        and user_seller_location.user.email not in to_emails
+                    ):
                         to_emails.append(user_seller_location.user.email)
                 # If no emails found, then send to internal team and log error.
                 if not to_emails:
