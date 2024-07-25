@@ -1,20 +1,21 @@
 from django.http import JsonResponse
-from django.views.generic import View
 from rest_framework.exceptions import APIException
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.viewsets import GenericViewSet
 
 from api.serializers import SellerProductSellerLocationSerializer
 from matching_engine.matching_engine import MatchingEngine
 
 
-class GetSellerProductSellerLocationsByLatLongView(View):
+class GetSellerProductSellerLocationsByLatLongView(GenericViewSet, CreateModelMixin):
     """
     This class-based view returns a list of SellerProductSellerLocations that match the
     given parameters in a POST request.
     """
 
-    http_method_names = ["post"]  # Only accept POST requests
+    serializer_class = SellerProductSellerLocationSerializer
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         """
         POST Body Args:
           product: Product Id (UUID)

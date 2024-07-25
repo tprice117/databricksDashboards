@@ -1,22 +1,22 @@
 import datetime
 
 from django.http import JsonResponse
-from django.views.generic import View
+from rest_framework import viewsets
 from rest_framework.exceptions import APIException
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.viewsets import GenericViewSet
 
 from api.serializers import SellerProductSellerLocationSerializer
 from pricing_engine.pricing_engine import PricingEngine
 
 
-class SellerProductSellerLocationPricingView(View):
+class SellerProductSellerLocationPricingView(GenericViewSet, CreateModelMixin):
     """
     This class-based view returns a list of SellerProductSellerLocations that match the
     given parameters in a POST request.
     """
 
-    http_method_names = ["post"]  # Only accept POST requests
-
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         """
         POST Body Args:
           seller_product_seller_location: SellerProductSellerLocation Id (UUID)

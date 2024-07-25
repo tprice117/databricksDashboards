@@ -7,10 +7,12 @@ router = DefaultRouter()
 router.register(
     r"pricing-engine/seller-product-seller-location-pricing",
     views.SellerProductSellerLocationPricingView,
+    basename="pricing-engine",
 )
 router.register(
     r"pricing-engine/seller-product-seller-location-pricing-by-lat-long",
     views.SellerProductSellerLocationPricingByLatLongView,
+    basename="pricing-engine",
 )
 
 urlpatterns = router.urls
