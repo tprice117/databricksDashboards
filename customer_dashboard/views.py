@@ -4,6 +4,7 @@ import json
 import logging
 import uuid
 from typing import List, Union
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -66,6 +67,7 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
+    OrderGroupForm,
     OrderGroupSwapForm,
 )
 
@@ -741,10 +743,11 @@ def new_order_3(request, product_id):
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
+    context["product_id"] = product_id
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
-    # TODO: Coming soon: In product selection screen and end date is always required.
-    # Add checkbox directly after: estimated end date.
+    # TODO: Coming soon: In product selection screen and end date is always required
+    # Add checkbox directly after: estimated end date
     main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related("main_product_category")
     main_product = main_product.first()
@@ -765,6 +768,85 @@ def new_order_3(request, product_id):
         request, context["user"], context["user_group"]
     )
     context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
+    if request.method == "POST":
+        product_id = request.POST.get("product_id")
+        user_address_id = request.POST.get("user_address")
+        product_add_on_choices = []
+        for key, value in request.POST.items():
+            if key.startswith("product_add_on_choices"):
+                product_add_on_choices.append(value)
+        product_waste_types = request.POST.getlist("product_waste_types")
+        service_frequency = request.POST.get("service_frequency")
+        delivery_date = request.POST.get("delivery_date")
+        removal_date = request.POST.get("removal_date")
+        context["product_id"] = product_id
+        context["user_address"] = user_address_id
+        context["product_waste_types"] = product_waste_types
+        context["product_add_on_choices"] = product_add_on_choices
+        context["service_frequency"] = service_frequency
+        context["delivery_date"] = delivery_date
+        context["removal_date"] = removal_date
+        # TODO: Check if form is valid, if so then redirect to next page.
+        # If not valid, then display error message.
+        # If valid, then redirect to next page.
+        query_params = {
+            "product_id": product_id,
+            "user_address_id": user_address_id,
+            "waste_type_id": product_waste_types,
+            "service_recurring_frequency_id": service_frequency,
+            "delivery_date": delivery_date,
+            "removal_date": removal_date,
+            "product_add_on_choices": product_add_on_choices,
+        }
+
+        try:
+            save_model = None
+            form = OrderGroupForm(request.POST, request.FILES)
+            context["form"] = form
+            if form.is_valid():
+                # first_name = form.cleaned_data.get("first_name")
+                # last_name = form.cleaned_data.get("last_name")
+                # email = form.cleaned_data.get("email")
+                # user_type = form.cleaned_data.get("type")
+                # # If other error
+                # # raise ValueError(f"Ooops other error")
+                # # directly create the user
+                # user = User(
+                #     first_name=first_name,
+                #     last_name=last_name,
+                #     email=email,
+                #     type=user_type,
+                # )
+                # save_model = user
+                messages.success(request, "Directly created user.")
+            else:
+                raise InvalidFormError(form, "Invalid OrderGroupForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return HttpResponseRedirect(
+                f"{reverse('customer_new_order_4')}?{urlencode(query_params)}"
+            )
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form[field].field.widget.attrs["class"] += " is-invalid"
+        except Exception as e:
+            messages.error(
+                request, f"Error saving, please contact us if this continues: [{e}]."
+            )
+    else:
+        context["form"] = OrderGroupForm(
+            user_addresses=context["user_addresses"],
+            main_product=context["main_product"],
+            product_waste_types=context["product_waste_types"],
+            product_add_ons=context["product_add_ons"],
+            service_freqencies=context["service_freqencies"],
+            initial={"product_id": product_id},
+        )
+
     return render(
         request, "customer_dashboard/new_order/main_product_detail.html", context
     )
