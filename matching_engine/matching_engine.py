@@ -1,3 +1,4 @@
+from decimal import Decimal
 from functools import lru_cache
 
 from api.models.main_product.main_product_waste_type import MainProductWasteType
@@ -26,6 +27,20 @@ class MatchingEngine:
         user_address: UserAddress,
         waste_type: WasteType = None,
     ) -> list[SellerProductSellerLocation]:
+        return MatchingEngine.get_possible_seller_product_seller_locations_by_lat_long(
+            product=product,
+            latitude=user_address.latitude,
+            longitude=user_address.longitude,
+            waste_type=waste_type,
+        )
+
+    @staticmethod
+    def get_possible_seller_product_seller_locations_by_lat_long(
+        product: Product,
+        latitude: Decimal,
+        longitude: Decimal,
+        waste_type: WasteType = None,
+    ) -> list[SellerProductSellerLocation]:
         # Get all SellerProductSellerLocation objects that match the product.
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
             seller_product__product=product,
@@ -41,9 +56,10 @@ class MatchingEngine:
         matches = []
         for seller_product_seller_location in seller_product_seller_locations:
             # Is the UserAddress within the ServiceRadius of the SellerProductSellerLocation?
-            within_service_radius = MatchingEngine._customer_is_within_seller_product_seller_location_service_radius(
+            within_service_radius = MatchingEngine._location_is_within_seller_product_seller_location_service_radius(
                 seller_product_seller_location,
-                user_address,
+                latitude=latitude,
+                longitude=longitude,
             )
 
             if seller_product_seller_location.is_complete and within_service_radius:
@@ -141,16 +157,17 @@ class MatchingEngine:
             # SellerProductSellerLocation with the fewest included_days and tonnage_included.
             return possible_seller_product_seller_locations[0]
 
-    def _customer_is_within_seller_product_seller_location_service_radius(
+    def _location_is_within_seller_product_seller_location_service_radius(
         seller_product_seller_location: SellerProductSellerLocation,
-        user_address: UserAddress,
+        latitude: Decimal,
+        longitude: Decimal,
     ):
         # First check euclidean distance, since it should always be less than the driving distance.
         euclidean_distance = DistanceUtils.get_euclidean_distance(
             lat1=seller_product_seller_location.seller_location.latitude,
             lon1=seller_product_seller_location.seller_location.longitude,
-            lat2=user_address.latitude,
-            lon2=user_address.longitude,
+            lat2=latitude,
+            lon2=longitude,
         )
         seller_location_radius = float(
             seller_product_seller_location.service_radius or 0
@@ -161,8 +178,8 @@ class MatchingEngine:
             distance = DistanceUtils.get_driving_distance(
                 lat1=seller_product_seller_location.seller_location.latitude,
                 lon1=seller_product_seller_location.seller_location.longitude,
-                lat2=user_address.latitude,
-                lon2=user_address.longitude,
+                lat2=latitude,
+                lon2=longitude,
             )
 
             return float(distance) < seller_location_radius

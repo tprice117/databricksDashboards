@@ -8,7 +8,7 @@ from api.serializers import SellerProductSellerLocationSerializer
 from pricing_engine.pricing_engine import PricingEngine
 
 
-class SellerProductSellerLocationPricingView(View):
+class SellerProductSellerLocationPricingByLatLongView(View):
     """
     This class-based view returns a list of SellerProductSellerLocations that match the
     given parameters in a POST request.
@@ -20,7 +20,8 @@ class SellerProductSellerLocationPricingView(View):
         """
         POST Body Args:
           seller_product_seller_location: SellerProductSellerLocation Id (UUID)
-          user_address: User's address (string)
+          latitude: User's latitude (Decimal)
+          longitude: User's longitude (Decimal)
           waste_type: Waste type (string or None)
           start_date: Start date (datetime in ISO format)
           end_date: End date (datetime in ISO format)
@@ -33,7 +34,8 @@ class SellerProductSellerLocationPricingView(View):
             seller_product_seller_location = request.data.get(
                 "seller_product_seller_location"
             )
-            user_address = request.data.get("user_address")
+            latitude = request.data.get("latitude")
+            longitude = request.data.get("longitude")
             waste_type = request.data.get("waste_type")
             start_date = request.data.get("start_date")
             end_date = request.data.get("end_date")
@@ -45,9 +47,10 @@ class SellerProductSellerLocationPricingView(View):
         end_date = datetime.datetime.fromisoformat(end_date)
 
         # Get SellerProductSellerLocations.
-        seller_product_seller_locations = PricingEngine.get_price(
+        seller_product_seller_locations = PricingEngine.get_price_by_lat_long(
             seller_product_seller_location=seller_product_seller_location,
-            user_address=user_address,
+            latitude=latitude,
+            longitude=longitude,
             start_date=start_date,
             end_date=start_date,
             waste_type=waste_type,
