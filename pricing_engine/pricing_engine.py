@@ -13,7 +13,7 @@ class PricingEngine:
         user_address: UserAddress,
         seller_product_seller_location: SellerProductSellerLocation,
         start_date: datetime.datetime,
-        end_date: Optional[datetime.datetime],
+        end_date: datetime.datetime,
         waste_type: Optional[WasteType],
     ):
         """

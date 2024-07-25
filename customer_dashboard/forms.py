@@ -302,6 +302,126 @@ class UserGroupForm(forms.Form):
             self.fields["tax_exempt_status"].disabled = True
 
 
+# Create an Order form
+class OrderGroupForm(forms.Form):
+    product_id = forms.CharField(
+        widget=forms.HiddenInput(),
+    )
+    # user_address = forms.ChoiceField(
+    #     choices=[],
+    #     widget=forms.Select(attrs={"class": "form-select"}),
+    # )
+    delivery_date = forms.DateField(
+        validators=[validate_start_date],
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "min": datetime.date.today(),
+            }
+        ),
+    )
+    removal_date = forms.DateField(
+        validators=[validate_start_date],
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "min": datetime.date.today(),
+            }
+        ),
+    )
+    # Add is estimated end date checkbox
+    # NOTE: Maybe also say that we will assume monthly rental for now.
+    is_estimated_end_date = forms.BooleanField(
+        initial=False,
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
+        required=False,
+    )
+    schedule_window = forms.ChoiceField(
+        choices=[
+            ("Morning (7am-11am)", "Morning (7am-11am)"),
+            ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
+            ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
+        ],
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        user_addresses = kwargs.pop("user_addresses", None)
+        product_waste_types = kwargs.pop("product_waste_types")
+        product_add_ons = kwargs.pop("product_add_ons")
+        main_product = kwargs.pop("main_product")
+        service_freqencies = kwargs.pop("service_freqencies")
+
+        super(OrderGroupForm, self).__init__(*args, **kwargs)
+
+        # # Add correct user_address_id field.
+        # if isinstance(user_addresses, list):
+        #     loc_count = len(user_addresses)
+        # else:
+        #     loc_count = user_addresses.count()
+        # if loc_count < 20:
+        #     # If there are less than 20 addresses, create a select field.
+        #     address_choices = [("Your added locations", [])]
+        #     for address in user_addresses:
+        #         address_choices[0][1].append(
+        #             (address.id, f"{address.name} | {address.formatted_address()}")
+        #         )
+        #     # Update choices on user_address field
+        #     self.fields["user_address"].choices = address_choices
+        # else:
+        #     # If there are more than 20 addresses, create a search input field.
+        #     self.fields["user_address"] = forms.CharField(
+        #         widget=forms.TextInput(
+        #             attrs={
+        #                 "class": "form-control",
+        #                 "placeholder": "Search for address",
+        #             }
+        #         ),
+        #     )
+
+        # Add optional fields
+        if product_add_ons:
+            product_choices = []
+            # create a select field for each product add-on
+            for add_on in product_add_ons:
+                _choices = []
+                for add_on_choice in add_on.choices:
+                    _choices.append((add_on_choice.id, add_on_choice.name))
+                product_choices.append((add_on.add_on.name, _choices))
+        if main_product.has_material:
+            self.fields["material"] = forms.ChoiceField(
+                help_text="Hold CTRL to select multiple.",
+                choices=list(product_waste_types.values_list("id", "waste_type__name")),
+                widget=forms.Select(attrs={"class": "form-select", "multiple": "true"}),
+            )
+        if (
+            not main_product.has_rental
+            and not main_product.has_rental_one_step
+            and not main_product.has_rental_multi_step
+        ):
+            # Hide delivery and removal date fields
+            self.fields["delivery_date"].widget = forms.HiddenInput()
+            self.fields["removal_date"].widget = forms.HiddenInput()
+            self.fields["delivery_date"].required = False
+            self.fields["removal_date"].required = False
+
+    def clean_removal_date(self):
+        # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
+        delivery_date = self.cleaned_data["delivery_date"]
+        removal_date = self.cleaned_data["removal_date"]
+        if removal_date < delivery_date:
+            raise ValidationError(
+                "Removal date must be after delivery date: %(delivery_date)s",
+                params={"delivery_date": delivery_date},
+            )
+        # Always return a value to use as the new cleaned data, even if this method didn't change it.
+        return removal_date
+
+
 class OrderGroupSwapForm(forms.Form):
     order_group_id = forms.CharField(
         widget=forms.HiddenInput(),
