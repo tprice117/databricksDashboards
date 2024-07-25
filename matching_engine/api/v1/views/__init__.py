@@ -1,1 +1,1 @@
-from .get_seller_product_seller_locations import GetSellerProductSellerLocationsView
+from .seller_product_seller_locations import GetSellerProductSellerLocationsView

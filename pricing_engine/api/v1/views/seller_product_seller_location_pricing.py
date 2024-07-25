@@ -1,3 +1,5 @@
+import datetime
+
 from django.http import JsonResponse
 from django.views.generic import View
 from rest_framework.exceptions import APIException
@@ -21,6 +23,8 @@ class SellerProductSellerLocationPricingView(View):
           seller_product_seller_location: SellerProductSellerLocation Id (UUID)
           user_address: User's address (string)
           waste_type: Waste type (string or None)
+          start_date: Start date (datetime in ISO format)
+          end_date: End date (datetime in ISO format)
 
         Returns:
           A list of SellerProductSellerLocations.
@@ -32,8 +36,14 @@ class SellerProductSellerLocationPricingView(View):
             )
             user_address = request.data.get("user_address")
             waste_type = request.data.get("waste_type")
+            start_date = request.data.get("start_date")
+            end_date = request.data.get("end_date")
         except KeyError as e:
             raise APIException(f"Missing required field: {e.args[0]}") from e
+
+        # Convert start_date and end_date to datetime objects.
+        start_date = datetime.datetime.fromisoformat(start_date)
+        end_date = datetime.datetime.fromisoformat(end_date)
 
         # Get SellerProductSellerLocations.
         seller_product_seller_locations = PricingEngine.get_price(
