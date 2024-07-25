@@ -1,20 +1,25 @@
 from django.http import JsonResponse
+from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException
-from rest_framework.mixins import CreateModelMixin
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.views import APIView
 
 from api.serializers import SellerProductSellerLocationSerializer
+from matching_engine.api.v1.serializers import MatchingEngineRequestByLatLongSerializer
 from matching_engine.matching_engine import MatchingEngine
 
 
-class GetSellerProductSellerLocationsByLatLongView(GenericViewSet, CreateModelMixin):
+class GetSellerProductSellerLocationsByLatLongView(APIView):
     """
     This class-based view returns a list of SellerProductSellerLocations that match the
     given parameters in a POST request.
     """
 
-    serializer_class = SellerProductSellerLocationSerializer
-
+    @extend_schema(
+        request=MatchingEngineRequestByLatLongSerializer,
+        responses={
+            200: SellerProductSellerLocationSerializer(many=True),
+        },
+    )
     def post(self, request):
         """
         POST Body Args:
