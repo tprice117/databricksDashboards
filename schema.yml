@@ -2287,86 +2287,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MainProduct'
           description: ''
-  /api/matching-engine-seller-product-seller-locations-by-lat-long/{id}/:
-    get:
-      operationId: api_matching_engine_seller_product_seller_locations_by_lat_long_retrieve
-      description: |-
-        This class-based view returns a list of SellerProductSellerLocations that match the
-        given parameters in a POST request.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiMatchingEngineSellerProductSellerLocationsByLatLongRetrieveErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
-          description: ''
-        '200':
-          description: No response body
-  /api/matching-engine-seller-product-seller-locations/{id}/:
-    get:
-      operationId: api_matching_engine_seller_product_seller_locations_retrieve
-      description: |-
-        This class-based view returns a list of SellerProductSellerLocations that match the
-        given parameters in a POST request.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiMatchingEngineSellerProductSellerLocationsRetrieveErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
-          description: ''
-        '200':
-          description: No response body
   /api/order-disposal-tickets/:
     get:
       operationId: api_order_disposal_tickets_list
@@ -5320,86 +5240,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiPricingCreateErrorResponse400'
-          description: ''
-        '200':
-          description: No response body
-  /api/pricing-engine-seller-product-seller-location-pricing-by-lat-long/{id}/:
-    get:
-      operationId: api_pricing_engine_seller_product_seller_location_pricing_by_lat_long_retrieve
-      description: |-
-        This class-based view returns a list of SellerProductSellerLocations that match the
-        given parameters in a POST request.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiPricingEngineSellerProductSellerLocationPricingByLatLongRetrieveErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
-          description: ''
-        '200':
-          description: No response body
-  /api/pricing-engine-seller-product-seller-location-pricing/{id}/:
-    get:
-      operationId: api_pricing_engine_seller_product_seller_location_pricing_retrieve
-      description: |-
-        This class-based view returns a list of SellerProductSellerLocations that match the
-        given parameters in a POST request.
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - {}
-      responses:
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiPricingEngineSellerProductSellerLocationPricingRetrieveErrorResponse400'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse404'
-              examples:
-                NotFound:
-                  value:
-                    type: client_error
-                    errors:
-                    - code: not_found
-                      detail: Not found.
-                      attr: null
           description: ''
         '200':
           description: No response body
@@ -12960,6 +12800,184 @@ paths:
           description: ''
         '204':
           description: No response body
+  /matching-engine/v1/seller-product-seller-locations/:
+    post:
+      operationId: matching_engine_v1_seller_product_seller_locations_create
+      description: |-
+        POST Body Args:
+          product: Product Id (UUID)
+          user_address: UserAddress Id (UUID)
+          waste_type: WasteType Id (UUID or None)
+
+        Returns:
+          A list of SellerProductSellerLocations.
+      tags:
+      - matching-engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchingEngineRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MatchingEngineRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MatchingEngineRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateErrorResponse400'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+  /matching-engine/v1/seller-product-seller-locations-by-lat-long/:
+    post:
+      operationId: matching_engine_v1_seller_product_seller_locations_by_lat_long_create
+      description: |-
+        POST Body Args:
+          product: Product Id (UUID)
+          latitude: User's latitude (Decimal)
+          longitude: User's longitude (Decimal)
+          waste_type: WasteType Id (UUID or None)
+
+        Returns:
+          A list of SellerProductSellerLocations.
+      tags:
+      - matching-engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchingEngineRequestByLatLong'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MatchingEngineRequestByLatLong'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MatchingEngineRequestByLatLong'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateErrorResponse400'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+  /pricing-engine/v1/seller-product-seller-location-pricing/:
+    post:
+      operationId: pricing_engine_v1_seller_product_seller_location_pricing_create
+      description: |-
+        POST Body Args:
+          seller_product_seller_location: SellerProductSellerLocation Id (UUID)
+          user_address: User's address (string)
+          waste_type: Waste type (string or None)
+          start_date: Start date (datetime in ISO format)
+          end_date: End date (datetime in ISO format)
+
+        Returns:
+          A list of SellerProductSellerLocations.
+      tags:
+      - pricing-engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingEngineRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PricingEngineRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PricingEngineRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateErrorResponse400'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
+  /pricing-engine/v1/seller-product-seller-location-pricing-by-lat-long:
+    post:
+      operationId: pricing_engine_v1_seller_product_seller_location_pricing_by_lat_long_create
+      description: |-
+        POST Body Args:
+          seller_product_seller_location: SellerProductSellerLocation Id (UUID)
+          latitude: User's latitude (Decimal)
+          longitude: User's longitude (Decimal)
+          waste_type: Waste type (string or None)
+          start_date: Start date (datetime in ISO format)
+          end_date: End date (datetime in ISO format)
+
+        Returns:
+          A list of SellerProductSellerLocations.
+      tags:
+      - pricing-engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingEngineRequestByLatLong'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PricingEngineRequestByLatLong'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PricingEngineRequestByLatLong'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateErrorResponse400'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SellerProductSellerLocation'
+          description: ''
   /supplier/{supplier_id}/dashboard/:
     get:
       operationId: supplier_dashboard_retrieve
@@ -18944,20 +18962,6 @@ components:
       - errors
       - type
     ApiMainProductsRetrieveErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          client_error: '#/components/schemas/ParseErrorResponse'
-    ApiMatchingEngineSellerProductSellerLocationsByLatLongRetrieveErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          client_error: '#/components/schemas/ParseErrorResponse'
-    ApiMatchingEngineSellerProductSellerLocationsRetrieveErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ParseErrorResponse'
       discriminator:
@@ -35046,20 +35050,6 @@ components:
         mapping:
           client_error: '#/components/schemas/ParseErrorResponse'
     ApiPricingCreateErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          client_error: '#/components/schemas/ParseErrorResponse'
-    ApiPricingEngineSellerProductSellerLocationPricingByLatLongRetrieveErrorResponse400:
-      oneOf:
-      - $ref: '#/components/schemas/ParseErrorResponse'
-      discriminator:
-        propertyName: type
-        mapping:
-          client_error: '#/components/schemas/ParseErrorResponse'
-    ApiPricingEngineSellerProductSellerLocationPricingRetrieveErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ParseErrorResponse'
       discriminator:
@@ -69979,6 +69969,357 @@ components:
       - main_product
       - updated_on
       - waste_type
+    MatchingEngineRequest:
+      type: object
+      properties:
+        product:
+          type: string
+          format: uuid
+          writeOnly: true
+        user_address:
+          type: string
+          format: uuid
+          writeOnly: true
+        waste_type:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+      required:
+      - product
+      - user_address
+      - waste_type
+    MatchingEngineRequestByLatLong:
+      type: object
+      properties:
+        product:
+          type: string
+          format: uuid
+          writeOnly: true
+        latitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          writeOnly: true
+        longitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          writeOnly: true
+        waste_type:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+      required:
+      - latitude
+      - longitude
+      - product
+      - waste_type
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateProductErrorComponent'
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateLatitudeErrorComponent'
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateLongitudeErrorComponent'
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateWasteTypeErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateNonFieldErrorsErrorComponent'
+          product: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateProductErrorComponent'
+          latitude: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateLatitudeErrorComponent'
+          longitude: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateLongitudeErrorComponent'
+          waste_type: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateWasteTypeErrorComponent'
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateLatitudeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - latitude
+          type: string
+          description: '* `latitude` - latitude'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateLongitudeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - longitude
+          type: string
+          description: '* `longitude` - longitude'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          type: string
+          description: '* `invalid` - invalid'
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateProductErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - product
+          type: string
+          description: '* `product` - product'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsByLatLongCreateError'
+      required:
+      - errors
+      - type
+    MatchingEngineV1SellerProductSellerLocationsByLatLongCreateWasteTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - waste_type
+          type: string
+          description: '* `waste_type` - waste_type'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateProductErrorComponent'
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateUserAddressErrorComponent'
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateWasteTypeErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateNonFieldErrorsErrorComponent'
+          product: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateProductErrorComponent'
+          user_address: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateUserAddressErrorComponent'
+          waste_type: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateWasteTypeErrorComponent'
+    MatchingEngineV1SellerProductSellerLocationsCreateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    MatchingEngineV1SellerProductSellerLocationsCreateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          type: string
+          description: '* `invalid` - invalid'
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsCreateProductErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - product
+          type: string
+          description: '* `product` - product'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsCreateUserAddressErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user_address
+          type: string
+          description: '* `user_address` - user_address'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    MatchingEngineV1SellerProductSellerLocationsCreateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchingEngineV1SellerProductSellerLocationsCreateError'
+      required:
+      - errors
+      - type
+    MatchingEngineV1SellerProductSellerLocationsCreateWasteTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - waste_type
+          type: string
+          description: '* `waste_type` - waste_type'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     NullEnum:
       enum:
       - null
@@ -73181,6 +73522,505 @@ components:
       - created_on
       - order
       - updated_on
+    PricingEngineRequest:
+      type: object
+      properties:
+        seller_product_seller_location:
+          type: string
+          format: uuid
+          writeOnly: true
+        user_address:
+          type: string
+          format: uuid
+          writeOnly: true
+        waste_type:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+        start_date:
+          type: string
+          format: date-time
+          writeOnly: true
+        end_date:
+          type: string
+          format: date-time
+          writeOnly: true
+      required:
+      - end_date
+      - seller_product_seller_location
+      - start_date
+      - user_address
+      - waste_type
+    PricingEngineRequestByLatLong:
+      type: object
+      properties:
+        seller_product_seller_location:
+          type: string
+          format: uuid
+          writeOnly: true
+        latitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          writeOnly: true
+        longitude:
+          type: number
+          format: double
+          maximum: 1000
+          minimum: -1000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          writeOnly: true
+        waste_type:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+        start_date:
+          type: string
+          format: date-time
+          writeOnly: true
+        end_date:
+          type: string
+          format: date-time
+          writeOnly: true
+      required:
+      - end_date
+      - latitude
+      - longitude
+      - seller_product_seller_location
+      - start_date
+      - waste_type
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateEndDateErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - end_date
+          type: string
+          description: '* `end_date` - end_date'
+        code:
+          enum:
+          - date
+          - invalid
+          - make_aware
+          - 'null'
+          - overflow
+          - required
+          type: string
+          description: |-
+            * `date` - date
+            * `invalid` - invalid
+            * `make_aware` - make_aware
+            * `null` - null
+            * `overflow` - overflow
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateSellerProductSellerLocationErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateLatitudeErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateLongitudeErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateWasteTypeErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateStartDateErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateEndDateErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateNonFieldErrorsErrorComponent'
+          seller_product_seller_location: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateSellerProductSellerLocationErrorComponent'
+          latitude: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateLatitudeErrorComponent'
+          longitude: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateLongitudeErrorComponent'
+          waste_type: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateWasteTypeErrorComponent'
+          start_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateStartDateErrorComponent'
+          end_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateEndDateErrorComponent'
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateLatitudeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - latitude
+          type: string
+          description: '* `latitude` - latitude'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateLongitudeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - longitude
+          type: string
+          description: '* `longitude` - longitude'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          type: string
+          description: '* `invalid` - invalid'
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateSellerProductSellerLocationErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - seller_product_seller_location
+          type: string
+          description: '* `seller_product_seller_location` - seller_product_seller_location'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateStartDateErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - start_date
+          type: string
+          description: '* `start_date` - start_date'
+        code:
+          enum:
+          - date
+          - invalid
+          - make_aware
+          - 'null'
+          - overflow
+          - required
+          type: string
+          description: |-
+            * `date` - date
+            * `invalid` - invalid
+            * `make_aware` - make_aware
+            * `null` - null
+            * `overflow` - overflow
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateError'
+      required:
+      - errors
+      - type
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateWasteTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - waste_type
+          type: string
+          description: '* `waste_type` - waste_type'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingCreateEndDateErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - end_date
+          type: string
+          description: '* `end_date` - end_date'
+        code:
+          enum:
+          - date
+          - invalid
+          - make_aware
+          - 'null'
+          - overflow
+          - required
+          type: string
+          description: |-
+            * `date` - date
+            * `invalid` - invalid
+            * `make_aware` - make_aware
+            * `null` - null
+            * `overflow` - overflow
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateNonFieldErrorsErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateSellerProductSellerLocationErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateUserAddressErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateWasteTypeErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateStartDateErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateEndDateErrorComponent'
+      discriminator:
+        propertyName: attr
+        mapping:
+          non_field_errors: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateNonFieldErrorsErrorComponent'
+          seller_product_seller_location: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateSellerProductSellerLocationErrorComponent'
+          user_address: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateUserAddressErrorComponent'
+          waste_type: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateWasteTypeErrorComponent'
+          start_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateStartDateErrorComponent'
+          end_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateEndDateErrorComponent'
+    PricingEngineV1SellerProductSellerLocationPricingCreateErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateValidationError'
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          validation_error: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateValidationError'
+          client_error: '#/components/schemas/ParseErrorResponse'
+    PricingEngineV1SellerProductSellerLocationPricingCreateNonFieldErrorsErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - non_field_errors
+          type: string
+          description: '* `non_field_errors` - non_field_errors'
+        code:
+          enum:
+          - invalid
+          type: string
+          description: '* `invalid` - invalid'
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingCreateSellerProductSellerLocationErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - seller_product_seller_location
+          type: string
+          description: '* `seller_product_seller_location` - seller_product_seller_location'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingCreateStartDateErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - start_date
+          type: string
+          description: '* `start_date` - start_date'
+        code:
+          enum:
+          - date
+          - invalid
+          - make_aware
+          - 'null'
+          - overflow
+          - required
+          type: string
+          description: |-
+            * `date` - date
+            * `invalid` - invalid
+            * `make_aware` - make_aware
+            * `null` - null
+            * `overflow` - overflow
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingCreateUserAddressErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - user_address
+          type: string
+          description: '* `user_address` - user_address'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - 'null'
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    PricingEngineV1SellerProductSellerLocationPricingCreateValidationError:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ValidationErrorEnum'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateError'
+      required:
+      - errors
+      - type
+    PricingEngineV1SellerProductSellerLocationPricingCreateWasteTypeErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - waste_type
+          type: string
+          description: '* `waste_type` - waste_type'
+        code:
+          enum:
+          - does_not_exist
+          - incorrect_type
+          - required
+          type: string
+          description: |-
+            * `does_not_exist` - does_not_exist
+            * `incorrect_type` - incorrect_type
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     Product:
       type: object
       properties:

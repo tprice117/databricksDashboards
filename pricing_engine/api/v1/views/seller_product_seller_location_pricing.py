@@ -1,21 +1,27 @@
 import datetime
 
 from django.http import JsonResponse
-from rest_framework import viewsets
+from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException
-from rest_framework.mixins import CreateModelMixin
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.views import APIView
 
 from api.serializers import SellerProductSellerLocationSerializer
+from pricing_engine.api.v1.serializers import PricingEngineRequestSerializer
 from pricing_engine.pricing_engine import PricingEngine
 
 
-class SellerProductSellerLocationPricingView(GenericViewSet, CreateModelMixin):
+class SellerProductSellerLocationPricingView(APIView):
     """
     This class-based view returns a list of SellerProductSellerLocations that match the
     given parameters in a POST request.
     """
 
+    @extend_schema(
+        request=PricingEngineRequestSerializer,
+        responses={
+            200: SellerProductSellerLocationSerializer(many=True),
+        },
+    )
     def post(self, request):
         """
         POST Body Args:
