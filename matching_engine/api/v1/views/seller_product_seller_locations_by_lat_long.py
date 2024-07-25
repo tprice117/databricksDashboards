@@ -6,7 +6,7 @@ from api.serializers import SellerProductSellerLocationSerializer
 from matching_engine.matching_engine import MatchingEngine
 
 
-class GetSellerProductSellerLocationsView(View):
+class GetSellerProductSellerLocationsByLatLongView(View):
     """
     This class-based view returns a list of SellerProductSellerLocations that match the
     given parameters in a POST request.
@@ -18,7 +18,8 @@ class GetSellerProductSellerLocationsView(View):
         """
         POST Body Args:
           product: Product Id (UUID)
-          user_address: UserAddress Id (UUID)
+          latitude: User's latitude (Decimal)
+          longitude: User's longitude (Decimal)
           waste_type: WasteType Id (UUID or None)
 
         Returns:
@@ -27,16 +28,18 @@ class GetSellerProductSellerLocationsView(View):
         # Get POST body args.
         try:
             product = request.data.get("product")
-            user_address = request.data.get("user_address")
+            latitude = request.data.get("latitude")
+            longitude = request.data.get("longitude")
             waste_type = request.data.get("waste_type")
         except KeyError as e:
             raise APIException(f"Missing required field: {e.args[0]}") from e
 
         # Get SellerProductSellerLocations.
         seller_product_seller_locations = (
-            MatchingEngine.get_possible_seller_product_seller_locations(
+            MatchingEngine.get_possible_seller_product_seller_locations_by_lat_long(
                 product=product,
-                user_address=user_address,
+                latitude=latitude,
+                longitude=longitude,
                 waste_type=waste_type,
             )
         )

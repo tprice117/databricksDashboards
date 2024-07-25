@@ -8,5 +8,9 @@ router.register(
     r"pricing-engine/seller-product-seller-location-pricing",
     views.SellerProductSellerLocationPricingView,
 )
+router.register(
+    r"pricing-engine/seller-product-seller-location-pricing-by-lat-long",
+    views.SellerProductSellerLocationPricingByLatLongView,
+)
 
 urlpatterns = router.urls

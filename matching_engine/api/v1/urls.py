@@ -8,5 +8,9 @@ router.register(
     r"matching-engine/seller-product-seller-locations",
     views.GetSellerProductSellerLocationsView,
 )
+router.register(
+    r"matching-engine/seller-product-seller-locations-by-lat-long",
+    views.GetSellerProductSellerLocationsByLatLongView,
+)
 
 urlpatterns = router.urls
