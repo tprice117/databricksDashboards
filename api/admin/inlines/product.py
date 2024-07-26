@@ -5,8 +5,12 @@ from api.models import Product
 
 class ProductInline(admin.TabularInline):
     model = Product
-    fields = ("product_code", "formatted_add_on_choices")
-    readonly_fields = ("formatted_add_on_choices",)
+    fields = (
+        "product_code",
+        "formatted_add_on_choices",
+        "_is_valid",
+    )
+    readonly_fields = ("formatted_add_on_choices", "_is_valid")
     show_change_link = True
     extra = 0
 
