@@ -142,7 +142,7 @@
                     {% endif %}
                     {% for product_add_on in product_add_ons %}
                         <p style="margin-bottom: 0px;">{{ product_add_on.add_on.name }}</p>
-                        <select class="form-select" name="product_add_on_choices_{{ forloop.counter }}" style="margin-bottom: 12px;">
+                        <select class="form-select" name="product_add_on_choices" style="margin-bottom: 12px;">
                             <optgroup label="{{ product_add_on.add_on.name }}">
                                 {% for product_add_on_choice in product_add_on.choices %}
                                     <option value="{{ product_add_on_choice.id }}">{{ product_add_on_choice.name }}</option>

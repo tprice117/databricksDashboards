@@ -307,7 +307,8 @@ class OrderGroupForm(forms.Form):
     user_address = forms.CharField(
         widget=forms.HiddenInput(),
     )
-    material = forms.ChoiceField(
+    product_waste_types = forms.ChoiceField(
+        label="Material",
         help_text="Hold CTRL to select multiple.",
         choices=[],
         widget=forms.Select(attrs={"class": "form-select", "multiple": "true"}),
@@ -352,12 +353,6 @@ class OrderGroupForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        # if args and len(args) > 0 and isinstance(args[0], QueryDict):
-        #     user_addresses = args[0].get("user_address")
-        #     product_waste_types = args[0].get("material")
-        #     product_add_ons = args[0].get("product_add_on")
-        #     service_freqencies = args[0].get("service_frequency")
-        # else:
         user_addresses = kwargs.pop("user_addresses", None)
         product_waste_types = kwargs.pop("product_waste_types", None)
         product_add_ons = kwargs.pop("product_add_ons", None)
@@ -366,57 +361,25 @@ class OrderGroupForm(forms.Form):
 
         super(OrderGroupForm, self).__init__(*args, **kwargs)
 
-        # # Add correct user_address_id field.
-        # if isinstance(user_addresses, list):
-        #     loc_count = len(user_addresses)
-        # else:
-        #     loc_count = user_addresses.count()
-        # if loc_count < 20:
-        #     # If there are less than 20 addresses, create a select field.
-        #     address_choices = [("Your added locations", [])]
-        #     for address in user_addresses:
-        #         address_choices[0][1].append(
-        #             (address.id, f"{address.name} | {address.formatted_address()}")
-        #         )
-        #     # Update choices on user_address field
-        #     self.fields["user_address"].choices = address_choices
-        # else:
-        #     # If there are more than 20 addresses, create a search input field.
-        #     self.fields["user_address"] = forms.CharField(
-        #         widget=forms.TextInput(
-        #             attrs={
-        #                 "class": "form-control",
-        #                 "placeholder": "Search for address",
-        #             }
-        #         ),
-        #     )
-
-        # Add optional fields
-        # if product_add_ons:
-        #     product_choices = []
-        #     # create a select field for each product add-on
-        #     for add_on in product_add_ons:
-        #         _choices = []
-        #         for add_on_choice in add_on["choices"]:
-        #             _choices.append((add_on_choice.id, add_on_choice.name))
-        #         product_choices.append((add_on.add_on.name, _choices))
         if main_product.has_material:
-            self.fields["material"].choices = list(
+            self.fields["product_waste_types"].choices = list(
                 product_waste_types.values_list("id", "waste_type__name")
             )
         else:
-            self.fields["material"].widget = forms.HiddenInput()
-            self.fields["material"].required = False
+            self.fields["product_waste_types"].widget = forms.HiddenInput()
+            self.fields["product_waste_types"].required = False
         if (
             not main_product.has_rental
             and not main_product.has_rental_one_step
             and not main_product.has_rental_multi_step
         ):
             # Hide delivery and removal date fields
-            self.fields["delivery_date"].widget = forms.HiddenInput()
+            # Change label of delivery date to service date
+            self.fields["delivery_date"].label = "Service Date"
+            # self.fields["delivery_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].widget = forms.HiddenInput()
             self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
-            self.fields["delivery_date"].required = False
+            # self.fields["delivery_date"].required = False
             self.fields["removal_date"].required = False
             self.fields["is_estimated_end_date"].required = False
 
@@ -428,10 +391,8 @@ class OrderGroupForm(forms.Form):
             # If both fields are empty, return the removal date as is.
             return removal_date
         if not delivery_date:
-            raise ValidationError("Delivery date is required.")
-        if not removal_date:
-            raise ValidationError("Removal date is required.")
-        if removal_date < delivery_date:
+            raise ValidationError("date is required.")
+        if removal_date and removal_date < delivery_date:
             raise ValidationError(
                 "Removal date must be after delivery date: %(delivery_date)s",
                 params={"delivery_date": delivery_date},

@@ -746,8 +746,6 @@ def new_order_3(request, product_id):
     context["product_id"] = product_id
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
-    # TODO: Coming soon: In product selection screen and end date is always required
-    # Add checkbox directly after: estimated end date
     main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related("main_product_category")
     main_product = main_product.first()
@@ -769,24 +767,15 @@ def new_order_3(request, product_id):
     )
     context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
     if request.method == "POST":
-        product_add_on_choices = []
-        for key, value in request.POST.items():
-            if key.startswith("product_add_on_choices"):
-                product_add_on_choices.append(value)
-        # TODO: Check if form is valid, if so then redirect to next page.
-        # If not valid, then display error message.
-        # If valid, then redirect to next page.
         query_params = {
             "product_id": context["product_id"],
             "user_address_id": request.POST.get("user_address"),
             "service_recurring_frequency_id": request.POST.get("service_frequency"),
             "delivery_date": request.POST.get("delivery_date"),
             "removal_date": request.POST.get("removal_date"),
-            "product_add_on_choices": product_add_on_choices,
+            "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
+            "product_waste_types": request.POST.getlist("product_waste_types"),
         }
-        product_waste_type_ids = request.POST.getlist("product_waste_types")
-        if product_waste_type_ids:
-            query_params["product_waste_types"] = product_waste_type_ids
         try:
             form = OrderGroupForm(
                 request.POST,
@@ -806,7 +795,7 @@ def new_order_3(request, product_id):
             else:
                 raise InvalidFormError(form, "Invalid OrderGroupForm")
             return HttpResponseRedirect(
-                f"{reverse('customer_new_order_4')}?{urlencode(query_params)}"
+                f"{reverse('customer_new_order_4')}?{urlencode(query_params, doseq=True)}"
             )
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
@@ -1001,43 +990,38 @@ def new_order_4(request):
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
-    product_id = request.GET.get("product_id")
-    user_address_id = request.GET.get("user_address")
-    product_add_on_choices = []
-    for key, value in request.GET.items():
-        if key.startswith("product_add_on_choices"):
-            product_add_on_choices.append(value)
-    product_waste_types = request.GET.getlist("product_waste_types")
-    service_frequency = request.GET.get("service_frequency")
-    delivery_date = request.GET.get("delivery_date")
-    removal_date = request.GET.get("removal_date")
-    context["product_id"] = product_id
-    context["user_address"] = user_address_id
-    context["product_waste_types"] = product_waste_types
-    context["product_add_on_choices"] = product_add_on_choices
-    context["service_frequency"] = service_frequency
-    context["delivery_date"] = delivery_date
-    context["removal_date"] = removal_date
+    context["product_id"] = request.GET.get("product_id")
+    context["user_address"] = request.GET.get("user_address")
+    context["product_waste_types"] = request.GET.getlist("product_waste_types")
+    if context["product_waste_types"] and context["product_waste_types"][0] == "":
+        context["product_waste_types"] = []
+    context["product_add_on_choices"] = request.GET.getlist("product_add_on_choices")
+    if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
+        context["product_add_on_choices"] = []
+    context["service_frequency"] = request.GET.get("service_frequency")
+    context["delivery_date"] = request.GET.get("delivery_date")
+    context["removal_date"] = request.GET.get("removal_date")
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
     waste_type = None
     waste_type_id = None
-    if product_waste_types:
+    if context["product_waste_types"]:
         main_product_waste_type = MainProductWasteType.objects.filter(
-            id=product_waste_types[0]
+            id=context["product_waste_types"][0]
         ).first()
         waste_type = main_product_waste_type.waste_type
         waste_type_id = waste_type.id
 
-    products = Product.objects.filter(main_product_id=product_id)
+    products = Product.objects.filter(main_product_id=context["product_id"])
     # Find the products that have the waste types and add ons.
-    if product_add_on_choices:
+    if context["product_add_on_choices"]:
+        prod_addon_choice_set = set(context["product_add_on_choices"])
         for product in products:
             product_addon_choices_db = ProductAddOnChoice.objects.filter(
                 product_id=product.id
             ).values_list("add_on_choice_id", flat=True)
-            if set(product_addon_choices_db) == set(product_add_on_choices):
+            if set(product_addon_choices_db) == prod_addon_choice_set:
                 context["product"] = product
                 break
     elif products.count() == 1:
@@ -1049,7 +1033,7 @@ def new_order_4(request):
     # step_time = time.time()
     # print(f"Find Product: {step_time - start_time}")
     # We know the product the user wants, so now find the seller locations that offer the product.
-    user_address_obj = UserAddress.objects.filter(id=user_address_id).first()
+    user_address_obj = UserAddress.objects.filter(id=context["user_address"]).first()
     seller_product_seller_locations = (
         MatchingEngine.get_possible_seller_product_seller_locations(
             context["product"],
@@ -1063,10 +1047,10 @@ def new_order_4(request):
     # print(f"Find Seller Locations: {step_time - start_time}")
 
     # if request.method == "POST":
-    # start_date = datetime.datetime.strptime(delivery_date, "%Y-%m-%d")
+    # start_date = datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d")
     # end_date = None
-    # if removal_date:
-    #     end_date = datetime.datetime.strptime(removal_date, "%Y-%m-%d")
+    # if context["removal_date"]:
+    #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
     context["seller_product_seller_locations"] = []
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
@@ -1076,13 +1060,13 @@ def new_order_4(request):
         # )
         seller_d["price_data"] = PricingEngine.get_price(
             user_address=UserAddress.objects.get(
-                id=user_address_id,
+                id=context["user_address"],
             ),
             seller_product_seller_location=seller_product_seller_location,
-            start_date=datetime.datetime.strptime(delivery_date, "%Y-%m-%d"),
+            start_date=datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d"),
             end_date=(
-                datetime.datetime.strptime(removal_date, "%Y-%m-%d")
-                if removal_date
+                datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
+                if context["removal_date"]
                 else None
             ),
             waste_type=(
