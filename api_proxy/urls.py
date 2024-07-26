@@ -174,6 +174,8 @@ urlpatterns = [
     path("matching-engine/", include("matching_engine.urls")),
     # Pricing Engine.
     path("pricing-engine/", include("pricing_engine.urls")),
+    # API App URLs.
+    path("api/", include("api.urls")),
     # Test.
     path("test/", views.test3),
 ]
