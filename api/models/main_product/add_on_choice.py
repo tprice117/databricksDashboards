@@ -5,8 +5,12 @@ from common.models import BaseModel
 
 
 class AddOnChoice(BaseModel):
+    add_on = models.ForeignKey(
+        AddOn,
+        models.CASCADE,
+        related_name="choices",
+    )
     name = models.CharField(max_length=80)
-    add_on = models.ForeignKey(AddOn, models.CASCADE)
 
     def __str__(self):
         return f"{self.add_on.main_product.name} - {self.add_on.name} - {self.name}"

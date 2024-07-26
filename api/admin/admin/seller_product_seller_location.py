@@ -121,8 +121,29 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin):
         urls = super().get_urls()
         my_urls = [
             path("import-csv/", self.import_csv),
+            path("incomplete/", self.show_incomplete),
         ]
         return my_urls + urls
+
+    def show_incomplete(self, request):
+        # Return html with all SellerProductSellerLocations that are incomplete.
+        spsl = SellerProductSellerLocation.objects.all()
+        spsl = spsl.select_related(
+            "seller_location", "seller_product__product__main_product"
+        )
+        spsl = spsl.prefetch_related(
+            "rental_one_step",
+            "rental",
+            "rental_multi_step",
+            "service_times_per_week",
+            "material",
+        )
+        incompletelist = [sp for sp in spsl if not sp.is_complete]
+        return render(
+            request,
+            "admin/incomplete_seller_product_seller_locations.html",
+            {"seller_product_seller_locations": incompletelist},
+        )
 
     def import_csv(self, request):
         if request.method == "POST":

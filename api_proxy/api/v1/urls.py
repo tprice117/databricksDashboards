@@ -9,4 +9,5 @@ router = DefaultRouter()
 router.registry.extend(admin_approvals.router.registry)
 router.registry.extend(billing.router.registry)
 router.registry.extend(payment_methods.router.registry)
+
 urlpatterns = router.urls

@@ -117,13 +117,13 @@
                                                     <thead>
                                                         <tr>
                                                             <th>Base Rate</th>
-                                                            <th>Per Day After {{item.seller_product_seller_location.included_days}} Days</th>
+                                                            <th>Per Day After {{item.seller_product_seller_location.rental.included_days}} Days</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         <tr>
                                                             <td>${{item.seller_product_seller_location.rental.base_price}}</td>
-                                                            <td>${{item.seller_product_seller_location.rental.price_per_additional_day}}</td>
+                                                            <td>${{item.seller_product_seller_location.rental.price_per_day_additional}}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -175,7 +175,7 @@
                                                     </thead>
                                                     <tbody>
                                                         <tr>
-                                                            <td>${% if item.seller_product_seller_location.service.per_mile %}{{item.seller_product_seller_location.service.per_mile}} per mile{% else %}{{item.seller_product_seller_location.service.flat_rate}}{% endif %}</td>
+                                                            <td>${% if item.seller_product_seller_location.service.per_mile %}{{item.seller_product_seller_location.service.per_mile}} per mile{% else %}{{item.seller_product_seller_location.service.flat_rate}} flat rate{% endif %}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

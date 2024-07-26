@@ -56,6 +56,11 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
     _is_complete.boolean = True
     is_complete = property(_is_complete)
 
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
+
     @property
     def effective_day_rate(self):
         """

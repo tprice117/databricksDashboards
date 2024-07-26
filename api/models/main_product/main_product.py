@@ -93,6 +93,25 @@ class MainProduct(BaseModel):
 
         return price
 
+    def _is_complete(self) -> bool:
+        # Given all related AddOns, ensure that we have a Product
+        # for each combination of MainProduct AddOnsChoices.
+        # For example, say we have AddOns A, B, and C. A has 2
+        # choices,mB has 3 choices, and C has 2 choices. We should
+        # have 2 * 3 * 2 = 12 Products.
+        add_ons = self.add_ons.all()
+        num_choices = [len(add_on.choices.all()) for add_on in add_ons]
+        num_products = 1
+        for choice in num_choices:
+            num_products *= choice
+
+        return num_products == self.products.count()
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_complete.boolean = True
+    is_complete = property(_is_complete)
+
 
 @receiver(pre_save, sender=MainProduct)
 def pre_save_main_product(sender, instance: MainProduct, **kwargs):
