@@ -1,6 +1,9 @@
 from django.contrib import admin
 
-from api.admin.inlines import ProductAddOnChoiceInline
+from api.admin.inlines import (
+    ProductAddOnChoiceInline,
+    # SellerProductSellerLocationInline,
+)
 from api.models import Product
 from common.admin.admin.base_admin import BaseModelAdmin
 
@@ -11,6 +14,8 @@ class ProductAdmin(BaseModelAdmin):
     list_display = ("__str__", "main_product")
     inlines = [
         ProductAddOnChoiceInline,
+        # NOTE: Product needs a foreign key to SellerProductSellerLocation inorder to use this inline.
+        # SellerProductSellerLocationInline,
     ]
     fieldsets = [
         (
