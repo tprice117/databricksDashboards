@@ -55,34 +55,39 @@
                 });
             });
         }
-        
-        usergroupInput.addEventListener("keydown", function (e) {
-            var x = document.getElementById("user_address-search-results");
-            if (x) x = x.getElementsByTagName("div");
-            if (x) {
-                if (e.keyCode == 40) {
-                    /*If the arrow DOWN key is pressed, increase the currentFocus variable:*/
-                    currentFocus++;
-                    /*and and make the current item more visible:*/
-                    addActive(x);
-                } else if (e.keyCode == 38) {
-                    /*If the arrow UP key is pressed, decrease the currentFocus variable:*/
-                    currentFocus--;
-                    /*and and make the current item more visible:*/
-                    addActive(x);
-                } else if (e.keyCode == 13) {
-                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
-                    e.preventDefault();
-                    if (currentFocus > -1) {
-                        /*and simulate a click on the "active" item:*/
-                        if (x) x[currentFocus].click();
+        function initUsergroupAutocomplete(user_addresses) {
+            usergroupInput = document.getElementById("user_address-search");
+            // If the usergroupInput is not found, return
+            if (!usergroupInput) return;
+            usergroupInput.addEventListener("keydown", function (e) {
+                var x = document.getElementById("user_address-search-results");
+                if (x) x = x.getElementsByTagName("div");
+                if (x) {
+                    if (e.keyCode == 40) {
+                        /*If the arrow DOWN key is pressed, increase the currentFocus variable:*/
+                        currentFocus++;
+                        /*and and make the current item more visible:*/
+                        addActive(x);
+                    } else if (e.keyCode == 38) {
+                        /*If the arrow UP key is pressed, decrease the currentFocus variable:*/
+                        currentFocus--;
+                        /*and and make the current item more visible:*/
+                        addActive(x);
+                    } else if (e.keyCode == 13) {
+                        /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                        e.preventDefault();
+                        if (currentFocus > -1) {
+                            /*and simulate a click on the "active" item:*/
+                            if (x) x[currentFocus].click();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
         
         // listen for page load event.
         document.addEventListener("DOMContentLoaded", function () {
+            initUsergroupAutocomplete();
             addUsergroupAutocompleteListeners();
         });
         // listen for htmx afterSettle event.
@@ -92,7 +97,7 @@
     </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid">
+    <div class="container-xxl">
         <h3 class="text-dark mb-1">New Order</h3>
         <div class="row">
             <div class="col">
@@ -135,6 +140,16 @@
                             <div class="dropdown-content" id="user_address-search-results"></div>
                         </div>
                     {% endif %}
+                    {% for product_add_on in product_add_ons %}
+                        <p style="margin-bottom: 0px;">{{ product_add_on.add_on.name }}</p>
+                        <select class="form-select" name="product_add_on_choices_{{ forloop.counter }}" style="margin-bottom: 12px;">
+                            <optgroup label="{{ product_add_on.add_on.name }}">
+                                {% for product_add_on_choice in product_add_on.choices %}
+                                    <option value="{{ product_add_on_choice.id }}">{{ product_add_on_choice.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    {% endfor %}
                     {% for field in form.visible_fields %}
                         {% if field.widget_type == 'checkbox' %}
                             <div class="mb-3 form-switch">
