@@ -35,7 +35,7 @@ from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
 
 logger = logging.getLogger("billing")
 
-CHECK_BOTTOM_ITEM_LIMIT = 6
+CHECK_BOTTOM_ITEM_LIMIT = 5
 CHECK_ATTACHMENT_PAGE_LIMIT = 16
 DEFAULT_BANK_ID = "bank_e83bd02ceb15448"
 if settings.ENVIRONMENT == "TEST":
@@ -70,36 +70,39 @@ class CheckRemittanceVariableResponse:
 
 
 def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> str:
-    """Get invoice_id for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
+    """Get invoice_id and account_number for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
     seller_invoice_payable_line_item = (
         order.seller_invoice_payable_line_items.all().first()
     )
     invoice_id = default_invoice_id
+    account_number = "N/A"
     if seller_invoice_payable_line_item:
         seller_invoice_payable = seller_invoice_payable_line_item.seller_invoice_payable
         if seller_invoice_payable:
             invoice_id = seller_invoice_payable.supplier_invoice_id
-    return invoice_id
+            account_number = seller_invoice_payable.account_number
+    return invoice_id, account_number
 
 
 def get_check_remittance_page_html(
-    remittance_advice: List[str], top_padding="3.65"
+    remittance_advice: List[str], top_padding="3.9"
 ) -> str:
     """Get the HTML for a single remittance advice page.
 
     Args:
         remittance_advice (List[str]): Remittance advice items.
-        top_padding (str, optional): Padding to add to top of page. Defaults to "3.65".
+        top_padding (str, optional): Padding to add to top of page. Defaults to "3.9".
 
     Returns:
         str: HTML for a single remittance advice page.
     """
-    return f"""<div style="padding-top:{top_padding}in; padding-left: .12in; padding-right: .12in; font-family: Thicccboi,Arial,sans-serif; font-size: 11pt; width: 8.5in; height:11in;">
+    return f"""<div style="padding-top:{top_padding}in; font-family: Thicccboi,Arial,sans-serif; font-size: 11pt; width: 8.26in; height:11in;">
     <h2 style="text-align: center; font-size: 1.8em;">Remittance Advice</h2>
     <table style="border-collapse: separate; width: 100%; border-radius: 10px; border: solid #ddd 1px; padding: 3px;">
         <thead>
             <tr style="background-color: #038480; color: white;">
                 <th style="text-align: left; border-left: none; padding: 7px;">Invoice ID</th>
+                <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Account Number</th>
                 <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Amount</th>
                 <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Description</th>
                 <th style="text-align: left; border-left: 1px solid #ddd; padding: 7px;">Date</th>
@@ -109,11 +112,13 @@ def get_check_remittance_page_html(
             {''.join(remittance_advice) if remittance_advice else '<td colspan="4">No orders found.</td>'}
         </tbody>
     </table>
+    </div>
     """
 
 
 def get_check_remittance_item_html(
     seller_invoice_id: str,
+    account_number: str,
     total: str,
     description: str,
     end_date: str,
@@ -133,6 +138,7 @@ def get_check_remittance_item_html(
     """
     return f"""<tr style="background-color: {line_background};">
             <td style="border-left: none; padding: 7px;">{seller_invoice_id}</td>
+            <td style="border-left: 1px solid #ddd; padding: 7px;">{account_number}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{total}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{description[:90]}</td>
             <td style="border-left: 1px solid #ddd; padding: 7px;">{end_date}</td></tr>
@@ -173,10 +179,13 @@ def get_check_remittance_html(
             + " | "
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
-        invoice_id = get_invoice_id(order, default_invoice_id=seller_invoice_str)
+        invoice_id, account_number = get_invoice_id(
+            order, default_invoice_id=seller_invoice_str
+        )
         remittance_advice.append(
             get_check_remittance_item_html(
                 invoice_id,
+                account_number,
                 f"${float(order.seller_price() - total_paid_to_seller):.2f}",
                 description,
                 order.end_date.strftime("%m/%d/%Y"),
@@ -242,10 +251,13 @@ def get_check_remittance_variable(
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
         # Add invoice to remittance advice page.
-        invoice_id = get_invoice_id(order, default_invoice_id=seller_invoice_str)
+        invoice_id, account_number = get_invoice_id(
+            order, default_invoice_id=seller_invoice_str
+        )
         page["invoices"].append(
             {
                 "id": invoice_id,
+                "account_number": account_number,
                 "amount": f"${float(order.seller_price() - total_paid_to_seller):.2f}",
                 "description": description,
                 "date": order.end_date.strftime("%m/%d/%Y"),

@@ -687,6 +687,7 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
 
 class SellerInvoicePayableSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    account_number = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = SellerInvoicePayable
