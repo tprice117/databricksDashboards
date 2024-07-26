@@ -1,8 +1,9 @@
+import logging
+
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-import logging
-from django.conf import settings
 
 from api.models import Order
 from api.models.day_of_week import DayOfWeek
@@ -14,7 +15,7 @@ from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
 from chat.models.conversation import Conversation
 from common.models import BaseModel
-from matching_engine.utils import MatchingEngine
+from matching_engine.matching_engine import MatchingEngine
 
 logger = logging.getLogger(__name__)
 

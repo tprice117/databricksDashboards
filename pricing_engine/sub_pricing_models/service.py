@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.user.user_address import UserAddress
 
@@ -5,7 +7,8 @@ from api.models.user.user_address import UserAddress
 class ServicePrice:
     @staticmethod
     def get_price(
-        user_address: UserAddress,
+        latitude: Decimal,
+        longitude: Decimal,
         seller_product_seller_location: SellerProductSellerLocation,
     ):
         """

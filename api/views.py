@@ -6,17 +6,20 @@ from random import randint
 import requests
 import stripe
 from django.conf import settings
+from django.contrib import messages
 from django.db.models import Avg, Count  # F, OuterRef, Q, Subquery, Sum,
 from django.db.models.functions import Round
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django_filters import rest_framework as filters
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from requests import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import (
     api_view,
@@ -1370,6 +1373,25 @@ def update_order_status(request, order_id, accept=True):
             "notifications/emails/supplier_order_updated.html",
             {"order_id": order_id},
         )
+
+
+@csrf_exempt
+@api_view(["GET"])
+def create_products_for_main_product(request, main_product_id):
+    main_product = MainProduct.objects.get(id=main_product_id)
+
+    # Create the MainProduct's Products.
+    Product.create_products_for_main_product(main_product)
+
+    messages.success(
+        request,
+        "Successfully created products for main product: {}".format(main_product.name),
+    )
+
+    return redirect(
+        "admin:api_mainproduct_change",
+        main_product_id,
+    )
 
 
 def test3(request):
