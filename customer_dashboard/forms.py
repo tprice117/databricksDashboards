@@ -304,13 +304,15 @@ class UserGroupForm(forms.Form):
 
 # Create an Order form
 class OrderGroupForm(forms.Form):
-    product_id = forms.CharField(
+    user_address = forms.CharField(
         widget=forms.HiddenInput(),
     )
-    # user_address = forms.ChoiceField(
-    #     choices=[],
-    #     widget=forms.Select(attrs={"class": "form-select"}),
-    # )
+    material = forms.ChoiceField(
+        help_text="Hold CTRL to select multiple.",
+        choices=[],
+        widget=forms.Select(attrs={"class": "form-select", "multiple": "true"}),
+        required=False,
+    )
     delivery_date = forms.DateField(
         validators=[validate_start_date],
         widget=forms.DateInput(
@@ -350,11 +352,17 @@ class OrderGroupForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        # if args and len(args) > 0 and isinstance(args[0], QueryDict):
+        #     user_addresses = args[0].get("user_address")
+        #     product_waste_types = args[0].get("material")
+        #     product_add_ons = args[0].get("product_add_on")
+        #     service_freqencies = args[0].get("service_frequency")
+        # else:
         user_addresses = kwargs.pop("user_addresses", None)
-        product_waste_types = kwargs.pop("product_waste_types")
-        product_add_ons = kwargs.pop("product_add_ons")
-        main_product = kwargs.pop("main_product")
-        service_freqencies = kwargs.pop("service_freqencies")
+        product_waste_types = kwargs.pop("product_waste_types", None)
+        product_add_ons = kwargs.pop("product_add_ons", None)
+        main_product = kwargs.pop("main_product", None)
+        service_freqencies = kwargs.pop("service_freqencies", None)
 
         super(OrderGroupForm, self).__init__(*args, **kwargs)
 
@@ -384,20 +392,21 @@ class OrderGroupForm(forms.Form):
         #     )
 
         # Add optional fields
-        if product_add_ons:
-            product_choices = []
-            # create a select field for each product add-on
-            for add_on in product_add_ons:
-                _choices = []
-                for add_on_choice in add_on.choices:
-                    _choices.append((add_on_choice.id, add_on_choice.name))
-                product_choices.append((add_on.add_on.name, _choices))
+        # if product_add_ons:
+        #     product_choices = []
+        #     # create a select field for each product add-on
+        #     for add_on in product_add_ons:
+        #         _choices = []
+        #         for add_on_choice in add_on["choices"]:
+        #             _choices.append((add_on_choice.id, add_on_choice.name))
+        #         product_choices.append((add_on.add_on.name, _choices))
         if main_product.has_material:
-            self.fields["material"] = forms.ChoiceField(
-                help_text="Hold CTRL to select multiple.",
-                choices=list(product_waste_types.values_list("id", "waste_type__name")),
-                widget=forms.Select(attrs={"class": "form-select", "multiple": "true"}),
+            self.fields["material"].choices = list(
+                product_waste_types.values_list("id", "waste_type__name")
             )
+        else:
+            self.fields["material"].widget = forms.HiddenInput()
+            self.fields["material"].required = False
         if (
             not main_product.has_rental
             and not main_product.has_rental_one_step
@@ -406,13 +415,22 @@ class OrderGroupForm(forms.Form):
             # Hide delivery and removal date fields
             self.fields["delivery_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].widget = forms.HiddenInput()
+            self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
             self.fields["delivery_date"].required = False
             self.fields["removal_date"].required = False
+            self.fields["is_estimated_end_date"].required = False
 
     def clean_removal_date(self):
         # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
         delivery_date = self.cleaned_data["delivery_date"]
         removal_date = self.cleaned_data["removal_date"]
+        if not delivery_date and not removal_date:
+            # If both fields are empty, return the removal date as is.
+            return removal_date
+        if not delivery_date:
+            raise ValidationError("Delivery date is required.")
+        if not removal_date:
+            raise ValidationError("Removal date is required.")
         if removal_date < delivery_date:
             raise ValidationError(
                 "Removal date must be after delivery date: %(delivery_date)s",
