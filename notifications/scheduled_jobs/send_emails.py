@@ -15,7 +15,7 @@ def send_emails():
     for email in emails_in_queue:
         try:
             email.send_email()
-            email.sent_at = datetime.datetime.now()
+            email.sent_at = timezone.now()
             email.save()
         except Exception as e:
             print("Email could not be sent. " + str(e))
