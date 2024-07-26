@@ -1467,7 +1467,7 @@ def order_group_swap(request, order_group_id, is_removal=False):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except Exception as e:
             context["form_error"] = (
                 f"Error saving, please contact us if this continues: [{e}]."
@@ -1649,7 +1649,7 @@ def order_group_detail(request, order_group_id):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -1922,7 +1922,7 @@ def location_detail(request, location_id):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -2122,7 +2122,7 @@ def new_location(request):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -2415,7 +2415,7 @@ def new_user(request):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except IntegrityError as e:
             if "unique constraint" in str(e):
                 messages.error(request, "User with that email already exists.")
@@ -2933,7 +2933,7 @@ def company_new_user(request, user_group_id):
             # This will let bootstrap know to highlight the fields with errors.
             context["form_error"] = ""
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
                 context["form_error"] += f"{field}: {e.form[field].errors}"
         except Exception as e:
             context["form_error"] = (
