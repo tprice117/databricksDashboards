@@ -34,6 +34,32 @@ class Product(BaseModel):
 
         return ", ".join(formatted_add_on_choices) if formatted_add_on_choices else ""
 
+    def _is_valid(self) -> bool:
+        # For this product, check if it has a valid set of add-on choices.
+        # For example, if the MainProduct has AddOns A, B, and C. A Product
+        # is valid if it has one choice for each AddOn. A Product is invalid
+        # if it has more or fewer choices than the MainProduct's AddOns.
+        product_add_on_choices = self.product_add_on_choices.all()
+        main_product_add_ons = self.main_product.add_ons.all()
+
+        # For each MainProduct AddOn, ensure one of the AddOn's AddOnChoices
+        # is present on the Product.
+        for main_product_add_on in main_product_add_ons:
+            # For this AddOn, confirm there is a ProductAddOnChoice with the
+            # same AddOn.
+            if not any(
+                product_add_on_choice.add_on_choice.add_on == main_product_add_on
+                for product_add_on_choice in product_add_on_choices
+            ):
+                return False
+
+        return True
+
+    # This is a workaround to make the is_complete property to display in the admin
+    # as the default Django boolean icons.
+    _is_valid.boolean = True
+    is_valid = property(_is_valid)
+
     @staticmethod
     def generate_product_code() -> str:
         """
