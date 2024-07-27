@@ -29,6 +29,7 @@ class SellerInvoicePayable(BaseModel):
     due_date = models.DateField(null=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="UNPAID")
+    account_number = models.CharField(max_length=255, blank=True, null=True)
 
     def auto_delete_file_on_delete(sender, instance, **kwargs):
         """

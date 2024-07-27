@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") != "TEST"
 # NOTE: DRF Standardized Errors will handle uncaught exceptions if this is set to False.
 # Setting it to True will still show the Django error page on uncaught exceptions.
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -408,8 +408,8 @@ else:
     )
     BETTERSTACK_TOKEN = env("BETTERSTACK_DJANGO_DEV_TOKEN")
     LOB_API_HOST = "https://api.lob.com/v1"
-    LOB_API_KEY = env("LOB_API_KEY")
-    LOB_PUB_API_KEY = env("LOB_PUB_API_KEY")
+    LOB_API_KEY = env("LOB_DEV_API_KEY")
+    LOB_PUB_API_KEY = env("LOB_DEV_PUB_API_KEY")
     LOB_CHECK_TEMPLATE_ID = "tmpl_72955c3cec0e752"
 
 # Django Admin Interface settings.
