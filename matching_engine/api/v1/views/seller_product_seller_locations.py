@@ -30,20 +30,19 @@ class GetSellerProductSellerLocationsView(APIView):
         Returns:
           A list of SellerProductSellerLocations.
         """
-        # Get POST body args.
-        try:
-            product = request.data.get("product")
-            user_address = request.data.get("user_address")
-            waste_type = request.data.get("waste_type")
-        except KeyError as e:
-            raise APIException(f"Missing required field: {e.args[0]}") from e
+        # Convert request into serializer.
+        serializer = MatchingEngineRequestSerializer(data=request.data)
+
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise APIException(serializer.errors)
 
         # Get SellerProductSellerLocations.
         seller_product_seller_locations = (
             MatchingEngine.get_possible_seller_product_seller_locations(
-                product=product,
-                user_address=user_address,
-                waste_type=waste_type,
+                product=serializer.validated_data["product"],
+                user_address=serializer.validated_data["user_address"],
+                waste_type=serializer.validated_data["waste_type"],
             )
         )
 

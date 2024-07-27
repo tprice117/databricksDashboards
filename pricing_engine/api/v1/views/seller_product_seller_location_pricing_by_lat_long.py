@@ -37,31 +37,23 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
         Returns:
           A list of SellerProductSellerLocations.
         """
-        # Get POST body args.
-        try:
-            seller_product_seller_location = request.data.get(
-                "seller_product_seller_location"
-            )
-            latitude = request.data.get("latitude")
-            longitude = request.data.get("longitude")
-            waste_type = request.data.get("waste_type")
-            start_date = request.data.get("start_date")
-            end_date = request.data.get("end_date")
-        except KeyError as e:
-            raise APIException(f"Missing required field: {e.args[0]}") from e
+        # Convert request into serializer.
+        serializer = PricingEngineRequestByLatLongSerializer(data=request.data)
 
-        # Convert start_date and end_date to datetime objects.
-        start_date = datetime.datetime.fromisoformat(start_date)
-        end_date = datetime.datetime.fromisoformat(end_date)
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise APIException(serializer.errors)
 
         # Get SellerProductSellerLocations.
         seller_product_seller_locations = PricingEngine.get_price_by_lat_long(
-            seller_product_seller_location=seller_product_seller_location,
-            latitude=latitude,
-            longitude=longitude,
-            start_date=start_date,
-            end_date=start_date,
-            waste_type=waste_type,
+            seller_product_seller_location=serializer.validated_data[
+                "seller_product_seller_location"
+            ],
+            latitude=serializer.validated_data["latitude"],
+            longitude=serializer.validated_data["longitude"],
+            start_date=serializer.validated_data["start_date"],
+            end_date=serializer.validated_data["end_date"],
+            waste_type=serializer.validated_data["waste_type"],
         )
 
         # Return SellerProductSellerLocations serialized data.
