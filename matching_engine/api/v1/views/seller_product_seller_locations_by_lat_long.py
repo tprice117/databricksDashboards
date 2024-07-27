@@ -31,22 +31,20 @@ class GetSellerProductSellerLocationsByLatLongView(APIView):
         Returns:
           A list of SellerProductSellerLocations.
         """
-        # Get POST body args.
-        try:
-            product = request.data.get("product")
-            latitude = request.data.get("latitude")
-            longitude = request.data.get("longitude")
-            waste_type = request.data.get("waste_type")
-        except KeyError as e:
-            raise APIException(f"Missing required field: {e.args[0]}") from e
+        # Convert request into serializer.
+        serializer = MatchingEngineRequestByLatLongSerializer(data=request.data)
+
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise APIException(serializer.errors)
 
         # Get SellerProductSellerLocations.
         seller_product_seller_locations = (
             MatchingEngine.get_possible_seller_product_seller_locations_by_lat_long(
-                product=product,
-                latitude=latitude,
-                longitude=longitude,
-                waste_type=waste_type,
+                product=serializer.validated_data["product"],
+                latitude=serializer.validated_data["latitude"],
+                longitude=serializer.validated_data["longitude"],
+                waste_type=serializer.validated_data["waste_type"],
             )
         )
 

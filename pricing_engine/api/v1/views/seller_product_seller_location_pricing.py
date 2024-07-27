@@ -34,29 +34,22 @@ class SellerProductSellerLocationPricingView(APIView):
         Returns:
           A list of SellerProductSellerLocations.
         """
-        # Get POST body args.
-        try:
-            seller_product_seller_location = request.data.get(
-                "seller_product_seller_location"
-            )
-            user_address = request.data.get("user_address")
-            waste_type = request.data.get("waste_type")
-            start_date = request.data.get("start_date")
-            end_date = request.data.get("end_date")
-        except KeyError as e:
-            raise APIException(f"Missing required field: {e.args[0]}") from e
+        # Convert request into serializer.
+        serializer = PricingEngineRequestSerializer(data=request.data)
 
-        # Convert start_date and end_date to datetime objects.
-        start_date = datetime.datetime.fromisoformat(start_date)
-        end_date = datetime.datetime.fromisoformat(end_date)
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise APIException(serializer.errors)
 
         # Get SellerProductSellerLocations.
         seller_product_seller_locations = PricingEngine.get_price(
-            seller_product_seller_location=seller_product_seller_location,
-            user_address=user_address,
-            start_date=start_date,
-            end_date=start_date,
-            waste_type=waste_type,
+            seller_product_seller_location=serializer.validated_data[
+                "seller_product_seller_location"
+            ],
+            user_address=serializer.validated_data["user_address"],
+            start_date=serializer.validated_data["start_date"],
+            end_date=serializer.validated_data["end_date"],
+            waste_type=serializer.validated_data["waste_type"],
         )
 
         # Return SellerProductSellerLocations serialized data.
