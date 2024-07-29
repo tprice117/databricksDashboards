@@ -8,9 +8,9 @@ from common.models.choices.user_type import UserType
 
 def validate_start_date(value):
     allowed_start_date = datetime.date.today()
-    if value < datetime.date.today():
+    if value < datetime.date.today() + datetime.timedelta(days=2):
         raise ValidationError(
-            "Start date must be equal to or greater than today: %(allowed_start_date)s",
+            "Date must be equal to or greater than: %(allowed_start_date)s",
             params={"allowed_start_date": allowed_start_date},
         )
 
@@ -300,6 +300,115 @@ class UserGroupForm(forms.Form):
             self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
             self.fields["tax_exempt_status"].disabled = True
+
+
+# Create an Order form
+class OrderGroupForm(forms.Form):
+    user_address = forms.CharField(
+        widget=forms.HiddenInput(),
+    )
+    product_waste_types = forms.ChoiceField(
+        label="Material",
+        help_text="Hold CTRL to select multiple.",
+        choices=[],
+        widget=forms.Select(attrs={"class": "form-select", "multiple": "true"}),
+        required=False,
+    )
+    delivery_date = forms.DateField(
+        validators=[validate_start_date],
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "min": datetime.date.today() + datetime.timedelta(days=2),
+            }
+        ),
+    )
+    removal_date = forms.DateField(
+        validators=[validate_start_date],
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "min": datetime.date.today() + datetime.timedelta(days=2),
+            }
+        ),
+    )
+    # Add is estimated end date checkbox
+    # NOTE: Maybe also say that we will assume monthly rental for now.
+    is_estimated_end_date = forms.BooleanField(
+        initial=False,
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
+        required=False,
+    )
+    schedule_window = forms.ChoiceField(
+        choices=[
+            ("Morning (7am-11am)", "Morning (7am-11am)"),
+            ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
+            ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
+        ],
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        user_addresses = kwargs.pop("user_addresses", None)
+        product_waste_types = kwargs.pop("product_waste_types", None)
+        product_add_ons = kwargs.pop("product_add_ons", None)
+        main_product = kwargs.pop("main_product", None)
+        service_freqencies = kwargs.pop("service_freqencies", None)
+
+        super(OrderGroupForm, self).__init__(*args, **kwargs)
+
+        if main_product.has_material:
+            self.fields["product_waste_types"].choices = list(
+                product_waste_types.values_list("id", "waste_type__name")
+            )
+        else:
+            self.fields["product_waste_types"].widget = forms.HiddenInput()
+            self.fields["product_waste_types"].required = False
+        if (
+            not main_product.has_rental
+            and not main_product.has_rental_one_step
+            and not main_product.has_rental_multi_step
+        ):
+            # Hide delivery and removal date fields
+            # Change label of delivery date to service date
+            self.fields["delivery_date"].label = "Service Date"
+            # self.fields["delivery_date"].widget = forms.HiddenInput()
+            self.fields["removal_date"].widget = forms.HiddenInput()
+            self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
+            # self.fields["delivery_date"].required = False
+            self.fields["removal_date"].required = False
+            self.fields["is_estimated_end_date"].required = False
+
+    def clean_delivery_date(self):
+        # Do not allow delivery date to be on a Sunday.
+        delivery_date = self.cleaned_data["delivery_date"]
+        if delivery_date.weekday() == 6:  # 6 corresponds to Sunday
+            raise ValidationError("Date cannot be on a Sunday.")
+        return delivery_date
+
+    def clean_removal_date(self):
+        # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
+        delivery_date = self.cleaned_data["delivery_date"]
+        removal_date = self.cleaned_data["removal_date"]
+        if not delivery_date and not removal_date:
+            # If both fields are empty, return the removal date as is.
+            return removal_date
+        if not delivery_date:
+            raise ValidationError("date is required.")
+        if removal_date and removal_date < delivery_date:
+            raise ValidationError(
+                "Removal date must be after delivery date: %(delivery_date)s",
+                params={"delivery_date": delivery_date},
+            )
+        # Do not allow removal date to be on a Sunday.
+        if removal_date.weekday() == 6:  # 6 corresponds to Sunday
+            raise ValidationError("Date cannot be on a Sunday.")
+        # Always return a value to use as the new cleaned data, even if this method didn't change it.
+        return removal_date
 
 
 class OrderGroupSwapForm(forms.Form):

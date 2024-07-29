@@ -1,6 +1,22 @@
 {% load static %}
 {% block javascript %}
     <script>
+        function addSetFocusListener() {
+            let dropdownToggle = document.querySelector(".dropdown-toggle");
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener("click", function () {
+                    let dropdownMenu = document.querySelector(".navbar-search-dropdown");
+                    if (dropdownMenu && dropdownMenu.classList.contains("show")) {
+                        let input = document.querySelector('input[name="search"]');
+                        if (input) {
+                            setTimeout(() => {
+                                input.focus();
+                            }, 300);
+                        }
+                    }
+                });
+            }
+        }
         document.body.addEventListener("htmx:afterSettle", function (event) {
             let dropdownMenu = document.querySelector(".navbar-search-dropdown");
             if (dropdownMenu && dropdownMenu.classList.contains("show")) {
@@ -9,6 +25,9 @@
                     input.focus();
                 }
             }
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+            addSetFocusListener();
         });
     </script>
 {% endblock %}
