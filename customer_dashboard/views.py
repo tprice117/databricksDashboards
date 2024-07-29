@@ -767,6 +767,9 @@ def new_order_3(request, product_id):
     )
     context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
     if request.method == "POST":
+        user_address_id = request.POST.get("user_address")
+        if user_address_id:
+            context["selected_user_address"] = UserAddress.objects.get(id=user_address_id)
         query_params = {
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
@@ -781,7 +784,6 @@ def new_order_3(request, product_id):
             # where the removal date is the same as the delivery date.
             query_params["removal_date"] = query_params["delivery_date"]
         try:
-            # TODO: Make so selected address stays selected after form submission and error.
             form = OrderGroupForm(
                 request.POST,
                 request.FILES,
@@ -867,6 +869,12 @@ def new_order_4(request):
                 context["product"] = product
                 break
     elif products.count() == 1:
+        context["product"] = products.first()
+    elif products.count() > 1:
+        messages.error(
+            request,
+            "Multiple products found. Only one product of each type should exist. You might encounter errors.",
+        )
         context["product"] = products.first()
     if context.get("product", None) is None:
         messages.error(request, "Product not found.")
