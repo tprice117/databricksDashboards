@@ -11,14 +11,14 @@ class PricingEngineRequestByLatLongSerializer(serializers.Serializer):
         allow_null=False,
     )
     latitude = serializers.DecimalField(
-        max_digits=9,
-        decimal_places=6,
+        max_digits=18,
+        decimal_places=15,
         write_only=True,
         allow_null=False,
     )
     longitude = serializers.DecimalField(
-        max_digits=9,
-        decimal_places=6,
+        max_digits=18,
+        decimal_places=15,
         write_only=True,
         allow_null=False,
     )
