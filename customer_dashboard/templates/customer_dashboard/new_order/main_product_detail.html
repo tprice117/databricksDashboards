@@ -127,15 +127,26 @@
                         <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
                             <optgroup label="Your added locations">
                                 {% for user_address in user_addresses %}
-                                    <option value="{{ user_address.id }}">{{ user_address.name }} | {{ user_address.formatted_address }}</option>
+                                    {% if selected_user_address and selected_user_address.id == user_address.id %}
+                                        <option value="{{ user_address.id }}" selected>{{ user_address.name }} | {{ user_address.formatted_address }}</option>
+                                    {% else %}
+                                        <option value="{{ user_address.id }}">{{ user_address.name }} | {{ user_address.formatted_address }}</option>
+                                    {% endif %}
                                 {% endfor %}
                             </optgroup>
                         </select>
                     {% else %}
                         <div class="dropdown mb-3">
                             <label for="user_address-search" class="form-label">Search Address <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
-                            <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" hx-post="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
-                            <!-- Hidden input field for user_address ID -->
+                            {% if selected_user_address and selected_user_address.id == user_address.id %}
+                                <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" value="{{ selected_user_address.name }}" hx-post="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
+                                <!-- Hidden input field for user_address ID -->
+                                <input id="user_address" type="hidden" name="user_address" value="{{ selected_user_address }}" />
+                            {% else %}
+                                <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" hx-post="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
+                                <!-- Hidden input field for user_address ID -->
+                                <input id="user_address" type="hidden" name="user_address" />
+                            {% endif %}
                             <input id="user_address" type="hidden" name="user_address" />
                             <div class="dropdown-content" id="user_address-search-results"></div>
                         </div>
