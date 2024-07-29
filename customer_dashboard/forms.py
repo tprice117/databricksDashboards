@@ -8,7 +8,7 @@ from common.models.choices.user_type import UserType
 
 def validate_start_date(value):
     allowed_start_date = datetime.date.today()
-    if value < datetime.date.today() + datetime.timedelta(days=2):
+    if value < datetime.date.today() + datetime.timedelta(days=1):
         raise ValidationError(
             "Date must be equal to or greater than: %(allowed_start_date)s",
             params={"allowed_start_date": allowed_start_date},
@@ -320,7 +320,7 @@ class OrderGroupForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "type": "date",
-                "min": datetime.date.today() + datetime.timedelta(days=2),
+                "min": datetime.date.today() + datetime.timedelta(days=1),
             }
         ),
     )
@@ -330,7 +330,7 @@ class OrderGroupForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "type": "date",
-                "min": datetime.date.today() + datetime.timedelta(days=2),
+                "min": datetime.date.today() + datetime.timedelta(days=1),
             }
         ),
     )
