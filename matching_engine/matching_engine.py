@@ -173,17 +173,18 @@ class MatchingEngine:
             seller_product_seller_location.service_radius or 0
         )
 
-        if float(euclidean_distance) < seller_location_radius:
-            # We found a potential match, now check the driving distance.
-            distance = DistanceUtils.get_driving_distance(
-                lat1=seller_product_seller_location.seller_location.latitude,
-                lon1=seller_product_seller_location.seller_location.longitude,
-                lat2=latitude,
-                lon2=longitude,
-            )
+        # NOTE: Do not check driving distance, due to cost.
+        # if float(euclidean_distance) < seller_location_radius:
+        #     # We found a potential match, now check the driving distance.
+        #     distance = DistanceUtils.get_driving_distance(
+        #         lat1=seller_product_seller_location.seller_location.latitude,
+        #         lon1=seller_product_seller_location.seller_location.longitude,
+        #         lat2=latitude,
+        #         lon2=longitude,
+        #     )
 
-            return float(distance) < seller_location_radius
-        return False
+        #     return float(distance) < seller_location_radius
+        return float(euclidean_distance) < seller_location_radius
 
     def _seller_product_seller_location_matches_waste_type(
         seller_product_seller_location: SellerProductSellerLocation,

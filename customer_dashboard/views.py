@@ -4,6 +4,7 @@ import json
 import logging
 import uuid
 from typing import List, Union
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -66,6 +67,7 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
+    OrderGroupForm,
     OrderGroupSwapForm,
 )
 
@@ -741,10 +743,9 @@ def new_order_3(request, product_id):
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
+    context["product_id"] = product_id
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
-    # TODO: Coming soon: In product selection screen and end date is always required.
-    # Add checkbox directly after: estimated end date.
     main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related("main_product_category")
     main_product = main_product.first()
@@ -759,178 +760,70 @@ def new_order_3(request, product_id):
     context["product_add_ons"] = []
     for add_on in add_ons:
         context["product_add_ons"].append(
-            {"add_on": add_on, "choices": add_on.addonchoice_set.all()}
+            {"add_on": add_on, "choices": add_on.choices.all()}
         )
     context["user_addresses"] = get_location_objects(
         request, context["user"], context["user_group"]
     )
     context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
+    if request.method == "POST":
+        user_address_id = request.POST.get("user_address")
+        if user_address_id:
+            context["selected_user_address"] = UserAddress.objects.get(id=user_address_id)
+        query_params = {
+            "product_id": context["product_id"],
+            "user_address": request.POST.get("user_address"),
+            "service_recurring_frequency_id": request.POST.get("service_frequency"),
+            "delivery_date": request.POST.get("delivery_date"),
+            "removal_date": request.POST.get("removal_date"),
+            "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
+            "product_waste_types": request.POST.getlist("product_waste_types"),
+        }
+        if not query_params["removal_date"]:
+            # This happens for one-time orders like junk removal,
+            # where the removal date is the same as the delivery date.
+            query_params["removal_date"] = query_params["delivery_date"]
+        try:
+            form = OrderGroupForm(
+                request.POST,
+                request.FILES,
+                user_addresses=context["user_addresses"],
+                main_product=context["main_product"],
+                product_waste_types=context["product_waste_types"],
+                product_add_ons=context["product_add_ons"],
+                service_freqencies=context["service_freqencies"],
+            )
+            context["form"] = form
+            # Use Django form validation to validate the form.
+            # If not valid, then display error message.
+            # If valid, then redirect to next page.
+            if form.is_valid():
+                pass
+            else:
+                raise InvalidFormError(form, "Invalid OrderGroupForm")
+            return HttpResponseRedirect(
+                f"{reverse('customer_new_order_4')}?{urlencode(query_params, doseq=True)}"
+            )
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+        except Exception as e:
+            messages.error(
+                request, f"Error saving, please contact us if this continues: [{e}]."
+            )
+    else:
+        context["form"] = OrderGroupForm(
+            user_addresses=context["user_addresses"],
+            main_product=context["main_product"],
+            product_waste_types=context["product_waste_types"],
+            product_add_ons=context["product_add_ons"],
+            service_freqencies=context["service_freqencies"],
+        )
+
     return render(
         request, "customer_dashboard/new_order/main_product_detail.html", context
     )
-
-
-def get_pricing(
-    product_id: uuid.UUID,
-    user_address_id: uuid.UUID,
-    waste_type_id: uuid.UUID = None,
-    seller_location_id: uuid.UUID = None,
-):
-    price_data = {
-        "seller_location": seller_location_id,
-        "product": product_id,
-        "user_address": user_address_id,
-    }
-    if waste_type_id:
-        price_data["waste_type"] = waste_type_id
-    price_mod = pricing.Price_Model(data=price_data)
-
-    # Get SellerLocations that offer the product.
-    seller_products = SellerProduct.objects.filter(product_id=product_id)
-    seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
-        seller_product__in=seller_products, active=True
-    )
-
-    return price_mod.get_prices(seller_product_seller_locations)
-
-
-def get_seller_product_location_line_items(
-    seller_product_seller_location: SellerProductSellerLocation,
-    delivery_date,
-    removal_date,
-):
-    line_items = []
-    # TODO: Update this to the actual platform fee. Defaulting to 30% for now, like OrderGroup.
-    platform_fee_percent = 30.0
-    # Add the delivery fee
-    # if order_group_orders.count() == 1:
-    if seller_product_seller_location.delivery_fee:
-        seller_payout_price = round(
-            (float(seller_product_seller_location.delivery_fee) or 0) * (1 or 0), 2
-        )
-        customer_price = round(
-            seller_payout_price * (1 + (platform_fee_percent / 100)), 2
-        )
-        line_items.append(
-            {
-                "type": OrderLineItemType.objects.get(code="DELIVERY"),
-                "items": [
-                    {
-                        "description": "Delivery Fee",
-                        "quantity": 1,
-                        "platform_fee_percent": platform_fee_percent,
-                        "rate": seller_product_seller_location.delivery_fee,
-                        "is_flat_rate": True,
-                        "seller_payout_price": seller_payout_price,
-                        "customer_price": customer_price,
-                    }
-                ],
-            }
-        )
-    # Create Removal Fee OrderLineItem.
-    if delivery_date == removal_date:
-        removal_fee = 0
-        if seller_product_seller_location.removal_fee:
-            removal_fee = float(seller_product_seller_location.removal_fee)
-        seller_payout_price = round((removal_fee or 0) * (1 or 0), 2)
-        customer_price = round(
-            seller_payout_price * (1 + (platform_fee_percent / 100)), 2
-        )
-        line_items.append(
-            {
-                "type": OrderLineItemType.objects.get(code="REMOVAL"),
-                "items": [
-                    {
-                        "description": "Removal Fee",
-                        "quantity": 1,
-                        "platform_fee_percent": platform_fee_percent,
-                        "rate": removal_fee,
-                        "is_flat_rate": True,
-                        "seller_payout_price": seller_payout_price,
-                        "customer_price": customer_price,
-                    }
-                ],
-            }
-        )
-        # Don't add any other OrderLineItems if this is a removal.
-    else:
-        pass
-        # Create OrderLineItems for newly "submitted" order.
-        # TODO: Where do I find this: Service Price.
-        # if hasattr(self.order_group, "service"):
-        #     line_items.append(
-        #         {
-        #             "type": OrderLineItemType.objects.get(code="SERVICE").name,
-        #             "quantity": self.order_group.service.miles or 1,
-        #             "rate": self.order_group.service.rate,
-        #             "platform_fee_percent": platform_fee_percent,
-        #             "is_flat_rate": self.order_group.service.miles is None
-        #         }
-        #     )
-
-        # TODO: Where do I find this: Rental Price.
-        # if hasattr(self.order_group, "rental"):
-        #     day_count = (
-        #         (self.end_date - self.start_date).days if self.end_date else 0
-        #     )
-        #     days_over_included = (
-        #         day_count - self.order_group.rental.included_days
-        #     )
-        #     order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
-        #     # Create OrderLineItem for Included Days.
-        #     line_items.append(
-        #         {
-        #             "type": order_line_item_type,
-        #             "rate": self.order_group.rental.price_per_day_included,
-        #             "quantity": self.order_group.rental.included_days,
-        #             "description": "Included Days",
-        #             "platform_fee_percent": self.order_group.take_rate,
-        #         }
-        #     )
-        #     # Create OrderLineItem for Additional Days.
-        #     if days_over_included > 0:
-        #         line_items.append(
-        #             {
-        #                 "type": order_line_item_type,
-        #                 "rate": self.order_group.rental.price_per_day_additional,
-        #                 "quantity": days_over_included,
-        #                 "description": "Additional Days",
-        #                 "platform_fee_percent": self.order_group.take_rate,
-        #             }
-        #         )
-
-        # TODO: Where do I find this: Material Price.
-        # if hasattr(self.order_group, "material"):
-        #     tons_over_included = (
-        #         self.order_group.tonnage_quantity or 0
-        #     ) - self.order_group.material.tonnage_included
-        #     order_line_item_type = OrderLineItemType.objects.get(
-        #         code="MATERIAL"
-        #     )
-
-        #     # Create OrderLineItem for Included Tons.
-        #     line_items.append(
-        #         {
-        #             "type": order_line_item_type,
-        #             "rate": self.order_group.material.price_per_ton,
-        #             "quantity": self.order_group.material.tonnage_included,
-        #             "description": "Included Tons",
-        #             "platform_fee_percent": self.order_group.take_rate,
-        #         }
-        #     )
-
-        #     # Create OrderLineItem for Additional Tons.
-        #     if tons_over_included > 0:
-        #         line_items.append(
-        #             {
-        #                 "type": order_line_item_type,
-        #                 "rate": self.order_group.material.price_per_ton,
-        #                 "quantity": tons_over_included,
-        #                 "description": "Additional Tons",
-        #                 "platform_fee_percent": self.order_group.take_rate,
-        #             }
-        #         )
-    return line_items
 
 
 @login_required(login_url="/admin/login/")
@@ -941,46 +834,47 @@ def new_order_4(request):
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     context["user_group"] = get_user_group(request)
-    product_id = request.GET.get("product_id")
-    user_address_id = request.GET.get("user_address")
-    product_add_on_choices = []
-    for key, value in request.GET.items():
-        if key.startswith("product_add_on_choices"):
-            product_add_on_choices.append(value)
-    product_waste_types = request.GET.getlist("product_waste_types")
-    service_frequency = request.GET.get("service_frequency")
-    delivery_date = request.GET.get("delivery_date")
-    removal_date = request.GET.get("removal_date")
-    context["product_id"] = product_id
-    context["user_address"] = user_address_id
-    context["product_waste_types"] = product_waste_types
-    context["product_add_on_choices"] = product_add_on_choices
-    context["service_frequency"] = service_frequency
-    context["delivery_date"] = delivery_date
-    context["removal_date"] = removal_date
+    context["product_id"] = request.GET.get("product_id")
+    context["user_address"] = request.GET.get("user_address")
+    context["product_waste_types"] = request.GET.getlist("product_waste_types")
+    if context["product_waste_types"] and context["product_waste_types"][0] == "":
+        context["product_waste_types"] = []
+    context["product_add_on_choices"] = request.GET.getlist("product_add_on_choices")
+    if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
+        context["product_add_on_choices"] = []
+    context["service_frequency"] = request.GET.get("service_frequency")
+    context["delivery_date"] = request.GET.get("delivery_date")
+    context["removal_date"] = request.GET.get("removal_date")
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
     waste_type = None
     waste_type_id = None
-    if product_waste_types:
+    if context["product_waste_types"]:
         main_product_waste_type = MainProductWasteType.objects.filter(
-            id=product_waste_types[0]
+            id=context["product_waste_types"][0]
         ).first()
         waste_type = main_product_waste_type.waste_type
         waste_type_id = waste_type.id
 
-    products = Product.objects.filter(main_product_id=product_id)
+    products = Product.objects.filter(main_product_id=context["product_id"])
     # Find the products that have the waste types and add ons.
-    if product_add_on_choices:
+    if context["product_add_on_choices"]:
+        prod_addon_choice_set = set(context["product_add_on_choices"])
         for product in products:
             product_addon_choices_db = ProductAddOnChoice.objects.filter(
                 product_id=product.id
             ).values_list("add_on_choice_id", flat=True)
-            if set(product_addon_choices_db) == set(product_add_on_choices):
+            if set(product_addon_choices_db) == prod_addon_choice_set:
                 context["product"] = product
                 break
     elif products.count() == 1:
+        context["product"] = products.first()
+    elif products.count() > 1:
+        messages.error(
+            request,
+            "Multiple products found. Only one product of each type should exist. You might encounter errors.",
+        )
         context["product"] = products.first()
     if context.get("product", None) is None:
         messages.error(request, "Product not found.")
@@ -989,7 +883,7 @@ def new_order_4(request):
     # step_time = time.time()
     # print(f"Find Product: {step_time - start_time}")
     # We know the product the user wants, so now find the seller locations that offer the product.
-    user_address_obj = UserAddress.objects.filter(id=user_address_id).first()
+    user_address_obj = UserAddress.objects.filter(id=context["user_address"]).first()
     seller_product_seller_locations = (
         MatchingEngine.get_possible_seller_product_seller_locations(
             context["product"],
@@ -1003,26 +897,23 @@ def new_order_4(request):
     # print(f"Find Seller Locations: {step_time - start_time}")
 
     # if request.method == "POST":
-    # start_date = datetime.datetime.strptime(delivery_date, "%Y-%m-%d")
+    # start_date = datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d")
     # end_date = None
-    # if removal_date:
-    #     end_date = datetime.datetime.strptime(removal_date, "%Y-%m-%d")
+    # if context["removal_date"]:
+    #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
     context["seller_product_seller_locations"] = []
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
         seller_d["seller_product_seller_location"] = seller_product_seller_location
-        # pricing_data = PricingEngine.get_price(
-        #     user_address_obj, seller_product_location, start_date, end_date, waste_type
-        # )
         seller_d["price_data"] = PricingEngine.get_price(
             user_address=UserAddress.objects.get(
-                id=user_address_id,
+                id=context["user_address"],
             ),
             seller_product_seller_location=seller_product_seller_location,
-            start_date=datetime.datetime.strptime(delivery_date, "%Y-%m-%d"),
+            start_date=datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d"),
             end_date=(
-                datetime.datetime.strptime(removal_date, "%Y-%m-%d")
-                if removal_date
+                datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
+                if context["removal_date"]
                 else None
             ),
             waste_type=(
@@ -1031,11 +922,6 @@ def new_order_4(request):
         )
         print("Price Data")
         print(seller_d["price_data"])
-        seller_d["line_types"] = get_seller_product_location_line_items(
-            seller_product_seller_location,
-            context["delivery_date"],
-            context["removal_date"],
-        )
         context["seller_product_seller_locations"].append(seller_d)
 
     # step_time = time.time()
@@ -1407,7 +1293,7 @@ def order_group_swap(request, order_group_id, is_removal=False):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except Exception as e:
             context["form_error"] = (
                 f"Error saving, please contact us if this continues: [{e}]."
@@ -1589,7 +1475,7 @@ def order_group_detail(request, order_group_id):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -1862,7 +1748,7 @@ def location_detail(request, location_id):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -2062,7 +1948,7 @@ def new_location(request):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -2355,7 +2241,7 @@ def new_user(request):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except IntegrityError as e:
             if "unique constraint" in str(e):
                 messages.error(request, "User with that email already exists.")
@@ -2873,7 +2759,7 @@ def company_new_user(request, user_group_id):
             # This will let bootstrap know to highlight the fields with errors.
             context["form_error"] = ""
             for field in e.form.errors:
-                e.form[field].field.widget.attrs["class"] += " is-invalid"
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
                 context["form_error"] += f"{field}: {e.form[field].errors}"
         except Exception as e:
             context["form_error"] = (
