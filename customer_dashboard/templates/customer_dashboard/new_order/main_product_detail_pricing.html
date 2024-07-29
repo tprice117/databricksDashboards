@@ -35,8 +35,20 @@
                             <p class="text-end">
                                 <b>${{ item.price_data.total|floatformat:2|intcomma }}</b>
                             </p>
-                            <p class="text-end">Delivery: ${{ item.price_data.delivery|floatformat:2|intcomma }}</p>
-                            <p class="text-end">Removal: ${{ item.price_data.removal|floatformat:2|intcomma }}</p>
+                            <p class="text-end">
+                                Delivery:{% if item.price_data.delivery %}
+                                    ${{ item.price_data.delivery|floatformat:2|intcomma }}
+                                {% else %}
+                                    No charge
+                                {% endif %}
+                            </p>
+                            <p class="text-end">
+                                Removal:{% if item.price_data.removal %}
+                                    ${{ item.price_data.removal|floatformat:2|intcomma }}
+                                {% else %}
+                                    No charge
+                                {% endif %}
+                            </p>
                         </div>
                         <div class="col-auto">
                             <form action="{% url 'customer_new_order_5' %}" method="post">
