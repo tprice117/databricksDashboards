@@ -320,7 +320,7 @@ class OrderGroupForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "type": "date",
-                "min": datetime.date.today(),
+                "min": datetime.date.today() + datetime.timedelta(days=2),
             }
         ),
     )
@@ -330,7 +330,7 @@ class OrderGroupForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "type": "date",
-                "min": datetime.date.today(),
+                "min": datetime.date.today() + datetime.timedelta(days=2),
             }
         ),
     )
@@ -382,6 +382,10 @@ class OrderGroupForm(forms.Form):
             # self.fields["delivery_date"].required = False
             self.fields["removal_date"].required = False
             self.fields["is_estimated_end_date"].required = False
+
+    # def clean_delivery_date(self):
+    #     # TODO: Do not allow sunday selection
+    #     return self.cleaned_data["delivery_date"]
 
     def clean_removal_date(self):
         # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
