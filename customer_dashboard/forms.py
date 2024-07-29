@@ -8,9 +8,9 @@ from common.models.choices.user_type import UserType
 
 def validate_start_date(value):
     allowed_start_date = datetime.date.today()
-    if value < datetime.date.today():
+    if value < datetime.date.today() + datetime.timedelta(days=2):
         raise ValidationError(
-            "Start date must be equal to or greater than today: %(allowed_start_date)s",
+            "Date must be equal to or greater than: %(allowed_start_date)s",
             params={"allowed_start_date": allowed_start_date},
         )
 
@@ -383,9 +383,12 @@ class OrderGroupForm(forms.Form):
             self.fields["removal_date"].required = False
             self.fields["is_estimated_end_date"].required = False
 
-    # def clean_delivery_date(self):
-    #     # TODO: Do not allow sunday selection
-    #     return self.cleaned_data["delivery_date"]
+    def clean_delivery_date(self):
+        # Do not allow delivery date to be on a Sunday.
+        delivery_date = self.cleaned_data["delivery_date"]
+        if delivery_date.weekday() == 6:  # 6 corresponds to Sunday
+            raise ValidationError("Date cannot be on a Sunday.")
+        return delivery_date
 
     def clean_removal_date(self):
         # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
@@ -401,6 +404,9 @@ class OrderGroupForm(forms.Form):
                 "Removal date must be after delivery date: %(delivery_date)s",
                 params={"delivery_date": delivery_date},
             )
+        # Do not allow removal date to be on a Sunday.
+        if removal_date.weekday() == 6:  # 6 corresponds to Sunday
+            raise ValidationError("Date cannot be on a Sunday.")
         # Always return a value to use as the new cleaned data, even if this method didn't change it.
         return removal_date
 
