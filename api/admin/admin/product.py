@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from api.admin.inlines import ProductAddOnChoiceInline
+from api.admin.inlines import ProductAddOnChoiceInline, SellerProductInline
 from api.models import Product
 from common.admin.admin.base_admin import BaseModelAdmin
 
@@ -9,9 +9,7 @@ from common.admin.admin.base_admin import BaseModelAdmin
 class ProductAdmin(BaseModelAdmin):
     search_fields = ["description", "main_product__name"]
     list_display = ("__str__", "main_product")
-    inlines = [
-        ProductAddOnChoiceInline,
-    ]
+    inlines = [ProductAddOnChoiceInline, SellerProductInline]
     fieldsets = [
         (
             None,
