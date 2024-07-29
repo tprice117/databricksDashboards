@@ -50,7 +50,7 @@
                     // Update the display field with the user_address's name
                     document.getElementById("user_address-search").value = item.getAttribute("data-name");
                     // Update the hidden field with the user_address's ID
-                    document.getElementById("user_address").value = item.getAttribute("data-id");
+                    document.getElementById("id_user_address").value = item.getAttribute("data-id");
                     removeAutocompleteDropdown();
                 });
             });
@@ -138,16 +138,13 @@
                     {% else %}
                         <div class="dropdown mb-3">
                             <label for="user_address-search" class="form-label">Search Address <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
-                            {% if selected_user_address and selected_user_address.id == user_address.id %}
+                            {% if selected_user_address %}
                                 <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" value="{{ selected_user_address.name }}" hx-post="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
-                                <!-- Hidden input field for user_address ID -->
-                                <input id="user_address" type="hidden" name="user_address" value="{{ selected_user_address }}" />
+                                <!-- Hidden input field for user_address ID is added by forms.py with id=id_user_address -->
                             {% else %}
                                 <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" hx-post="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
-                                <!-- Hidden input field for user_address ID -->
-                                <input id="user_address" type="hidden" name="user_address" />
+                                <!-- Hidden input field for user_address ID is added by forms.py id=id_user_address -->
                             {% endif %}
-                            <input id="user_address" type="hidden" name="user_address" />
                             <div class="dropdown-content" id="user_address-search-results"></div>
                         </div>
                     {% endif %}
