@@ -14,7 +14,6 @@ class MainProduct(BaseModel):
         related_name="main_products",
     )
     name = models.CharField(max_length=80)
-    cubic_yards = models.IntegerField(blank=True, null=True)
     ar_url = models.URLField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
@@ -25,35 +24,24 @@ class MainProduct(BaseModel):
         blank=True,
     )
 
-    # # Mark Up Configuration.
-    # default_take_rate = models.DecimalField(
-    #     max_digits=18,
-    #     decimal_places=2,
-    #     blank=True,
-    #     null=True,
-    #     help_text="Default mark up for this product (ex: 35%)",
-    # )
-    # minimum_take_rate = models.DecimalField(
-    #     max_digits=18,
-    #     decimal_places=2,
-    #     blank=True,
-    #     null=True,
-    #     help_text="Minimum take rate for this product (ex: 10%)",
-    # )
+    # Mark Up Configuration.
+    default_take_rate = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=20,
+        help_text="Default mark up for this product (ex: 35 means 35%)",
+    )
+    minimum_take_rate = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=20,
+        help_text="Minimum take rate for this product (ex: 10 means 10%)",
+    )
 
     included_tonnage_quantity = models.DecimalField(
         max_digits=18, decimal_places=0, blank=True, null=True
     )
-    price_per_additional_ton = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
-    )
     max_tonnage_quantity = models.DecimalField(
-        max_digits=18, decimal_places=0, blank=True, null=True
-    )
-    max_rate = models.DecimalField(
-        max_digits=18, decimal_places=0, blank=True, null=True
-    )
-    included_rate_quantity = models.DecimalField(
         max_digits=18, decimal_places=0, blank=True, null=True
     )
     main_product_code = models.CharField(max_length=255, blank=True, null=True)
@@ -70,6 +58,10 @@ class MainProduct(BaseModel):
 
     def __str__(self):
         return f"{self.main_product_category.name} - {self.name}"
+
+    @property
+    def max_discount(self):
+        return self.default_take_rate - self.minimum_take_rate
 
     @property
     def price_from(self):
