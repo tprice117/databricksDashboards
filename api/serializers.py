@@ -49,8 +49,11 @@ from .models import (
     SellerProductSellerLocationMaterial,
     SellerProductSellerLocationMaterialWasteType,
     SellerProductSellerLocationRental,
+    SellerProductSellerLocationRentalMultiStep,
+    SellerProductSellerLocationRentalOneStep,
     SellerProductSellerLocationService,
     SellerProductSellerLocationServiceRecurringFrequency,
+    SellerProductSellerLocationServiceTimesPerWeek,
     ServiceRecurringFrequency,
     Subscription,
     TimeSlot,
@@ -605,11 +608,37 @@ class SellerProductSellerLocationServiceRecurringFrequencySerializer(
         fields = "__all__"
 
 
+class SellerProductSellerLocationServiceTimesPerWeekSerializer(
+    serializers.ModelSerializer
+):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = SellerProductSellerLocationServiceTimesPerWeek
+        fields = "__all__"
+
+
+class SellerProductSellerLocationRentalOneSteperializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = SellerProductSellerLocationRentalOneStep
+        fields = "__all__"
+
+
 class SellerProductSellerLocationRentalSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = SellerProductSellerLocationRental
+        fields = "__all__"
+
+
+class SellerProductSellerLocationRentalMultiStepSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = SellerProductSellerLocationRentalMultiStep
         fields = "__all__"
 
 
@@ -678,7 +707,14 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
     )
     service = SellerProductSellerLocationServiceSerializer(read_only=True)
     material = SellerProductSellerLocationMaterialSerializer(read_only=True)
+    rental_one_step = SellerProductSellerLocationRentalOneSteperializer(read_only=True)
     rental = SellerProductSellerLocationRentalSerializer(read_only=True)
+    rental_multi_step = SellerProductSellerLocationRentalMultiStepSerializer(
+        read_only=True
+    )
+    service_times_per_week = SellerProductSellerLocationServiceTimesPerWeekSerializer(
+        read_only=True
+    )
 
     class Meta:
         model = SellerProductSellerLocation
