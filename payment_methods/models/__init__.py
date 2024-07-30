@@ -1,3 +1,0 @@
-from .payment_method import PaymentMethod
-from .payment_method_user import PaymentMethodUser
-from .payment_method_user_address import PaymentMethodUserAddress
