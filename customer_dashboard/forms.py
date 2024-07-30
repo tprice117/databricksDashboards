@@ -311,8 +311,10 @@ class OrderGroupForm(forms.Form):
         label="Material",
         help_text="Hold CTRL to select multiple.",
         choices=[],
-        widget=forms.Select(attrs={"class": "form-select", "multiple": "true"}),
-        required=False,
+        widget=forms.Select(
+            attrs={"class": "form-select", "multiple": "true", "required": "true"}
+        ),
+        required=True,
     )
     delivery_date = forms.DateField(
         validators=[validate_start_date],
