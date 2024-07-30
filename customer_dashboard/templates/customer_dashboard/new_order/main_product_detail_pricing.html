@@ -1,0 +1,79 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Select Supplier
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-1">New Order: Supplier Options</h3>
+        <div class="row">
+            <div class="col">
+                {% for item in seller_product_seller_locations %}
+                    <div class="row mb-4">
+                        <div class="col-auto">
+                            <img class="img-thumbnail img-fluid"
+                                alt="Seller logo"
+                                width="200"
+                                height="200"
+                                src="{% if item.seller_product_seller_location.seller_location.seller.location_logo_url %}
+                                    {{ item.seller_product_seller_location.seller_location.seller.location_logo_url }}
+                                {% else %}
+                                    {% static 'customer_dashboard/img/photo-1545231027-637d2f6210f8.jpg' %}
+                                {% endif %}" />
+                        </div>
+                        <div class="col">
+                            <h3>{{ item.seller_product_seller_location.seller_location.name }}</h3>
+                            <p>
+                                <a class="card-link" href="https://www.google.com/maps/place/{{ item.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.seller_product_location.seller_location.formatted_address }}</a>
+                            </p>
+                        </div>
+                        <div class="col-auto">
+                            <p class="text-end">
+                                <b>${{ item.price_data.total|floatformat:2|intcomma }}</b>
+                            </p>
+                            <p class="text-end">
+                                Delivery:{% if item.price_data.delivery %}
+                                    ${{ item.price_data.delivery|floatformat:2|intcomma }}
+                                {% else %}
+                                    No charge
+                                {% endif %}
+                            </p>
+                            <p class="text-end">
+                                Removal:{% if item.price_data.removal %}
+                                    ${{ item.price_data.removal|floatformat:2|intcomma }}
+                                {% else %}
+                                    No charge
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-auto">
+                            <form action="{% url 'customer_new_order_5' %}" method="post">
+                                {% csrf_token %}
+                                <input name="seller_product_seller_location_id" type="hidden" value="{{ item.seller_product_seller_location.id }}" />
+                                <input name="product_id" type="hidden" value="{{ product_id }}" />
+                                <input name="user_address" type="hidden" value="{{ user_address }}" />
+                                <input name="product_waste_types" type="hidden" value="{{ product_waste_types }}" />
+                                <input name="product_add_ons" type="hidden" value="{{ product_add_ons }}" />
+                                <input name="service_frequency" type="hidden" value="{{ service_frequency }}" />
+                                <input name="delivery_date" type="hidden" value="{{ delivery_date }}" />
+                                <input name="removal_date" type="hidden" value="{{ removal_date }}" />
+                                <div class="d-flex justify-content-center">
+                                    <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">Add to Cart</button>
+                                </div>
+                            </form>
+                            <button class="btn btn-link mt-2" type="button" data-bs-target="#modal-price-detail-{{ forloop.counter }}" data-bs-toggle="modal">Pricing Details</button>
+                            {% include 'customer_dashboard/snippets/price_details_modal.html' %}
+                        </div>
+                    </div>
+                    {% if not forloop.first %}
+                        <hr />
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

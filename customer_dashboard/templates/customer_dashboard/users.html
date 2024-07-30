@@ -1,0 +1,116 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Users
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block javascript %}
+    <script>
+        const searchFilter = document.getElementById("user-search-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has service_date
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceDate = urlParams.get("q");
+            if (serviceDate) {
+                // update date filter value
+                searchFilter.value = serviceDate;
+            }
+        });
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Remove q query param before attaching to htmx search input.
+            queryParams.delete("q");
+            // Create url with current query params.
+            const searchUsersUrl = "{% url 'customer_users' %}?" + queryParams.toString();
+            // update hx-get attribute of search filter input.
+            htmx.find("#user-search-filter").setAttribute("hx-get", searchUsersUrl);
+            // force htmx to process the new hx-get attribute
+            htmx.process("#user-search-filter");
+        
+            // Add event listener to table filter options
+            const tableFilterOptions = document.getElementById("table-filter-options");
+            if (tableFilterOptions) {
+                tableFilterOptions.addEventListener("change", function () {
+                    searchFilter.value = "";
+                });
+            }
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Users</h3>
+            <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{% url 'customer_new_user' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create User</a>
+        </div>
+        {% if request.user.is_staff %}
+            <div class="row">
+                <div class="col">
+                    <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_users' %}" hx-target="#user-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+                        <option value="" selected>Filter Data By</option>
+                        <option value="new">New (created in last 30 days)</option>
+                        <option value="active">Active Buyers</option>
+                        <option value="loggedin">Logged In</option>
+                        <option value="churned">Churning</option>
+                        <option value="fully_churned">Fully Churned</option>
+                    </select>
+                </div>
+            </div>
+        {% endif %}
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col">
+                        <p class="text-primary m-0 fw-bold" id="table-title">Users</p>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="user-search-filter">Filter by name or email</label>
+                            <input id="user-search-filter" class="form-control" type="search" name="q" hx-push-url="true" hx-get="{% url 'customer_users' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user-results" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table table-hover my-0" id="user-results" hx-get="{{ users_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
+                        <thead>
+                            <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Company</th>
+                                {% endif %}
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Associated Locations</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot>
+                            <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Company</th>
+                                {% endif %}
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Associated Locations</th>
+                                <th>Created</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="row invisible" id="users-pagination"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

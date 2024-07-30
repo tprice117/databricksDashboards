@@ -1,0 +1,129 @@
+{% load static %}
+{% load humanize %}
+{% if request.user.is_staff and help_text %}
+    <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
+{% endif %}
+
+<table class="table table-hover my-0" id="location-results">
+    <thead>
+        <tr>
+            <th>Address</th>
+            <th>Company</th>
+            {% if request.user.is_staff %}
+                {% if tab == 'active' %}
+                    <th class="header-sort-icon-down">Last Order</th>
+                {% elif tab == 'churned' or tab == 'fully_churned' %}
+                    <th>Last Order</th>
+                    <th>Total Spend</th>
+                    <th class="header-sort-icon-down">Change</th>
+                    <th>Percentage</th>
+                {% else %}
+                    <th>Last Order</th>
+                    <th class="header-sort-icon-down">Created On</th>
+                {% endif %}
+            {% else %}
+                <th>Autopay?</th>
+                <th>Is Archived?</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% if page_obj %}
+            {% for user_address in page_obj %}
+                <tr class="clickable-row" onclick="window.location.href='{% url 'customer_location_detail' location_id=user_address.id %}'">
+                    <td>{{ user_address.formatted_address }}</td>
+                    <td>{{ user_address.user_group.name }}</td>
+                    {% if request.user.is_staff %}
+                        {% if tab == 'active' %}
+                            <td>{{ user_address.last_order }}</td>
+                        {% elif tab == 'churned' or tab == 'fully_churned' %}
+                            <td>{{ user_address.last_order }}</td>
+                            <td>${{ user_address.total_spend|floatformat:2|intcomma }}</td>
+                            <td>${{ user_address.change|floatformat:2|intcomma }}</td>
+                            <td>{{ user_address.percent_change }}%</td>
+                        {% else %}
+                            {% if user_address.last_order %}
+                                <td>{{ user_address.last_order }}</td>
+                            {% else %}
+                                <td class="text-center" hx-get="{% url 'customer_company_last_order' %}?user_address_id={{ user_address.id }}" hx-trigger="load" hx-swap="outerHTML">
+                                    <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </td>
+                            {% endif %}
+                            <td>{{ user_address.created_on }}</td>
+                        {% endif %}
+                    {% else %}
+                        <td>{{ user_address.autopay }}</td>
+                        <td>{{ user_address.is_archived }}</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th>Address</th>
+            <th>Company</th>
+            {% if request.user.is_staff %}
+                {% if tab == 'active' %}
+                    <th>Last Order</th>
+                {% elif tab == 'churned' or tab == 'fully_churned' %}
+                    <th>Last Order</th>
+                    <th>Total Spend</th>
+                    <th>Change</th>
+                    <th>Percentage</th>
+                {% else %}
+                    <th>Last Order</th>
+                    <th>Created On</th>
+                {% endif %}
+            {% else %}
+                <th>Autopay?</th>
+                <th>Is Archived?</th>
+            {% endif %}
+        </tr>
+    </tfoot>
+</table>
+<div class="row" id="locations-pagination" hx-swap-oob="true">
+    <div class="col-md-6 align-self-center">
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </p>
+    </div>
+    <div class="col-md-6">
+        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
+                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
+                {% endif %}
+                <li class="page-item active">
+                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
+                </li>
+                {% if page_obj.has_next %}
+                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
+                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#location-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+{% if request.user.is_staff %}
+    <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_locations' %}" hx-target="#location-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-swap-oob="true">
+        <option value=""{% if not tab or tab == '' %} selected{% endif %}>
+            Filter Data By{% if not tab or tab == '' %} [count: {{ page_obj.paginator.count }}]{% endif %}
+        </option>
+        <option value="new"{% if tab == 'new' %} selected{% endif %}>
+            New (created in last 30 days){% if tab == 'new' %} [count: {{ page_obj.paginator.count }}]{% endif %}
+        </option>
+        <option value="active"{% if tab == 'active' %} selected{% endif %}>
+            Active Locations{% if tab == 'active' %} [count: {{ page_obj.paginator.count }}]{% endif %}
+        </option>
+        <option value="churned"{% if tab == 'churned' %} selected{% endif %}>
+            Churning{% if tab == 'churned' %} [count: {{ page_obj.paginator.count }}]{% endif %}
+        </option>
+        <option value="fully_churned"{% if tab == 'fully_churned' %} selected{% endif %}>
+            Fully Churned{% if tab == 'fully_churned' %} [count: {{ page_obj.paginator.count }}]{% endif %}
+        </option>
+    </select>
+{% endif %}

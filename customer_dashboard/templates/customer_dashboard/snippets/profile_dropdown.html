@@ -1,0 +1,22 @@
+{% load static %}
+<li class="nav-item dropdown no-arrow">
+    <div class="nav-item dropdown no-arrow">
+        <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#">
+            <span class="d-none d-lg-inline me-2 text-gray-600 small">{{ user.first_name }}</span>
+            {% if user.photo %}
+                <img class="border rounded-circle img-profile" src="{{ user.photo.url }}" />
+            {% else %}
+                <span class="border rounded-circle img-profile" style="display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+            {% endif %}
+        </a>
+        <div class="dropdown-menu shadow dropdown-menu-end animated--grow-in">
+            <a class="dropdown-item" href="{% url 'customer_profile' %}"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Profile</a>
+            {% if request.user.is_staff %}
+                <a class="dropdown-item" href="{% url 'customer_company' %}"><i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Company Settings</a>
+            {% elif user.type == 'ADMIN' and user_group %}
+                <a class="dropdown-item" href="{% url 'customer_company' %}"><i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Company Settings</a>
+            {% endif %}
+            <div class="dropdown-divider"></div><a class="dropdown-item" href="{% url 'customer_logout' %}"><i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>&nbsp;Logout</a>
+        </div>
+    </div>
+</li>

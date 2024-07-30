@@ -1,0 +1,52 @@
+{% load static %}
+{% load humanize %}
+<tbody id="payout-results">
+    {% if page_obj %}
+        {% for payout in page_obj %}
+            <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
+                {% if request.user.is_staff %}
+                    <td>{{ payout.order.order_group.seller_product_seller_location.seller_location.seller.name }}</td>
+                {% endif %}
+                <td>{{ payout.invoice_id }}</td>
+                <td>{{ payout.created_on }}</td>
+                <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
+                {% if request.user.is_staff %}
+                    <td>
+                        {% if payout.is_check %}
+                            Check
+                        {% else %}
+                            Stripe
+                        {% endif %}
+                    </td>
+                {% endif %}
+                {% comment %} <td>{{ payout.new_abstract_field_for_status }}</td>
+                <td>{{ payout.status }}</td> {% endcomment %}
+            </tr>
+        {% endfor %}
+    {% endif %}
+</tbody>
+<div class="row" id="payouts-pagination" hx-swap-oob="true">
+    <div class="col-md-6 align-self-center">
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </p>
+    </div>
+    <div class="col-md-6">
+        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
+                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
+                {% endif %}
+                <li class="page-item active">
+                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
+                </li>
+                {% if page_obj.has_next %}
+                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
+                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>

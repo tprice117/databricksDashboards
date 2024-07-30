@@ -1,0 +1,2772 @@
+import ast
+import datetime
+import json
+import logging
+import uuid
+from typing import List, Union
+from urllib.parse import urlencode
+
+from django.contrib import messages
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.core.validators import validate_email
+from django.db import IntegrityError
+from django.db.models import Q
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect, render
+from django.urls import reverse
+
+from admin_approvals.models import UserGroupAdminApprovalUserInvite
+from api.models import (
+    AddOn,
+    MainProduct,
+    MainProductAddOn,
+    MainProductCategory,
+    MainProductCategoryInfo,
+    MainProductInfo,
+    MainProductServiceRecurringFrequency,
+    MainProductWasteType,
+    Order,
+    OrderGroup,
+    OrderLineItemType,
+    Product,
+    ProductAddOnChoice,
+    SellerLocation,
+    SellerProduct,
+    SellerProductSellerLocation,
+    ServiceRecurringFrequency,
+    Subscription,
+    User,
+    UserAddress,
+    UserAddressType,
+    UserGroup,
+)
+from api.models.user.user import CompanyUtils as UserUtils
+from api.models.user.user_address import CompanyUtils as UserAddressUtils
+from api.models.user.user_group import CompanyUtils as UserGroupUtils
+from api.models.user.user_user_address import UserUserAddress
+from api.models.waste_type import WasteType
+from api.models.user.user_group import CompanyUtils as UserGroupUtils
+from api.models.user.user_address import CompanyUtils as UserAddressUtils
+from api.models.user.user import CompanyUtils as UserUtils
+from api.pricing_ml import pricing
+from billing.models import Invoice
+from common.models.choices.user_type import UserType
+from communications.intercom.utils.utils import get_json_safe_value
+from matching_engine.matching_engine import MatchingEngine
+from payment_methods.models import PaymentMethod
+from pricing_engine.pricing_engine import PricingEngine
+
+from .forms import (
+    AccessDetailsForm,
+    OrderGroupSwapForm,
+    PlacementDetailsForm,
+    UserAddressForm,
+    UserForm,
+    UserGroupForm,
+    UserInviteForm,
+    OrderGroupForm,
+    OrderGroupSwapForm,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class InvalidFormError(Exception):
+    """Exception raised for validation errors in the form."""
+
+    def __init__(self, form, msg):
+        self.form = form
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+
+class UserAlreadyExistsError(Exception):
+    """Exception raised if User already exists."""
+
+    pass
+
+
+def get_dashboard_chart_data(data_by_month: List[int]):
+    # Create a list of labels along with earnings data of months going back from the current month to 8 months ago.
+    data = []
+    all_months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    current_month = datetime.date.today().month
+    months = []
+    for i in range(11, 0, -1):
+        months.append(all_months[(current_month - i) % 12])
+        data.append(round(data_by_month[(current_month - i) % 12], 2))
+
+    dashboard_chart = {
+        "type": "line",
+        "data": {
+            "labels": months,
+            "datasets": [
+                {
+                    "label": "Earnings",
+                    "fill": True,
+                    "data": data,
+                    "backgroundColor": "rgba(78, 115, 223, 0.05)",
+                    "borderColor": "rgba(78, 115, 223, 1)",
+                }
+            ],
+        },
+        "options": {
+            "maintainAspectRatio": False,
+            "legend": {"display": False, "labels": {"fontStyle": "normal"}},
+            "title": {"fontStyle": "normal"},
+            "scales": {
+                "xAxes": [
+                    {
+                        "gridLines": {
+                            "color": "rgb(234, 236, 244)",
+                            "zeroLineColor": "rgb(234, 236, 244)",
+                            "drawBorder": False,
+                            "drawTicks": False,
+                            "borderDash": ["2"],
+                            "zeroLineBorderDash": ["2"],
+                            "drawOnChartArea": False,
+                        },
+                        "ticks": {
+                            "fontColor": "#858796",
+                            "fontStyle": "normal",
+                            "padding": 20,
+                        },
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "gridLines": {
+                            "color": "rgb(234, 236, 244)",
+                            "zeroLineColor": "rgb(234, 236, 244)",
+                            "drawBorder": False,
+                            "drawTicks": False,
+                            "borderDash": ["2"],
+                            "zeroLineBorderDash": ["2"],
+                        },
+                        "ticks": {
+                            "fontColor": "#858796",
+                            "fontStyle": "normal",
+                            "padding": 20,
+                        },
+                    }
+                ],
+            },
+        },
+    }
+    return dashboard_chart
+
+
+def is_impersonating(request: HttpRequest) -> bool:
+    return request.session.get("customer_user_id") and request.session.get(
+        "customer_user_id"
+    ) != str(request.user.id)
+
+
+def get_user_group(request: HttpRequest) -> Union[UserGroup, None]:
+    """Returns the current UserGroup. This handles the case where the user is impersonating another user.
+    If the user is impersonating, it will return the UserGroup of the impersonated user.
+    The the user is staff and is not impersonating a user, then it will return None.
+
+    Args:
+        request (HttpRequest): Current request object.
+
+    Returns:
+        [UserGroup, None]: Returns the UserGroup object or None. None means staff user.
+    """
+
+    if is_impersonating(request) and request.session["customer_user_group_id"]:
+        user_group = UserGroup.objects.get(id=request.session["customer_user_group_id"])
+    elif request.user.is_staff:
+        user_group = None
+    else:
+        # Normal user
+        if request.session.get("customer_user_group_id"):
+            user_group = UserGroup.objects.get(
+                id=request.session["customer_user_group_id"]
+            )
+        else:
+            # Cache user_group id for faster lookups
+            user_group = request.user.user_group
+            request.session["customer_user_group_id"] = get_json_safe_value(
+                user_group.id
+            )
+
+    return user_group
+
+
+def get_user(request: HttpRequest) -> User:
+    """Returns the current user. This handles the case where the user is impersonating another user.
+
+    Args:
+        request (HttpRequest): Current request object.
+
+    Returns:
+        dict: Dictionary of the User object.
+    """
+    if is_impersonating(request):
+        user = User.objects.get(id=request.session.get("customer_user_id"))
+    else:
+        user = request.user
+    return user
+
+
+def get_user_group_user_objects(
+    request: HttpRequest, user: User, user_group: UserGroup, search_q: str = None
+):
+    """Returns the users for the current UserGroup.
+
+    If user is:
+        - staff, then all users are returned.
+        - not staff
+            - is admin, then return all users for the UserGroup.
+            - not admin, then only users in the logged in user's user group.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
+
+    Returns:
+        QuerySet[User]: The users queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        users = User.objects.filter(user_group_id=user.user_group_id)
+    else:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all users.
+            users = User.objects.all()
+        elif user_group:
+            users = User.objects.filter(user_group_id=user_group.id)
+        else:
+            # Individual user.
+            users = User.objects.filter(id=user.id)
+    if search_q:
+        users = users.filter(
+            Q(first_name__icontains=search_q)
+            | Q(last_name__icontains=search_q)
+            | Q(email__icontains=search_q)
+        )
+    return users
+
+
+def get_booking_objects(
+    request: HttpRequest, user: User, user_group: UserGroup, exclude_in_cart=True
+):
+    """Returns the orders for the current UserGroup.
+
+    If user is:
+        - staff, then all orders for all of UserGroups are returned.
+        - not staff
+            - is admin, then return all orders for the UserGroup.
+            - not admin, then only orders for the UserGroup locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
+
+    Returns:
+        QuerySet[Order]: The orders queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_location_ids = (
+            UserUserAddress.objects.filter(user_id=user.id)
+            .select_related("user_address")
+            .values_list("user_address_id", flat=True)
+        )
+        orders = Order.objects.filter(
+            order_group__user_address__in=user_user_location_ids
+        )
+    else:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all orders.
+            orders = Order.objects.all()
+        elif user_group:
+            orders = Order.objects.filter(
+                order_group__user__user_group_id=user_group.id
+            )
+        else:
+            # Individual user. Get all orders for the user.
+            orders = Order.objects.filter(order_group__user_id=user.id)
+    if exclude_in_cart:
+        orders = orders.filter(submitted_on__isnull=False)
+    return orders
+
+
+def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGroup):
+    """Returns the order_groups for the current UserGroup.
+
+    If user is:
+        - staff, then all order_groups for all of UserGroups are returned.
+        - not staff
+            - is admin, then return all order_groups for the UserGroup.
+            - not admin, then only order_groups for the UserGroup locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
+
+    Returns:
+        QuerySet[OrderGroup]: The order_groups queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_location_ids = (
+            UserUserAddress.objects.filter(user_id=user.id)
+            .select_related("user_address")
+            .values_list("user_address_id", flat=True)
+        )
+        order_groups = OrderGroup.objects.filter(
+            user_address__in=user_user_location_ids
+        )
+    else:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all order_groups.
+            order_groups = OrderGroup.objects.all()
+        elif user_group:
+            order_groups = OrderGroup.objects.filter(user__user_group_id=user_group.id)
+        else:
+            # Individual user. Get all orders for the user.
+            order_groups = OrderGroup.objects.filter(user_id=user.id)
+    return order_groups
+
+
+def get_location_objects(
+    request: HttpRequest, user: User, user_group: UserGroup, search_q: str = None
+):
+    """Returns the locations for the current UserGroup.
+
+    If user is:
+        - staff, then all locations for all of UserGroups are returned.
+        - not staff
+            - is admin, then return all locations for the UserGroup.
+            - not admin, then only locations for the UserGroup locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
+        search_q (str): [Optional] Search query string.
+
+    Returns:
+        QuerySet[Location]: The locations queryset.
+    """
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_locations = UserUserAddress.objects.filter(
+            user_id=user.id
+        ).select_related("user_address")
+        if search_q:
+            user_user_locations = user_user_locations.filter(
+                Q(user_address__name__icontains=search_q)
+                | Q(user_address__street__icontains=search_q)
+                | Q(user_address__city__icontains=search_q)
+                | Q(user_address__state__icontains=search_q)
+                | Q(user_address__postal_code__icontains=search_q)
+            )
+        user_user_locations = user_user_locations.order_by("-user_address__created_on")
+        locations = [
+            user_user_location.user_address
+            for user_user_location in user_user_locations
+        ]
+    else:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all locations.
+            locations = UserAddress.objects.all()
+            locations = locations.order_by("name", "-created_on")
+        elif user_group:
+            locations = UserAddress.objects.filter(user_group_id=user_group.id)
+            locations = locations.order_by("-created_on")
+        else:
+            # Individual user. Get all locations for the user.
+            locations = UserAddress.objects.filter(user_id=user.id)
+            locations = locations.order_by("-created_on")
+        if search_q:
+            locations = locations.filter(
+                Q(name__icontains=search_q)
+                | Q(street__icontains=search_q)
+                | Q(city__icontains=search_q)
+                | Q(state__icontains=search_q)
+                | Q(postal_code__icontains=search_q)
+            )
+    return locations
+
+
+def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup):
+    """Returns the invoices for the current user_group.
+
+    If user is:
+        - staff, then all invoices for all of user_groups are returned.
+        - not staff
+            - is admin, then return all invoices for the user_group.
+            - not admin, then only invoices for the user_group locations the user is associated with are returned.
+
+    Args:
+        request (HttpRequest): Request object from the view.
+        user (User): User object.
+        user_group (UserGroup): UserGroup object. NOTE: May be None.
+
+    Returns:
+        QuerySet[Invoice]: The invoices queryset.
+    """
+
+    if not user.is_staff and user.type != UserType.ADMIN:
+        user_user_location_ids = (
+            UserUserAddress.objects.filter(user_id=user.id)
+            .select_related("user_address")
+            .values_list("user_address_id", flat=True)
+        )
+        invoices = Invoice.objects.filter(user_address__in=user_user_location_ids)
+    else:
+        if request.user.is_staff and not is_impersonating(request):
+            # Global View: Get all invoices.
+            invoices = Invoice.objects.all()
+        elif user_group:
+            invoices = Invoice.objects.filter(
+                user_address__user__user_group_id=user_group.id
+            )
+        else:
+            # Individual user. Get all invoices for the user.
+            invoices = Invoice.objects.filter(user_address__user_id=user.id)
+    return invoices
+
+
+########################
+# Page views
+########################
+# Add redirect to auth0 login if not logged in.
+def customer_logout(request):
+    logout(request)
+    # Redirect to a success page.
+    return HttpResponseRedirect("https://trydownstream.com/")
+
+
+@login_required(login_url="/admin/login/")
+def customer_search(request, is_selection=False):
+    context = {}
+    if request.method == "POST":
+        search = request.POST.get("search")
+        search = search.strip()
+        if not search:
+            return HttpResponse(status=204)
+        try:
+            search_id = uuid.UUID(search)
+            user_groups = UserGroup.objects.filter(id=search_id)
+            users = User.objects.filter(id=search_id)
+        except ValueError:
+            isearch = search.casefold()
+            user_groups = UserGroup.objects.filter(name__icontains=isearch)
+            users = User.objects.filter(
+                Q(first_name__icontains=isearch)
+                | Q(last_name__icontains=isearch)
+                | Q(email__icontains=isearch)
+            )
+        context["user_groups"] = user_groups
+        context["users"] = users
+
+    if is_selection:
+        return render(
+            request,
+            "customer_dashboard/snippets/user_group_search_selection.html",
+            context,
+        )
+    else:
+        return render(
+            request, "customer_dashboard/snippets/user_search_list.html", context
+        )
+
+
+@login_required(login_url="/admin/login/")
+def customer_impersonation_start(request):
+    if request.user.is_staff:
+        redirect_url = reverse("customer_home")
+        if request.method == "POST":
+            user_group_id = request.POST.get("user_group_id")
+            user_id = request.POST.get("user_id")
+            if request.POST.get("redirect_url"):
+                redirect_url = request.GET.get("redirect_url")
+        elif request.method == "GET":
+            user_group_id = request.GET.get("user_group_id")
+            user_id = request.GET.get("user_id")
+            if request.GET.get("redirect_url"):
+                redirect_url = request.GET.get("redirect_url")
+        else:
+            return HttpResponse("Not Implemented", status=406)
+        try:
+            user = None
+            if user_group_id:
+                user_group = UserGroup.objects.get(id=user_group_id)
+                user = user_group.users.filter(type=UserType.ADMIN).first()
+            elif user_id:
+                user = User.objects.get(id=user_id)
+                # user_group = user.user_group
+                # if user_group:
+                #     user_group_id = user_group.id
+            if not user:
+                user = user_group.users.first()
+                if not user:
+                    raise User.DoesNotExist
+                messages.warning(
+                    request,
+                    "No admin user found for UserGroup. UserGroup should have at least one admin user.",
+                )
+            if not user:
+                raise User.DoesNotExist
+            request.session["customer_user_group_id"] = get_json_safe_value(
+                user_group_id
+            )
+            request.session["customer_user_id"] = get_json_safe_value(user.id)
+            return HttpResponseRedirect(redirect_url)
+        except User.DoesNotExist:
+            messages.error(
+                request,
+                "No admin user found for UserGroup. UserGroup must have at least one admin user.",
+            )
+            return HttpResponseRedirect("/customer/")
+        except Exception:
+            return HttpResponse("Not Found", status=404)
+    else:
+        return HttpResponse("Unauthorized", status=401)
+
+
+@login_required(login_url="/admin/login/")
+def customer_impersonation_stop(request):
+    if request.session.get("customer_user_id"):
+        del request.session["customer_user_id"]
+    if request.session.get("customer_user_group_id"):
+        del request.session["customer_user_group_id"]
+    return HttpResponseRedirect("/customer/")
+
+
+@login_required(login_url="/admin/login/")
+def index(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    if request.headers.get("HX-Request"):
+        orders = get_booking_objects(request, context["user"], context["user_group"])
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        orders = orders.prefetch_related("payouts", "order_line_items")
+        # .filter(status=Order.Status.PENDING)
+        context["earnings"] = 0
+        earnings_by_category = {}
+        pending_count = 0
+        scheduled_count = 0
+        complete_count = 0
+        cancelled_count = 0
+        earnings_by_month = [0] * 12
+        one_year_ago = datetime.date.today() - datetime.timedelta(days=365)
+        for order in orders:
+            context["earnings"] += float(order.customer_price())
+            if order.end_date >= one_year_ago:
+                earnings_by_month[order.end_date.month - 1] += float(
+                    order.customer_price()
+                )
+
+            category = (
+                order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
+            )
+            if category not in earnings_by_category:
+                earnings_by_category[category] = {"amount": 0, "percent": 0}
+            earnings_by_category[category]["amount"] += float(order.customer_price())
+
+            if order.status == Order.Status.PENDING:
+                pending_count += 1
+            elif order.status == Order.Status.SCHEDULED:
+                scheduled_count += 1
+            elif order.status == Order.Status.COMPLETE:
+                complete_count += 1
+            elif order.status == Order.Status.CANCELLED:
+                cancelled_count += 1
+
+        # # Just test data here
+        # earnings_by_category["Business Dumpster"] = {"amount": 2000, "percent": 0}
+        # earnings_by_category["Junk Removal"] = {"amount": 5000, "percent": 0}
+        # earnings_by_category["Scissor Lift"] = {"amount": 100, "percent": 0}
+        # earnings_by_category["Concrete & Masonary"] = {
+        #     "amount": 50,
+        #     "percent": 0,
+        # }
+        # earnings_by_category["Office Unit"] = {"amount": 25, "percent": 0}
+        # earnings_by_category["Forklift"] = {"amount": 80, "percent": 0}
+        # earnings_by_category["Boom Lifts"] = {"amount": 800, "percent": 0}
+        # context["earnings"] += 200 + 500 + 100 + 50 + 25 + 80 + 800
+
+        # Sort the dictionary by the 'amount' field in descending order
+        sorted_categories = sorted(
+            earnings_by_category.items(), key=lambda x: x[1]["amount"], reverse=True
+        )
+
+        # Calculate the 'percent' field for each category
+        for category, data in sorted_categories:
+            if context["earnings"] == 0:
+                data["percent"] = int((data["amount"] / 1) * 100)
+            else:
+                data["percent"] = int((data["amount"] / context["earnings"]) * 100)
+
+        # Create a new category 'Other' for the categories that are not in the top 4
+        other_amount = sum(data["amount"] for category, data in sorted_categories[4:])
+        if context["earnings"] == 0:
+            other_percent = int((other_amount / 1) * 100)
+        else:
+            other_percent = int((other_amount / context["earnings"]) * 100)
+
+        # Create the final dictionary
+        final_categories = dict(sorted_categories[:4])
+        final_categories["Other"] = {"amount": other_amount, "percent": other_percent}
+        context["earnings_by_category"] = final_categories
+        # print(final_categories)
+        context["pending_count"] = pending_count
+        # context["pending_count"] = orders.count()
+        locations = get_location_objects(
+            request, context["user"], context["user_group"]
+        )
+        if isinstance(locations, list):
+            context["location_count"] = len(locations)
+        else:
+            context["location_count"] = locations.count()
+        location_users = get_user_group_user_objects(
+            request, context["user"], context["user_group"]
+        )
+        context["user_count"] = location_users.count()
+        context["chart_data"] = get_dashboard_chart_data(earnings_by_month)
+        # context["chart_data"] = json.dumps(get_dashboard_chart_data(earnings_by_month))
+
+        return render(request, "customer_dashboard/snippets/dashboard.html", context)
+    else:
+        return render(request, "customer_dashboard/index.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_order(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    main_product_categories = MainProductCategory.objects.all().order_by("sort")
+    context["main_product_categories"] = main_product_categories
+
+    return render(
+        request, "customer_dashboard/new_order/main_product_categories.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_category_price(request, category_id):
+    context = {}
+    main_product_category = MainProductCategory.objects.get(id=category_id)
+    context["price_from"] = main_product_category.price_from
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request, "customer_dashboard/snippets/category_price_from.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def user_address_search(request):
+    context = {}
+    if request.method == "POST":
+        search = request.POST.get("q")
+        search = search.strip()
+        if not search:
+            return HttpResponse(status=204)
+        try:
+            user_address_id = uuid.UUID(search)
+            user_addresses = UserAddress.objects.filter(id=user_address_id)
+        except ValueError:
+            user_addresses = UserAddress.objects.filter(
+                Q(name__icontains=search)
+                | Q(street__icontains=search)
+                | Q(city__icontains=search)
+                | Q(state__icontains=search)
+                | Q(postal_code__icontains=search)
+            )
+        context["user_addresses"] = user_addresses
+
+    return render(
+        request,
+        "customer_dashboard/snippets/user_address_search_selection.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_2(request, category_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    main_product_category = MainProductCategory.objects.filter(id=category_id)
+    main_product_category = main_product_category.prefetch_related("main_products")
+    main_product_category = main_product_category.first()
+    main_products = main_product_category.main_products.all().order_by("sort")
+    context["main_product_category"] = main_product_category
+    context["main_products"] = []
+    for main_product in main_products:
+        main_product_dict = {}
+        main_product_dict["product"] = main_product
+        main_product_dict["infos"] = main_product.mainproductinfo_set.all().order_by(
+            "sort"
+        )
+        context["main_products"].append(main_product_dict)
+
+    return render(request, "customer_dashboard/new_order/main_products.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_order_3(request, product_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    context["product_id"] = product_id
+    # TODO: Add a button that allows adding an address.
+    # The button could open a modal that allows adding an address.
+    main_product = MainProduct.objects.filter(id=product_id)
+    main_product = main_product.select_related("main_product_category")
+    main_product = main_product.first()
+    context["main_product"] = main_product
+    product_waste_types = MainProductWasteType.objects.filter(
+        main_product_id=main_product.id
+    )
+    product_waste_types = product_waste_types.select_related("waste_type")
+    context["product_waste_types"] = product_waste_types
+    add_ons = AddOn.objects.filter(main_product_id=product_id)
+    # Get addon choices for each add_on and display the choices under the add_on.
+    context["product_add_ons"] = []
+    for add_on in add_ons:
+        context["product_add_ons"].append(
+            {"add_on": add_on, "choices": add_on.choices.all()}
+        )
+    context["user_addresses"] = get_location_objects(
+        request, context["user"], context["user_group"]
+    )
+    context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
+    if request.method == "POST":
+        user_address_id = request.POST.get("user_address")
+        if user_address_id:
+            context["selected_user_address"] = UserAddress.objects.get(id=user_address_id)
+        query_params = {
+            "product_id": context["product_id"],
+            "user_address": request.POST.get("user_address"),
+            "service_recurring_frequency_id": request.POST.get("service_frequency"),
+            "delivery_date": request.POST.get("delivery_date"),
+            "removal_date": request.POST.get("removal_date"),
+            "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
+            "product_waste_types": request.POST.getlist("product_waste_types"),
+        }
+        if not query_params["removal_date"]:
+            # This happens for one-time orders like junk removal,
+            # where the removal date is the same as the delivery date.
+            query_params["removal_date"] = query_params["delivery_date"]
+        try:
+            form = OrderGroupForm(
+                request.POST,
+                request.FILES,
+                user_addresses=context["user_addresses"],
+                main_product=context["main_product"],
+                product_waste_types=context["product_waste_types"],
+                product_add_ons=context["product_add_ons"],
+                service_freqencies=context["service_freqencies"],
+            )
+            context["form"] = form
+            # Use Django form validation to validate the form.
+            # If not valid, then display error message.
+            # If valid, then redirect to next page.
+            if form.is_valid():
+                pass
+            else:
+                raise InvalidFormError(form, "Invalid OrderGroupForm")
+            return HttpResponseRedirect(
+                f"{reverse('customer_new_order_4')}?{urlencode(query_params, doseq=True)}"
+            )
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+        except Exception as e:
+            messages.error(
+                request, f"Error saving, please contact us if this continues: [{e}]."
+            )
+    else:
+        context["form"] = OrderGroupForm(
+            user_addresses=context["user_addresses"],
+            main_product=context["main_product"],
+            product_waste_types=context["product_waste_types"],
+            product_add_ons=context["product_add_ons"],
+            service_freqencies=context["service_freqencies"],
+        )
+
+    return render(
+        request, "customer_dashboard/new_order/main_product_detail.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_4(request):
+    # import time
+    # start_time = time.time()
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    context["product_id"] = request.GET.get("product_id")
+    context["user_address"] = request.GET.get("user_address")
+    context["product_waste_types"] = request.GET.getlist("product_waste_types")
+    if context["product_waste_types"] and context["product_waste_types"][0] == "":
+        context["product_waste_types"] = []
+    context["product_add_on_choices"] = request.GET.getlist("product_add_on_choices")
+    if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
+        context["product_add_on_choices"] = []
+    context["service_frequency"] = request.GET.get("service_frequency")
+    context["delivery_date"] = request.GET.get("delivery_date")
+    context["removal_date"] = request.GET.get("removal_date")
+    # step_time = time.time()
+    # print(f"Extract parameters: {step_time - start_time}")
+    # if product_waste_types:
+    waste_type = None
+    waste_type_id = None
+    if context["product_waste_types"]:
+        main_product_waste_type = MainProductWasteType.objects.filter(
+            id=context["product_waste_types"][0]
+        ).first()
+        waste_type = main_product_waste_type.waste_type
+        waste_type_id = waste_type.id
+
+    products = Product.objects.filter(main_product_id=context["product_id"])
+    # Find the products that have the waste types and add ons.
+    if context["product_add_on_choices"]:
+        prod_addon_choice_set = set(context["product_add_on_choices"])
+        for product in products:
+            product_addon_choices_db = ProductAddOnChoice.objects.filter(
+                product_id=product.id
+            ).values_list("add_on_choice_id", flat=True)
+            if set(product_addon_choices_db) == prod_addon_choice_set:
+                context["product"] = product
+                break
+    elif products.count() == 1:
+        context["product"] = products.first()
+    elif products.count() > 1:
+        messages.error(
+            request,
+            "Multiple products found. Only one product of each type should exist. You might encounter errors.",
+        )
+        context["product"] = products.first()
+    if context.get("product", None) is None:
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_new_order"))
+
+    # step_time = time.time()
+    # print(f"Find Product: {step_time - start_time}")
+    # We know the product the user wants, so now find the seller locations that offer the product.
+    user_address_obj = UserAddress.objects.filter(id=context["user_address"]).first()
+    seller_product_seller_locations = (
+        MatchingEngine.get_possible_seller_product_seller_locations(
+            context["product"],
+            user_address_obj,
+            waste_type,
+        )
+    )
+    print("Seller Product Seller Locations")
+    print(seller_product_seller_locations)
+    # step_time = time.time()
+    # print(f"Find Seller Locations: {step_time - start_time}")
+
+    # if request.method == "POST":
+    # start_date = datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d")
+    # end_date = None
+    # if context["removal_date"]:
+    #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
+    context["seller_product_seller_locations"] = []
+    for seller_product_seller_location in seller_product_seller_locations:
+        seller_d = {}
+        seller_d["seller_product_seller_location"] = seller_product_seller_location
+        seller_d["price_data"] = PricingEngine.get_price(
+            user_address=UserAddress.objects.get(
+                id=context["user_address"],
+            ),
+            seller_product_seller_location=seller_product_seller_location,
+            start_date=datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d"),
+            end_date=(
+                datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
+                if context["removal_date"]
+                else None
+            ),
+            waste_type=(
+                WasteType.objects.get(id=waste_type_id) if waste_type_id else None
+            ),
+        )
+        print("Price Data")
+        print(seller_d["price_data"])
+        context["seller_product_seller_locations"].append(seller_d)
+
+    # step_time = time.time()
+    # print(f"Get Prices: {step_time - start_time}")
+    # context["seller_locations"] = seller_product_location.first().seller_location
+    return render(
+        request,
+        "customer_dashboard/new_order/main_product_detail_pricing.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_5(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    context["cart"] = {}
+    if request.method == "POST":
+        # Create the order group and orders.
+        seller_product_location_id = request.POST.get("seller_product_location_id")
+        product_id = request.POST.get("product_id")
+        user_address_id = request.POST.get("user_address")
+        product_waste_types = request.POST.get("product_waste_types")
+        if product_waste_types:
+            product_waste_types = ast.literal_eval(product_waste_types)
+        placement_details = request.POST.get("placement_details")
+        # product_add_on_choices = request.POST.get("product_add_on_choices")
+        service_frequency = request.POST.get("service_frequency")
+        delivery_date = request.POST.get("delivery_date")
+        removal_date = request.POST.get("removal_date")
+        main_product = MainProduct.objects.filter(id=product_id)
+        main_product = main_product.select_related("main_product_category")
+        # main_product = main_product.prefetch_related("products")
+        main_product = main_product.first()
+        context["main_product"] = main_product
+        seller_product_location = SellerProductSellerLocation.objects.get(
+            id=seller_product_location_id
+        )
+        user_address = UserAddress.objects.filter(id=user_address_id).first()
+        # create order group and orders
+        # TODO: where do I get tonnage_quantity?
+        order_group = OrderGroup(
+            user=context["user"],
+            user_address=user_address,
+            seller_product_seller_location_id=seller_product_location_id,
+            start_date=delivery_date,
+            take_rate=30.0,
+        )
+        if service_frequency:
+            order_group.service_recurring_frequency_id = service_frequency
+        if removal_date:
+            order_group.end_date = removal_date
+        if seller_product_location.delivery_fee:
+            order_group.delivery_fee = seller_product_location.delivery_fee
+        if seller_product_location.removal_fee:
+            order_group.removal_fee = seller_product_location.removal_fee
+        order_group.save()
+        # Create the order (Let submitted on null, this indicates that the order is in the cart)
+        # The first order of an order group always gets the same start and end date.
+        order = order_group.create_delivery(delivery_date)
+        # context["cart"][order_group.id] = {
+        #     "order_group": order_group,
+        #     "price": order.customer_price()
+        # }
+    elif request.method == "DELETE":
+        # Delete the order group and orders.
+        order_group_id = request.GET.get("id")
+        subtotal = request.GET.get("subtotal")
+        cart_count = request.GET.get("count")
+        customer_price = request.GET.get("price")
+        groupcount = request.GET.get("groupcount")
+        order_group = OrderGroup.objects.filter(id=order_group_id).first()
+        if customer_price:
+            customer_price = float(customer_price)
+        else:
+            customer_price = 0
+        if order_group:
+            # Delete any related protected objects, like orders and subscriptions.
+            sub_obj = Subscription.objects.filter(order_group_id=order_group.id).first()
+            if sub_obj:
+                sub_obj.delete()
+            for order in order_group.orders.all():
+                # del_subtotal += order.customer_price()
+                order.delete()
+            order_group.delete()
+            context["user_address"] = order_group.user_address_id
+        if subtotal:
+            context["subtotal"] = float(subtotal) - float(customer_price)
+        if cart_count:
+            context["cart_count"] = int(cart_count) - 1
+        if groupcount:
+            context["groupcount"] = int(groupcount) - 1
+        if order_group:
+            messages.success(request, "Order removed from cart.")
+        else:
+            messages.error(request, f"Order not found [{order_group_id}].")
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "customer_dashboard/new_order/cart_remove_item.html",
+                context,
+            )
+
+    # Load the cart page
+    context["subtotal"] = 0
+    context["cart_count"] = 0
+    # Pull all orders with submitted_on = None and show them in the cart.
+    orders = get_booking_objects(
+        request, context["user"], context["user_group"], exclude_in_cart=False
+    )
+    orders = orders.filter(submitted_on__isnull=True)
+    orders = orders.prefetch_related("order_line_items")
+    orders = orders.order_by("-order_group__start_date")
+
+    if not orders:
+        messages.error(request, "Your cart is empty.")
+    else:
+        # Get unique order group objects from the orders and place them in address buckets.
+        for order in orders:
+            try:
+                customer_price = order.customer_price()
+                if context["cart"].get(order.order_group.user_address_id, None) is None:
+                    context["cart"][order.order_group.user_address_id] = {
+                        "address": order.order_group.user_address,
+                        "total": 0,
+                        "orders": {},
+                    }
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group_id
+                ]["price"] += customer_price
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ]["count"] += 1
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ]["order_type"] = order.order_type
+                context["cart"][order.order_group.user_address_id][
+                    "total"
+                ] += customer_price
+                context["subtotal"] += customer_price
+            except KeyError:
+                customer_price = order.customer_price()
+                context["cart"][order.order_group.user_address_id]["orders"][
+                    order.order_group.id
+                ] = {
+                    "order_group": order.order_group,
+                    "price": customer_price,
+                    "count": 1,
+                    "order_type": order.order_type,
+                }
+                context["cart"][order.order_group.user_address_id][
+                    "total"
+                ] += customer_price
+                context["subtotal"] += customer_price
+                context["cart_count"] += 1
+
+    return render(
+        request,
+        "customer_dashboard/new_order/cart.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_order_6(request, order_group_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    count, deleted_objs = OrderGroup.objects.filter(id=order_group_id).delete()
+    if count:
+        messages.success(request, "Order removed from cart.")
+    else:
+        messages.error(request, f"Order not found [{order_group_id}].")
+    return HttpResponseRedirect(reverse("customer_new_order"))
+
+
+@login_required(login_url="/admin/login/")
+def checkout(request, user_address_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+
+    if request.method == "POST":
+        # Save access details to the user address.
+        if request.POST.get("access_details") != context["user_address"].access_details:
+            context["user_address"].access_details = request.POST.get("access_details")
+            context["user_address"].save()
+            messages.success(request, "Access details saved.")
+
+    # Get all orders in the cart for this user_address_id.
+    orders = Order.objects.filter(
+        order_group__user_address_id=user_address_id,
+        submitted_on__isnull=True,
+    )
+    orders = orders.prefetch_related("order_line_items")
+    orders = orders.order_by("-order_group__start_date")
+    context["cart"] = {}
+    context["discounts"] = 0
+    context["subtotal"] = 0
+    context["cart_count"] = 0
+    context["pre_tax_subtotal"] = 0
+    if context["user_group"]:
+        payment_methods = PaymentMethod.objects.filter(active=True).filter(
+            user_group_id=context["user_group"].id
+        )
+    else:
+        if context["user_address"].user_group_id:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_group_id=context["user_address"].user_group_id
+            )
+        elif context["user_address"].user_id:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_id=context["user_address"].user_id
+            )
+        else:
+            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+                user_id=context["user"].id
+            )
+    context["payment_methods"] = payment_methods
+    for order in orders:
+        try:
+            customer_price = order.customer_price()
+            context["cart"][order.order_group_id]["price"] += customer_price
+            context["cart"][order.order_group.id]["count"] += 1
+            context["cart"][order.order_group.id]["order_type"] = order.order_type
+            context["cart"]["total"] += customer_price
+            context["subtotal"] += customer_price
+        except KeyError:
+            customer_price = order.customer_price()
+            context["cart"][order.order_group.id] = {
+                "order_group": order.order_group,
+                "price": customer_price,
+                "count": 1,
+                "order_type": order.order_type,
+            }
+            context["subtotal"] += customer_price
+            context["cart_count"] += 1
+
+    return render(
+        request,
+        "customer_dashboard/new_order/checkout.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def profile(request):
+    context = {}
+    user = get_user(request)
+    context["user"] = user
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+
+    if request.method == "POST":
+        # NOTE: Since email is disabled, it is never POSTed,
+        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
+        POST_COPY = request.POST.copy()
+        POST_COPY["email"] = user.email
+        form = UserForm(POST_COPY, request.FILES)
+        context["form"] = form
+        if form.is_valid():
+            save_db = False
+            if form.cleaned_data.get("first_name") != user.first_name:
+                user.first_name = form.cleaned_data.get("first_name")
+                save_db = True
+            if form.cleaned_data.get("last_name") != user.last_name:
+                user.last_name = form.cleaned_data.get("last_name")
+                save_db = True
+            if form.cleaned_data.get("phone") != user.phone:
+                user.phone = form.cleaned_data.get("phone")
+                save_db = True
+            if form.cleaned_data.get("type") != user.type:
+                user.type = form.cleaned_data.get("type")
+                save_db = True
+            if request.FILES.get("photo"):
+                user.photo = request.FILES["photo"]
+                save_db = True
+            elif request.POST.get("photo-clear") == "on":
+                user.photo = None
+                save_db = True
+            if save_db:
+                context["user"] = user
+                user.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
+            form = UserForm(
+                initial={
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "phone": user.phone,
+                    "photo": user.photo,
+                    "email": user.email,
+                    "type": user.type,
+                }
+            )
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            # if request.headers.get("HX-Request"):
+            return render(request, "customer_dashboard/profile.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+    else:
+        form = UserForm(
+            initial={
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "phone": user.phone,
+                "photo": user.photo,
+                "email": user.email,
+                "type": user.type,
+            }
+        )
+        context["form"] = form
+    return render(request, "customer_dashboard/profile.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def order_group_swap(request, order_group_id, is_removal=False):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+
+    order_group = OrderGroup.objects.filter(id=order_group_id).first()
+    context["order_group"] = order_group
+    context["is_removal"] = is_removal
+    if is_removal:
+        context["submit_link"] = reverse(
+            "customer_order_group_removal",
+            kwargs={
+                "order_group_id": order_group_id,
+            },
+        )
+    else:
+        context["submit_link"] = reverse(
+            "customer_order_group_swap",
+            kwargs={
+                "order_group_id": order_group_id,
+            },
+        )
+
+    if request.method == "POST":
+        try:
+            form = OrderGroupSwapForm(request.POST, request.FILES)
+            context["form"] = form
+            if form.is_valid():
+                swap_date = form.cleaned_data.get("swap_date")
+                schedule_window = form.cleaned_data.get("schedule_window")
+                # is_removal = form.cleaned_data.get("is_removal")
+                # Create the Order object.
+                if is_removal:
+                    order_group.create_removal(swap_date, schedule_window)
+                else:
+                    order_group.create_swap(swap_date, schedule_window)
+                context["form_msg"] = "Successfully saved!"
+            else:
+                raise InvalidFormError(form, "Invalid UserInviteForm")
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+        except Exception as e:
+            context["form_error"] = (
+                f"Error saving, please contact us if this continues: [{e}]."
+            )
+    else:
+        context["form"] = OrderGroupSwapForm(
+            initial={
+                "order_group_id": order_group.id,
+                "order_group_start_date": order_group.start_date,
+            }
+        )
+
+    return render(request, "customer_dashboard/snippets/order_group_swap.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def my_order_groups(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    date = request.GET.get("date", None)
+    location_id = request.GET.get("location_id", None)
+    user_id = request.GET.get("user_id", None)
+    try:
+        is_active = int(request.GET.get("active", 1))
+    except ValueError:
+        is_active = 1
+    context["is_active"] = bool(is_active)
+    query_params = request.GET.copy()
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        if user_id:
+            order_groups = OrderGroup.objects.filter(user_id=user_id)
+        else:
+            order_groups = get_order_group_objects(
+                request, context["user"], context["user_group"]
+            )
+
+        if date:
+            order_groups = order_groups.filter(end_date=date)
+        if location_id:
+            # TODO: Ask if location is user_address_id or seller_product_seller_location__seller_location_id
+            order_groups = order_groups.filter(user_address_id=location_id)
+        # Select related fields to reduce db queries.
+        order_groups = order_groups.select_related(
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product",
+            # "user_address",
+        )
+        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.order_by("-end_date")
+
+        # Active orders are those that have an end_date in the future or are null (recurring orders).
+        today = datetime.date.today()
+        order_groups_lst = []
+        for order_group in order_groups:
+            if order_group.end_date and order_group.end_date < today:
+                if not is_active:
+                    order_groups_lst.append(order_group)
+            else:
+                if is_active:
+                    order_groups_lst.append(order_group)
+
+        paginator = Paginator(order_groups_lst, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = (
+            f"/customer/order_groups/?{query_params.urlencode()}"
+        )
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/customer/order_groups/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/customer/order_groups/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/customer/order_groups/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/order_groups/?{query_params.urlencode()}"
+
+        return render(
+            request, "customer_dashboard/snippets/order_groups_table.html", context
+        )
+    else:
+        if query_params.get("active") is None:
+            query_params["active"] = 1
+        context["active_orders_link"] = (
+            f"/customer/order_groups/?{query_params.urlencode()}"
+        )
+        return render(request, "customer_dashboard/order_groups.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def order_group_detail(request, order_group_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    # order.order_group.user_address.access_details
+    # order.order_group.placement_details
+    order_group = OrderGroup.objects.filter(id=order_group_id)
+    order_group = order_group.select_related(
+        "seller_product_seller_location__seller_product__seller",
+        "seller_product_seller_location__seller_product__product__main_product",
+        "user_address",
+    )
+    order_group = order_group.prefetch_related("orders")
+    order_group = order_group.first()
+    context["order_group"] = order_group
+    user_address = order_group.user_address
+    context["user_address"] = user_address
+    context["orders"] = order_group.orders.all().order_by("-end_date")
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "access_details_button" in request.POST:
+                context["placement_form"] = PlacementDetailsForm(
+                    initial={"placement_details": order_group.placement_details}
+                )
+                form = AccessDetailsForm(request.POST)
+                context["access_form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("access_details")
+                        != user_address.access_details
+                    ):
+                        user_address.access_details = form.cleaned_data.get(
+                            "access_details"
+                        )
+                        save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid AccessDetailsForm")
+            elif "placement_details_button" in request.POST:
+                context["access_form"] = AccessDetailsForm(
+                    initial={"access_details": user_address.access_details}
+                )
+                form = PlacementDetailsForm(request.POST)
+                context["placement_form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("placement_details")
+                        != order_group.placement_details
+                    ):
+                        order_group.placement_details = form.cleaned_data.get(
+                            "placement_details"
+                        )
+                        save_model = order_group
+                else:
+                    raise InvalidFormError(form, "Invalid PlacementDetailsForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return render(
+                request, "customer_dashboard/order_group_detail.html", context
+            )
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        context["access_form"] = AccessDetailsForm(
+            initial={"access_details": user_address.access_details}
+        )
+        context["placement_form"] = PlacementDetailsForm(
+            initial={"placement_details": order_group.placement_details}
+        )
+
+    return render(request, "customer_dashboard/order_group_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def order_detail(request, order_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    order = Order.objects.filter(id=order_id)
+    order = order.select_related(
+        "order_group__seller_product_seller_location__seller_product__seller",
+        "order_group__user_address",
+        "order_group__user",
+        "order_group__seller_product_seller_location__seller_product__product__main_product",
+    )
+    order = order.prefetch_related("payouts", "order_line_items")
+    context["order"] = order.first()
+
+    return render(request, "customer_dashboard/order_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def company_last_order(request):
+    context = {}
+    user_address_id = request.GET.get("user_address_id", None)
+    user_group_id = request.GET.get("user_group_id", None)
+    user_id = request.GET.get("user_id", None)
+    if user_address_id:
+        orders = Order.objects.filter(order_group__user_address_id=user_address_id)
+    elif user_group_id:
+        orders = Order.objects.filter(order_group__user__user_group_id=user_group_id)
+    elif user_id:
+        orders = Order.objects.filter(order_group__user_id=user_id)
+    else:
+        return HttpRequest(status=204)
+
+    orders = orders.order_by("-end_date").first()
+    context["last_order"] = orders
+    # Assume htmx request, so only return html snippet
+    return render(
+        request, "customer_dashboard/snippets/company_last_order_col.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def locations(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    search_q = request.GET.get("q", None)
+    # location_id = request.GET.get("location_id", None)
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
+        query_params = request.GET.copy()
+
+        if request.user.is_staff and tab == "new":
+            user_addresses = UserAddressUtils.get_new(search_q=search_q)
+            context["help_text"] = "New locations created in the last 30 days."
+        elif request.user.is_staff and tab == "active":
+            user_addresses = UserAddressUtils.get_active(search_q=search_q)
+            context["help_text"] = "Active locations with orders in the last 30 days."
+            pagination_limit = 100  # Create large limit due to long request time
+        elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
+            cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+            churn_date = datetime.date.today() - datetime.timedelta(days=60)
+            user_addresses = UserAddressUtils.get_churning(
+                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+            )
+            pagination_limit = 200  # Create large limit due to long request time.
+            if tab == "fully_churned":
+                context["help_text"] = (
+                    f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+            else:
+                context["help_text"] = (
+                    f"""Churning locations are those with a smaller revenue when compared to the previous
+                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+        else:
+            user_addresses = get_location_objects(
+                request, context["user"], context["user_group"], search_q=search_q
+            )
+
+        paginator = Paginator(user_addresses, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/locations/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/customer/locations/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/customer/locations/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/customer/locations/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/locations/?{query_params.urlencode()}"
+        return render(
+            request, "customer_dashboard/snippets/locations_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    if query_params.get("tab", None) is not None:
+        context["locations_table_link"] = request.get_full_path()
+    else:
+        # Else load pending tab as default
+        context["locations_table_link"] = (
+            f"{reverse('customer_companies')}?{query_params.urlencode()}"
+        )
+    return render(request, "customer_dashboard/locations.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def location_detail(request, location_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    user_address = UserAddress.objects.get(id=location_id)
+    context["user_address"] = user_address
+    if user_address.user_group_id:
+        context["users"] = User.objects.filter(user_group_id=user_address.user_group_id)
+        today = datetime.date.today()
+        order_groups = OrderGroup.objects.filter(user_address_id=user_address.id)
+        order_groups = order_groups.select_related(
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product",
+            # "user_address",
+        )
+        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.order_by("-end_date")
+        # Active orders are those that have an end_date in the future or are null (recurring orders).
+        context["active_orders"] = []
+        context["past_orders"] = []
+        for order_group in order_groups:
+            if order_group.end_date and order_group.end_date < today:
+                if len(context["past_orders"]) < 2:
+                    context["past_orders"].append(order_group)
+            else:
+                if len(context["active_orders"]) < 2:
+                    context["active_orders"].append(order_group)
+            # Only show the first 2 active and past order_groups.
+            if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
+                break
+        # TODO: Maybe store these orders for this user in local cache so that, if see all is tapped, it will be faster.
+        context["invoices"] = []
+        invoices = Invoice.objects.filter(
+            user_address_id=context["user_address"].id
+        ).order_by("-due_date")
+        if invoices.exists():
+            context["invoices"] = invoices[:5]
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "access_details_submit" in request.POST:
+                form = AccessDetailsForm(request.POST)
+                context["form"] = form
+                if form.is_valid():
+                    if (
+                        form.cleaned_data.get("access_details")
+                        != user_address.access_details
+                    ):
+                        user_address.access_details = form.cleaned_data.get(
+                            "access_details"
+                        )
+                        save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid AccessDetailsForm")
+            elif "user_address_submit" in request.POST:
+                form = UserAddressForm(request.POST)
+                context["user_address_form"] = form
+                if form.is_valid():
+                    if form.cleaned_data.get("name") != user_address.name:
+                        user_address.name = form.cleaned_data.get("name")
+                        save_model = user_address
+                    if form.cleaned_data.get("address_type") != str(
+                        user_address.user_address_type_id
+                    ):
+                        user_address.user_address_type_id = form.cleaned_data.get(
+                            "address_type"
+                        )
+                        save_model = user_address
+                    if form.cleaned_data.get("street") != user_address.street:
+                        user_address.street = form.cleaned_data.get("street")
+                        save_model = user_address
+                    if form.cleaned_data.get("city") != user_address.city:
+                        user_address.city = form.cleaned_data.get("city")
+                        save_model = user_address
+                    if form.cleaned_data.get("state") != user_address.state:
+                        user_address.state = form.cleaned_data.get("state")
+                        save_model = user_address
+                    if form.cleaned_data.get("postal_code") != user_address.postal_code:
+                        user_address.postal_code = form.cleaned_data.get("postal_code")
+                        save_model = user_address
+                    if form.cleaned_data.get("autopay") != user_address.autopay:
+                        user_address.autopay = form.cleaned_data.get("autopay")
+                        save_model = user_address
+                    if form.cleaned_data.get("is_archived") != user_address.is_archived:
+                        user_address.is_archived = form.cleaned_data.get("is_archived")
+                        save_model = user_address
+                    if (
+                        form.cleaned_data.get("access_details")
+                        != user_address.access_details
+                    ):
+                        user_address.access_details = form.cleaned_data.get(
+                            "access_details"
+                        )
+                        save_model = user_address
+                    if (
+                        form.cleaned_data.get("allow_saturday_delivery")
+                        != user_address.allow_saturday_delivery
+                    ):
+                        user_address.allow_saturday_delivery = form.cleaned_data.get(
+                            "allow_saturday_delivery"
+                        )
+                        save_model = user_address
+                    if (
+                        form.cleaned_data.get("allow_sunday_delivery")
+                        != user_address.allow_sunday_delivery
+                    ):
+                        user_address.allow_sunday_delivery = form.cleaned_data.get(
+                            "allow_sunday_delivery"
+                        )
+                        save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid UserAddressForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return render(request, "customer_dashboard/location_detail.html", context)
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        context["form"] = AccessDetailsForm(
+            initial={"access_details": user_address.access_details}
+        )
+        context["user_address_form"] = UserAddressForm(
+            initial={
+                "name": user_address.name,
+                "address_type": user_address.user_address_type_id,
+                "street": user_address.street,
+                "city": user_address.city,
+                "state": user_address.state,
+                "postal_code": user_address.postal_code,
+                "is_archived": user_address.is_archived,
+                "allow_saturday_delivery": user_address.allow_saturday_delivery,
+                "allow_sunday_delivery": user_address.allow_sunday_delivery,
+                "access_details": user_address.access_details,
+            }
+        )
+
+    # For any request type, get the current UserUserAddress objects.
+    user_user_addresses = UserUserAddress.objects.filter(
+        user_address_id=location_id
+    ).select_related("user")
+
+    user_user_location_normal = []
+    user_user_location_normal_ids = []
+    user_user_location_admin_users = []
+    for user_user_address in user_user_addresses:
+        if user_user_address.user.type == UserType.ADMIN:
+            user_user_location_admin_users.append(user_user_address.user.id)
+        else:
+            user_user_location_normal.append(user_user_address)
+            user_user_location_normal_ids.append(user_user_address.user.id)
+
+    context["user_user_addresses"] = user_user_location_normal
+
+    # Get the list of UserGroup Users that are not already associated with the SellerLocation.
+    if user_address.user_group:
+        context["non_associated_users"] = (
+            User.objects.filter(
+                user_group=user_address.user_group,
+            )
+            .exclude(
+                id__in=user_user_location_normal_ids,
+            )
+            .exclude(
+                type=UserType.ADMIN,
+            )
+        )
+
+        # Get ADMIN users for this UserGroup.
+        admin_users = User.objects.filter(
+            user_group_id=user_address.user_group.id,
+            type=UserType.ADMIN,
+        )
+        context["location_admins"] = []
+        for user in admin_users:
+            if user.id in user_user_location_admin_users:
+                context["location_admins"].append({"user": user, "notify": True})
+            else:
+                context["location_admins"].append({"user": user, "notify": False})
+
+    return render(request, "customer_dashboard/location_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def customer_location_user_add(request, user_address_id, user_id):
+
+    user_address = UserAddress.objects.get(id=user_address_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group != user_address.user_group:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserUserAddress.objects.create(
+            user=user,
+            user_address=user_address,
+        )
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "customer_dashboard/snippets/user_user_address_row.html",
+                {
+                    "location_admin": {"user": user, "notify": True},
+                    "user_address": user_address,
+                },
+            )
+        else:
+            return redirect(
+                reverse(
+                    "customer_location_detail",
+                    kwargs={
+                        "location_id": user_address_id,
+                    },
+                )
+            )
+
+
+@login_required(login_url="/admin/login/")
+def customer_location_user_remove(request, user_address_id, user_id):
+
+    user_address = UserAddress.objects.get(id=user_address_id)
+    user = User.objects.get(id=user_id)
+
+    # Throw error if user is not in the same seller group as the seller location.
+    if user.user_group != user_address.user_group:
+        return HttpResponse("Unauthorized", status=401)
+    else:
+        UserUserAddress.objects.filter(
+            user=user,
+            user_address=user_address,
+        ).delete()
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "customer_dashboard/snippets/user_user_address_row.html",
+                {
+                    "location_admin": {"user": user, "notify": False},
+                    "user_address": user_address,
+                },
+            )
+        else:
+            return redirect(
+                reverse(
+                    "customer_location_detail",
+                    kwargs={
+                        "location_id": user_address_id,
+                    },
+                )
+            )
+
+
+@login_required(login_url="/admin/login/")
+def new_location(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    # If staff user and not impersonating, then warn that no customer is selected.
+    if request.user.is_staff and not is_impersonating(request):
+        messages.warning(
+            request,
+            f"No customer selected! Location would be added to your account [{request.user.email}].",
+        )
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            if "user_address_submit" in request.POST:
+                form = UserAddressForm(request.POST)
+                context["user_address_form"] = form
+                if form.is_valid():
+                    name = form.cleaned_data.get("name")
+                    address_type = form.cleaned_data.get("address_type")
+                    street = form.cleaned_data.get("street")
+                    city = form.cleaned_data.get("city")
+                    state = form.cleaned_data.get("state")
+                    postal_code = form.cleaned_data.get("postal_code")
+                    autopay = form.cleaned_data.get("autopay")
+                    is_archived = form.cleaned_data.get("is_archived")
+                    access_details = form.cleaned_data.get("access_details")
+                    allow_saturday_delivery = form.cleaned_data.get(
+                        "allow_saturday_delivery"
+                    )
+                    allow_sunday_delivery = form.cleaned_data.get(
+                        "allow_sunday_delivery"
+                    )
+                    user_address = UserAddress(
+                        user_group_id=context["user"].user_group_id,
+                        user_id=context["user"].id,
+                        name=name,
+                        street=street,
+                        city=city,
+                        state=state,
+                        postal_code=postal_code,
+                        autopay=autopay,
+                        is_archived=is_archived,
+                        allow_saturday_delivery=allow_saturday_delivery,
+                        allow_sunday_delivery=allow_sunday_delivery,
+                    )
+                    if address_type:
+                        user_address.user_address_type_id = address_type
+                    if access_details:
+                        user_address.access_details = access_details
+                    save_model = user_address
+                else:
+                    raise InvalidFormError(form, "Invalid UserAddressForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return HttpResponseRedirect(reverse("customer_locations"))
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+            # messages.error(request, e.msg)
+    else:
+        context["user_address_form"] = UserAddressForm()
+
+    return render(request, "customer_dashboard/location_new_edit.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_associated_locations(request, user_id):
+    context = {}
+    context["associated_locations"] = UserAddress.objects.filter(
+        user_id=user_id
+    ).count()
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request,
+        "customer_dashboard/snippets/user_associated_locations_count.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def users(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    user_id = request.GET.get("user_id", None)
+    date = request.GET.get("date", None)
+    search_q = request.GET.get("q", None)
+    # location_id = request.GET.get("location_id", None)
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
+        query_params = request.GET.copy()
+
+        if request.user.is_staff and tab == "new":
+            users = UserUtils.get_new(search_q=search_q)
+            context["help_text"] = "New users created in the last 30 days."
+        elif request.user.is_staff and tab == "loggedin":
+            users = UserUtils.get_loggedin(search_q=search_q)
+            context["help_text"] = (
+                "Get all users who have logged in, in the last 30 days."
+            )
+        elif request.user.is_staff and tab == "active":
+            users = UserUtils.get_active(search_q=search_q)
+            context["help_text"] = "Active users with orders in the last 30 days."
+            pagination_limit = 100  # Create large limit due to long request time
+        elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
+            cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+            churn_date = datetime.date.today() - datetime.timedelta(days=60)
+            users = UserUtils.get_churning(
+                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+            )
+            pagination_limit = 200  # Create large limit due to long request time.
+            if tab == "fully_churned":
+                context["help_text"] = (
+                    f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+            else:
+                context["help_text"] = (
+                    f"""Churning users are those with a smaller revenue when compared to the previous
+                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+        else:
+            users = get_user_group_user_objects(
+                request, context["user"], context["user_group"], search_q=search_q
+            )
+            if date:
+                users = users.filter(date_joined__date=date)
+            users = users.order_by("-date_joined")
+
+        paginator = Paginator(users, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/users/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = f"/customer/users/?{query_params.urlencode()}"
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = f"/customer/users/?{query_params.urlencode()}"
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = f"/customer/users/?{query_params.urlencode()}"
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/users/?{query_params.urlencode()}"
+        return render(request, "customer_dashboard/snippets/users_table.html", context)
+
+    query_params = request.GET.copy()
+    if query_params.get("tab", None) is not None:
+        context["users_table_link"] = request.get_full_path()
+    else:
+        # Else load pending tab as default
+        context["users_table_link"] = (
+            f"{reverse('customer_users')}?{query_params.urlencode()}"
+        )
+
+    return render(request, "customer_dashboard/users.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_detail(request, user_id):
+    context = {}
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    user = User.objects.get(id=user_id)
+    context["user"] = user
+    context["user_group"] = get_user_group(request)
+    if user.user_group_id:
+        context["user_addresses"] = UserAddress.objects.filter(user_id=user.id)[0:3]
+        order_groups = OrderGroup.objects.filter(user_id=user.id)
+        # Select related fields to reduce db queries.
+        order_groups = order_groups.select_related(
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product",
+            # "user_address",
+        )
+        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.order_by("-end_date")
+
+        today = datetime.date.today()
+        context["active_orders"] = []
+        context["past_orders"] = []
+        for order_group in order_groups:
+            if order_group.end_date and order_group.end_date < today:
+                if len(context["past_orders"]) < 2:
+                    context["past_orders"].append(order_group)
+            else:
+                if len(context["active_orders"]) < 2:
+                    context["active_orders"].append(order_group)
+            # Only show the first 2 active and past order_groups.
+            if len(context["active_orders"]) >= 2 and len(context["past_orders"]) >= 2:
+                break
+
+    if request.method == "POST":
+        # NOTE: Since email is disabled, it is never POSTed,
+        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
+        POST_COPY = request.POST.copy()
+        POST_COPY["email"] = user.email
+        form = UserForm(POST_COPY, request.FILES)
+        context["form"] = form
+        if form.is_valid():
+            save_db = False
+            if form.cleaned_data.get("first_name") != user.first_name:
+                user.first_name = form.cleaned_data.get("first_name")
+                save_db = True
+            if form.cleaned_data.get("last_name") != user.last_name:
+                user.last_name = form.cleaned_data.get("last_name")
+                save_db = True
+            if form.cleaned_data.get("phone") != user.phone:
+                user.phone = form.cleaned_data.get("phone")
+                save_db = True
+            if form.cleaned_data.get("type") != user.type:
+                user.type = form.cleaned_data.get("type")
+                save_db = True
+            if request.FILES.get("photo"):
+                user.photo = request.FILES["photo"]
+                save_db = True
+            elif request.POST.get("photo-clear") == "on":
+                user.photo = None
+                save_db = True
+            if save_db:
+                context["user"] = user
+                user.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
+            form = UserForm(
+                initial={
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "phone": user.phone,
+                    "photo": user.photo,
+                    "email": user.email,
+                    "type": user.type,
+                }
+            )
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            # if request.headers.get("HX-Request"):
+            return render(request, "customer_dashboard/user_detail.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+    else:
+        form = UserForm(
+            initial={
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "phone": user.phone,
+                "photo": user.photo,
+                "email": user.email,
+                "type": user.type,
+            }
+        )
+        context["form"] = form
+
+    return render(request, "customer_dashboard/user_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def new_user(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+
+    # Only allow admin to create new users.
+    if context["user"].type != UserType.ADMIN:
+        messages.error(request, "Only admins can create new users.")
+        return HttpResponseRedirect(reverse("customer_users"))
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            POST_COPY = request.POST.copy()
+            # POST_COPY["email"] = user.email
+            form = UserInviteForm(POST_COPY, request.FILES, auth_user=context["user"])
+            context["form"] = form
+            # Default to the current user's UserGroup.
+            user_group_id = context["user"].user_group_id
+            if not context["user_group"] and request.user.is_staff:
+                usergroup_id = request.POST.get("usergroupId")
+                if usergroup_id:
+                    user_group = UserGroup.objects.get(id=usergroup_id)
+                    user_group_id = user_group.id
+            if form.is_valid():
+                first_name = form.cleaned_data.get("first_name")
+                last_name = form.cleaned_data.get("last_name")
+                email = form.cleaned_data.get("email")
+                user_type = form.cleaned_data.get("type")
+                # Check if email is already in use.
+                if email and User.objects.filter(email=email.casefold()).exists():
+                    raise UserAlreadyExistsError()
+                else:
+                    if user_group_id:
+                        user_invite = UserGroupAdminApprovalUserInvite(
+                            user_group_id=user_group_id,
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            type=user_type,
+                        )
+                        save_model = user_invite
+                    elif request.user.is_staff:
+                        # directly create the user
+                        user = User(
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            type=user_type,
+                        )
+                        save_model = user
+                        messages.success(request, "Directly created user.")
+                    else:
+                        raise ValueError(
+                            f"User:[{context['user'].id}]-UserGroup:[{user_group_id}]-invite attempt:[{email}]"
+                        )
+            else:
+                raise InvalidFormError(form, "Invalid UserInviteForm")
+            if save_model:
+                save_model.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            return HttpResponseRedirect(reverse("customer_users"))
+        except UserAlreadyExistsError:
+            messages.error(request, "User with that email already exists.")
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+        except IntegrityError as e:
+            if "unique constraint" in str(e):
+                messages.error(request, "User with that email already exists.")
+            else:
+                messages.error(
+                    request, "Error saving, please contact us if this continues."
+                )
+                messages.error(request, f"Database IntegrityError:[{e}]")
+        except Exception as e:
+            messages.error(
+                request, "Error saving, please contact us if this continues."
+            )
+            messages.error(request, e)
+    else:
+        context["form"] = UserInviteForm(auth_user=context["user"])
+
+    return render(request, "customer_dashboard/user_new_edit.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def invoices(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    date = request.GET.get("date", None)
+    location_id = request.GET.get("location_id", None)
+    # This is an HTMX request, so respond with html snippet
+    # if request.headers.get("HX-Request"):
+    query_params = request.GET.copy()
+    invoices = get_invoice_objects(request, context["user"], context["user_group"])
+    if location_id:
+        invoices = invoices.filter(user_address_id=location_id)
+    if date:
+        invoices = invoices.filter(due_date__date=date)
+    invoices = invoices.order_by("-due_date")
+    today = datetime.date.today()
+    context["total_paid"] = 0
+    context["past_due"] = 0
+    context["total_open"] = 0
+    for invoice in invoices:
+        context["total_paid"] += invoice.amount_paid
+        context["total_open"] += invoice.amount_remaining
+        if invoice.due_date and invoice.due_date.date() > today:
+            context["past_due"] += invoice.amount_remaining
+
+    paginator = Paginator(invoices, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    if page_number is None:
+        page_number = 1
+    else:
+        page_number = int(page_number)
+
+    query_params["p"] = 1
+    context["page_start_link"] = f"/customer/invoices/?{query_params.urlencode()}"
+    query_params["p"] = page_number
+    context["page_current_link"] = f"/customer/invoices/?{query_params.urlencode()}"
+    if page_obj.has_previous():
+        query_params["p"] = page_obj.previous_page_number()
+        context["page_prev_link"] = f"/customer/invoices/?{query_params.urlencode()}"
+    if page_obj.has_next():
+        query_params["p"] = page_obj.next_page_number()
+        context["page_next_link"] = f"/customer/invoices/?{query_params.urlencode()}"
+    query_params["p"] = paginator.num_pages
+    context["page_end_link"] = f"/customer/invoices/?{query_params.urlencode()}"
+    return render(request, "customer_dashboard/invoices.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def companies(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = get_user_group(request)
+    context["help_text"] = (
+        "Companies [ list of comanies where UserGroup.Seller == NULL ]"
+    )
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+    pagination_limit = 25
+    page_number = 1
+    if request.GET.get("p", None) is not None:
+        page_number = request.GET.get("p")
+    search_q = request.GET.get("q", None)
+    # location_id = request.GET.get("location_id", None)
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
+        query_params = request.GET.copy()
+
+        if tab == "new":
+            user_groups = UserGroupUtils.get_new(search_q=search_q)
+            context["help_text"] = "New Companies created in the last 30 days."
+        elif tab == "active":
+            user_groups = UserGroupUtils.get_active(search_q=search_q)
+            context["help_text"] = "Active Companies with orders in the last 30 days."
+            pagination_limit = 100
+        elif tab == "churned" or tab == "fully_churned":
+            cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
+            churn_date = datetime.date.today() - datetime.timedelta(days=60)
+            user_groups = UserGroupUtils.get_churning(
+                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+            )
+            pagination_limit = len(user_groups)
+            if tab == "fully_churned":
+                context["help_text"] = (
+                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
+                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+            else:
+                context["help_text"] = (
+                    f"""Churning Companies are those with a smaller revenue when compared to the previous
+                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
+                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                )
+        else:
+            user_groups = UserGroup.objects.filter(seller__isnull=True)
+            if search_q:
+                user_groups = user_groups.filter(name__icontains=search_q)
+            user_groups = user_groups.order_by("name")
+
+        paginator = Paginator(user_groups, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/companies/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/customer/companies/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/customer/companies/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/customer/companies/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/companies/?{query_params.urlencode()}"
+        return render(
+            request, "customer_dashboard/snippets/companies_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    if query_params.get("tab", None) is not None:
+        context["companies_table_link"] = request.get_full_path()
+    else:
+        # Else load pending tab as default
+        context["companies_table_link"] = (
+            f"{reverse('customer_companies')}?{query_params.urlencode()}"
+        )
+    return render(request, "customer_dashboard/companies.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def company_detail(request, user_group_id=None):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    if not user_group_id:
+        if request.user.type != UserType.ADMIN:
+            return HttpResponseRedirect(reverse("customer_home"))
+        user_group = get_user_group(request)
+        if not user_group:
+            if hasattr(request.user, "user_group") and request.user.user_group:
+                user_group = request.user.user_group
+                messages.warning(
+                    request,
+                    f"No customer selected! Using current staff user group [{request.user.user_group}].",
+                )
+            else:
+                # Get first available UserGroup.
+                user_group = UserGroup.objects.all().first()
+                messages.warning(
+                    request,
+                    f"No customer selected! Using first user group found: [{user_group.name}].",
+                )
+    else:
+        if not request.user.is_staff:
+            return HttpResponseRedirect(reverse("customer_home"))
+        user_group = UserGroup.objects.filter(id=user_group_id)
+        user_group = user_group.prefetch_related("users", "user_addresses")
+        user_group = user_group.first()
+    context["user_group"] = user_group
+    if request.method == "POST":
+        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
+        context["form"] = form
+        if form.is_valid():
+            save_db = False
+            if form.cleaned_data.get("name") != user_group.name:
+                user_group.name = form.cleaned_data.get("name")
+                save_db = True
+            if form.cleaned_data.get("pay_later") != user_group.pay_later:
+                user_group.pay_later = form.cleaned_data.get("pay_later")
+                save_db = True
+            if form.cleaned_data.get("autopay") != user_group.autopay:
+                user_group.autopay = form.cleaned_data.get("autopay")
+                save_db = True
+            if form.cleaned_data.get("net_terms") != user_group.net_terms:
+                user_group.net_terms = form.cleaned_data.get("net_terms")
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_frequency")
+                != user_group.invoice_frequency
+            ):
+                user_group.invoice_frequency = form.cleaned_data.get(
+                    "invoice_frequency"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_day_of_month")
+                != user_group.invoice_day_of_month
+            ):
+                user_group.invoice_day_of_month = form.cleaned_data.get(
+                    "invoice_day_of_month"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("invoice_at_project_completion")
+                != user_group.invoice_at_project_completion
+            ):
+                user_group.invoice_at_project_completion = form.cleaned_data.get(
+                    "invoice_at_project_completion"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("credit_line_limit")
+                != user_group.credit_line_limit
+            ):
+                user_group.credit_line_limit = form.cleaned_data.get(
+                    "credit_line_limit"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("compliance_status")
+                != user_group.compliance_status
+            ):
+                user_group.compliance_status = form.cleaned_data.get(
+                    "compliance_status"
+                )
+                save_db = True
+            if (
+                form.cleaned_data.get("tax_exempt_status")
+                != user_group.tax_exempt_status
+            ):
+                user_group.tax_exempt_status = form.cleaned_data.get(
+                    "tax_exempt_status"
+                )
+                save_db = True
+
+            if save_db:
+                context["user_group"] = user_group
+                user_group.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.info(request, "No changes detected.")
+            # Reload the form with the updated data since disabled fields do not POST.
+            form = UserGroupForm(
+                initial={
+                    "name": user_group.name,
+                    "pay_later": user_group.pay_later,
+                    "autopay": user_group.autopay,
+                    "net_terms": user_group.net_terms,
+                    "invoice_frequency": user_group.invoice_frequency,
+                    "invoice_day_of_month": user_group.invoice_day_of_month,
+                    "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                    "share_code": user_group.share_code,
+                    "credit_line_limit": user_group.credit_line_limit,
+                    "compliance_status": user_group.compliance_status,
+                    "tax_exempt_status": user_group.tax_exempt_status,
+                },
+                user=context["user"],
+            )
+            context["form"] = form
+            # return HttpResponse("", status=200)
+            # This is an HTMX request, so respond with html snippet
+            # if request.headers.get("HX-Request"):
+            return render(request, "customer_dashboard/company_detail.html", context)
+        else:
+            # This will let bootstrap know to highlight the fields with errors.
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            # messages.error(request, "Error saving, please contact us if this continues.")
+    else:
+        context["form"] = UserGroupForm(
+            initial={
+                "name": user_group.name,
+                "pay_later": user_group.pay_later,
+                "autopay": user_group.autopay,
+                "net_terms": user_group.net_terms,
+                "invoice_frequency": user_group.invoice_frequency,
+                "invoice_day_of_month": user_group.invoice_day_of_month,
+                "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                "share_code": user_group.share_code,
+                "credit_line_limit": user_group.credit_line_limit,
+                "compliance_status": user_group.compliance_status,
+                "tax_exempt_status": user_group.tax_exempt_status,
+            },
+            user=context["user"],
+        )
+        context["types"] = context["user"].get_allowed_user_types()
+    return render(request, "customer_dashboard/company_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_email_check(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["help_msg"] = ""
+    context["css_class"] = "form-valid"
+    if request.method == "POST":
+        context["email"] = request.POST.get("email")
+        context["phone"] = request.POST.get("phone")
+        context["first_name"] = request.POST.get("first_name")
+        context["last_name"] = request.POST.get("last_name")
+        context["last_name"] = request.POST.get("last_name")
+        context["type"] = request.POST.get("type")
+        if context["type"]:
+            context["types"] = context["user"].get_allowed_user_types()
+    else:
+        return HttpResponse("Invalid request method.", status=400)
+    if context["email"]:
+        try:
+            validate_email(context["email"])
+            if User.objects.filter(email=context["email"].casefold()).exists():
+                user = User.objects.get(email=context["email"].casefold())
+                if user.user_group:
+                    context["error"] = (
+                        f"User [{context['email']}] already exists in UserGroup [{user.user_group.name}]."
+                    )
+                    context["css_class"] = "form-error"
+                else:
+                    context["help_msg"] = "Found existing user with that email."
+                    context["email"] = user.email
+                    context["phone"] = user.phone
+                    context["first_name"] = user.first_name
+                    context["last_name"] = user.last_name
+                    context["type"] = user.type
+        except ValidationError as e:
+            context["error"] = f"{e}"
+            context["css_class"] = "form-error"
+
+    # Assume htmx request
+    # if request.headers.get("HX-Request"):
+    return render(
+        request,
+        "customer_dashboard/snippets/email_check.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+def new_company(request):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+    context["user_group"] = None
+    context["help_msg"] = "Enter new or existing user email."
+    if request.method == "POST":
+        try:
+            form = UserGroupForm(request.POST, request.FILES, user=request.user)
+            POST_COPY = request.POST.copy()
+            if request.POST.get("type"):
+                context["type"] = request.POST.get("type")
+            else:
+                POST_COPY["type"] = UserType.ADMIN
+            context["user_form"] = UserForm(POST_COPY, request.FILES)
+            context["user_form"].fields["email"].disabled = False
+            context["email"] = request.POST.get("email")
+            context["phone"] = request.POST.get("phone")
+            context["first_name"] = request.POST.get("first_name")
+            context["last_name"] = request.POST.get("last_name")
+            context["form"] = form
+            if form.is_valid():
+                # Create New UserGroup
+                user_group = UserGroup(
+                    name=form.cleaned_data.get("name"),
+                    pay_later=form.cleaned_data.get("pay_later"),
+                    autopay=form.cleaned_data.get("autopay"),
+                    net_terms=form.cleaned_data.get("net_terms"),
+                    invoice_frequency=form.cleaned_data.get("invoice_frequency"),
+                    invoice_day_of_month=form.cleaned_data.get("invoice_day_of_month"),
+                    invoice_at_project_completion=form.cleaned_data.get(
+                        "invoice_at_project_completion"
+                    ),
+                    credit_line_limit=form.cleaned_data.get("credit_line_limit"),
+                    compliance_status=form.cleaned_data.get("compliance_status"),
+                    tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
+                )
+                context["user_group"] = user_group
+                user_group.save()
+                if context["user_form"].is_valid():
+                    # Create New User
+                    email = context["user_form"].cleaned_data.get("email")
+                    if User.objects.filter(email=email.casefold()).exists():
+                        user = User.objects.get(email=email.casefold())
+                        if user.user_group:
+                            messages.error(
+                                request,
+                                f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
+                            )
+                        else:
+                            user.user_group = user_group
+                            user.save()
+                            messages.success(request, "Successfully saved!")
+                            return HttpResponseRedirect(reverse("customer_companies"))
+                    else:
+                        user = User(
+                            first_name=context["user_form"].cleaned_data.get(
+                                "first_name"
+                            ),
+                            last_name=context["user_form"].cleaned_data.get(
+                                "last_name"
+                            ),
+                            email=context["user_form"].cleaned_data.get("email"),
+                            type=context["user_form"].cleaned_data.get("type"),
+                            user_group=user_group,
+                        )
+                        user.save()
+                        messages.success(request, "Successfully saved!")
+                        return HttpResponseRedirect(reverse("customer_companies"))
+            else:
+                # This will let bootstrap know to highlight the fields with errors.
+                for field in form.errors:
+                    form[field].field.widget.attrs["class"] += " is-invalid"
+                messages.error(
+                    request, "Error saving, please contact us if this continues."
+                )
+        except Exception as e:
+            messages.error(
+                request, f"Error saving, please contact us if this continues. [{e}]"
+            )
+            logger.error(f"new_company: [{e}]", exc_info=e)
+    else:
+        context["form"] = UserGroupForm(user=request.user)
+
+    return render(request, "customer_dashboard/company_new.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def company_new_user(request, user_group_id):
+    context = {}
+    context["user"] = get_user(request)
+    context["is_impersonating"] = is_impersonating(request)
+    context["user_group"] = UserGroup.objects.get(id=user_group_id)
+
+    # Only allow admin to create new users.
+    if context["user"].type != UserType.ADMIN:
+        messages.error(request, "Only admins can create new users.")
+        return HttpResponseRedirect(request.get_full_path())
+
+    if request.method == "POST":
+        try:
+            save_model = None
+            POST_COPY = request.POST.copy()
+            # POST_COPY["email"] = user.email
+            form = UserInviteForm(POST_COPY, request.FILES, auth_user=context["user"])
+            context["form"] = form
+            if form.is_valid():
+                context["first_name"] = form.cleaned_data.get("first_name")
+                context["last_name"] = form.cleaned_data.get("last_name")
+                context["email"] = form.cleaned_data.get("email")
+                context["type"] = form.cleaned_data.get("type")
+                context["types"] = context["user"].get_allowed_user_types()
+                # Check if email is already in use.
+                if (
+                    context["email"]
+                    and User.objects.filter(email=context["email"].casefold()).exists()
+                ):
+                    user = User.objects.get(email=context["email"].casefold())
+                    if user.user_group:
+                        raise UserAlreadyExistsError()
+                    else:
+                        user.user_group = context["user_group"]
+                        save_model = user
+                else:
+                    user_invite = UserGroupAdminApprovalUserInvite(
+                        user_group_id=context["user_group"].id,
+                        first_name=context["first_name"],
+                        last_name=context["last_name"],
+                        email=context["email"],
+                        type=context["type"],
+                    )
+                    save_model = user_invite
+            else:
+                raise InvalidFormError(form, "Invalid UserInviteForm")
+            if save_model:
+                save_model.save()
+                context["form_msg"] = "Successfully saved!"
+                context["first_name"] = context["last_name"] = context["email"] = (
+                    context["type"]
+                ) = ""
+        except UserAlreadyExistsError:
+            context["form_error"] = "User with that email already exists."
+        except InvalidFormError as e:
+            # This will let bootstrap know to highlight the fields with errors.
+            context["form_error"] = ""
+            for field in e.form.errors:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                context["form_error"] += f"{field}: {e.form[field].errors}"
+        except Exception as e:
+            context["form_error"] = (
+                f"Error saving, please contact us if this continues: [{e}]."
+            )
+            messages.error(request, e)
+    else:
+        context["types"] = context["user"].get_allowed_user_types()
+
+    return render(request, "customer_dashboard/snippets/company_new_user.html", context)

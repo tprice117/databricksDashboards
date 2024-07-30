@@ -1,0 +1,170 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Payouts
+{% endblock %}
+{% block javascript %}
+    <script>
+        const dateFilter = document.getElementById("payouts-date-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has service_date
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceDate = urlParams.get("service_date");
+            if (serviceDate) {
+                // update date filter value
+                dateFilter.value = serviceDate;
+            }
+        });
+        function selectDate(el) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Check if date filter has a value
+            if (el.value) {
+                // update current queryParams for date filter url
+                let urlencodeDate = encodeURIComponent(el.value);
+                queryParams.set("service_date", urlencodeDate);
+            } else {
+                // remove service_date from queryParams
+                queryParams.delete("service_date");
+            }
+            // update date filter url with current queryParams
+            const dateFilterUrl = "{% url 'supplier_payouts' %}?" + queryParams.toString();
+            // TODO: Maybe don't reload the card metrics when date filter is changed
+            htmx.find("#payouts-date-filter").setAttribute("hx-get", dateFilterUrl);
+            // force htmx to process the new hx-get attributes
+            htmx.process("#payouts-date-filter");
+            // trigger onDateFilter event
+            htmx.trigger(el, "onDateFilter");
+            // redirect to date filter url
+            // window.location.href = dateFilterUrl;
+        }
+        // Add change event listener to date filter
+        dateFilter.addEventListener("change", function () {
+            selectDate(this);
+        });
+        // Every 2 seconds, check if the date filter is disabled, if it is disabled and no other .status-card, button, .form-control, .pagi-link is disabled, enable the date filter.
+        // Filter out the date filter from the list of elements to check if disabled. htmx is not doing this always here, I don't know why.
+        setInterval(() => {
+            const disabledElt = document.querySelectorAll(".status-card, button, .form-control, .pagi-link");
+            const dateFilterElt = document.getElementById("payouts-date-filter");
+            let isDisabled = Array.from(disabledElt).some((elt) => {
+                if (elt.id != dateFilterElt.id) {
+                    return elt.disabled;
+                }
+            });
+            if (dateFilterElt.disabled) {
+                if (!isDisabled) {
+                    // console.log("Enabling date filter");
+                    dateFilterElt.disabled = false;
+                }
+            }
+        }, 500);
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">Payouts</h3>
+            <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{{ download_link }}"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
+        </div>
+        <div hx-get="{{ payouts_cards_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-status">
+            {% include 'supplier_dashboard/snippets/payouts_metric_cards.html' %}
+        </div>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col">
+                        <p class="text-primary m-0 fw-bold">All Payouts</p>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="payouts-date-filter">Filter by date</label>
+                            <input id="payouts-date-filter" class="form-control" type="date" hx-target="#payout-results" hx-swap="outerHTML" hx-trigger="onDateFilter" hx-indicator="#htmx-indicator-loading-status" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                    <table class="table table-hover my-0" id="dataTable">
+                        <thead>
+                            <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Seller</th>
+                                {% endif %}
+                                <th>Invoice ID</th>
+                                <th>Processed Date</th>
+                                <th>Amount</th>
+                                {% if request.user.is_staff %}
+                                    <th>Payment Method</th>
+                                {% endif %}
+                                {% comment %} <th>Delivery Date</th>
+                                <th>Status</th> {% endcomment %}
+                            </tr>
+                        </thead>
+                        <tbody id="payout-results" hx-get="{{ payouts_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></tbody>
+                        <tfoot>
+                            <tr>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Seller</strong>
+                                    </td>
+                                {% endif %}
+                                <td>
+                                    <strong>Processed Date</strong>
+                                </td>
+                                <td>
+                                    <strong>Amount</strong>
+                                </td>
+                                <td>
+                                    <strong>Invoice ID</strong>
+                                </td>
+                                {% if request.user.is_staff %}
+                                    <td>
+                                        <strong>Payment Method</strong>
+                                    </td>
+                                {% endif %}
+                                {% comment %} <td>
+                                    <strong>Delivery Date</strong>
+                                </td>
+                                <td>
+                                    <strong>Status</strong>
+                                </td> {% endcomment %}
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="row invisible" id="payouts-pagination">
+                    <div class="col-md-6 align-self-center">
+                        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
+                                </li>
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">1</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">2</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">3</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
