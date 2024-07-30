@@ -311,8 +311,10 @@ class OrderGroupForm(forms.Form):
         label="Material",
         help_text="Hold CTRL to select multiple.",
         choices=[],
-        widget=forms.Select(attrs={"class": "form-select", "multiple": "true"}),
-        required=False,
+        widget=forms.Select(
+            attrs={"class": "form-select", "multiple": "true", "required": "true"}
+        ),
+        required=True,
     )
     delivery_date = forms.DateField(
         validators=[validate_start_date],
@@ -405,7 +407,7 @@ class OrderGroupForm(forms.Form):
                 params={"delivery_date": delivery_date},
             )
         # Do not allow removal date to be on a Sunday.
-        if removal_date.weekday() == 6:  # 6 corresponds to Sunday
+        if removal_date and removal_date.weekday() == 6:  # 6 corresponds to Sunday
             raise ValidationError("Date cannot be on a Sunday.")
         # Always return a value to use as the new cleaned data, even if this method didn't change it.
         return removal_date
