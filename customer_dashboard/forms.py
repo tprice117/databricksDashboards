@@ -407,7 +407,7 @@ class OrderGroupForm(forms.Form):
                 params={"delivery_date": delivery_date},
             )
         # Do not allow removal date to be on a Sunday.
-        if removal_date.weekday() == 6:  # 6 corresponds to Sunday
+        if removal_date and removal_date.weekday() == 6:  # 6 corresponds to Sunday
             raise ValidationError("Date cannot be on a Sunday.")
         # Always return a value to use as the new cleaned data, even if this method didn't change it.
         return removal_date
