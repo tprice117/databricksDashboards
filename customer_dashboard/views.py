@@ -6,6 +6,7 @@ import uuid
 from typing import List, Union
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -555,12 +556,20 @@ def customer_impersonation_stop(request):
     return HttpResponseRedirect("/customer/")
 
 
-@login_required(login_url="/admin/login/")
-def index(request):
+def get_user_context(request: HttpRequest, add_user_group=True):
+    """Returns the common context data for the views."""
     context = {}
+    context["BASIS_THEORY_API_KEY"] = settings.BASIS_THEORY_USE_PCI_API_KEY
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    if add_user_group:
+        context["user_group"] = get_user_group(request)
+    return context
+
+
+@login_required(login_url="/admin/login/")
+def index(request):
+    context = get_user_context(request)
     if request.headers.get("HX-Request"):
         orders = get_booking_objects(request, context["user"], context["user_group"])
         orders = orders.select_related(
@@ -662,10 +671,7 @@ def index(request):
 
 @login_required(login_url="/admin/login/")
 def new_order(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     main_product_categories = MainProductCategory.objects.all().order_by("sort")
     context["main_product_categories"] = main_product_categories
 
@@ -716,10 +722,7 @@ def user_address_search(request):
 
 @login_required(login_url="/admin/login/")
 def new_order_2(request, category_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     main_product_category = MainProductCategory.objects.filter(id=category_id)
     main_product_category = main_product_category.prefetch_related("main_products")
     main_product_category = main_product_category.first()
@@ -739,10 +742,7 @@ def new_order_2(request, category_id):
 
 @login_required(login_url="/admin/login/")
 def new_order_3(request, product_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     context["product_id"] = product_id
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
@@ -769,7 +769,9 @@ def new_order_3(request, product_id):
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         if user_address_id:
-            context["selected_user_address"] = UserAddress.objects.get(id=user_address_id)
+            context["selected_user_address"] = UserAddress.objects.get(
+                id=user_address_id
+            )
         query_params = {
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
@@ -830,10 +832,7 @@ def new_order_3(request, product_id):
 def new_order_4(request):
     # import time
     # start_time = time.time()
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     context["product_id"] = request.GET.get("product_id")
     context["user_address"] = request.GET.get("user_address")
     context["product_waste_types"] = request.GET.getlist("product_waste_types")
@@ -936,10 +935,7 @@ def new_order_4(request):
 
 @login_required(login_url="/admin/login/")
 def new_order_5(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     context["cart"] = {}
     if request.method == "POST":
         # Create the order group and orders.
@@ -1089,10 +1085,7 @@ def new_order_5(request):
 
 @login_required(login_url="/admin/login/")
 def new_order_6(request, order_group_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     count, deleted_objs = OrderGroup.objects.filter(id=order_group_id).delete()
     if count:
         messages.success(request, "Order removed from cart.")
@@ -1103,10 +1096,7 @@ def new_order_6(request, order_group_id):
 
 @login_required(login_url="/admin/login/")
 def checkout(request, user_address_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
 
     if request.method == "POST":
@@ -1174,11 +1164,8 @@ def checkout(request, user_address_id):
 
 @login_required(login_url="/admin/login/")
 def profile(request):
-    context = {}
-    user = get_user(request)
-    context["user"] = user
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
+    user = context["user"]
 
     if request.method == "POST":
         # NOTE: Since email is disabled, it is never POSTed,
@@ -1251,10 +1238,7 @@ def profile(request):
 
 @login_required(login_url="/admin/login/")
 def order_group_swap(request, order_group_id, is_removal=False):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
 
     order_group = OrderGroup.objects.filter(id=order_group_id).first()
     context["order_group"] = order_group
@@ -1311,10 +1295,7 @@ def order_group_swap(request, order_group_id, is_removal=False):
 
 @login_required(login_url="/admin/login/")
 def my_order_groups(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -1406,10 +1387,7 @@ def my_order_groups(request):
 
 @login_required(login_url="/admin/login/")
 def order_group_detail(request, order_group_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     # order.order_group.user_address.access_details
@@ -1491,10 +1469,7 @@ def order_group_detail(request, order_group_id):
 
 @login_required(login_url="/admin/login/")
 def order_detail(request, order_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     order = Order.objects.filter(id=order_id)
     order = order.select_related(
         "order_group__seller_product_seller_location__seller_product__seller",
@@ -1533,10 +1508,7 @@ def company_last_order(request):
 
 @login_required(login_url="/admin/login/")
 def locations(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -1624,10 +1596,7 @@ def locations(request):
 
 @login_required(login_url="/admin/login/")
 def location_detail(request, location_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     # This is an HTMX request, so respond with html snippet
     # if request.headers.get("HX-Request"):
     user_address = UserAddress.objects.get(id=location_id)
@@ -1886,10 +1855,7 @@ def customer_location_user_remove(request, user_address_id, user_id):
 
 @login_required(login_url="/admin/login/")
 def new_location(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     # If staff user and not impersonating, then warn that no customer is selected.
     if request.user.is_staff and not is_impersonating(request):
         messages.warning(
@@ -1974,10 +1940,7 @@ def user_associated_locations(request, user_id):
 
 @login_required(login_url="/admin/login/")
 def users(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -2172,10 +2135,7 @@ def user_detail(request, user_id):
 
 @login_required(login_url="/admin/login/")
 def new_user(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
 
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
@@ -2263,10 +2223,7 @@ def new_user(request):
 
 @login_required(login_url="/admin/login/")
 def invoices(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
@@ -2318,10 +2275,7 @@ def invoices(request):
 
 @login_required(login_url="/admin/login/")
 def companies(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
-    context["user_group"] = get_user_group(request)
+    context = get_user_context(request)
     context["help_text"] = (
         "Companies [ list of comanies where UserGroup.Seller == NULL ]"
     )
@@ -2415,9 +2369,7 @@ def companies(request):
 
 @login_required(login_url="/admin/login/")
 def company_detail(request, user_group_id=None):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
+    context = get_user_context(request, add_user_group=False)
     if not user_group_id:
         if request.user.type != UserType.ADMIN:
             return HttpResponseRedirect(reverse("customer_home"))
@@ -2612,9 +2564,7 @@ def user_email_check(request):
 
 @login_required(login_url="/admin/login/")
 def new_company(request):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
+    context = get_user_context(request, add_user_group=False)
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
     context["user_group"] = None
@@ -2702,9 +2652,7 @@ def new_company(request):
 
 @login_required(login_url="/admin/login/")
 def company_new_user(request, user_group_id):
-    context = {}
-    context["user"] = get_user(request)
-    context["is_impersonating"] = is_impersonating(request)
+    context = get_user_context(request, add_user_group=False)
     context["user_group"] = UserGroup.objects.get(id=user_group_id)
 
     # Only allow admin to create new users.
