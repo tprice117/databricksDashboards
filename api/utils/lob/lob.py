@@ -80,7 +80,8 @@ def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> st
         seller_invoice_payable = seller_invoice_payable_line_item.seller_invoice_payable
         if seller_invoice_payable:
             invoice_id = seller_invoice_payable.supplier_invoice_id
-            account_number = seller_invoice_payable.account_number
+            if seller_invoice_payable.account_number:
+                account_number = seller_invoice_payable.account_number
     return invoice_id, account_number
 
 
