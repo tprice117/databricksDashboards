@@ -175,7 +175,7 @@ class SellerLocationViewSet(viewsets.ModelViewSet):
 
 
 class UserAddressTypeViewSet(viewsets.ModelViewSet):
-    queryset = UserAddressType.objects.all()
+    queryset = UserAddressType.objects.all().order_by("sort")
     serializer_class = UserAddressTypeSerializer
     filterset_fields = ["id"]
 

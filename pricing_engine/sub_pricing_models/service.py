@@ -4,6 +4,8 @@ from typing import Optional, Tuple, Union
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from common.utils.distance.distance import DistanceUtils
 from pricing_engine.models import PricingLineItem, PricingLineItemGroup
+from api.models.user.user_address import UserAddress
+from common.utils.distance.distance import DistanceUtils
 
 
 class ServicePrice:

@@ -14,6 +14,7 @@ from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
 from api.models.order.order import Order
 from common.models import BaseModel
+from common.utils.get_file_path import get_file_path
 from communications.intercom.intercom import Intercom
 from communications.intercom.typings import CustomAttributesType
 
@@ -84,6 +85,10 @@ class UserGroup(BaseModel):
         choices=TaxExemptStatus.choices,
         default=TaxExemptStatus.NONE,
     )
+    owned_and_rented_equiptment_coi = models.FileField(
+        upload_to=get_file_path, blank=True, null=True
+    )
+    credit_report = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
     intercom_id = models.CharField(
         max_length=255,

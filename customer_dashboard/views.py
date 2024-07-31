@@ -68,6 +68,8 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
+    OrderGroupForm,
+    OrderGroupSwapForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -768,9 +770,7 @@ def new_order_3(request, product_id):
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         if user_address_id:
-            context["selected_user_address"] = UserAddress.objects.get(
-                id=user_address_id
-            )
+            context["selected_user_address"] = UserAddress.objects.get(id=user_address_id)
         query_params = {
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
