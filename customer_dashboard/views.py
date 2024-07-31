@@ -1,12 +1,12 @@
 import ast
 import datetime
-import json
 import logging
 import uuid
 from typing import List, Union
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -1095,17 +1095,25 @@ def new_order_6(request, order_group_id):
 
 
 @login_required(login_url="/admin/login/")
+def add_payment_method(request):
+    context = get_user_context(request)
+    http_status = 204
+    if request.method == "POST":
+        token = request.POST.get("token")
+        if token:
+            payment_method = PaymentMethod(
+                user=context["user"], user_group=context["user_group"], token=token
+            )
+            payment_method.save()
+            messages.success(request, "Payment method added.")
+            http_status = 201
+    return HttpResponse(status=http_status)
+
+
+@login_required(login_url="/admin/login/")
 def checkout(request, user_address_id):
     context = get_user_context(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
-
-    if request.method == "POST":
-        # Save access details to the user address.
-        if request.POST.get("access_details") != context["user_address"].access_details:
-            context["user_address"].access_details = request.POST.get("access_details")
-            context["user_address"].save()
-            messages.success(request, "Access details saved.")
-
     # Get all orders in the cart for this user_address_id.
     orders = Order.objects.filter(
         order_group__user_address_id=user_address_id,
@@ -1113,6 +1121,26 @@ def checkout(request, user_address_id):
     )
     orders = orders.prefetch_related("order_line_items")
     orders = orders.order_by("-order_group__start_date")
+
+    if request.method == "POST":
+        # Save access details to the user address.
+        payment_method_id = request.POST.get("payment_method")
+        if payment_method_id:
+            for order in orders:
+                order.submitted_on = timezone.now()
+                order.save()
+            context["user_address"].default_payment_method_id = payment_method_id
+            context["user_address"].save()
+            messages.success(request, "Successfully checked out!")
+            return HttpResponseRedirect(reverse("customer_cart"))
+        else:
+            messages.error(request, "No payment method selected.")
+            context["form_error"] = "No payment method selected."
+        if request.POST.get("access_details") != context["user_address"].access_details:
+            context["user_address"].access_details = request.POST.get("access_details")
+            context["user_address"].save()
+            messages.success(request, "Access details saved.")
+
     context["cart"] = {}
     context["discounts"] = 0
     context["subtotal"] = 0
@@ -1154,7 +1182,9 @@ def checkout(request, user_address_id):
             }
             context["subtotal"] += customer_price
             context["cart_count"] += 1
-
+    if not context["cart"]:
+        messages.error(request, "This Order is empty.")
+        return HttpResponseRedirect(reverse("customer_cart"))
     return render(
         request,
         "customer_dashboard/new_order/checkout.html",
