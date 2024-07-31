@@ -1,10 +1,12 @@
 import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
+from pricing_engine.models import PricingLineItemGroup
+from pricing_engine.models.pricing_line_item import PricingLineItem
 from pricing_engine.sub_pricing_models import MaterialPrice, RentalPrice, ServicePrice
 from pricing_engine.sub_pricing_models.delivery import DeliveryPrice
 from pricing_engine.sub_pricing_models.removal import RemovalPrice
@@ -18,7 +20,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: datetime.datetime,
         waste_type: Optional[WasteType],
-    ):
+    ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         return PricingEngine.get_price_by_lat_long(
             latitude=user_address.latitude,
             longitude=user_address.longitude,
@@ -36,7 +38,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: Optional[datetime.datetime],
         waste_type: Optional[WasteType],
-    ):
+    ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         """
         This method calls the sub-classes to compute the total price based on
         customer location, seller location, and product.
@@ -54,12 +56,16 @@ class PricingEngine:
         if not seller_product_seller_location.is_complete:
             return None
 
+        response = {}
+
         # Service price.
         service = ServicePrice.get_price(
             latitude=latitude,
             longitude=longitude,
             seller_product_seller_location=seller_product_seller_location,
         )
+        if service:
+            service[0].sort = 0
 
         # Rental
         rental = RentalPrice.get_price(
@@ -67,6 +73,8 @@ class PricingEngine:
             start_date=start_date,
             end_date=end_date,
         )
+        if rental:
+            rental[0].sort = 1
 
         # Material.
         material = (
@@ -77,16 +85,42 @@ class PricingEngine:
             if waste_type
             else 0
         )
+        if material:
+            material[0].sort = 2
 
-        return {
-            "service": service,
-            "rental": rental,
-            "material": material,
-            "total": service + rental + material,
-            "delivery": DeliveryPrice.get_price(
-                seller_product_seller_location=seller_product_seller_location,
-            ),
-            "removal": RemovalPrice.get_price(
-                seller_product_seller_location=seller_product_seller_location,
-            ),
-        }
+        # Delivery.
+        delivery = DeliveryPrice.get_price(
+            seller_product_seller_location=seller_product_seller_location,
+        )
+        if delivery:
+            delivery[0].sort = 3
+
+        # Removal.
+        removal = RemovalPrice.get_price(
+            seller_product_seller_location=seller_product_seller_location,
+        )
+        if removal:
+            removal[0].sort = 4
+
+        # Construct the response.
+        response: List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]
+        response = [
+            service,
+            rental,
+            material,
+            delivery,
+            removal,
+        ]
+
+        # Filter out None values.
+        response = [x for x in response if x]
+
+        # Sort the response.
+        response = sorted(
+            response,
+            key=lambda x: x[0].sort,
+        )
+
+        print("Response: ", response)
+
+        return response

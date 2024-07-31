@@ -9,7 +9,7 @@ GOOGLE_MAPS_API = r"AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE"
 class DistanceUtils:
     @staticmethod
     def get_driving_distance(lat1, lon1, lat2, lon2, unit="M"):
-        """Use google maps api to calculate the driving distance between two points."""
+        """Use google maps api to calculate the driving distance between two points. Defaults to miles."""
         gmaps = googlemaps.Client(key=GOOGLE_MAPS_API)
         try:
             distance = gmaps.distance_matrix(

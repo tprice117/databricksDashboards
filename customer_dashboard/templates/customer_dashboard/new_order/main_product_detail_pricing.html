@@ -37,14 +37,14 @@
                             </p>
                             <p class="text-end">
                                 Delivery:{% if item.price_data.delivery %}
-                                    ${{ item.price_data.delivery|floatformat:2|intcomma }}
+                                    ${{ item.price_data.delivery.total|floatformat:2|intcomma }}
                                 {% else %}
                                     No charge
                                 {% endif %}
                             </p>
                             <p class="text-end">
                                 Removal:{% if item.price_data.removal %}
-                                    ${{ item.price_data.removal|floatformat:2|intcomma }}
+                                    ${{ item.price_data.removal.total|floatformat:2|intcomma }}
                                 {% else %}
                                     No charge
                                 {% endif %}

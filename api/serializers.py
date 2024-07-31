@@ -100,6 +100,7 @@ class SellerLocationSerializer(serializers.ModelSerializer):
 
 class UserAddressTypeSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    sort = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = UserAddressType
