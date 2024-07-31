@@ -18,5 +18,9 @@ class PricingLineItemGroup(models.Model):
         related_name="items",
     )
 
+    @property
+    def total(self):
+        return sum([item.total for item in self.items.all()])
+
     class Meta:
         abstract = True

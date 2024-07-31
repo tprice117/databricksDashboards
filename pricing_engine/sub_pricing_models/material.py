@@ -2,6 +2,7 @@ from typing import Optional
 
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.waste_type import WasteType
+from pricing_engine.models import PricingLineItem, PricingLineItemGroup
 
 
 class MaterialPrice:
@@ -9,7 +10,7 @@ class MaterialPrice:
     def get_price(
         seller_product_seller_location: SellerProductSellerLocation,
         waste_type: Optional[WasteType],
-    ):
+    ) -> Optional[PricingLineItemGroup]:
         """
         This method computes the material price based on the SellerProductSellerLocation's
         (and related MainProduct) rental pricing structure.
@@ -28,7 +29,18 @@ class MaterialPrice:
             )
             if included_tonnage_quantity is None:
                 included_tonnage_quantity = 2
-            return seller_product_seller_location.material.get_price(
+
+            items: list[PricingLineItem]
+            items = seller_product_seller_location.material.get_price(
                 waste_type=waste_type,
                 quantity=included_tonnage_quantity,
+            )
+
+            return (
+                PricingLineItemGroup(
+                    title="Material",
+                    items=items,
+                )
+                if len(items) > 0
+                else None
             )

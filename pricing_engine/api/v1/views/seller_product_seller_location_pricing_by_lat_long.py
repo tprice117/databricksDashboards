@@ -1,14 +1,12 @@
-import datetime
-
 from django.http import JsonResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
-from api.serializers import SellerProductSellerLocationSerializer
 from pricing_engine.api.v1.serializers.pricing_engine_request_by_lat_long import (
     PricingEngineRequestByLatLongSerializer,
 )
+from pricing_engine.models import PricingLineItemGroup
 from pricing_engine.pricing_engine import PricingEngine
 
 
@@ -21,7 +19,7 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
     @extend_schema(
         request=PricingEngineRequestByLatLongSerializer,
         responses={
-            200: SellerProductSellerLocationSerializer(many=True),
+            200: PricingLineItemGroup(many=True),
         },
     )
     def post(self, request):
@@ -45,7 +43,7 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
             raise APIException(serializer.errors)
 
         # Get SellerProductSellerLocations.
-        seller_product_seller_locations = PricingEngine.get_price_by_lat_long(
+        pricing_line_item_groups = PricingEngine.get_price_by_lat_long(
             seller_product_seller_location=serializer.validated_data[
                 "seller_product_seller_location"
             ],
@@ -57,8 +55,8 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
         )
 
         # Return SellerProductSellerLocations serialized data.
-        data = SellerProductSellerLocationSerializer(
-            seller_product_seller_locations,
+        data = PricingLineItemGroup(
+            pricing_line_item_groups,
             many=True,
         ).data
 

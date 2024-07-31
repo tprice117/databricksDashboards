@@ -1,8 +1,10 @@
 from decimal import Decimal
+from typing import Optional
 
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.user.user_address import UserAddress
 from common.utils.distance.distance import DistanceUtils
+from pricing_engine.models import PricingLineItem, PricingLineItemGroup
 
 
 class ServicePrice:
@@ -12,7 +14,7 @@ class ServicePrice:
         longitude: Decimal,
         seller_product_seller_location: SellerProductSellerLocation,
         times_per_week: int = None,
-    ):
+    ) -> Optional[PricingLineItemGroup]:
         """
         This method computes the service price based on customer location,
         seller location, and product. You'll need to implement the logic here
@@ -27,30 +29,46 @@ class ServicePrice:
         Returns:
           The service price (float)
         """
-        price = 0
+        items: list[PricingLineItem]
+        items = []
+
         if (
             seller_product_seller_location.seller_product.product.main_product.has_service
-            and seller_product_seller_location.service
+            and hasattr(seller_product_seller_location, "service")
         ):
             # Legacy Service Model.
-            price = _service_legacy_price(
-                seller_product_seller_location=seller_product_seller_location,
-                latitude=latitude,
-                longitude=longitude,
+            miles = DistanceUtils.get_euclidean_distance(
+                lat1=latitude,
+                lon1=longitude,
+                lat2=seller_product_seller_location.seller_location.latitude,
+                lon2=seller_product_seller_location.seller_location.longitude,
             )
+
+            item = seller_product_seller_location.service.get_price(
+                miles=miles,
+            )
+
+            items.append(item)
         elif (
             seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
-            and seller_product_seller_location.service_times_per_week
+            and hasattr(seller_product_seller_location, "service_times_per_week")
             and times_per_week
         ):
             # New Times Per Week Service Model.
-            price = _service_times_per_week_price(
-                seller_product_seller_location=seller_product_seller_location,
+            item = seller_product_seller_location.service_times_per_week.get_price(
                 times_per_week=times_per_week,
             )
-        if price is None:
-            price = 0
-        return price
+
+            items.append(item)
+
+        return (
+            PricingLineItemGroup(
+                title="Service",
+                items=items,
+            )
+            if len(items) > 0
+            else None
+        )
 
 
 def _service_legacy_price(

@@ -5,6 +5,7 @@ from typing import Optional
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
+from pricing_engine.models import PricingLineItemGroup
 from pricing_engine.sub_pricing_models import MaterialPrice, RentalPrice, ServicePrice
 from pricing_engine.sub_pricing_models.delivery import DeliveryPrice
 from pricing_engine.sub_pricing_models.removal import RemovalPrice
@@ -36,7 +37,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: Optional[datetime.datetime],
         waste_type: Optional[WasteType],
-    ):
+    ) -> list[PricingLineItemGroup]:
         """
         This method calls the sub-classes to compute the total price based on
         customer location, seller location, and product.
@@ -54,22 +55,24 @@ class PricingEngine:
         if not seller_product_seller_location.is_complete:
             return None
 
+        response = {}
+
         # Service price.
-        service = ServicePrice.get_price(
+        response["service"] = ServicePrice.get_price(
             latitude=latitude,
             longitude=longitude,
             seller_product_seller_location=seller_product_seller_location,
         )
 
         # Rental
-        rental = RentalPrice.get_price(
+        response["rental"] = RentalPrice.get_price(
             seller_product_seller_location,
             start_date=start_date,
             end_date=end_date,
         )
 
         # Material.
-        material = (
+        response["material"] = (
             MaterialPrice.get_price(
                 seller_product_seller_location,
                 waste_type=waste_type,
@@ -78,15 +81,14 @@ class PricingEngine:
             else 0
         )
 
-        return {
-            "service": service,
-            "rental": rental,
-            "material": material,
-            "total": service + rental + material,
-            "delivery": DeliveryPrice.get_price(
-                seller_product_seller_location=seller_product_seller_location,
-            ),
-            "removal": RemovalPrice.get_price(
-                seller_product_seller_location=seller_product_seller_location,
-            ),
-        }
+        # Delivery.
+        response["delivery"] = DeliveryPrice.get_price(
+            seller_product_seller_location=seller_product_seller_location,
+        )
+
+        # Removal.
+        response["removal"] = RemovalPrice.get_price(
+            seller_product_seller_location=seller_product_seller_location,
+        )
+
+        return response
