@@ -560,7 +560,7 @@ def customer_impersonation_stop(request):
 def get_user_context(request: HttpRequest, add_user_group=True):
     """Returns the common context data for the views."""
     context = {}
-    context["BASIS_THEORY_API_KEY"] = settings.BASIS_THEORY_USE_PCI_API_KEY
+    context["BASIS_THEORY_API_KEY"] = settings.BASIS_THEORY_PUB_API_KEY
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     if add_user_group:
