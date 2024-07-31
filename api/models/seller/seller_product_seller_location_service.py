@@ -8,6 +8,7 @@ from api.models.seller.seller_product_seller_location_service_recurring_frequenc
     SellerProductSellerLocationServiceRecurringFrequency,
 )
 from common.models import BaseModel
+from pricing_engine.models import PricingLineItem
 
 
 class SellerProductSellerLocationService(BaseModel):
@@ -35,6 +36,36 @@ class SellerProductSellerLocationService(BaseModel):
     # as the default Django boolean icons.
     _is_complete.boolean = True
     is_complete = property(_is_complete)
+
+    def get_price(
+        self,
+        miles: float,
+    ) -> list[PricingLineItem]:
+        items: list[PricingLineItem]
+        items = []
+
+        # Handle the case where the service is priced per mile.
+        if self.price_per_mile is not None:
+            items.append(
+                PricingLineItem(
+                    title="Service",
+                    units="Miles",
+                    quantity=miles,
+                    rate=self.price_per_mile,
+                )
+            )
+
+        # Handle the case where the service is a flat rate.
+        if self.flat_rate_price is not None:
+
+            items.append(
+                PricingLineItem(
+                    description="Flat Rate",
+                    unit_price=self.flat_rate_price,
+                )
+            )
+
+        return items
 
     def post_save(sender, instance, created, **kwargs):
         # Ensure all service recurring frequencies are created.

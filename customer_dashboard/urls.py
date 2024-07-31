@@ -143,4 +143,9 @@ urlpatterns = [
         views.checkout,
         name="customer_checkout",
     ),
+    path(
+        "customer/new/payment/",
+        views.add_payment_method,
+        name="customer_new_payment",
+    ),
 ]

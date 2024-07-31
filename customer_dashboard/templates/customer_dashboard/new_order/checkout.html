@@ -7,6 +7,8 @@
 {% block javascript %}
     <script>
         const checkoutModal = document.getElementById("checkout-orders-modal");
+        const addCardModal = document.getElementById("add-card-modal");
+        const checkoutForm = document.getElementById("checkoutForm");
         let checkoutItemChanged = false;
         // listen for htmx afterSettle event.
         document.body.addEventListener("htmx:afterSettle", function (event) {
@@ -56,16 +58,165 @@
             // trigger onRemoveClick event
             htmx.trigger(el, "onRemoveClick");
         }
+
+        // BasisTheory
+        let bt;
+        let cardNumberElement;
+        let cardExpirationDateElement;
+        let cardVerificationCodeElement;
+        function disableAddCardSaveButton() {
+            // Disable card_submit button
+            document.getElementById("card_submit").disabled = true;
+            // Show htmx indicator by adding a class to the body htmx-request
+            document.getElementById("add-card-spinner").classList.add("htmx-request");
+        }
+        function enableAddCardSaveButton() {
+            // Enable card_submit button
+            document.getElementById("card_submit").disabled = false;
+            // Hide htmx indicator by removing a class to the body htmx-request
+            document.getElementById("add-card-spinner").classList.remove("htmx-request");
+        }
+
+        async function submitCard () {
+            try {
+                disableAddCardSaveButton();
+
+                const token = await bt.tokens.create({
+                    type: 'card',
+                    data: {
+                        number: cardNumberElement,
+                        expiration_month: cardExpirationDateElement.month(),
+                        expiration_year: cardExpirationDateElement.year(),
+                        cvc: cardVerificationCodeElement,
+                    }
+                });
+                // Create Payment Method with token.id
+                // request.get_full_path
+                // body: JSON.stringify({
+                //    token: "token.id",
+                //    next: window.location.pathname
+                // })
+                const data = new URLSearchParams();
+                data.append('token', 'token.id');
+                data.append('next', window.location.pathname);
+                const response = await fetch("{% url 'customer_new_payment' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: data.toString()
+                });
+                if (response.ok) {
+                    // reload the page to reflect the changes
+                    location.reload();
+                } else {
+                    console.error("Failed to create payment method");
+                    // Show popup with error message
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to create payment method',
+                        icon: 'error',
+                        confirmButtonText: 'Ok'
+                    }).then((result) => {
+                        enableAddCardSaveButton();
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function mountCardElements() {
+            // Check if Elements are already mounted
+            if (cardNumberElement && cardExpirationDateElement && cardVerificationCodeElement) {
+                return;
+            }
+            disableAddCardSaveButton();
+            if (!bt) {
+                bt = await BasisTheory.init("{{ BASIS_THEORY_API_KEY }}", { elements: true });
+            }
+            // Creates Elements instances
+            cardNumberElement = bt.createElement('cardNumber', {
+                targetId: 'myCardNumber' // (custom) used for tracking validation errors
+            });
+            cardExpirationDateElement = bt.createElement('cardExpirationDate', {
+                targetId: 'myCardExpiration'
+            });
+            cardVerificationCodeElement = bt.createElement('cardVerificationCode', {
+                targetId: 'myCardVerification'
+            });
+
+            // Mounts Elements in the DOM in parallel
+            await Promise.all([
+                cardNumberElement.mount('#cardNumber'),
+                cardExpirationDateElement.mount('#cardExpirationDate'),
+                cardVerificationCodeElement.mount('#cardVerificationCode'),
+            ]);
+
+            // Binds card brand to verification code element
+            cardNumberElement.on('change', ({ cardBrand }) => {
+                cardVerificationCodeElement.update({ cardBrand });
+            });
+
+            document.getElementById("card_submit").addEventListener("click", submitCard);
+            enableAddCardSaveButton();
+        }
+        addCardModal.addEventListener("shown.bs.modal", (event) => {
+            if (event.target === addCardModal) {
+                mountCardElements();
+            }
+        });
+
+        // Listen for form submit event
+        checkoutForm.addEventListener("submit", (event) => {
+            // Disable form submit button
+            document.getElementById("form_submit").disabled = true;
+            // Show htmx indicator by adding a class to the body htmx-request
+            document.getElementById("checkout-spinner").classList.add("htmx-request");
+        });
+
+
+        window.addEventListener("load", async () => {
+            try {
+                // Initialize BasisTheory SDK with Elements.
+                bt = await BasisTheory.init("{{ BASIS_THEORY_API_KEY }}", { elements: true });
+            } catch (e) {
+              // handle errors that could happen while loading elements script
+                console.error("Initialize BasisTheory:", e);
+            }
+        });
     </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        <h3 class="text-dark mb-1">Checkout</h3>
+    <div class="container-fluid mb-4" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+        <div class="d-sm-flex justify-content-between align-items-center mb-2">
+            <h3 class="text-dark mb-0">Checkout</h3>
+            {% if request.user.is_staff and not is_impersonating %}
+                <span class="badge text-bg-primary rounded-pill ms-2 fs-6">
+                    {% if user_address.user_group.name %}
+                        {{ user_address.user_group }}
+                    {% else %}
+                        USER: {{ user_address.user.full_name }}
+                    {% endif %}
+                </span>
+            {% endif %}
+        </div>
         <h6 class="text-muted mb-2">Complete your Order{{ cart|length|pluralize }} for {{ user_address.formatted_address }}</h6>
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">Order Summary<button class="btn btn-link float-end" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Details</button></h4>
                 <h6 class="text-muted card-subtitle mb-2">{{ cart|length }} item{{ cart|length|pluralize }} in Cart</h6>
+                {% if request.user.is_staff and not is_impersonating and needs_approval %}
+                <div class="row">
+                    <div class="col">
+                        <p class="fw-bold text-danger" style="margin-bottom: 0px;">Approval Needed</p>
+                    </div>
+                    <div class="col">
+                        <p style="margin-bottom: 0px;">Order will be auto approved on checkout.</p>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="row">
                     <div class="col">
                         <p style="margin-bottom: 0px;">Subtotal</p>
@@ -100,22 +251,30 @@
             <div class="card-body">
                 <h4 class="card-title">Access Details</h4>
                 <h6 class="text-muted card-subtitle mb-2">Let the suppliers know how to access your property/job site once they arrive</h6>
-                <textarea form="checkoutForm" class="form-control" name="access_details">{% if user_address.access_details %}{{ user_address.access_details }}{% endif %}</textarea>
+                <textarea form="checkoutForm" rows="4" class="form-control" name="access_details">{% if user_address.access_details %}{{ user_address.access_details }}{% endif %}</textarea>
             </div>
         </div>
         <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h4 class="card-title">Select Payment Method<button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
+            </div>
             <div class="card-body">
-                <h4 class="card-title">Select Payment Method (using Payment Methods for the User Group)</h4>
                 {% for payment_method in payment_methods %}
                     <div class="card">
                         <div class="card-body">
-                            <div></div>
-                            <div class="row">
-                                <div class="col">
-                                    <h4 style="margin-bottom: 0px;">{% if payment_method.card_brand %}{{ payment_method.card_brand }}{% else %}Card{% endif %} XXXX{% if payment_method.card_number %}{{ payment_method.card_number|slice:"-4:" }}{% endif %}</h4>
-                                </div>
-                                <div class="col">
-                                    <p class="text-end" style="margin-bottom: 0px;">Expires {{ payment_method.card_exp_month }}/{{ payment_method.card_exp_year }}</p>
+                            <div class="form-check">
+                                {% if forloop.first %}
+                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" required>
+                                {% else %}
+                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}">
+                                {% endif %}
+                                <div class="row">
+                                    <div class="col">
+                                        <h4 style="margin-bottom: 0px;">{% if payment_method.card_brand %}{{ payment_method.card_brand }}{% else %}Card{% endif %} XXXX{% if payment_method.card_number %}{{ payment_method.card_number|slice:"-4:" }}{% endif %}</h4>
+                                    </div>
+                                    <div class="col">
+                                        <p class="text-end" style="margin-bottom: 0px;">Expires {{ payment_method.card_exp_month }}/{{ payment_method.card_exp_year }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -123,11 +282,25 @@
                 {% endfor %}
             </div>
         </div>
+        {% if form_error or form_msg %}
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-body">
+                {% if form_error %}
+                    <h4 class="card-title">Error Details</h4>
+                    <p class="text-danger">{{ form_error }}</p>
+                {% endif %}
+                {% if form_msg %}
+                    <h4 class="card-title">Help Details</h4>
+                    <p class="text-success">{{ form_msg }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
         <form id="checkoutForm" action="{{ request.get_full_path }}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="subtotal" value="{{ subtotal }}">
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
-            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" style="margin-top: 10px;">Checkout</button>
+            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" style="margin-top: 10px;">Checkout <span class="htmx-indicator" id="checkout-spinner"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
         </form>
     </div>
 {% endblock %}
@@ -214,4 +387,23 @@
             </div>
         </div>
     </div>
+    <div id="add-card-modal" class="modal fade" role="dialog" tabindex="-1" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">New Card</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div id="cardNumber"></div>
+              <div style="display: flex;">
+                <div id="cardExpirationDate" style="width: 100%;"></div>
+                <div id="cardVerificationCode" style="width: 100%;"></div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-primary" type="button" id="card_submit">Save <span class="htmx-indicator" id="add-card-spinner"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 {% endblock %}

@@ -1,13 +1,11 @@
-import datetime
-
 from django.http import JsonResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
-from api.serializers import SellerProductSellerLocationSerializer
-from pricing_engine.api.v1.serializers.pricing_engine_request_by_lat_long import (
-    PricingEngineRequestByLatLongSerializer,
+from pricing_engine.api.v1.serializers import PricingEngineRequestByLatLongSerializer
+from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+    PricingEngineResponseSerializer,
 )
 from pricing_engine.pricing_engine import PricingEngine
 
@@ -21,7 +19,7 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
     @extend_schema(
         request=PricingEngineRequestByLatLongSerializer,
         responses={
-            200: SellerProductSellerLocationSerializer(many=True),
+            200: PricingEngineResponseSerializer(),
         },
     )
     def post(self, request):
@@ -45,7 +43,7 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
             raise APIException(serializer.errors)
 
         # Get SellerProductSellerLocations.
-        seller_product_seller_locations = PricingEngine.get_price_by_lat_long(
+        pricing_line_item_groups = PricingEngine.get_price_by_lat_long(
             seller_product_seller_location=serializer.validated_data[
                 "seller_product_seller_location"
             ],
@@ -56,10 +54,9 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
             waste_type=serializer.validated_data["waste_type"],
         )
 
-        # Return SellerProductSellerLocations serialized data.
-        data = SellerProductSellerLocationSerializer(
-            seller_product_seller_locations,
-            many=True,
+        # Return PricingEngineResponse serialized data.
+        data = PricingEngineResponseSerializer(
+            pricing_line_item_groups,
         ).data
 
         return JsonResponse(data, safe=False)
