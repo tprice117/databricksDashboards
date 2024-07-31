@@ -80,7 +80,7 @@
             try {
                 disableAddCardSaveButton();
 
-                {% comment %} const token = await bt.tokens.create({
+                const token = await bt.tokens.create({
                     type: 'card',
                     data: {
                         number: cardNumberElement,
@@ -88,7 +88,7 @@
                         expiration_year: cardExpirationDateElement.year(),
                         cvc: cardVerificationCodeElement,
                     }
-                }); {% endcomment %}
+                });
                 // Create Payment Method with token.id
                 // request.get_full_path
                 // body: JSON.stringify({
