@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.db import models
 
 from common.models import BaseModel
+from pricing_engine.models import PricingLineItem
 
 
 class SellerProductSellerLocationRentalMultiStep(BaseModel):
@@ -180,7 +181,7 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
 
         return price, remaining_hours
 
-    def get_price(self, duration: timedelta):
+    def get_price(self, duration: timedelta) -> PricingLineItem:
         """
         Calculates the most cost-efficient rental price based on duration (hours or days).
 
@@ -204,8 +205,8 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
         two_weeks_price = self.get_price_base_two_weeks(hours)
         monthly_price = self.get_price_base_months(hours)
 
-        # Find the most cost-efficient pricing tier.
-        return min(
+        # Find the most cost-efficient pricing tier, return PriceLineItem.
+        min_price = min(
             price
             for price in [
                 hourly_price,
@@ -216,3 +217,42 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
             ]
             if price is not None
         )
+
+        if min_price == hourly_price:
+            return PricingLineItem(
+                description="Hourly",
+                quantity=hours,
+                unit_price=self.hour,
+                units="hours",
+            )
+
+        elif min_price == daily_price:
+            return PricingLineItem(
+                description="Daily",
+                quantity=hours / 24,
+                unit_price=self.effective_day_rate,
+                units="days",
+            )
+
+        elif min_price == weekly_price:
+            return PricingLineItem(
+                description="Weekly",
+                quantity=hours / 168,
+                unit_price=self.effective_week_rate,
+                units="weeks",
+            )
+
+        elif min_price == two_weeks_price:
+            return PricingLineItem(
+                description="Two Weeks",
+                quantity=hours / 336,
+                unit_price=self.effective_two_week_rate,
+                units="weeks",
+            )
+        else:
+            return PricingLineItem(
+                description="Monthly",
+                quantity=hours / 720,
+                unit_price=self.effective_month_rate,
+                units="months",
+            )

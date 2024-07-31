@@ -4,6 +4,7 @@ from math import ceil
 from django.db import models
 
 from common.models import BaseModel
+from pricing_engine.models.pricing_line_item import PricingLineItem
 
 
 class SellerProductSellerLocationRentalOneStep(BaseModel):
@@ -42,11 +43,17 @@ class SellerProductSellerLocationRentalOneStep(BaseModel):
     _is_complete.boolean = True
     is_complete = property(_is_complete)
 
-    def get_price(self, duration: timedelta):
+    def get_price(self, duration: timedelta) -> PricingLineItem:
         if duration < timedelta(0):
             raise Exception("The Duration must be positive.")
 
         # Get the quanity of 28 day periods for the rental.
         periods = ceil(duration.days / 28)
 
-        return self.rate * periods
+        # Create a PricingLineItem for each period.
+        return PricingLineItem(
+            title="Rental",
+            units="28 day periods",
+            quantity=periods,
+            rate=self.rate,
+        )

@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.db import models
 
 from common.models import BaseModel
+from pricing_engine.models import PricingLineItem
 
 
 class SellerProductSellerLocationRental(BaseModel):
@@ -48,12 +49,17 @@ class SellerProductSellerLocationRental(BaseModel):
     def get_price(
         self,
         duration: timedelta,
-    ):
+    ) -> list[PricingLineItem]:
         if duration < timedelta(0):
             raise Exception("The Duration must be positive.")
 
         # Included day price (always charged).
-        included_price = self.included_days * self.price_per_day_included
+        included_price = PricingLineItem(
+            description="Included",
+            units="Days",
+            quantity=self.included_days,
+            unit_price=self.price_per_day_included,
+        )
 
         # Additional days price (if needed).
         additional_days = (
@@ -61,6 +67,20 @@ class SellerProductSellerLocationRental(BaseModel):
             if duration.days > self.included_days
             else 0
         )
-        additional_days_price = additional_days * self.price_per_day_additional
 
-        return included_price + additional_days_price
+        if additional_days > 0:
+            additional_days_price = PricingLineItem(
+                description="Additional",
+                units="Days",
+                quantity=additional_days,
+                unit_price=self.price_per_day_additional,
+            )
+
+            return [
+                included_price,
+                additional_days_price,
+            ]
+        else:
+            return [
+                included_price,
+            ]

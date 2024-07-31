@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.db import models
 
 from common.models import BaseModel
+from pricing_engine.models.pricing_line_item import PricingLineItem
 
 
 class SellerProductSellerLocationServiceTimesPerWeek(BaseModel):
@@ -71,19 +72,34 @@ class SellerProductSellerLocationServiceTimesPerWeek(BaseModel):
     def get_price(
         self,
         times_per_week: int,
-    ):
+    ) -> PricingLineItem:
         if times_per_week < 0:
             raise Exception("The times_per_week must be positive.")
 
         if times_per_week == 1:
-            return self.one_time_per_week
+            return PricingLineItem(
+                title="One Time Per Week",
+                rate=self.one_time_per_week,
+            )
         elif times_per_week == 2:
-            return self.two_times_per_week
+            return PricingLineItem(
+                title="Two Times Per Week",
+                rate=self.two_times_per_week,
+            )
         elif times_per_week == 3:
-            return self.three_times_per_week
+            return PricingLineItem(
+                title="Three Times Per Week",
+                rate=self.three_times_per_week,
+            )
         elif times_per_week == 4:
-            return self.four_times_per_week
+            return PricingLineItem(
+                title="Four Times Per Week",
+                rate=self.four_times_per_week,
+            )
         elif times_per_week == 5:
-            return self.five_times_per_week
+            return PricingLineItem(
+                title="Five Times Per Week",
+                rate=self.five_times_per_week,
+            )
         else:
             raise Exception("The times_per_week must be between 1 and 5.")
