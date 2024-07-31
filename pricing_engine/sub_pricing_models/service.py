@@ -19,18 +19,21 @@ class ServicePrice:
         considering factors like distance, product complexity, etc.
 
         Args:
-          user_address: Customer's address (UserAddress object)
+          latitude: The customer's latitude (float)
+          longitude: The customer's longitude (float)
           seller_product_seller_location: SellerProductSellerLocation object
+          times_per_week [Optional]: Number of times per week the service is required (int)
 
         Returns:
           The service price (float)
         """
+        price = 0
         if (
             seller_product_seller_location.seller_product.product.main_product.has_service
             and seller_product_seller_location.service
         ):
             # Legacy Service Model.
-            return _service_legacy_price(
+            price = _service_legacy_price(
                 seller_product_seller_location=seller_product_seller_location,
                 latitude=latitude,
                 longitude=longitude,
@@ -41,10 +44,13 @@ class ServicePrice:
             and times_per_week
         ):
             # New Times Per Week Service Model.
-            return _service_times_per_week_price(
+            price = _service_times_per_week_price(
                 seller_product_seller_location=seller_product_seller_location,
                 times_per_week=times_per_week,
             )
+        if price is None:
+            price = 0
+        return price
 
 
 def _service_legacy_price(
