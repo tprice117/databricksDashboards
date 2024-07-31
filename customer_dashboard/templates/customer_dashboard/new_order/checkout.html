@@ -180,7 +180,18 @@
 {% endblock %}
 {% block content %}
     <div class="container-fluid mb-4" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        <h3 class="text-dark mb-1">Checkout</h3>
+        <div class="d-sm-flex justify-content-between align-items-center mb-2">
+            <h3 class="text-dark mb-0">Checkout</h3>
+            {% if request.user.is_staff and not is_impersonating %}
+                <span class="badge text-bg-primary rounded-pill ms-2 fs-6">
+                    {% if user_address.user_group.name %}
+                        {{ user_address.user_group }}
+                    {% else %}
+                        USER: {{ user_address.user.full_name }}
+                    {% endif %}
+                </span>
+            {% endif %}
+        </div>
         <h6 class="text-muted mb-2">Complete your Order{{ cart|length|pluralize }} for {{ user_address.formatted_address }}</h6>
         <div class="card">
             <div class="card-body">
