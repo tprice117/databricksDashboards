@@ -197,6 +197,16 @@
             <div class="card-body">
                 <h4 class="card-title">Order Summary<button class="btn btn-link float-end" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Details</button></h4>
                 <h6 class="text-muted card-subtitle mb-2">{{ cart|length }} item{{ cart|length|pluralize }} in Cart</h6>
+                {% if request.user.is_staff and not is_impersonating and needs_approval %}
+                <div class="row">
+                    <div class="col">
+                        <p class="fw-bold text-danger" style="margin-bottom: 0px;">Approval Needed</p>
+                    </div>
+                    <div class="col">
+                        <p style="margin-bottom: 0px;">Order will be auto approved on checkout.</p>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="row">
                     <div class="col">
                         <p style="margin-bottom: 0px;">Subtotal</p>

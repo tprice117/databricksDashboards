@@ -1166,7 +1166,10 @@ def checkout(request, user_address_id):
                 user_id=context["user"].id
             )
     context["payment_methods"] = payment_methods
+    context["needs_approval"] = False
     for order in orders:
+        if order.status == Order.Status.APPROVAL:
+            context["needs_approval"] = True
         try:
             customer_price = order.customer_price()
             context["cart"][order.order_group_id]["price"] += customer_price
