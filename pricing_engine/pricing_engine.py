@@ -79,22 +79,7 @@ class PricingEngine:
         )
 
         return {
-            "service": {
-                "total": service,
-                "items": [
-                    {
-                        "name": "Service (Included)",
-                        "unit_price": unit_price,
-                        "quantity": quantity,
-                        "units": "hours",
-                        "total": unit_price * quantity,
-                    },
-                    {
-                        "name": "Service (Additional)"
-                        "price": service1, $40
-                    },
-                ]
-            },
+            "service": service,
             "rental": rental,
             "material": material,
             "total": service + rental + material,
