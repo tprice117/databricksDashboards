@@ -13,6 +13,7 @@ class DeliveryPrice:
             (
                 PricingLineItemGroup(
                     title="Delivery",
+                    code="delivery",
                 ),
                 [
                     PricingLineItem(

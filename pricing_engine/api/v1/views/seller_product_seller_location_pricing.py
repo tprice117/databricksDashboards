@@ -4,9 +4,10 @@ from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
 from pricing_engine.api.v1.serializers import PricingEngineRequestSerializer
-from pricing_engine.models import PricingLineItemGroup
+from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+    PricingEngineResponseSerializer,
+)
 from pricing_engine.pricing_engine import PricingEngine
-from pricing_engine.serializers import PricingLineItemGroupSerializer
 
 
 class SellerProductSellerLocationPricingView(APIView):
@@ -18,7 +19,7 @@ class SellerProductSellerLocationPricingView(APIView):
     @extend_schema(
         request=PricingEngineRequestSerializer,
         responses={
-            200: PricingLineItemGroupSerializer(many=True),
+            200: PricingEngineResponseSerializer(),
         },
     )
     def post(self, request):
@@ -51,10 +52,11 @@ class SellerProductSellerLocationPricingView(APIView):
             waste_type=serializer.validated_data["waste_type"],
         )
 
+        print(pricing_line_item_groups)
+
         # Return SellerProductSellerLocations serialized data.
-        data = PricingLineItemGroup(
+        data = PricingEngineResponseSerializer(
             pricing_line_item_groups,
-            many=True,
         ).data
 
         return JsonResponse(data, safe=False)

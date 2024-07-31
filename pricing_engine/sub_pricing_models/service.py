@@ -30,6 +30,7 @@ class ServicePrice:
         """
         group = PricingLineItemGroup(
             title="Service",
+            code="service",
         )
 
         if (

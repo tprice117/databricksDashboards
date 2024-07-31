@@ -21,6 +21,9 @@ class PricingLineItem(models.Model):
         max_length=255,
         null=True,
     )
+    sort = models.IntegerField(
+        default=0,
+    )
 
     @property
     def total(self):

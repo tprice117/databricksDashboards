@@ -48,27 +48,26 @@ from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
-from api.models.user.user_group import CompanyUtils as UserGroupUtils
-from api.models.user.user_address import CompanyUtils as UserAddressUtils
-from api.models.user.user import CompanyUtils as UserUtils
 from api.pricing_ml import pricing
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
 from payment_methods.models import PaymentMethod
+from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+    PricingEngineResponseSerializer,
+)
 from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
     AccessDetailsForm,
+    OrderGroupForm,
     OrderGroupSwapForm,
     PlacementDetailsForm,
     UserAddressForm,
     UserForm,
     UserGroupForm,
     UserInviteForm,
-    OrderGroupForm,
-    OrderGroupSwapForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -769,7 +768,9 @@ def new_order_3(request, product_id):
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         if user_address_id:
-            context["selected_user_address"] = UserAddress.objects.get(id=user_address_id)
+            context["selected_user_address"] = UserAddress.objects.get(
+                id=user_address_id
+            )
         query_params = {
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
@@ -905,7 +906,7 @@ def new_order_4(request):
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
         seller_d["seller_product_seller_location"] = seller_product_seller_location
-        seller_d["price_data"] = PricingEngine.get_price(
+        pricing = PricingEngine.get_price(
             user_address=UserAddress.objects.get(
                 id=context["user_address"],
             ),
@@ -920,8 +921,10 @@ def new_order_4(request):
                 WasteType.objects.get(id=waste_type_id) if waste_type_id else None
             ),
         )
-        print("Price Data")
+
+        seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
         print(seller_d["price_data"])
+
         context["seller_product_seller_locations"].append(seller_d)
 
     # step_time = time.time()

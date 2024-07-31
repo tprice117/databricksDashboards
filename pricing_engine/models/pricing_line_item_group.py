@@ -7,10 +7,12 @@ class PricingLineItemGroup(models.Model):
     title = models.CharField(
         max_length=255,
     )
-
-    @property
-    def total(self):
-        return sum([item.total for item in self.items.all()])
+    code = models.CharField(
+        max_length=255,
+    )
+    sort = models.IntegerField(
+        default=0,
+    )
 
     class Meta:
         managed = False

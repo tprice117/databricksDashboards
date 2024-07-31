@@ -51,6 +51,7 @@ class RentalPrice:
             (
                 PricingLineItemGroup(
                     title="Rental",
+                    code="rental",
                 ),
                 items,
             )

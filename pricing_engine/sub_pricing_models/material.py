@@ -41,6 +41,7 @@ class MaterialPrice:
             (
                 PricingLineItemGroup(
                     title="Material",
+                    code="material",
                 ),
                 [item],
             )
