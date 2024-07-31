@@ -6,3 +6,10 @@ from pricing_engine.models import PricingLineItem
 class PricingLineItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = PricingLineItem
+        fields = [
+            "description",
+            "quantity",
+            "unit_price",
+            "units",
+            "total",
+        ]

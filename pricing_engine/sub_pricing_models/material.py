@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.waste_type import WasteType
@@ -10,7 +10,7 @@ class MaterialPrice:
     def get_price(
         seller_product_seller_location: SellerProductSellerLocation,
         waste_type: Optional[WasteType],
-    ) -> Optional[PricingLineItemGroup]:
+    ) -> Optional[Union[Tuple[PricingLineItemGroup, list[PricingLineItem]], None]]:
         """
         This method computes the material price based on the SellerProductSellerLocation's
         (and related MainProduct) rental pricing structure.
@@ -21,6 +21,7 @@ class MaterialPrice:
         Returns:
           The material price (float)
         """
+
         if (
             seller_product_seller_location.seller_product.product.main_product.has_material
         ):
@@ -30,17 +31,19 @@ class MaterialPrice:
             if included_tonnage_quantity is None:
                 included_tonnage_quantity = 2
 
-            items: list[PricingLineItem]
-            items = seller_product_seller_location.material.get_price(
+            item: PricingLineItem
+            item = seller_product_seller_location.material.get_price(
                 waste_type=waste_type,
                 quantity=included_tonnage_quantity,
             )
 
-            return (
+        return (
+            (
                 PricingLineItemGroup(
                     title="Material",
-                    items=items,
-                )
-                if len(items) > 0
-                else None
+                ),
+                [item],
             )
+            if item
+            else None
+        )

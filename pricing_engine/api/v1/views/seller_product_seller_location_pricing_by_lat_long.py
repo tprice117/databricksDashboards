@@ -8,6 +8,7 @@ from pricing_engine.api.v1.serializers.pricing_engine_request_by_lat_long import
 )
 from pricing_engine.models import PricingLineItemGroup
 from pricing_engine.pricing_engine import PricingEngine
+from pricing_engine.serializers import PricingLineItemGroupSerializer
 
 
 class SellerProductSellerLocationPricingByLatLongView(APIView):
@@ -19,7 +20,7 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
     @extend_schema(
         request=PricingEngineRequestByLatLongSerializer,
         responses={
-            200: PricingLineItemGroup(many=True),
+            200: PricingLineItemGroupSerializer(many=True),
         },
     )
     def post(self, request):

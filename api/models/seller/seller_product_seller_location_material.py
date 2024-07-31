@@ -40,11 +40,11 @@ class SellerProductSellerLocationMaterial(BaseModel):
             material_waste_type = self.waste_types.filter(
                 main_product_waste_type__waste_type=waste_type
             ).first()
+
             return PricingLineItem(
-                title="Material",
                 units="Tons",
                 quantity=quantity,
-                rate=material_waste_type.price_per_ton,
+                unit_price=material_waste_type.price_per_ton,
             )
         else:
             return None

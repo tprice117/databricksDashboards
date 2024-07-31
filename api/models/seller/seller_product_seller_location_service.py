@@ -39,7 +39,7 @@ class SellerProductSellerLocationService(BaseModel):
 
     def get_price(
         self,
-        distance: float,
+        miles: float,
     ) -> list[PricingLineItem]:
         items: list[PricingLineItem]
         items = []
@@ -50,19 +50,18 @@ class SellerProductSellerLocationService(BaseModel):
                 PricingLineItem(
                     title="Service",
                     units="Miles",
-                    quantity=distance,
+                    quantity=miles,
                     rate=self.price_per_mile,
                 )
             )
 
         # Handle the case where the service is a flat rate.
         if self.flat_rate_price is not None:
+
             items.append(
                 PricingLineItem(
-                    title="Service",
-                    units="Flat rate",
-                    quantity=1,
-                    rate=self.flat_rate_price,
+                    description="Flat Rate",
+                    unit_price=self.flat_rate_price,
                 )
             )
 

@@ -55,10 +55,10 @@ class SellerProductSellerLocationRental(BaseModel):
 
         # Included day price (always charged).
         included_price = PricingLineItem(
-            title="Rental",
-            units="Included days",
+            description="Included",
+            units="Days",
             quantity=self.included_days,
-            rate=self.price_per_day_included,
+            unit_price=self.price_per_day_included,
         )
 
         # Additional days price (if needed).
@@ -70,13 +70,17 @@ class SellerProductSellerLocationRental(BaseModel):
 
         if additional_days > 0:
             additional_days_price = PricingLineItem(
-                title="Rental",
-                units="Additional days",
+                description="Additional",
+                units="Days",
                 quantity=additional_days,
-                rate=self.price_per_day_additional,
+                unit_price=self.price_per_day_additional,
             )
 
-        return [
-            included_price,
-            additional_days_price,
-        ]
+            return [
+                included_price,
+                additional_days_price,
+            ]
+        else:
+            return [
+                included_price,
+            ]

@@ -2,13 +2,16 @@ import uuid
 
 from django.db import models
 
+from pricing_engine.models.pricing_line_item_group import PricingLineItemGroup
+
 
 class PricingLineItem(models.Model):
     description = models.CharField(
         max_length=255,
+        null=True,
     )
     quantity = models.IntegerField(
-        null=True,
+        default=1,
     )
     unit_price = models.DecimalField(
         max_digits=10,
@@ -24,4 +27,4 @@ class PricingLineItem(models.Model):
         return self.quantity * self.unit_price
 
     class Meta:
-        abstract = True
+        managed = False

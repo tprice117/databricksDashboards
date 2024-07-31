@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from pricing_engine.api.v1.serializers import PricingEngineRequestSerializer
 from pricing_engine.models import PricingLineItemGroup
 from pricing_engine.pricing_engine import PricingEngine
+from pricing_engine.serializers import PricingLineItemGroupSerializer
 
 
 class SellerProductSellerLocationPricingView(APIView):
@@ -17,7 +18,7 @@ class SellerProductSellerLocationPricingView(APIView):
     @extend_schema(
         request=PricingEngineRequestSerializer,
         responses={
-            200: PricingLineItemGroup(many=True),
+            200: PricingLineItemGroupSerializer(many=True),
         },
     )
     def post(self, request):
