@@ -8,6 +8,7 @@
     <script>
         const checkoutModal = document.getElementById("checkout-orders-modal");
         const addCardModal = document.getElementById("add-card-modal");
+        const checkoutForm = document.getElementById("checkoutForm");
         let checkoutItemChanged = false;
         // listen for htmx afterSettle event.
         document.body.addEventListener("htmx:afterSettle", function (event) {
@@ -167,6 +168,15 @@
             }
         });
 
+        // Listen for form submit event
+        checkoutForm.addEventListener("submit", (event) => {
+            // Disable form submit button
+            document.getElementById("form_submit").disabled = true;
+            // Show htmx indicator by adding a class to the body htmx-request
+            document.getElementById("checkout-spinner").classList.add("htmx-request");
+        });
+
+
         window.addEventListener("load", async () => {
             try {
                 // Initialize BasisTheory SDK with Elements.
@@ -290,7 +300,7 @@
             {% csrf_token %}
             <input type="hidden" name="subtotal" value="{{ subtotal }}">
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
-            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" style="margin-top: 10px;">Checkout</button>
+            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" style="margin-top: 10px;">Checkout <span class="htmx-indicator" id="checkout-spinner"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
         </form>
     </div>
 {% endblock %}
