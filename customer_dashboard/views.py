@@ -1130,8 +1130,7 @@ def checkout(request, user_address_id):
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
             for order in orders:
-                order.submitted_on = timezone.now()
-                order.save()
+                order.submit_order(override_approval_policy=True)
             context["user_address"].default_payment_method_id = payment_method_id
             context["user_address"].save()
             messages.success(request, "Successfully checked out!")

@@ -25,6 +25,7 @@ from notifications.utils.add_email_to_queue import (
     add_internal_email_to_queue,
 )
 from communications.intercom.conversation import Conversation as IntercomConversation
+from common.models.choices.approval_status import ApprovalStatus
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +33,12 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 USER_MODEL = None
 USER_SELLER_LOCATION_MODEL = None
+ORDER_APPROVAL_MODEL = None
 
 
 def get_our_user_model():
-    """This function returns the Lob object. If the Lob object does not exist, it creates a new one.
-    This just makes so Lob is not reinstatiated every time it is called.
-    This also avoid the circular import issue."""
+    """This imports the User model.
+    This avoid the circular import issue."""
     global USER_MODEL
     if USER_MODEL is None:
         from api.models.user.user import User as USER_MODEL
@@ -46,9 +47,8 @@ def get_our_user_model():
 
 
 def get_user_seller_location_model():
-    """This function returns the Lob object. If the Lob object does not exist, it creates a new one.
-    This just makes so Lob is not reinstatiated every time it is called.
-    This also avoid the circular import issue."""
+    """This imports the UserSellerLocation model.
+    This avoid the circular import issue."""
     global USER_SELLER_LOCATION_MODEL
     if USER_SELLER_LOCATION_MODEL is None:
         from api.models.user.user_seller_location import (
@@ -56,6 +56,18 @@ def get_user_seller_location_model():
         )
 
     return USER_SELLER_LOCATION_MODEL
+
+
+def get_order_approval_model():
+    """This imports the OrderGroupAdminApprovalOrder model.
+    This avoid the circular import issue."""
+    global ORDER_APPROVAL_MODEL
+    if ORDER_APPROVAL_MODEL is None:
+        from admin_approvals.models import (
+            UserGroupAdminApprovalOrder as ORDER_APPROVAL_MODEL,
+        )
+
+    return ORDER_APPROVAL_MODEL
 
 
 @track_data(
@@ -438,8 +450,6 @@ class Order(BaseModel):
         """
         # Add policy checks for UserGroupPolicyMonthlyLimit and UserGroupPolicyPurchaseApproval.
         try:
-            from admin_approvals.models import UserGroupAdminApprovalOrder
-
             user = self.order_group.user
             # Admins are not subject to Order Approvals.
             if user.type != UserType.ADMIN:
@@ -478,7 +488,7 @@ class Order(BaseModel):
                     Order.objects.filter(id=self.id).update(
                         status=Order.Status.APPROVAL
                     )
-                    UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
+                    get_order_approval_model().objects.create(order_id=self.id)
                     # raise ValidationError(
                     #     "Monthly Order Limit has been exceeded. This Order will be sent to your Admin for approval."
                     # )
@@ -499,7 +509,7 @@ class Order(BaseModel):
                         Order.objects.filter(id=self.id).update(
                             status=Order.Status.APPROVAL
                         )
-                        UserGroupAdminApprovalOrder.objects.create(order_id=self.id)
+                        get_order_approval_model().objects.create(order_id=self.id)
                         # raise ValidationError(
                         #     "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
                         # )
@@ -827,6 +837,37 @@ class Order(BaseModel):
                 IntercomConversation.attach_booking_tag(conversation_id)
             except Exception as e:
                 logger.error(f"create_customer_chat:reply {e}", exc_info=e)
+
+    def submit_order(self, override_approval_policy=False):
+        """This method is used to submit an Order (set status to PENDING and set submitted_on to now).
+        It will check if the Order needs approval before it can be submitted.
+        If the Order needs approval and override_approval_policy is False, then it will raise a ValidationError.
+        If the Order needs approval and override_approval_policy is True, then it will approve the Order and submit it.
+        """
+        if not self.submitted_on:
+            # Check if order needed approval
+            if self.status == Order.Status.APPROVAL:
+                if not override_approval_policy:
+                    raise ValidationError(
+                        "Order needs approval before it can be submitted."
+                    )
+                order_approval = (
+                    get_order_approval_model().objects.filter(order_id=self.id).first()
+                )
+                if order_approval:
+                    # Order Approval has a pre_save signal to submit the order.
+                    order_approval.status = ApprovalStatus.APPROVED
+                    order_approval.save()
+                else:
+                    # For some reason, the order_approval is missing. This should not happen.
+                    # But if it does, then just submit the order.
+                    self.status = Order.Status.PENDING
+                    self.submitted_on = timezone.now()
+                    self.save()
+            else:
+                self.status = Order.Status.PENDING
+                self.submitted_on = timezone.now()
+                self.save()
 
     def __str__(self):
         return (
