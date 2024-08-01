@@ -1705,78 +1705,63 @@ def location_detail(request, location_id):
     if request.method == "POST":
         try:
             save_model = None
-            if "access_details_submit" in request.POST:
-                form = AccessDetailsForm(request.POST)
-                context["form"] = form
-                if form.is_valid():
-                    if (
-                        form.cleaned_data.get("access_details")
-                        != user_address.access_details
-                    ):
-                        user_address.access_details = form.cleaned_data.get(
-                            "access_details"
-                        )
-                        save_model = user_address
-                else:
-                    raise InvalidFormError(form, "Invalid AccessDetailsForm")
-            elif "user_address_submit" in request.POST:
-                form = UserAddressForm(request.POST)
-                context["user_address_form"] = form
-                if form.is_valid():
-                    if form.cleaned_data.get("name") != user_address.name:
-                        user_address.name = form.cleaned_data.get("name")
-                        save_model = user_address
-                    if form.cleaned_data.get("address_type") != str(
-                        user_address.user_address_type_id
-                    ):
-                        user_address.user_address_type_id = form.cleaned_data.get(
-                            "address_type"
-                        )
-                        save_model = user_address
-                    if form.cleaned_data.get("street") != user_address.street:
-                        user_address.street = form.cleaned_data.get("street")
-                        save_model = user_address
-                    if form.cleaned_data.get("city") != user_address.city:
-                        user_address.city = form.cleaned_data.get("city")
-                        save_model = user_address
-                    if form.cleaned_data.get("state") != user_address.state:
-                        user_address.state = form.cleaned_data.get("state")
-                        save_model = user_address
-                    if form.cleaned_data.get("postal_code") != user_address.postal_code:
-                        user_address.postal_code = form.cleaned_data.get("postal_code")
-                        save_model = user_address
-                    if form.cleaned_data.get("autopay") != user_address.autopay:
-                        user_address.autopay = form.cleaned_data.get("autopay")
-                        save_model = user_address
-                    if form.cleaned_data.get("is_archived") != user_address.is_archived:
-                        user_address.is_archived = form.cleaned_data.get("is_archived")
-                        save_model = user_address
-                    if (
-                        form.cleaned_data.get("access_details")
-                        != user_address.access_details
-                    ):
-                        user_address.access_details = form.cleaned_data.get(
-                            "access_details"
-                        )
-                        save_model = user_address
-                    if (
-                        form.cleaned_data.get("allow_saturday_delivery")
-                        != user_address.allow_saturday_delivery
-                    ):
-                        user_address.allow_saturday_delivery = form.cleaned_data.get(
-                            "allow_saturday_delivery"
-                        )
-                        save_model = user_address
-                    if (
-                        form.cleaned_data.get("allow_sunday_delivery")
-                        != user_address.allow_sunday_delivery
-                    ):
-                        user_address.allow_sunday_delivery = form.cleaned_data.get(
-                            "allow_sunday_delivery"
-                        )
-                        save_model = user_address
-                else:
-                    raise InvalidFormError(form, "Invalid UserAddressForm")
+            form = UserAddressForm(request.POST)
+            context["user_address_form"] = form
+            if form.is_valid():
+                if form.cleaned_data.get("name") != user_address.name:
+                    user_address.name = form.cleaned_data.get("name")
+                    save_model = user_address
+                if form.cleaned_data.get("address_type") != str(
+                    user_address.user_address_type_id
+                ):
+                    user_address.user_address_type_id = form.cleaned_data.get(
+                        "address_type"
+                    )
+                    save_model = user_address
+                if form.cleaned_data.get("street") != user_address.street:
+                    user_address.street = form.cleaned_data.get("street")
+                    save_model = user_address
+                if form.cleaned_data.get("city") != user_address.city:
+                    user_address.city = form.cleaned_data.get("city")
+                    save_model = user_address
+                if form.cleaned_data.get("state") != user_address.state:
+                    user_address.state = form.cleaned_data.get("state")
+                    save_model = user_address
+                if form.cleaned_data.get("postal_code") != user_address.postal_code:
+                    user_address.postal_code = form.cleaned_data.get("postal_code")
+                    save_model = user_address
+                if form.cleaned_data.get("autopay") != user_address.autopay:
+                    user_address.autopay = form.cleaned_data.get("autopay")
+                    save_model = user_address
+                if form.cleaned_data.get("is_archived") != user_address.is_archived:
+                    user_address.is_archived = form.cleaned_data.get("is_archived")
+                    save_model = user_address
+                if (
+                    form.cleaned_data.get("access_details")
+                    != user_address.access_details
+                ):
+                    user_address.access_details = form.cleaned_data.get(
+                        "access_details"
+                    )
+                    save_model = user_address
+                if (
+                    form.cleaned_data.get("allow_saturday_delivery")
+                    != user_address.allow_saturday_delivery
+                ):
+                    user_address.allow_saturday_delivery = form.cleaned_data.get(
+                        "allow_saturday_delivery"
+                    )
+                    save_model = user_address
+                if (
+                    form.cleaned_data.get("allow_sunday_delivery")
+                    != user_address.allow_sunday_delivery
+                ):
+                    user_address.allow_sunday_delivery = form.cleaned_data.get(
+                        "allow_sunday_delivery"
+                    )
+                    save_model = user_address
+            else:
+                raise InvalidFormError(form, "Invalid UserAddressForm")
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
@@ -2478,7 +2463,10 @@ def company_detail(request, user_group_id=None):
             if form.cleaned_data.get("autopay") != user_group.autopay:
                 user_group.autopay = form.cleaned_data.get("autopay")
                 save_db = True
-            if form.cleaned_data.get("net_terms") != user_group.net_terms:
+            if (
+                form.cleaned_data.get("net_terms")
+                and form.cleaned_data.get("net_terms") != user_group.net_terms
+            ):
                 user_group.net_terms = form.cleaned_data.get("net_terms")
                 save_db = True
             if (
@@ -2507,6 +2495,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("credit_line_limit")
+                and form.cleaned_data.get("credit_line_limit")
                 != user_group.credit_line_limit
             ):
                 user_group.credit_line_limit = form.cleaned_data.get(
@@ -2515,6 +2504,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("compliance_status")
+                and form.cleaned_data.get("compliance_status")
                 != user_group.compliance_status
             ):
                 user_group.compliance_status = form.cleaned_data.get(
