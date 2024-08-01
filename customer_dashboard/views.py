@@ -49,7 +49,6 @@ from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
-from api.pricing_ml import pricing
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
@@ -1102,14 +1101,36 @@ def add_payment_method(request):
     context = get_user_context(request)
     http_status = 204
     if request.method == "POST":
+        user_address_id = request.POST.get("user_address")
+        # If staff, then get the user and user_group from the user_address.
+        # If impersonating, then user and user_group are already set.
+        if request.user.is_staff and not is_impersonating(request):
+            context["user_address"] = UserAddress.objects.filter(
+                id=user_address_id
+            ).first()
+            context["user_group"] = context["user_address"].user_group
+            context["user"] = (
+                context["user_group"].users.filter(type=UserType.ADMIN).first()
+            )
+            if not context["user"]:
+                context["user"] = context["user_group"].users.first()
         token = request.POST.get("token")
         if token:
-            payment_method = PaymentMethod(
-                user=context["user"], user_group=context["user_group"], token=token
-            )
-            payment_method.save()
-            messages.success(request, "Payment method added.")
-            http_status = 201
+            if context["user"] and context["user_group"]:
+                payment_method = PaymentMethod(
+                    user=context["user"], user_group=context["user_group"], token=token
+                )
+                payment_method.save()
+                messages.success(request, "Payment method added.")
+                http_status = 201
+
+            else:
+                if not context["user"]:
+                    messages.error(request, "Unable to save card. User not found.")
+                elif not context["user_group"]:
+                    messages.error(request, "Unable to save card. Company not found.")
+                http_status = 400
+
     return HttpResponse(status=http_status)
 
 
