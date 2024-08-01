@@ -1,3 +1,4 @@
+{% load static %}
 <div class="modal-dialog" role="document" id="order-swap-form">
     <div class="modal-content">
         <div class="modal-header">
@@ -9,7 +10,7 @@
             <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-            <form hx-post="{{ submit_link }}" hx-target="#order-swap-form" hx-swap="outerHTML">
+            <form hx-post="{{ submit_link }}" hx-target="#order-swap-form" hx-swap="outerHTML" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
                 {% csrf_token %}
                 <!-- Include the hidden fields -->
                 {% for hidden in form.hidden_fields %}
@@ -54,7 +55,7 @@
                     <p class="text-success">{{ form_msg }}</p>
                 {% endif %}
                 <div class="d-flex flex-row-reverse">
-                    <button class="btn btn-primary" type="submit" name="swap_button" style="margin-top: 12px;">Add to Cart</button>
+                    <button class="btn btn-primary" type="submit" name="swap_button" style="margin-top: 12px;">Add to Cart <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
                 </div>
             </form>
         </div>
