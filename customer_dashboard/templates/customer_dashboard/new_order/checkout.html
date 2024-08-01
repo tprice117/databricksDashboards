@@ -97,7 +97,8 @@
                 //    next: window.location.pathname
                 // })
                 const data = new URLSearchParams();
-                data.append('token', 'token.id');
+                data.append('token', token.id);
+                data.append('user_address', '{{ user_address.id }}');
                 data.append('next', window.location.pathname);
                 const response = await fetch("{% url 'customer_new_payment' %}", {
                     method: "POST",
