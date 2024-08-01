@@ -223,6 +223,33 @@
                 }
             });
         }
+        // Disable submit button after the form is submitted for all non htmx forms
+        document.addEventListener("DOMContentLoaded", function () {
+            // Select all forms that do not contain an attribute that starts with hx-
+            document.querySelectorAll("form:not([hx-]").forEach(function (form) {
+                form.addEventListener("submit", function () {
+                    // Disable the submit button
+                    let submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        // Create the span element
+                        var span = document.createElement("span");
+                        span.className = "htmx-indicator htmx-request ms-2";
+        
+                        // Create the img element
+                        var img = document.createElement("img");
+                        img.className = "svg-loader";
+                        img.src = "{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}";
+                        // Append the img to the span
+                        span.appendChild(img);
+        
+                        // Append the span to a target element in the DOM
+                        // Replace 'targetElementId' with the actual ID of the target element
+                        submitButton.appendChild(span);
+                        submitButton.disabled = true;
+                    }
+                });
+            });
+        });
     </script>
     {% block javascript %}{% endblock %}
 </body>

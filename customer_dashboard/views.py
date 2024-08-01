@@ -775,12 +775,14 @@ def new_order_3(request, product_id):
         query_params = {
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
-            "service_recurring_frequency_id": request.POST.get("service_frequency"),
             "delivery_date": request.POST.get("delivery_date"),
-            "removal_date": request.POST.get("removal_date"),
+            "removal_date": request.POST.get("removal_date", ""),
+            "schedule_window": request.POST.get("schedule_window"),
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
         }
+        if request.POST.get("service_frequency"):
+            query_params["service_frequency"] = request.POST.get("service_frequency")
         if not query_params["removal_date"]:
             # This happens for one-time orders like junk removal,
             # where the removal date is the same as the delivery date.
@@ -841,9 +843,10 @@ def new_order_4(request):
     context["product_add_on_choices"] = request.GET.getlist("product_add_on_choices")
     if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
         context["product_add_on_choices"] = []
-    context["service_frequency"] = request.GET.get("service_frequency")
+    context["schedule_window"] = request.GET.get("schedule_window", "")
+    context["service_frequency"] = request.GET.get("service_frequency", "")
     context["delivery_date"] = request.GET.get("delivery_date")
-    context["removal_date"] = request.GET.get("removal_date")
+    context["removal_date"] = request.GET.get("removal_date", "")
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
@@ -941,7 +944,9 @@ def new_order_5(request):
     context["cart"] = {}
     if request.method == "POST":
         # Create the order group and orders.
-        seller_product_location_id = request.POST.get("seller_product_location_id")
+        seller_product_seller_location_id = request.POST.get(
+            "seller_product_seller_location_id"
+        )
         product_id = request.POST.get("product_id")
         user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
@@ -949,6 +954,7 @@ def new_order_5(request):
             product_waste_types = ast.literal_eval(product_waste_types)
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
+        schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
         service_frequency = request.POST.get("service_frequency")
         delivery_date = request.POST.get("delivery_date")
         removal_date = request.POST.get("removal_date")
@@ -958,7 +964,7 @@ def new_order_5(request):
         main_product = main_product.first()
         context["main_product"] = main_product
         seller_product_location = SellerProductSellerLocation.objects.get(
-            id=seller_product_location_id
+            id=seller_product_seller_location_id
         )
         user_address = UserAddress.objects.filter(id=user_address_id).first()
         # create order group and orders
@@ -966,7 +972,7 @@ def new_order_5(request):
         order_group = OrderGroup(
             user=context["user"],
             user_address=user_address,
-            seller_product_seller_location_id=seller_product_location_id,
+            seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
             take_rate=30.0,
         )
@@ -981,7 +987,9 @@ def new_order_5(request):
         order_group.save()
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
         # The first order of an order group always gets the same start and end date.
-        order = order_group.create_delivery(delivery_date)
+        order = order_group.create_delivery(
+            delivery_date, schedule_window=schedule_window
+        )
         # context["cart"][order_group.id] = {
         #     "order_group": order_group,
         #     "price": order.customer_price()
@@ -2656,8 +2664,6 @@ def new_company(request):
                     compliance_status=form.cleaned_data.get("compliance_status"),
                     tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
                 )
-                context["user_group"] = user_group
-                user_group.save()
                 if context["user_form"].is_valid():
                     # Create New User
                     email = context["user_form"].cleaned_data.get("email")
@@ -2669,11 +2675,15 @@ def new_company(request):
                                 f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
                             )
                         else:
+                            context["user_group"] = user_group
+                            user_group.save()  # Only save if User will be saved.
                             user.user_group = user_group
                             user.save()
                             messages.success(request, "Successfully saved!")
                             return HttpResponseRedirect(reverse("customer_companies"))
                     else:
+                        context["user_group"] = user_group
+                        user_group.save()  # Only save if User will be saved.
                         user = User(
                             first_name=context["user_form"].cleaned_data.get(
                                 "first_name"
