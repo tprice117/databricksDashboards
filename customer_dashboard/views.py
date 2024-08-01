@@ -775,12 +775,14 @@ def new_order_3(request, product_id):
         query_params = {
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
-            "service_recurring_frequency_id": request.POST.get("service_frequency"),
             "delivery_date": request.POST.get("delivery_date"),
-            "removal_date": request.POST.get("removal_date"),
+            "removal_date": request.POST.get("removal_date", ""),
+            "schedule_window": request.POST.get("schedule_window"),
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
         }
+        if request.POST.get("service_frequency"):
+            query_params["service_frequency"] = request.POST.get("service_frequency")
         if not query_params["removal_date"]:
             # This happens for one-time orders like junk removal,
             # where the removal date is the same as the delivery date.
@@ -841,9 +843,10 @@ def new_order_4(request):
     context["product_add_on_choices"] = request.GET.getlist("product_add_on_choices")
     if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
         context["product_add_on_choices"] = []
-    context["service_frequency"] = request.GET.get("service_frequency")
+    context["schedule_window"] = request.GET.get("schedule_window", "")
+    context["service_frequency"] = request.GET.get("service_frequency", "")
     context["delivery_date"] = request.GET.get("delivery_date")
-    context["removal_date"] = request.GET.get("removal_date")
+    context["removal_date"] = request.GET.get("removal_date", "")
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
@@ -941,7 +944,9 @@ def new_order_5(request):
     context["cart"] = {}
     if request.method == "POST":
         # Create the order group and orders.
-        seller_product_location_id = request.POST.get("seller_product_location_id")
+        seller_product_seller_location_id = request.POST.get(
+            "seller_product_seller_location_id"
+        )
         product_id = request.POST.get("product_id")
         user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
@@ -949,6 +954,7 @@ def new_order_5(request):
             product_waste_types = ast.literal_eval(product_waste_types)
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
+        schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
         service_frequency = request.POST.get("service_frequency")
         delivery_date = request.POST.get("delivery_date")
         removal_date = request.POST.get("removal_date")
@@ -958,7 +964,7 @@ def new_order_5(request):
         main_product = main_product.first()
         context["main_product"] = main_product
         seller_product_location = SellerProductSellerLocation.objects.get(
-            id=seller_product_location_id
+            id=seller_product_seller_location_id
         )
         user_address = UserAddress.objects.filter(id=user_address_id).first()
         # create order group and orders
@@ -966,7 +972,7 @@ def new_order_5(request):
         order_group = OrderGroup(
             user=context["user"],
             user_address=user_address,
-            seller_product_seller_location_id=seller_product_location_id,
+            seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
             take_rate=30.0,
         )
@@ -981,7 +987,9 @@ def new_order_5(request):
         order_group.save()
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
         # The first order of an order group always gets the same start and end date.
-        order = order_group.create_delivery(delivery_date)
+        order = order_group.create_delivery(
+            delivery_date, schedule_window=schedule_window
+        )
         # context["cart"][order_group.id] = {
         #     "order_group": order_group,
         #     "price": order.customer_price()
@@ -1327,7 +1335,12 @@ def order_group_swap(request, order_group_id, is_removal=False):
                     order_group.create_removal(swap_date, schedule_window)
                 else:
                     order_group.create_swap(swap_date, schedule_window)
+                # Add response header to let HTMX know to redirect to the cart page.
+                response = HttpResponse("", status=201)
+                response["HX-Redirect"] = reverse("customer_cart")
                 context["form_msg"] = "Successfully saved!"
+                messages.success(request, "Successfully added to cart!")
+                return response
             else:
                 raise InvalidFormError(form, "Invalid UserInviteForm")
         except InvalidFormError as e:
@@ -1692,78 +1705,63 @@ def location_detail(request, location_id):
     if request.method == "POST":
         try:
             save_model = None
-            if "access_details_submit" in request.POST:
-                form = AccessDetailsForm(request.POST)
-                context["form"] = form
-                if form.is_valid():
-                    if (
-                        form.cleaned_data.get("access_details")
-                        != user_address.access_details
-                    ):
-                        user_address.access_details = form.cleaned_data.get(
-                            "access_details"
-                        )
-                        save_model = user_address
-                else:
-                    raise InvalidFormError(form, "Invalid AccessDetailsForm")
-            elif "user_address_submit" in request.POST:
-                form = UserAddressForm(request.POST)
-                context["user_address_form"] = form
-                if form.is_valid():
-                    if form.cleaned_data.get("name") != user_address.name:
-                        user_address.name = form.cleaned_data.get("name")
-                        save_model = user_address
-                    if form.cleaned_data.get("address_type") != str(
-                        user_address.user_address_type_id
-                    ):
-                        user_address.user_address_type_id = form.cleaned_data.get(
-                            "address_type"
-                        )
-                        save_model = user_address
-                    if form.cleaned_data.get("street") != user_address.street:
-                        user_address.street = form.cleaned_data.get("street")
-                        save_model = user_address
-                    if form.cleaned_data.get("city") != user_address.city:
-                        user_address.city = form.cleaned_data.get("city")
-                        save_model = user_address
-                    if form.cleaned_data.get("state") != user_address.state:
-                        user_address.state = form.cleaned_data.get("state")
-                        save_model = user_address
-                    if form.cleaned_data.get("postal_code") != user_address.postal_code:
-                        user_address.postal_code = form.cleaned_data.get("postal_code")
-                        save_model = user_address
-                    if form.cleaned_data.get("autopay") != user_address.autopay:
-                        user_address.autopay = form.cleaned_data.get("autopay")
-                        save_model = user_address
-                    if form.cleaned_data.get("is_archived") != user_address.is_archived:
-                        user_address.is_archived = form.cleaned_data.get("is_archived")
-                        save_model = user_address
-                    if (
-                        form.cleaned_data.get("access_details")
-                        != user_address.access_details
-                    ):
-                        user_address.access_details = form.cleaned_data.get(
-                            "access_details"
-                        )
-                        save_model = user_address
-                    if (
-                        form.cleaned_data.get("allow_saturday_delivery")
-                        != user_address.allow_saturday_delivery
-                    ):
-                        user_address.allow_saturday_delivery = form.cleaned_data.get(
-                            "allow_saturday_delivery"
-                        )
-                        save_model = user_address
-                    if (
-                        form.cleaned_data.get("allow_sunday_delivery")
-                        != user_address.allow_sunday_delivery
-                    ):
-                        user_address.allow_sunday_delivery = form.cleaned_data.get(
-                            "allow_sunday_delivery"
-                        )
-                        save_model = user_address
-                else:
-                    raise InvalidFormError(form, "Invalid UserAddressForm")
+            form = UserAddressForm(request.POST)
+            context["user_address_form"] = form
+            if form.is_valid():
+                if form.cleaned_data.get("name") != user_address.name:
+                    user_address.name = form.cleaned_data.get("name")
+                    save_model = user_address
+                if form.cleaned_data.get("address_type") != str(
+                    user_address.user_address_type_id
+                ):
+                    user_address.user_address_type_id = form.cleaned_data.get(
+                        "address_type"
+                    )
+                    save_model = user_address
+                if form.cleaned_data.get("street") != user_address.street:
+                    user_address.street = form.cleaned_data.get("street")
+                    save_model = user_address
+                if form.cleaned_data.get("city") != user_address.city:
+                    user_address.city = form.cleaned_data.get("city")
+                    save_model = user_address
+                if form.cleaned_data.get("state") != user_address.state:
+                    user_address.state = form.cleaned_data.get("state")
+                    save_model = user_address
+                if form.cleaned_data.get("postal_code") != user_address.postal_code:
+                    user_address.postal_code = form.cleaned_data.get("postal_code")
+                    save_model = user_address
+                if form.cleaned_data.get("autopay") != user_address.autopay:
+                    user_address.autopay = form.cleaned_data.get("autopay")
+                    save_model = user_address
+                if form.cleaned_data.get("is_archived") != user_address.is_archived:
+                    user_address.is_archived = form.cleaned_data.get("is_archived")
+                    save_model = user_address
+                if (
+                    form.cleaned_data.get("access_details")
+                    != user_address.access_details
+                ):
+                    user_address.access_details = form.cleaned_data.get(
+                        "access_details"
+                    )
+                    save_model = user_address
+                if (
+                    form.cleaned_data.get("allow_saturday_delivery")
+                    != user_address.allow_saturday_delivery
+                ):
+                    user_address.allow_saturday_delivery = form.cleaned_data.get(
+                        "allow_saturday_delivery"
+                    )
+                    save_model = user_address
+                if (
+                    form.cleaned_data.get("allow_sunday_delivery")
+                    != user_address.allow_sunday_delivery
+                ):
+                    user_address.allow_sunday_delivery = form.cleaned_data.get(
+                        "allow_sunday_delivery"
+                    )
+                    save_model = user_address
+            else:
+                raise InvalidFormError(form, "Invalid UserAddressForm")
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
@@ -2465,7 +2463,10 @@ def company_detail(request, user_group_id=None):
             if form.cleaned_data.get("autopay") != user_group.autopay:
                 user_group.autopay = form.cleaned_data.get("autopay")
                 save_db = True
-            if form.cleaned_data.get("net_terms") != user_group.net_terms:
+            if (
+                form.cleaned_data.get("net_terms")
+                and form.cleaned_data.get("net_terms") != user_group.net_terms
+            ):
                 user_group.net_terms = form.cleaned_data.get("net_terms")
                 save_db = True
             if (
@@ -2494,6 +2495,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("credit_line_limit")
+                and form.cleaned_data.get("credit_line_limit")
                 != user_group.credit_line_limit
             ):
                 user_group.credit_line_limit = form.cleaned_data.get(
@@ -2502,6 +2504,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("compliance_status")
+                and form.cleaned_data.get("compliance_status")
                 != user_group.compliance_status
             ):
                 user_group.compliance_status = form.cleaned_data.get(
@@ -2656,8 +2659,6 @@ def new_company(request):
                     compliance_status=form.cleaned_data.get("compliance_status"),
                     tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
                 )
-                context["user_group"] = user_group
-                user_group.save()
                 if context["user_form"].is_valid():
                     # Create New User
                     email = context["user_form"].cleaned_data.get("email")
@@ -2669,11 +2670,15 @@ def new_company(request):
                                 f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
                             )
                         else:
+                            context["user_group"] = user_group
+                            user_group.save()  # Only save if User will be saved.
                             user.user_group = user_group
                             user.save()
                             messages.success(request, "Successfully saved!")
                             return HttpResponseRedirect(reverse("customer_companies"))
                     else:
+                        context["user_group"] = user_group
+                        user_group.save()  # Only save if User will be saved.
                         user = User(
                             first_name=context["user_form"].cleaned_data.get(
                                 "first_name"

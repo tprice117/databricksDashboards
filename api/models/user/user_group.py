@@ -228,6 +228,9 @@ class CompanyUtils:
         orders = orders.order_by("order_group__user__user_group", "-end_date")
         user_groups = []
         for order in orders:
+            if order.order_group.user.user_group is None:
+                # This happens when a user is not part of a UserGroup.
+                continue
             setattr(order.order_group.user.user_group, "last_order", order.end_date)
             user_groups.append(order.order_group.user.user_group)
         # sort based on user_group.created_on

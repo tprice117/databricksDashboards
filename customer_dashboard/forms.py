@@ -338,13 +338,13 @@ class OrderGroupForm(forms.Form):
     )
     # Add is estimated end date checkbox
     # NOTE: Maybe also say that we will assume monthly rental for now.
-    is_estimated_end_date = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
+    # is_estimated_end_date = forms.BooleanField(
+    #     initial=False,
+    #     widget=forms.CheckboxInput(
+    #         attrs={"class": "form-check-input", "role": "switch"}
+    #     ),
+    #     required=False,
+    # )
     schedule_window = forms.ChoiceField(
         choices=[
             ("Morning (7am-11am)", "Morning (7am-11am)"),
@@ -378,12 +378,10 @@ class OrderGroupForm(forms.Form):
             # Hide delivery and removal date fields
             # Change label of delivery date to service date
             self.fields["delivery_date"].label = "Service Date"
-            # self.fields["delivery_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].widget = forms.HiddenInput()
-            self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
-            # self.fields["delivery_date"].required = False
+            # self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].required = False
-            self.fields["is_estimated_end_date"].required = False
+            # self.fields["is_estimated_end_date"].required = False
 
     def clean_delivery_date(self):
         # Do not allow delivery date to be on a Sunday.
