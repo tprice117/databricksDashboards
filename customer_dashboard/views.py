@@ -1335,7 +1335,12 @@ def order_group_swap(request, order_group_id, is_removal=False):
                     order_group.create_removal(swap_date, schedule_window)
                 else:
                     order_group.create_swap(swap_date, schedule_window)
+                # Add response header to let HTMX know to redirect to the cart page.
+                response = HttpResponse("", status=201)
+                response["HX-Redirect"] = reverse("customer_cart")
                 context["form_msg"] = "Successfully saved!"
+                messages.success(request, "Successfully added to cart!")
+                return response
             else:
                 raise InvalidFormError(form, "Invalid UserInviteForm")
         except InvalidFormError as e:
