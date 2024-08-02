@@ -24,6 +24,7 @@ class PaymentMethodAdmin(admin.ModelAdmin):
         "active",
     )
     list_filter = ("active",)
+    search_fields = ["user__email", "user_group__name", "id", "token"]
 
     @admin.display(ordering="user__email", description="User Email")
     def get_user(self, obj):
