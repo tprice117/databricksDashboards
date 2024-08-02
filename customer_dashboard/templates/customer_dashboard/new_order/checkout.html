@@ -169,14 +169,6 @@
             }
         });
 
-        // Listen for form submit event
-        checkoutForm.addEventListener("submit", (event) => {
-            // Disable form submit button
-            document.getElementById("form_submit").disabled = true;
-            // Show htmx indicator by adding a class to the body htmx-request
-            document.getElementById("checkout-spinner").classList.add("htmx-request");
-        });
-
 
         window.addEventListener("load", async () => {
             try {
@@ -260,12 +252,68 @@
                 <h4 class="card-title">Select Payment Method<button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
             </div>
             <div class="card-body">
+                {% if user_address.user_group.credit_line_limit and user_address.user_group.credit_line_limit != 0 %}
+                    {% if user_address.user_group.credit_limit_remaining > 0 %}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" value="paylater">
+                                    <div class="row">
+                                        <div class="col">
+                                            <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
+                                        </div>
+                                        <div class="col">
+                                            <p class="text-end" style="margin-bottom: 0px;"><span class="badge bg-success">${{ user_address.user_group.credit_limit_remaining|floatformat:2|intcomma }} Available</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <div class="row">
+                                        <div class="col">
+                                            <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
+                                        </div>
+                                        <div class="col">
+                                            <p class="text-end" style="margin-bottom: 0px;"><span class="badge bg-danger">${{ user_address.user_group.credit_limit_remaining|floatformat:2|intcomma }} Over</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <div class="row">
+                                    <div class="col">
+                                        <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
+                                    </div>
+                                    <div class="col">
+                                        <p class="text-end" style="margin-bottom: 0px;"><span class="badge bg-info">
+                                            {% if user_address.user_group.credit_line_limit == 0 %}
+                                                Denied, resend application
+                                            {% else %}
+                                                Send Application
+                                            {% endif %}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
                 {% for payment_method in payment_methods %}
                     <div class="card">
                         <div class="card-body">
                             <div class="form-check">
                                 {% if forloop.first %}
-                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" required>
+                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" required checked>
                                 {% else %}
                                     <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}">
                                 {% endif %}
@@ -301,7 +349,7 @@
             {% csrf_token %}
             <input type="hidden" name="subtotal" value="{{ subtotal }}">
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
-            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" style="margin-top: 10px;">Checkout <span class="htmx-indicator" id="checkout-spinner"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+            <button id="form_submit" class="btn btn-primary float-end mb-4" type="submit" name="form_submit" style="margin-top: 10px;">Checkout</button>
         </form>
     </div>
 {% endblock %}

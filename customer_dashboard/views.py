@@ -1158,10 +1158,13 @@ def checkout(request, user_address_id):
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
+            if payment_method_id == "paylater":
+                pass
+            else:
+                context["user_address"].default_payment_method_id = payment_method_id
+                context["user_address"].save()
             for order in orders:
                 order.submit_order(override_approval_policy=True)
-            context["user_address"].default_payment_method_id = payment_method_id
-            context["user_address"].save()
             messages.success(request, "Successfully checked out!")
             return HttpResponseRedirect(reverse("customer_cart"))
         else:
@@ -1194,6 +1197,8 @@ def checkout(request, user_address_id):
             payment_methods = PaymentMethod.objects.filter(active=True).filter(
                 user_id=context["user"].id
             )
+    # Order payment methods by oldest first.
+    payment_methods = payment_methods.order_by("created_on")
     context["payment_methods"] = payment_methods
     context["needs_approval"] = False
     for order in orders:
