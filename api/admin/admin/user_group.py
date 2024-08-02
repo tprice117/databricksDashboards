@@ -3,6 +3,7 @@ import csv
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from django.utils.html import format_html
 
 from admin_approvals.admin.inlines.user_group_admin_approval_order import (
     UserGroupAdminApprovalOrderInline,
@@ -96,7 +97,18 @@ class UserGroupAdmin(admin.ModelAdmin):
         )
 
     def credit_utilization(self, obj: UserGroup):
-        return f"{float(obj.credit_limit_used()) / float(float(obj.credit_line_limit or 0.0) + float(0.0000000001))}%"
+        if obj.credit_line_limit is None:
+            return "N/A"
+        elif obj.credit_line_limit == 0:
+            return "Denied"
+        else:
+            credit_used = float(obj.credit_limit_used())
+            credit_line_limit = float(obj.credit_line_limit)
+            if credit_used > credit_line_limit:
+                return format_html(
+                    f"<span style='color:red;'>Over: ${round(credit_used - credit_line_limit, 2)}</span>"
+                )
+            return format_html(f"{round((credit_used / credit_line_limit) * 100, 2)}%")
 
     def import_csv(self, request):
         if request.method == "POST":
