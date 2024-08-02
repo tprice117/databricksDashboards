@@ -158,6 +158,21 @@ class UserGroup(BaseModel):
             credit_used += order_line_item.customer_price()
         return credit_used
 
+    def lifetime_spend(self):
+        order_line_items = OrderLineItem.objects.filter(
+            order__order_group__user_address__user_group_id=self.id
+        )
+        credit_used = 0
+        for order_line_item in order_line_items:
+            credit_used += order_line_item.customer_price()
+        return credit_used
+
+    @property
+    def credit_limit_remaining(self):
+        if not self.credit_line_limit:
+            return None
+        return self.credit_line_limit - self.credit_limit_used()
+
     def post_delete(sender, instance, **kwargs):
         # Delete intercom Company.
         try:
