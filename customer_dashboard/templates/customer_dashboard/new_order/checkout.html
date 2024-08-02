@@ -312,10 +312,12 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="form-check">
-                                {% if forloop.first %}
-                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" required checked>
-                                {% else %}
-                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}">
+                                {% if payment_method.active %}
+                                    {% if forloop.first %}
+                                        <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" required checked>
+                                    {% else %}
+                                        <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}">
+                                    {% endif %}
                                 {% endif %}
                                 <div class="row">
                                     <div class="col">
@@ -325,6 +327,13 @@
                                         <p class="text-end" style="margin-bottom: 0px;">Expires {{ payment_method.card_exp_month }}/{{ payment_method.card_exp_year }}</p>
                                     </div>
                                 </div>
+                                {% if not payment_method.active %}
+                                    <div class="row">
+                                        <div class="col">
+                                            <p class="text-danger" style="margin-bottom: 0px;">Inactive: {{ payment_method.inactive_reason }}</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

@@ -1181,20 +1181,20 @@ def checkout(request, user_address_id):
     context["cart_count"] = 0
     context["pre_tax_subtotal"] = 0
     if context["user_group"]:
-        payment_methods = PaymentMethod.objects.filter(active=True).filter(
+        payment_methods = PaymentMethod.objects.filter(
             user_group_id=context["user_group"].id
         )
     else:
         if context["user_address"].user_group_id:
-            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+            payment_methods = PaymentMethod.objects.filter(
                 user_group_id=context["user_address"].user_group_id
             )
         elif context["user_address"].user_id:
-            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+            payment_methods = PaymentMethod.objects.filter(
                 user_id=context["user_address"].user_id
             )
         else:
-            payment_methods = PaymentMethod.objects.filter(active=True).filter(
+            payment_methods = PaymentMethod.objects.filter(
                 user_id=context["user"].id
             )
     # Order payment methods by oldest first.
