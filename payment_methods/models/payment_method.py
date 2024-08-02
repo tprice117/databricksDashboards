@@ -1,3 +1,4 @@
+import re
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
@@ -68,6 +69,18 @@ class PaymentMethod(BaseModel):
 
     def get_card(self):
         return DSPaymentMethods.Tokens.get_card(self.token)
+
+    @property
+    def inactive_reason(self):
+        if self.reason:
+            pattern = r"\[Request req_[\w:]+: (.*?)\]-"
+            match = re.search(pattern, self.reason)
+            if match:
+                return match.group(1)
+            else:
+                return None
+        else:
+            return None
 
     def create_stripe_payment_method(self):
         """
