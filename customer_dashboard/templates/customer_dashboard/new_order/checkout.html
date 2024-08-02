@@ -316,7 +316,11 @@
                                     {% if forloop.first %}
                                         <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" required checked>
                                     {% else %}
-                                        <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}">
+                                        {% if payment_method.id == user_user_address.default_payment_method_id %}
+                                            <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" checked>
+                                        {% else %}
+                                            <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}">
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                                 <div class="row">
