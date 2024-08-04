@@ -17,7 +17,7 @@ class PricingLineItemGroupSerializer(serializers.ModelSerializer):
         fields = [
             "title",
             "items",
-            "total",
+            "sort",
         ]
 
     def to_representation(
