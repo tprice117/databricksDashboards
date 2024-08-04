@@ -402,6 +402,9 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MainProductSerializer
     filterset_fields = ["id", "main_product_category__id"]
 
+    def get_queryset(self):
+        return self.queryset.prefetch_related("add_ons", "add_ons__choices",)
+
 
 @authentication_classes([])
 @permission_classes([])
