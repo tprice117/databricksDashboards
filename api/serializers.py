@@ -320,21 +320,31 @@ class UserSellerReviewAggregateSerializer(serializers.Serializer):
     review_count = serializers.IntegerField()
 
 
-class AddOnSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-
-    class Meta:
-        model = AddOn
-        fields = "__all__"
-
-
 class AddOnChoiceSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
-    add_on = AddOnSerializer(read_only=True)
 
     class Meta:
         model = AddOnChoice
-        fields = "__all__"
+        fields = [
+            "id",
+            "add_on",
+            "name",
+        ]
+
+
+class AddOnSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    choices = AddOnChoiceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = AddOn
+        fields = [
+            "id",
+            "main_product",
+            "name",
+            "sort",
+            "choices",
+        ]
 
 
 class DisposalLocationSerializer(serializers.ModelSerializer):
@@ -411,6 +421,7 @@ class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product_category = MainProductCategorySerializer(read_only=True)
     main_product_infos = MainProductInfoSerializer(many=True, read_only=True)
+    add_ons = AddOnSerializer(many=True, read_only=True)
     tags = MainProductTagSerializer(many=True, read_only=True)
 
     class Meta:
