@@ -229,7 +229,7 @@
         document.body.addEventListener('htmx:beforeSwap', function(evt) {
             if(evt.detail.xhr.status >= 400) {
                 console.error("Error", evt.detail.xhr);
-                // alert the user when a 404 occurs (maybe use a nicer mechanism than alert())
+                // alert the user when a 400 error occurs when using htmx
                 Swal.fire(
                     {title: 'Error', text:`${evt.detail.xhr.response}`, icon: 'error'}
                 );
