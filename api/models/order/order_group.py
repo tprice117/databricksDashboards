@@ -1,13 +1,21 @@
 import logging
 
-from django.conf import settings
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from api.models import Order
 from api.models.day_of_week import DayOfWeek
+from api.models.main_product.main_product import MainProduct
+from api.models.order.order_group_material import OrderGroupMaterial
+from api.models.order.order_group_rental import OrderGroupRental
+from api.models.order.order_group_rental_multi_step import OrderGroupRentalMultiStep
+from api.models.order.order_group_rental_one_step import OrderGroupRentalOneStep
 from api.models.order.order_group_seller_decline import OrderGroupSellerDecline
+from api.models.order.order_group_service import OrderGroupService
+from api.models.order.order_group_service_times_per_week import (
+    OrderGroupServiceTimesPerWeek,
+)
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
@@ -294,3 +302,81 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
         # TODO: Create a Conversation in Intercom for the OrderGroup.
     # TODO: On OrderGroup complete, maybe close the Conversation in Intercom.
     # https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/manageconversation
+
+
+@receiver(post_save, sender=OrderGroup)
+def post_save(sender, instance: OrderGroup, created, **kwargs):
+    # If creating, capture the SellerProductSellerLocation pricing
+    # in the OrderGroup child objects.
+    if created:
+        main_product: MainProduct = (
+            instance.seller_product_seller_location.seller_product.product.main_product
+        )
+        seller_product_seller_location: SellerProductSellerLocation = (
+            instance.seller_product_seller_location
+        )
+
+        # Rental One Step.
+        if main_product.has_rental_one_step and hasattr(
+            seller_product_seller_location, "rental_one_step"
+        ):
+            OrderGroupRentalOneStep.objects.create(
+                order_group=instance,
+                rate=seller_product_seller_location.rental_one_step.rate,
+            )
+
+        # Rental (two step).
+        if main_product.has_rental and hasattr(
+            seller_product_seller_location, "rental"
+        ):
+            OrderGroupRental.objects.create(
+                order_group=instance,
+                included_days=seller_product_seller_location.rental.included_days,
+                price_per_day_included=seller_product_seller_location.rental.price_per_day_included,
+                price_per_day_additional=seller_product_seller_location.rental.price_per_day_additional,
+            )
+
+        # Rental Multi Step.
+        if main_product.has_rental_multi_step and hasattr(
+            seller_product_seller_location, "rental_multi_step"
+        ):
+            OrderGroupRentalMultiStep.objects.create(
+                order_group=instance,
+                hour=seller_product_seller_location.rental_multi_step.hour,
+                day=seller_product_seller_location.rental_multi_step.day,
+                week=seller_product_seller_location.rental_multi_step.week,
+                two_weeks=seller_product_seller_location.rental_multi_step.two_weeks,
+                month=seller_product_seller_location.rental_multi_step.month,
+            )
+
+        # Material.
+        if main_product.has_material and hasattr(
+            seller_product_seller_location, "material"
+        ):
+            OrderGroupMaterial.objects.create(
+                order_group=instance,
+                price_per_ton=seller_product_seller_location.material.price_per_ton,
+                tonnage_included=seller_product_seller_location.material.tonnage_included,
+            )
+
+        # Service (legacy).
+        if main_product.has_service and hasattr(
+            seller_product_seller_location, "service"
+        ):
+            OrderGroupService.objects.create(
+                order_group=instance,
+                rate=seller_product_seller_location.service.rate,
+            )
+
+        # Service Times Per Week.
+        if main_product.has_service_times_per_week and hasattr(
+            seller_product_seller_location, "service_times_per_week"
+        ):
+            OrderGroupServiceTimesPerWeek.objects.create(
+                order_group=instance,
+                one_time_per_week=seller_product_seller_location.service_times_per_week.one_time_per_week,
+                two_times_per_week=seller_product_seller_location.service_times_per_week.two_times_per_week,
+                three_times_per_week=seller_product_seller_location.service_times_per_week.three_times_per_week,
+                four_times_per_week=seller_product_seller_location.service_times_per_week.four_times_per_week,
+                five_times_per_week=seller_product_seller_location.service_times_per_week.five_times_per_week,
+            )
