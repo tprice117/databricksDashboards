@@ -974,7 +974,7 @@ def new_order_5(request):
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=30.0,
+            take_rate=main_product.default_take_rate,
         )
         if service_frequency:
             order_group.service_recurring_frequency_id = service_frequency
