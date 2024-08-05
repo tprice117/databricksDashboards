@@ -144,6 +144,16 @@ urlpatterns = [
         name="customer_checkout",
     ),
     path(
+        "customer/<uuid:user_address_id>/<uuid:payment_method_id>/default/payment/",
+        views.make_payment_method_default,
+        name="customer_default_payment_method",
+    ),
+    path(
+        "customer/<uuid:payment_method_id>/remove/payment/",
+        views.remove_payment_method,
+        name="customer_remove_payment_method",
+    ),
+    path(
         "customer/new/payment/",
         views.add_payment_method,
         name="customer_new_payment",
