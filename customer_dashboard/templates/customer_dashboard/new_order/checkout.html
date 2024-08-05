@@ -225,6 +225,16 @@
                 console.error("Initialize BasisTheory:", e);
             }
         });
+
+        document.body.addEventListener('htmx:beforeSwap', function(evt) {
+            if(evt.detail.xhr.status >= 400) {
+                console.error("Error", evt.detail.xhr);
+                // alert the user when a 404 occurs (maybe use a nicer mechanism than alert())
+                Swal.fire(
+                    {title: 'Error', text:`${evt.detail.xhr.response}`, icon: 'error'}
+                );
+            }
+        });
     </script>
 {% endblock %}
 {% block content %}
@@ -355,45 +365,7 @@
                     </div>
                 {% endif %}
                 {% for payment_method in payment_methods %}
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="form-check">
-                                {% if payment_method.active %}
-                                    {% if forloop.first or payment_method.id == user_user_address.default_payment_method_id %}
-                                        <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" required checked>
-                                    {% else %}
-                                        <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}">
-                                    {% endif %}
-                                {% endif %}
-                                <div class="row">
-                                    <div class="col">
-                                        <h4 style="margin-bottom: 0px;">
-                                            {% if payment_method.card_brand %}
-                                                {{ payment_method.card_brand }}
-                                            {% else %}
-                                                Card
-                                            {% endif %} XXXX
-                                            {% if payment_method.card_number %}
-                                                {{ payment_method.card_number|slice:"-4:" }}
-                                            {% endif %}
-                                            {% if forloop.first or payment_method.id == user_user_address.default_payment_method_id %}
-                                                <span class="badge bg-success fs-6"><i class="fas fa-star"></i> Default</span></h4>
-                                            {% endif %}
-                                    </div>
-                                    <div class="col">
-                                        <p class="text-end" style="margin-bottom: 0px;">Expires {{ payment_method.card_exp_month }}/{{ payment_method.card_exp_year }}</p>
-                                    </div>
-                                </div>
-                                {% if not payment_method.active %}
-                                    <div class="row mt-2">
-                                        <div class="col">
-                                            <p class="text-danger" style="margin-bottom: 0px;">Inactive: {{ payment_method.inactive_reason }}</p>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+                    {% include 'customer_dashboard/snippets/payment_method_item.html' %}
                 {% endfor %}
             </div>
         </div>
