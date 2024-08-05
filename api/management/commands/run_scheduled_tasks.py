@@ -40,10 +40,10 @@ class Command(BaseCommand):
         scheduler = BlockingScheduler(timezone=settings.TIME_ZONE)
         scheduler.add_jobstore(DjangoJobStore(), "default")
 
-        # Sync OrderLineItem paid status from Stripe. Run every 1 minute.
+        # Sync OrderLineItem paid status from Stripe. Run every 10 minutes.
         scheduler.add_job(
             update_order_line_item_paid_status,
-            trigger=CronTrigger(minute="*/1"),
+            trigger=CronTrigger(minute="*/10"),
             id="update_order_line_item_paid_status",
             max_instances=20,
             jitter=30,
