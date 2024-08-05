@@ -6,9 +6,18 @@ from api.models import UserAddressType, UserGroup
 from common.models.choices.user_type import UserType
 
 
-def validate_start_date(value):
+def validate_swap_start_date(value):
     allowed_start_date = datetime.date.today()
-    if value < datetime.date.today() + datetime.timedelta(days=1):
+    if value < allowed_start_date:
+        raise ValidationError(
+            "Date must be equal to or greater than: %(allowed_start_date)s",
+            params={"allowed_start_date": allowed_start_date},
+        )
+
+
+def validate_start_date(value):
+    allowed_start_date = datetime.date.today() + datetime.timedelta(days=1)
+    if value < allowed_start_date:
         raise ValidationError(
             "Date must be equal to or greater than: %(allowed_start_date)s",
             params={"allowed_start_date": allowed_start_date},
@@ -419,7 +428,7 @@ class OrderGroupSwapForm(forms.Form):
         widget=forms.HiddenInput(),
     )
     swap_date = forms.DateField(
-        validators=[validate_start_date],
+        validators=[validate_swap_start_date],
         widget=forms.DateInput(
             attrs={
                 "class": "form-control",
