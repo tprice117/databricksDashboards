@@ -112,11 +112,11 @@
                     // reload the page to reflect the changes
                     location.reload();
                 } else {
-                    console.error("Failed to create payment method");
+                    console.error("Failed to create payment method", response);
                     // Show popup with error message
                     Swal.fire({
                         title: 'Error!',
-                        text: 'Failed to create payment method',
+                        text: `Failed to create payment method: ${response.statusText}`,
                         icon: 'error',
                         confirmButtonText: 'Ok'
                     }).then((result) => {
@@ -124,7 +124,53 @@
                     });
                 }
             } catch (error) {
-                console.error(error);
+                console.error("Create Payment Error", error, error.details, event.data);
+                console.log(error.data, typeof error.data);
+                console.log(error.details, typeof error.details);
+                let errorReasons = [];
+                let errorTitle = "Error!";
+                if (error.data) {
+                    console.log("1", error.data, typeof error.data);
+                    let loopErrors = [];
+                    if (error.validationErrors && error.validationErrors.data) {
+                        loopErrors = error.validationErrors.data;
+                        errorTitle = "Validation Error!";
+                    } else if (error.data.errors) {
+                        loopErrors = error.data.errors;
+                    }
+                    if (error.data.title) {
+                        errorTitle = error.data.title;
+                    }
+                    for (let key in loopErrors) {
+                        if (loopErrors.hasOwnProperty(key)) {
+                            let reason = loopErrors[key];
+                            errorReasons.push(`${key}: ${reason}`);
+                        }
+                    }
+                } else if (error.details && error.details.data) {
+                    console.log("2", error.details.data, typeof error.details.data);
+                    errorTitle = "Validation Error!";
+                    // Extract and format error reasons from the data object
+                    errorReasons = [];
+                    for (let key in error.details.data) {
+                        if (error.details.data.hasOwnProperty(key)) {
+                            let reason = error.details.data[key].type;
+                            errorReasons.push(`${key}: ${reason}`);
+                        }
+                    }
+                    // `Reason: ${formattedErrorReasons}`,
+                } else {
+                    errorReasons.push(`Failed to create payment method: ${error}`);
+                }
+                let formattedErrorReasons = errorReasons.join(", ");
+                Swal.fire({
+                    title: errorTitle,
+                    text: `${formattedErrorReasons}`,
+                    icon: 'error',
+                    confirmButtonText: 'Ok'
+                }).then((result) => {
+                    enableAddCardSaveButton();
+                });
             }
         }
 
