@@ -43,12 +43,16 @@ from api.models import (
     UserAddress,
     UserAddressType,
     UserGroup,
+    OrderGroupMaterial,
 )
 from api.models.user.user import CompanyUtils as UserUtils
 from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
+from api.models.seller.seller_product_seller_location_material_waste_type import (
+    SellerProductSellerLocationMaterialWasteType,
+)
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
@@ -855,12 +859,14 @@ def new_order_4(request):
     # if product_waste_types:
     waste_type = None
     waste_type_id = None
+    # TODO: We are only using the first waste type for now.
     if context["product_waste_types"]:
         main_product_waste_type = MainProductWasteType.objects.filter(
             id=context["product_waste_types"][0]
         ).first()
         waste_type = main_product_waste_type.waste_type
         waste_type_id = waste_type.id
+    context["waste_type"] = waste_type_id
 
     products = Product.objects.filter(main_product_id=context["product_id"])
     # Find the products that have the waste types and add ons.
@@ -955,6 +961,7 @@ def new_order_5(request):
         product_waste_types = request.POST.get("product_waste_types")
         if product_waste_types:
             product_waste_types = ast.literal_eval(product_waste_types)
+        waste_type_id = request.POST.get("waste_type")
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
@@ -970,8 +977,21 @@ def new_order_5(request):
             id=seller_product_seller_location_id
         )
         user_address = UserAddress.objects.filter(id=user_address_id).first()
+        if main_product.has_material and hasattr(seller_product_location, "material"):
+            material_waste_type = (
+                SellerProductSellerLocationMaterialWasteType.objects.filter(
+                    seller_product_seller_location_material=seller_product_location.material
+                )
+                .filter(main_product_waste_type__waste_type_id=waste_type_id)
+                .first()
+            )
+            if not material_waste_type:
+                messages.error(
+                    request,
+                    "Material waste type not found. Please contact us if this continues.",
+                )
+                return HttpResponseRedirect(reverse("customer_new_order"))
         # create order group and orders
-        # TODO: where do I get tonnage_quantity?
         order_group = OrderGroup(
             user=context["user"],
             user_address=user_address,
@@ -988,6 +1008,14 @@ def new_order_5(request):
         if seller_product_location.removal_fee:
             order_group.removal_fee = seller_product_location.removal_fee
         order_group.save()
+        # Create Material object if main product has material
+        if main_product.has_material and hasattr(seller_product_location, "material"):
+            OrderGroupMaterial.objects.create(
+                order_group=order_group,
+                price_per_ton=material_waste_type.price_per_ton,
+                tonnage_included=material_waste_type.tonnage_included,
+            )
+
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
         # The first order of an order group always gets the same start and end date.
         order = order_group.create_delivery(
@@ -2417,6 +2445,7 @@ def companies(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
+        # TODO: If impersonating a company, then only show that company.
         context["tab"] = tab
         query_params = request.GET.copy()
 

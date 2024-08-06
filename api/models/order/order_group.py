@@ -17,6 +17,9 @@ from api.models.order.order_group_service_times_per_week import (
     OrderGroupServiceTimesPerWeek,
 )
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
+from api.models.seller.seller_product_seller_location_material_waste_type import (
+    SellerProductSellerLocationMaterialWasteType,
+)
 from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
 from api.models.user.user_address import UserAddress
@@ -349,15 +352,37 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 month=seller_product_seller_location.rental_multi_step.month,
             )
 
-        # Material.
-        if main_product.has_material and hasattr(
-            seller_product_seller_location, "material"
-        ):
-            OrderGroupMaterial.objects.create(
-                order_group=instance,
-                price_per_ton=seller_product_seller_location.material.price_per_ton,
-                tonnage_included=seller_product_seller_location.material.tonnage_included,
-            )
+        # # Material.
+        # if main_product.has_material and hasattr(
+        #     seller_product_seller_location, "material"
+        # ):
+        #     material_waste_type = SellerProductSellerLocationMaterialWasteType.objects.filter(
+        #         seller_product_seller_location_material=seller_product_seller_location.material
+        #     )
+        #     price_per_ton = None
+        #     tonnage_included = None
+        #     for mwt in material_waste_type:
+        #         print(mwt.price_per_ton, mwt.tonnage_included)
+        #         if price_per_ton is None:
+        #             price_per_ton = mwt.price_per_ton
+        #             tonnage_included = mwt.tonnage_included
+        #         if (
+        #             price_per_ton != mwt.price_per_ton
+        #             or tonnage_included != mwt.tonnage_included
+        #         ):
+        #             print(
+        #                 "Material Waste Type price_per_ton/tonnage_included must be the same for all Waste Types."
+        #             )
+        #             # raise Exception(
+        #             #     "Material Waste Type price_per_ton/tonnage_included must be the same for all Waste Types."
+        #             # )
+        #         price_per_ton += mwt.price_per_ton
+        #         tonnage_included += mwt.tonnage_included
+        #     OrderGroupMaterial.objects.create(
+        #         order_group=instance,
+        #         price_per_ton=material_waste_type.price_per_ton,
+        #         tonnage_included=material_waste_type.tonnage_included,
+        #     )
 
         # Service (legacy).
         if main_product.has_service and hasattr(
@@ -365,7 +390,8 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
         ):
             OrderGroupService.objects.create(
                 order_group=instance,
-                rate=seller_product_seller_location.service.rate,
+                rate=seller_product_seller_location.service.flat_rate_price,
+                miles=seller_product_seller_location.service.price_per_mile,
             )
 
         # Service Times Per Week.
