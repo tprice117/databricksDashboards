@@ -1156,12 +1156,10 @@ def add_payment_method(request):
     http_status = 204
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
+        context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
         # If staff, then get the user and user_group from the user_address.
         # If impersonating, then user and user_group are already set.
         if request.user.is_staff and not is_impersonating(request):
-            context["user_address"] = UserAddress.objects.filter(
-                id=user_address_id
-            ).first()
             context["user_group"] = context["user_address"].user_group
             context["user"] = (
                 context["user_group"].users.filter(type=UserType.ADMIN).first()
@@ -1206,13 +1204,13 @@ def checkout(request, user_address_id):
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
-            # TODO: Add a way to explicitly set the default payment method via UI.
-            # For now turn off setting address payment method default.
-            # if payment_method_id == "paylater":
-            #     pass
-            # else:
-            #     context["user_address"].default_payment_method_id = payment_method_id
-            #     context["user_address"].save()
+            # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
+            # For now always set as default.
+            if payment_method_id == "paylater":
+                pass
+            else:
+                context["user_address"].default_payment_method_id = payment_method_id
+                context["user_address"].save()
             for order in orders:
                 order.submit_order(override_approval_policy=True)
             messages.success(request, "Successfully checked out!")
