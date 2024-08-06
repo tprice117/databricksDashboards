@@ -885,12 +885,8 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         order_group.preferred_service_days.set(preferred_service_days)
 
         # Create service, rental, and material.
-        if service_data:
-            OrderGroupService.objects.create(order_group=order_group, **service_data)
-        if rental_data:
-            OrderGroupRental.objects.create(order_group=order_group, **rental_data)
-        if material_data:
-            OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
+        # NOTE: This has moved into the OrderGroup post_save signal.
+        # It uses the seller_product_seller_location to extract the service, rental, material, etc.
 
         return order_group
 
