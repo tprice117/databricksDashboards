@@ -1127,8 +1127,9 @@ def new_order_5(request):
 @login_required(login_url="/admin/login/")
 def new_order_6(request, order_group_id):
     context = get_user_context(request)
-    count, deleted_objs = OrderGroup.objects.filter(id=order_group_id).delete()
-    if count:
+    order_group = OrderGroup.objects.filter(id=order_group_id).first()
+    if order_group:
+        order_group.delete()
         messages.success(request, "Order removed from cart.")
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
