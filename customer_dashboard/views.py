@@ -1204,13 +1204,13 @@ def checkout(request, user_address_id):
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
-            # TODO: Add a way to explicitly set the default payment method via UI.
-            # For now turn off setting address payment method default.
-            # if payment_method_id == "paylater":
-            #     pass
-            # else:
-            #     context["user_address"].default_payment_method_id = payment_method_id
-            #     context["user_address"].save()
+            # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
+            # For now always set as default.
+            if payment_method_id == "paylater":
+                pass
+            else:
+                context["user_address"].default_payment_method_id = payment_method_id
+                context["user_address"].save()
             for order in orders:
                 order.submit_order(override_approval_policy=True)
             messages.success(request, "Successfully checked out!")
