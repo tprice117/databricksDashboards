@@ -103,6 +103,8 @@ class SellerProductSellerLocation(BaseModel):
             and pricing["material"]
             and "price_per_ton" in pricing["material"]
             and "tonnage_included" in pricing["material"]
+            and pricing["material"]["tonnage_included"] is not None
+            and pricing["material"]["tonnage_included"] is not None
             else 0
         )
 
