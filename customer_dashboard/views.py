@@ -1105,6 +1105,52 @@ def new_order_6(request, order_group_id):
 
 
 @login_required(login_url="/admin/login/")
+def make_payment_method_default(request, user_address_id, payment_method_id):
+    context = get_user_context(request)
+    if request.method == "POST":
+        context["forloop"] = {"counter": request.POST.get("loopcount", 0)}
+        # user_address_id = request.POST.get("user_address")
+        # payment_method_id = request.POST.get("payment_method")
+        context["payment_method"] = PaymentMethod.objects.filter(
+            id=payment_method_id
+        ).first()
+        context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+        if context["payment_method"] and context["user_address"]:
+            context["user_address"].default_payment_method_id = context[
+                "payment_method"
+            ].id
+            context["user_address"].save()
+            setattr(context["payment_method"], "is_default", True)
+
+        return render(
+            request, "customer_dashboard/snippets/payment_method_item.html", context
+        )
+    else:
+        return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
+def remove_payment_method(request, payment_method_id):
+    context = get_user_context(request)
+    http_status = 204
+    status_text = ""
+    if request.method == "POST":
+        payment_method = PaymentMethod.objects.filter(id=payment_method_id).first()
+        if payment_method:
+            try:
+                payment_method.delete()
+                http_status = 200
+            except Exception as e:
+                http_status = 400
+                status_text = f"Error deleting payment method: {e}"
+        else:
+            http_status = 400
+            status_text = "Payment method not found."
+
+    return HttpResponse(status=http_status, content=status_text)
+
+
+@login_required(login_url="/admin/login/")
 def add_payment_method(request):
     context = get_user_context(request)
     http_status = 204
@@ -1129,6 +1175,8 @@ def add_payment_method(request):
                     user=context["user"], user_group=context["user_group"], token=token
                 )
                 payment_method.save()
+                context["user_address"].default_payment_method_id = payment_method.id
+                context["user_address"].save()
                 messages.success(request, "Payment method added.")
                 http_status = 201
 
@@ -1199,7 +1247,11 @@ def checkout(request, user_address_id):
             payment_methods = PaymentMethod.objects.filter(user_id=context["user"].id)
     # Order payment methods by newest first.
     payment_methods = payment_methods.order_by("-created_on")
-    context["payment_methods"] = payment_methods
+    context["payment_methods"] = []
+    for payment_method in payment_methods:
+        if payment_method.id == context["user_address"].default_payment_method_id:
+            setattr(payment_method, "is_default", True)
+        context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
     for order in orders:
         if order.status == Order.Status.APPROVAL:

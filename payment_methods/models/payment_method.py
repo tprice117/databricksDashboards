@@ -211,6 +211,16 @@ def save_payment_method(sender, instance: PaymentMethod, created, **kwargs):
 
 @receiver(pre_delete, sender=PaymentMethod)
 def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
+    if instance.user_group:
+        payment_methods = PaymentMethod.objects.filter(
+            user_group_id=instance.user_group.id
+        )
+    else:
+        payment_methods = PaymentMethod.objects.filter(user_id=instance.user.id)
+    if payment_methods.count() == 1:
+        raise ValueError(
+            "Cannot delete the last Payment Method for the UserGroup/User."
+        )
     # Delete the token from Basis Theory.
     DSPaymentMethods.Tokens.delete(instance.token)
 
