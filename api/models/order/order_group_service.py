@@ -1,6 +1,5 @@
 from django.db import models
 
-from api.models.order.order_group import OrderGroup
 from common.models import BaseModel
 
 
