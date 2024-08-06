@@ -1156,12 +1156,10 @@ def add_payment_method(request):
     http_status = 204
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
+        context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
         # If staff, then get the user and user_group from the user_address.
         # If impersonating, then user and user_group are already set.
         if request.user.is_staff and not is_impersonating(request):
-            context["user_address"] = UserAddress.objects.filter(
-                id=user_address_id
-            ).first()
             context["user_group"] = context["user_address"].user_group
             context["user"] = (
                 context["user_group"].users.filter(type=UserType.ADMIN).first()
