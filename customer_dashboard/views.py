@@ -43,12 +43,16 @@ from api.models import (
     UserAddress,
     UserAddressType,
     UserGroup,
+    OrderGroupMaterial,
 )
 from api.models.user.user import CompanyUtils as UserUtils
 from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
+from api.models.seller.seller_product_seller_location_material_waste_type import (
+    SellerProductSellerLocationMaterialWasteType,
+)
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
@@ -811,7 +815,10 @@ def new_order_3(request, product_id):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                if e.form.fields[field].widget.attrs.get("class", None) is None:
+                    e.form.fields[field].widget.attrs["class"] = "is-invalid"
+                else:
+                    e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except Exception as e:
             messages.error(
                 request, f"Error saving, please contact us if this continues: [{e}]."
@@ -852,12 +859,14 @@ def new_order_4(request):
     # if product_waste_types:
     waste_type = None
     waste_type_id = None
+    # TODO: We are only using the first waste type for now.
     if context["product_waste_types"]:
         main_product_waste_type = MainProductWasteType.objects.filter(
             id=context["product_waste_types"][0]
         ).first()
         waste_type = main_product_waste_type.waste_type
         waste_type_id = waste_type.id
+    context["waste_type"] = waste_type_id
 
     products = Product.objects.filter(main_product_id=context["product_id"])
     # Find the products that have the waste types and add ons.
@@ -893,8 +902,8 @@ def new_order_4(request):
             waste_type,
         )
     )
-    print("Seller Product Seller Locations")
-    print(seller_product_seller_locations)
+    # print("Seller Product Seller Locations")
+    # print(seller_product_seller_locations)
     # step_time = time.time()
     # print(f"Find Seller Locations: {step_time - start_time}")
 
@@ -904,6 +913,18 @@ def new_order_4(request):
     # if context["removal_date"]:
     #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
     context["seller_product_seller_locations"] = []
+    context["default_take_rate_100"] = float(
+        context["product"].main_product.default_take_rate
+    )
+    context["minimum_take_rate_100"] = float(
+        context["product"].main_product.minimum_take_rate
+    )
+    context["default_take_rate"] = float(
+        context["product"].main_product.default_take_rate / 100
+    )
+    context["minimum_take_rate"] = float(
+        context["product"].main_product.minimum_take_rate / 100
+    )
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
         seller_d["seller_product_seller_location"] = seller_product_seller_location
@@ -924,7 +945,39 @@ def new_order_4(request):
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
-        print(seller_d["price_data"])
+        seller_d["price_data"]["total_min"] = seller_d["price_data"]["total"] + (
+            seller_d["price_data"]["total"] * context["minimum_take_rate"]
+        )
+        seller_d["price_data"]["total_max"] = seller_d["price_data"]["total"] + (
+            seller_d["price_data"]["total"] * context["default_take_rate"]
+        )
+        if seller_d["price_data"]["delivery"]:
+            seller_d["price_data"]["delivery_min"] = seller_d["price_data"]["delivery"][
+                "total"
+            ] + (
+                seller_d["price_data"]["delivery"]["total"]
+                * context["minimum_take_rate"]
+            )
+            seller_d["price_data"]["delivery_max"] = seller_d["price_data"]["delivery"][
+                "total"
+            ] + (
+                seller_d["price_data"]["delivery"]["total"]
+                * context["default_take_rate"]
+            )
+        if seller_d["price_data"]["removal"]:
+            seller_d["price_data"]["removal_min"] = seller_d["price_data"]["removal"][
+                "total"
+            ] + (
+                seller_d["price_data"]["removal"]["total"]
+                * context["minimum_take_rate"]
+            )
+            seller_d["price_data"]["removal_max"] = seller_d["price_data"]["removal"][
+                "total"
+            ] + (
+                seller_d["price_data"]["removal"]["total"]
+                * context["default_take_rate"]
+            )
+        # print(seller_d["price_data"])
 
         context["seller_product_seller_locations"].append(seller_d)
 
@@ -947,11 +1000,13 @@ def new_order_5(request):
         seller_product_seller_location_id = request.POST.get(
             "seller_product_seller_location_id"
         )
+        take_rate = request.POST.get("take_rate")
         product_id = request.POST.get("product_id")
         user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
         if product_waste_types:
             product_waste_types = ast.literal_eval(product_waste_types)
+        waste_type_id = request.POST.get("waste_type")
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
@@ -962,19 +1017,37 @@ def new_order_5(request):
         main_product = main_product.select_related("main_product_category")
         # main_product = main_product.prefetch_related("products")
         main_product = main_product.first()
+        if take_rate:
+            take_rate = float(take_rate)
+        else:
+            take_rate = main_product.default_take_rate
         context["main_product"] = main_product
         seller_product_location = SellerProductSellerLocation.objects.get(
             id=seller_product_seller_location_id
         )
         user_address = UserAddress.objects.filter(id=user_address_id).first()
+        if main_product.has_material and hasattr(seller_product_location, "material"):
+            material_waste_type = (
+                SellerProductSellerLocationMaterialWasteType.objects.filter(
+                    seller_product_seller_location_material=seller_product_location.material
+                )
+                .filter(main_product_waste_type__waste_type_id=waste_type_id)
+                .first()
+            )
+            if not material_waste_type:
+                messages.error(
+                    request,
+                    "Material waste type not found. Please contact us if this continues.",
+                )
+                return HttpResponseRedirect(reverse("customer_new_order"))
         # create order group and orders
-        # TODO: where do I get tonnage_quantity?
         order_group = OrderGroup(
             user=context["user"],
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=main_product.default_take_rate,
+            take_rate=take_rate,
+            waste_type_id=waste_type_id,
         )
         if service_frequency:
             order_group.service_recurring_frequency_id = service_frequency
@@ -985,6 +1058,7 @@ def new_order_5(request):
         if seller_product_location.removal_fee:
             order_group.removal_fee = seller_product_location.removal_fee
         order_group.save()
+
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
         # The first order of an order group always gets the same start and end date.
         order = order_group.create_delivery(
@@ -1033,59 +1107,112 @@ def new_order_5(request):
                 context,
             )
 
+    query_params = request.GET.copy()
+    # TODO: Create a decorator to catch and display errors.
     # Load the cart page
     context["subtotal"] = 0
     context["cart_count"] = 0
-    # Pull all orders with submitted_on = None and show them in the cart.
-    orders = get_booking_objects(
-        request, context["user"], context["user_group"], exclude_in_cart=False
-    )
-    orders = orders.filter(submitted_on__isnull=True)
-    orders = orders.prefetch_related("order_line_items")
-    orders = orders.order_by("-order_group__start_date")
 
-    if not orders:
-        messages.error(request, "Your cart is empty.")
-    else:
-        # Get unique order group objects from the orders and place them in address buckets.
-        for order in orders:
-            try:
-                customer_price = order.customer_price()
-                if context["cart"].get(order.order_group.user_address_id, None) is None:
-                    context["cart"][order.order_group.user_address_id] = {
-                        "address": order.order_group.user_address,
-                        "total": 0,
-                        "orders": {},
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        filter_qry = request.GET.get("filter")
+        my_carts = request.GET.get("my_carts")
+        start_date = request.GET.get("start_date")
+        end_date = request.GET.get("end_date")
+        if start_date:
+            start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+            check_date = start_date
+        else:
+            check_date = timezone.now().date()
+
+        if end_date:
+            end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+
+        # Pull all orders with submitted_on = None and show them in the cart.
+        orders = get_booking_objects(
+            request, context["user"], context["user_group"], exclude_in_cart=False
+        )
+        # if start_date:
+        #     orders = orders.filter(order_group__start_date__gte=start_date)
+        # if end_date:
+        #     orders = orders.filter(order_group__end_date__lte=end_date)
+        # if filter_qry == "active":
+        #     # Displays all open carts
+        #     orders = orders.filter(submitted_on__isnull=True)
+        # elif filter_qry == "starting":
+        #     # Displays all open carts that have a Order.EndDate LESS THAN 5 days from Today
+        #     orders = orders.filter(submitted_on__isnull=True)
+        #     orders = orders.filter(
+        #         order_group__end_date__lte=check_date + datetime.timedelta(days=5)
+        #     )
+        # elif filter_qry == "inactive":
+        #     # Displays all open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
+        #     # TODO: Fix
+        #     # orders = orders.filter(updated_on)
+        #     orders = orders.filter(
+        #         order_group__start_date__lt=check_date,
+        #         order_group__end_date__gt=check_date,
+        #     )
+        # elif filter_qry == "expired":
+        #     # Displays all open carts that have a Order.EndDate AFTER Today
+        #     orders = orders.filter(order_group__end_date__gt=check_date)
+        # else:
+        #     # new: default filter
+        #     # Displays all open carts that the Order.CreatedDate == today
+        #     orders = orders.filter(order_group__start_date=check_date)
+        # if my_carts:
+        #     orders = orders.filter(order_group__user_id=context["user"].id)
+
+        orders = orders.filter(submitted_on__isnull=True)
+        orders = orders.prefetch_related("order_line_items")
+        orders = orders.order_by("-order_group__start_date")
+
+        if not orders:
+            messages.error(request, "Your cart is empty.")
+        else:
+            # Get unique order group objects from the orders and place them in address buckets.
+            for order in orders:
+                customer_price = order.customer_price_new()
+                try:
+                    if (
+                        context["cart"].get(order.order_group.user_address_id, None)
+                        is None
+                    ):
+                        context["cart"][order.order_group.user_address_id] = {
+                            "address": order.order_group.user_address,
+                            "total": 0,
+                            "orders": {},
+                        }
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group_id
+                    ]["price"] += customer_price
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group.id
+                    ]["count"] += 1
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group.id
+                    ]["order_type"] = order.order_type
+                    context["cart"][order.order_group.user_address_id][
+                        "total"
+                    ] += customer_price
+                    context["subtotal"] += customer_price
+                except KeyError:
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group.id
+                    ] = {
+                        "order_group": order.order_group,
+                        "price": customer_price,
+                        "count": 1,
+                        "order_type": order.order_type,
                     }
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group_id
-                ]["price"] += customer_price
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group.id
-                ]["count"] += 1
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group.id
-                ]["order_type"] = order.order_type
-                context["cart"][order.order_group.user_address_id][
-                    "total"
-                ] += customer_price
-                context["subtotal"] += customer_price
-            except KeyError:
-                customer_price = order.customer_price()
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group.id
-                ] = {
-                    "order_group": order.order_group,
-                    "price": customer_price,
-                    "count": 1,
-                    "order_type": order.order_type,
-                }
-                context["cart"][order.order_group.user_address_id][
-                    "total"
-                ] += customer_price
-                context["subtotal"] += customer_price
-                context["cart_count"] += 1
+                    context["cart"][order.order_group.user_address_id][
+                        "total"
+                    ] += customer_price
+                    context["subtotal"] += customer_price
+                    context["cart_count"] += 1
+        return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
+    context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
     return render(
         request,
         "customer_dashboard/new_order/cart.html",
@@ -1096,8 +1223,9 @@ def new_order_5(request):
 @login_required(login_url="/admin/login/")
 def new_order_6(request, order_group_id):
     context = get_user_context(request)
-    count, deleted_objs = OrderGroup.objects.filter(id=order_group_id).delete()
-    if count:
+    order_group = OrderGroup.objects.filter(id=order_group_id).first()
+    if order_group:
+        order_group.delete()
         messages.success(request, "Order removed from cart.")
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
@@ -1251,18 +1379,18 @@ def checkout(request, user_address_id):
             setattr(payment_method, "is_default", True)
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
+    # TODO: Get total price with max take_rate, then apply the discount (order_group.take_rate).
     for order in orders:
         if order.status == Order.Status.APPROVAL:
             context["needs_approval"] = True
+        customer_price = order.customer_price_new()
         try:
-            customer_price = order.customer_price()
             context["cart"][order.order_group_id]["price"] += customer_price
             context["cart"][order.order_group.id]["count"] += 1
             context["cart"][order.order_group.id]["order_type"] = order.order_type
             context["cart"]["total"] += customer_price
             context["subtotal"] += customer_price
         except KeyError:
-            customer_price = order.customer_price()
             context["cart"][order.order_group.id] = {
                 "order_group": order.order_group,
                 "price": customer_price,
@@ -1401,7 +1529,10 @@ def order_group_swap(request, order_group_id, is_removal=False):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                if e.form.fields[field].widget.attrs.get("class", None) is None:
+                    e.form.fields[field].widget.attrs["class"] = "is-invalid"
+                else:
+                    e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except Exception as e:
             context["form_error"] = (
                 f"Error saving, please contact us if this continues: [{e}]."
@@ -1577,7 +1708,10 @@ def order_group_detail(request, order_group_id):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                if e.form.fields[field].widget.attrs.get("class", None) is None:
+                    e.form.fields[field].widget.attrs["class"] = "is-invalid"
+                else:
+                    e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -1826,7 +1960,10 @@ def location_detail(request, location_id):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                if e.form.fields[field].widget.attrs.get("class", None) is None:
+                    e.form.fields[field].widget.attrs["class"] = "is-invalid"
+                else:
+                    e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -2023,7 +2160,10 @@ def new_location(request):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                if e.form.fields[field].widget.attrs.get("class", None) is None:
+                    e.form.fields[field].widget.attrs["class"] = "is-invalid"
+                else:
+                    e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
@@ -2310,7 +2450,10 @@ def new_user(request):
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                if e.form.fields[field].widget.attrs.get("class", None) is None:
+                    e.form.fields[field].widget.attrs["class"] = "is-invalid"
+                else:
+                    e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except IntegrityError as e:
             if "unique constraint" in str(e):
                 messages.error(request, "User with that email already exists.")
@@ -2399,6 +2542,7 @@ def companies(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
+        # TODO: If impersonating a company, then only show that company.
         context["tab"] = tab
         query_params = request.GET.copy()
 
@@ -2823,7 +2967,10 @@ def company_new_user(request, user_group_id):
             # This will let bootstrap know to highlight the fields with errors.
             context["form_error"] = ""
             for field in e.form.errors:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+                if e.form.fields[field].widget.attrs.get("class", None) is None:
+                    e.form.fields[field].widget.attrs["class"] = "is-invalid"
+                else:
+                    e.form.fields[field].widget.attrs["class"] += " is-invalid"
                 context["form_error"] += f"{field}: {e.form[field].errors}"
         except Exception as e:
             context["form_error"] = (

@@ -47,7 +47,7 @@ class EmailNotificationAdmin(admin.ModelAdmin):
         else:
             return "N/A"
 
-    list_display = ["from_email", "subject", "sent_at", "order_link"]
+    list_display = ["from_email", "subject", "created_on", "sent_at", "order_link"]
     inlines = [
         inlines.EmailNotificationToInline,
         inlines.EmailNotificationBccInline,

@@ -1,5 +1,6 @@
 import datetime
 import logging
+from functools import lru_cache
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
@@ -34,6 +35,17 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 USER_MODEL = None
 USER_SELLER_LOCATION_MODEL = None
 ORDER_APPROVAL_MODEL = None
+PRICING_ENGINE = None
+
+
+def get_pricing_engine():
+    """This imports the PricingEngine model.
+    This avoid the circular import issue."""
+    global PRICING_ENGINE
+    if PRICING_ENGINE is None:
+        from pricing_engine.pricing_engine import PricingEngine as PRICING_ENGINE
+
+    return PRICING_ENGINE
 
 
 def get_our_user_model():
@@ -158,6 +170,73 @@ class Order(BaseModel):
     @property
     def seller_view_order_url(self):
         return f"{settings.API_URL}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
+
+    @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
+    def get_price(self):
+        from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+            PricingEngineResponseSerializer,
+        )
+
+        pricing = get_pricing_engine().get_price(
+            user_address=self.order_group.user_address,
+            seller_product_seller_location=self.order_group.seller_product_seller_location,
+            start_date=self.start_date,
+            end_date=self.end_date,
+            waste_type=self.order_group.waste_type,
+        )
+        take_rate = float(self.order_group.take_rate / 100)
+        pricing_d = PricingEngineResponseSerializer(pricing).data
+        total_pricing = {
+            "seller": pricing_d,
+            "customer": {
+                "service": (
+                    pricing_d["service"]["total"]
+                    + (pricing_d["service"]["total"] * take_rate)
+                    if pricing_d["service"]
+                    else None
+                ),
+                "rental": (
+                    pricing_d["rental"]["total"]
+                    + (pricing_d["rental"]["total"] * take_rate)
+                    if pricing_d["rental"]
+                    else None
+                ),
+                "material": (
+                    pricing_d["material"]["total"]
+                    + (pricing_d["material"]["total"] * take_rate)
+                    if pricing_d["material"]
+                    else None
+                ),
+                "delivery": (
+                    pricing_d["delivery"]["total"]
+                    + (pricing_d["delivery"]["total"] * take_rate)
+                    if pricing_d["delivery"]
+                    else None
+                ),
+                "removal": (
+                    pricing_d["removal"]["total"]
+                    + (pricing_d["removal"]["total"] * take_rate)
+                    if pricing_d["removal"]
+                    else None
+                ),
+                "total": (
+                    pricing_d["total"] + (pricing_d["total"] * take_rate)
+                    if pricing_d["total"]
+                    else None
+                ),
+            },
+        }
+        return total_pricing
+
+    def customer_price_new(self):
+        pricing = self.get_price()
+        # TODO: Maybe get order_type then get the appropriate pricing.
+        # pricing["delivery"]["total"]
+        return pricing["customer"]["total"]
+
+    def seller_price_new(self):
+        pricing = self.get_price()
+        return pricing["seller"]["total"]
 
     def customer_price(self):
         return sum(

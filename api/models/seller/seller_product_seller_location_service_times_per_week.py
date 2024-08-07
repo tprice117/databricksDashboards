@@ -78,28 +78,28 @@ class SellerProductSellerLocationServiceTimesPerWeek(BaseModel):
 
         if times_per_week == 1:
             return PricingLineItem(
-                title="One Time Per Week",
-                rate=self.one_time_per_week,
+                description="One Time Per Week",
+                unit_price=self.one_time_per_week,
             )
         elif times_per_week == 2:
             return PricingLineItem(
-                title="Two Times Per Week",
-                rate=self.two_times_per_week,
+                description="Two Times Per Week",
+                unit_price=self.two_times_per_week,
             )
         elif times_per_week == 3:
             return PricingLineItem(
-                title="Three Times Per Week",
-                rate=self.three_times_per_week,
+                description="Three Times Per Week",
+                unit_price=self.three_times_per_week,
             )
         elif times_per_week == 4:
             return PricingLineItem(
-                title="Four Times Per Week",
-                rate=self.four_times_per_week,
+                description="Four Times Per Week",
+                unit_price=self.four_times_per_week,
             )
         elif times_per_week == 5:
             return PricingLineItem(
-                title="Five Times Per Week",
-                rate=self.five_times_per_week,
+                description="Five Times Per Week",
+                unit_price=self.five_times_per_week,
             )
         else:
             raise Exception("The times_per_week must be between 1 and 5.")

@@ -318,10 +318,10 @@ class OrderGroupForm(forms.Form):
     )
     product_waste_types = forms.ChoiceField(
         label="Material",
-        help_text="Hold CTRL to select multiple.",
+        help_text="Select majority material to be placed in dumpster.",
         choices=[],
         widget=forms.Select(
-            attrs={"class": "form-select", "multiple": "true", "required": "true"}
+            attrs={"class": "form-select", "required": "true"}  # "multiple": "true",
         ),
         required=True,
     )

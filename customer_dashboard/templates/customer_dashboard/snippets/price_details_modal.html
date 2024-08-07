@@ -213,9 +213,9 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for material_waste_type in item.seller_product_seller_location.seller_product.product.main_product.material_waste_types.all %}
+                                            {% for material_waste_type in item.seller_product_seller_location.material.waste_types.all %}
                                                 <tr>
-                                                    <td>{{ material_waste_type.waste_type.name }}</td>
+                                                    <td>{{ material_waste_type.main_product_waste_type.waste_type.name }}</td>
                                                     <td>{{ material_waste_type.base_price }}</td>
                                                     <td>{{ material_waste_type.price_per_ton }}</td>
                                                 </tr>
