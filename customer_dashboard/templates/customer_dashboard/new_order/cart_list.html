@@ -1,0 +1,114 @@
+{% load static %}
+{% load humanize %}
+<div class="accordion" role="tablist" id="cart-results">
+    {% for cart_address in cart.values %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" role="tab">
+                <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
+                    <div>
+                        <span>{{ cart_address.address.formatted_address }}</span> -
+                        <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+                        <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.orders|length }}">{{ cart_address.orders|length }} item{{ cart_address.orders|length|pluralize }}</span>
+                    </div>
+                    <div class="ms-auto align-items-end">
+                        {% if user.is_staff %}
+                            <span class="ms-2">
+                                [{% if cart_address.address.user_group.name %}
+                                    {{ cart_address.address.user_group.name }}
+                                {% else %}
+                                    USER: {{ cart_address.address.user.full_name }}
+                                {% endif %}]
+                            </span>
+                        {% endif %}
+                    </div>
+                </button>
+            </h2>
+            <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}
+                    show
+                {% else %}
+                    collapsed
+                {% endif %}"
+                role="tabpanel"
+                data-bs-parent="#cart-results">
+                <div class="accordion-body">
+                    {% for cart_item in cart_address.orders.values %}
+                        <div class="row cart-item mb-2">
+                            <div class="col">
+                                <div class="card" style="background: var(--bs-card-cap-bg);">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="row">
+                                                    <div class="col-auto">
+                                                        <img class="img-thumbnail img-fluid"
+                                                            alt="Product category image"
+                                                            width="67"
+                                                            height="96"
+                                                            src="{% if cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image %}
+                                                                {{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image }}
+                                                            {% else %}
+                                                                {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
+                                                            {% endif %}" />
+                                                        <img class="img-thumbnail img-fluid"
+                                                            alt="Product image"
+                                                            width="138"
+                                                            height="95"
+                                                            src="{% if cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                                {{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                            {% else %}
+                                                                {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
+                                                            {% endif %}" />
+                                                    </div>
+                                                    <div class="col">
+                                                        <h3>{{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
+                                                        {% if cart_item.order_group.end_date %}
+                                                            <p class="mb-1">{{ cart_item.order_group.start_date }} to {{ cart_item.order_group.end_date }}</p>
+                                                        {% else %}
+                                                            {% if cart_item.order_group.service_recurring_frequency %}
+                                                                <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }} and recurring {{ cart_item.order_group.service_recurring_frequency.name|lower }}</p>
+                                                            {% else %}
+                                                                <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }}</p>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        <p class="mb-1">Order Type: {{ cart_item.order_type }}</p>
+                                                        {% comment %} <p>order line items: {{ cart_item.count }} - [{{ cart_item.status }}]</p> {% endcomment %}
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <p class="text-end">${{ cart_item.price|floatformat:2|intcomma }}</p>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#modal-1" data-bs-toggle="modal">Remove</button> {% endcomment %}
+                                                        <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" type="button"
+                                                            data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" data-countid="count-{{ cart_address.address.id }}"
+                                                            hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
+                                                            onClick="event.stopPropagation();
+                                                            Swal.fire(
+                                                                {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
+                                                            ).then((result)=>{
+                                                                if(result.isConfirmed){removeItemFromCart(this);}
+                                                            })">
+                                                            Remove
+                                                            <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="row mb-2">
+                        <div class="col">
+                            <a class="btn btn-primary float-end" role="button" style="margin-top: 10px;" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}" hx-swap-oob="true">Shopping Cart ({{ cart_count }})</h3>
+<h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>

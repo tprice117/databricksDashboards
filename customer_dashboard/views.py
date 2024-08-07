@@ -902,8 +902,8 @@ def new_order_4(request):
             waste_type,
         )
     )
-    print("Seller Product Seller Locations")
-    print(seller_product_seller_locations)
+    # print("Seller Product Seller Locations")
+    # print(seller_product_seller_locations)
     # step_time = time.time()
     # print(f"Find Seller Locations: {step_time - start_time}")
 
@@ -913,6 +913,14 @@ def new_order_4(request):
     # if context["removal_date"]:
     #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
     context["seller_product_seller_locations"] = []
+    context["default_take_rate_100"] = context["product"].main_product.default_take_rate
+    context["minimum_take_rate_100"] = context["product"].main_product.minimum_take_rate
+    context["default_take_rate"] = (
+        context["product"].main_product.default_take_rate / 100
+    )
+    context["minimum_take_rate"] = (
+        context["product"].main_product.minimum_take_rate / 100
+    )
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
         seller_d["seller_product_seller_location"] = seller_product_seller_location
@@ -933,7 +941,39 @@ def new_order_4(request):
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
-        print(seller_d["price_data"])
+        seller_d["price_data"]["total_min"] = seller_d["price_data"]["total"] + (
+            seller_d["price_data"]["total"] * context["minimum_take_rate"]
+        )
+        seller_d["price_data"]["total_max"] = seller_d["price_data"]["total"] + (
+            seller_d["price_data"]["total"] * context["default_take_rate"]
+        )
+        if seller_d["price_data"]["delivery"]:
+            seller_d["price_data"]["delivery_min"] = seller_d["price_data"]["delivery"][
+                "total"
+            ] + (
+                seller_d["price_data"]["delivery"]["total"]
+                * context["minimum_take_rate"]
+            )
+            seller_d["price_data"]["delivery_max"] = seller_d["price_data"]["delivery"][
+                "total"
+            ] + (
+                seller_d["price_data"]["delivery"]["total"]
+                * context["default_take_rate"]
+            )
+        if seller_d["price_data"]["removal"]:
+            seller_d["price_data"]["removal_min"] = seller_d["price_data"]["removal"][
+                "total"
+            ] + (
+                seller_d["price_data"]["removal"]["total"]
+                * context["minimum_take_rate"]
+            )
+            seller_d["price_data"]["removal_max"] = seller_d["price_data"]["removal"][
+                "total"
+            ] + (
+                seller_d["price_data"]["removal"]["total"]
+                * context["default_take_rate"]
+            )
+        # print(seller_d["price_data"])
 
         context["seller_product_seller_locations"].append(seller_d)
 
@@ -998,6 +1038,7 @@ def new_order_5(request):
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
             take_rate=main_product.default_take_rate,
+            waste_type_id=waste_type_id,
         )
         if service_frequency:
             order_group.service_recurring_frequency_id = service_frequency
@@ -1008,13 +1049,6 @@ def new_order_5(request):
         if seller_product_location.removal_fee:
             order_group.removal_fee = seller_product_location.removal_fee
         order_group.save()
-        # Create Material object if main product has material
-        if main_product.has_material and hasattr(seller_product_location, "material"):
-            OrderGroupMaterial.objects.create(
-                order_group=order_group,
-                price_per_ton=material_waste_type.price_per_ton,
-                tonnage_included=material_waste_type.tonnage_included,
-            )
 
         # Create the order (Let submitted on null, this indicates that the order is in the cart)
         # The first order of an order group always gets the same start and end date.
@@ -1064,59 +1098,112 @@ def new_order_5(request):
                 context,
             )
 
+    query_params = request.GET.copy()
+    # TODO: Create a decorator to catch and display errors.
     # Load the cart page
     context["subtotal"] = 0
     context["cart_count"] = 0
-    # Pull all orders with submitted_on = None and show them in the cart.
-    orders = get_booking_objects(
-        request, context["user"], context["user_group"], exclude_in_cart=False
-    )
-    orders = orders.filter(submitted_on__isnull=True)
-    orders = orders.prefetch_related("order_line_items")
-    orders = orders.order_by("-order_group__start_date")
 
-    if not orders:
-        messages.error(request, "Your cart is empty.")
-    else:
-        # Get unique order group objects from the orders and place them in address buckets.
-        for order in orders:
-            try:
-                customer_price = order.customer_price()
-                if context["cart"].get(order.order_group.user_address_id, None) is None:
-                    context["cart"][order.order_group.user_address_id] = {
-                        "address": order.order_group.user_address,
-                        "total": 0,
-                        "orders": {},
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        filter_qry = request.GET.get("filter")
+        my_carts = request.GET.get("my_carts")
+        start_date = request.GET.get("start_date")
+        end_date = request.GET.get("end_date")
+        if start_date:
+            start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+            check_date = start_date
+        else:
+            check_date = timezone.now().date()
+
+        if end_date:
+            end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+
+        # Pull all orders with submitted_on = None and show them in the cart.
+        orders = get_booking_objects(
+            request, context["user"], context["user_group"], exclude_in_cart=False
+        )
+        # if start_date:
+        #     orders = orders.filter(order_group__start_date__gte=start_date)
+        # if end_date:
+        #     orders = orders.filter(order_group__end_date__lte=end_date)
+        # if filter_qry == "active":
+        #     # Displays all open carts
+        #     orders = orders.filter(submitted_on__isnull=True)
+        # elif filter_qry == "starting":
+        #     # Displays all open carts that have a Order.EndDate LESS THAN 5 days from Today
+        #     orders = orders.filter(submitted_on__isnull=True)
+        #     orders = orders.filter(
+        #         order_group__end_date__lte=check_date + datetime.timedelta(days=5)
+        #     )
+        # elif filter_qry == "inactive":
+        #     # Displays all open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
+        #     # TODO: Fix
+        #     # orders = orders.filter(updated_on)
+        #     orders = orders.filter(
+        #         order_group__start_date__lt=check_date,
+        #         order_group__end_date__gt=check_date,
+        #     )
+        # elif filter_qry == "expired":
+        #     # Displays all open carts that have a Order.EndDate AFTER Today
+        #     orders = orders.filter(order_group__end_date__gt=check_date)
+        # else:
+        #     # new: default filter
+        #     # Displays all open carts that the Order.CreatedDate == today
+        #     orders = orders.filter(order_group__start_date=check_date)
+        # if my_carts:
+        #     orders = orders.filter(order_group__user_id=context["user"].id)
+
+        orders = orders.filter(submitted_on__isnull=True)
+        orders = orders.prefetch_related("order_line_items")
+        orders = orders.order_by("-order_group__start_date")
+
+        if not orders:
+            messages.error(request, "Your cart is empty.")
+        else:
+            # Get unique order group objects from the orders and place them in address buckets.
+            for order in orders:
+                customer_price = order.customer_price_new()
+                try:
+                    if (
+                        context["cart"].get(order.order_group.user_address_id, None)
+                        is None
+                    ):
+                        context["cart"][order.order_group.user_address_id] = {
+                            "address": order.order_group.user_address,
+                            "total": 0,
+                            "orders": {},
+                        }
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group_id
+                    ]["price"] += customer_price
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group.id
+                    ]["count"] += 1
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group.id
+                    ]["order_type"] = order.order_type
+                    context["cart"][order.order_group.user_address_id][
+                        "total"
+                    ] += customer_price
+                    context["subtotal"] += customer_price
+                except KeyError:
+                    context["cart"][order.order_group.user_address_id]["orders"][
+                        order.order_group.id
+                    ] = {
+                        "order_group": order.order_group,
+                        "price": customer_price,
+                        "count": 1,
+                        "order_type": order.order_type,
                     }
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group_id
-                ]["price"] += customer_price
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group.id
-                ]["count"] += 1
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group.id
-                ]["order_type"] = order.order_type
-                context["cart"][order.order_group.user_address_id][
-                    "total"
-                ] += customer_price
-                context["subtotal"] += customer_price
-            except KeyError:
-                customer_price = order.customer_price()
-                context["cart"][order.order_group.user_address_id]["orders"][
-                    order.order_group.id
-                ] = {
-                    "order_group": order.order_group,
-                    "price": customer_price,
-                    "count": 1,
-                    "order_type": order.order_type,
-                }
-                context["cart"][order.order_group.user_address_id][
-                    "total"
-                ] += customer_price
-                context["subtotal"] += customer_price
-                context["cart_count"] += 1
+                    context["cart"][order.order_group.user_address_id][
+                        "total"
+                    ] += customer_price
+                    context["subtotal"] += customer_price
+                    context["cart_count"] += 1
+        return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
+    context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
     return render(
         request,
         "customer_dashboard/new_order/cart.html",
@@ -1286,15 +1373,14 @@ def checkout(request, user_address_id):
     for order in orders:
         if order.status == Order.Status.APPROVAL:
             context["needs_approval"] = True
+        customer_price = order.customer_price_new()
         try:
-            customer_price = order.customer_price()
             context["cart"][order.order_group_id]["price"] += customer_price
             context["cart"][order.order_group.id]["count"] += 1
             context["cart"][order.order_group.id]["order_type"] = order.order_type
             context["cart"]["total"] += customer_price
             context["subtotal"] += customer_price
         except KeyError:
-            customer_price = order.customer_price()
             context["cart"][order.order_group.id] = {
                 "order_group": order.order_group,
                 "price": customer_price,

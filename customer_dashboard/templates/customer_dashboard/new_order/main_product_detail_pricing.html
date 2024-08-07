@@ -12,6 +12,14 @@
         <h3 class="text-dark mb-1">New Order: Supplier Options</h3>
         <div class="row">
             <div class="col">
+                <p class="text-end">
+                    <b>Take Rate: {{ default_take_rate_100 }}%</b>
+                    {% comment %} <b>Take Rate: {{ minimum_take_rate_100 }}% - {{ default_take_rate_100 }}%</b> {% endcomment %}
+                </p>
+                {% comment %} <form class="mb-4">
+                    <label for="customRange3" class="form-label">Take Rate</label>
+                    <input type="range" class="form-range" min="minimum_take_rate_100" max="default_take_rate_100" step="1" id="customRange3" name="take_rate" />
+                </form> {% endcomment %}
                 {% for item in seller_product_seller_locations %}
                     <div class="row mb-4">
                         <div class="col-auto">
@@ -33,18 +41,21 @@
                         </div>
                         <div class="col-auto">
                             <p class="text-end">
-                                <b>${{ item.price_data.total|floatformat:2|intcomma }}</b>
+                                <b>${{ item.price_data.total_max|floatformat:2|intcomma }}</b>
+                                {% comment %} <b>Range: ${{ item.price_data.total_min|floatformat:2|intcomma }} - ${{ item.price_data.total_max|floatformat:2|intcomma }}</b> {% endcomment %}
                             </p>
                             <p class="text-end">
                                 Delivery:{% if item.price_data.delivery %}
-                                    ${{ item.price_data.delivery.total|floatformat:2|intcomma }}
+                                    ${{ item.price_data.delivery_max|floatformat:2|intcomma }}
+                                    {% comment %}Range: ${{ item.price_data.delivery_min|floatformat:2|intcomma }} - ${{ item.price_data.delivery_max|floatformat:2|intcomma }} {% endcomment %}
                                 {% else %}
                                     No charge
                                 {% endif %}
                             </p>
                             <p class="text-end">
                                 Removal:{% if item.price_data.removal %}
-                                    ${{ item.price_data.removal.total|floatformat:2|intcomma }}
+                                    ${{ item.price_data.removal_max|floatformat:2|intcomma }}
+                                    {% comment %}Range: ${{ item.price_data.removal_min|floatformat:2|intcomma }} - ${{ item.price_data.removal_max|floatformat:2|intcomma }} {% endcomment %}
                                 {% else %}
                                     No charge
                                 {% endif %}
