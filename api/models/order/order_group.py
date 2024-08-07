@@ -26,6 +26,7 @@ from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
 from chat.models.conversation import Conversation
 from common.models import BaseModel
+from common.utils import DistanceUtils
 from matching_engine.matching_engine import MatchingEngine
 
 logger = logging.getLogger(__name__)
@@ -118,7 +119,7 @@ class OrderGroup(BaseModel):
         # Update tonnage_quantity.
         seller_product_seller_location_material_waste_type = (
             self.seller_product_seller_location.material.waste_types.filter(
-                waste_type=self.waste_type
+                main_product_waste_type__waste_type=self.waste_type
             ).first()
         )
 
@@ -352,46 +353,43 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 month=seller_product_seller_location.rental_multi_step.month,
             )
 
-        # # Material.
-        # if main_product.has_material and hasattr(
-        #     seller_product_seller_location, "material"
-        # ):
-        #     material_waste_type = SellerProductSellerLocationMaterialWasteType.objects.filter(
-        #         seller_product_seller_location_material=seller_product_seller_location.material
-        #     )
-        #     price_per_ton = None
-        #     tonnage_included = None
-        #     for mwt in material_waste_type:
-        #         print(mwt.price_per_ton, mwt.tonnage_included)
-        #         if price_per_ton is None:
-        #             price_per_ton = mwt.price_per_ton
-        #             tonnage_included = mwt.tonnage_included
-        #         if (
-        #             price_per_ton != mwt.price_per_ton
-        #             or tonnage_included != mwt.tonnage_included
-        #         ):
-        #             print(
-        #                 "Material Waste Type price_per_ton/tonnage_included must be the same for all Waste Types."
-        #             )
-        #             # raise Exception(
-        #             #     "Material Waste Type price_per_ton/tonnage_included must be the same for all Waste Types."
-        #             # )
-        #         price_per_ton += mwt.price_per_ton
-        #         tonnage_included += mwt.tonnage_included
-        #     OrderGroupMaterial.objects.create(
-        #         order_group=instance,
-        #         price_per_ton=material_waste_type.price_per_ton,
-        #         tonnage_included=material_waste_type.tonnage_included,
-        #     )
+        # Material.
+        if instance.waste_type:
+            material_waste_type = (
+                SellerProductSellerLocationMaterialWasteType.objects.filter(
+                    seller_product_seller_location_material=seller_product_seller_location.material
+                )
+                .filter(main_product_waste_type__waste_type=instance.waste_type)
+                .first()
+            )
+            if material_waste_type:
+                OrderGroupMaterial.objects.create(
+                    order_group=instance,
+                    price_per_ton=material_waste_type.price_per_ton,
+                    tonnage_included=material_waste_type.tonnage_included,
+                )
+            else:
+                raise Exception(
+                    f"Material Waste Type not found for SellerProductSellerLocationMaterial [{seller_product_seller_location.material}] and WasteType [{instance.waste_type}]."
+                )
 
         # Service (legacy).
         if main_product.has_service and hasattr(
             seller_product_seller_location, "service"
         ):
+            # Get distance between User and Seller.
+            distance = DistanceUtils.get_euclidean_distance(
+                instance.user_address.latitude,
+                instance.user_address.longitude,
+                instance.seller_product_seller_location.seller_location.latitude,
+                instance.seller_product_seller_location.seller_location.longitude,
+            )
+
             OrderGroupService.objects.create(
                 order_group=instance,
-                rate=seller_product_seller_location.service.flat_rate_price,
-                miles=seller_product_seller_location.service.price_per_mile,
+                rate=seller_product_seller_location.service.price_per_mile
+                or seller_product_seller_location.service.flat_rate_price,
+                miles=distance if distance else None,
             )
 
         # Service Times Per Week.
