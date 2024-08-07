@@ -20,7 +20,10 @@ from .order.order_disposal_ticket import OrderDisposalTicket
 from .order.order_group import OrderGroup
 from .order.order_group_material import OrderGroupMaterial
 from .order.order_group_rental import OrderGroupRental
+from .order.order_group_rental_multi_step import OrderGroupRentalMultiStep
+from .order.order_group_rental_one_step import OrderGroupRentalOneStep
 from .order.order_group_service import OrderGroupService
+from .order.order_group_service_times_per_week import OrderGroupServiceTimesPerWeek
 from .order.order_line_item import OrderLineItem
 from .order.order_line_item_type import OrderLineItemType
 from .order.subscription import Subscription

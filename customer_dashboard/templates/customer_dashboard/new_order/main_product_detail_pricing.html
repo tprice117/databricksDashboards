@@ -7,11 +7,39 @@
 {% block stylesheet %}
     <style></style>
 {% endblock %}
+{% block javascript %}
+    <script>
+        // listen for the range slider take_rate change event
+        document.getElementById("take_rate").addEventListener("input", function () {
+            // get the value of the range slider
+            let takeRate = this.value;
+            // get the takeRateLabel element
+            let takeRateLabel = document.getElementById("takeRateLabel");
+            // update the text of the takeRateLabel element
+            takeRateLabel.innerText = takeRate + "%";
+            // get all price-item elements
+            let priceItems = document.querySelectorAll(".price-item");
+            // loop through all price-item elements
+            priceItems.forEach(function (priceItem) {
+                // get the price of the price-item element
+                let price = parseFloat(priceItem.getAttribute("data-price"));
+                // calculate the new price
+                let newPrice = price + price * (takeRate / 100);
+                // update the price of the price-item element
+                priceItem.innerText = "$" + newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+            });
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         <h3 class="text-dark mb-1">New Order: Supplier Options</h3>
         <div class="row">
             <div class="col">
+                <div class="container-sm mb-4 pt-4 pb-4">
+                    <label for="take_rate" class="form-label">Take Rate <b id="takeRateLabel">{{ default_take_rate_100 }}%</b></label>
+                    <input form="orderForm" type="range" class="form-range" min="{{ minimum_take_rate_100 }}" max="{{ default_take_rate_100 }}" step="0.5" id="take_rate" name="take_rate" value="{{ default_take_rate_100 }}" />
+                </div>
                 {% for item in seller_product_seller_locations %}
                     <div class="row mb-4">
                         <div class="col-auto">
@@ -33,30 +61,31 @@
                         </div>
                         <div class="col-auto">
                             <p class="text-end">
-                                <b>${{ item.price_data.total|floatformat:2|intcomma }}</b>
+                                <b class="price-item" data-price="{{ item.price_data.total }}">${{ item.price_data.total_max|floatformat:2|intcomma }}</b>
                             </p>
                             <p class="text-end">
                                 Delivery:{% if item.price_data.delivery %}
-                                    ${{ item.price_data.delivery.total|floatformat:2|intcomma }}
+                                    <span class="price-item" data-price="{{ item.price_data.delivery.total }}">${{ item.price_data.delivery_max|floatformat:2|intcomma }}</span>
                                 {% else %}
                                     No charge
                                 {% endif %}
                             </p>
                             <p class="text-end">
                                 Removal:{% if item.price_data.removal %}
-                                    ${{ item.price_data.removal.total|floatformat:2|intcomma }}
+                                    <span class="price-item" data-price="{{ item.price_data.removal.total }}">${{ item.price_data.removal_max|floatformat:2|intcomma }}</span>
                                 {% else %}
                                     No charge
                                 {% endif %}
                             </p>
                         </div>
                         <div class="col-auto">
-                            <form action="{% url 'customer_new_order_5' %}" method="post">
+                            <form id="orderForm" action="{% url 'customer_new_order_5' %}" method="post">
                                 {% csrf_token %}
                                 <input name="seller_product_seller_location_id" type="hidden" value="{{ item.seller_product_seller_location.id }}" />
                                 <input name="product_id" type="hidden" value="{{ product_id }}" />
                                 <input name="user_address" type="hidden" value="{{ user_address }}" />
                                 <input name="product_waste_types" type="hidden" value="{{ product_waste_types }}" />
+                                <input name="waste_type" type="hidden" value="{{ waste_type }}" />
                                 <input name="product_add_ons" type="hidden" value="{{ product_add_ons }}" />
                                 <input name="schedule_window" type="hidden" value="{{ schedule_window }}" />
                                 <input name="service_frequency" type="hidden" value="{{ service_frequency }}" />

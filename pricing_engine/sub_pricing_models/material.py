@@ -43,7 +43,9 @@ class MaterialPrice:
                     title="Material",
                     code="material",
                 ),
-                [item],
+                [
+                    item,
+                ],
             )
             if item
             else None

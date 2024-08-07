@@ -48,10 +48,10 @@ class SellerProductSellerLocationService(BaseModel):
         if self.price_per_mile is not None:
             items.append(
                 PricingLineItem(
-                    title="Service",
+                    description="Service",
                     units="Miles",
                     quantity=miles,
-                    rate=self.price_per_mile,
+                    unit_price=self.price_per_mile,
                 )
             )
 

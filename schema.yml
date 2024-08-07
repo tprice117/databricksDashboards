@@ -589,6 +589,44 @@ paths:
           description: ''
         '204':
           description: No response body
+  /api/admin/create-products-for-main-product/{main_product_id}/:
+    get:
+      operationId: api_admin_create_products_for_main_product_retrieve
+      parameters:
+      - in: path
+        name: main_product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAdminCreateProductsForMainProductRetrieveErrorResponse400'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                NotFound:
+                  value:
+                    type: client_error
+                    errors:
+                    - code: not_found
+                      detail: Not found.
+                      attr: null
+          description: ''
+        '200':
+          description: No response body
   /api/customer-portal/{user_address_id}/:
     get:
       operationId: api_customer_portal_retrieve
@@ -12928,9 +12966,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SellerProductSellerLocation'
+                $ref: '#/components/schemas/PricingEngineResponse'
           description: ''
   /pricing-engine/v1/seller-product-seller-location-pricing-by-lat-long:
     post:
@@ -12974,9 +13010,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SellerProductSellerLocation'
+                $ref: '#/components/schemas/PricingEngineResponse'
           description: ''
   /supplier/{supplier_id}/dashboard/:
     get:
@@ -13075,16 +13109,9 @@ components:
         id:
           type: string
           nullable: true
-        created_on:
+        main_product:
           type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
+          format: uuid
         name:
           type: string
           maxLength: 80
@@ -13095,23 +13122,16 @@ components:
           minimum: -1000000000000000000
           exclusiveMaximum: true
           exclusiveMinimum: true
-        created_by:
-          type: string
-          format: uuid
-          nullable: true
-        updated_by:
-          type: string
-          format: uuid
-          nullable: true
-        main_product:
-          type: string
-          format: uuid
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddOnChoice'
+          readOnly: true
       required:
-      - created_on
+      - choices
       - main_product
       - name
       - sort
-      - updated_on
     AddOnChoice:
       type: object
       properties:
@@ -13119,51 +13139,34 @@ components:
           type: string
           nullable: true
         add_on:
-          allOf:
-          - $ref: '#/components/schemas/AddOn'
-          readOnly: true
-        created_on:
           type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
+          format: uuid
         name:
           type: string
           maxLength: 80
-        created_by:
-          type: string
-          format: uuid
-          nullable: true
-        updated_by:
-          type: string
-          format: uuid
-          nullable: true
       required:
       - add_on
-      - created_on
       - name
-      - updated_on
-    ApiAddOnChoicesCreateCreatedByErrorComponent:
+    ApiAddOnChoicesCreateAddOnErrorComponent:
       type: object
       properties:
         attr:
           enum:
-          - created_by
+          - add_on
           type: string
-          description: '* `created_by` - created_by'
+          description: '* `add_on` - add_on'
         code:
           enum:
           - does_not_exist
           - incorrect_type
+          - 'null'
+          - required
           type: string
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
         detail:
           type: string
       required:
@@ -13174,19 +13177,15 @@ components:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnChoicesCreateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnChoicesCreateIdErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesCreateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiAddOnChoicesCreateAddOnErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnChoicesCreateNameErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesCreateCreatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesCreateUpdatedByErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
           non_field_errors: '#/components/schemas/ApiAddOnChoicesCreateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiAddOnChoicesCreateIdErrorComponent'
-          is_deleted: '#/components/schemas/ApiAddOnChoicesCreateIsDeletedErrorComponent'
+          add_on: '#/components/schemas/ApiAddOnChoicesCreateAddOnErrorComponent'
           name: '#/components/schemas/ApiAddOnChoicesCreateNameErrorComponent'
-          created_by: '#/components/schemas/ApiAddOnChoicesCreateCreatedByErrorComponent'
-          updated_by: '#/components/schemas/ApiAddOnChoicesCreateUpdatedByErrorComponent'
     ApiAddOnChoicesCreateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnChoicesCreateValidationError'
@@ -13216,28 +13215,6 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    ApiAddOnChoicesCreateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
         detail:
           type: string
       required:
@@ -13289,28 +13266,6 @@ components:
           - invalid
           type: string
           description: '* `invalid` - invalid'
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    ApiAddOnChoicesCreateUpdatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - updated_by
-          type: string
-          description: '* `updated_by` - updated_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
         detail:
           type: string
       required:
@@ -13404,22 +13359,26 @@ components:
       required:
       - errors
       - type
-    ApiAddOnChoicesPartialUpdateCreatedByErrorComponent:
+    ApiAddOnChoicesPartialUpdateAddOnErrorComponent:
       type: object
       properties:
         attr:
           enum:
-          - created_by
+          - add_on
           type: string
-          description: '* `created_by` - created_by'
+          description: '* `add_on` - add_on'
         code:
           enum:
           - does_not_exist
           - incorrect_type
+          - 'null'
+          - required
           type: string
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
         detail:
           type: string
       required:
@@ -13430,19 +13389,15 @@ components:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateIdErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateAddOnErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateNameErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateCreatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateUpdatedByErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
           non_field_errors: '#/components/schemas/ApiAddOnChoicesPartialUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiAddOnChoicesPartialUpdateIdErrorComponent'
-          is_deleted: '#/components/schemas/ApiAddOnChoicesPartialUpdateIsDeletedErrorComponent'
+          add_on: '#/components/schemas/ApiAddOnChoicesPartialUpdateAddOnErrorComponent'
           name: '#/components/schemas/ApiAddOnChoicesPartialUpdateNameErrorComponent'
-          created_by: '#/components/schemas/ApiAddOnChoicesPartialUpdateCreatedByErrorComponent'
-          updated_by: '#/components/schemas/ApiAddOnChoicesPartialUpdateUpdatedByErrorComponent'
     ApiAddOnChoicesPartialUpdateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnChoicesPartialUpdateValidationError'
@@ -13472,28 +13427,6 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    ApiAddOnChoicesPartialUpdateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
         detail:
           type: string
       required:
@@ -13551,28 +13484,6 @@ components:
       - attr
       - code
       - detail
-    ApiAddOnChoicesPartialUpdateUpdatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - updated_by
-          type: string
-          description: '* `updated_by` - updated_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnChoicesPartialUpdateValidationError:
       type: object
       properties:
@@ -13592,22 +13503,26 @@ components:
         propertyName: type
         mapping:
           client_error: '#/components/schemas/ParseErrorResponse'
-    ApiAddOnChoicesUpdateCreatedByErrorComponent:
+    ApiAddOnChoicesUpdateAddOnErrorComponent:
       type: object
       properties:
         attr:
           enum:
-          - created_by
+          - add_on
           type: string
-          description: '* `created_by` - created_by'
+          description: '* `add_on` - add_on'
         code:
           enum:
           - does_not_exist
           - incorrect_type
+          - 'null'
+          - required
           type: string
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+            * `null` - null
+            * `required` - required
         detail:
           type: string
       required:
@@ -13618,19 +13533,15 @@ components:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnChoicesUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnChoicesUpdateIdErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiAddOnChoicesUpdateAddOnErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnChoicesUpdateNameErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesUpdateCreatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnChoicesUpdateUpdatedByErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
           non_field_errors: '#/components/schemas/ApiAddOnChoicesUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiAddOnChoicesUpdateIdErrorComponent'
-          is_deleted: '#/components/schemas/ApiAddOnChoicesUpdateIsDeletedErrorComponent'
+          add_on: '#/components/schemas/ApiAddOnChoicesUpdateAddOnErrorComponent'
           name: '#/components/schemas/ApiAddOnChoicesUpdateNameErrorComponent'
-          created_by: '#/components/schemas/ApiAddOnChoicesUpdateCreatedByErrorComponent'
-          updated_by: '#/components/schemas/ApiAddOnChoicesUpdateUpdatedByErrorComponent'
     ApiAddOnChoicesUpdateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnChoicesUpdateValidationError'
@@ -13660,28 +13571,6 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    ApiAddOnChoicesUpdateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
         detail:
           type: string
       required:
@@ -13739,28 +13628,6 @@ components:
       - attr
       - code
       - detail
-    ApiAddOnChoicesUpdateUpdatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - updated_by
-          type: string
-          description: '* `updated_by` - updated_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnChoicesUpdateValidationError:
       type: object
       properties:
@@ -13773,49 +13640,21 @@ components:
       required:
       - errors
       - type
-    ApiAddOnsCreateCreatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - created_by
-          type: string
-          description: '* `created_by` - created_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnsCreateError:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnsCreateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsCreateIdErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsCreateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiAddOnsCreateMainProductErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsCreateNameErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsCreateSortErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsCreateCreatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsCreateUpdatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsCreateMainProductErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
           non_field_errors: '#/components/schemas/ApiAddOnsCreateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiAddOnsCreateIdErrorComponent'
-          is_deleted: '#/components/schemas/ApiAddOnsCreateIsDeletedErrorComponent'
+          main_product: '#/components/schemas/ApiAddOnsCreateMainProductErrorComponent'
           name: '#/components/schemas/ApiAddOnsCreateNameErrorComponent'
           sort: '#/components/schemas/ApiAddOnsCreateSortErrorComponent'
-          created_by: '#/components/schemas/ApiAddOnsCreateCreatedByErrorComponent'
-          updated_by: '#/components/schemas/ApiAddOnsCreateUpdatedByErrorComponent'
-          main_product: '#/components/schemas/ApiAddOnsCreateMainProductErrorComponent'
     ApiAddOnsCreateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnsCreateValidationError'
@@ -13845,28 +13684,6 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    ApiAddOnsCreateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
         detail:
           type: string
       required:
@@ -13982,28 +13799,6 @@ components:
       - attr
       - code
       - detail
-    ApiAddOnsCreateUpdatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - updated_by
-          type: string
-          description: '* `updated_by` - updated_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnsCreateValidationError:
       type: object
       properties:
@@ -14070,49 +13865,21 @@ components:
       required:
       - errors
       - type
-    ApiAddOnsPartialUpdateCreatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - created_by
-          type: string
-          description: '* `created_by` - created_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnsPartialUpdateError:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnsPartialUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsPartialUpdateIdErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsPartialUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiAddOnsPartialUpdateMainProductErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsPartialUpdateNameErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsPartialUpdateSortErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsPartialUpdateCreatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsPartialUpdateUpdatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsPartialUpdateMainProductErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
           non_field_errors: '#/components/schemas/ApiAddOnsPartialUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiAddOnsPartialUpdateIdErrorComponent'
-          is_deleted: '#/components/schemas/ApiAddOnsPartialUpdateIsDeletedErrorComponent'
+          main_product: '#/components/schemas/ApiAddOnsPartialUpdateMainProductErrorComponent'
           name: '#/components/schemas/ApiAddOnsPartialUpdateNameErrorComponent'
           sort: '#/components/schemas/ApiAddOnsPartialUpdateSortErrorComponent'
-          created_by: '#/components/schemas/ApiAddOnsPartialUpdateCreatedByErrorComponent'
-          updated_by: '#/components/schemas/ApiAddOnsPartialUpdateUpdatedByErrorComponent'
-          main_product: '#/components/schemas/ApiAddOnsPartialUpdateMainProductErrorComponent'
     ApiAddOnsPartialUpdateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnsPartialUpdateValidationError'
@@ -14142,28 +13909,6 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    ApiAddOnsPartialUpdateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
         detail:
           type: string
       required:
@@ -14279,28 +14024,6 @@ components:
       - attr
       - code
       - detail
-    ApiAddOnsPartialUpdateUpdatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - updated_by
-          type: string
-          description: '* `updated_by` - updated_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnsPartialUpdateValidationError:
       type: object
       properties:
@@ -14320,49 +14043,21 @@ components:
         propertyName: type
         mapping:
           client_error: '#/components/schemas/ParseErrorResponse'
-    ApiAddOnsUpdateCreatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - created_by
-          type: string
-          description: '* `created_by` - created_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnsUpdateError:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnsUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsUpdateIdErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsUpdateIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiAddOnsUpdateMainProductErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsUpdateNameErrorComponent'
       - $ref: '#/components/schemas/ApiAddOnsUpdateSortErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsUpdateCreatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsUpdateUpdatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiAddOnsUpdateMainProductErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
           non_field_errors: '#/components/schemas/ApiAddOnsUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiAddOnsUpdateIdErrorComponent'
-          is_deleted: '#/components/schemas/ApiAddOnsUpdateIsDeletedErrorComponent'
+          main_product: '#/components/schemas/ApiAddOnsUpdateMainProductErrorComponent'
           name: '#/components/schemas/ApiAddOnsUpdateNameErrorComponent'
           sort: '#/components/schemas/ApiAddOnsUpdateSortErrorComponent'
-          created_by: '#/components/schemas/ApiAddOnsUpdateCreatedByErrorComponent'
-          updated_by: '#/components/schemas/ApiAddOnsUpdateUpdatedByErrorComponent'
-          main_product: '#/components/schemas/ApiAddOnsUpdateMainProductErrorComponent'
     ApiAddOnsUpdateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiAddOnsUpdateValidationError'
@@ -14392,28 +14087,6 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
-    ApiAddOnsUpdateIsDeletedErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - is_deleted
-          type: string
-          description: '* `is_deleted` - is_deleted'
-        code:
-          enum:
-          - invalid
-          - 'null'
-          type: string
-          description: |-
-            * `invalid` - invalid
-            * `null` - null
         detail:
           type: string
       required:
@@ -14529,28 +14202,6 @@ components:
       - attr
       - code
       - detail
-    ApiAddOnsUpdateUpdatedByErrorComponent:
-      type: object
-      properties:
-        attr:
-          enum:
-          - updated_by
-          type: string
-          description: '* `updated_by` - updated_by'
-        code:
-          enum:
-          - does_not_exist
-          - incorrect_type
-          type: string
-          description: |-
-            * `does_not_exist` - does_not_exist
-            * `incorrect_type` - incorrect_type
-        detail:
-          type: string
-      required:
-      - attr
-      - code
-      - detail
     ApiAddOnsUpdateValidationError:
       type: object
       properties:
@@ -14563,6 +14214,13 @@ components:
       required:
       - errors
       - type
+    ApiAdminCreateProductsForMainProductRetrieveErrorResponse400:
+      oneOf:
+      - $ref: '#/components/schemas/ParseErrorResponse'
+      discriminator:
+        propertyName: type
+        mapping:
+          client_error: '#/components/schemas/ParseErrorResponse'
     ApiCustomerPortalRetrieveErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ParseErrorResponse'
@@ -37391,6 +37049,32 @@ components:
       required:
       - errors
       - type
+    ApiSellerInvoicePayablesCreateAccountNumberErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - account_number
+          type: string
+          description: '* `account_number` - account_number'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiSellerInvoicePayablesCreateAmountErrorComponent:
       type: object
       properties:
@@ -37471,6 +37155,7 @@ components:
       oneOf:
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesCreateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesCreateIdErrorComponent'
+      - $ref: '#/components/schemas/ApiSellerInvoicePayablesCreateAccountNumberErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesCreateIsDeletedErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesCreateInvoiceFileErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesCreateSupplierInvoiceIdErrorComponent'
@@ -37486,6 +37171,7 @@ components:
         mapping:
           non_field_errors: '#/components/schemas/ApiSellerInvoicePayablesCreateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiSellerInvoicePayablesCreateIdErrorComponent'
+          account_number: '#/components/schemas/ApiSellerInvoicePayablesCreateAccountNumberErrorComponent'
           is_deleted: '#/components/schemas/ApiSellerInvoicePayablesCreateIsDeletedErrorComponent'
           invoice_file: '#/components/schemas/ApiSellerInvoicePayablesCreateInvoiceFileErrorComponent'
           supplier_invoice_id: '#/components/schemas/ApiSellerInvoicePayablesCreateSupplierInvoiceIdErrorComponent'
@@ -37752,6 +37438,32 @@ components:
         propertyName: type
         mapping:
           client_error: '#/components/schemas/ParseErrorResponse'
+    ApiSellerInvoicePayablesPartialUpdateAccountNumberErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - account_number
+          type: string
+          description: '* `account_number` - account_number'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiSellerInvoicePayablesPartialUpdateAmountErrorComponent:
       type: object
       properties:
@@ -37832,6 +37544,7 @@ components:
       oneOf:
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateIdErrorComponent'
+      - $ref: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateAccountNumberErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateIsDeletedErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateInvoiceFileErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateSupplierInvoiceIdErrorComponent'
@@ -37847,6 +37560,7 @@ components:
         mapping:
           non_field_errors: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateIdErrorComponent'
+          account_number: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateAccountNumberErrorComponent'
           is_deleted: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateIsDeletedErrorComponent'
           invoice_file: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateInvoiceFileErrorComponent'
           supplier_invoice_id: '#/components/schemas/ApiSellerInvoicePayablesPartialUpdateSupplierInvoiceIdErrorComponent'
@@ -38106,6 +37820,32 @@ components:
         propertyName: type
         mapping:
           client_error: '#/components/schemas/ParseErrorResponse'
+    ApiSellerInvoicePayablesUpdateAccountNumberErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - account_number
+          type: string
+          description: '* `account_number` - account_number'
+        code:
+          enum:
+          - blank
+          - invalid
+          - null_characters_not_allowed
+          - surrogate_characters_not_allowed
+          type: string
+          description: |-
+            * `blank` - blank
+            * `invalid` - invalid
+            * `null_characters_not_allowed` - null_characters_not_allowed
+            * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiSellerInvoicePayablesUpdateAmountErrorComponent:
       type: object
       properties:
@@ -38186,6 +37926,7 @@ components:
       oneOf:
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesUpdateNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesUpdateIdErrorComponent'
+      - $ref: '#/components/schemas/ApiSellerInvoicePayablesUpdateAccountNumberErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesUpdateIsDeletedErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesUpdateInvoiceFileErrorComponent'
       - $ref: '#/components/schemas/ApiSellerInvoicePayablesUpdateSupplierInvoiceIdErrorComponent'
@@ -38201,6 +37942,7 @@ components:
         mapping:
           non_field_errors: '#/components/schemas/ApiSellerInvoicePayablesUpdateNonFieldErrorsErrorComponent'
           id: '#/components/schemas/ApiSellerInvoicePayablesUpdateIdErrorComponent'
+          account_number: '#/components/schemas/ApiSellerInvoicePayablesUpdateAccountNumberErrorComponent'
           is_deleted: '#/components/schemas/ApiSellerInvoicePayablesUpdateIsDeletedErrorComponent'
           invoice_file: '#/components/schemas/ApiSellerInvoicePayablesUpdateInvoiceFileErrorComponent'
           supplier_invoice_id: '#/components/schemas/ApiSellerInvoicePayablesUpdateSupplierInvoiceIdErrorComponent'
@@ -60407,6 +60149,32 @@ components:
       - attr
       - code
       - detail
+    ApiUserGroupsCreateCreditReportErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - credit_report
+          type: string
+          description: '* `credit_report` - credit_report'
+        code:
+          enum:
+          - empty
+          - invalid
+          - max_length
+          - no_name
+          type: string
+          description: |-
+            * `empty` - empty
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `no_name` - no_name
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiUserGroupsCreateError:
       oneOf:
       - $ref: '#/components/schemas/ApiUserGroupsCreateNonFieldErrorsErrorComponent'
@@ -60449,6 +60217,8 @@ components:
       - $ref: '#/components/schemas/ApiUserGroupsCreateCreditLineLimitErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsCreateComplianceStatusErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsCreateTaxExemptStatusErrorComponent'
+      - $ref: '#/components/schemas/ApiUserGroupsCreateOwnedAndRentedEquiptmentCoiErrorComponent'
+      - $ref: '#/components/schemas/ApiUserGroupsCreateCreditReportErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsCreateIntercomIdErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsCreateCreatedByErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsCreateUpdatedByErrorComponent'
@@ -60495,6 +60265,8 @@ components:
           credit_line_limit: '#/components/schemas/ApiUserGroupsCreateCreditLineLimitErrorComponent'
           compliance_status: '#/components/schemas/ApiUserGroupsCreateComplianceStatusErrorComponent'
           tax_exempt_status: '#/components/schemas/ApiUserGroupsCreateTaxExemptStatusErrorComponent'
+          owned_and_rented_equiptment_coi: '#/components/schemas/ApiUserGroupsCreateOwnedAndRentedEquiptmentCoiErrorComponent'
+          credit_report: '#/components/schemas/ApiUserGroupsCreateCreditReportErrorComponent'
           intercom_id: '#/components/schemas/ApiUserGroupsCreateIntercomIdErrorComponent'
           created_by: '#/components/schemas/ApiUserGroupsCreateCreatedByErrorComponent'
           updated_by: '#/components/schemas/ApiUserGroupsCreateUpdatedByErrorComponent'
@@ -61054,6 +60826,32 @@ components:
           description: |-
             * `cannot_delete_protected` - cannot_delete_protected
             * `invalid` - invalid
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiUserGroupsCreateOwnedAndRentedEquiptmentCoiErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - owned_and_rented_equiptment_coi
+          type: string
+          description: '* `owned_and_rented_equiptment_coi` - owned_and_rented_equiptment_coi'
+        code:
+          enum:
+          - empty
+          - invalid
+          - max_length
+          - no_name
+          type: string
+          description: |-
+            * `empty` - empty
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `no_name` - no_name
         detail:
           type: string
       required:
@@ -61665,6 +61463,32 @@ components:
       - attr
       - code
       - detail
+    ApiUserGroupsPartialUpdateCreditReportErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - credit_report
+          type: string
+          description: '* `credit_report` - credit_report'
+        code:
+          enum:
+          - empty
+          - invalid
+          - max_length
+          - no_name
+          type: string
+          description: |-
+            * `empty` - empty
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `no_name` - no_name
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiUserGroupsPartialUpdateError:
       oneOf:
       - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateNonFieldErrorsErrorComponent'
@@ -61707,6 +61531,8 @@ components:
       - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateCreditLineLimitErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateComplianceStatusErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateTaxExemptStatusErrorComponent'
+      - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateOwnedAndRentedEquiptmentCoiErrorComponent'
+      - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateCreditReportErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateIntercomIdErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateCreatedByErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsPartialUpdateUpdatedByErrorComponent'
@@ -61753,6 +61579,8 @@ components:
           credit_line_limit: '#/components/schemas/ApiUserGroupsPartialUpdateCreditLineLimitErrorComponent'
           compliance_status: '#/components/schemas/ApiUserGroupsPartialUpdateComplianceStatusErrorComponent'
           tax_exempt_status: '#/components/schemas/ApiUserGroupsPartialUpdateTaxExemptStatusErrorComponent'
+          owned_and_rented_equiptment_coi: '#/components/schemas/ApiUserGroupsPartialUpdateOwnedAndRentedEquiptmentCoiErrorComponent'
+          credit_report: '#/components/schemas/ApiUserGroupsPartialUpdateCreditReportErrorComponent'
           intercom_id: '#/components/schemas/ApiUserGroupsPartialUpdateIntercomIdErrorComponent'
           created_by: '#/components/schemas/ApiUserGroupsPartialUpdateCreatedByErrorComponent'
           updated_by: '#/components/schemas/ApiUserGroupsPartialUpdateUpdatedByErrorComponent'
@@ -62318,6 +62146,32 @@ components:
       - attr
       - code
       - detail
+    ApiUserGroupsPartialUpdateOwnedAndRentedEquiptmentCoiErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - owned_and_rented_equiptment_coi
+          type: string
+          description: '* `owned_and_rented_equiptment_coi` - owned_and_rented_equiptment_coi'
+        code:
+          enum:
+          - empty
+          - invalid
+          - max_length
+          - no_name
+          type: string
+          description: |-
+            * `empty` - empty
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `no_name` - no_name
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiUserGroupsPartialUpdateParentAccountIdErrorComponent:
       type: object
       properties:
@@ -62852,6 +62706,32 @@ components:
       - attr
       - code
       - detail
+    ApiUserGroupsUpdateCreditReportErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - credit_report
+          type: string
+          description: '* `credit_report` - credit_report'
+        code:
+          enum:
+          - empty
+          - invalid
+          - max_length
+          - no_name
+          type: string
+          description: |-
+            * `empty` - empty
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `no_name` - no_name
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiUserGroupsUpdateError:
       oneOf:
       - $ref: '#/components/schemas/ApiUserGroupsUpdateNonFieldErrorsErrorComponent'
@@ -62894,6 +62774,8 @@ components:
       - $ref: '#/components/schemas/ApiUserGroupsUpdateCreditLineLimitErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsUpdateComplianceStatusErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsUpdateTaxExemptStatusErrorComponent'
+      - $ref: '#/components/schemas/ApiUserGroupsUpdateOwnedAndRentedEquiptmentCoiErrorComponent'
+      - $ref: '#/components/schemas/ApiUserGroupsUpdateCreditReportErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsUpdateIntercomIdErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsUpdateCreatedByErrorComponent'
       - $ref: '#/components/schemas/ApiUserGroupsUpdateUpdatedByErrorComponent'
@@ -62940,6 +62822,8 @@ components:
           credit_line_limit: '#/components/schemas/ApiUserGroupsUpdateCreditLineLimitErrorComponent'
           compliance_status: '#/components/schemas/ApiUserGroupsUpdateComplianceStatusErrorComponent'
           tax_exempt_status: '#/components/schemas/ApiUserGroupsUpdateTaxExemptStatusErrorComponent'
+          owned_and_rented_equiptment_coi: '#/components/schemas/ApiUserGroupsUpdateOwnedAndRentedEquiptmentCoiErrorComponent'
+          credit_report: '#/components/schemas/ApiUserGroupsUpdateCreditReportErrorComponent'
           intercom_id: '#/components/schemas/ApiUserGroupsUpdateIntercomIdErrorComponent'
           created_by: '#/components/schemas/ApiUserGroupsUpdateCreatedByErrorComponent'
           updated_by: '#/components/schemas/ApiUserGroupsUpdateUpdatedByErrorComponent'
@@ -63499,6 +63383,32 @@ components:
           description: |-
             * `cannot_delete_protected` - cannot_delete_protected
             * `invalid` - invalid
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiUserGroupsUpdateOwnedAndRentedEquiptmentCoiErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - owned_and_rented_equiptment_coi
+          type: string
+          description: '* `owned_and_rented_equiptment_coi` - owned_and_rented_equiptment_coi'
+        code:
+          enum:
+          - empty
+          - invalid
+          - max_length
+          - no_name
+          type: string
+          description: |-
+            * `empty` - empty
+            * `invalid` - invalid
+            * `max_length` - max_length
+            * `no_name` - no_name
         detail:
           type: string
       required:
@@ -69585,6 +69495,11 @@ components:
           items:
             $ref: '#/components/schemas/MainProductInfo'
           readOnly: true
+        add_ons:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddOn'
+          readOnly: true
         tags:
           type: array
           items:
@@ -69603,11 +69518,6 @@ components:
         name:
           type: string
           maxLength: 80
-        cubic_yards:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-          nullable: true
         ar_url:
           type: string
           format: uri
@@ -69623,6 +69533,22 @@ components:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+        default_take_rate:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          description: 'Default mark up for this product (ex: 35 means 35%)'
+        minimum_take_rate:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          description: 'Minimum take rate for this product (ex: 10 means 10%)'
         included_tonnage_quantity:
           type: number
           format: double
@@ -69631,31 +69557,7 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
-        price_per_additional_ton:
-          type: number
-          format: double
-          maximum: 10000000000000000
-          minimum: -10000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
         max_tonnage_quantity:
-          type: number
-          format: double
-          maximum: 1000000000000000000
-          minimum: -1000000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        max_rate:
-          type: number
-          format: double
-          maximum: 1000000000000000000
-          minimum: -1000000000000000000
-          exclusiveMaximum: true
-          exclusiveMinimum: true
-          nullable: true
-        included_rate_quantity:
           type: number
           format: double
           maximum: 1000000000000000000
@@ -69688,6 +69590,7 @@ components:
           format: uuid
           nullable: true
       required:
+      - add_ons
       - created_on
       - main_product_category
       - main_product_infos
@@ -70984,16 +70887,9 @@ components:
         id:
           type: string
           nullable: true
-        created_on:
+        main_product:
           type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
+          format: uuid
         name:
           type: string
           maxLength: 80
@@ -71004,17 +70900,11 @@ components:
           minimum: -1000000000000000000
           exclusiveMaximum: true
           exclusiveMinimum: true
-        created_by:
-          type: string
-          format: uuid
-          nullable: true
-        updated_by:
-          type: string
-          format: uuid
-          nullable: true
-        main_product:
-          type: string
-          format: uuid
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddOnChoice'
+          readOnly: true
     PatchedAddOnChoice:
       type: object
       properties:
@@ -71022,30 +70912,11 @@ components:
           type: string
           nullable: true
         add_on:
-          allOf:
-          - $ref: '#/components/schemas/AddOn'
-          readOnly: true
-        created_on:
           type: string
-          format: date-time
-          readOnly: true
-        updated_on:
-          type: string
-          format: date-time
-          readOnly: true
-        is_deleted:
-          type: boolean
+          format: uuid
         name:
           type: string
           maxLength: 80
-        created_by:
-          type: string
-          format: uuid
-          nullable: true
-        updated_by:
-          type: string
-          format: uuid
-          nullable: true
     PatchedDayOfWeek:
       type: object
       properties:
@@ -71998,6 +71869,9 @@ components:
         id:
           type: string
           nullable: true
+        account_number:
+          type: string
+          nullable: true
         created_on:
           type: string
           format: date-time
@@ -72290,9 +72164,21 @@ components:
           allOf:
           - $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
           readOnly: true
+        rental_one_step:
+          allOf:
+          - $ref: '#/components/schemas/SellerProductSellerLocationRentalOneSteperializer'
+          readOnly: true
         rental:
           allOf:
           - $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          readOnly: true
+        rental_multi_step:
+          allOf:
+          - $ref: '#/components/schemas/SellerProductSellerLocationRentalMultiStep'
+          readOnly: true
+        service_times_per_week:
+          allOf:
+          - $ref: '#/components/schemas/SellerProductSellerLocationServiceTimesPerWeek'
           readOnly: true
         created_on:
           type: string
@@ -72898,6 +72784,9 @@ components:
         id:
           type: string
           nullable: true
+        sort:
+          type: integer
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -73020,6 +72909,14 @@ components:
           $ref: '#/components/schemas/ComplianceStatusEnum'
         tax_exempt_status:
           $ref: '#/components/schemas/TaxExemptStatusEnum'
+        owned_and_rented_equiptment_coi:
+          type: string
+          format: uri
+          nullable: true
+        credit_report:
+          type: string
+          format: uri
+          nullable: true
         intercom_id:
           type: string
           nullable: true
@@ -73595,6 +73492,49 @@ components:
       - seller_product_seller_location
       - start_date
       - waste_type
+    PricingEngineResponse:
+      type: object
+      properties:
+        service:
+          allOf:
+          - $ref: '#/components/schemas/PricingLineItemGroup'
+          readOnly: true
+          nullable: true
+        rental:
+          allOf:
+          - $ref: '#/components/schemas/PricingLineItemGroup'
+          readOnly: true
+          nullable: true
+        material:
+          allOf:
+          - $ref: '#/components/schemas/PricingLineItemGroup'
+          readOnly: true
+          nullable: true
+        delivery:
+          allOf:
+          - $ref: '#/components/schemas/PricingLineItemGroup'
+          readOnly: true
+          nullable: true
+        removal:
+          allOf:
+          - $ref: '#/components/schemas/PricingLineItemGroup'
+          readOnly: true
+          nullable: true
+        total:
+          type: number
+          format: double
+          maximum: 100000000
+          minimum: -100000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          readOnly: true
+      required:
+      - delivery
+      - material
+      - removal
+      - rental
+      - service
+      - total
     PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateEndDateErrorComponent:
       type: object
       properties:
@@ -74021,6 +73961,47 @@ components:
       - attr
       - code
       - detail
+    PricingLineItem:
+      type: object
+      properties:
+        description:
+          type: string
+          nullable: true
+          maxLength: 255
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        unit_price:
+          type: number
+          format: double
+        units:
+          type: string
+          nullable: true
+          maxLength: 255
+        total:
+          type: string
+          readOnly: true
+      required:
+      - total
+      - unit_price
+    PricingLineItemGroup:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricingLineItem'
+        sort:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - items
+      - title
     Product:
       type: object
       properties:
@@ -74263,6 +74244,9 @@ components:
       type: object
       properties:
         id:
+          type: string
+          nullable: true
+        account_number:
           type: string
           nullable: true
         created_on:
@@ -74600,9 +74584,21 @@ components:
           allOf:
           - $ref: '#/components/schemas/SellerProductSellerLocationMaterial'
           readOnly: true
+        rental_one_step:
+          allOf:
+          - $ref: '#/components/schemas/SellerProductSellerLocationRentalOneSteperializer'
+          readOnly: true
         rental:
           allOf:
           - $ref: '#/components/schemas/SellerProductSellerLocationRental'
+          readOnly: true
+        rental_multi_step:
+          allOf:
+          - $ref: '#/components/schemas/SellerProductSellerLocationRentalMultiStep'
+          readOnly: true
+        service_times_per_week:
+          allOf:
+          - $ref: '#/components/schemas/SellerProductSellerLocationServiceTimesPerWeek'
           readOnly: true
         created_on:
           type: string
@@ -74684,11 +74680,14 @@ components:
       - created_on
       - material
       - rental
+      - rental_multi_step
+      - rental_one_step
       - seller_location
       - seller_location_id
       - seller_product
       - seller_product_id
       - service
+      - service_times_per_week
       - updated_on
     SellerProductSellerLocationMaterial:
       type: object
@@ -74824,6 +74823,116 @@ components:
       - created_on
       - seller_product_seller_location
       - updated_on
+    SellerProductSellerLocationRentalMultiStep:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        hour:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        day:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        week:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        two_weeks:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        month:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - seller_product_seller_location
+      - updated_on
+    SellerProductSellerLocationRentalOneSteperializer:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        rate:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - seller_product_seller_location
+      - updated_on
     SellerProductSellerLocationService:
       type: object
       properties:
@@ -74912,6 +75021,77 @@ components:
       - created_on
       - main_product_service_recurring_frequency
       - seller_product_seller_location_service
+      - updated_on
+    SellerProductSellerLocationServiceTimesPerWeek:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_on:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        one_time_per_week:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        two_times_per_week:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        three_times_per_week:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        four_times_per_week:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        five_times_per_week:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+        seller_product_seller_location:
+          type: string
+          format: uuid
+      required:
+      - created_on
+      - seller_product_seller_location
       - updated_on
     SellerStatusEnum:
       enum:
@@ -75411,6 +75591,9 @@ components:
         id:
           type: string
           nullable: true
+        sort:
+          type: integer
+          readOnly: true
         created_on:
           type: string
           format: date-time
@@ -75435,6 +75618,7 @@ components:
       required:
       - created_on
       - name
+      - sort
       - updated_on
     UserGroup:
       type: object
@@ -75537,6 +75721,14 @@ components:
           $ref: '#/components/schemas/ComplianceStatusEnum'
         tax_exempt_status:
           $ref: '#/components/schemas/TaxExemptStatusEnum'
+        owned_and_rented_equiptment_coi:
+          type: string
+          format: uri
+          nullable: true
+        credit_report:
+          type: string
+          format: uri
+          nullable: true
         intercom_id:
           type: string
           nullable: true
