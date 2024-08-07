@@ -27,7 +27,7 @@ class PricingLineItem(models.Model):
 
     @property
     def total(self):
-        return self.quantity * self.unit_price
+        return float(self.quantity) * float(self.unit_price)
 
     class Meta:
         managed = False

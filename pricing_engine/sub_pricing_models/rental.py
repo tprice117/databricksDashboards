@@ -31,20 +31,26 @@ class RentalPrice:
         if (
             seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
         ):
-            items += seller_product_seller_location.rental_one_step.get_price(
-                duration=duration,
+            items.append(
+                seller_product_seller_location.rental_one_step.get_price(
+                    duration=duration,
+                )
             )
         elif (
             seller_product_seller_location.seller_product.product.main_product.has_rental
         ):
-            items += seller_product_seller_location.rental.get_price(
-                duration=duration,
+            items.append(
+                seller_product_seller_location.rental.get_price(
+                    duration=duration,
+                )
             )
         elif (
             seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
         ):
-            items += seller_product_seller_location.rental_multi_step.get_price(
-                duration=duration,
+            items.append(
+                seller_product_seller_location.rental_multi_step.get_price(
+                    duration=duration,
+                )
             )
 
         return (
