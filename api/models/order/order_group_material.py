@@ -16,10 +16,11 @@ class OrderGroupMaterial(BaseModel):
         """
         Based on the OrderGroup.SellerProductSellerLocation's pricing, update the pricing.
         """
-        self.price_per_ton = (
-            self.order_group.seller_product_seller_location.material.price_per_ton
+        material_waste_type = (
+            self.order_group.seller_product_seller_location.material.waste_types.filter(
+                main_product_waste_type__waste_type=self.order_group.waste_type
+            ).first()
         )
-        self.tonnage_included = (
-            self.order_group.seller_product_seller_location.material.tonnage_included
-        )
+        self.price_per_ton = material_waste_type.price_per_ton
+        self.tonnage_included = material_waste_type.tonnage_included
         self.save()
