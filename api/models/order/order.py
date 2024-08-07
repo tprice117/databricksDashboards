@@ -184,7 +184,7 @@ class Order(BaseModel):
             end_date=self.end_date,
             waste_type=self.order_group.waste_type,
         )
-        take_rate = self.order_group.take_rate / 100
+        take_rate = float(self.order_group.take_rate / 100)
         pricing_d = PricingEngineResponseSerializer(pricing).data
         total_pricing = {
             "seller": pricing_d,
