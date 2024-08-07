@@ -996,6 +996,7 @@ def new_order_5(request):
         seller_product_seller_location_id = request.POST.get(
             "seller_product_seller_location_id"
         )
+        take_rate = request.POST.get("take_rate")
         product_id = request.POST.get("product_id")
         user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
@@ -1012,6 +1013,10 @@ def new_order_5(request):
         main_product = main_product.select_related("main_product_category")
         # main_product = main_product.prefetch_related("products")
         main_product = main_product.first()
+        if take_rate:
+            take_rate = float(take_rate)
+        else:
+            take_rate = main_product.default_take_rate
         context["main_product"] = main_product
         seller_product_location = SellerProductSellerLocation.objects.get(
             id=seller_product_seller_location_id
@@ -1037,7 +1042,7 @@ def new_order_5(request):
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=main_product.default_take_rate,
+            take_rate=take_rate,
             waste_type_id=waste_type_id,
         )
         if service_frequency:
