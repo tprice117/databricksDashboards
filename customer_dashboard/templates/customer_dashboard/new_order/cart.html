@@ -61,7 +61,7 @@
 {% endblock %}
 {% block content %}
     <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        {% if request.user.is_staff %}
+        {% comment %} {% if request.user.is_staff %}
             <div class="row">
                 <div class="col">
                     <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
@@ -70,7 +70,6 @@
                                 <div class="input-group">
                                     <label class="input-group-text" for="inputGroupSelect01">Options</label>
                                     <select class="form-select" id="inputGroupSelect01" name="filter" aria-label="Filter Data By">
-                                        {% comment %} <option value="">Filter Data By</option> {% endcomment %}
                                         <option value="new" selected>Created Today</option>
                                         <option value="starting">Starting in > 5 days</option>
                                         <option value="inactive">Inactive for 5+ Days</option>
@@ -101,7 +100,7 @@
                     </div>
                 </div>
             </div>
-        {% endif %}
+        {% endif %} {% endcomment %}
         <div class="card shadow">
             <div class="card-header py-3">
                 <div class="row">
