@@ -875,9 +875,9 @@ class OrderGroupSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        service_data = validated_data.pop("service")
-        rental_data = validated_data.pop("rental")
-        material_data = validated_data.pop("material")
+        validated_data.pop("service")
+        validated_data.pop("rental")
+        validated_data.pop("material")
 
         # Create order group.
         preferred_service_days = validated_data.pop("preferred_service_days")
@@ -886,9 +886,6 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
         # NOTE: This has moved into the OrderGroup post_save signal.
         # It uses the seller_product_seller_location to extract the service, rental, etc.
-        # Create material since we need the material type here.
-        if material_data:
-            OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
 
         return order_group
 
