@@ -184,11 +184,7 @@ class Order(BaseModel):
             end_date=self.end_date,
             waste_type=self.order_group.waste_type,
         )
-        take_rate = (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
-        )
-        if take_rate > 1:
-            take_rate = take_rate / 100
+        take_rate = self.order_group.take_rate / 100
         pricing_d = PricingEngineResponseSerializer(pricing).data
         total_pricing = {
             "seller": pricing_d,
