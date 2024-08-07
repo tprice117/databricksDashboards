@@ -52,8 +52,8 @@ class SellerProductSellerLocationRentalOneStep(BaseModel):
 
         # Create a PricingLineItem for each period.
         return PricingLineItem(
-            title="Rental",
+            description="Rental",
             units="28 day periods",
             quantity=periods,
-            rate=self.rate,
+            unit_price=self.rate,
         )
