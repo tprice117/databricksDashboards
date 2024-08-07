@@ -913,12 +913,16 @@ def new_order_4(request):
     # if context["removal_date"]:
     #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
     context["seller_product_seller_locations"] = []
-    context["default_take_rate_100"] = context["product"].main_product.default_take_rate
-    context["minimum_take_rate_100"] = context["product"].main_product.minimum_take_rate
-    context["default_take_rate"] = (
+    context["default_take_rate_100"] = float(
+        context["product"].main_product.default_take_rate
+    )
+    context["minimum_take_rate_100"] = float(
+        context["product"].main_product.minimum_take_rate
+    )
+    context["default_take_rate"] = float(
         context["product"].main_product.default_take_rate / 100
     )
-    context["minimum_take_rate"] = (
+    context["minimum_take_rate"] = float(
         context["product"].main_product.minimum_take_rate / 100
     )
     for seller_product_seller_location in seller_product_seller_locations:
@@ -1375,6 +1379,7 @@ def checkout(request, user_address_id):
             setattr(payment_method, "is_default", True)
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
+    # TODO: Get total price with max take_rate, then apply the discount (order_group.take_rate).
     for order in orders:
         if order.status == Order.Status.APPROVAL:
             context["needs_approval"] = True
