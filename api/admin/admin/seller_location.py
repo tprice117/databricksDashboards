@@ -39,6 +39,11 @@ class SellerLocationAdmin(admin.ModelAdmin):
     list_filter = [
         SellerLocationAdminTasksFilter,
     ]
+    raw_id_fields = (
+        "seller",
+        "created_by",
+        "updated_by",
+    )
 
     def get_form(self, request, obj=None, **kwargs):
         # just save obj reference for future processing in Inline
