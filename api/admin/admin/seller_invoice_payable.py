@@ -20,3 +20,8 @@ class SellerInvoicePayableAdmin(admin.ModelAdmin):
     list_filter = [
         SellerInvoicePayableAdminTasksFilter,
     ]
+    raw_id_fields = (
+        "seller_location",
+        "created_by",
+        "updated_by",
+    )
