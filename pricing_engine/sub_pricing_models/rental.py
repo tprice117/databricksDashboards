@@ -31,7 +31,7 @@ class RentalPrice:
         if (
             seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
         ):
-            items.extend(
+            items.append(
                 seller_product_seller_location.rental_one_step.get_price(
                     duration=duration,
                 )
@@ -47,7 +47,7 @@ class RentalPrice:
         elif (
             seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
         ):
-            items.extend(
+            items.append(
                 seller_product_seller_location.rental_multi_step.get_price(
                     duration=duration,
                 )
