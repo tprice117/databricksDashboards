@@ -866,7 +866,8 @@ def new_order_4(request):
         ).first()
         waste_type = main_product_waste_type.waste_type
         waste_type_id = waste_type.id
-    context["waste_type"] = waste_type_id
+    if waste_type_id:
+        context["waste_type"] = waste_type_id
 
     products = Product.objects.filter(main_product_id=context["product_id"])
     # Find the products that have the waste types and add ons.
@@ -1046,9 +1047,10 @@ def new_order_5(request):
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=take_rate,
-            waste_type_id=waste_type_id,
+            take_rate=take_rate
         )
+        if waste_type_id:
+            order_group.waste_type_id = waste_type_id
         if service_frequency:
             order_group.service_recurring_frequency_id = service_frequency
         if removal_date:
