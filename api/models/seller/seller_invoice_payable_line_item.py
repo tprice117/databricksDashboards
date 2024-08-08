@@ -7,7 +7,7 @@ from common.models import BaseModel
 
 class SellerInvoicePayableLineItem(BaseModel):
     seller_invoice_payable = models.ForeignKey(
-        SellerInvoicePayable, models.CASCADE, blank=True, null=True
+        SellerInvoicePayable, models.CASCADE, null=True
     )
     order = models.ForeignKey(
         Order,

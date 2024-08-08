@@ -14,6 +14,7 @@ check = lob.sendPhysicalCheck(
 
 from typing import List, Union, Literal
 from dataclasses import dataclass
+import uuid
 import logging
 import lob_python
 from lob_python.api_client import ApiClient
@@ -69,20 +70,46 @@ class CheckRemittanceVariableResponse:
     description: str
 
 
-def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> str:
-    """Get invoice_id and account_number for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
-    seller_invoice_payable_line_item = (
-        order.seller_invoice_payable_line_items.all().first()
+def get_invoice_id(order: Order) -> str:
+    """Get invoice_id and account_number for Order from SellerInvoicePayableLineItem.seller_invoice_payable.
+    This should be the invoice id that the seller uses to track the order line item; it is on the invoice they send us.
+    If multiple SellerInvoicePayables are found, use comma separated string of all invoice_ids found.
+    If invoice_id is not found, use uuid and log error."""
+    seller_invoice_payable_line_items = order.seller_invoice_payable_line_items.all()
+
+    # Get the unique SellerInvoicePayables.
+    seller_invoice_payables = set(
+        [
+            line_item.seller_invoice_payable
+            for line_item in seller_invoice_payable_line_items
+        ]
     )
-    invoice_id = default_invoice_id
-    account_number = "N/A"
-    if seller_invoice_payable_line_item:
-        seller_invoice_payable = seller_invoice_payable_line_item.seller_invoice_payable
-        if seller_invoice_payable:
-            invoice_id = seller_invoice_payable.supplier_invoice_id
-            if seller_invoice_payable.account_number:
-                account_number = seller_invoice_payable.account_number
-    return invoice_id, account_number
+
+    # Format the invoice_id, comma separated if multiple.
+    invoice_ids = [
+        seller_invoice_payable.supplier_invoice_id
+        for seller_invoice_payable in seller_invoice_payables
+    ]
+    if not invoice_ids:
+        invoice_ids = [str(uuid.uuid4())]
+        logger.error(
+            f"Order[{order.id}] -> SellerInvoicePayableLineItem has no parent seller_invoice_payable. Using {invoice_ids[0]} for invoice_id. {seller_invoice_payable_line_items.count()}"
+        )
+    formatted_invoice_str = ", ".join(invoice_ids)
+
+    # Get unique set of SellerInvoicePayables account numbers.
+    seller_invoice_payable_line_item = set(
+        seller_invoice_payables.account_number
+        for seller_invoice_payables in seller_invoice_payables
+        if seller_invoice_payables.account_number
+    )
+    formatted_account_str = (
+        ", ".join(seller_invoice_payable_line_item)
+        if seller_invoice_payable_line_item
+        else "N/A"
+    )
+
+    return formatted_invoice_str, formatted_account_str
 
 
 def get_check_remittance_page_html(
@@ -146,9 +173,7 @@ def get_check_remittance_item_html(
             """
 
 
-def get_check_remittance_html(
-    seller_invoice_str: str, orders: List[Order]
-) -> CheckRemittanceHTMLResponse:
+def get_check_remittance_html(orders: List[Order]) -> CheckRemittanceHTMLResponse:
     """Get the HTML for the remittance advice on the check. If there are more than 6 orders, the remittance advice
     will be an attachment. If there are 6 or fewer orders, the remittance advice will be added to the check bottom.
     check_bottom must conform to the size in this template:
@@ -180,9 +205,7 @@ def get_check_remittance_html(
             + " | "
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
-        invoice_id, account_number = get_invoice_id(
-            order, default_invoice_id=seller_invoice_str
-        )
+        invoice_id, account_number = get_invoice_id(order)
         remittance_advice.append(
             get_check_remittance_item_html(
                 invoice_id,
@@ -223,9 +246,7 @@ def get_check_remittance_html(
     )
 
 
-def get_check_remittance_variable(
-    seller_invoice_str: str, orders: List[Order]
-) -> CheckRemittanceHTMLResponse:
+def get_check_remittance_variable(orders: List[Order]) -> CheckRemittanceHTMLResponse:
     """Get merge variables for the remittance advice on the check. This assumes that the remittance advice will be
     added as an attachment to the check and will use a template already in Lob.com.
     API Docs on templates: https://help.lob.com/print-and-mail/designing-mail-creatives/dynamic-personalization
@@ -252,9 +273,7 @@ def get_check_remittance_variable(
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
         # Add invoice to remittance advice page.
-        invoice_id, account_number = get_invoice_id(
-            order, default_invoice_id=seller_invoice_str
-        )
+        invoice_id, account_number = get_invoice_id(order)
         page["invoices"].append(
             {
                 "id": invoice_id,
@@ -335,14 +354,6 @@ class Lob:
             Union[Check, CheckErrorResponse]: The check object on success or error object on failure.
         """
         try:
-            # Get SellerInvoicePayable
-            seller_invoice_payable = SellerInvoicePayable.objects.filter(
-                seller_location_id=seller_location.id
-            ).first()
-            seller_invoice_str = "No Invoice Provided"
-            if seller_invoice_payable:
-                seller_invoice_str = seller_invoice_payable.supplier_invoice_id
-
             check_editable = CheckEditable(
                 bank_account=bank_id,
                 amount=float(amount),
@@ -371,9 +382,7 @@ class Lob:
             # Add Remittance Advice as an attachment if more than 6 orders.
             if len(orders) > CHECK_BOTTOM_ITEM_LIMIT:
                 # Add merge variables for remittance advice, which will be an attachment using a template.
-                check_remittance_merge = get_check_remittance_variable(
-                    seller_invoice_str, orders
-                )
+                check_remittance_merge = get_check_remittance_variable(orders)
                 check_editable.merge_variables = check_remittance_merge.merge_variables
                 check_editable.attachment = settings.LOB_CHECK_TEMPLATE_ID
                 check_editable.message = f"""Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice of {len(orders)} items."""
@@ -382,7 +391,7 @@ class Lob:
                 )
             else:
                 # Add Remittance Advice to check bottom if 6 or fewer orders.
-                check_remittance = get_check_remittance_html(seller_invoice_str, orders)
+                check_remittance = get_check_remittance_html(orders)
                 check_editable.description = (
                     f"{len(orders)} items - {check_remittance.description[:100]}"
                 )
