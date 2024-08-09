@@ -183,6 +183,7 @@ class Order(BaseModel):
             start_date=self.start_date,
             end_date=self.end_date,
             waste_type=self.order_group.waste_type,
+            times_per_week=self.order_group.times_per_week,
         )
         take_rate = float(self.order_group.take_rate / 100)
         pricing_d = PricingEngineResponseSerializer(pricing).data
