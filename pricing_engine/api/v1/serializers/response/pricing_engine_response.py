@@ -48,12 +48,9 @@ class PricingEngineResponseSerializer(serializers.Serializer):
             "removal": None,
         }
 
-        print(instance)
-
         # Loop through the instance and create a dictionary with the keys.
         group_and_items: Tuple[PricingLineItemGroup, list[PricingLineItem]]
         for group_and_items in instance:
-            print("Group and items", group_and_items)
             if group_and_items[0].code == "service":
                 response["service"] = PricingLineItemGroupSerializer(
                     group_and_items
@@ -72,6 +69,10 @@ class PricingEngineResponseSerializer(serializers.Serializer):
                 ).data
             elif group_and_items[0].code == "removal":
                 response["removal"] = PricingLineItemGroupSerializer(
+                    group_and_items
+                ).data
+            elif group_and_items[0].code == "fuel_and_environmental":
+                response["fuel_and_environmental"] = PricingLineItemGroupSerializer(
                     group_and_items
                 ).data
 

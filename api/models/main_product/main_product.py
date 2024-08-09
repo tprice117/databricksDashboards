@@ -61,7 +61,8 @@ class MainProduct(BaseModel):
 
     @property
     def max_discount(self):
-        return self.default_take_rate - self.minimum_take_rate
+        """Returns the maximum discount for this MainProduct as a decimal (0 < x < 1)."""
+        return 1 - ((1 + self.minimum_take_rate) / (1 + self.default_take_rate))
 
     @property
     def price_from(self):

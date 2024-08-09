@@ -9,6 +9,9 @@ from pricing_engine.models import PricingLineItemGroup
 from pricing_engine.models.pricing_line_item import PricingLineItem
 from pricing_engine.sub_pricing_models import MaterialPrice, RentalPrice, ServicePrice
 from pricing_engine.sub_pricing_models.delivery import DeliveryPrice
+from pricing_engine.sub_pricing_models.fuel_and_environmental import (
+    FuelAndEnvironmentalPrice,
+)
 from pricing_engine.sub_pricing_models.removal import RemovalPrice
 
 
@@ -20,6 +23,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: datetime.datetime,
         waste_type: Optional[WasteType],
+        discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         return PricingEngine.get_price_by_lat_long(
             latitude=user_address.latitude,
@@ -28,6 +32,7 @@ class PricingEngine:
             start_date=start_date,
             end_date=end_date,
             waste_type=waste_type,
+            discount=discount,
         )
 
     @staticmethod
@@ -38,6 +43,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: Optional[datetime.datetime],
         waste_type: Optional[WasteType],
+        discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         """
         This method calls the sub-classes to compute the total price based on
@@ -55,6 +61,20 @@ class PricingEngine:
         # Ensure the SellerProductSellerLocation is completely configured.
         if not seller_product_seller_location.is_complete:
             return None
+
+        # If discount is passed, ensure that it is not greater than
+        # the difference between the MainProduct default_take_rate and the
+        # minimum_take_rate.
+        if discount:
+            if (
+                discount
+                > seller_product_seller_location.seller_product.product.main_product.max_discount
+            ):
+                return Exception(
+                    "Discount cannot be greater than "
+                    f"{seller_product_seller_location.seller_product.product.main_product.max_discount}"
+                    " for this product."
+                )
 
         response = {}
 
@@ -102,6 +122,13 @@ class PricingEngine:
         if removal:
             removal[0].sort = 4
 
+        # Fuel and environmental Fees.
+        fuel_and_environmental_fees = FuelAndEnvironmentalPrice.get_price(
+            seller_product_seller_location=seller_product_seller_location,
+        )
+        if fuel_and_environmental_fees:
+            fuel_and_environmental_fees[0].sort = 5
+
         # Construct the response.
         response: List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]
         response = [
@@ -110,7 +137,22 @@ class PricingEngine:
             material,
             delivery,
             removal,
+            fuel_and_environmental_fees,
         ]
+
+        # For each item in the response, add the take rate to the unit price.
+        effective_take_rate = (
+            seller_product_seller_location.seller_product.product.main_product.default_take_rate
+        )
+        for _, items in response:
+            for item in items:
+                price_with_take_rate = item.unit_price * (1 + effective_take_rate)
+                price_after_discount = (
+                    price_with_take_rate * (1 - discount)
+                    if discount
+                    else price_with_take_rate
+                )
+                item.unit_price = price_after_discount
 
         # Filter out None values.
         response = [x for x in response if x]
@@ -120,7 +162,5 @@ class PricingEngine:
             response,
             key=lambda x: x[0].sort,
         )
-
-        print("Response: ", response)
 
         return response
