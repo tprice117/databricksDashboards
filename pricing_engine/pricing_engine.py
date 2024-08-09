@@ -122,6 +122,16 @@ class PricingEngine:
         if removal:
             removal[0].sort = 4
 
+        # Begin constructing the response.
+        response: List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]
+        response = [
+            service,
+            rental,
+            material,
+            delivery,
+            removal,
+        ]
+
         # Fuel and environmental Fees.
         subtotal = sum(
             [
@@ -131,27 +141,19 @@ class PricingEngine:
                         for x in group_and_items[1]
                     ]
                 )
-                for group_and_items in [service, rental, material, delivery, removal]
+                for group_and_items in response
                 if group_and_items and group_and_items[1] is not None
             ]
         )
-        fuel_and_environmental_fees = FuelAndEnvironmentalPrice.get_price(
+        fuel_and_environmental = FuelAndEnvironmentalPrice.get_price(
             seller_product_seller_location=seller_product_seller_location,
             subtotal=subtotal,
         )
-        if fuel_and_environmental_fees:
-            fuel_and_environmental_fees[0].sort = 5
+        if fuel_and_environmental:
+            fuel_and_environmental[0].sort = 5
 
-        # Construct the response.
-        response: List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]
-        response = [
-            service,
-            rental,
-            material,
-            delivery,
-            removal,
-            fuel_and_environmental_fees,
-        ]
+        # Append the fuel and environmental fees to the response.
+        response.append(fuel_and_environmental)
 
         # For each item in the response, add the take rate to the unit price.
         effective_take_rate = (
