@@ -73,7 +73,7 @@ class PricingEngine:
                 discount
                 > seller_product_seller_location.seller_product.product.main_product.max_discount
             ):
-                return Exception(
+                raise Exception(
                     "Discount cannot be greater than "
                     f"{seller_product_seller_location.seller_product.product.main_product.max_discount}"
                     " for this product."
@@ -88,14 +88,14 @@ class PricingEngine:
             not seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
             and times_per_week is not None
         ):
-            return Exception(
+            raise Exception(
                 "This product does not support times_per_week. Please remove this parameter."
             )
         if (
             seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
             and times_per_week is None
         ):
-            return Exception(
+            raise Exception(
                 "This product requires times_per_week. Please include this parameter."
             )
 
