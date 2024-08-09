@@ -164,7 +164,6 @@ class PricingEngine:
             seller_product_seller_location.seller_product.product.main_product.default_take_rate
         )
 
-        print(response)
         for _, items in response:
             for item in items:
                 price_with_take_rate = float(item.unit_price) * (

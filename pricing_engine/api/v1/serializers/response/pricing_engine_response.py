@@ -29,6 +29,10 @@ class PricingEngineResponseSerializer(serializers.Serializer):
         read_only=True,
         allow_null=True,
     )
+    fuel_and_environmental = PricingLineItemGroupSerializer(
+        read_only=True,
+        allow_null=True,
+    )
     total = serializers.DecimalField(
         read_only=True,
         max_digits=10,
@@ -46,6 +50,7 @@ class PricingEngineResponseSerializer(serializers.Serializer):
             "material": None,
             "delivery": None,
             "removal": None,
+            "fuel_and_environmental": None,
         }
 
         # Loop through the instance and create a dictionary with the keys.
