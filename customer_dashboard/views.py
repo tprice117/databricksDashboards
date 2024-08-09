@@ -903,6 +903,8 @@ def new_order_4(request):
         context["product_add_on_choices"] = []
     context["schedule_window"] = request.GET.get("schedule_window", "")
     context["service_times_per_week"] = request.GET.get("service_times_per_week", "")
+    if context["service_times_per_week"]:
+        context["service_times_per_week"] = int(context["service_times_per_week"])
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
     # step_time = time.time()
@@ -993,6 +995,11 @@ def new_order_4(request):
             ),
             waste_type=(
                 WasteType.objects.get(id=waste_type_id) if waste_type_id else None
+            ),
+            times_per_week=(
+                context["service_times_per_week"]
+                if context["service_times_per_week"]
+                else None
             ),
         )
 
