@@ -1,0 +1,18 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Server Error
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-4">Server Error</h3>
+        <div class="card shadow">
+            <div class="card-header py-3"></div>
+            <div class="card-body">{{ error_message }}</div>
+        </div>
+    </div>
+{% endblock %}

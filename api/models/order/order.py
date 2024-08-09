@@ -176,13 +176,14 @@ class Order(BaseModel):
         from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
             PricingEngineResponseSerializer,
         )
-
+        # TODO: Remove self.order_group.times_per_week or 1 once we figure out how to handle old restroom orders.
         pricing = get_pricing_engine().get_price(
             user_address=self.order_group.user_address,
             seller_product_seller_location=self.order_group.seller_product_seller_location,
             start_date=self.start_date,
             end_date=self.end_date,
             waste_type=self.order_group.waste_type,
+            times_per_week=self.order_group.times_per_week or 1,
         )
         take_rate = float(self.order_group.take_rate / 100)
         pricing_d = PricingEngineResponseSerializer(pricing).data
