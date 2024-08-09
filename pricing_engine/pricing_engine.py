@@ -23,6 +23,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: datetime.datetime,
         waste_type: Optional[WasteType],
+        times_per_week: int = None,
         discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         return PricingEngine.get_price_by_lat_long(
@@ -32,6 +33,7 @@ class PricingEngine:
             start_date=start_date,
             end_date=end_date,
             waste_type=waste_type,
+            times_per_week=times_per_week,
             discount=discount,
         )
 
@@ -43,6 +45,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: Optional[datetime.datetime],
         waste_type: Optional[WasteType],
+        times_per_week: Optional[int] = None,
         discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         """
@@ -76,6 +79,26 @@ class PricingEngine:
                     " for this product."
                 )
 
+        # Validate the times_per_week parameter.
+        # If the product does not support times_per_week, but the parameter is passed,
+        # raise an exception.
+        # If the product supports times_per_week, but the parameter is not passed,
+        # raise an exception.
+        if (
+            not seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
+            and times_per_week is not None
+        ):
+            return Exception(
+                "This product does not support times_per_week. Please remove this parameter."
+            )
+        if (
+            seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
+            and times_per_week is None
+        ):
+            return Exception(
+                "This product requires times_per_week. Please include this parameter."
+            )
+
         response = {}
 
         # Service price.
@@ -83,6 +106,7 @@ class PricingEngine:
             latitude=latitude,
             longitude=longitude,
             seller_product_seller_location=seller_product_seller_location,
+            times_per_week=times_per_week,
         )
         if service:
             service[0].sort = 0

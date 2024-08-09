@@ -2,10 +2,9 @@ from decimal import Decimal
 from typing import Optional, Tuple, Union
 
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
-from common.utils.distance.distance import DistanceUtils
-from pricing_engine.models import PricingLineItem, PricingLineItemGroup
 from api.models.user.user_address import UserAddress
 from common.utils.distance.distance import DistanceUtils
+from pricing_engine.models import PricingLineItem, PricingLineItemGroup
 
 
 class ServicePrice:
@@ -14,7 +13,7 @@ class ServicePrice:
         latitude: Decimal,
         longitude: Decimal,
         seller_product_seller_location: SellerProductSellerLocation,
-        times_per_week: int = None,
+        times_per_week: Optional[int] = None,
     ) -> Optional[Union[Tuple[PricingLineItemGroup, list[PricingLineItem]], None]]:
         """
         This method computes the service price based on customer location,
