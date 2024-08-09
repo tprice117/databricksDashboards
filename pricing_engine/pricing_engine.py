@@ -132,6 +132,9 @@ class PricingEngine:
             removal,
         ]
 
+        # Filter out None values.
+        response = [x for x in response if x]
+
         # Fuel and environmental Fees.
         subtotal = sum(
             [
@@ -159,18 +162,18 @@ class PricingEngine:
         effective_take_rate = (
             seller_product_seller_location.seller_product.product.main_product.default_take_rate
         )
+
         for _, items in response:
             for item in items:
-                price_with_take_rate = item.unit_price * (1 + effective_take_rate)
+                price_with_take_rate = float(item.unit_price) * (
+                    1 + float(effective_take_rate / 100)
+                )
                 price_after_discount = (
-                    price_with_take_rate * (1 - discount)
+                    price_with_take_rate * (1 - float(discount / 100))
                     if discount
                     else price_with_take_rate
                 )
                 item.unit_price = price_after_discount
-
-        # Filter out None values.
-        response = [x for x in response if x]
 
         # Sort the response.
         response = sorted(

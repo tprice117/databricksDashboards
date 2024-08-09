@@ -19,8 +19,11 @@ class FuelAndEnvironmentalPrice:
                 [
                     PricingLineItem(
                         description=None,
-                        unit_price=seller_product_seller_location.fuel_environmental_markup
-                        * subtotal,
+                        unit_price=float(
+                            seller_product_seller_location.fuel_environmental_markup
+                            / 100
+                        )
+                        * float(subtotal),
                         units=None,
                     )
                 ],
