@@ -27,3 +27,8 @@ class PricingEngineRequestSerializer(serializers.Serializer):
         write_only=True,
         allow_null=False,
     )
+    times_per_week = serializers.IntegerField(
+        required=False,
+        write_only=True,
+        allow_null=True,
+    )

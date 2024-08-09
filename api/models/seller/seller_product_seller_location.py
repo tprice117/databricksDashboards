@@ -47,7 +47,11 @@ class SellerProductSellerLocation(BaseModel):
         max_digits=18, decimal_places=2, blank=True, null=True
     )
     fuel_environmental_markup = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
+        max_digits=18,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Percentage (ex: 35 means 35%)",
     )
 
     class Meta:

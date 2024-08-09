@@ -29,6 +29,10 @@ class PricingEngineResponseSerializer(serializers.Serializer):
         read_only=True,
         allow_null=True,
     )
+    fuel_and_environmental = PricingLineItemGroupSerializer(
+        read_only=True,
+        allow_null=True,
+    )
     total = serializers.DecimalField(
         read_only=True,
         max_digits=10,
@@ -46,14 +50,12 @@ class PricingEngineResponseSerializer(serializers.Serializer):
             "material": None,
             "delivery": None,
             "removal": None,
+            "fuel_and_environmental": None,
         }
-
-        print(instance)
 
         # Loop through the instance and create a dictionary with the keys.
         group_and_items: Tuple[PricingLineItemGroup, list[PricingLineItem]]
         for group_and_items in instance:
-            print("Group and items", group_and_items)
             if group_and_items[0].code == "service":
                 response["service"] = PricingLineItemGroupSerializer(
                     group_and_items
@@ -72,6 +74,10 @@ class PricingEngineResponseSerializer(serializers.Serializer):
                 ).data
             elif group_and_items[0].code == "removal":
                 response["removal"] = PricingLineItemGroupSerializer(
+                    group_and_items
+                ).data
+            elif group_and_items[0].code == "fuel_and_environmental":
+                response["fuel_and_environmental"] = PricingLineItemGroupSerializer(
                     group_and_items
                 ).data
 

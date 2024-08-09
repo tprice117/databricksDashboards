@@ -35,3 +35,7 @@ class PricingEngineRequestByLatLongSerializer(serializers.Serializer):
         write_only=True,
         allow_null=False,
     )
+    times_per_week = serializers.IntegerField(
+        write_only=True,
+        allow_null=True,
+    )
