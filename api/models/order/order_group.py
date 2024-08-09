@@ -394,7 +394,12 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 order_group=instance,
                 rate=seller_product_seller_location.service.price_per_mile
                 or seller_product_seller_location.service.flat_rate_price,
-                miles=distance if distance else None,
+                miles=(
+                    distance
+                    if distance
+                    and seller_product_seller_location.service.price_per_mile
+                    else None
+                ),
             )
 
         # Service Times Per Week.
