@@ -125,6 +125,7 @@ class PricingEngine:
         # Fuel and environmental Fees.
         fuel_and_environmental_fees = FuelAndEnvironmentalPrice.get_price(
             seller_product_seller_location=seller_product_seller_location,
+            subtotal=0,
         )
         if fuel_and_environmental_fees:
             fuel_and_environmental_fees[0].sort = 5
