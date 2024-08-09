@@ -769,7 +769,6 @@ def new_order_3(request, product_id):
     context["user_addresses"] = get_location_objects(
         request, context["user"], context["user_group"]
     )
-    context["service_freqencies"] = ServiceRecurringFrequency.objects.all()
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         if user_address_id:
@@ -785,8 +784,10 @@ def new_order_3(request, product_id):
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
         }
-        if request.POST.get("service_frequency"):
-            query_params["service_frequency"] = request.POST.get("service_frequency")
+        if request.POST.get("service_times_per_week"):
+            query_params["service_times_per_week"] = request.POST.get(
+                "service_times_per_week"
+            )
         if not query_params["removal_date"]:
             # This happens for one-time orders like junk removal,
             # where the removal date is the same as the delivery date.
@@ -799,7 +800,6 @@ def new_order_3(request, product_id):
                 main_product=context["main_product"],
                 product_waste_types=context["product_waste_types"],
                 product_add_ons=context["product_add_ons"],
-                service_freqencies=context["service_freqencies"],
             )
             context["form"] = form
             # Use Django form validation to validate the form.
@@ -829,7 +829,6 @@ def new_order_3(request, product_id):
             main_product=context["main_product"],
             product_waste_types=context["product_waste_types"],
             product_add_ons=context["product_add_ons"],
-            service_freqencies=context["service_freqencies"],
         )
 
     return render(
@@ -851,7 +850,7 @@ def new_order_4(request):
     if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
         context["product_add_on_choices"] = []
     context["schedule_window"] = request.GET.get("schedule_window", "")
-    context["service_frequency"] = request.GET.get("service_frequency", "")
+    context["service_times_per_week"] = request.GET.get("service_times_per_week", "")
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
     # step_time = time.time()
@@ -1011,7 +1010,7 @@ def new_order_5(request):
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
-        service_frequency = request.POST.get("service_frequency")
+        service_times_per_week = request.POST.get("service_times_per_week")
         delivery_date = request.POST.get("delivery_date")
         removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
@@ -1047,12 +1046,13 @@ def new_order_5(request):
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=take_rate
+            take_rate=take_rate,
         )
+        if service_times_per_week:
+            # TODO: add OrderGroup.service_times_per_week field, just a decimal field.
+            pass
         if waste_type_id:
             order_group.waste_type_id = waste_type_id
-        if service_frequency:
-            order_group.service_recurring_frequency_id = service_frequency
         if removal_date:
             order_group.end_date = removal_date
         if seller_product_location.delivery_fee:
