@@ -156,13 +156,15 @@ class PricingEngine:
             fuel_and_environmental[0].sort = 5
 
         # Append the fuel and environmental fees to the response.
-        response.append(fuel_and_environmental)
+        if fuel_and_environmental:
+            response.append(fuel_and_environmental)
 
         # For each item in the response, add the take rate to the unit price.
         effective_take_rate = (
             seller_product_seller_location.seller_product.product.main_product.default_take_rate
         )
 
+        print(response)
         for _, items in response:
             for item in items:
                 price_with_take_rate = float(item.unit_price) * (
