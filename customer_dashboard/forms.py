@@ -345,6 +345,19 @@ class OrderGroupForm(forms.Form):
             }
         ),
     )
+    # Create a choice field for service times per week, where the choices are 1-5 times per week.
+    times_per_week = forms.ChoiceField(
+        label="Service Times Per Week",
+        choices=[
+            (1, "1 time per week"),
+            (2, "2 times per week"),
+            (3, "3 times per week"),
+            (4, "4 times per week"),
+            (5, "5 times per week"),
+        ],
+        widget=forms.Select(attrs={"class": "form-select"}),
+        required=True,
+    )
     # Add is estimated end date checkbox
     # NOTE: Maybe also say that we will assume monthly rental for now.
     # is_estimated_end_date = forms.BooleanField(
@@ -368,7 +381,6 @@ class OrderGroupForm(forms.Form):
         product_waste_types = kwargs.pop("product_waste_types", None)
         product_add_ons = kwargs.pop("product_add_ons", None)
         main_product = kwargs.pop("main_product", None)
-        service_freqencies = kwargs.pop("service_freqencies", None)
 
         super(OrderGroupForm, self).__init__(*args, **kwargs)
 
@@ -391,6 +403,9 @@ class OrderGroupForm(forms.Form):
             # self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].required = False
             # self.fields["is_estimated_end_date"].required = False
+        if not main_product.has_service_times_per_week:
+            self.fields["times_per_week"].widget = forms.HiddenInput()
+            self.fields["times_per_week"].required = False
 
     def clean_delivery_date(self):
         # Do not allow delivery date to be on a Sunday.

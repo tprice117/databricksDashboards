@@ -855,6 +855,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "end_date",
             "take_rate",
             "tonnage_quantity",
+            "times_per_week",
             "delivery_fee",
             "removal_fee",
             "created_by",
