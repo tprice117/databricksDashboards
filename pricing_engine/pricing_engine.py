@@ -127,7 +127,7 @@ class PricingEngine:
             [
                 sum([x.unit_price * x.quantity for x in group_and_items[1]])
                 for group_and_items in [service, rental, material, delivery, removal]
-                if group_and_items
+                if group_and_items and group_and_items[1] is not None
             ]
         )
         fuel_and_environmental_fees = FuelAndEnvironmentalPrice.get_price(
