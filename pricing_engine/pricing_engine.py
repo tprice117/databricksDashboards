@@ -123,9 +123,16 @@ class PricingEngine:
             removal[0].sort = 4
 
         # Fuel and environmental Fees.
+        subtotal = sum(
+            [
+                sum([x.unit_price * x.quantity for x in group_and_items[1]])
+                for group_and_items in [service, rental, material, delivery, removal]
+                if group_and_items
+            ]
+        )
         fuel_and_environmental_fees = FuelAndEnvironmentalPrice.get_price(
             seller_product_seller_location=seller_product_seller_location,
-            subtotal=0,
+            subtotal=subtotal,
         )
         if fuel_and_environmental_fees:
             fuel_and_environmental_fees[0].sort = 5
