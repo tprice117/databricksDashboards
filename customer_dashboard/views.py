@@ -4,6 +4,7 @@ import logging
 import uuid
 from typing import List, Union
 from urllib.parse import urlencode
+from functools import wraps
 
 from django.conf import settings
 from django.utils import timezone
@@ -456,6 +457,52 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
 ########################
 # Page views
 ########################
+def catch_errors(redirect_url_name=None):
+    """
+    Decorator for views that enclose the view in a try/except block.
+    If the test_func raises an exception, the decorator will catch it and
+    attach a messages.error to the request object.
+    """
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapper_view(request, *args, **kwargs):
+            try:
+                return view_func(request, *args, **kwargs)
+            except Exception as e:
+                error_message = f"An unhandled error [{e}] occurred while accessing view [{str(view_func.__name__)}] on path [{request.get_full_path()}]"
+                logger.error(
+                    f"catch_errors: view: {str(view_func.__name__)} path:{request.get_full_path()}",
+                    exc_info=e,
+                )
+                if request.headers.get("HX-Request"):
+                    # Reraise htmx errors since those don't cause a 500 error.
+                    raise
+                # Add a _is_redirect flag to the redirect url to avoid infinite loops.
+                query_params = request.GET.copy()
+                _is_redirect = query_params.get("_is_redirect", None)
+                if _is_redirect == "1" or _is_redirect == 1:
+                    return render(
+                        request,
+                        "customer_dashboard/error.html",
+                        {"error_message": error_message},
+                    )
+                messages.error(request, f"A server error occurred: {e}")
+                query_params["_is_redirect"] = 1
+                if redirect_url_name:
+                    query_params.urlencode()
+                    return HttpResponseRedirect(
+                        f"{reverse(redirect_url_name)}?{query_params.urlencode()}"
+                    )
+                else:
+                    full_path = f"{request.path}?{query_params.urlencode()}"
+                    return HttpResponseRedirect(full_path)
+
+        return _wrapper_view
+
+    return decorator
+
+
 # Add redirect to auth0 login if not logged in.
 def customer_logout(request):
     logout(request)
@@ -572,6 +619,7 @@ def get_user_context(request: HttpRequest, add_user_group=True):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def index(request):
     context = get_user_context(request)
     if request.headers.get("HX-Request"):
@@ -674,6 +722,7 @@ def index(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_order(request):
     context = get_user_context(request)
     main_product_categories = MainProductCategory.objects.all().order_by("sort")
@@ -725,6 +774,7 @@ def user_address_search(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_order_2(request, category_id):
     context = get_user_context(request)
     main_product_category = MainProductCategory.objects.filter(id=category_id)
@@ -745,6 +795,7 @@ def new_order_2(request, category_id):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_order_3(request, product_id):
     context = get_user_context(request)
     context["product_id"] = product_id
@@ -837,6 +888,7 @@ def new_order_3(request, product_id):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_order_4(request):
     # import time
     # start_time = time.time()
@@ -992,6 +1044,7 @@ def new_order_4(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_order_5(request):
     context = get_user_context(request)
     context["cart"] = {}
@@ -1223,6 +1276,7 @@ def new_order_5(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_order_6(request, order_group_id):
     context = get_user_context(request)
     order_group = OrderGroup.objects.filter(id=order_group_id).first()
@@ -1319,6 +1373,7 @@ def add_payment_method(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def checkout(request, user_address_id):
     context = get_user_context(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
@@ -1412,6 +1467,7 @@ def checkout(request, user_address_id):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def profile(request):
     context = get_user_context(request)
     user = context["user"]
@@ -1551,6 +1607,7 @@ def order_group_swap(request, order_group_id, is_removal=False):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
     pagination_limit = 25
@@ -1643,6 +1700,7 @@ def my_order_groups(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def order_group_detail(request, order_group_id):
     context = get_user_context(request)
     # This is an HTMX request, so respond with html snippet
@@ -1728,6 +1786,7 @@ def order_group_detail(request, order_group_id):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def order_detail(request, order_id):
     context = get_user_context(request)
     order = Order.objects.filter(id=order_id)
@@ -1767,6 +1826,7 @@ def company_last_order(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def locations(request):
     context = get_user_context(request)
     pagination_limit = 25
@@ -1855,6 +1915,7 @@ def locations(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def location_detail(request, location_id):
     context = get_user_context(request)
     # This is an HTMX request, so respond with html snippet
@@ -2102,6 +2163,7 @@ def customer_location_user_remove(request, user_address_id, user_id):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_location(request):
     context = get_user_context(request)
     # If staff user and not impersonating, then warn that no customer is selected.
@@ -2190,6 +2252,7 @@ def user_associated_locations(request, user_id):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def users(request):
     context = get_user_context(request)
     pagination_limit = 25
@@ -2281,6 +2344,7 @@ def users(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def user_detail(request, user_id):
     context = {}
     # This is an HTMX request, so respond with html snippet
@@ -2385,6 +2449,7 @@ def user_detail(request, user_id):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_user(request):
     context = get_user_context(request)
 
@@ -2476,6 +2541,7 @@ def new_user(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def invoices(request):
     context = get_user_context(request)
     pagination_limit = 25
@@ -2528,6 +2594,7 @@ def invoices(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def companies(request):
     context = get_user_context(request)
     context["help_text"] = (
@@ -2623,6 +2690,7 @@ def companies(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def company_detail(request, user_group_id=None):
     context = get_user_context(request, add_user_group=False)
     if not user_group_id:
@@ -2823,6 +2891,7 @@ def user_email_check(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def new_company(request):
     context = get_user_context(request, add_user_group=False)
     if not request.user.is_staff:
@@ -2913,6 +2982,7 @@ def new_company(request):
 
 
 @login_required(login_url="/admin/login/")
+@catch_errors()
 def company_new_user(request, user_group_id):
     context = get_user_context(request, add_user_group=False)
     context["user_group"] = UserGroup.objects.get(id=user_group_id)
