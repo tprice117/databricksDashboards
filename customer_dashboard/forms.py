@@ -346,7 +346,8 @@ class OrderGroupForm(forms.Form):
         ),
     )
     # Create a choice field for service times per week, where the choices are 1-5 times per week.
-    service_times_per_week = forms.ChoiceField(
+    times_per_week = forms.ChoiceField(
+        label="Service Times Per Week",
         choices=[
             (1, "1 time per week"),
             (2, "2 times per week"),
@@ -403,8 +404,8 @@ class OrderGroupForm(forms.Form):
             self.fields["removal_date"].required = False
             # self.fields["is_estimated_end_date"].required = False
         if not main_product.has_service_times_per_week:
-            self.fields["service_times_per_week"].widget = forms.HiddenInput()
-            self.fields["service_times_per_week"].required = False
+            self.fields["times_per_week"].widget = forms.HiddenInput()
+            self.fields["times_per_week"].required = False
 
     def clean_delivery_date(self):
         # Do not allow delivery date to be on a Sunday.

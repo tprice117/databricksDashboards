@@ -835,9 +835,9 @@ def new_order_3(request, product_id):
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
         }
-        if request.POST.get("service_times_per_week"):
-            query_params["service_times_per_week"] = request.POST.get(
-                "service_times_per_week"
+        if request.POST.get("times_per_week"):
+            query_params["times_per_week"] = request.POST.get(
+                "times_per_week"
             )
         if not query_params["removal_date"]:
             # This happens for one-time orders like junk removal,
@@ -902,9 +902,9 @@ def new_order_4(request):
     if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
         context["product_add_on_choices"] = []
     context["schedule_window"] = request.GET.get("schedule_window", "")
-    context["service_times_per_week"] = request.GET.get("service_times_per_week", "")
-    if context["service_times_per_week"]:
-        context["service_times_per_week"] = int(context["service_times_per_week"])
+    context["times_per_week"] = request.GET.get("times_per_week", "")
+    if context["times_per_week"]:
+        context["times_per_week"] = int(context["times_per_week"])
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
     # step_time = time.time()
@@ -997,8 +997,8 @@ def new_order_4(request):
                 WasteType.objects.get(id=waste_type_id) if waste_type_id else None
             ),
             times_per_week=(
-                context["service_times_per_week"]
-                if context["service_times_per_week"]
+                context["times_per_week"]
+                if context["times_per_week"]
                 else None
             ),
         )
@@ -1070,7 +1070,7 @@ def new_order_5(request):
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
-        service_times_per_week = request.POST.get("service_times_per_week")
+        times_per_week = request.POST.get("times_per_week")
         delivery_date = request.POST.get("delivery_date")
         removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
@@ -1108,9 +1108,8 @@ def new_order_5(request):
             start_date=delivery_date,
             take_rate=take_rate,
         )
-        if service_times_per_week:
-            # TODO: add OrderGroup.service_times_per_week field, just a decimal field.
-            pass
+        if times_per_week:
+            order_group.times_per_week = times_per_week
         if waste_type_id:
             order_group.waste_type_id = waste_type_id
         if removal_date:
