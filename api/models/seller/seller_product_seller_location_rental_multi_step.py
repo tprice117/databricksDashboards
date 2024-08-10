@@ -1,3 +1,4 @@
+import math
 from datetime import timedelta
 from typing import List
 
@@ -294,7 +295,7 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
             pricing_line_items.append(
                 PricingLineItem(
                     description=None,
-                    quantity=remaining_hours,
+                    quantity=math.ceil(remaining_hours),
                     unit_price=self.hour,
                     units="hours",
                 )
