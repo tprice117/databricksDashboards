@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from api.serializers import SellerProductSellerLocationSerializer
 from matching_engine.api.v1.serializers import MatchingEngineRequestByLatLongSerializer
 from matching_engine.matching_engine import MatchingEngine
+from matching_engine.utils import seller_product_seller_location_plus_take_rate
 
 
 class GetSellerProductSellerLocationsByLatLongView(APIView):
@@ -48,10 +49,14 @@ class GetSellerProductSellerLocationsByLatLongView(APIView):
             )
         )
 
-        # Return SellerProductSellerLocations serialized data.
-        data = SellerProductSellerLocationSerializer(
-            seller_product_seller_locations,
-            many=True,
-        ).data
+        # Add default take rate to the price and serialize the data.
+        data = []
+
+        for seller_product_seller_location in seller_product_seller_locations:
+            data.append(
+                seller_product_seller_location_plus_take_rate(
+                    seller_product_seller_location,
+                )
+            )
 
         return JsonResponse(data, safe=False)
