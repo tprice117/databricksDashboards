@@ -46,13 +46,8 @@ def seller_product_seller_location_plus_take_rate(
     )
 
     # Material.
-    if "material" in data and "waste_types" in data["material"]:
+    if "material" in data and data["material"] and "waste_types" in data["material"]:
         waste_types = data["material"]["waste_types"]
-
-        # PRint the price_per_ton for each waste type.
-        print("Before")
-        for waste_type in waste_types:
-            print(waste_type["price_per_ton"])
 
         # For all waste types, update the price_per_ton. Then replace the waste_types in the data.
         updated_waste_types = []
@@ -63,11 +58,6 @@ def seller_product_seller_location_plus_take_rate(
                 else None
             )
             updated_waste_types.append(waste_type)
-
-        # PRint the price_per_ton for each waste type.
-        print("After")
-        for waste_type in updated_waste_types:
-            print(waste_type["price_per_ton"])
 
         data["material"]["waste_types"] = updated_waste_types
 
