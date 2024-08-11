@@ -46,10 +46,11 @@ class SellerProductSellerLocationPricingView(APIView):
             seller_product_seller_location=serializer.validated_data[
                 "seller_product_seller_location"
             ],
-            user_address=serializer.validated_data["user_address"],
-            start_date=serializer.validated_data["start_date"],
-            end_date=serializer.validated_data["end_date"],
-            waste_type=serializer.validated_data["waste_type"],
+            user_address=serializer.validated_data.get("user_address"),
+            start_date=serializer.validated_data.get("start_date"),
+            end_date=serializer.validated_data.get("end_date"),
+            waste_type=serializer.validated_data.get("waste_type"),
+            times_per_week=serializer.validated_data.get("times_per_week"),
         )
 
         print(pricing_line_item_groups)
