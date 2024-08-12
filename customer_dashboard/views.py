@@ -836,9 +836,7 @@ def new_order_3(request, product_id):
             "product_waste_types": request.POST.getlist("product_waste_types"),
         }
         if request.POST.get("times_per_week"):
-            query_params["times_per_week"] = request.POST.get(
-                "times_per_week"
-            )
+            query_params["times_per_week"] = request.POST.get("times_per_week")
         if not query_params["removal_date"]:
             # This happens for one-time orders like junk removal,
             # where the removal date is the same as the delivery date.
@@ -997,9 +995,7 @@ def new_order_4(request):
                 WasteType.objects.get(id=waste_type_id) if waste_type_id else None
             ),
             times_per_week=(
-                context["times_per_week"]
-                if context["times_per_week"]
-                else None
+                context["times_per_week"] if context["times_per_week"] else None
             ),
         )
 
@@ -1193,13 +1189,15 @@ def new_order_5(request):
         orders = get_booking_objects(
             request, context["user"], context["user_group"], exclude_in_cart=False
         )
-        # if start_date:
-        #     orders = orders.filter(order_group__start_date__gte=start_date)
-        # if end_date:
-        #     orders = orders.filter(order_group__end_date__lte=end_date)
+
         # if filter_qry == "active":
         #     # Displays all open carts
+        #     # context["help_text"] = "All active orders."
         #     orders = orders.filter(submitted_on__isnull=True)
+        #     if start_date:
+        #         orders = orders.filter(order_group__start_date__gte=start_date)
+        #     if end_date:
+        #         orders = orders.filter(order_group__end_date__lte=end_date)
         # elif filter_qry == "starting":
         #     # Displays all open carts that have a Order.EndDate LESS THAN 5 days from Today
         #     orders = orders.filter(submitted_on__isnull=True)
@@ -1208,12 +1206,10 @@ def new_order_5(request):
         #     )
         # elif filter_qry == "inactive":
         #     # Displays all open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
-        #     # TODO: Fix
-        #     # orders = orders.filter(updated_on)
         #     orders = orders.filter(
-        #         order_group__start_date__lt=check_date,
-        #         order_group__end_date__gt=check_date,
+        #         updated_on__lt=check_date - datetime.timedelta(days=5)
         #     )
+        #     orders = orders.filter(order_group__end_date__gt=check_date)
         # elif filter_qry == "expired":
         #     # Displays all open carts that have a Order.EndDate AFTER Today
         #     orders = orders.filter(order_group__end_date__gt=check_date)
@@ -1221,6 +1217,10 @@ def new_order_5(request):
         #     # new: default filter
         #     # Displays all open carts that the Order.CreatedDate == today
         #     orders = orders.filter(order_group__start_date=check_date)
+        #     if start_date:
+        #         orders = orders.filter(order_group__start_date__gte=start_date)
+        #     if end_date:
+        #         orders = orders.filter(order_group__end_date__lte=end_date)
         # if my_carts:
         #     orders = orders.filter(order_group__user_id=context["user"].id)
 
@@ -1229,7 +1229,8 @@ def new_order_5(request):
         orders = orders.order_by("-order_group__start_date")
 
         if not orders:
-            messages.error(request, "Your cart is empty.")
+            # messages.error(request, "Your cart is empty.")
+            pass
         else:
             # Get unique order group objects from the orders and place them in address buckets.
             for order in orders:

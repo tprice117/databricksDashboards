@@ -57,6 +57,34 @@
                 removeItemFromCart(this);
             });
         }); {% endcomment %}
+        // Listen for page load and set the form field values to the query params
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has filter
+            const urlParams = new URLSearchParams(window.location.search);
+            const filter = urlParams.get("filter");
+            if (filter) {
+                // update filter value
+                document.getElementById("filterGroupSelect").value = filter;
+            }
+            // Check if query params has my_carts
+            const myCarts = urlParams.get("my_carts");
+            if (myCarts) {
+                // update my_carts value
+                document.getElementById("myCartsCheck").checked = true;
+            }
+            // Check if query params has start_date
+            const startDate = urlParams.get("start_date");
+            if (startDate) {
+                // update start_date value
+                document.getElementById("cartStartDate").value = startDate;
+            }
+            // Check if query params has end_date
+            const endDate = urlParams.get("end_date");
+            if (endDate) {
+                // update end_date value
+                document.getElementById("cartEndDate").value = endDate;
+            }
+        });
     </script>
 {% endblock %}
 {% block content %}
@@ -68,8 +96,8 @@
                         <form class="row g-3" action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'customer_cart' %}" hx-target="#cart-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
                             <div class="col-10 mb-3">
                                 <div class="input-group">
-                                    <label class="input-group-text" for="inputGroupSelect01">Options</label>
-                                    <select class="form-select" id="inputGroupSelect01" name="filter" aria-label="Filter Data By">
+                                    <label class="input-group-text" for="filterGroupSelect">Options</label>
+                                    <select class="form-select" id="filterGroupSelect" name="filter" aria-label="Filter Data By">
                                         <option value="new" selected>Created Today</option>
                                         <option value="starting">Starting in > 5 days</option>
                                         <option value="inactive">Inactive for 5+ Days</option>
