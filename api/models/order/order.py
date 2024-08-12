@@ -1,6 +1,7 @@
 import datetime
 import logging
 from functools import lru_cache
+from typing import Optional
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
@@ -19,14 +20,14 @@ from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from common.models import BaseModel
+from common.models.choices.approval_status import ApprovalStatus
 from common.models.choices.user_type import UserType
+from communications.intercom.conversation import Conversation as IntercomConversation
 from notifications import signals as notifications_signals
 from notifications.utils.add_email_to_queue import (
     add_email_to_queue,
     add_internal_email_to_queue,
 )
-from communications.intercom.conversation import Conversation as IntercomConversation
-from common.models.choices.approval_status import ApprovalStatus
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +177,7 @@ class Order(BaseModel):
         from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
             PricingEngineResponseSerializer,
         )
+
         # TODO: Remove self.order_group.times_per_week or 1 once we figure out how to handle old restroom orders.
         pricing = get_pricing_engine().get_price(
             user_address=self.order_group.user_address,
@@ -397,125 +399,110 @@ class Order(BaseModel):
         # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
             try:
-                # Create Delivery Fee OrderLineItem.
+                # Only add OrderLineItems if this is the first Order in the OrderGroup.
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
 
-                if order_group_orders.count() == 1:
-                    if self.order_group.seller_product_seller_location.delivery_fee:
-                        OrderLineItem.objects.create(
-                            order=self,
-                            order_line_item_type=OrderLineItemType.objects.get(
-                                code="DELIVERY"
-                            ),
-                            rate=self.order_group.seller_product_seller_location.delivery_fee,
-                            quantity=1,
-                            description="Delivery Fee",
-                            platform_fee_percent=self.order_group.take_rate,
-                            is_flat_rate=True,
-                        )
+                is_first_order = order_group_orders.count() == 1
 
-                # Create Removal Fee OrderLineItem.
+                if is_first_order:
+                    if self.order_group.seller_product_seller_location.delivery_fee:
+                        self._get_order_line_item_delievery().save()
+
+                # Only add OrderLineItems if this is the last Order in the OrderGroup.
                 if (
                     self.order_group.end_date == self.end_date
                     and order_group_orders.count() > 1
                 ):
-                    removal_fee = 0
-                    if self.order_group.seller_product_seller_location.removal_fee:
-                        removal_fee = (
-                            self.order_group.seller_product_seller_location.removal_fee
-                        )
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=OrderLineItemType.objects.get(
-                            code="REMOVAL"
-                        ),
-                        rate=removal_fee,
-                        quantity=1,
-                        description="Removal Fee",
-                        platform_fee_percent=self.order_group.take_rate,
-                        is_flat_rate=True,
-                    )
+                    self._get_order_line_item_removal().save()
                     # Don't add any other OrderLineItems if this is a removal.
                     return
 
-                # Create OrderLineItems for newly "submitted" order.
-                # Service Price.
-                if hasattr(self.order_group, "service"):
-                    order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=order_line_item_type,
-                        rate=self.order_group.service.rate,
-                        quantity=self.order_group.service.miles or 1,
-                        is_flat_rate=self.order_group.service.miles is None,
-                        platform_fee_percent=self.order_group.take_rate,
-                    )
-
-                # Rental Price.
-                if hasattr(self.order_group, "rental"):
-                    day_count = (
-                        (self.end_date - self.start_date).days if self.end_date else 0
-                    )
-                    days_over_included = (
-                        day_count - self.order_group.rental.included_days
-                    )
-                    order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
-
-                    # Create OrderLineItem for Included Days.
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=order_line_item_type,
-                        rate=self.order_group.rental.price_per_day_included,
-                        quantity=self.order_group.rental.included_days,
-                        description="Included Days",
-                        platform_fee_percent=self.order_group.take_rate,
-                    )
-
-                    # Create OrderLineItem for Additional Days.
-                    if days_over_included > 0:
-                        OrderLineItem.objects.create(
-                            order=self,
-                            order_line_item_type=order_line_item_type,
-                            rate=self.order_group.rental.price_per_day_additional,
-                            quantity=days_over_included,
-                            description="Additional Days",
-                            platform_fee_percent=self.order_group.take_rate,
-                        )
-
-                # Material Price.
+                # If the OrderGroup has Material, add those line items.
                 if hasattr(self.order_group, "material"):
-                    tons_over_included = (
-                        self.order_group.tonnage_quantity or 0
-                    ) - self.order_group.material.tonnage_included
-                    order_line_item_type = OrderLineItemType.objects.get(
-                        code="MATERIAL"
+                    materials = self.order_group.material.order_line_items(self)
+
+                    for material in materials:
+                        material.save()
+
+                # If the OrderGroup has Rental One-Step, add those line items.
+                if hasattr(self.order_group, "rental_one_step"):
+                    rental_one_steps = (
+                        self.order_group.rental_one_step.order_line_items(self)
                     )
 
-                    # Create OrderLineItem for Included Tons.
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=order_line_item_type,
-                        rate=self.order_group.material.price_per_ton,
-                        quantity=self.order_group.material.tonnage_included,
-                        description="Included Tons",
-                        platform_fee_percent=self.order_group.take_rate,
+                    for rental in rental_one_steps:
+                        rental.save()
+
+                # If the OrderGroup has Rental Two-Step (Legacy), add those line items.
+                if hasattr(self.order_group, "rental"):
+                    rentals = self.order_group.rental.order_line_items(self)
+
+                    for rental in rentals:
+                        rental.save()
+
+                # If the OrderGroup has Rental Multi-Step, add those line items.
+                # NOTE: Do not add Rental Multi-Step line items for the first Order.
+                if (
+                    hasattr(self.order_group, "rental_multi_step")
+                    and not is_first_order
+                ):
+                    rental_multi_steps = (
+                        self.order_group.rental_multi_step.order_line_items(self)
                     )
 
-                    # Create OrderLineItem for Additional Tons.
-                    if tons_over_included > 0:
-                        OrderLineItem.objects.create(
-                            order=self,
-                            order_line_item_type=order_line_item_type,
-                            rate=self.order_group.material.price_per_ton,
-                            quantity=tons_over_included,
-                            description="Additional Tons",
-                            platform_fee_percent=self.order_group.take_rate,
-                        )
+                    for rental in rental_multi_steps:
+                        rental.save()
+
+                # If the OrderGroup has Service, add those line items.
+                if hasattr(self.order_group, "service"):
+                    service = self.order_group.service.order_line_items(self)
+
+                    for service in service:
+                        service.save()
+
+                # If the OrderGroup has ServiceTimesPerWeek, add those line items.
+                if hasattr(self.order_group, "service_times_per_week"):
+                    service_times_per_week = (
+                        self.order_group.service_times_per_week.order_line_items(self)
+                    )
+
+                    for service in service_times_per_week:
+                        service.save()
 
                 # Check for any Admin Policy checks.
                 self.admin_policy_checks(orders=order_group_orders)
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
+
+    def _get_order_line_item_delievery(self) -> Optional[OrderLineItem]:
+        return (
+            OrderLineItem(
+                order=self,
+                order_line_item_type=OrderLineItemType.objects.get(code="DELIVERY"),
+                rate=self.order_group.seller_product_seller_location.delivery_fee,
+                quantity=1,
+                description="Delivery Fee",
+                platform_fee_percent=self.order_group.take_rate,
+                is_flat_rate=True,
+            )
+            if self.order_group.seller_product_seller_location.delivery_fee
+            else None
+        )
+
+    def _get_order_line_item_removal(self) -> Optional[OrderLineItem]:
+        return (
+            OrderLineItem(
+                order=self,
+                order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
+                rate=self.order_group.seller_product_seller_location.removal_fee,
+                quantity=1,
+                description="Removal Fee",
+                platform_fee_percent=self.order_group.take_rate,
+                is_flat_rate=True,
+            )
+            if (self.order_group.seller_product_seller_location.removal_fee)
+            else None
+        )
 
     def post_save(sender, instance, created, **kwargs):
         instance.add_line_items(created)
