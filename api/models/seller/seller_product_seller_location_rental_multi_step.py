@@ -130,7 +130,7 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
             effective_interval_rate=self.effective_day_rate,
         )
 
-        if remaining_hours > 0:
+        if remaining_hours > 0 and self.hour:
             price += remaining_hours * float(self.hour)
 
         return price
