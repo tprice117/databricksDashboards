@@ -200,9 +200,6 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
         # Get the total number of hours.
         hours = duration.total_seconds() / 3600
 
-        print("Hours: ", hours)
-        print("Days: ", hours / 24)
-
         # Calculate the price for each pricing tier.
         hourly_price = self.get_price_base_hours(hours)
         daily_price = self.get_price_base_days(hours)
@@ -291,14 +288,17 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
                 )
             )
 
-        if remaining_hours > 0:
-            pricing_line_items.append(
-                PricingLineItem(
-                    description=None,
-                    quantity=math.ceil(remaining_hours),
-                    unit_price=self.hour,
-                    units="hours",
-                )
-            )
+        # NOTE: The following code is commented out because we are not using
+        # hourly pricing currently. This is a future enhancement.
+
+        # if remaining_hours > 0:
+        #     pricing_line_items.append(
+        #         PricingLineItem(
+        #             description=None,
+        #             quantity=math.ceil(remaining_hours),
+        #             unit_price=self.hour,
+        #             units="hours",
+        #         )
+        #     )
 
         return pricing_line_items
