@@ -1,4 +1,6 @@
+import math
 from datetime import timedelta
+from typing import List
 
 from django.db import models
 
@@ -128,7 +130,7 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
             effective_interval_rate=self.effective_day_rate,
         )
 
-        if remaining_hours > 0:
+        if remaining_hours > 0 and self.hour:
             price += remaining_hours * float(self.hour)
 
         return price
@@ -181,7 +183,7 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
 
         return price, remaining_hours
 
-    def get_price(self, duration: timedelta) -> PricingLineItem:
+    def get_price(self, duration: timedelta) -> List[PricingLineItem]:
         """
         Calculates the most cost-efficient rental price based on duration (hours or days).
 
@@ -218,41 +220,85 @@ class SellerProductSellerLocationRentalMultiStep(BaseModel):
             if price is not None
         )
 
-        if min_price == hourly_price:
-            return PricingLineItem(
-                description="Hourly",
-                quantity=hours,
-                unit_price=self.hour,
-                units="hours",
+        # Create list of PricingLineItems.
+        pricing_line_items: List[PricingLineItem] = []
+        remaining_hours = hours
+
+        if remaining_hours // 720 > 0:
+            # Get whole months.
+            months = remaining_hours // 720
+
+            # Get remaining hours and price.
+            remaining_hours = remaining_hours % 720
+
+            pricing_line_items.append(
+                PricingLineItem(
+                    description=None,
+                    quantity=months,
+                    unit_price=self.effective_month_rate,
+                    units="months",
+                )
             )
 
-        elif min_price == daily_price:
-            return PricingLineItem(
-                description="Daily",
-                quantity=hours / 24,
-                unit_price=self.effective_day_rate,
-                units="days",
+        if remaining_hours // 336 > 0:
+            # Get whole two-week periods.
+            two_weeks = remaining_hours // 336
+
+            # Get remaining hours and price.
+            remaining_hours = remaining_hours % 336
+
+            pricing_line_items.append(
+                PricingLineItem(
+                    description=None,
+                    quantity=two_weeks,
+                    unit_price=self.effective_two_week_rate,
+                    units="two weeks",
+                )
             )
 
-        elif min_price == weekly_price:
-            return PricingLineItem(
-                description="Weekly",
-                quantity=hours / 168,
-                unit_price=self.effective_week_rate,
-                units="weeks",
+        if remaining_hours // 168 > 0:
+            # Get whole weeks.
+            weeks = remaining_hours // 168
+
+            # Get remaining hours and price.
+            remaining_hours = remaining_hours % 168
+
+            pricing_line_items.append(
+                PricingLineItem(
+                    description=None,
+                    quantity=weeks,
+                    unit_price=self.effective_week_rate,
+                    units="weeks",
+                )
             )
 
-        elif min_price == two_weeks_price:
-            return PricingLineItem(
-                description="Two Weeks",
-                quantity=hours / 336,
-                unit_price=self.effective_two_week_rate,
-                units="weeks",
+        if remaining_hours // 24 > 0:
+            # Get whole days.
+            days = remaining_hours // 24
+
+            # Get remaining hours and price.
+            remaining_hours = remaining_hours % 24
+
+            pricing_line_items.append(
+                PricingLineItem(
+                    description=None,
+                    quantity=days,
+                    unit_price=self.effective_day_rate,
+                    units="days",
+                )
             )
-        else:
-            return PricingLineItem(
-                description="Monthly",
-                quantity=hours / 720,
-                unit_price=self.effective_month_rate,
-                units="months",
-            )
+
+        # NOTE: The following code is commented out because we are not using
+        # hourly pricing currently. This is a future enhancement.
+
+        # if remaining_hours > 0:
+        #     pricing_line_items.append(
+        #         PricingLineItem(
+        #             description=None,
+        #             quantity=math.ceil(remaining_hours),
+        #             unit_price=self.hour,
+        #             units="hours",
+        #         )
+        #     )
+
+        return pricing_line_items

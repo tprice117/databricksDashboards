@@ -19847,6 +19847,7 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsCreateEndDateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateTakeRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateTonnageQuantityErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsCreateTimesPerWeekErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateDeliveryFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateRemovalFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateCreatedByErrorComponent'
@@ -19893,6 +19894,7 @@ components:
           end_date: '#/components/schemas/ApiOrderGroupsCreateEndDateErrorComponent'
           take_rate: '#/components/schemas/ApiOrderGroupsCreateTakeRateErrorComponent'
           tonnage_quantity: '#/components/schemas/ApiOrderGroupsCreateTonnageQuantityErrorComponent'
+          times_per_week: '#/components/schemas/ApiOrderGroupsCreateTimesPerWeekErrorComponent'
           delivery_fee: '#/components/schemas/ApiOrderGroupsCreateDeliveryFeeErrorComponent'
           removal_fee: '#/components/schemas/ApiOrderGroupsCreateRemovalFeeErrorComponent'
           created_by: '#/components/schemas/ApiOrderGroupsCreateCreatedByErrorComponent'
@@ -20728,6 +20730,32 @@ components:
       - attr
       - code
       - detail
+    ApiOrderGroupsCreateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiOrderGroupsCreateTonnageQuantityErrorComponent:
       type: object
       properties:
@@ -21031,6 +21059,7 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateEndDateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateTakeRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateTonnageQuantityErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateTimesPerWeekErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateDeliveryFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateRemovalFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateCreatedByErrorComponent'
@@ -21077,6 +21106,7 @@ components:
           end_date: '#/components/schemas/ApiOrderGroupsForSellerCreateEndDateErrorComponent'
           take_rate: '#/components/schemas/ApiOrderGroupsForSellerCreateTakeRateErrorComponent'
           tonnage_quantity: '#/components/schemas/ApiOrderGroupsForSellerCreateTonnageQuantityErrorComponent'
+          times_per_week: '#/components/schemas/ApiOrderGroupsForSellerCreateTimesPerWeekErrorComponent'
           delivery_fee: '#/components/schemas/ApiOrderGroupsForSellerCreateDeliveryFeeErrorComponent'
           removal_fee: '#/components/schemas/ApiOrderGroupsForSellerCreateRemovalFeeErrorComponent'
           created_by: '#/components/schemas/ApiOrderGroupsForSellerCreateCreatedByErrorComponent'
@@ -21912,6 +21942,32 @@ components:
       - attr
       - code
       - detail
+    ApiOrderGroupsForSellerCreateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiOrderGroupsForSellerCreateTonnageQuantityErrorComponent:
       type: object
       properties:
@@ -22222,6 +22278,7 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateEndDateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateTakeRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateTonnageQuantityErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateTimesPerWeekErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateDeliveryFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateRemovalFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateCreatedByErrorComponent'
@@ -22268,6 +22325,7 @@ components:
           end_date: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateEndDateErrorComponent'
           take_rate: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateTakeRateErrorComponent'
           tonnage_quantity: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateTonnageQuantityErrorComponent'
+          times_per_week: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateTimesPerWeekErrorComponent'
           delivery_fee: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateDeliveryFeeErrorComponent'
           removal_fee: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateRemovalFeeErrorComponent'
           created_by: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateCreatedByErrorComponent'
@@ -23103,6 +23161,32 @@ components:
       - attr
       - code
       - detail
+    ApiOrderGroupsForSellerPartialUpdateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiOrderGroupsForSellerPartialUpdateTonnageQuantityErrorComponent:
       type: object
       properties:
@@ -23406,6 +23490,7 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateEndDateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateTakeRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateTonnageQuantityErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateTimesPerWeekErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateDeliveryFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateRemovalFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateCreatedByErrorComponent'
@@ -23452,6 +23537,7 @@ components:
           end_date: '#/components/schemas/ApiOrderGroupsForSellerUpdateEndDateErrorComponent'
           take_rate: '#/components/schemas/ApiOrderGroupsForSellerUpdateTakeRateErrorComponent'
           tonnage_quantity: '#/components/schemas/ApiOrderGroupsForSellerUpdateTonnageQuantityErrorComponent'
+          times_per_week: '#/components/schemas/ApiOrderGroupsForSellerUpdateTimesPerWeekErrorComponent'
           delivery_fee: '#/components/schemas/ApiOrderGroupsForSellerUpdateDeliveryFeeErrorComponent'
           removal_fee: '#/components/schemas/ApiOrderGroupsForSellerUpdateRemovalFeeErrorComponent'
           created_by: '#/components/schemas/ApiOrderGroupsForSellerUpdateCreatedByErrorComponent'
@@ -24287,6 +24373,32 @@ components:
       - attr
       - code
       - detail
+    ApiOrderGroupsForSellerUpdateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiOrderGroupsForSellerUpdateTonnageQuantityErrorComponent:
       type: object
       properties:
@@ -24654,6 +24766,7 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateEndDateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateTakeRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateTonnageQuantityErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateTimesPerWeekErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateDeliveryFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateRemovalFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateCreatedByErrorComponent'
@@ -24700,6 +24813,7 @@ components:
           end_date: '#/components/schemas/ApiOrderGroupsPartialUpdateEndDateErrorComponent'
           take_rate: '#/components/schemas/ApiOrderGroupsPartialUpdateTakeRateErrorComponent'
           tonnage_quantity: '#/components/schemas/ApiOrderGroupsPartialUpdateTonnageQuantityErrorComponent'
+          times_per_week: '#/components/schemas/ApiOrderGroupsPartialUpdateTimesPerWeekErrorComponent'
           delivery_fee: '#/components/schemas/ApiOrderGroupsPartialUpdateDeliveryFeeErrorComponent'
           removal_fee: '#/components/schemas/ApiOrderGroupsPartialUpdateRemovalFeeErrorComponent'
           created_by: '#/components/schemas/ApiOrderGroupsPartialUpdateCreatedByErrorComponent'
@@ -25535,6 +25649,32 @@ components:
       - attr
       - code
       - detail
+    ApiOrderGroupsPartialUpdateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     ApiOrderGroupsPartialUpdateTonnageQuantityErrorComponent:
       type: object
       properties:
@@ -25838,6 +25978,7 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateEndDateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateTakeRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateTonnageQuantityErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsUpdateTimesPerWeekErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateDeliveryFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateRemovalFeeErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateCreatedByErrorComponent'
@@ -25884,6 +26025,7 @@ components:
           end_date: '#/components/schemas/ApiOrderGroupsUpdateEndDateErrorComponent'
           take_rate: '#/components/schemas/ApiOrderGroupsUpdateTakeRateErrorComponent'
           tonnage_quantity: '#/components/schemas/ApiOrderGroupsUpdateTonnageQuantityErrorComponent'
+          times_per_week: '#/components/schemas/ApiOrderGroupsUpdateTimesPerWeekErrorComponent'
           delivery_fee: '#/components/schemas/ApiOrderGroupsUpdateDeliveryFeeErrorComponent'
           removal_fee: '#/components/schemas/ApiOrderGroupsUpdateRemovalFeeErrorComponent'
           created_by: '#/components/schemas/ApiOrderGroupsUpdateCreatedByErrorComponent'
@@ -26713,6 +26855,32 @@ components:
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
             * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsUpdateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - max_value
+          - min_value
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `max_value` - max_value
+            * `min_value` - min_value
         detail:
           type: string
       required:
@@ -70515,6 +70683,12 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
+        times_per_week:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          nullable: true
+          description: Service times times per week for MainProducts that have has_service_times_per_week.
         delivery_fee:
           type: number
           format: double
@@ -71354,6 +71528,12 @@ components:
           maximum: 2147483647
           minimum: -2147483648
           nullable: true
+        times_per_week:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          nullable: true
+          description: Service times times per week for MainProducts that have has_service_times_per_week.
         delivery_fee:
           type: number
           format: double
@@ -72248,6 +72428,7 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
+          description: 'Percentage (ex: 35 means 35%)'
         created_by:
           type: string
           format: uuid
@@ -73443,6 +73624,10 @@ components:
           type: string
           format: date-time
           writeOnly: true
+        times_per_week:
+          type: integer
+          writeOnly: true
+          nullable: true
       required:
       - end_date
       - seller_product_seller_location
@@ -73485,12 +73670,17 @@ components:
           type: string
           format: date-time
           writeOnly: true
+        times_per_week:
+          type: integer
+          writeOnly: true
+          nullable: true
       required:
       - end_date
       - latitude
       - longitude
       - seller_product_seller_location
       - start_date
+      - times_per_week
       - waste_type
     PricingEngineResponse:
       type: object
@@ -73520,6 +73710,11 @@ components:
           - $ref: '#/components/schemas/PricingLineItemGroup'
           readOnly: true
           nullable: true
+        fuel_and_environmental:
+          allOf:
+          - $ref: '#/components/schemas/PricingLineItemGroup'
+          readOnly: true
+          nullable: true
         total:
           type: number
           format: double
@@ -73530,6 +73725,7 @@ components:
           readOnly: true
       required:
       - delivery
+      - fuel_and_environmental
       - material
       - removal
       - rental
@@ -73574,6 +73770,7 @@ components:
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateWasteTypeErrorComponent'
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateStartDateErrorComponent'
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateEndDateErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateTimesPerWeekErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
@@ -73584,6 +73781,7 @@ components:
           waste_type: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateWasteTypeErrorComponent'
           start_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateStartDateErrorComponent'
           end_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateEndDateErrorComponent'
+          times_per_week: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateTimesPerWeekErrorComponent'
     PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateValidationError'
@@ -73732,6 +73930,30 @@ components:
       - attr
       - code
       - detail
+    PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          - required
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+            * `required` - required
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     PricingEngineV1SellerProductSellerLocationPricingByLatLongCreateValidationError:
       type: object
       properties:
@@ -73806,6 +74028,7 @@ components:
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateWasteTypeErrorComponent'
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateStartDateErrorComponent'
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateEndDateErrorComponent'
+      - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateTimesPerWeekErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
@@ -73815,6 +74038,7 @@ components:
           waste_type: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateWasteTypeErrorComponent'
           start_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateStartDateErrorComponent'
           end_date: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateEndDateErrorComponent'
+          times_per_week: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateTimesPerWeekErrorComponent'
     PricingEngineV1SellerProductSellerLocationPricingCreateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/PricingEngineV1SellerProductSellerLocationPricingCreateValidationError'
@@ -73899,6 +74123,28 @@ components:
       - attr
       - code
       - detail
+    PricingEngineV1SellerProductSellerLocationPricingCreateTimesPerWeekErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - times_per_week
+          type: string
+          description: '* `times_per_week` - times_per_week'
+        code:
+          enum:
+          - invalid
+          - max_string_length
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_string_length` - max_string_length
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
     PricingEngineV1SellerProductSellerLocationPricingCreateUserAddressErrorComponent:
       type: object
       properties:
@@ -73975,6 +74221,7 @@ components:
         unit_price:
           type: number
           format: double
+          nullable: true
         units:
           type: string
           nullable: true
@@ -74668,6 +74915,7 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
+          description: 'Percentage (ex: 35 means 35%)'
         created_by:
           type: string
           format: uuid

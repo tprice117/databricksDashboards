@@ -47,7 +47,7 @@ class RentalPrice:
         elif (
             seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
         ):
-            items.append(
+            items.extend(
                 seller_product_seller_location.rental_multi_step.get_price(
                     duration=duration,
                 )
