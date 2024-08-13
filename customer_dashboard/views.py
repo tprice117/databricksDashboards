@@ -1217,35 +1217,31 @@ def new_order_5(request):
         elif filter_qry == "starting":
             # Displays all open carts that have an Order.EndDate LESS THAN 5 days from Today
             orders = orders.filter(
-                order_group__end_date__lte=check_date + datetime.timedelta(days=5)
+                end_date__lte=check_date + datetime.timedelta(days=5)
             )
             if start_date:
                 context[
                     "help_text"
-                ] += f"open carts that have an Order.EndDate LESS THAN 5 days from this day {check_date}."
+                ] += f"open carts expiring (Order.EndDate) 5 days after {check_date}."
             else:
-                context[
-                    "help_text"
-                ] += (
-                    "open carts that have an Order.EndDate LESS THAN 5 days from today."
-                )
+                context["help_text"] += "open carts expiring (Order.EndDate) in 5 days."
         elif filter_qry == "inactive":
             # Displays all open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
             orders = orders.filter(
                 Q(updated_on__date__lt=check_date - datetime.timedelta(days=5))
-                & Q(order_group__end_date__gt=check_date)
+                & Q(end_date__gt=check_date)
             )
             if start_date:
                 context[
                     "help_text"
-                ] += f"open carts that haven't been updated in GREATER THAN 5 days & {check_date} is BEFORE any order's Order.EndDate."
+                ] += f"open carts that haven't been updated in more than 5 days & {check_date} is before any order's EndDate."
             else:
                 context[
                     "help_text"
-                ] += "open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate."
+                ] += "open carts that haven't been updated in more than 5 days & today is before any order's EndDate."
         elif filter_qry == "expired":
             # Displays all open carts that have an Order.EndDate AFTER Today
-            orders = orders.filter(order_group__end_date__gt=check_date)
+            orders = orders.filter(end_date__gt=check_date)
             if start_date:
                 context[
                     "help_text"
@@ -1258,23 +1254,24 @@ def new_order_5(request):
             # active: default filter. Displays all open carts
             if start_date and end_date:
                 orders = orders.filter(
-                    Q(order_group__start_date__gte=start_date)
-                    & Q(order_group__end_date__lte=end_date)
+                    Q(end_date__gte=start_date) & Q(end_date__lte=end_date)
                 )
                 context[
                     "help_text"
-                ] += f"open carts created between {start_date} and {end_date}."
+                ] += f"open carts starting on or between {start_date} and {end_date}."
             elif start_date:
-                orders = orders.filter(order_group__start_date__gte=start_date)
-                context["help_text"] += f"open carts created after {start_date}."
+                orders = orders.filter(end_date__gte=start_date)
+                context["help_text"] += f"open carts starting on or after {start_date}."
             elif end_date:
-                orders = orders.filter(order_group__end_date__lte=end_date)
-                context["help_text"] += f"open carts created before {start_date}."
+                orders = orders.filter(end_date__lte=end_date)
+                context[
+                    "help_text"
+                ] += f"open carts starting on or before {start_date}."
             else:
                 context["help_text"] += "open carts."
 
         orders = orders.prefetch_related("order_line_items")
-        orders = orders.order_by("-order_group__start_date")
+        orders = orders.order_by("-end_date")
 
         if not orders:
             # messages.error(request, "Your cart is empty.")
@@ -2234,6 +2231,7 @@ def new_location(request):
             save_model = None
             if "user_address_submit" in request.POST:
                 form = UserAddressForm(request.POST)
+                # TODO: Save country
                 context["user_address_form"] = form
                 if form.is_valid():
                     name = form.cleaned_data.get("name")
