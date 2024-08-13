@@ -1,7 +1,7 @@
 {% load humanize %}
 {% block modals %}
     <div class="modal fade" role="dialog" tabindex="-1" id="modal-price-detail-{{ forloop.counter }}">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">Price Details</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
@@ -216,8 +216,8 @@
                                             {% for material_waste_type in item.seller_product_seller_location.material.waste_types.all %}
                                                 <tr>
                                                     <td>{{ material_waste_type.main_product_waste_type.waste_type.name }}</td>
-                                                    <td>{{ material_waste_type.base_price }}</td>
-                                                    <td>{{ material_waste_type.price_per_ton }}</td>
+                                                    <td>${{ material_waste_type.base_price }}</td>
+                                                    <td>${{ material_waste_type.price_per_ton }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
