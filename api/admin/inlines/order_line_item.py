@@ -13,6 +13,7 @@ class OrderLineItemInlineForm(forms.ModelForm):
         model = OrderLineItem
         fields = (
             "order_line_item_type",
+            "description",
             "rate",
             "quantity",
             "seller_payout_price",

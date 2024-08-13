@@ -368,10 +368,23 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 .first()
             )
             if material_waste_type:
+                # If the SellerProductSellerLocationMaterialWasteType.tonnage_included is less
+                # than the MainProduct's included_tonnage_quantity, then use the MainProduct's
+                # included_tonnage_quantity.
+                main_product_included_tonnage_quantity = (
+                    instance.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity
+                )
+                tonnage_included = (
+                    material_waste_type.tonnage_included
+                    if material_waste_type.tonnage_included
+                    > main_product_included_tonnage_quantity
+                    else main_product_included_tonnage_quantity
+                )
+
                 OrderGroupMaterial.objects.create(
                     order_group=instance,
                     price_per_ton=material_waste_type.price_per_ton,
-                    tonnage_included=material_waste_type.tonnage_included,
+                    tonnage_included=tonnage_included,
                 )
             else:
                 raise Exception(

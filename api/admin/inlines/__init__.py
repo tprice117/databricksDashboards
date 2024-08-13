@@ -7,7 +7,10 @@ from .order import OrderInline
 from .order_disposal_ticket import OrderDisposalTicketInline
 from .order_group_material import OrderGroupMaterialInline
 from .order_group_rental import OrderGroupRentalInline
+from .order_group_rental_multi_step import OrderGroupRentalMultiStepInline
+from .order_group_rental_one_step import OrderGroupRentalOneStepInline
 from .order_group_service import OrderGroupServiceInline
+from .order_group_service_times_per_week import OrderGroupServiceTimesPerWeekInline
 from .order_line_item import OrderLineItemInline
 from .payout import PayoutInline
 from .product import ProductInline
