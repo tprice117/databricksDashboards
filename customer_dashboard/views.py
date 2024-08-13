@@ -1502,6 +1502,7 @@ def checkout(request, user_address_id):
             context["subtotal"] += customer_price
         except KeyError:
             context["cart"][order.order_group.id] = {
+                "order": order,
                 "order_group": order.order_group,
                 "price": customer_price,
                 "count": 1,
