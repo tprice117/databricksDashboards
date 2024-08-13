@@ -45,7 +45,7 @@
                             {% if user_address.last_order %}
                                 <td>{{ user_address.last_order }}</td>
                             {% else %}
-                                <td class="text-center" hx-get="{% url 'customer_company_last_order' %}?user_address_id={{ user_address.id }}" hx-trigger="load" hx-swap="outerHTML">
+                                <td hx-get="{% url 'customer_company_last_order' %}?user_address_id={{ user_address.id }}" hx-trigger="load" hx-swap="outerHTML">
                                     <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </td>
                             {% endif %}
