@@ -1305,6 +1305,7 @@ def new_order_5(request):
                     context["cart"][order.order_group.user_address_id]["orders"][
                         order.order_group.id
                     ] = {
+                        "id": order.id,
                         "order_group": order.order_group,
                         "price": customer_price,
                         "count": 1,
