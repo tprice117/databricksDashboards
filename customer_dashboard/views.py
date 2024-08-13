@@ -2256,6 +2256,7 @@ def new_location(request):
                         street=street,
                         city=city,
                         state=state,
+                        country="US",
                         postal_code=postal_code,
                         autopay=autopay,
                         is_archived=is_archived,
