@@ -37,16 +37,16 @@ class MaterialPrice:
                 quantity=included_tonnage_quantity,
             )
 
-        return (
-            (
-                PricingLineItemGroup(
-                    title="Material",
-                    code="material",
-                ),
-                [
-                    item,
-                ],
+            return (
+                (
+                    PricingLineItemGroup(
+                        title="Material",
+                        code="material",
+                    ),
+                    [
+                        item,
+                    ],
+                )
+                if item
+                else None
             )
-            if item
-            else None
-        )

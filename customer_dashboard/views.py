@@ -1177,54 +1177,103 @@ def new_order_5(request):
         start_date = request.GET.get("start_date")
         end_date = request.GET.get("end_date")
         if start_date:
-            start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+            # Parse date object
+            start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
             check_date = start_date
         else:
             check_date = timezone.now().date()
 
         if end_date:
-            end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+            end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
 
         # Pull all orders with submitted_on = None and show them in the cart.
         orders = get_booking_objects(
             request, context["user"], context["user_group"], exclude_in_cart=False
         )
-
-        # if filter_qry == "active":
-        #     # Displays all open carts
-        #     # context["help_text"] = "All active orders."
-        #     orders = orders.filter(submitted_on__isnull=True)
-        #     if start_date:
-        #         orders = orders.filter(order_group__start_date__gte=start_date)
-        #     if end_date:
-        #         orders = orders.filter(order_group__end_date__lte=end_date)
-        # elif filter_qry == "starting":
-        #     # Displays all open carts that have a Order.EndDate LESS THAN 5 days from Today
-        #     orders = orders.filter(submitted_on__isnull=True)
-        #     orders = orders.filter(
-        #         order_group__end_date__lte=check_date + datetime.timedelta(days=5)
-        #     )
-        # elif filter_qry == "inactive":
-        #     # Displays all open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
-        #     orders = orders.filter(
-        #         updated_on__lt=check_date - datetime.timedelta(days=5)
-        #     )
-        #     orders = orders.filter(order_group__end_date__gt=check_date)
-        # elif filter_qry == "expired":
-        #     # Displays all open carts that have a Order.EndDate AFTER Today
-        #     orders = orders.filter(order_group__end_date__gt=check_date)
-        # else:
-        #     # new: default filter
-        #     # Displays all open carts that the Order.CreatedDate == today
-        #     orders = orders.filter(order_group__start_date=check_date)
-        #     if start_date:
-        #         orders = orders.filter(order_group__start_date__gte=start_date)
-        #     if end_date:
-        #         orders = orders.filter(order_group__end_date__lte=end_date)
-        # if my_carts:
-        #     orders = orders.filter(order_group__user_id=context["user"].id)
-
         orders = orders.filter(submitted_on__isnull=True)
+
+        if my_carts:
+            context["help_text"] = "My "
+            orders = orders.filter(order_group__user_id=context["user"].id)
+        else:
+            context["help_text"] = "All "
+
+        if filter_qry == "active":
+            # Displays all open carts
+            if start_date and end_date:
+                orders = orders.filter(
+                    Q(order_group__start_date__gte=start_date)
+                    & Q(order_group__end_date__lte=end_date)
+                )
+                context[
+                    "help_text"
+                ] += f"open carts created between {start_date} and {end_date}."
+            elif start_date:
+                orders = orders.filter(order_group__start_date__gte=start_date)
+                context["help_text"] += f"open carts created after {start_date}."
+            elif end_date:
+                orders = orders.filter(order_group__end_date__lte=end_date)
+                context["help_text"] += f"open carts created before {start_date}."
+            else:
+                context["help_text"] += "open carts."
+        elif filter_qry == "starting":
+            # Displays all open carts that have an Order.EndDate LESS THAN 5 days from Today
+            orders = orders.filter(
+                order_group__end_date__lte=check_date + datetime.timedelta(days=5)
+            )
+            if start_date:
+                context[
+                    "help_text"
+                ] += f"open carts that have an Order.EndDate LESS THAN 5 days from this day {check_date}."
+            else:
+                context[
+                    "help_text"
+                ] += (
+                    "open carts that have an Order.EndDate LESS THAN 5 days from today."
+                )
+        elif filter_qry == "inactive":
+            # Displays all open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
+            orders = orders.filter(
+                Q(updated_on__date__lt=check_date - datetime.timedelta(days=5))
+                & Q(order_group__end_date__gt=check_date)
+            )
+            if start_date:
+                context[
+                    "help_text"
+                ] += f"open carts that haven't been updated in GREATER THAN 5 days & {check_date} is BEFORE any order's Order.EndDate."
+            else:
+                context[
+                    "help_text"
+                ] += "open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate."
+        elif filter_qry == "expired":
+            # Displays all open carts that have an Order.EndDate AFTER Today
+            orders = orders.filter(order_group__end_date__gt=check_date)
+            if start_date:
+                context[
+                    "help_text"
+                ] += f"open carts that have an Order.EndDate AFTER {check_date}."
+            else:
+                context[
+                    "help_text"
+                ] += "open carts that have an Order.EndDate AFTER Today."
+        else:
+            # new: default filter
+            # Displays all open carts that the Order.CreatedDate == today
+            if start_date and end_date:
+                orders = orders.filter(
+                    Q(created_on__date__gte=start_date)
+                    & Q(created_on__date__lte=end_date)
+                )
+                context[
+                    "help_text"
+                ] += f"open carts created between {start_date} and {end_date}."
+            else:
+                orders = orders.filter(created_on__date=check_date)
+                if start_date:
+                    context["help_text"] += f"open carts created on {start_date}."
+                else:
+                    context["help_text"] += "open carts created today."
+
         orders = orders.prefetch_related("order_line_items")
         orders = orders.order_by("-order_group__start_date")
 
