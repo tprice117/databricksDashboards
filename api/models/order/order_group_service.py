@@ -30,8 +30,8 @@ class OrderGroupService(BaseModel):
         order: Order,
     ) -> List[OrderLineItem]:
         """
-        Returns the OrderLineItems for this OrderGroupService. This method does not
-        save the OrderLineItems to the database.
+        Returns the OrderLineItems for this OrderGroupService. This method
+        saves the OrderLineItems to the database.
         """
         # Get the OrderLineItemType for SERVICE.
         order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")

@@ -27,13 +27,13 @@ class OrderGroupRentalOneStep(BaseModel):
         order: Order,
     ) -> List[OrderLineItem]:
         """
-        Returns the OrderLineItems for this OrderGroupMaterial. This method does not
-        save the OrderLineItems to the database.
+        Returns the OrderLineItems for this OrderGroupMaterial. This method
+        saves the OrderLineItems to the database.
         """
         days = (order.end_date - order.start_date).days
 
         # Get the number of 28-day periods, rounded up.
-        periods = math.ceil(days / 28)
+        periods = math.ceil(days / 28) if days != 0 else 1
 
         # Get the OrderLineItemType for RENTAL.
         order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")

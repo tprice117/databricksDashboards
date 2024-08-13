@@ -198,28 +198,28 @@ class RentalMultiStep(BaseModel):
 
         remaining_hours = total_hours
 
-        if remaining_hours // 720 > 0:
+        if remaining_hours // 720 > 0 and self.month:
             # Get whole months.
             months = remaining_hours // 720
 
             # Get remaining hours and price.
             remaining_hours = remaining_hours % 720
 
-        if remaining_hours // 336 > 0:
+        if remaining_hours // 336 > 0 and self.two_weeks:
             # Get whole two-week periods.
             two_weeks = remaining_hours // 336
 
             # Get remaining hours and price.
             remaining_hours = remaining_hours % 336
 
-        if remaining_hours // 168 > 0:
+        if remaining_hours // 168 > 0 and self.week:
             # Get whole weeks.
             weeks = remaining_hours // 168
 
             # Get remaining hours and price.
             remaining_hours = remaining_hours % 168
 
-        if remaining_hours // 24 > 0:
+        if remaining_hours // 24 > 0 and self.effective_day_rate:
             # Get whole days.
             days = remaining_hours // 24
 

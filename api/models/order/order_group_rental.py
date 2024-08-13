@@ -42,8 +42,8 @@ class OrderGroupRental(BaseModel):
         order: Order,
     ) -> List[OrderLineItem]:
         """
-        Returns the OrderLineItems for this OrderGroupRental. This method does not
-        save the OrderLineItems to the database.
+        Returns the OrderLineItems for this OrderGroupRental. This method
+        saves the OrderLineItems to the database.
         """
         day_count = (order.end_date - order.start_date).days if order.end_date else 0
         days_over_included = day_count - self.order_group.rental.included_days
@@ -56,7 +56,7 @@ class OrderGroupRental(BaseModel):
         # Create OrderLineItem for Included Days.
         order_line_items.append(
             OrderLineItem(
-                order=self,
+                order=order,
                 order_line_item_type=order_line_item_type,
                 rate=self.order_group.rental.price_per_day_included,
                 quantity=self.order_group.rental.included_days,

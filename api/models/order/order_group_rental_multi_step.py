@@ -20,8 +20,8 @@ class OrderGroupRentalMultiStep(RentalMultiStep):
         order: Order,
     ) -> List[OrderLineItem]:
         """
-        Returns the OrderLineItems for this OrderGroupRentalMultiStep. This method does not
-        save the OrderLineItems to the database.
+        Returns the OrderLineItems for this OrderGroupRentalMultiStep. This method
+        saves the OrderLineItems to the database.
         """
         # Get the OrderLineItemType for RENTAL.
         order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")

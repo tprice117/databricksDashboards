@@ -1,12 +1,12 @@
 import datetime
 import logging
 from functools import lru_cache
-from typing import Optional
+from typing import List, Optional
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -379,66 +379,53 @@ class Order(BaseModel):
             raise ValidationError(
                 "This Order overlaps with another Order for this OrderGroup"
             )
-        # Only 1 Order from an OrderGroup can be in the cart
-        # (Order.submittedDate == null) at a time.
-        elif (
-            Order.objects.filter(
-                order_group=self.order_group,
-                submitted_on__isnull=True,
-            )
-            .exclude(id=self.id)
-            .count()
-            > 1
-        ):
-            raise ValidationError(
-                "Only 1 Order from an OrderGroup can be in the cart at a time"
-            )
 
     def add_line_items(self, created):
         order_line_items = OrderLineItem.objects.filter(order=self)
         # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
+
             try:
                 # Only add OrderLineItems if this is the first Order in the OrderGroup.
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
 
-                is_first_order = order_group_orders.count() == 1
+                is_first_order = (
+                    self.order_group.start_date == self.start_date
+                    and order_group_orders.count() == 1
+                )
 
-                if is_first_order:
-                    if self.order_group.seller_product_seller_location.delivery_fee:
-                        self._get_order_line_item_delievery().save()
-
-                # Only add OrderLineItems if this is the last Order in the OrderGroup.
-                if (
+                is_last_order = (
                     self.order_group.end_date == self.end_date
                     and order_group_orders.count() > 1
-                ):
-                    self._get_order_line_item_removal().save()
-                    # Don't add any other OrderLineItems if this is a removal.
-                    return
+                )
+
+                if is_first_order:
+                    self._add_order_line_item_delievery()
+
+                # Only add OrderLineItems if this is the last Order in the OrderGroup.
+                if is_last_order:
+                    self._add_order_line_item_removal()
+
+                # Create list of OrderLineItems for this Order to be created.
+                new_order_line_items: List[OrderLineItem] = []
 
                 # If the OrderGroup has Material, add those line items.
                 if hasattr(self.order_group, "material"):
-                    materials = self.order_group.material.order_line_items(self)
-
-                    for material in materials:
-                        material.save()
+                    new_order_line_items.extend(
+                        self.order_group.material.order_line_items(self)
+                    )
 
                 # If the OrderGroup has Rental One-Step, add those line items.
                 if hasattr(self.order_group, "rental_one_step"):
-                    rental_one_steps = (
+                    new_order_line_items.extend(
                         self.order_group.rental_one_step.order_line_items(self)
                     )
 
-                    for rental in rental_one_steps:
-                        rental.save()
-
                 # If the OrderGroup has Rental Two-Step (Legacy), add those line items.
                 if hasattr(self.order_group, "rental"):
-                    rentals = self.order_group.rental.order_line_items(self)
-
-                    for rental in rentals:
-                        rental.save()
+                    new_order_line_items.extend(
+                        self.order_group.rental.order_line_items(self)
+                    )
 
                 # If the OrderGroup has Rental Multi-Step, add those line items.
                 # NOTE: Do not add Rental Multi-Step line items for the first Order.
@@ -446,37 +433,35 @@ class Order(BaseModel):
                     hasattr(self.order_group, "rental_multi_step")
                     and not is_first_order
                 ):
-                    rental_multi_steps = (
+                    new_order_line_items.extend(
                         self.order_group.rental_multi_step.order_line_items(self)
                     )
 
-                    for rental in rental_multi_steps:
-                        rental.save()
-
                 # If the OrderGroup has Service, add those line items.
-                if hasattr(self.order_group, "service"):
-                    service = self.order_group.service.order_line_items(self)
-
-                    for service in service:
-                        service.save()
+                if hasattr(self.order_group, "service") and not is_last_order:
+                    new_order_line_items.extend(
+                        self.order_group.service.order_line_items(self)
+                    )
 
                 # If the OrderGroup has ServiceTimesPerWeek, add those line items.
                 if hasattr(self.order_group, "service_times_per_week"):
-                    service_times_per_week = (
+                    new_order_line_items.extend(
                         self.order_group.service_times_per_week.order_line_items(self)
                     )
 
-                    for service in service_times_per_week:
-                        service.save()
+                # Create the OrderLineItems.
+                OrderLineItem.objects.bulk_create(new_order_line_items)
 
+                print("GOT HERE 7")
                 # Check for any Admin Policy checks.
                 self.admin_policy_checks(orders=order_group_orders)
+                print("GOT HERE 8")
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
 
-    def _get_order_line_item_delievery(self) -> Optional[OrderLineItem]:
+    def _add_order_line_item_delievery(self) -> Optional[OrderLineItem]:
         return (
-            OrderLineItem(
+            OrderLineItem.objects.create(
                 order=self,
                 order_line_item_type=OrderLineItemType.objects.get(code="DELIVERY"),
                 rate=self.order_group.seller_product_seller_location.delivery_fee,
@@ -489,9 +474,9 @@ class Order(BaseModel):
             else None
         )
 
-    def _get_order_line_item_removal(self) -> Optional[OrderLineItem]:
+    def _add_order_line_item_removal(self) -> Optional[OrderLineItem]:
         return (
-            OrderLineItem(
+            OrderLineItem.objects.create(
                 order=self,
                 order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
                 rate=self.order_group.seller_product_seller_location.removal_fee,
@@ -504,7 +489,7 @@ class Order(BaseModel):
             else None
         )
 
-    def post_save(sender, instance, created, **kwargs):
+    def post_save(sender, instance: "Order", created, **kwargs):
         instance.add_line_items(created)
         notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
 
