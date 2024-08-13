@@ -187,7 +187,7 @@ class RentalMultiStep(BaseModel):
             raise Exception("The Duration must be positive.")
 
         # Get the total number of hours.
-        hours = duration.total_seconds() / 3600
+        total_hours = duration.total_seconds() / 3600
 
         # Create list of PricingLineItems.
         hours = None
@@ -196,7 +196,7 @@ class RentalMultiStep(BaseModel):
         two_weeks = None
         months = None
 
-        remaining_hours = hours
+        remaining_hours = total_hours
 
         if remaining_hours // 720 > 0:
             # Get whole months.
@@ -249,7 +249,7 @@ class RentalMultiStep(BaseModel):
             raise Exception("The Duration must be positive.")
 
         months, two_weeks, weeks, days, hours = self.get_most_efficient_pricing_pieces(
-            duration
+            duration=duration
         )
 
         # Create list of PricingLineItems.
