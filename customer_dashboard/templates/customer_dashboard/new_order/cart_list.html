@@ -61,7 +61,11 @@
                                                                 <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }}</p>
                                                             {% endif %}
                                                         {% endif %}
-                                                        <p class="mb-1">Order Type: {{ cart_item.order_type }}</p>
+                                                        <p class="mb-1">Service date: {{ cart_item.order.end_date }}</p>
+                                                        <p class="mb-1">Order type: {{ cart_item.order_type }}</p>
+                                                        {% if user.is_staff %}
+                                                            <p class="mb-1">Created by: {% if cart_item.order.created_by %}{{ cart_item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ cart_item.order.created_on }}</p>
+                                                        {% endif %}
                                                         {% comment %} <p>order line items: {{ cart_item.count }} - [{{ cart_item.status }}]</p> {% endcomment %}
                                                     </div>
                                                     <div class="col-auto">
@@ -81,7 +85,7 @@
                                                             Remove
                                                             <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                                         </button>
-                                                        {% comment %} <a class="btn btn-link" role="button" href="/admin/api/order/{{cart_item.id}}/change/">In database</a> {% endcomment %}
+                                                        {% comment %} <a class="btn btn-link" role="button" href="/admin/api/order/{{cart_item.order.id}}/change/">In database</a> {% endcomment %}
                                                     </div>
                                                 </div>
                                             </div>
