@@ -46,7 +46,7 @@ class OrderGroupRental(BaseModel):
         saves the OrderLineItems to the database.
         """
         day_count = (order.end_date - order.start_date).days if order.end_date else 0
-        days_over_included = day_count - self.order_group.rental.included_days
+        days_over_included = day_count - self.included_days
 
         # Get the OrderLineItemType for RENTAL.
         order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
@@ -58,8 +58,8 @@ class OrderGroupRental(BaseModel):
             OrderLineItem(
                 order=order,
                 order_line_item_type=order_line_item_type,
-                rate=self.order_group.rental.price_per_day_included,
-                quantity=self.order_group.rental.included_days,
+                rate=self.price_per_day_included,
+                quantity=self.included_days,
                 description="Included Days",
                 platform_fee_percent=self.order_group.take_rate,
             )
@@ -71,7 +71,7 @@ class OrderGroupRental(BaseModel):
                 OrderLineItem(
                     order=order,
                     order_line_item_type=order_line_item_type,
-                    rate=self.order_group.rental.price_per_day_additional,
+                    rate=self.price_per_day_additional,
                     quantity=days_over_included,
                     description="Additional Days",
                     platform_fee_percent=self.order_group.take_rate,
