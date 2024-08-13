@@ -369,9 +369,9 @@ class OrderGroupForm(forms.Form):
     # )
     schedule_window = forms.ChoiceField(
         choices=[
+            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
             ("Morning (7am-11am)", "Morning (7am-11am)"),
             ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
-            ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
         ],
         widget=forms.Select(attrs={"class": "form-select"}),
     )
@@ -454,9 +454,9 @@ class OrderGroupSwapForm(forms.Form):
     )
     schedule_window = forms.ChoiceField(
         choices=[
+            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
             ("Morning (7am-11am)", "Morning (7am-11am)"),
             ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
-            ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
         ],
         widget=forms.Select(attrs={"class": "form-select"}),
     )
