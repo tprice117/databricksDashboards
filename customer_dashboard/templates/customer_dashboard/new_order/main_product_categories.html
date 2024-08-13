@@ -17,8 +17,8 @@
                 <div class="col-lg-4 d-flex align-items-stretch">
                     <div class="card shadow mb-4">
                         <img class="card-img-top img-fluid"
-                            src="{% if main_product_category.image %}
-                                {{ main_product_category.image }}
+                            src="{% if main_product_category.icon %}
+                                {{ main_product_category.icon.url }}
                             {% else %}
                                 {% static 'customer_dashboard/img/dogs/image3.jpeg' %}
                             {% endif %}" />
