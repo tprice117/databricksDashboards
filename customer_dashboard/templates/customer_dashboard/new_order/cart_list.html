@@ -110,5 +110,7 @@
     {% endfor %}
 </div>
 
-<h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}" hx-swap-oob="true">Shopping Cart ({{ cart_count }})</h3>
+<h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}" hx-swap-oob="true">
+    Shopping Cart ({{ cart_count }}){% if help_text %} - {{ help_text }}{% endif %}
+</h3>
 <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>

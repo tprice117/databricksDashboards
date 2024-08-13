@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from api.models.waste_type import WasteType
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
@@ -178,68 +179,124 @@ class Order(BaseModel):
             PricingEngineResponseSerializer,
         )
 
-        # TODO: Remove self.order_group.times_per_week or 1 once we figure out how to handle old restroom orders.
+        times_per_week = self.order_group.times_per_week
+        if (
+            self.order_group.seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
+            and not times_per_week
+        ):
+            # Grab the service line item and get the quantity.
+            order_line_item_1st = self.order_line_items.filter(
+                order_line_item_type__name="Service"
+            ).first()
+            if order_line_item_1st:
+                times_per_week = int(order_line_item_1st.quantity)
+            else:
+                times_per_week = 0
+                logger.error(
+                    f"Order.get_price: {self.id}-{self.order_type} times_per_week is None and no Service OrderLineItem found."
+                )
+
+        waste_type = self.order_group.waste_type
+        if (
+            self.order_group.seller_product_seller_location.seller_product.product.main_product.has_material
+            and not waste_type
+        ):
+            # TODO: Grab the material line item and get the waste type.
+            # Or simply grab the most expensive waste type.
+            waste_type = WasteType.objects.filter(name="Construction Debris").first()
+            logger.error(
+                f"Order.get_price: {self.id}-{self.order_type} waste_type is None, using Construction Debris."
+            )
+
+        # TODO: Use new parameter discount.
+        take_rate = float(self.order_group.take_rate / 100)
+        # TODO: Modify get_price to silence all invalid parameter exceptions
+        # when getting prices for non new orders. Example allow discount to be any value.
+
         pricing = get_pricing_engine().get_price(
             user_address=self.order_group.user_address,
             seller_product_seller_location=self.order_group.seller_product_seller_location,
             start_date=self.start_date,
             end_date=self.end_date,
-            waste_type=self.order_group.waste_type,
-            times_per_week=self.order_group.times_per_week or 1,
+            waste_type=waste_type,
+            times_per_week=times_per_week,
         )
-        take_rate = float(self.order_group.take_rate / 100)
         pricing_d = PricingEngineResponseSerializer(pricing).data
+        pricing_cust = PricingEngineResponseSerializer(pricing).data
+
+        if pricing_cust["service"] and pricing_cust["service"]["total"]:
+            pricing_cust["service"]["total"] = pricing_cust["service"]["total"] + (
+                pricing_cust["service"]["total"] * take_rate
+            )
+        if pricing_cust["rental"] and pricing_cust["rental"]["total"]:
+            pricing_cust["rental"]["total"] = pricing_cust["rental"]["total"] + (
+                pricing_cust["rental"]["total"] * take_rate
+            )
+        if pricing_cust["material"] and pricing_cust["material"]["total"]:
+            pricing_cust["material"]["total"] = pricing_cust["material"]["total"] + (
+                pricing_cust["material"]["total"] * take_rate
+            )
+        if pricing_cust["delivery"] and pricing_cust["delivery"]["total"]:
+            pricing_cust["delivery"]["total"] = pricing_cust["delivery"]["total"] + (
+                pricing_cust["delivery"]["total"] * take_rate
+            )
+        if pricing_cust["removal"] and pricing_cust["removal"]["total"]:
+            pricing_cust["removal"]["total"] = pricing_cust["removal"]["total"] + (
+                pricing_cust["removal"]["total"] * take_rate
+            )
+        if pricing_cust["total"]:
+            pricing_cust["total"] = pricing_cust["total"] + (
+                pricing_cust["total"] * take_rate
+            )
         total_pricing = {
             "seller": pricing_d,
-            "customer": {
-                "service": (
-                    pricing_d["service"]["total"]
-                    + (pricing_d["service"]["total"] * take_rate)
-                    if pricing_d["service"]
-                    else None
-                ),
-                "rental": (
-                    pricing_d["rental"]["total"]
-                    + (pricing_d["rental"]["total"] * take_rate)
-                    if pricing_d["rental"]
-                    else None
-                ),
-                "material": (
-                    pricing_d["material"]["total"]
-                    + (pricing_d["material"]["total"] * take_rate)
-                    if pricing_d["material"]
-                    else None
-                ),
-                "delivery": (
-                    pricing_d["delivery"]["total"]
-                    + (pricing_d["delivery"]["total"] * take_rate)
-                    if pricing_d["delivery"]
-                    else None
-                ),
-                "removal": (
-                    pricing_d["removal"]["total"]
-                    + (pricing_d["removal"]["total"] * take_rate)
-                    if pricing_d["removal"]
-                    else None
-                ),
-                "total": (
-                    pricing_d["total"] + (pricing_d["total"] * take_rate)
-                    if pricing_d["total"]
-                    else None
-                ),
-            },
+            "customer": pricing_cust,
         }
         return total_pricing
 
     def customer_price_new(self):
         pricing = self.get_price()
-        # TODO: Maybe get order_type then get the appropriate pricing.
-        # pricing["delivery"]["total"]
-        return pricing["customer"]["total"]
+        if self.order_type == Order.Type.AUTO_RENEWAL:
+            total = pricing["customer"]["total"]
+            if (
+                pricing["customer"]["removal"]
+                and pricing["customer"]["removal"]["total"]
+            ):
+                total -= pricing["customer"]["removal"]["total"]
+            if (
+                pricing["customer"]["delivery"]
+                and pricing["customer"]["delivery"]["total"]
+            ):
+                total -= pricing["customer"]["delivery"]["total"]
+            return total
+        elif self.order_type == Order.Type.REMOVAL:
+            return (
+                pricing["customer"]["removal"]["total"]
+                if pricing["customer"]["removal"]
+                and pricing["customer"]["removal"]["total"]
+                else 0.0
+            )
+        else:
+            return pricing["customer"]["total"]
 
     def seller_price_new(self):
         pricing = self.get_price()
-        return pricing["seller"]["total"]
+        if self.order_type == Order.Type.AUTO_RENEWAL:
+            total = pricing["seller"]["total"]
+            if pricing["seller"]["removal"] and pricing["seller"]["removal"]["total"]:
+                total -= pricing["seller"]["removal"]["total"]
+            if pricing["seller"]["delivery"] and pricing["seller"]["delivery"]["total"]:
+                total -= pricing["seller"]["delivery"]["total"]
+            return total
+        elif self.order_type == Order.Type.REMOVAL:
+            return (
+                pricing["seller"]["removal"]["total"]
+                if pricing["seller"]["removal"]
+                and pricing["seller"]["removal"]["total"]
+                else 0.0
+            )
+        else:
+            return pricing["seller"]["total"]
 
     def customer_price(self):
         return sum(
