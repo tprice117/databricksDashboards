@@ -1279,7 +1279,7 @@ def new_order_5(request):
         else:
             # Get unique order group objects from the orders and place them in address buckets.
             for order in orders:
-                customer_price = order.customer_price_new()
+                customer_price = order.customer_price()
                 try:
                     if (
                         context["cart"].get(order.order_group.user_address_id, None)
@@ -1493,7 +1493,7 @@ def checkout(request, user_address_id):
     for order in orders:
         if order.status == Order.Status.APPROVAL:
             context["needs_approval"] = True
-        customer_price = order.customer_price_new()
+        customer_price = order.customer_price()
         try:
             context["cart"][order.order_group_id]["price"] += customer_price
             context["cart"][order.order_group.id]["count"] += 1
