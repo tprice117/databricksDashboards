@@ -962,6 +962,10 @@ def new_order_4(request):
     # end_date = None
     # if context["removal_date"]:
     #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
+    # TODO: discount will be inverse take_rate.
+    # discount = 0 == default_take_rate
+    # Show discount slider from 0 - max_discount
+    # print(f"max_discount: {context['product'].main_product.max_discount}")
     context["seller_product_seller_locations"] = []
     context["default_take_rate_100"] = float(
         context["product"].main_product.default_take_rate
@@ -1159,7 +1163,6 @@ def new_order_5(request):
             )
 
     query_params = request.GET.copy()
-    # TODO: Create a decorator to catch and display errors.
     # Load the cart page
     context["subtotal"] = 0
     context["cart_count"] = 0
@@ -1210,40 +1213,45 @@ def new_order_5(request):
                     context["help_text"] += "open carts created today."
         elif filter_qry == "starting":
             # Displays all open carts that have an Order.EndDate LESS THAN 5 days from Today
+            # starting in less than 5 days = starting T + 1-5 .. basically meaning these carts are high priority because it’s coming up on the date
             orders = orders.filter(
-                end_date__lte=check_date + datetime.timedelta(days=5)
+                Q(end_date__gte=check_date)
+                & Q(end_date__lte=check_date + datetime.timedelta(days=5))
             )
             if start_date:
                 context[
                     "help_text"
-                ] += f"open carts expiring (Order.EndDate) 5 days after {check_date}."
+                ] += f"open carts expiring (Order.EndDate) within 5 days after {check_date}."
             else:
-                context["help_text"] += "open carts expiring (Order.EndDate) in 5 days."
+                context[
+                    "help_text"
+                ] += "open carts expiring (Order.EndDate) within 5 days."
         elif filter_qry == "inactive":
             # Displays all open carts that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
             orders = orders.filter(
                 Q(updated_on__date__lt=check_date - datetime.timedelta(days=5))
-                & Q(end_date__gt=check_date)
+                & Q(end_date__lt=check_date)
             )
             if start_date:
                 context[
                     "help_text"
-                ] += f"open carts that haven't been updated in more than 5 days & {check_date} is before any order's EndDate."
+                ] += f"open carts that haven't been updated in more than 5 days & {check_date} is after any order's EndDate."
             else:
                 context[
                     "help_text"
-                ] += "open carts that haven't been updated in more than 5 days & today is before any order's EndDate."
+                ] += "open carts that haven't been updated in more than 5 days & today is after any order's EndDate."
         elif filter_qry == "expired":
             # Displays all open carts that have an Order.EndDate AFTER Today
-            orders = orders.filter(end_date__gt=check_date)
+            # expired = T - infinite .. basically these are in the last and we will start working to clear this list becuase it’s an error or expired quote now
+            orders = orders.filter(end_date__lt=check_date)
             if start_date:
                 context[
                     "help_text"
-                ] += f"open carts that have an Order.EndDate AFTER {check_date}."
+                ] += f"open carts that have an Order.EndDate before {check_date}."
             else:
                 context[
                     "help_text"
-                ] += "open carts that have an Order.EndDate AFTER Today."
+                ] += "open carts that have an Order.EndDate before Today."
         else:
             # active: default filter. Displays all open carts
             if start_date and end_date:
