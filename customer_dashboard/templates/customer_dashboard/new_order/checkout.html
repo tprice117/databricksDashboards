@@ -393,7 +393,7 @@
 {% endblock %}
 {% block modals %}
     <div class="modal fade" role="dialog" tabindex="-1" id="checkout-orders-modal" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">Cart Details</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
@@ -407,15 +407,6 @@
                                     {% for item in cart.values %}
                                         <div class="row cart-item">
                                             <div class="col-auto">
-                                                <img class="img-thumbnail img-fluid"
-                                                    alt="Product category image"
-                                                    width="67"
-                                                    height="96"
-                                                    src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image %}
-                                                        {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image }}
-                                                    {% else %}
-                                                        {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
-                                                    {% endif %}" />
                                                 <img class="img-thumbnail img-fluid"
                                                     alt="Product image"
                                                     width="138"
@@ -437,8 +428,11 @@
                                                         <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
                                                     {% endif %}
                                                 {% endif %}
+                                                <p class="mb-1">Service date: {{ item.order.end_date }}</p>
                                                 <p class="mb-1">Order Type: {{ item.order_type }}</p>
-                                                {% comment %} <p>{{ item.order_group.start_date }} to {{ order_group.end_date }}</p> {% endcomment %}
+                                                {% if user.is_staff %}
+                                                    <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on }}</p>
+                                                {% endif %}
                                             </div>
                                             <div class="col-auto">
                                                 <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
@@ -475,7 +469,7 @@
         </div>
     </div>
     <div id="add-card-modal" class="modal fade" role="dialog" tabindex="-1" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title">New Card</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
