@@ -26,7 +26,12 @@
                 // calculate the new price
                 let newPrice = price + price * (takeRate / 100);
                 // update the price of the price-item element
-                priceItem.innerText = "$" + newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+                // check if innerText contained a dollar sign
+                if (priceItem.innerText.includes("$")) {
+                    priceItem.innerText = "$" + newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+                } else {
+                    priceItem.innerText = newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+                }
             });
         });
     </script>
