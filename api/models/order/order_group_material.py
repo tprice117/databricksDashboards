@@ -2,20 +2,28 @@ from typing import List
 
 from django.db import models
 
+from api.models.common.material import PricingMaterial
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
-from common.models import BaseModel
 
 
-class OrderGroupMaterial(BaseModel):
+class OrderGroupMaterial(PricingMaterial):
     order_group = models.OneToOneField(
         "api.OrderGroup",
         on_delete=models.CASCADE,
         related_name="material",
     )
-    price_per_ton = models.DecimalField(max_digits=18, decimal_places=2, default=0)
-    tonnage_included = models.IntegerField(default=0)
+    price_per_ton = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        help_text="Deprecated. Use OrderGroupMaterialWasteType(s) instead of this field.",
+    )
+    tonnage_included = models.IntegerField(
+        default=0,
+        help_text="Deprecated. Use OrderGroupMaterialWasteType(s) instead of this field.",
+    )
 
     def update_pricing(self):
         """
@@ -38,38 +46,21 @@ class OrderGroupMaterial(BaseModel):
         Returns the OrderLineItems for this OrderGroupMaterial. This method does not
         save the OrderLineItems to the database.
         """
-        tons_over_included = (
-            self.order_group.tonnage_quantity or 0
-        ) - self.order_group.material.tonnage_included
-
         # Get the OrderLineItemType for MATERIAL.
         order_line_item_type = OrderLineItemType.objects.get(code="MATERIAL")
 
-        order_line_items = []
+        line_item = self.get_price(
+            waste_type=self.order_group.waste_type,
+            tons=self.order_group.tonnage_quantity,
+        )
 
-        # Create OrderLineItem for Included Tons.
-        order_line_items.append(
+        return [
             OrderLineItem(
                 order=order,
                 order_line_item_type=order_line_item_type,
-                rate=self.order_group.material.price_per_ton,
-                quantity=self.order_group.material.tonnage_included,
-                description="Included Tons",
+                rate=line_item.unit_price,
+                quantity=line_item.quantity,
+                description=line_item.description,
                 platform_fee_percent=self.order_group.take_rate,
             )
-        )
-
-        # Create OrderLineItem for Additional Tons.
-        if tons_over_included > 0:
-            order_line_items.append(
-                OrderLineItem(
-                    order=order,
-                    order_line_item_type=order_line_item_type,
-                    rate=self.order_group.material.price_per_ton,
-                    quantity=tons_over_included,
-                    description="Additional Tons",
-                    platform_fee_percent=self.order_group.take_rate,
-                )
-            )
-
-        return order_line_items
+        ]

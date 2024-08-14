@@ -13,11 +13,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from api.models.waste_type import WasteType
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
+from api.models.waste_type import WasteType
 from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from common.models import BaseModel
@@ -456,11 +456,15 @@ class Order(BaseModel):
                     and order_group_orders.count() > 1
                 )
 
+                is_equiptment_order = (
+                    self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+                )
+
                 if is_first_order:
                     self._add_order_line_item_delievery()
 
                 # Only add OrderLineItems if this is the last Order in the OrderGroup.
-                if is_last_order:
+                if (is_last_order and not is_equiptment_order) or (is_first_order and is_equiptment_order):
                     self._add_order_line_item_removal()
 
                 # Create list of OrderLineItems for this Order to be created.

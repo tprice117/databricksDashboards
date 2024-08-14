@@ -61,18 +61,18 @@
                         </div>
                         <div class="col-auto">
                             <p class="text-end">
-                                <b class="price-item" data-price="{{ item.price_data.total }}">${{ item.price_data.total_max|floatformat:2|intcomma }}</b>
+                                <b class="price-item" data-price="{{ item.price_data.total }}">${{ item.price_data.total|floatformat:2|intcomma }}</b>
                             </p>
                             <p class="text-end">
                                 Delivery:{% if item.price_data.delivery %}
-                                    <span class="price-item" data-price="{{ item.price_data.delivery.total }}">${{ item.price_data.delivery_max|floatformat:2|intcomma }}</span>
+                                    <span class="price-item" data-price="{{ item.price_data.delivery.total }}">${{ item.price_data.delivery.total|floatformat:2|intcomma }}</span>
                                 {% else %}
                                     No charge
                                 {% endif %}
                             </p>
                             <p class="text-end">
                                 Removal:{% if item.price_data.removal %}
-                                    <span class="price-item" data-price="{{ item.price_data.removal.total }}">${{ item.price_data.removal_max|floatformat:2|intcomma }}</span>
+                                    <span class="price-item" data-price="{{ item.price_data.removal.total }}">${{ item.price_data.removal.total|floatformat:2|intcomma }}</span>
                                 {% else %}
                                     No charge
                                 {% endif %}

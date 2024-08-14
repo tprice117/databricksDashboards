@@ -19,6 +19,7 @@ from .order.order import Order
 from .order.order_disposal_ticket import OrderDisposalTicket
 from .order.order_group import OrderGroup
 from .order.order_group_material import OrderGroupMaterial
+from .order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from .order.order_group_rental import OrderGroupRental
 from .order.order_group_rental_multi_step import OrderGroupRentalMultiStep
 from .order.order_group_rental_one_step import OrderGroupRentalOneStep

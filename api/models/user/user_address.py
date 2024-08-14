@@ -1,14 +1,15 @@
 import datetime
 from typing import List
-from django.db import models
-from django.db.models.signals import pre_save
-from django.db.models import Q
 
+from django.db import models
+from django.db.models import Q
+from django.db.models.signals import pre_save
+
+from api.models.order.order import Order
 from api.models.track_data import track_data
 from api.models.user.user import User
 from api.models.user.user_address_type import UserAddressType
 from api.models.user.user_group import UserGroup
-from api.models.order.order import Order
 from api.utils.google_maps import geocode_address
 from common.middleware.save_author import get_request
 from common.models import BaseModel
@@ -74,7 +75,7 @@ class UserAddress(BaseModel):
     allow_sunday_delivery = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name or "[No name]"
+        return f"{(self.name or '[No Name]')} ({self.formatted_address()})"
 
     def formatted_address(self):
         return f"{self.street} {self.city}, {self.state} {self.postal_code}"

@@ -2,12 +2,11 @@ import ast
 import datetime
 import logging
 import uuid
+from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
-from functools import wraps
 
 from django.conf import settings
-from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -19,6 +18,7 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -32,6 +32,7 @@ from api.models import (
     MainProductWasteType,
     Order,
     OrderGroup,
+    OrderGroupMaterial,
     OrderLineItemType,
     Product,
     ProductAddOnChoice,
@@ -44,16 +45,15 @@ from api.models import (
     UserAddress,
     UserAddressType,
     UserGroup,
-    OrderGroupMaterial,
+)
+from api.models.seller.seller_product_seller_location_material_waste_type import (
+    SellerProductSellerLocationMaterialWasteType,
 )
 from api.models.user.user import CompanyUtils as UserUtils
 from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
-from api.models.seller.seller_product_seller_location_material_waste_type import (
-    SellerProductSellerLocationMaterialWasteType,
-)
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
@@ -73,8 +73,6 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
-    OrderGroupForm,
-    OrderGroupSwapForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -986,11 +984,7 @@ def new_order_4(request):
             ),
             seller_product_seller_location=seller_product_seller_location,
             start_date=datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d"),
-            end_date=(
-                datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
-                if context["removal_date"]
-                else None
-            ),
+            end_date=datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d"),
             waste_type=(
                 WasteType.objects.get(id=waste_type_id) if waste_type_id else None
             ),
