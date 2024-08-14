@@ -2,20 +2,32 @@ from typing import List
 
 from django.db import models
 
+from api.models.common.service import PricingService
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
-from common.models import BaseModel
 
 
-class OrderGroupService(BaseModel):
+class OrderGroupService(PricingService):
     order_group = models.OneToOneField(
         "api.OrderGroup",
         on_delete=models.CASCADE,
         related_name="service",
     )
-    rate = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
-    miles = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    rate = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Deprecated. Use price_per_mile and flat_rate_price instead.",
+    )
+    miles = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Deprecated. Use price_per_mile and flat_rate_price instead.",
+    )
 
     def update_pricing(self):
         """
