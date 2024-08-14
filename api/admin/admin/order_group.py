@@ -4,7 +4,10 @@ from api.admin.filters import CreatedDateFilter
 from api.admin.inlines import (
     OrderGroupMaterialInline,
     OrderGroupRentalInline,
+    OrderGroupRentalMultiStepInline,
+    OrderGroupRentalOneStepInline,
     OrderGroupServiceInline,
+    OrderGroupServiceTimesPerWeekInline,
     OrderInline,
     SubscriptionInline,
 )
@@ -22,8 +25,11 @@ class OrderGroupAdmin(admin.ModelAdmin):
     inlines = [
         SubscriptionInline,
         OrderInline,
-        OrderGroupServiceInline,
+        OrderGroupRentalOneStepInline,
         OrderGroupRentalInline,
+        OrderGroupRentalMultiStepInline,
+        OrderGroupServiceTimesPerWeekInline,
+        OrderGroupServiceInline,
         OrderGroupMaterialInline,
     ]
     search_fields = [

@@ -1,18 +1,18 @@
 import datetime
 import logging
 from functools import lru_cache
+from typing import List, Optional
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from api.models.waste_type import WasteType
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
@@ -20,14 +20,14 @@ from api.models.track_data import track_data
 from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from common.models import BaseModel
+from common.models.choices.approval_status import ApprovalStatus
 from common.models.choices.user_type import UserType
+from communications.intercom.conversation import Conversation as IntercomConversation
 from notifications import signals as notifications_signals
 from notifications.utils.add_email_to_queue import (
     add_email_to_queue,
     add_internal_email_to_queue,
 )
-from communications.intercom.conversation import Conversation as IntercomConversation
-from common.models.choices.approval_status import ApprovalStatus
 
 logger = logging.getLogger(__name__)
 
@@ -36,17 +36,6 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 USER_MODEL = None
 USER_SELLER_LOCATION_MODEL = None
 ORDER_APPROVAL_MODEL = None
-PRICING_ENGINE = None
-
-
-def get_pricing_engine():
-    """This imports the PricingEngine model.
-    This avoid the circular import issue."""
-    global PRICING_ENGINE
-    if PRICING_ENGINE is None:
-        from pricing_engine.pricing_engine import PricingEngine as PRICING_ENGINE
-
-    return PRICING_ENGINE
 
 
 def get_our_user_model():
@@ -173,139 +162,6 @@ class Order(BaseModel):
         return f"{settings.API_URL}/api/order/{self.id}/view/?key={encrypt_string(str(self.id))}"
 
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
-    def get_price(self):
-        from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
-            PricingEngineResponseSerializer,
-        )
-
-        times_per_week = self.order_group.times_per_week
-        if (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
-            and not times_per_week
-        ):
-            # Grab the service line item and get the quantity.
-            order_line_item_1st = self.order_line_items.filter(
-                order_line_item_type__name="Service"
-            ).first()
-            if order_line_item_1st:
-                times_per_week = int(order_line_item_1st.quantity)
-            else:
-                times_per_week = 0
-                logger.error(
-                    f"Order.get_price: {self.id}-{self.order_type} times_per_week is None and no Service OrderLineItem found."
-                )
-
-        waste_type = self.order_group.waste_type
-        if (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.has_material
-            and not waste_type
-        ):
-            # TODO: Grab the material line item and get the waste type.
-            # Or simply grab the most expensive waste type.
-            waste_type = WasteType.objects.filter(name="Construction Debris").first()
-            logger.error(
-                f"Order.get_price: {self.id}-{self.order_type} waste_type is None, using Construction Debris."
-            )
-
-        # TODO: Use new parameter discount.
-        take_rate = float(self.order_group.take_rate / 100)
-        # TODO: Modify get_price to silence all invalid parameter exceptions
-        # when getting prices for non new orders. Example allow discount to be any value.
-        pricing = get_pricing_engine().get_price(
-            user_address=self.order_group.user_address,
-            seller_product_seller_location=self.order_group.seller_product_seller_location,
-            start_date=self.start_date,
-            end_date=self.end_date,
-            waste_type=waste_type,
-            times_per_week=times_per_week,
-        )
-        pricing_d = PricingEngineResponseSerializer(pricing).data
-        pricing_cust = PricingEngineResponseSerializer(pricing).data
-
-        if pricing_cust["service"] and pricing_cust["service"]["total"]:
-            pricing_cust["service"]["total"] = pricing_cust["service"]["total"] + (
-                pricing_cust["service"]["total"] * take_rate
-            )
-        if pricing_cust["rental"] and pricing_cust["rental"]["total"]:
-            pricing_cust["rental"]["total"] = pricing_cust["rental"]["total"] + (
-                pricing_cust["rental"]["total"] * take_rate
-            )
-        if pricing_cust["material"] and pricing_cust["material"]["total"]:
-            pricing_cust["material"]["total"] = pricing_cust["material"]["total"] + (
-                pricing_cust["material"]["total"] * take_rate
-            )
-        if pricing_cust["delivery"] and pricing_cust["delivery"]["total"]:
-            pricing_cust["delivery"]["total"] = pricing_cust["delivery"]["total"] + (
-                pricing_cust["delivery"]["total"] * take_rate
-            )
-        if pricing_cust["removal"] and pricing_cust["removal"]["total"]:
-            pricing_cust["removal"]["total"] = pricing_cust["removal"]["total"] + (
-                pricing_cust["removal"]["total"] * take_rate
-            )
-        if pricing_cust["total"]:
-            pricing_cust["total"] = pricing_cust["total"] + (
-                pricing_cust["total"] * take_rate
-            )
-        total_pricing = {
-            "seller": pricing_d,
-            "customer": pricing_cust,
-        }
-        return total_pricing
-
-    def customer_price_new(self):
-        pricing = self.get_price()
-        if self.order_type == Order.Type.AUTO_RENEWAL:
-            total = pricing["customer"]["total"]
-            if (
-                pricing["customer"]["removal"]
-                and pricing["customer"]["removal"]["total"]
-            ):
-                total -= pricing["customer"]["removal"]["total"]
-            if (
-                pricing["customer"]["delivery"]
-                and pricing["customer"]["delivery"]["total"]
-            ):
-                total -= pricing["customer"]["delivery"]["total"]
-            return total
-        elif self.order_type == Order.Type.REMOVAL:
-            return (
-                pricing["customer"]["removal"]["total"]
-                if pricing["customer"]["removal"]
-                and pricing["customer"]["removal"]["total"]
-                else 0.0
-            )
-        else:
-            return pricing["customer"]["total"]
-
-    def seller_price_new(self):
-        pricing = self.get_price()
-        if self.order_type == Order.Type.AUTO_RENEWAL:
-            total = pricing["seller"]["total"]
-            if pricing["seller"]["removal"] and pricing["seller"]["removal"]["total"]:
-                total -= pricing["seller"]["removal"]["total"]
-            if pricing["seller"]["delivery"] and pricing["seller"]["delivery"]["total"]:
-                total -= pricing["seller"]["delivery"]["total"]
-            return total
-        elif self.order_type == Order.Type.REMOVAL:
-            return (
-                pricing["seller"]["removal"]["total"]
-                if pricing["seller"]["removal"]
-                and pricing["seller"]["removal"]["total"]
-                else 0.0
-            )
-        else:
-            return pricing["seller"]["total"]
-
-    def customer_price(self):
-        return sum(
-            [
-                order_line_item.rate
-                * order_line_item.quantity
-                * (1 + (order_line_item.platform_fee_percent / 100))
-                for order_line_item in self.order_line_items.all()
-            ]
-        )
-
     def seller_price(self):
         seller_price = sum(
             [
@@ -314,6 +170,9 @@ class Order(BaseModel):
             ]
         )
         return round(seller_price, 2)
+
+    def customer_price(self):
+        return self.seller_price() * (1 + (self.order_group.take_rate / 100))
 
     @property
     def take_rate(self):
@@ -434,147 +293,117 @@ class Order(BaseModel):
             raise ValidationError(
                 "This Order overlaps with another Order for this OrderGroup"
             )
-        # Only 1 Order from an OrderGroup can be in the cart
-        # (Order.submittedDate == null) at a time.
-        elif (
-            Order.objects.filter(
-                order_group=self.order_group,
-                submitted_on__isnull=True,
-            )
-            .exclude(id=self.id)
-            .count()
-            > 1
-        ):
-            raise ValidationError(
-                "Only 1 Order from an OrderGroup can be in the cart at a time"
-            )
 
     def add_line_items(self, created):
         order_line_items = OrderLineItem.objects.filter(order=self)
         # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
+
             try:
-                # Create Delivery Fee OrderLineItem.
+                # Only add OrderLineItems if this is the first Order in the OrderGroup.
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
 
-                if order_group_orders.count() == 1:
-                    if self.order_group.seller_product_seller_location.delivery_fee:
-                        OrderLineItem.objects.create(
-                            order=self,
-                            order_line_item_type=OrderLineItemType.objects.get(
-                                code="DELIVERY"
-                            ),
-                            rate=self.order_group.seller_product_seller_location.delivery_fee,
-                            quantity=1,
-                            description="Delivery Fee",
-                            platform_fee_percent=self.order_group.take_rate,
-                            is_flat_rate=True,
-                        )
+                is_first_order = (
+                    self.order_group.start_date == self.start_date
+                    and order_group_orders.count() == 1
+                )
 
-                # Create Removal Fee OrderLineItem.
-                if (
+                is_last_order = (
                     self.order_group.end_date == self.end_date
                     and order_group_orders.count() > 1
-                ):
-                    removal_fee = 0
-                    if self.order_group.seller_product_seller_location.removal_fee:
-                        removal_fee = (
-                            self.order_group.seller_product_seller_location.removal_fee
-                        )
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=OrderLineItemType.objects.get(
-                            code="REMOVAL"
-                        ),
-                        rate=removal_fee,
-                        quantity=1,
-                        description="Removal Fee",
-                        platform_fee_percent=self.order_group.take_rate,
-                        is_flat_rate=True,
-                    )
-                    # Don't add any other OrderLineItems if this is a removal.
-                    return
+                )
 
-                # Create OrderLineItems for newly "submitted" order.
-                # Service Price.
-                if hasattr(self.order_group, "service"):
-                    order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=order_line_item_type,
-                        rate=self.order_group.service.rate,
-                        quantity=self.order_group.service.miles or 1,
-                        is_flat_rate=self.order_group.service.miles is None,
-                        platform_fee_percent=self.order_group.take_rate,
-                    )
+                if is_first_order:
+                    self._add_order_line_item_delievery()
 
-                # Rental Price.
-                if hasattr(self.order_group, "rental"):
-                    day_count = (
-                        (self.end_date - self.start_date).days if self.end_date else 0
-                    )
-                    days_over_included = (
-                        day_count - self.order_group.rental.included_days
-                    )
-                    order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
+                # Only add OrderLineItems if this is the last Order in the OrderGroup.
+                if is_last_order:
+                    self._add_order_line_item_removal()
 
-                    # Create OrderLineItem for Included Days.
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=order_line_item_type,
-                        rate=self.order_group.rental.price_per_day_included,
-                        quantity=self.order_group.rental.included_days,
-                        description="Included Days",
-                        platform_fee_percent=self.order_group.take_rate,
-                    )
+                # Create list of OrderLineItems for this Order to be created.
+                new_order_line_items: List[OrderLineItem] = []
 
-                    # Create OrderLineItem for Additional Days.
-                    if days_over_included > 0:
-                        OrderLineItem.objects.create(
-                            order=self,
-                            order_line_item_type=order_line_item_type,
-                            rate=self.order_group.rental.price_per_day_additional,
-                            quantity=days_over_included,
-                            description="Additional Days",
-                            platform_fee_percent=self.order_group.take_rate,
-                        )
-
-                # Material Price.
+                # If the OrderGroup has Material, add those line items.
                 if hasattr(self.order_group, "material"):
-                    tons_over_included = (
-                        self.order_group.tonnage_quantity or 0
-                    ) - self.order_group.material.tonnage_included
-                    order_line_item_type = OrderLineItemType.objects.get(
-                        code="MATERIAL"
+                    new_order_line_items.extend(
+                        self.order_group.material.order_line_items(self)
                     )
 
-                    # Create OrderLineItem for Included Tons.
-                    OrderLineItem.objects.create(
-                        order=self,
-                        order_line_item_type=order_line_item_type,
-                        rate=self.order_group.material.price_per_ton,
-                        quantity=self.order_group.material.tonnage_included,
-                        description="Included Tons",
-                        platform_fee_percent=self.order_group.take_rate,
+                # If the OrderGroup has Rental One-Step, add those line items.
+                if hasattr(self.order_group, "rental_one_step"):
+                    new_order_line_items.extend(
+                        self.order_group.rental_one_step.order_line_items(self)
                     )
 
-                    # Create OrderLineItem for Additional Tons.
-                    if tons_over_included > 0:
-                        OrderLineItem.objects.create(
-                            order=self,
-                            order_line_item_type=order_line_item_type,
-                            rate=self.order_group.material.price_per_ton,
-                            quantity=tons_over_included,
-                            description="Additional Tons",
-                            platform_fee_percent=self.order_group.take_rate,
-                        )
+                # If the OrderGroup has Rental Two-Step (Legacy), add those line items.
+                if hasattr(self.order_group, "rental"):
+                    new_order_line_items.extend(
+                        self.order_group.rental.order_line_items(self)
+                    )
 
+                # If the OrderGroup has Rental Multi-Step, add those line items.
+                # NOTE: Do not add Rental Multi-Step line items for the first Order.
+                if (
+                    hasattr(self.order_group, "rental_multi_step")
+                    and not is_first_order
+                ):
+                    new_order_line_items.extend(
+                        self.order_group.rental_multi_step.order_line_items(self)
+                    )
+
+                # If the OrderGroup has Service, add those line items.
+                if hasattr(self.order_group, "service") and not is_last_order:
+                    new_order_line_items.extend(
+                        self.order_group.service.order_line_items(self)
+                    )
+
+                # If the OrderGroup has ServiceTimesPerWeek, add those line items.
+                if hasattr(self.order_group, "service_times_per_week"):
+                    new_order_line_items.extend(
+                        self.order_group.service_times_per_week.order_line_items(self)
+                    )
+
+                # Create the OrderLineItems.
+                OrderLineItem.objects.bulk_create(new_order_line_items)
+
+                print("GOT HERE 7")
                 # Check for any Admin Policy checks.
                 self.admin_policy_checks(orders=order_group_orders)
+                print("GOT HERE 8")
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
 
-    def post_save(sender, instance, created, **kwargs):
+    def _add_order_line_item_delievery(self) -> Optional[OrderLineItem]:
+        return (
+            OrderLineItem.objects.create(
+                order=self,
+                order_line_item_type=OrderLineItemType.objects.get(code="DELIVERY"),
+                rate=self.order_group.seller_product_seller_location.delivery_fee,
+                quantity=1,
+                description="Delivery Fee",
+                platform_fee_percent=self.order_group.take_rate,
+                is_flat_rate=True,
+            )
+            if self.order_group.seller_product_seller_location.delivery_fee
+            else None
+        )
+
+    def _add_order_line_item_removal(self) -> Optional[OrderLineItem]:
+        return (
+            OrderLineItem.objects.create(
+                order=self,
+                order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
+                rate=self.order_group.seller_product_seller_location.removal_fee,
+                quantity=1,
+                description="Removal Fee",
+                platform_fee_percent=self.order_group.take_rate,
+                is_flat_rate=True,
+            )
+            if (self.order_group.seller_product_seller_location.removal_fee)
+            else None
+        )
+
+    def post_save(sender, instance: "Order", created, **kwargs):
         instance.add_line_items(created)
         notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
 
