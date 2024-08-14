@@ -8,6 +8,7 @@ from api.models import Order
 from api.models.day_of_week import DayOfWeek
 from api.models.main_product.main_product import MainProduct
 from api.models.order.order_group_material import OrderGroupMaterial
+from api.models.order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from api.models.order.order_group_rental import OrderGroupRental
 from api.models.order.order_group_rental_multi_step import OrderGroupRentalMultiStep
 from api.models.order.order_group_rental_one_step import OrderGroupRentalOneStep
@@ -360,35 +361,21 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
 
         # Material.
         if instance.waste_type:
-            material_waste_type = (
-                SellerProductSellerLocationMaterialWasteType.objects.filter(
-                    seller_product_seller_location_material=seller_product_seller_location.material
-                )
-                .filter(main_product_waste_type__waste_type=instance.waste_type)
-                .first()
+            # Create an OrderGroupMaterial.
+            order_group_material = OrderGroupMaterial.objects.create(
+                order_group=instance,
             )
-            if material_waste_type:
-                # If the SellerProductSellerLocationMaterialWasteType.tonnage_included is less
-                # than the MainProduct's included_tonnage_quantity, then use the MainProduct's
-                # included_tonnage_quantity.
-                main_product_included_tonnage_quantity = (
-                    instance.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity
-                )
-                tonnage_included = (
-                    material_waste_type.tonnage_included
-                    if material_waste_type.tonnage_included
-                    > main_product_included_tonnage_quantity
-                    else main_product_included_tonnage_quantity
-                )
 
-                OrderGroupMaterial.objects.create(
-                    order_group=instance,
+            # For each SellerProductSellerLocationMaterialWasteType,
+            # create an OrderGroupMaterialWasteType.
+            for (
+                material_waste_type
+            ) in seller_product_seller_location.material.waste_types.all():
+                OrderGroupMaterialWasteType.objects.create(
+                    order_group_material=order_group_material,
+                    main_product_waste_type=material_waste_type.main_product_waste_type,
                     price_per_ton=material_waste_type.price_per_ton,
-                    tonnage_included=tonnage_included,
-                )
-            else:
-                raise Exception(
-                    f"Material Waste Type not found for SellerProductSellerLocationMaterial [{seller_product_seller_location.material}] and WasteType [{instance.waste_type}]."
+                    tonnage_included=material_waste_type.tonnage_included,
                 )
 
         # Service (legacy).

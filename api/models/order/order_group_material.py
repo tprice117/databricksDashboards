@@ -46,12 +46,13 @@ class OrderGroupMaterial(PricingMaterial):
         Returns the OrderLineItems for this OrderGroupMaterial. This method does not
         save the OrderLineItems to the database.
         """
+
         # Get the OrderLineItemType for MATERIAL.
         order_line_item_type = OrderLineItemType.objects.get(code="MATERIAL")
 
         line_item = self.get_price(
             waste_type=self.order_group.waste_type,
-            tons=self.order_group.tonnage_quantity,
+            quantity=self.order_group.tonnage_quantity,
         )
 
         return [

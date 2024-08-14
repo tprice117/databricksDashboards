@@ -1023,8 +1023,12 @@ def new_order_5(request):
         placement_details = request.POST.get("placement_details")
         # product_add_on_choices = request.POST.get("product_add_on_choices")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
-        times_per_week = request.POST.get("times_per_week")
-        delivery_date = request.POST.get("delivery_date")
+        times_per_week = int(request.POST.get("times_per_week")) if request.POST.get("times_per_week") else None
+        delivery_date = datetime.datetime.strptime(
+            request.POST.get("delivery_date"),
+            "%Y-%m-%d",
+        )
+
         # removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
         main_product = main_product.select_related("main_product_category")
