@@ -396,6 +396,7 @@ class OrderGroupForm(forms.Form):
         # Always hide. If needed, we can show it again.
         # NOTE: If we want to show it again (even dynamically), we can remove the below line.
         self.fields["removal_date"].widget = forms.HiddenInput()
+        self.fields["removal_date"].required = False
 
         if (
             not main_product.has_rental

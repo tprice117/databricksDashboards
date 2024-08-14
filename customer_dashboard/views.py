@@ -828,7 +828,7 @@ def new_order_3(request, product_id):
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
             "delivery_date": request.POST.get("delivery_date"),
-            "removal_date": request.POST.get("removal_date", ""),
+            "removal_date": request.POST.get("removal_date"),
             "schedule_window": request.POST.get("schedule_window"),
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
@@ -1066,7 +1066,7 @@ def new_order_5(request):
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
         times_per_week = request.POST.get("times_per_week")
         delivery_date = request.POST.get("delivery_date")
-        removal_date = request.POST.get("removal_date")
+        # removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
         main_product = main_product.select_related("main_product_category")
         # main_product = main_product.prefetch_related("products")
@@ -1106,8 +1106,10 @@ def new_order_5(request):
             order_group.times_per_week = times_per_week
         if waste_type_id:
             order_group.waste_type_id = waste_type_id
-        if removal_date:
-            order_group.end_date = removal_date
+        # NOTE: Commenting removal_date out for now. We may, possibly, maybe add this back in later.
+        # This means that we never set the removal date on the OrderGroup when creating it.
+        # if removal_date:
+        #     order_group.end_date = removal_date
         if seller_product_location.delivery_fee:
             order_group.delivery_fee = seller_product_location.delivery_fee
         if seller_product_location.removal_fee:
