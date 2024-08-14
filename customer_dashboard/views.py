@@ -967,18 +967,10 @@ def new_order_4(request):
     # Show discount slider from 0 - max_discount
     # print(f"max_discount: {context['product'].main_product.max_discount}")
     context["seller_product_seller_locations"] = []
-    context["default_take_rate_100"] = float(
-        context["product"].main_product.default_take_rate
+    context["max_discount_100"] = (
+        float(context["product"].main_product.max_discount) * 100
     )
-    context["minimum_take_rate_100"] = float(
-        context["product"].main_product.minimum_take_rate
-    )
-    context["default_take_rate"] = float(
-        context["product"].main_product.default_take_rate / 100
-    )
-    context["minimum_take_rate"] = float(
-        context["product"].main_product.minimum_take_rate / 100
-    )
+
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
         seller_d["seller_product_seller_location"] = seller_product_seller_location
@@ -998,39 +990,6 @@ def new_order_4(request):
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
-        seller_d["price_data"]["total_min"] = seller_d["price_data"]["total"] + (
-            seller_d["price_data"]["total"] * context["minimum_take_rate"]
-        )
-        seller_d["price_data"]["total_max"] = seller_d["price_data"]["total"] + (
-            seller_d["price_data"]["total"] * context["default_take_rate"]
-        )
-        if seller_d["price_data"]["delivery"]:
-            seller_d["price_data"]["delivery_min"] = seller_d["price_data"]["delivery"][
-                "total"
-            ] + (
-                seller_d["price_data"]["delivery"]["total"]
-                * context["minimum_take_rate"]
-            )
-            seller_d["price_data"]["delivery_max"] = seller_d["price_data"]["delivery"][
-                "total"
-            ] + (
-                seller_d["price_data"]["delivery"]["total"]
-                * context["default_take_rate"]
-            )
-        if seller_d["price_data"]["removal"]:
-            seller_d["price_data"]["removal_min"] = seller_d["price_data"]["removal"][
-                "total"
-            ] + (
-                seller_d["price_data"]["removal"]["total"]
-                * context["minimum_take_rate"]
-            )
-            seller_d["price_data"]["removal_max"] = seller_d["price_data"]["removal"][
-                "total"
-            ] + (
-                seller_d["price_data"]["removal"]["total"]
-                * context["default_take_rate"]
-            )
-        # print(seller_d["price_data"])
 
         context["seller_product_seller_locations"].append(seller_d)
 
@@ -1054,7 +1013,7 @@ def new_order_5(request):
         seller_product_seller_location_id = request.POST.get(
             "seller_product_seller_location_id"
         )
-        take_rate = request.POST.get("take_rate")
+        discount = request.POST.get("discount")
         product_id = request.POST.get("product_id")
         user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
@@ -1071,10 +1030,11 @@ def new_order_5(request):
         main_product = main_product.select_related("main_product_category")
         # main_product = main_product.prefetch_related("products")
         main_product = main_product.first()
-        if take_rate:
-            take_rate = float(take_rate)
-        else:
-            take_rate = main_product.default_take_rate
+
+        # Set the discount. If no discount is set, then default to 0.
+        discount = float(discount) if discount else 0
+        print("Discount: ", discount)
+
         context["main_product"] = main_product
         seller_product_location = SellerProductSellerLocation.objects.get(
             id=seller_product_seller_location_id
@@ -1094,13 +1054,21 @@ def new_order_5(request):
                     "Material waste type not found. Please contact us if this continues.",
                 )
                 return HttpResponseRedirect(reverse("customer_new_order"))
-        # create order group and orders
+
+        # Get the default take rate and calculate the take rate based on the discount.
+        default_take_rate_percent = float(main_product.default_take_rate) / 100
+        default_price_multiplier = 1 + default_take_rate_percent
+        discount_percent = discount / 100
+        price_with_discount = default_price_multiplier * (1 - discount_percent)
+        take_rate = price_with_discount - 1
+
+        # Create order group and orders
         order_group = OrderGroup(
             user=context["user"],
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=take_rate,
+            take_rate=take_rate * 100,
         )
         if times_per_week:
             order_group.times_per_week = times_per_week

@@ -9,14 +9,14 @@
 {% endblock %}
 {% block javascript %}
     <script>
-        // listen for the range slider take_rate change event
-        document.getElementById("take_rate").addEventListener("input", function () {
+        // listen for the range slider discount change event
+        document.getElementById("discount").addEventListener("input", function () {
             // get the value of the range slider
-            let takeRate = this.value;
-            // get the takeRateLabel element
-            let takeRateLabel = document.getElementById("takeRateLabel");
-            // update the text of the takeRateLabel element
-            takeRateLabel.innerText = takeRate + "%";
+            let discount = this.value;
+            // get the discountLabel element
+            let discountLabel = document.getElementById("discountLabel");
+            // update the text of the discountLabel element
+            discountLabel.innerText = discount + "%";
             // get all price-item elements
             let priceItems = document.querySelectorAll(".price-item");
             // loop through all price-item elements
@@ -24,7 +24,7 @@
                 // get the price of the price-item element
                 let price = parseFloat(priceItem.getAttribute("data-price"));
                 // calculate the new price
-                let newPrice = price + price * (takeRate / 100);
+                let newPrice = price * (1 - (discount / 100));
                 // update the price of the price-item element
                 // check if innerText contained a dollar sign
                 if (priceItem.innerText.includes("$")) {
@@ -42,8 +42,8 @@
         <div class="row">
             <div class="col">
                 <div class="container-sm pt-4 pb-4">
-                    <label for="take_rate" class="form-label">Take Rate <b id="takeRateLabel">{{ default_take_rate_100 }}%</b></label>
-                    <input form="orderForm" type="range" class="form-range" min="{{ minimum_take_rate_100 }}" max="{{ default_take_rate_100 }}" step="0.5" id="take_rate" name="take_rate" value="{{ default_take_rate_100 }}" />
+                    <label for="discount" class="form-label">Discount <b id="discountLabel">0%</b></label>
+                    <input form="orderForm" type="range" class="form-range" min="0" max="{{ max_discount_100 }}" step="0.5" id="discount" name="discount" value="0" />
                 </div>
                 {% for item in seller_product_seller_locations %}
                     {% if forloop.first %}
