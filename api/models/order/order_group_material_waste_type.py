@@ -6,7 +6,7 @@ from api.models.common.material_waste_type import PricingMaterialWasteType
 class OrderGroupMaterialWasteType(PricingMaterialWasteType):
     order_group_material = models.ForeignKey(
         "api.OrderGroupMaterial",
-        models.PROTECT,
+        models.CASCADE,
         related_name="waste_types",
     )
 

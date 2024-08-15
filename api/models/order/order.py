@@ -337,9 +337,11 @@ class Order(BaseModel):
                 # If the OrderGroup has Material, add those line items.
                 if hasattr(self.order_group, "material"):
                     new_order_line_items.extend(
-                        self.order_group.material.order_line_items(self)
+                        self.order_group.material.order_line_items(
+                            self,
+                            quantity=self.order_group.tonnage_quantity,
+                        )
                     )
-
                 # If the OrderGroup has Rental One-Step, add those line items.
                 if hasattr(self.order_group, "rental_one_step"):
                     new_order_line_items.extend(
@@ -384,7 +386,6 @@ class Order(BaseModel):
 
                 # Check for any Admin Policy checks.
                 self.admin_policy_checks(orders=order_group_orders)
-                
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
 
@@ -426,11 +427,12 @@ class Order(BaseModel):
         self,
         order_line_items: List[OrderLineItem],
     ) -> Optional[OrderLineItem]:
+
         order_line_item_type = OrderLineItemType.objects.get(code="FUEL_AND_ENV")
 
         order_line_items_total = sum(
             [
-                order_line_item.rate * order_line_item.quantity
+                float(order_line_item.rate) * float(order_line_item.quantity or 1)
                 for order_line_item in order_line_items
             ]
         )
@@ -446,7 +448,7 @@ class Order(BaseModel):
 
         # Calculate the Fuel and Environmental Fee or set it to None.
         fuel_and_environmental_fee = (
-            order_line_items_total * fuel_and_environmental_multiplier
+            order_line_items_total * float(fuel_and_environmental_multiplier)
             if fuel_and_environmental_multiplier
             else None
         )

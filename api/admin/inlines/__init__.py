@@ -6,6 +6,7 @@ from .main_product_info import MainProductInfoInline
 from .order import OrderInline
 from .order_disposal_ticket import OrderDisposalTicketInline
 from .order_group_material import OrderGroupMaterialInline
+from .order_group_material_waste_type import OrderGroupMaterialWasteTypeInline
 from .order_group_rental import OrderGroupRentalInline
 from .order_group_rental_multi_step import OrderGroupRentalMultiStepInline
 from .order_group_rental_one_step import OrderGroupRentalOneStepInline
