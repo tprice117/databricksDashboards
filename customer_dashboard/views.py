@@ -60,6 +60,9 @@ from billing.models import Invoice
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
+from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
+    prep_seller_product_seller_locations_for_response,
+)
 from payment_methods.models import PaymentMethod
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
@@ -992,6 +995,14 @@ def new_order_4(request):
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
+
+        # Update the SellerProductSellerLocation to default to the take rate.
+        seller_d["seller_product_seller_location"] = (
+            prep_seller_product_seller_locations_for_response(
+                main_product=context["product"].main_product,
+                seller_product_seller_locations=[seller_product_seller_location],
+            )[0]
+        )
 
         context["seller_product_seller_locations"].append(seller_d)
 

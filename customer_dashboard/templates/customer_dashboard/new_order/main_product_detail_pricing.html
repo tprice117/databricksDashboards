@@ -24,7 +24,7 @@
                 // get the price of the price-item element
                 let price = parseFloat(priceItem.getAttribute("data-price"));
                 // calculate the new price
-                let newPrice = price * (1 - (discount / 100));
+                let newPrice = price * (1 - discount / 100);
                 // update the price of the price-item element
                 // check if innerText contained a dollar sign
                 if (priceItem.innerText.includes("$")) {
@@ -66,6 +66,40 @@
                             <p>
                                 <a class="card-link" href="https://www.google.com/maps/place/{{ item.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.seller_product_location.seller_location.formatted_address }}</a>
                             </p>
+                            {% if item.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step %}
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Hourly</th>
+                                                <th>Daily</th>
+                                                <th>Weekly</th>
+                                                <th>Biweekly</th>
+                                                <th>Monthly</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.hour }}">${{ item.seller_product_seller_location.rental_multi_step.hour }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.day }}">${{ item.seller_product_seller_location.rental_multi_step.day }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.week }}">${{ item.seller_product_seller_location.rental_multi_step.week }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.two_weeks }}">${{ item.seller_product_seller_location.rental_multi_step.two_weeks }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.month }}">${{ item.seller_product_seller_location.rental_multi_step.month }}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="col-auto">
                             <p class="text-end">

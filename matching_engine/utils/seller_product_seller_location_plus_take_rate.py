@@ -20,6 +20,16 @@ def seller_product_seller_location_plus_take_rate(
         seller_product_seller_location.seller_product.product.main_product.default_take_rate
     )
 
+    # Delivery.
+    if "delivery_fee" in data and data["delivery_fee"]:
+        delivery_fee = data["delivery_fee"] * (1 + (default_take_rate / 100))
+        data["delivery_fee"] = round(delivery_fee, 2)
+
+    # Removal.
+    if "removal_fee" in data and data["removal_fee"]:
+        removal_fee = data["removal_fee"] * (1 + (default_take_rate / 100))
+        data["removal_fee"] = round(removal_fee, 2)
+
     # Service.
     data = _update_if_exists(
         data=data,
