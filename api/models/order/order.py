@@ -339,9 +339,9 @@ class Order(BaseModel):
                     new_order_line_items.extend(
                         self.order_group.material.order_line_items(
                             self,
-                            quantity=self.order_group.tonnage_quantity,
                         )
                     )
+
                 # If the OrderGroup has Rental One-Step, add those line items.
                 if hasattr(self.order_group, "rental_one_step"):
                     new_order_line_items.extend(
@@ -427,7 +427,6 @@ class Order(BaseModel):
         self,
         order_line_items: List[OrderLineItem],
     ) -> Optional[OrderLineItem]:
-
         order_line_item_type = OrderLineItemType.objects.get(code="FUEL_AND_ENV")
 
         order_line_items_total = sum(

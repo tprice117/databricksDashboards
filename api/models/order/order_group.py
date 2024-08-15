@@ -326,6 +326,10 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
             instance.seller_product_seller_location
         )
 
+        # Update included tonnage_quantity based on MainProduct.
+        instance.tonnage_quantity = main_product.included_tonnage_quantity
+        instance.save()
+
         # Rental One Step.
         if main_product.has_rental_one_step and hasattr(
             seller_product_seller_location, "rental_one_step"
