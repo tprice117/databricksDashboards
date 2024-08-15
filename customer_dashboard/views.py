@@ -6,6 +6,7 @@ import json
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
+import requests
 
 from django.conf import settings
 from django.contrib import messages
@@ -1328,7 +1329,7 @@ def new_order_6(request, order_group_id):
 
 @login_required(login_url="/admin/login/")
 def cart_send_quote(request):
-    import time
+    # import time
 
     context = get_user_context(request)
     if request.method == "POST":
@@ -1340,19 +1341,55 @@ def cart_send_quote(request):
             if email_lst and order_id_lst:
                 order_id_1 = order_id_lst[0]
                 order = Order.objects.filter(id=order_id_1).first()
-                time.sleep(4)
-                # subject = (
-                #     "Downstream | Quote | "
-                #     + order.order_group.user_address.formatted_address()
-                # )
+                # time.sleep(4)
+                subject = (
+                    "Downstream | Quote | "
+                    + order.order_group.user_address.formatted_address()
+                )
                 # add_email_to_queue(
                 #     to_emails=email_lst,
                 #     subject=subject,
                 # )
-                # id 3
-                return JsonResponse(
-                    {"status": "success", "message": "Successfully sent quote."}
+                # https://customer.io/docs/api/app/#operation/sendEmail
+                headers = {
+                    "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
+                    "Content-Type": "application/json",
+                }
+                data = {
+                    "transactional_message_id": 3,
+                    "to": ",".join(email_lst),
+                    # "from": "system@trydownstream.com",
+                    "subject": subject,
+                    "identifiers": {"email": email_lst[0]},
+                    "message_data": {
+                        "customer.full_name": order.order_group.user.full_name,
+                        "UserGroup.Name": order.order_group.user.user_group.name,
+                        "UserAddress.ProjectID": order.order_group.user_address.name,
+                        "UserAddress.Street": order.order_group.user_address.street,
+                        "UserAddress.City": order.order_group.user_address.city,
+                        "UserAddress.State": order.order_group.user_address.state,
+                        "UserAddress.Zip": order.order_group.user_address.postal_code,
+                    },
+                }
+                response = requests.post(
+                    "https://api.customer.io/v1/send/email",
+                    headers=headers,
+                    data=json.dumps(data),
                 )
+                if response.status_code < 400:
+                    ret_data = response.json()
+                    # [delivery_id:{ret_data['delivery_id']}-queued_at:{ret_data['queued_at']}]
+                    return JsonResponse(
+                        {
+                            "status": "success",
+                            "message": f"Successfully sent quote.",
+                        }
+                    )
+                else:
+                    ret_data = response.json()
+                    return JsonResponse(
+                        {"status": "error", "error": ret_data["meta"]["error"]}
+                    )
             else:
                 return JsonResponse(
                     {"status": "error", "error": "No email or order ids."}
