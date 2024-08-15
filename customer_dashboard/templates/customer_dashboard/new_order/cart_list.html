@@ -63,7 +63,7 @@
                                                         {% endif %}
                                                         <p class="mb-1">Service date: {{ cart_item.order.end_date }}</p>
                                                         <p class="mb-1">Order type: {{ cart_item.order_type }}</p>
-                                                        {% if user.is_staff %}
+                                                        {% if request.user.is_staff %}
                                                             <p class="mb-1">Created by: {% if cart_item.order.created_by %}{{ cart_item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ cart_item.order.created_on }}</p>
                                                         {% endif %}
                                                         {% comment %} <p>order line items: {{ cart_item.count }} - [{{ cart_item.status }}]</p> {% endcomment %}
@@ -72,20 +72,29 @@
                                                         <p class="text-end">${{ cart_item.price|floatformat:2|intcomma }}</p>
                                                     </div>
                                                     <div class="col-auto">
-                                                        {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#modal-1" data-bs-toggle="modal">Remove</button> {% endcomment %}
-                                                        <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" type="button"
-                                                            data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" data-countid="count-{{ cart_address.address.id }}"
-                                                            hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
-                                                            onClick="event.stopPropagation();
-                                                            Swal.fire(
-                                                                {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
-                                                            ).then((result)=>{
-                                                                if(result.isConfirmed){removeItemFromCart(this);}
-                                                            })">
-                                                            Remove
-                                                            <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                                                        </button>
-                                                        {% comment %} <a class="btn btn-link" role="button" href="/admin/api/order/{{cart_item.order.id}}/change/">In database</a> {% endcomment %}
+                                                        <div class="row justify-content-center">
+                                                            <div class="col-auto">
+                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" type="button"
+                                                                    data-id="{{ cart_item.order_group.id }}" data-price="{{ cart_item.price }}" data-countid="count-{{ cart_address.address.id }}"
+                                                                    hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
+                                                                    onClick="event.stopPropagation();
+                                                                    Swal.fire(
+                                                                        {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
+                                                                    ).then((result)=>{
+                                                                        if(result.isConfirmed){removeItemFromCart(this);}
+                                                                    })">
+                                                                    Remove
+                                                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        {% if request.user.is_superuser %}
+                                                            <div class="row justify-content-center">
+                                                                <div class="col-auto">
+                                                                    <a class="btn btn-link" role="button" href="/admin/api/order/{{cart_item.order.id}}/change/">In database</a>
+                                                                </div>
+                                                            </div>
+                                                        {% endif %}
                                                     </div>
                                                 </div>
                                             </div>
@@ -95,10 +104,17 @@
                             </div>
                         </div>
                     {% endfor %}
-                    <div class="row mb-2">
-                        <div class="col">
-                            <a class="btn btn-primary float-end" role="button" style="margin-top: 10px;" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
+                    <div class="row justify-content-end mb-2 mt-4">
+                        <div class="col-auto">
+                            <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
+                                Send Quote
+                            </button>
                         </div>
+                        {% if request.user.is_staff %}
+                            <div class="col-auto">
+                                <a class="btn btn-primary" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

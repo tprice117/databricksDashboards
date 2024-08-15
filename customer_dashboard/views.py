@@ -2,6 +2,7 @@ import ast
 import datetime
 import logging
 import uuid
+import json
 from typing import List, Union
 from urllib.parse import urlencode
 from functools import wraps
@@ -16,7 +17,7 @@ from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -1297,6 +1298,7 @@ def new_order_5(request):
                             "address": order.order_group.user_address,
                             "total": 0,
                             "orders": {},
+                            "ids": [],
                         }
                     context["cart"][order.order_group.user_address_id]["orders"][
                         order.order_group_id
@@ -1324,6 +1326,9 @@ def new_order_5(request):
                     context["cart"][order.order_group.user_address_id][
                         "total"
                     ] += customer_price
+                    context["cart"][order.order_group.user_address_id]["ids"].append(
+                        str(order.id)
+                    )
                     context["subtotal"] += customer_price
                     context["cart_count"] += 1
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
@@ -1347,6 +1352,43 @@ def new_order_6(request, order_group_id):
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
     return HttpResponseRedirect(reverse("customer_new_order"))
+
+
+@login_required(login_url="/admin/login/")
+def cart_send_quote(request):
+    import time
+
+    context = get_user_context(request)
+    if request.method == "POST":
+        # Get json body
+        try:
+            data = json.loads(request.body)
+            email_lst = list(set(data.get("emails")))
+            order_id_lst = data.get("ids")
+            if email_lst and order_id_lst:
+                order_id_1 = order_id_lst[0]
+                order = Order.objects.filter(id=order_id_1).first()
+                time.sleep(4)
+                # subject = (
+                #     "Downstream | Quote | "
+                #     + order.order_group.user_address.formatted_address()
+                # )
+                # add_email_to_queue(
+                #     to_emails=email_lst,
+                #     subject=subject,
+                # )
+                # id 3
+                return JsonResponse(
+                    {"status": "success", "message": "Successfully sent quote."}
+                )
+            else:
+                return JsonResponse(
+                    {"status": "error", "error": "No email or order ids."}
+                )
+        except Exception as e:
+            logger.error(f"Error sending quote: {e}")
+            return JsonResponse({"status": "error", "error": str(e)})
+    return HttpResponse(status=204)
 
 
 @login_required(login_url="/admin/login/")
