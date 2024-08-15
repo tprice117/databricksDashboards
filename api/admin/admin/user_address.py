@@ -1,3 +1,4 @@
+from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 
 from api.admin.filters.user_address.admin_tasks import UserAdddressAdminTasksFilter
@@ -5,6 +6,11 @@ from api.models import UserAddress
 from billing.utils.billing import BillingUtils
 from common.utils.stripe.stripe_utils import StripeUtils
 from external_contracts.admin.inlines import ExternalContractInline
+
+
+class UserGroupFilter(AutocompleteFilter):
+    title = "User Group"
+    field_name = "user_group"
 
 
 @admin.register(UserAddress)
@@ -17,6 +23,7 @@ class UserAddressAdmin(admin.ModelAdmin):
     ]
     search_fields = ["name", "street"]
     list_filter = [
+        UserGroupFilter,
         UserAdddressAdminTasksFilter,
     ]
     actions = [

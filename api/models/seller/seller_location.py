@@ -1,5 +1,5 @@
-import uuid
 import datetime
+import uuid
 
 from django.db import models
 from django.db.models.signals import pre_save
@@ -56,7 +56,7 @@ class SellerLocation(BaseModel):
     # END: Insurance and tax fields.
 
     def __str__(self):
-        return self.name
+        return f"{self.name} | {self.seller.name}"
 
     @property
     def formatted_address(self):

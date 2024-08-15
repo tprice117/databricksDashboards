@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") != "TEST"
 # NOTE: DRF Standardized Errors will handle uncaught exceptions if this is set to False.
 # Setting it to True will still show the Django error page on uncaught exceptions.
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "payment_methods",
     "supplier_dashboard",
     # END: Django Apps.
+    "admin_auto_filters",
     "api.pricing_ml",
     "api.utils",
     "django_filters",

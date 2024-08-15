@@ -7,7 +7,7 @@ from common.models import BaseModel
 from pricing_engine.models import PricingLineItem
 
 
-class RentalMultiStep(BaseModel):
+class PricingRentalMultiStep(BaseModel):
     hour = models.DecimalField(
         max_digits=18,
         decimal_places=2,

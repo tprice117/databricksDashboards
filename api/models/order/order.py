@@ -17,6 +17,7 @@ from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
+from api.models.waste_type import WasteType
 from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from common.models import BaseModel
@@ -303,6 +304,9 @@ class Order(BaseModel):
                 # Only add OrderLineItems if this is the first Order in the OrderGroup.
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
 
+                # Create list of OrderLineItems for this Order to be created.
+                new_order_line_items: List[OrderLineItem] = []
+
                 is_first_order = (
                     self.order_group.start_date == self.start_date
                     and order_group_orders.count() == 1
@@ -313,20 +317,29 @@ class Order(BaseModel):
                     and order_group_orders.count() > 1
                 )
 
+                is_equiptment_order = (
+                    self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+                )
+
                 if is_first_order:
-                    self._add_order_line_item_delievery()
+                    new_order_line_items.extend(
+                        self._add_order_line_item_delivery(),
+                    )
 
                 # Only add OrderLineItems if this is the last Order in the OrderGroup.
-                if is_last_order:
-                    self._add_order_line_item_removal()
-
-                # Create list of OrderLineItems for this Order to be created.
-                new_order_line_items: List[OrderLineItem] = []
+                if (is_last_order and not is_equiptment_order) or (
+                    is_first_order and is_equiptment_order
+                ):
+                    new_order_line_items.extend(
+                        self._add_order_line_item_removal(),
+                    )
 
                 # If the OrderGroup has Material, add those line items.
                 if hasattr(self.order_group, "material"):
                     new_order_line_items.extend(
-                        self.order_group.material.order_line_items(self)
+                        self.order_group.material.order_line_items(
+                            self,
+                        )
                     )
 
                 # If the OrderGroup has Rental One-Step, add those line items.
@@ -363,46 +376,99 @@ class Order(BaseModel):
                         self.order_group.service_times_per_week.order_line_items(self)
                     )
 
+                # For all the OrderLineItems, compute the Fuel and Environmental Fee.
+                new_order_line_items.extend(
+                    self._add_fuel_and_environmental(new_order_line_items),
+                )
+
                 # Create the OrderLineItems.
                 OrderLineItem.objects.bulk_create(new_order_line_items)
 
-                print("GOT HERE 7")
                 # Check for any Admin Policy checks.
                 self.admin_policy_checks(orders=order_group_orders)
-                print("GOT HERE 8")
             except Exception as e:
                 logger.error(f"Order.post_save: [{e}]", exc_info=e)
 
-    def _add_order_line_item_delievery(self) -> Optional[OrderLineItem]:
+    def _add_order_line_item_delivery(self) -> Optional[List[OrderLineItem]]:
         return (
-            OrderLineItem.objects.create(
-                order=self,
-                order_line_item_type=OrderLineItemType.objects.get(code="DELIVERY"),
-                rate=self.order_group.seller_product_seller_location.delivery_fee,
-                quantity=1,
-                description="Delivery Fee",
-                platform_fee_percent=self.order_group.take_rate,
-                is_flat_rate=True,
-            )
+            [
+                OrderLineItem(
+                    order=self,
+                    order_line_item_type=OrderLineItemType.objects.get(code="DELIVERY"),
+                    rate=self.order_group.seller_product_seller_location.delivery_fee,
+                    quantity=1,
+                    description="Delivery Fee",
+                    platform_fee_percent=self.order_group.take_rate,
+                    is_flat_rate=True,
+                )
+            ]
             if self.order_group.seller_product_seller_location.delivery_fee
-            else None
+            else []
         )
 
-    def _add_order_line_item_removal(self) -> Optional[OrderLineItem]:
+    def _add_order_line_item_removal(self) -> Optional[List[OrderLineItem]]:
         return (
-            OrderLineItem.objects.create(
-                order=self,
-                order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
-                rate=self.order_group.seller_product_seller_location.removal_fee,
-                quantity=1,
-                description="Removal Fee",
-                platform_fee_percent=self.order_group.take_rate,
-                is_flat_rate=True,
-            )
+            [
+                OrderLineItem(
+                    order=self,
+                    order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
+                    rate=self.order_group.seller_product_seller_location.removal_fee,
+                    quantity=1,
+                    description="Removal Fee",
+                    platform_fee_percent=self.order_group.take_rate,
+                    is_flat_rate=True,
+                )
+            ]
             if (self.order_group.seller_product_seller_location.removal_fee)
+            else []
+        )
+
+    def _add_fuel_and_environmental(
+        self,
+        order_line_items: List[OrderLineItem],
+    ) -> Optional[OrderLineItem]:
+        order_line_item_type = OrderLineItemType.objects.get(code="FUEL_AND_ENV")
+
+        order_line_items_total = sum(
+            [
+                float(order_line_item.rate) * float(order_line_item.quantity or 1)
+                for order_line_item in order_line_items
+            ]
+        )
+
+        # If SellerProductSellerLocation has a Fuel and Environmental Fee, multiply
+        # it by the total of all OrderLineItems.
+        fuel_and_environmental_multiplier = (
+            self.order_group.seller_product_seller_location.fuel_environmental_markup
+            / 100
+            if self.order_group.seller_product_seller_location.fuel_environmental_markup
             else None
         )
 
+        # Calculate the Fuel and Environmental Fee or set it to None.
+        fuel_and_environmental_fee = (
+            order_line_items_total * float(fuel_and_environmental_multiplier)
+            if fuel_and_environmental_multiplier
+            else None
+        )
+
+        return (
+            [
+                OrderLineItem(
+                    order=self,
+                    order_line_item_type=order_line_item_type,
+                    rate=fuel_and_environmental_fee,
+                    quantity=1,
+                    description="Fuel and Environmental Fee",
+                    platform_fee_percent=self.order_group.take_rate,
+                    is_flat_rate=True,
+                )
+            ]
+            if fuel_and_environmental_fee
+            else []
+        )
+
+    @staticmethod
     def post_save(sender, instance: "Order", created, **kwargs):
         instance.add_line_items(created)
         notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
