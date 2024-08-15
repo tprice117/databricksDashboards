@@ -6,7 +6,12 @@ from rest_framework.views import APIView
 from api.serializers import SellerProductSellerLocationSerializer
 from matching_engine.api.v1.serializers import MatchingEngineRequestByLatLongSerializer
 from matching_engine.matching_engine import MatchingEngine
-from matching_engine.utils import seller_product_seller_location_plus_take_rate
+from matching_engine.utils.align_seller_product_seller_location_children_with_main_product import (
+    align_seller_product_seller_location_children_with_main_product,
+)
+from matching_engine.utils.seller_product_seller_location_plus_take_rate import (
+    seller_product_seller_location_plus_take_rate,
+)
 
 
 class GetSellerProductSellerLocationsByLatLongView(APIView):
@@ -49,6 +54,15 @@ class GetSellerProductSellerLocationsByLatLongView(APIView):
             )
         )
 
+        # Align SellerProductSellerLocations pricing configurations with
+        # current MainProduct settings.
+        seller_product_seller_locations = [
+            align_seller_product_seller_location_children_with_main_product(
+                seller_product_seller_location
+            )
+            for seller_product_seller_location in seller_product_seller_locations
+        ]
+
         # Add default take rate to the price and serialize the data.
         data = []
 
@@ -58,5 +72,9 @@ class GetSellerProductSellerLocationsByLatLongView(APIView):
                     seller_product_seller_location,
                 )
             )
+
+        # Remove child SellerProductSellerLocation configurations that are not needed.
+        # For example, set the SellerProductSellerLocation.rental_multi_step to None,
+        # if the MainProduct.rental_multi_step is False.
 
         return JsonResponse(data, safe=False)
