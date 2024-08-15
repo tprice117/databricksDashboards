@@ -52,7 +52,7 @@ class OrderGroupMaterial(PricingMaterial):
 
         line_item = self.get_price(
             waste_type=self.order_group.waste_type,
-            quantity=self.order_group.tonnage_quantity,
+            quantity=self.order_group.tonnage_quantity or 0,
         )
 
         return [
