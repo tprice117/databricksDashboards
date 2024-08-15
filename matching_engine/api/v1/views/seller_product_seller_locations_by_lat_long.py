@@ -3,11 +3,15 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
+from api.models.main_product.product import Product
 from api.serializers import SellerProductSellerLocationSerializer
 from matching_engine.api.v1.serializers import MatchingEngineRequestByLatLongSerializer
 from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.align_seller_product_seller_location_children_with_main_product import (
     align_seller_product_seller_location_children_with_main_product,
+)
+from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
+    prep_seller_product_seller_locations_for_response,
 )
 from matching_engine.utils.seller_product_seller_location_plus_take_rate import (
     seller_product_seller_location_plus_take_rate,
@@ -54,24 +58,14 @@ class GetSellerProductSellerLocationsByLatLongView(APIView):
             )
         )
 
-        # Align SellerProductSellerLocations pricing configurations with
-        # current MainProduct settings.
-        seller_product_seller_locations = [
-            align_seller_product_seller_location_children_with_main_product(
-                seller_product_seller_location
-            )
-            for seller_product_seller_location in seller_product_seller_locations
-        ]
+        # Get typed Product object.
+        product: Product = serializer.validated_data["product"]
 
-        # Add default take rate to the price and serialize the data.
-        data = []
-
-        for seller_product_seller_location in seller_product_seller_locations:
-            data.append(
-                seller_product_seller_location_plus_take_rate(
-                    seller_product_seller_location,
-                )
-            )
+        # Get response data.
+        data = prep_seller_product_seller_locations_for_response(
+            main_product=product.main_product,
+            seller_product_seller_locations=seller_product_seller_locations,
+        )
 
         # Remove child SellerProductSellerLocation configurations that are not needed.
         # For example, set the SellerProductSellerLocation.rental_multi_step to None,
