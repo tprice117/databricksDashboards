@@ -381,8 +381,6 @@ if ENVIRONMENT == "TEST":
     LOB_API_KEY = env("LOB_API_KEY")
     LOB_PUB_API_KEY = env("LOB_PUB_API_KEY")
     LOB_CHECK_TEMPLATE_ID = "tmpl_e67263addbfe12c"
-    CUSTOMER_IO_SITE_ID = env("CUSTOMER_IO_SITE_ID")
-    CUSTOMER_IO_API_KEY = env("CUSTOMER_IO_API_KEY")
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     API_URL = "https://api-dev.trydownstream.com"
@@ -417,8 +415,6 @@ else:
     LOB_API_KEY = env("LOB_API_KEY")
     LOB_PUB_API_KEY = env("LOB_PUB_API_KEY")
     LOB_CHECK_TEMPLATE_ID = "tmpl_72955c3cec0e752"
-    CUSTOMER_IO_SITE_ID = env("CUSTOMER_IO_SITE_ID")
-    CUSTOMER_IO_API_KEY = env("CUSTOMER_IO_API_KEY")
 
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
@@ -447,6 +443,8 @@ MAILCHIMP_API_KEY = env("MAILCHIMP_API_KEY")
 # Canny JWT Token.
 CANNY_JWT_SECRET = env("CANNY_JWT_SECRET")
 
+# Customer IO API Key.
+CUSTOMER_IO_API_KEY = env("CUSTOMER_IO_API_KEY")
 
 # Python Logging
 # Django help: https://docs.djangoproject.com/en/5.0/topics/logging/
