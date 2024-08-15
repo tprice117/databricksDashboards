@@ -82,7 +82,7 @@ class MainProduct(BaseModel):
         # Get the lowest price from all SellerProductSellerLocations.
         price = None
         for seller_product_seller_location in seller_product_seller_locations:
-            price_from = seller_product_seller_location.price_from
+            price_from = seller_product_seller_location.price_from or 0
             if price is None or price_from < price:
                 price = price_from
 

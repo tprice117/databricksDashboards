@@ -1,4 +1,5 @@
 import datetime
+
 from django import forms
 from django.core.exceptions import ValidationError
 
@@ -391,6 +392,12 @@ class OrderGroupForm(forms.Form):
         else:
             self.fields["product_waste_types"].widget = forms.HiddenInput()
             self.fields["product_waste_types"].required = False
+
+        # Always hide. If needed, we can show it again.
+        # NOTE: If we want to show it again (even dynamically), we can remove the below line.
+        self.fields["removal_date"].widget = forms.HiddenInput()
+        self.fields["removal_date"].required = False
+
         if (
             not main_product.has_rental
             and not main_product.has_rental_one_step

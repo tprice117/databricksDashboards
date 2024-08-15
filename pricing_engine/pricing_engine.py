@@ -2,7 +2,6 @@ import datetime
 from decimal import Decimal
 from typing import List, Optional, Tuple
 
-from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
 from pricing_engine.models import PricingLineItemGroup
@@ -19,7 +18,7 @@ class PricingEngine:
     @staticmethod
     def get_price(
         user_address: UserAddress,
-        seller_product_seller_location: SellerProductSellerLocation,
+        seller_product_seller_location,  # SellerProductSellerLocation
         start_date: datetime.datetime,
         end_date: datetime.datetime,
         waste_type: Optional[WasteType],
@@ -41,7 +40,7 @@ class PricingEngine:
     def get_price_by_lat_long(
         latitude: Decimal,
         longitude: Decimal,
-        seller_product_seller_location: SellerProductSellerLocation,
+        seller_product_seller_location,  # SellerProductSellerLocation
         start_date: datetime.datetime,
         end_date: Optional[datetime.datetime],
         waste_type: Optional[WasteType],
