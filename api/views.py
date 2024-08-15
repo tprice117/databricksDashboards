@@ -411,7 +411,6 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
             "add_ons__choices",
         )
 
-
 @authentication_classes([])
 @permission_classes([])
 class MainProductWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
