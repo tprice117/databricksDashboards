@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv("ENV")
 DEBUG = os.getenv("ENV") != "TEST"
 # NOTE: DRF Standardized Errors will handle uncaught exceptions if this is set to False.
 # Setting it to True will still show the Django error page on uncaught exceptions.
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -381,6 +381,8 @@ if ENVIRONMENT == "TEST":
     LOB_API_KEY = env("LOB_API_KEY")
     LOB_PUB_API_KEY = env("LOB_PUB_API_KEY")
     LOB_CHECK_TEMPLATE_ID = "tmpl_e67263addbfe12c"
+    CUSTOMER_IO_SITE_ID = env("CUSTOMER_IO_SITE_ID")
+    CUSTOMER_IO_API_KEY = env("CUSTOMER_IO_API_KEY")
 else:
     BASE_URL = "https://downstream-customer-dev.web.app"
     API_URL = "https://api-dev.trydownstream.com"
@@ -415,6 +417,8 @@ else:
     LOB_API_KEY = env("LOB_API_KEY")
     LOB_PUB_API_KEY = env("LOB_PUB_API_KEY")
     LOB_CHECK_TEMPLATE_ID = "tmpl_72955c3cec0e752"
+    CUSTOMER_IO_SITE_ID = env("CUSTOMER_IO_SITE_ID")
+    CUSTOMER_IO_API_KEY = env("CUSTOMER_IO_API_KEY")
 
 # Django Admin Interface settings.
 X_FRAME_OPTIONS = "SAMEORIGIN"
