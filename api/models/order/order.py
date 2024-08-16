@@ -356,15 +356,13 @@ class Order(BaseModel):
                     )
 
                 # If the OrderGroup has Rental One-Step, add those line items.
-                if not standard_removal and hasattr(
-                    self.order_group, "rental_one_step"
-                ):
+                if hasattr(self.order_group, "rental_one_step"):
                     new_order_line_items.extend(
                         self.order_group.rental_one_step.order_line_items(self)
                     )
 
                 # If the OrderGroup has Rental Two-Step (Legacy), add those line items.
-                if not standard_removal and hasattr(self.order_group, "rental"):
+                if hasattr(self.order_group, "rental"):
                     new_order_line_items.extend(
                         self.order_group.rental.order_line_items(self)
                     )
@@ -374,7 +372,6 @@ class Order(BaseModel):
                 if (
                     hasattr(self.order_group, "rental_multi_step")
                     and not is_first_order
-                    and not standard_removal
                 ):
                     new_order_line_items.extend(
                         self.order_group.rental_multi_step.order_line_items(self)
@@ -394,11 +391,10 @@ class Order(BaseModel):
                         self.order_group.service_times_per_week.order_line_items(self)
                     )
 
-                if not standard_removal:
-                    # For all the OrderLineItems, compute the Fuel and Environmental Fee.
-                    new_order_line_items.extend(
-                        self._add_fuel_and_environmental(new_order_line_items),
-                    )
+                # For all the OrderLineItems, compute the Fuel and Environmental Fee.
+                new_order_line_items.extend(
+                    self._add_fuel_and_environmental(new_order_line_items),
+                )
 
                 if new_order_line_items:
                     # Create the OrderLineItems.
