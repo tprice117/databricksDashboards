@@ -173,7 +173,12 @@ class Order(BaseModel):
         return round(seller_price, 2)
 
     def customer_price(self):
-        return self.seller_price() * (1 + (self.order_group.take_rate / 100))
+        return sum(
+            [
+                order_line_item.customer_price()
+                for order_line_item in self.order_line_items.all()
+            ]
+        )
 
     @property
     def take_rate(self):
