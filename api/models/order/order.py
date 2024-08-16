@@ -166,7 +166,7 @@ class Order(BaseModel):
     def seller_price(self):
         seller_price = sum(
             [
-                order_line_item.rate * order_line_item.quantity
+                order_line_item.seller_payout_price()
                 for order_line_item in self.order_line_items.all()
             ]
         )
@@ -179,6 +179,12 @@ class Order(BaseModel):
                 for order_line_item in self.order_line_items.all()
             ]
         )
+
+    def full_price(self):
+        default_take_rate = (
+            self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
+        )
+        return self.seller_price() * (1 + (default_take_rate / 100))
 
     @property
     def take_rate(self):

@@ -1555,19 +1555,17 @@ def checkout(request, user_address_id):
             setattr(payment_method, "is_default", True)
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
-    # TODO: Get total price with max take_rate, then apply the discount (order_group.take_rate).
     for order in orders:
         if order.status == Order.Status.APPROVAL:
             context["needs_approval"] = True
         customer_price = order.customer_price()
-        customer_price_full = order.customer_price(exclude_discount=True)
+        customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full
         context["pre_tax_subtotal"] += customer_price
         try:
             context["cart"][order.order_group_id]["price"] += customer_price
             context["cart"][order.order_group.id]["count"] += 1
             context["cart"][order.order_group.id]["order_type"] = order.order_type
-            context["cart"]["total"] += customer_price
         except KeyError:
             context["cart"][order.order_group.id] = {
                 "order": order,
