@@ -11,6 +11,7 @@ from pricing_engine.models.pricing_line_item import PricingLineItem
 
 class PricingLineItemGroupSerializer(serializers.ModelSerializer):
     items = PricingLineItemSerializer(many=True)
+    total = serializers.SerializerMethodField()
 
     class Meta:
         model = PricingLineItemGroup
