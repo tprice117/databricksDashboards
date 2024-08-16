@@ -166,7 +166,7 @@ class Order(BaseModel):
     def seller_price(self):
         seller_price = sum(
             [
-                order_line_item.rate * order_line_item.quantity
+                order_line_item.seller_payout_price()
                 for order_line_item in self.order_line_items.all()
             ]
         )
@@ -179,6 +179,12 @@ class Order(BaseModel):
                 for order_line_item in self.order_line_items.all()
             ]
         )
+
+    def full_price(self):
+        default_take_rate = (
+            self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
+        )
+        return self.seller_price() * (1 + (default_take_rate / 100))
 
     @property
     def take_rate(self):
@@ -332,6 +338,8 @@ class Order(BaseModel):
                     )
 
                 # Only add OrderLineItems if this is the last Order in the OrderGroup.
+                # NOTE: Don't add any other OrderLineItems if this is a non equipment removal.
+                standard_removal = is_last_order and not is_equiptment_order
                 if (is_last_order and not is_equiptment_order) or (
                     is_first_order and is_equiptment_order
                 ):
@@ -340,7 +348,7 @@ class Order(BaseModel):
                     )
 
                 # If the OrderGroup has Material, add those line items.
-                if hasattr(self.order_group, "material"):
+                if not standard_removal and hasattr(self.order_group, "material"):
                     new_order_line_items.extend(
                         self.order_group.material.order_line_items(
                             self,
@@ -348,13 +356,15 @@ class Order(BaseModel):
                     )
 
                 # If the OrderGroup has Rental One-Step, add those line items.
-                if hasattr(self.order_group, "rental_one_step"):
+                if not standard_removal and hasattr(
+                    self.order_group, "rental_one_step"
+                ):
                     new_order_line_items.extend(
                         self.order_group.rental_one_step.order_line_items(self)
                     )
 
                 # If the OrderGroup has Rental Two-Step (Legacy), add those line items.
-                if hasattr(self.order_group, "rental"):
+                if not standard_removal and hasattr(self.order_group, "rental"):
                     new_order_line_items.extend(
                         self.order_group.rental.order_line_items(self)
                     )
@@ -364,6 +374,7 @@ class Order(BaseModel):
                 if (
                     hasattr(self.order_group, "rental_multi_step")
                     and not is_first_order
+                    and not standard_removal
                 ):
                     new_order_line_items.extend(
                         self.order_group.rental_multi_step.order_line_items(self)
@@ -376,18 +387,22 @@ class Order(BaseModel):
                     )
 
                 # If the OrderGroup has ServiceTimesPerWeek, add those line items.
-                if hasattr(self.order_group, "service_times_per_week"):
+                if not standard_removal and hasattr(
+                    self.order_group, "service_times_per_week"
+                ):
                     new_order_line_items.extend(
                         self.order_group.service_times_per_week.order_line_items(self)
                     )
 
-                # For all the OrderLineItems, compute the Fuel and Environmental Fee.
-                new_order_line_items.extend(
-                    self._add_fuel_and_environmental(new_order_line_items),
-                )
+                if not standard_removal:
+                    # For all the OrderLineItems, compute the Fuel and Environmental Fee.
+                    new_order_line_items.extend(
+                        self._add_fuel_and_environmental(new_order_line_items),
+                    )
 
-                # Create the OrderLineItems.
-                OrderLineItem.objects.bulk_create(new_order_line_items)
+                if new_order_line_items:
+                    # Create the OrderLineItems.
+                    OrderLineItem.objects.bulk_create(new_order_line_items)
 
                 # Check for any Admin Policy checks.
                 self.admin_policy_checks(orders=order_group_orders)

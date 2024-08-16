@@ -443,6 +443,8 @@ MAILCHIMP_API_KEY = env("MAILCHIMP_API_KEY")
 # Canny JWT Token.
 CANNY_JWT_SECRET = env("CANNY_JWT_SECRET")
 
+# Customer IO API Key.
+CUSTOMER_IO_API_KEY = env("CUSTOMER_IO_API_KEY")
 
 # Python Logging
 # Django help: https://docs.djangoproject.com/en/5.0/topics/logging/

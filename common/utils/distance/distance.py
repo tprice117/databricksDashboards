@@ -36,5 +36,12 @@ class DistanceUtils:
         distance = math.sin(lat_a) * math.sin(lat_b) + math.cos(lat_a) * math.cos(
             lat_b
         ) * math.cos(long_diff)
+        # Handle slight floating point precision errors
+        if distance < -1:
+            if abs(distance) - 1 < 0.0000000001:
+                distance = -1
+        elif distance > 1:
+            if abs(distance) - 1 < 0.0000000001:
+                distance = 1
         resToMile = math.degrees(math.acos(distance)) * 69.09
         return resToMile

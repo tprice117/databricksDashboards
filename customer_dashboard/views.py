@@ -2,9 +2,11 @@ import ast
 import datetime
 import logging
 import uuid
+import json
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
+import requests
 
 from django.conf import settings
 from django.contrib import messages
@@ -15,7 +17,7 @@ from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -965,10 +967,6 @@ def new_order_4(request):
     # end_date = None
     # if context["removal_date"]:
     #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
-    # TODO: discount will be inverse take_rate.
-    # discount = 0 == default_take_rate
-    # Show discount slider from 0 - max_discount
-    # print(f"max_discount: {context['product'].main_product.max_discount}")
     context["seller_product_seller_locations"] = []
     context["max_discount_100"] = (
         float(context["product"].main_product.max_discount) * 100
@@ -1280,6 +1278,7 @@ def new_order_5(request):
                             "address": order.order_group.user_address,
                             "total": 0,
                             "orders": {},
+                            "ids": [],
                         }
                     context["cart"][order.order_group.user_address_id]["orders"][
                         order.order_group_id
@@ -1307,6 +1306,9 @@ def new_order_5(request):
                     context["cart"][order.order_group.user_address_id][
                         "total"
                     ] += customer_price
+                    context["cart"][order.order_group.user_address_id]["ids"].append(
+                        str(order.id)
+                    )
                     context["subtotal"] += customer_price
                     context["cart_count"] += 1
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
@@ -1330,6 +1332,79 @@ def new_order_6(request, order_group_id):
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
     return HttpResponseRedirect(reverse("customer_new_order"))
+
+
+@login_required(login_url="/admin/login/")
+def cart_send_quote(request):
+    # import time
+
+    context = get_user_context(request)
+    if request.method == "POST":
+        # Get json body
+        try:
+            data = json.loads(request.body)
+            email_lst = list(set(data.get("emails")))
+            order_id_lst = data.get("ids")
+            if email_lst and order_id_lst:
+                order_id_1 = order_id_lst[0]
+                order = Order.objects.filter(id=order_id_1).first()
+                # time.sleep(4)
+                subject = (
+                    "Downstream | Quote | "
+                    + order.order_group.user_address.formatted_address()
+                )
+                # add_email_to_queue(
+                #     to_emails=email_lst,
+                #     subject=subject,
+                # )
+                # https://customer.io/docs/api/app/#operation/sendEmail
+                headers = {
+                    "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
+                    "Content-Type": "application/json",
+                }
+                data = {
+                    "transactional_message_id": 3,
+                    "to": ",".join(email_lst),
+                    # "from": "system@trydownstream.com",
+                    "subject": subject,
+                    "identifiers": {"email": email_lst[0]},
+                    "message_data": {
+                        "customer.full_name": order.order_group.user.full_name,
+                        "UserGroup.Name": order.order_group.user.user_group.name,
+                        "UserAddress.ProjectID": order.order_group.user_address.name,
+                        "UserAddress.Street": order.order_group.user_address.street,
+                        "UserAddress.City": order.order_group.user_address.city,
+                        "UserAddress.State": order.order_group.user_address.state,
+                        "UserAddress.Zip": order.order_group.user_address.postal_code,
+                    },
+                }
+                response = requests.post(
+                    "https://api.customer.io/v1/send/email",
+                    headers=headers,
+                    data=json.dumps(data),
+                )
+                if response.status_code < 400:
+                    ret_data = response.json()
+                    # [delivery_id:{ret_data['delivery_id']}-queued_at:{ret_data['queued_at']}]
+                    return JsonResponse(
+                        {
+                            "status": "success",
+                            "message": "Successfully sent quote.",
+                        }
+                    )
+                else:
+                    ret_data = response.json()
+                    return JsonResponse(
+                        {"status": "error", "error": ret_data["meta"]["error"]}
+                    )
+            else:
+                return JsonResponse(
+                    {"status": "error", "error": "No email or order ids."}
+                )
+        except Exception as e:
+            logger.error(f"Error sending quote: {e}")
+            return JsonResponse({"status": "error", "error": str(e)})
+    return HttpResponse(status=204)
 
 
 @login_required(login_url="/admin/login/")
@@ -1480,17 +1555,17 @@ def checkout(request, user_address_id):
             setattr(payment_method, "is_default", True)
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
-    # TODO: Get total price with max take_rate, then apply the discount (order_group.take_rate).
     for order in orders:
         if order.status == Order.Status.APPROVAL:
             context["needs_approval"] = True
         customer_price = order.customer_price()
+        customer_price_full = order.full_price()
+        context["subtotal"] += customer_price_full
+        context["pre_tax_subtotal"] += customer_price
         try:
             context["cart"][order.order_group_id]["price"] += customer_price
             context["cart"][order.order_group.id]["count"] += 1
             context["cart"][order.order_group.id]["order_type"] = order.order_type
-            context["cart"]["total"] += customer_price
-            context["subtotal"] += customer_price
         except KeyError:
             context["cart"][order.order_group.id] = {
                 "order": order,
@@ -1499,8 +1574,8 @@ def checkout(request, user_address_id):
                 "count": 1,
                 "order_type": order.order_type,
             }
-            context["subtotal"] += customer_price
             context["cart_count"] += 1
+    context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
         messages.error(request, "This Order is empty.")
         return HttpResponseRedirect(reverse("customer_cart"))

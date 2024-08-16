@@ -23,6 +23,10 @@
             priceItems.forEach(function (priceItem) {
                 // get the price of the price-item element
                 let price = parseFloat(priceItem.getAttribute("data-price"));
+                // check if the price is NaN
+                if (isNaN(price)) {
+                    return;
+                }
                 // calculate the new price
                 let newPrice = price * (1 - discount / 100);
                 // update the price of the price-item element
@@ -81,19 +85,19 @@
                                         <tbody>
                                             <tr>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.hour }}">${{ item.seller_product_seller_location.rental_multi_step.hour }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.hour }}">${{ item.seller_product_seller_location.rental_multi_step.hour|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.day }}">${{ item.seller_product_seller_location.rental_multi_step.day }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.day }}">${{ item.seller_product_seller_location.rental_multi_step.day|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.week }}">${{ item.seller_product_seller_location.rental_multi_step.week }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.week }}">${{ item.seller_product_seller_location.rental_multi_step.week|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.two_weeks }}">${{ item.seller_product_seller_location.rental_multi_step.two_weeks }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.two_weeks }}">${{ item.seller_product_seller_location.rental_multi_step.two_weeks|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.month }}">${{ item.seller_product_seller_location.rental_multi_step.month }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.month }}">${{ item.seller_product_seller_location.rental_multi_step.month|floatformat:2|intcomma }}</span>
                                                 </td>
                                             </tr>
                                         </tbody>
