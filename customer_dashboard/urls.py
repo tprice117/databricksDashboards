@@ -122,6 +122,11 @@ urlpatterns = [
         views.new_order_4,
         name="customer_new_order_4",
     ),
+    path(
+        "customer/cart/send_quote/",
+        views.cart_send_quote,
+        name="customer_cart_send_quote",
+    ),
     # POST: Create OrderGroup and loads cart. GET: Load cart #
     path(
         "customer/order/new/cart/",
