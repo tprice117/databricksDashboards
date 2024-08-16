@@ -967,10 +967,6 @@ def new_order_4(request):
     # end_date = None
     # if context["removal_date"]:
     #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
-    # TODO: discount will be inverse take_rate.
-    # discount = 0 == default_take_rate
-    # Show discount slider from 0 - max_discount
-    # print(f"max_discount: {context['product'].main_product.max_discount}")
     context["seller_product_seller_locations"] = []
     context["max_discount_100"] = (
         float(context["product"].main_product.max_discount) * 100
@@ -1564,12 +1560,14 @@ def checkout(request, user_address_id):
         if order.status == Order.Status.APPROVAL:
             context["needs_approval"] = True
         customer_price = order.customer_price()
+        customer_price_full = order.customer_price(exclude_discount=True)
+        context["subtotal"] += customer_price_full
+        context["pre_tax_subtotal"] += customer_price
         try:
             context["cart"][order.order_group_id]["price"] += customer_price
             context["cart"][order.order_group.id]["count"] += 1
             context["cart"][order.order_group.id]["order_type"] = order.order_type
             context["cart"]["total"] += customer_price
-            context["subtotal"] += customer_price
         except KeyError:
             context["cart"][order.order_group.id] = {
                 "order": order,
@@ -1578,8 +1576,8 @@ def checkout(request, user_address_id):
                 "count": 1,
                 "order_type": order.order_type,
             }
-            context["subtotal"] += customer_price
             context["cart_count"] += 1
+    context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
         messages.error(request, "This Order is empty.")
         return HttpResponseRedirect(reverse("customer_cart"))
