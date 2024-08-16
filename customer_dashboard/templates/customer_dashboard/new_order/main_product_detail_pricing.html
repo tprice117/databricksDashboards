@@ -23,6 +23,10 @@
             priceItems.forEach(function (priceItem) {
                 // get the price of the price-item element
                 let price = parseFloat(priceItem.getAttribute("data-price"));
+                // check if the price is NaN
+                if (isNaN(price)) {
+                    return;
+                }
                 // calculate the new price
                 let newPrice = price * (1 - discount / 100);
                 // update the price of the price-item element
