@@ -19821,6 +19821,8 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsCreateServiceNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateServiceOrderGroupErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateServiceIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsCreateServicePricePerMileErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsCreateServiceFlatRatePriceErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateServiceRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateServiceMilesErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsCreateServiceCreatedByErrorComponent'
@@ -19868,6 +19870,8 @@ components:
           service.non_field_errors: '#/components/schemas/ApiOrderGroupsCreateServiceNonFieldErrorsErrorComponent'
           service.order_group: '#/components/schemas/ApiOrderGroupsCreateServiceOrderGroupErrorComponent'
           service.is_deleted: '#/components/schemas/ApiOrderGroupsCreateServiceIsDeletedErrorComponent'
+          service.price_per_mile: '#/components/schemas/ApiOrderGroupsCreateServicePricePerMileErrorComponent'
+          service.flat_rate_price: '#/components/schemas/ApiOrderGroupsCreateServiceFlatRatePriceErrorComponent'
           service.rate: '#/components/schemas/ApiOrderGroupsCreateServiceRateErrorComponent'
           service.miles: '#/components/schemas/ApiOrderGroupsCreateServiceMilesErrorComponent'
           service.created_by: '#/components/schemas/ApiOrderGroupsCreateServiceCreatedByErrorComponent'
@@ -20363,7 +20367,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -20371,7 +20374,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -20393,7 +20395,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -20401,7 +20402,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -20472,6 +20472,34 @@ components:
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsCreateServiceFlatRatePriceErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.flat_rate_price
+          type: string
+          description: '* `service.flat_rate_price` - service.flat_rate_price'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -20570,6 +20598,34 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsCreateServicePricePerMileErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.price_per_mile
+          type: string
+          description: '* `service.price_per_mile` - service.price_per_mile'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -21033,6 +21089,8 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceOrderGroupErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServicePricePerMileErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceFlatRatePriceErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceMilesErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceCreatedByErrorComponent'
@@ -21080,6 +21138,8 @@ components:
           service.non_field_errors: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceNonFieldErrorsErrorComponent'
           service.order_group: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceOrderGroupErrorComponent'
           service.is_deleted: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceIsDeletedErrorComponent'
+          service.price_per_mile: '#/components/schemas/ApiOrderGroupsForSellerCreateServicePricePerMileErrorComponent'
+          service.flat_rate_price: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceFlatRatePriceErrorComponent'
           service.rate: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceRateErrorComponent'
           service.miles: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceMilesErrorComponent'
           service.created_by: '#/components/schemas/ApiOrderGroupsForSellerCreateServiceCreatedByErrorComponent'
@@ -21575,7 +21635,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -21583,7 +21642,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -21605,7 +21663,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -21613,7 +21670,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -21684,6 +21740,34 @@ components:
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsForSellerCreateServiceFlatRatePriceErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.flat_rate_price
+          type: string
+          description: '* `service.flat_rate_price` - service.flat_rate_price'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -21782,6 +21866,34 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsForSellerCreateServicePricePerMileErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.price_per_mile
+          type: string
+          description: '* `service.price_per_mile` - service.price_per_mile'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -22252,6 +22364,8 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceOrderGroupErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServicePricePerMileErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceFlatRatePriceErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceMilesErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceCreatedByErrorComponent'
@@ -22299,6 +22413,8 @@ components:
           service.non_field_errors: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceNonFieldErrorsErrorComponent'
           service.order_group: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceOrderGroupErrorComponent'
           service.is_deleted: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceIsDeletedErrorComponent'
+          service.price_per_mile: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServicePricePerMileErrorComponent'
+          service.flat_rate_price: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceFlatRatePriceErrorComponent'
           service.rate: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceRateErrorComponent'
           service.miles: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceMilesErrorComponent'
           service.created_by: '#/components/schemas/ApiOrderGroupsForSellerPartialUpdateServiceCreatedByErrorComponent'
@@ -22794,7 +22910,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -22802,7 +22917,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -22824,7 +22938,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -22832,7 +22945,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -22903,6 +23015,34 @@ components:
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsForSellerPartialUpdateServiceFlatRatePriceErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.flat_rate_price
+          type: string
+          description: '* `service.flat_rate_price` - service.flat_rate_price'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -23001,6 +23141,34 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsForSellerPartialUpdateServicePricePerMileErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.price_per_mile
+          type: string
+          description: '* `service.price_per_mile` - service.price_per_mile'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -23464,6 +23632,8 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceOrderGroupErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServicePricePerMileErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceFlatRatePriceErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceMilesErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceCreatedByErrorComponent'
@@ -23511,6 +23681,8 @@ components:
           service.non_field_errors: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceNonFieldErrorsErrorComponent'
           service.order_group: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceOrderGroupErrorComponent'
           service.is_deleted: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceIsDeletedErrorComponent'
+          service.price_per_mile: '#/components/schemas/ApiOrderGroupsForSellerUpdateServicePricePerMileErrorComponent'
+          service.flat_rate_price: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceFlatRatePriceErrorComponent'
           service.rate: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceRateErrorComponent'
           service.miles: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceMilesErrorComponent'
           service.created_by: '#/components/schemas/ApiOrderGroupsForSellerUpdateServiceCreatedByErrorComponent'
@@ -24006,7 +24178,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -24014,7 +24185,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -24036,7 +24206,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -24044,7 +24213,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -24115,6 +24283,34 @@ components:
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsForSellerUpdateServiceFlatRatePriceErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.flat_rate_price
+          type: string
+          description: '* `service.flat_rate_price` - service.flat_rate_price'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -24213,6 +24409,34 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsForSellerUpdateServicePricePerMileErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.price_per_mile
+          type: string
+          description: '* `service.price_per_mile` - service.price_per_mile'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -24740,6 +24964,8 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceOrderGroupErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServicePricePerMileErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceFlatRatePriceErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceMilesErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceCreatedByErrorComponent'
@@ -24787,6 +25013,8 @@ components:
           service.non_field_errors: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceNonFieldErrorsErrorComponent'
           service.order_group: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceOrderGroupErrorComponent'
           service.is_deleted: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceIsDeletedErrorComponent'
+          service.price_per_mile: '#/components/schemas/ApiOrderGroupsPartialUpdateServicePricePerMileErrorComponent'
+          service.flat_rate_price: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceFlatRatePriceErrorComponent'
           service.rate: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceRateErrorComponent'
           service.miles: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceMilesErrorComponent'
           service.created_by: '#/components/schemas/ApiOrderGroupsPartialUpdateServiceCreatedByErrorComponent'
@@ -25282,7 +25510,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -25290,7 +25517,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -25312,7 +25538,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -25320,7 +25545,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -25391,6 +25615,34 @@ components:
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsPartialUpdateServiceFlatRatePriceErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.flat_rate_price
+          type: string
+          description: '* `service.flat_rate_price` - service.flat_rate_price'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -25489,6 +25741,34 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsPartialUpdateServicePricePerMileErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.price_per_mile
+          type: string
+          description: '* `service.price_per_mile` - service.price_per_mile'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -25952,6 +26232,8 @@ components:
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateServiceNonFieldErrorsErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateServiceOrderGroupErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateServiceIsDeletedErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsUpdateServicePricePerMileErrorComponent'
+      - $ref: '#/components/schemas/ApiOrderGroupsUpdateServiceFlatRatePriceErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateServiceRateErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateServiceMilesErrorComponent'
       - $ref: '#/components/schemas/ApiOrderGroupsUpdateServiceCreatedByErrorComponent'
@@ -25999,6 +26281,8 @@ components:
           service.non_field_errors: '#/components/schemas/ApiOrderGroupsUpdateServiceNonFieldErrorsErrorComponent'
           service.order_group: '#/components/schemas/ApiOrderGroupsUpdateServiceOrderGroupErrorComponent'
           service.is_deleted: '#/components/schemas/ApiOrderGroupsUpdateServiceIsDeletedErrorComponent'
+          service.price_per_mile: '#/components/schemas/ApiOrderGroupsUpdateServicePricePerMileErrorComponent'
+          service.flat_rate_price: '#/components/schemas/ApiOrderGroupsUpdateServiceFlatRatePriceErrorComponent'
           service.rate: '#/components/schemas/ApiOrderGroupsUpdateServiceRateErrorComponent'
           service.miles: '#/components/schemas/ApiOrderGroupsUpdateServiceMilesErrorComponent'
           service.created_by: '#/components/schemas/ApiOrderGroupsUpdateServiceCreatedByErrorComponent'
@@ -26494,7 +26778,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -26502,7 +26785,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -26524,7 +26806,6 @@ components:
           - max_digits
           - max_string_length
           - max_whole_digits
-          - 'null'
           type: string
           description: |-
             * `invalid` - invalid
@@ -26532,7 +26813,6 @@ components:
             * `max_digits` - max_digits
             * `max_string_length` - max_string_length
             * `max_whole_digits` - max_whole_digits
-            * `null` - null
         detail:
           type: string
       required:
@@ -26603,6 +26883,34 @@ components:
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsUpdateServiceFlatRatePriceErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.flat_rate_price
+          type: string
+          description: '* `service.flat_rate_price` - service.flat_rate_price'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -26701,6 +27009,34 @@ components:
             * `invalid` - invalid
             * `null_characters_not_allowed` - null_characters_not_allowed
             * `surrogate_characters_not_allowed` - surrogate_characters_not_allowed
+        detail:
+          type: string
+      required:
+      - attr
+      - code
+      - detail
+    ApiOrderGroupsUpdateServicePricePerMileErrorComponent:
+      type: object
+      properties:
+        attr:
+          enum:
+          - service.price_per_mile
+          type: string
+          description: '* `service.price_per_mile` - service.price_per_mile'
+        code:
+          enum:
+          - invalid
+          - max_decimal_places
+          - max_digits
+          - max_string_length
+          - max_whole_digits
+          type: string
+          description: |-
+            * `invalid` - invalid
+            * `max_decimal_places` - max_decimal_places
+            * `max_digits` - max_digits
+            * `max_string_length` - max_string_length
+            * `max_whole_digits` - max_whole_digits
         detail:
           type: string
       required:
@@ -41014,8 +41350,8 @@ components:
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateTonnageIncludedErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateCreatedByErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateUpdatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateSellerProductSellerLocationMaterialErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateMainProductWasteTypeErrorComponent'
+      - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateSellerProductSellerLocationMaterialErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
@@ -41026,8 +41362,8 @@ components:
           tonnage_included: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateTonnageIncludedErrorComponent'
           created_by: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateCreatedByErrorComponent'
           updated_by: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateUpdatedByErrorComponent'
-          seller_product_seller_location_material: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateSellerProductSellerLocationMaterialErrorComponent'
           main_product_waste_type: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateMainProductWasteTypeErrorComponent'
+          seller_product_seller_location_material: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateSellerProductSellerLocationMaterialErrorComponent'
     ApiSellerProductSellerLocationMaterialWasteTypesCreateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesCreateValidationError'
@@ -41357,8 +41693,8 @@ components:
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateTonnageIncludedErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateCreatedByErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateUpdatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateSellerProductSellerLocationMaterialErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateMainProductWasteTypeErrorComponent'
+      - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateSellerProductSellerLocationMaterialErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
@@ -41369,8 +41705,8 @@ components:
           tonnage_included: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateTonnageIncludedErrorComponent'
           created_by: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateCreatedByErrorComponent'
           updated_by: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateUpdatedByErrorComponent'
-          seller_product_seller_location_material: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateSellerProductSellerLocationMaterialErrorComponent'
           main_product_waste_type: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateMainProductWasteTypeErrorComponent'
+          seller_product_seller_location_material: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateSellerProductSellerLocationMaterialErrorComponent'
     ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesPartialUpdateValidationError'
@@ -41632,8 +41968,8 @@ components:
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateTonnageIncludedErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateCreatedByErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateUpdatedByErrorComponent'
-      - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateSellerProductSellerLocationMaterialErrorComponent'
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateMainProductWasteTypeErrorComponent'
+      - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateSellerProductSellerLocationMaterialErrorComponent'
       discriminator:
         propertyName: attr
         mapping:
@@ -41644,8 +41980,8 @@ components:
           tonnage_included: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateTonnageIncludedErrorComponent'
           created_by: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateCreatedByErrorComponent'
           updated_by: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateUpdatedByErrorComponent'
-          seller_product_seller_location_material: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateSellerProductSellerLocationMaterialErrorComponent'
           main_product_waste_type: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateMainProductWasteTypeErrorComponent'
+          seller_product_seller_location_material: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateSellerProductSellerLocationMaterialErrorComponent'
     ApiSellerProductSellerLocationMaterialWasteTypesUpdateErrorResponse400:
       oneOf:
       - $ref: '#/components/schemas/ApiSellerProductSellerLocationMaterialWasteTypesUpdateValidationError'
@@ -70770,10 +71106,14 @@ components:
           minimum: -10000000000000000
           exclusiveMaximum: true
           exclusiveMinimum: true
+          description: Deprecated. Use OrderGroupMaterialWasteType(s) instead of this
+            field.
         tonnage_included:
           type: integer
           maximum: 2147483647
           minimum: -2147483648
+          description: Deprecated. Use OrderGroupMaterialWasteType(s) instead of this
+            field.
         created_by:
           type: string
           format: uuid
@@ -70817,6 +71157,7 @@ components:
           minimum: -10000000000000000
           exclusiveMaximum: true
           exclusiveMinimum: true
+          nullable: true
         price_per_day_additional:
           type: number
           format: double
@@ -70824,6 +71165,7 @@ components:
           minimum: -10000000000000000
           exclusiveMaximum: true
           exclusiveMinimum: true
+          nullable: true
         created_by:
           type: string
           format: uuid
@@ -70856,6 +71198,22 @@ components:
           readOnly: true
         is_deleted:
           type: boolean
+        price_per_mile:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
+        flat_rate_price:
+          type: number
+          format: double
+          maximum: 10000000000000000
+          minimum: -10000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+          nullable: true
         rate:
           type: number
           format: double
@@ -70864,6 +71222,7 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
+          description: Deprecated. Use price_per_mile and flat_rate_price instead.
         miles:
           type: number
           format: double
@@ -70872,6 +71231,7 @@ components:
           exclusiveMaximum: true
           exclusiveMinimum: true
           nullable: true
+          description: Deprecated. Use price_per_mile and flat_rate_price instead.
         created_by:
           type: string
           format: uuid
@@ -72504,10 +72864,10 @@ components:
           type: string
           format: uuid
           nullable: true
-        seller_product_seller_location_material:
+        main_product_waste_type:
           type: string
           format: uuid
-        main_product_waste_type:
+        seller_product_seller_location_material:
           type: string
           format: uuid
     PatchedSellerProductSellerLocationRental:
@@ -74242,13 +74602,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PricingLineItem'
-        sort:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+        total:
+          type: string
+          readOnly: true
       required:
       - items
       - title
+      - total
     Product:
       type: object
       properties:
@@ -75009,10 +75369,10 @@ components:
           type: string
           format: uuid
           nullable: true
-        seller_product_seller_location_material:
+        main_product_waste_type:
           type: string
           format: uuid
-        main_product_waste_type:
+        seller_product_seller_location_material:
           type: string
           format: uuid
       required:
