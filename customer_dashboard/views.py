@@ -1389,7 +1389,7 @@ def cart_send_quote(request):
                     return JsonResponse(
                         {
                             "status": "success",
-                            "message": f"Successfully sent quote.",
+                            "message": "Successfully sent quote.",
                         }
                     )
                 else:
