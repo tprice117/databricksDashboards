@@ -436,7 +436,17 @@ class Order(BaseModel):
                 )
             ]
             if (self.order_group.seller_product_seller_location.removal_fee)
-            else []
+            else [
+                OrderLineItem(
+                    order=self,
+                    order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
+                    rate=0,
+                    quantity=1,
+                    description="Removal Fee",
+                    platform_fee_percent=self.order_group.take_rate,
+                    is_flat_rate=True,
+                )
+            ]
         )
 
     def _add_fuel_and_environmental(
