@@ -166,6 +166,7 @@ class Order(BaseModel):
         )
         return round(seller_price, 2)
 
+    @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def customer_price(self):
         return sum(
             [
