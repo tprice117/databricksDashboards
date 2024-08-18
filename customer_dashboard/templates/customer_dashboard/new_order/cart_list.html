@@ -8,7 +8,7 @@
                     <div>
                         <span>{{ cart_address.address.formatted_address }}</span> -
                         <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-                        <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.orders|length }}">{{ cart_address.orders|length }} item{{ cart_address.orders|length|pluralize }}</span>
+                        <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.transactions|length }}">{{ cart_address.transactions|length }} item{{ cart_address.transactions|length|pluralize }}</span>
                     </div>
                     <div class="ms-auto align-items-end">
                         {% if user.is_staff %}
@@ -31,7 +31,7 @@
                 role="tabpanel"
                 data-bs-parent="#cart-results">
                 <div class="accordion-body">
-                    {% for cart_item in cart_address.orders.values %}
+                    {% for order in cart_address.transactions %}
                         <div class="row cart-item mb-2">
                             <div class="col">
                                 <div class="card" style="background: var(--bs-card-cap-bg);">
@@ -44,38 +44,38 @@
                                                             alt="Product image"
                                                             width="138"
                                                             height="95"
-                                                            src="{% if cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
-                                                                {{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                            src="{% if order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                                {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
                                                             {% else %}
                                                                 {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
                                                             {% endif %}" />
                                                     </div>
                                                     <div class="col">
-                                                        <h3>{{ cart_item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
-                                                        {% if cart_item.order_group.end_date %}
-                                                            <p class="mb-1">{{ cart_item.order_group.start_date }} to {{ cart_item.order_group.end_date }}</p>
+                                                        <h3>{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
+                                                        {% if order.order_group.end_date %}
+                                                            <p class="mb-1">{{ order.order_group.start_date }} to {{ order.order_group.end_date }}</p>
                                                         {% else %}
-                                                            {% if cart_item.order_group.service_recurring_frequency %}
-                                                                <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }} and recurring {{ cart_item.order_group.service_recurring_frequency.name|lower }}</p>
+                                                            {% if order.order_group.service_recurring_frequency %}
+                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }} and recurring {{ order.order_group.service_recurring_frequency.name|lower }}</p>
                                                             {% else %}
-                                                                <p class="mb-1">Subscription starts on {{ cart_item.order_group.start_date }}</p>
+                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }}</p>
                                                             {% endif %}
                                                         {% endif %}
-                                                        <p class="mb-1">Service date: {{ cart_item.order.end_date }}</p>
-                                                        <p class="mb-1">Order type: {{ cart_item.order_type }}</p>
+                                                        <p class="mb-1">Service date: {{ order.end_date }}</p>
+                                                        <p class="mb-1">Order type: {{ order.order_type }}</p>
                                                         {% if request.user.is_staff %}
-                                                            <p class="mb-1">Created by: {% if cart_item.order.created_by %}{{ cart_item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ cart_item.order.created_on }}</p>
+                                                            <p class="mb-1">Created by: {% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on }}</p>
                                                         {% endif %}
-                                                        {% comment %} <p>order line items: {{ cart_item.count }} - [{{ cart_item.status }}]</p> {% endcomment %}
+                                                        {% comment %} <p>order line items: {{ order.order_line_items.count }} - [{{ order.status }}]</p> {% endcomment %}
                                                     </div>
                                                     <div class="col-auto">
-                                                        <p class="text-end">${{ cart_item.price|floatformat:2|intcomma }}</p>
+                                                        <p class="text-end">${{ order.customer_price|floatformat:2|intcomma }}</p>
                                                     </div>
                                                     <div class="col-auto">
                                                         <div class="row justify-content-center">
                                                             <div class="col-auto">
-                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ cart_item.order_group.id }}" type="button"
-                                                                    data-id="{{ cart_item.order_group.id }}" data-orderid="{{ cart_item.order.id }}" data-price="{{ cart_item.price }}" data-countid="count-{{ cart_address.address.id }}"
+                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ order.order_group.id }}" type="button"
+                                                                    data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ order.customer_price }}" data-countid="count-{{ cart_address.address.id }}"
                                                                     hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
                                                                     onClick="event.stopPropagation();
                                                                     Swal.fire(
@@ -91,7 +91,7 @@
                                                         {% if request.user.is_superuser %}
                                                             <div class="row justify-content-center">
                                                                 <div class="col-auto">
-                                                                    <a class="btn btn-link" role="button" href="/admin/api/order/{{cart_item.order.id}}/change/">In database</a>
+                                                                    <a class="btn btn-link" role="button" href="/admin/api/order/{{order.id}}/change/">In database</a>
                                                                 </div>
                                                             </div>
                                                         {% endif %}

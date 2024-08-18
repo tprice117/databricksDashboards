@@ -968,8 +968,8 @@ def new_order_4(request):
     # if context["removal_date"]:
     #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
     context["seller_product_seller_locations"] = []
-    context["max_discount_100"] = (
-        float(context["product"].main_product.max_discount) * 100
+    context["max_discount_100"] = round(
+        float(context["product"].main_product.max_discount) * 100, 1
     )
 
     for seller_product_seller_location in seller_product_seller_locations:
@@ -1274,6 +1274,12 @@ def new_order_5(request):
                 context["help_text"] += "open carts."
 
         orders = orders.prefetch_related("order_line_items")
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
         orders = orders.order_by("-end_date")
 
         if not orders:
@@ -1283,48 +1289,23 @@ def new_order_5(request):
             # Get unique order group objects from the orders and place them in address buckets.
             for order in orders:
                 customer_price = order.customer_price()
-                try:
-                    if (
-                        context["cart"].get(order.order_group.user_address_id, None)
-                        is None
-                    ):
-                        context["cart"][order.order_group.user_address_id] = {
-                            "address": order.order_group.user_address,
-                            "total": 0,
-                            "orders": {},
-                            "ids": [],
-                        }
-                    context["cart"][order.order_group.user_address_id]["orders"][
-                        order.order_group_id
-                    ]["price"] += customer_price
-                    context["cart"][order.order_group.user_address_id]["orders"][
-                        order.order_group.id
-                    ]["count"] += 1
-                    context["cart"][order.order_group.user_address_id]["orders"][
-                        order.order_group.id
-                    ]["order_type"] = order.order_type
-                    context["cart"][order.order_group.user_address_id][
-                        "total"
-                    ] += customer_price
-                    context["subtotal"] += customer_price
-                except KeyError:
-                    context["cart"][order.order_group.user_address_id]["orders"][
-                        order.order_group.id
-                    ] = {
-                        "order": order,
-                        "order_group": order.order_group,
-                        "price": customer_price,
-                        "count": 1,
-                        "order_type": order.order_type,
+                # Create a new address bucket if it doesn't exist.
+                uaid = order.order_group.user_address_id
+                if context["cart"].get(uaid, None) is None:
+                    context["cart"][uaid] = {
+                        "address": order.order_group.user_address,
+                        "total": 0,
+                        "transactions": [],
+                        "ids": [],
+                        "count": 0,
                     }
-                    context["cart"][order.order_group.user_address_id][
-                        "total"
-                    ] += customer_price
-                    context["cart"][order.order_group.user_address_id]["ids"].append(
-                        str(order.id)
-                    )
-                    context["subtotal"] += customer_price
-                    context["cart_count"] += 1
+                # Transactions are the individual orders (delivery/swap/removal) in the order group.
+                context["cart"][uaid]["transactions"].append(order)
+                context["cart"][uaid]["ids"].append(str(order.id))
+                context["cart"][uaid]["count"] += 1
+                context["cart"][uaid]["total"] += customer_price
+                context["subtotal"] += customer_price
+                context["cart_count"] += 1
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
