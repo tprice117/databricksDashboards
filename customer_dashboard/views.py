@@ -1113,6 +1113,7 @@ def new_order_5(request):
     elif request.method == "DELETE":
         # Delete the order group and orders.
         order_group_id = request.GET.get("id")
+        order_id = request.GET.get("order_id")
         subtotal = request.GET.get("subtotal")
         cart_count = request.GET.get("count")
         customer_price = request.GET.get("price")
@@ -1122,15 +1123,28 @@ def new_order_5(request):
             customer_price = float(customer_price)
         else:
             customer_price = 0
+        # Only delete the single order/transaction, not the entire order group, except if it is the first order.
+        order = Order.objects.filter(id=order_id).first()
         if order_group:
-            # Delete any related protected objects, like orders and subscriptions.
-            sub_obj = Subscription.objects.filter(order_group_id=order_group.id).first()
-            if sub_obj:
-                sub_obj.delete()
-            for order in order_group.orders.all():
-                # del_subtotal += order.customer_price()
+            order_group_orders = order_group.orders.all()
+            is_first_order = (
+                order.order_group.start_date == order.start_date
+                and order_group_orders.count() == 1
+            )
+            if is_first_order:
+                # A single transaction Order, which is a delivery or one-time service.
+                # Delete any related protected objects, like orders and subscriptions.
+                sub_obj = Subscription.objects.filter(
+                    order_group_id=order_group.id
+                ).first()
+                if sub_obj:
+                    sub_obj.delete()
+                for ordr in order_group.orders.all():
+                    # del_subtotal += order.customer_price()
+                    ordr.delete()
+                order_group.delete()
+            elif order:
                 order.delete()
-            order_group.delete()
             context["user_address"] = order_group.user_address_id
         if subtotal:
             context["subtotal"] = float(subtotal) - float(customer_price)
