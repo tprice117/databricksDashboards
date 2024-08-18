@@ -18,9 +18,12 @@
         function removeItemFromCart(el) {
             // Get current query params.
             let queryParams = new URLSearchParams(window.location.search);
-            // Get id of item
+            // Get order group id of item
             let id = el.getAttribute("data-id");
             queryParams.set("id", encodeURIComponent(id));
+            // Get order id
+            let orderId = el.getAttribute("data-orderid");
+            queryParams.set("order_id", encodeURIComponent(orderId));
             // Get cart-subtotal
             let cartSubtotal = document.getElementById("cart-subtotal");
             let subtotal = parseFloat(cartSubtotal.getAttribute("data-subtotal"));
