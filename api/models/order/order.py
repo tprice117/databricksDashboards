@@ -137,12 +137,6 @@ class Order(BaseModel):
         blank=True,
         null=True,
     )  # 6.6.23
-    __original_submitted_on = None
-
-    def __init__(self, *args, **kwargs):
-        super(Order, self).__init__(*args, **kwargs)
-        self.__original_submitted_on = self.submitted_on
-        self.__original_status = self.status
 
     @property
     def is_past_due(self):
