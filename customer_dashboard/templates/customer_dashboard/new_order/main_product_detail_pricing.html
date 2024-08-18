@@ -13,6 +13,13 @@
         document.getElementById("discount").addEventListener("input", function () {
             // get the value of the range slider
             let discount = this.value;
+            // get all order-form-discount elements
+            let orderFormDiscounts = document.querySelectorAll(".order-form-discount");
+            // loop through all order-form-discount elements
+            orderFormDiscounts.forEach(function (orderFormDiscount) {
+                // update the value of the order-form-discount element
+                orderFormDiscount.value = discount;
+            });
             // get the discountLabel element
             let discountLabel = document.getElementById("discountLabel");
             // update the text of the discountLabel element
@@ -47,7 +54,7 @@
             <div class="col">
                 <div class="container-sm pt-4 pb-4">
                     <label for="discount" class="form-label">Discount <b id="discountLabel">0%</b></label>
-                    <input form="orderForm" type="range" class="form-range" min="0" max="{{ max_discount_100 }}" step="0.5" id="discount" name="discount" value="0" />
+                    <input form="orderForm" type="range" class="form-range" min="0" max="{{ max_discount_100 }}" step="0.5" id="discount" name="discount2" value="0" />
                 </div>
                 {% for item in seller_product_seller_locations %}
                     {% if forloop.first %}
@@ -125,7 +132,7 @@
                             </p>
                         </div>
                         <div class="col-auto">
-                            <form id="orderForm" action="{% url 'customer_new_order_5' %}" method="post">
+                            <form id="orderForm" action="{% url 'customer_new_order_5' %}" method="post" enctype="multipart/form-data">
                                 {% csrf_token %}
                                 <input name="seller_product_seller_location_id" type="hidden" value="{{ item.seller_product_seller_location.id }}" />
                                 <input name="product_id" type="hidden" value="{{ product_id }}" />
@@ -137,6 +144,7 @@
                                 <input name="times_per_week" type="hidden" value="{{ times_per_week }}" />
                                 <input name="delivery_date" type="hidden" value="{{ delivery_date }}" />
                                 <input name="removal_date" type="hidden" value="{{ removal_date }}" />
+                                <input class="order-form-discount" type="hidden" name="discount" value="0" />
                                 <div class="d-flex justify-content-center">
                                     <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">Add to Cart</button>
                                 </div>
