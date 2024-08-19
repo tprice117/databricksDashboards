@@ -1,5 +1,6 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Location Details
@@ -65,7 +66,7 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Created</strong>
                         </p>
-                        <p>{{ user_address.created_on }}</p>
+                        <p>{{ user_address.created_on|timezone:'America/Chicago' }} (CT)</p>
                         <p class="card-text"></p><a class="card-link" href="#"></a>
                     </div>
                 </div>
@@ -101,7 +102,13 @@
                                         <tbody>
                                             {% for invoice in invoices %}
                                                 <tr>
-                                                    <td>{{ invoice.due_date }}</td>
+                                                    <td>
+                                                        {% if invoice.due_date %}
+                                                            {{ invoice.due_date|timezone:'America/Chicago' }} (CT)
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
                                                     <td>${{ invoice.total|stringformat:'.2f'|intcomma }}</td>
                                                     <td>{{ invoice.status }}</td>
                                                     <td>{{ invoice.number }}</td>
