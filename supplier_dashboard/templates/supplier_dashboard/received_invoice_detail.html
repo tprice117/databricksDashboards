@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Received Invoice Details
@@ -17,7 +18,7 @@
                         <h4 class="card-title">${{ seller_invoice_payable.amount|stringformat:'.2f'|intcomma }}</h4>
                         <h6 class="text-muted card-subtitle mb-2">
                             Received on:
-                            {{ seller_invoice_payable.created_on }}
+                            {{ seller_invoice_payable.created_on|timezone:'America/Chicago' }} (CT)
                         </h6>
                         <p style="margin-bottom: 0px;">
                             <strong>Location</strong>

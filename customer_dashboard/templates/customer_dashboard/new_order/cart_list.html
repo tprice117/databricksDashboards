@@ -65,7 +65,7 @@
                                                         <p class="mb-1">Service date: {{ order.end_date }}</p>
                                                         <p class="mb-1">Order type: {{ order.order_type }}</p>
                                                         {% if request.user.is_staff %}
-                                                            <p class="mb-1">Created by: {% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on|timezone:"America/Chicago" }}</p>
+                                                            <p class="mb-1">Created by: {% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on|timezone:"America/Chicago" }} (CT)</p>
                                                         {% endif %}
                                                         {% comment %} <p>order line items: {{ order.order_line_items.count }} - [{{ order.status }}]</p> {% endcomment %}
                                                     </div>

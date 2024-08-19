@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     User Details
@@ -65,7 +66,7 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Created</strong>
                         </p>
-                        <p>{{ user.date_joined }}</p>
+                        <p>{{ user.date_joined|timezone:'America/Chicago' }} (CT)</p>
                         <p class="card-text"></p><a class="card-link" href="#"></a>
                     </div>
                 </div>

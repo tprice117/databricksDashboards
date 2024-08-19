@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load tz %}
 {% block title %}
     Location Details
 {% endblock %}
@@ -24,7 +25,7 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Created</strong>
                         </p>
-                        <p>{{ seller_location.created_on }}</p>
+                        <p>{{ seller_location.created_on|timezone:'America/Chicago' }} (CT)</p>
                         <p class="card-text"></p>
                     </div>
                 </div>
@@ -128,7 +129,7 @@
                                 <tbody>
                                     {% for payout in payouts %}
                                         <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
-                                            <td>{{ payout.created_on }}</td>
+                                            <td>{{ payout.created_on|timezone:'America/Chicago' }} (CT)</td>
                                             <td>{{ payout.amount }}</td>
                                             <td>{{ payout.status }}</td>
                                         </tr>

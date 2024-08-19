@@ -1,5 +1,6 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Checkout
@@ -431,7 +432,7 @@
                                                 <p class="mb-1">Service date: {{ item.order.end_date }}</p>
                                                 <p class="mb-1">Order Type: {{ item.order_type }}</p>
                                                 {% if user.is_staff %}
-                                                    <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on }}</p>
+                                                    <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
                                                 {% endif %}
                                             </div>
                                             <div class="col-auto">

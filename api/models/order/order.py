@@ -130,8 +130,10 @@ class Order(BaseModel):
     schedule_window = models.CharField(
         max_length=35,
         choices=[
+            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
             ("Morning (7am-11am)", "Morning (7am-11am)"),
             ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
+            # Deprecated, do not show in UI. This is so old data can still be read.
             ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
         ],
         blank=True,

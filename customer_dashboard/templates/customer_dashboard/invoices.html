@@ -1,5 +1,6 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Invoices
@@ -92,7 +93,13 @@
                         <tbody>
                             {% for invoice in page_obj %}
                                 <tr>
-                                    <td>{{ invoice.due_date }}</td>
+                                    <td>
+                                        {% if invoice.due_date %}
+                                            {{ invoice.due_date|timezone:'America/Chicago' }} (CT)
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
                                     <td>${{ invoice.total|stringformat:'.2f'|intcomma }}</td>
                                     <td>{{ invoice.status }}</td>
                                     <td>{{ invoice.number }}</td>
