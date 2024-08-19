@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Booking Details
@@ -35,7 +36,7 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Created</strong>
                         </p>
-                        <p>{{ order.created_on }}</p>
+                        <p>{{ order.created_on|timezone:'America/Chicago' }} (CT)</p>
                         <p class="card-text"></p>
                         <div id="booking-detail-actions">
                             {% include 'supplier_dashboard/snippets/booking_detail_actions.html' %}
@@ -272,7 +273,7 @@
                                     <tbody>
                                         {% for payout in order.payouts.all %}
                                             <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
-                                                <td>{{ payout.created_on }}</td>
+                                                <td>{{ payout.created_on|timezone:'America/Chicago' }} (CT)</td>
                                                 <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ payout.status }}</td>
                                             </tr>

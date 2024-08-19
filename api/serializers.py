@@ -809,7 +809,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     )
     time_slot = TimeSlotSerializer(read_only=True)
     time_slot_id = serializers.PrimaryKeyRelatedField(
-        queryset=TimeSlot.objects.all(),
+        queryset=TimeSlot.get_all_time_slots(),
         source="time_slot",
         write_only=True,
         allow_null=True,

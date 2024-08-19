@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Users
@@ -87,7 +88,7 @@
                                     <td>{{ obj.user.email }}</td>
                                     <td>{{ obj.user.type }}</td>
                                     <td class="text-center">{{ obj.meta.associated_locations }}</td>
-                                    <td>{{ obj.user.date_joined }}</td>
+                                    <td>{{ obj.user.date_joined|timezone:"America/Chicago" }} (CT)</td>
                                 </tr>
                             {% endfor %}
                         </tbody>

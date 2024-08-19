@@ -1,5 +1,6 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Order Details
@@ -121,7 +122,7 @@
                                     <p style="margin-bottom: 0px;">
                                         <strong>Created On</strong>
                                     </p>
-                                    <p>{{ order.created_on }}</p>
+                                    <p>{{ order.created_on|timezone:'America/Chicago' }} (CT)</p>
                                     <p style="margin-bottom: 0px;">
                                         <strong>Submitted On</strong>
                                     </p>
