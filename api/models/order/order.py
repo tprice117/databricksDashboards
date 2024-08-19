@@ -352,20 +352,23 @@ class Order(BaseModel):
                         )
                     )
 
-                # If the OrderGroup has Rental One-Step, add those line items.
+                # If the OrderGroup has Rental One-Step, add those line items. e.g. Porta Potty
                 if hasattr(self.order_group, "rental_one_step"):
                     new_order_line_items.extend(
                         self.order_group.rental_one_step.order_line_items(self)
                     )
 
-                # If the OrderGroup has Rental Two-Step (Legacy), add those line items.
+                # If the OrderGroup has Rental Two-Step (Legacy), add those line items. e.g. Roll Off Dumpster
+                # If this is a removal, then do not include the included days line item.
                 if hasattr(self.order_group, "rental"):
                     new_order_line_items.extend(
-                        self.order_group.rental.order_line_items(self)
+                        self.order_group.rental.order_line_items(
+                            self, is_last_order=is_last_order
+                        )
                     )
 
                 # If the OrderGroup has Rental Multi-Step, add those line items.
-                # NOTE: Do not add Rental Multi-Step line items for the first Order.
+                # NOTE: Do not add Rental Multi-Step line items for the first Order. e.g. Telehandler
                 if (
                     hasattr(self.order_group, "rental_multi_step")
                     and not is_first_order

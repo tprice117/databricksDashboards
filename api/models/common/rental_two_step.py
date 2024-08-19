@@ -46,17 +46,21 @@ class PricingRentalTwoStep(BaseModel):
     def get_price(
         self,
         duration: timedelta,
+        is_last_order: bool = False,
     ) -> list[PricingLineItem]:
         if duration < timedelta(0):
             raise Exception("The Duration must be positive.")
 
-        # Included day price (always charged).
-        included_price = PricingLineItem(
-            description="Included",
-            units="Days",
-            quantity=self.included_days,
-            unit_price=self.price_per_day_included,
-        )
+        line_items = []
+        if not is_last_order:
+            # Included day price (always charged if not removal).
+            included_price = PricingLineItem(
+                description="Included",
+                units="Days",
+                quantity=self.included_days,
+                unit_price=self.price_per_day_included,
+            )
+            line_items.append(included_price)
 
         # Additional days price (if needed).
         additional_days = (
@@ -72,12 +76,6 @@ class PricingRentalTwoStep(BaseModel):
                 quantity=additional_days,
                 unit_price=self.price_per_day_additional,
             )
+            line_items.append(additional_days_price)
 
-            return [
-                included_price,
-                additional_days_price,
-            ]
-        else:
-            return [
-                included_price,
-            ]
+        return line_items
