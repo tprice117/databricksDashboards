@@ -1370,8 +1370,11 @@ def cart_send_quote(request):
                     "subject": subject,
                     "identifiers": {"email": email_lst[0]},
                     "message_data": {
-                        "customer.full_name": order.order_group.user.full_name,
-                        "UserGroup.Name": order.order_group.user.user_group.name,
+                        "full_name": order.order_group.user.full_name,
+                        "company_name": order.order_group.user.user_group.name,
+                        "delivery_address": order.order_group.user_address.formatted_address(),
+                        "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
+                        "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
                         "UserAddress.ProjectID": order.order_group.user_address.name,
                         "UserAddress.Street": order.order_group.user_address.street,
                         "UserAddress.City": order.order_group.user_address.city,
