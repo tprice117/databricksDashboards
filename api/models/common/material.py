@@ -1,3 +1,4 @@
+from typing import Optional
 from api.models.waste_type import WasteType
 from common.models import BaseModel
 from pricing_engine.models.pricing_line_item import PricingLineItem
@@ -19,7 +20,7 @@ class PricingMaterial(BaseModel):
         self,
         waste_type: WasteType,
         quantity: float,
-    ) -> PricingLineItem:
+    ) -> Optional[PricingLineItem]:
         if self.waste_types.filter(
             main_product_waste_type__waste_type=waste_type
         ).exists():

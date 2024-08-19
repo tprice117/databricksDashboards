@@ -55,13 +55,16 @@ class OrderGroupMaterial(PricingMaterial):
             quantity=self.order_group.tonnage_quantity or 0,
         )
 
-        return [
-            OrderLineItem(
-                order=order,
-                order_line_item_type=order_line_item_type,
-                rate=line_item.unit_price,
-                quantity=line_item.quantity,
-                description=line_item.description,
-                platform_fee_percent=self.order_group.take_rate,
-            )
-        ]
+        if line_item:
+            return [
+                OrderLineItem(
+                    order=order,
+                    order_line_item_type=order_line_item_type,
+                    rate=line_item.unit_price,
+                    quantity=line_item.quantity,
+                    description=line_item.description,
+                    platform_fee_percent=self.order_group.take_rate,
+                )
+            ]
+        else:
+            return []
