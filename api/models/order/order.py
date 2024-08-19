@@ -352,20 +352,23 @@ class Order(BaseModel):
                         )
                     )
 
-                # If the OrderGroup has Rental One-Step, add those line items.
+                # If the OrderGroup has Rental One-Step, add those line items. e.g. Porta Potty
                 if hasattr(self.order_group, "rental_one_step"):
                     new_order_line_items.extend(
                         self.order_group.rental_one_step.order_line_items(self)
                     )
 
-                # If the OrderGroup has Rental Two-Step (Legacy), add those line items.
+                # If the OrderGroup has Rental Two-Step (Legacy), add those line items. e.g. Roll Off Dumpster
+                # If this is a removal, then do not include the included days line item.
                 if hasattr(self.order_group, "rental"):
                     new_order_line_items.extend(
-                        self.order_group.rental.order_line_items(self)
+                        self.order_group.rental.order_line_items(
+                            self, is_last_order=is_last_order
+                        )
                     )
 
                 # If the OrderGroup has Rental Multi-Step, add those line items.
-                # NOTE: Do not add Rental Multi-Step line items for the first Order.
+                # NOTE: Do not add Rental Multi-Step line items for the first Order. e.g. Telehandler
                 if (
                     hasattr(self.order_group, "rental_multi_step")
                     and not is_first_order
@@ -400,7 +403,7 @@ class Order(BaseModel):
                 # Check for any Admin Policy checks.
                 self.admin_policy_checks(orders=order_group_orders)
             except Exception as e:
-                logger.error(f"Order.post_save: [{e}]", exc_info=e)
+                logger.error(f"Order.post_save: [{self.id}]-[{e}]", exc_info=e)
 
     def _add_order_line_item_delivery(self) -> Optional[List[OrderLineItem]]:
         return (
@@ -569,7 +572,7 @@ class Order(BaseModel):
                         #     "Purchase Approval Limit has been exceeded. This Order will be sent to your Admin for approval."
                         # )
         except Exception as e:
-            logger.error(f"Order.admin_policy_checks: [{e}]", exc_info=e)
+            logger.error(f"Order.admin_policy_checks: [{self.id}]-[{e}]", exc_info=e)
 
     def send_internal_order_confirmation_email(self):
         # Send email to internal team. Only on our PROD environment.
@@ -623,7 +626,8 @@ class Order(BaseModel):
                 )
             except Exception as e:
                 logger.error(
-                    f"Order.send_internal_order_confirmation_email: [{e}]", exc_info=e
+                    f"Order.send_internal_order_confirmation_email: [{self.id}]-[{e}]",
+                    exc_info=e,
                 )
 
     def send_customer_email_when_order_scheduled(self):
@@ -666,7 +670,8 @@ class Order(BaseModel):
                 )
             except Exception as e:
                 logger.error(
-                    f"Order.send_customer_email_when_order_scheduled: [{e}]", exc_info=e
+                    f"Order.send_customer_email_when_order_scheduled: [{self.id}]-[{e}]",
+                    exc_info=e,
                 )
 
     def log_order_state(self):
@@ -693,7 +698,7 @@ class Order(BaseModel):
                 -[order_group.end_date:{self.order_group.end_date}]"""
             )
         except Exception as e:
-            logger.error(f"Order.log_order_state: [{e}]", exc_info=e)
+            logger.error(f"Order.log_order_state: [{self.id}]-[{e}]", exc_info=e)
 
     def send_supplier_approval_email(self):
         # Send email to supplier. Only CC on our PROD environment.
@@ -771,14 +776,16 @@ class Order(BaseModel):
                         reply_to="dispatch@trydownstream.com",
                     )
         except Exception as e:
-            logger.error(f"Order.send_supplier_approval_email: [{e}]", exc_info=e)
+            logger.error(
+                f"Order.send_supplier_approval_email: [{self.id}]-[{e}]", exc_info=e
+            )
 
     def close_admin_chat(self, message=None):
         if self.intercom_id:
             try:
                 IntercomConversation.close(self.intercom_id)
             except Exception as e:
-                logger.error(f"close_admin_chat: [{e}]", exc_info=e)
+                logger.error(f"close_admin_chat: [{self.id}]-[{e}]", exc_info=e)
 
     def create_admin_chat(self, conversation_id: str):
         """
@@ -792,7 +799,10 @@ class Order(BaseModel):
                 # Close the previous chat
                 IntercomConversation.close(self.intercom_id)
             except Exception as e:
-                logger.error(f"create_admin_chat:close previous chat: {e}", exc_info=e)
+                logger.error(
+                    f"create_admin_chat:close previous chat: [{self.id}]-[{e}]",
+                    exc_info=e,
+                )
         try:
             self.intercom_id = conversation_id
             self.save()
@@ -833,7 +843,7 @@ class Order(BaseModel):
             # Add Booking tag to conversation
             IntercomConversation.attach_booking_tag(conversation_id)
         except Exception as e:
-            logger.error(f"create_admin_chat:reply {e}", exc_info=e)
+            logger.error(f"create_admin_chat:reply [{self.id}]-[{e}]", exc_info=e)
 
     def create_customer_chat(self, user_intercom_id: str):
         """
@@ -857,7 +867,9 @@ class Order(BaseModel):
                 #     self.custmer_intercom_id, user_intercom_id, html_content_supplier
                 # )
             except Exception as e:
-                logger.error(f"create_customer_chat:reply {e}", exc_info=e)
+                logger.error(
+                    f"create_customer_chat:reply [{self.id}]-[{e}]", exc_info=e
+                )
         else:
             try:
                 body = f"{subject} This is a chat between Seller and Client."
@@ -891,7 +903,9 @@ class Order(BaseModel):
                 # Add Booking tag to conversation
                 IntercomConversation.attach_booking_tag(conversation_id)
             except Exception as e:
-                logger.error(f"create_customer_chat:reply {e}", exc_info=e)
+                logger.error(
+                    f"create_customer_chat:reply [{self.id}]-[{e}]", exc_info=e
+                )
 
     def submit_order(self, override_approval_policy=False):
         """This method is used to submit an Order (set status to PENDING and set submitted_on to now).

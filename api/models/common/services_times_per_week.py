@@ -70,26 +70,46 @@ class PricingServiceTimesPerWeek(BaseModel):
             raise Exception("The times_per_week must be positive.")
 
         if times_per_week == 1:
+            if self.one_time_per_week is None:
+                raise Exception(
+                    f"The one_time_per_week must be set on PricingServiceTimesPerWeek {self.id}."
+                )
             return PricingLineItem(
                 description="One Time Per Week",
                 unit_price=self.one_time_per_week,
             )
         elif times_per_week == 2:
+            if self.two_times_per_week is None:
+                raise Exception(
+                    f"The two_times_per_week must be set on PricingServiceTimesPerWeek {self.id}."
+                )
             return PricingLineItem(
                 description="Two Times Per Week",
                 unit_price=self.two_times_per_week,
             )
         elif times_per_week == 3:
+            if self.three_times_per_week is None:
+                raise Exception(
+                    f"The three_times_per_week must be set on PricingServiceTimesPerWeek {self.id}."
+                )
             return PricingLineItem(
                 description="Three Times Per Week",
                 unit_price=self.three_times_per_week,
             )
         elif times_per_week == 4:
+            if self.four_times_per_week is None:
+                raise Exception(
+                    f"The four_times_per_week must be set on PricingServiceTimesPerWeek {self.id}."
+                )
             return PricingLineItem(
                 description="Four Times Per Week",
                 unit_price=self.four_times_per_week,
             )
         elif times_per_week == 5:
+            if self.five_times_per_week is None:
+                raise Exception(
+                    f"The five_times_per_week must be set on PricingServiceTimesPerWeek {self.id}."
+                )
             return PricingLineItem(
                 description="Five Times Per Week",
                 unit_price=self.five_times_per_week,
