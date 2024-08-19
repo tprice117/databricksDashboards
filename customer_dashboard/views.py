@@ -47,6 +47,7 @@ from api.models import (
     UserAddress,
     UserAddressType,
     UserGroup,
+    TimeSlot,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -1099,6 +1100,11 @@ def new_order_5(request):
             order_group.delivery_fee = seller_product_location.delivery_fee
         if seller_product_location.removal_fee:
             order_group.removal_fee = seller_product_location.removal_fee
+        if schedule_window:
+            time_slot_name = schedule_window.split(' ')[0]
+            time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
+            if time_slot:
+                order_group.time_slot = time_slot
         order_group.save()
 
         # Create the order (Let submitted on null, this indicates that the order is in the cart)

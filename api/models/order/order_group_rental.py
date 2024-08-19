@@ -33,6 +33,7 @@ class OrderGroupRental(PricingRentalTwoStep):
     def order_line_items(
         self,
         order: Order,
+        is_last_order: bool = False,
     ) -> List[OrderLineItem]:
         """
         Returns the OrderLineItems for this OrderGroupRental. This method
@@ -41,7 +42,9 @@ class OrderGroupRental(PricingRentalTwoStep):
         # Get the OrderLineItemType for RENTAL.
         order_line_item_type = OrderLineItemType.objects.get(code="RENTAL")
 
-        line_items = self.get_price(duration=order.end_date - order.start_date)
+        line_items = self.get_price(
+            duration=order.end_date - order.start_date, is_last_order=is_last_order
+        )
 
         order_line_items: List[OrderLineItem] = []
         for line_item in line_items:
