@@ -24,7 +24,13 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
-                        <h6 class="text-muted card-subtitle mb-2">{{ order.id }}</h6>
+                        <h6 class="text-muted card-subtitle mb-2">
+                            {% if request.user.is_superuser %}
+                                <a class="btn btn-link" role="button" href="/admin/api/order/{{ order.id }}/change/">{{ order.id }}</a>
+                            {% else %}
+                                {{ order.id }}
+                            {% endif %}
+                        </h6>
                         <p style="margin-bottom: 0px;">
                             <strong>Status</strong>
                         </p>
