@@ -121,7 +121,8 @@ class SellerProductSellerLocation(BaseModel):
 
         # Return the total price.
         data = get_pricing_engine_response_serializer(pricing).data
-
+        if "total" not in data:
+            return None
         return data["total"] if pricing else None
 
     def __str__(self):
