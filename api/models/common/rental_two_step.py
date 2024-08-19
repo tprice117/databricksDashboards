@@ -53,6 +53,10 @@ class PricingRentalTwoStep(BaseModel):
 
         line_items = []
         if not is_last_order:
+            if self.price_per_day_included is None:
+                raise Exception(
+                    f"The price_per_day_included must be set on PricingRentalTwoStep {self.id}."
+                )
             # Included day price (always charged if not removal).
             included_price = PricingLineItem(
                 description="Included",
@@ -70,6 +74,10 @@ class PricingRentalTwoStep(BaseModel):
         )
 
         if additional_days > 0:
+            if self.price_per_day_additional is None:
+                raise Exception(
+                    f"The price_per_day_additional must be set on PricingRentalTwoStep {self.id}."
+                )
             additional_days_price = PricingLineItem(
                 description="Additional",
                 units="Days",

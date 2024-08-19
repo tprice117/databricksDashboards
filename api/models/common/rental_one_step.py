@@ -1,6 +1,5 @@
 import math
 from datetime import timedelta
-from math import ceil
 
 from django.db import models
 
@@ -45,6 +44,11 @@ class PricingRentalOneStep(BaseModel):
     def get_price(self, duration: timedelta) -> PricingLineItem:
         if duration < timedelta(0):
             raise Exception("The Duration must be positive.")
+
+        if self.rate is None:
+            # Ensure the unit_price is never None otherwise it could error
+            # in order._add_fuel_and_environmental().
+            raise Exception(f"The rate must be set on PricingRentalOneStep {self.id}.")
 
         # Get the quanity of 28 day periods for the rental.
         periods = math.ceil(duration.days / 28) if duration.days != 0 else 1
