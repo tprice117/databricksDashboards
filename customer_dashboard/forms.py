@@ -3,7 +3,7 @@ import datetime
 from django import forms
 from django.core.exceptions import ValidationError
 
-from api.models import UserAddressType, UserGroup
+from api.models import UserAddressType, UserGroup, UserAddress
 from common.models.choices.user_type import UserType
 
 
@@ -418,7 +418,21 @@ class OrderGroupForm(forms.Form):
         # Do not allow delivery date to be on a Sunday.
         delivery_date = self.cleaned_data["delivery_date"]
         if delivery_date.weekday() == 6:  # 6 corresponds to Sunday
-            raise ValidationError("Date cannot be on a Sunday.")
+            user_address = self.cleaned_data["user_address"]
+            allow_sunday_delivery = False
+            if user_address:
+                user_address_obj = UserAddress.objects.get(id=user_address)
+                allow_sunday_delivery = user_address_obj.allow_sunday_delivery
+            if not allow_sunday_delivery:
+                raise ValidationError("Date cannot be on a Sunday.")
+        elif delivery_date.weekday() == 5:
+            user_address = self.cleaned_data["user_address"]
+            allow_saturday_delivery = False
+            if user_address:
+                user_address_obj = UserAddress.objects.get(id=user_address)
+                allow_saturday_delivery = user_address_obj.allow_saturday_delivery
+            if not allow_saturday_delivery:
+                raise ValidationError("Date cannot be on a Saturday.")
         return delivery_date
 
     def clean_removal_date(self):
