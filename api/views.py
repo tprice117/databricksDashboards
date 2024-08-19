@@ -411,6 +411,7 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
             "add_ons__choices",
         )
 
+
 @authentication_classes([])
 @permission_classes([])
 class MainProductWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -499,7 +500,7 @@ class DayOfWeekViewSet(viewsets.ModelViewSet):  # added 2/25/2021
 
 
 class TimeSlotViewSet(viewsets.ModelViewSet):  # added 2/25/2021
-    queryset = TimeSlot.objects.all()
+    queryset = TimeSlot.get_all_time_slots()
     serializer_class = TimeSlotSerializer
     filterset_fields = ["id"]
 
