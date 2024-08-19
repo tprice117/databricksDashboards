@@ -50,11 +50,11 @@ class PricingServiceTimesPerWeek(BaseModel):
 
     def _is_complete(self):
         return (
-            self.one_time_per_week
-            or self.two_times_per_week
-            or self.three_times_per_week
-            or self.four_times_per_week
-            or self.five_times_per_week
+            self.one_time_per_week is not None
+            or self.two_times_per_week is not None
+            or self.three_times_per_week is not None
+            or self.four_times_per_week is not None
+            or self.five_times_per_week is not None
         )
 
     # This is a workaround to make the is_complete property to display in the admin
