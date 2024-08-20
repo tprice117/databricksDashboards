@@ -419,30 +419,15 @@ class Order(BaseModel):
                     is_flat_rate=True,
                 )
             ]
-            if self.order_group.seller_product_seller_location.delivery_fee
+            if self.order_group.seller_product_seller_location.delivery_fee is not None
             else []
         )
 
     def _add_order_line_item_removal(
         self, add_empty=False
     ) -> Optional[List[OrderLineItem]]:
-        return (
-            [
-                OrderLineItem(
-                    order=self,
-                    order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
-                    rate=self.order_group.seller_product_seller_location.removal_fee,
-                    quantity=1,
-                    description="Removal Fee",
-                    platform_fee_percent=self.order_group.take_rate,
-                    is_flat_rate=True,
-                )
-            ]
-            if (
-                self.order_group.seller_product_seller_location.removal_fee
-                and not add_empty
-            )
-            else [
+        if add_empty:
+            return [
                 OrderLineItem(
                     order=self,
                     order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
@@ -453,7 +438,20 @@ class Order(BaseModel):
                     is_flat_rate=True,
                 )
             ]
-        )
+        elif self.order_group.seller_product_seller_location.removal_fee:
+            return [
+                OrderLineItem(
+                    order=self,
+                    order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
+                    rate=self.order_group.seller_product_seller_location.removal_fee,
+                    quantity=1,
+                    description="Removal Fee",
+                    platform_fee_percent=self.order_group.take_rate,
+                    is_flat_rate=True,
+                )
+            ]
+        else:
+            return []
 
     def _add_fuel_and_environmental(
         self,
