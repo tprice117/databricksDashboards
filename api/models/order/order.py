@@ -334,14 +334,15 @@ class Order(BaseModel):
                         self._add_order_line_item_delivery(),
                     )
 
-                # Only add OrderLineItems if this is the last Order in the OrderGroup.
                 # NOTE: Don't add any other OrderLineItems if this is a non equipment removal.
                 standard_removal = is_last_order and not is_equiptment_order
-                if (is_last_order and not is_equiptment_order) or (
-                    is_first_order and is_equiptment_order
-                ):
+                # Add Removal Line Item for first and last Order.
+                # The first order will get any actual removal fee, the last order will get a $0 removal line item.
+                if is_first_order:
+                    new_order_line_items.extend(self._add_order_line_item_removal())
+                elif is_last_order:
                     new_order_line_items.extend(
-                        self._add_order_line_item_removal(),
+                        self._add_order_line_item_removal(add_empty=True)
                     )
 
                 # If the OrderGroup has Material, add those line items.
@@ -422,7 +423,9 @@ class Order(BaseModel):
             else []
         )
 
-    def _add_order_line_item_removal(self) -> Optional[List[OrderLineItem]]:
+    def _add_order_line_item_removal(
+        self, add_empty=False
+    ) -> Optional[List[OrderLineItem]]:
         return (
             [
                 OrderLineItem(
@@ -435,7 +438,10 @@ class Order(BaseModel):
                     is_flat_rate=True,
                 )
             ]
-            if (self.order_group.seller_product_seller_location.removal_fee)
+            if (
+                self.order_group.seller_product_seller_location.removal_fee
+                and not add_empty
+            )
             else [
                 OrderLineItem(
                     order=self,
