@@ -370,20 +370,22 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                     main_product_waste_type__waste_type=instance.waste_type
                 ).first()
             )
-            # Update the tonnage_quantity if SPSL has a higher tonnage_included.
-            if (
-                material_waste_type
-                and material_waste_type.tonnage_included > instance.tonnage_quantity
-            ):
-                instance.tonnage_quantity = material_waste_type.tonnage_included
-                instance.save()
+            price_per_ton = 0
+            tonnage_included = 0
+            if material_waste_type:
+                price_per_ton = material_waste_type.price_per_ton
+                tonnage_included = material_waste_type.tonnage_included
+                # Update the tonnage_quantity if SPSL has a higher tonnage_included.
+                if tonnage_included > instance.tonnage_quantity:
+                    instance.tonnage_quantity = tonnage_included
+                    instance.save()
             # Create an OrderGroupMaterial.
             order_group_material = OrderGroupMaterial.objects.create(
                 order_group=instance,
                 # Only adding this so that the OrderGroupMaterialInline
                 # in the admin will show the correct field values.
-                price_per_ton=material_waste_type.price_per_ton,
-                tonnage_included=material_waste_type.tonnage_included,
+                price_per_ton=price_per_ton,
+                tonnage_included=tonnage_included,
             )
 
             # For each SellerProductSellerLocationMaterialWasteType,
