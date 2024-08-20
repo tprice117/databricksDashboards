@@ -500,7 +500,7 @@ class DayOfWeekViewSet(viewsets.ModelViewSet):  # added 2/25/2021
 
 
 class TimeSlotViewSet(viewsets.ModelViewSet):  # added 2/25/2021
-    queryset = TimeSlot.get_all_time_slots()
+    queryset = TimeSlot.get_all_time_slots().order_by("-updated_on")
     serializer_class = TimeSlotSerializer
     filterset_fields = ["id"]
 
