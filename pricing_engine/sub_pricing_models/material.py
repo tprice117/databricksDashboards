@@ -28,6 +28,18 @@ class MaterialPrice:
             included_tonnage_quantity = (
                 seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity
             )
+            if waste_type:
+                # Use SPSL's tonnage_included if it has a higher amount.
+                # TODO: What if the SPSL tonnage_included is lower?
+                material_waste_type = (
+                    seller_product_seller_location.material.waste_types.filter(
+                        main_product_waste_type__waste_type=waste_type
+                    ).first()
+                )
+                if material_waste_type and material_waste_type.tonnage_included > int(
+                    included_tonnage_quantity
+                ):
+                    included_tonnage_quantity = material_waste_type.tonnage_included
             if included_tonnage_quantity is None:
                 included_tonnage_quantity = 2
 

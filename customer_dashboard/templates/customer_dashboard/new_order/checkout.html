@@ -24,9 +24,12 @@
         function removeItemFromCart(el) {
             // Get current query params.
             let queryParams = new URLSearchParams(window.location.search);
-            // Get id of item
+            // Get order group id of item
             let id = el.getAttribute("data-id");
             queryParams.set("id", encodeURIComponent(id));
+            // Get order id
+            let orderId = el.getAttribute("data-orderid");
+            queryParams.set("order_id", encodeURIComponent(orderId));
             // Get cart-subtotal
             let cartSubtotal = document.getElementById("cart-subtotal");
             let subtotal = parseFloat(cartSubtotal.getAttribute("data-subtotal"));
@@ -405,7 +408,7 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col">
-                                    {% for item in cart.values %}
+                                    {% for item in cart %}
                                         <div class="row cart-item">
                                             <div class="col-auto">
                                                 <img class="img-thumbnail img-fluid"
@@ -441,7 +444,7 @@
                                             <div class="col-auto">
                                                 {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Remove</button> {% endcomment %}
                                                 <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ item.order_group.id }}" type="button"
-                                                    data-id="{{ item.order_group.id }}" data-price="{{ item.price }}"
+                                                    data-id="{{ item.order_group.id }}" data-orderid="{{ item.order.id }}" data-price="{{ item.price }}"
                                                     hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
                                                     onClick="event.stopPropagation();
                                                     Swal.fire(

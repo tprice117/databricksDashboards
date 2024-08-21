@@ -45,7 +45,7 @@ class MatchingEngine:
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
             seller_product__product=product,
         )
-        # Select related fields to reduce the number of queries.
+        # Select related fields to reduce the number of queries. "material__waste_types"
         seller_product_seller_locations = (
             seller_product_seller_locations.select_related(
                 "seller_product__product", "seller_location"
