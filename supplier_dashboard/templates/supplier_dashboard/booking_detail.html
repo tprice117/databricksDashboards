@@ -79,14 +79,18 @@
                             <strong>Time Window</strong>
                         </p>
                         <p>
-                            {% if order.order_group.time_slot %}
-                                {{ order.order_group.time_slot.name }}
-                                <br />
-                                {{ order.order_group.time_slot.start }}
-                                -
-                                {{ order.order_group.time_slot.end }}
+                            {% if order.schedule_window %}
+                                {{ order.schedule_window }}
                             {% else %}
-                                Any
+                                {% if order.order_group.time_slot %}
+                                    {{ order.order_group.time_slot.name }}
+                                    <br />
+                                    {{ order.order_group.time_slot.start }}
+                                    -
+                                    {{ order.order_group.time_slot.end }}
+                                {% else %}
+                                    Any
+                                {% endif %}
                             {% endif %}
                         </p>
                         <a class="card-link" href="#"></a><a href="{% url 'supplier_bookings' %}?service_date={{ order.end_date|urlencode }}">See All Orders on this Service Date</a><a class="card-link" href="#"></a>

@@ -1046,14 +1046,18 @@
                                                                                                                                                 style="line-height:16px;text-align:right;">
                                                                                                                                                 <span
                                                                                                                                                     style="color:#020f16;font-weight:700;font-family:Outfit,Arial,sans-serif;font-size:14px;line-height:16px;text-align:right;">
-                                                                                                                                                    {% if order.order_group.time_slot %}
-                                                                                                                                                    {{ order.order_group.time_slot.name }}
-                                                                                                                                                    <br>
-                                                                                                                                                    {{ order.order_group.time_slot.start }}
-                                                                                                                                                    -
-                                                                                                                                                    {{ order.order_group.time_slot.end }}
+                                                                                                                                                    {% if order.schedule_window %}
+                                                                                                                                                        {{ order.schedule_window }}
                                                                                                                                                     {% else %}
-                                                                                                                                                    Any
+                                                                                                                                                        {% if order.order_group.time_slot %}
+                                                                                                                                                            {{ order.order_group.time_slot.name }}
+                                                                                                                                                            <br>
+                                                                                                                                                            {{ order.order_group.time_slot.start }}
+                                                                                                                                                            -
+                                                                                                                                                            {{ order.order_group.time_slot.end }}
+                                                                                                                                                        {% else %}
+                                                                                                                                                            Any
+                                                                                                                                                        {% endif %}
                                                                                                                                                     {% endif %}
                                                                                                                                                 </span>
                                                                                                                                             </div>

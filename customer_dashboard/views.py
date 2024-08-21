@@ -1101,7 +1101,7 @@ def new_order_5(request):
         if seller_product_location.removal_fee:
             order_group.removal_fee = seller_product_location.removal_fee
         if schedule_window:
-            time_slot_name = schedule_window.split(' ')[0]
+            time_slot_name = schedule_window.split(" ")[0]
             time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
             if time_slot:
                 order_group.time_slot = time_slot
@@ -1205,6 +1205,7 @@ def new_order_5(request):
         if filter_qry == "new":
             # Displays all open carts that the Order.CreatedDate == today
             if start_date and end_date:
+                # Could use https://docs.djangoproject.com/en/5.0/ref/models/querysets/#range
                 orders = orders.filter(
                     Q(created_on__date__gte=start_date)
                     & Q(created_on__date__lte=end_date)
@@ -1382,6 +1383,10 @@ def cart_send_quote(request):
                         "UserAddress.Zip": order.order_group.user_address.postal_code,
                     },
                 }
+                # payload = {"trigger": data["message_data"]}
+                # return render(
+                #     request, "customer_dashboard/customer_quote.html", payload
+                # )
                 response = requests.post(
                     "https://api.customer.io/v1/send/email",
                     headers=headers,
@@ -1501,10 +1506,11 @@ def checkout(request, user_address_id):
     context = get_user_context(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
     # Get all orders in the cart for this user_address_id.
-    orders = Order.objects.filter(
-        order_group__user_address_id=user_address_id,
-        submitted_on__isnull=True,
+    orders = get_booking_objects(
+        request, context["user"], context["user_group"], exclude_in_cart=False
     )
+    orders = orders.filter(order_group__user_address_id=user_address_id)
+    orders = orders.filter(submitted_on__isnull=True)
     orders = orders.prefetch_related("order_line_items")
     orders = orders.order_by("-order_group__start_date")
 
@@ -1531,7 +1537,7 @@ def checkout(request, user_address_id):
             context["user_address"].save()
             messages.success(request, "Access details saved.")
 
-    context["cart"] = {}
+    context["cart"] = []
     context["discounts"] = 0
     context["subtotal"] = 0
     context["cart_count"] = 0
@@ -1566,19 +1572,16 @@ def checkout(request, user_address_id):
         customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full
         context["pre_tax_subtotal"] += customer_price
-        try:
-            context["cart"][order.order_group_id]["price"] += customer_price
-            context["cart"][order.order_group.id]["count"] += 1
-            context["cart"][order.order_group.id]["order_type"] = order.order_type
-        except KeyError:
-            context["cart"][order.order_group.id] = {
+        context["cart"].append(
+            {
                 "order": order,
                 "order_group": order.order_group,
                 "price": customer_price,
                 "count": 1,
                 "order_type": order.order_type,
             }
-            context["cart_count"] += 1
+        )
+        context["cart_count"] += 1
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
         messages.error(request, "This Order is empty.")
