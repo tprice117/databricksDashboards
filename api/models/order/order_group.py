@@ -376,7 +376,6 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 price_per_ton = material_waste_type.price_per_ton
                 tonnage_included = material_waste_type.tonnage_included
                 # Update the tonnage_quantity if SPSL has a higher tonnage_included.
-                # TODO: What if the SPSL tonnage_included is lower?
                 if tonnage_included > instance.tonnage_quantity:
                     instance.tonnage_quantity = tonnage_included
                     instance.save()
