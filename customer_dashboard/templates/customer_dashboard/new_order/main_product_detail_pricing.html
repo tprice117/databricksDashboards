@@ -130,6 +130,13 @@
                                     No charge
                                 {% endif %}
                             </p>
+                            <p class="text-end">
+                                Fuel and Fees:{% if item.price_data.fuel_and_environmental %}
+                                    <span class="price-item" data-price="{{ item.price_data.fuel_and_environmental.total }}">${{ item.price_data.fuel_and_environmental.total|floatformat:2|intcomma }}</span>
+                                {% else %}
+                                    No charge
+                                {% endif %}
+                            </p>
                         </div>
                         <div class="col-auto">
                             <form id="orderForm" action="{% url 'customer_new_order_5' %}" method="post" enctype="multipart/form-data">
