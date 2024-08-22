@@ -740,6 +740,7 @@ def new_order(request):
 @login_required(login_url="/admin/login/")
 def new_order_category_price(request, category_id):
     context = {}
+    # NOTE: Causes a lot of heavy db queries. Need to optimize.
     main_product_category = MainProductCategory.objects.get(id=category_id)
     context["price_from"] = main_product_category.price_from
     # Assume htmx request
@@ -932,7 +933,8 @@ def new_order_4(request):
             product_addon_choices_db = ProductAddOnChoice.objects.filter(
                 product_id=product.id
             ).values_list("add_on_choice_id", flat=True)
-            if set(product_addon_choices_db) == prod_addon_choice_set:
+            db_choices = set([str(choice) for choice in product_addon_choices_db])
+            if db_choices == prod_addon_choice_set:
                 context["product"] = product
                 break
     elif products.count() == 1:
