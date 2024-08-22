@@ -1000,6 +1000,9 @@ def new_order_4(request):
                 seller_product_seller_locations=[seller_product_seller_location],
             )[0]
         )
+        # Include because SellerProductSellerLocationSerializer does not include waste types info needed
+        # needed for price_details_modal.
+        seller_d["spsl"] = seller_product_seller_location
 
         context["seller_product_seller_locations"].append(seller_d)
 

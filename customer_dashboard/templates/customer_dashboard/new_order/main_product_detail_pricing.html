@@ -137,6 +137,15 @@
                                     No charge
                                 {% endif %}
                             </p>
+                            {% if item.seller_product_seller_location.seller_product.product.main_product.has_material %}
+                                <p class="text-end">
+                                    {% if item.price_data.material.items.0.quantity > item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity %}
+                                        Tonnage Included (extra): {{ item.price_data.material.items.0.quantity }}
+                                    {% else %}
+                                        Tonnage Included (standard): {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}
+                                    {% endif %}
+                                </p>
+                            {% endif %}
                         </div>
                         <div class="col-auto">
                             <form id="orderForm" action="{% url 'customer_new_order_5' %}" method="post" enctype="multipart/form-data">
