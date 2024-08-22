@@ -26,9 +26,9 @@
                             <div class="row">
                                 <div class="col" style="padding-right: 24px;padding-left: 24px;padding-top: 12px;">
                                     <h5>{{ main_product_category.name }}</h5>
-                                    <p style="margin-bottom: 0px;" hx-get="{% url 'customer_category_price' category_id=main_product_category.id %}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
+                                    {% comment %} <p style="margin-bottom: 0px;" hx-get="{% url 'customer_category_price' category_id=main_product_category.id %}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
                                         <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                                    </p>
+                                    </p> {% endcomment %}
                                 </div>
                             </div>
                         </div>

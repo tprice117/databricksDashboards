@@ -30,7 +30,6 @@ class MaterialPrice:
             )
             if waste_type:
                 # Use SPSL's tonnage_included if it has a higher amount.
-                # TODO: What if the SPSL tonnage_included is lower?
                 material_waste_type = (
                     seller_product_seller_location.material.waste_types.filter(
                         main_product_waste_type__waste_type=waste_type
