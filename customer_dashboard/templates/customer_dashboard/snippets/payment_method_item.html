@@ -3,7 +3,8 @@
 <div class="card" id="paymentMethod{{ forloop.counter }}">
     <div class="card-body">
         <div class="form-check">
-            {% if payment_method.active and cart %}
+            <!-- Only add checkbox if this is on the checkout form. -->
+            {% if payment_method.active and is_checkout %}
                 <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" {% if forloop.first %}required{% endif %} {% if payment_method.is_default %}checked{% endif %}>
             {% endif %}
             <div class="row">
@@ -32,7 +33,7 @@
                             {% if user_address %}
                             <button class="dropdown-item"
                                 hx-post="{% url 'customer_default_payment_method' user_address_id=user_address.id payment_method_id=payment_method.id %}"
-                                hx-vals='{"loopcount": "{{forloop.counter}}"}'
+                                hx-vals='{"loopcount": "{{forloop.counter}}", "is_checkout": "{{ is_checkout }}"}'
                                 hx-swap="outerHTML" hx-target="#paymentMethod{{ forloop.counter }}"
                                 hx-indicator="#htmx-indicator-status"
                                 hx-trigger='confirmed' 
