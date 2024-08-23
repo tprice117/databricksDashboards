@@ -1494,11 +1494,20 @@ def add_payment_method(request):
     http_status = 204
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
-        context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+        user_group_id = request.POST.get("user_group")
+        if user_address_id:
+            context["user_address"] = UserAddress.objects.filter(
+                id=user_address_id
+            ).first()
         # If staff, then get the user and user_group from the user_address.
         # If impersonating, then user and user_group are already set.
         if request.user.is_staff and not is_impersonating(request):
-            context["user_group"] = context["user_address"].user_group
+            if user_address_id:
+                context["user_group"] = context["user_address"].user_group
+            else:
+                context["user_group"] = UserGroup.objects.filter(
+                    id=user_group_id
+                ).first()
             context["user"] = (
                 context["user_group"].users.filter(type=UserType.ADMIN).first()
             )
@@ -1511,8 +1520,11 @@ def add_payment_method(request):
                     user=context["user"], user_group=context["user_group"], token=token
                 )
                 payment_method.save()
-                context["user_address"].default_payment_method_id = payment_method.id
-                context["user_address"].save()
+                if user_address_id:
+                    context["user_address"].default_payment_method_id = (
+                        payment_method.id
+                    )
+                    context["user_address"].save()
                 messages.success(request, "Payment method added.")
                 http_status = 201
 
@@ -2889,6 +2901,15 @@ def company_detail(request, user_group_id=None):
         user_group = user_group.prefetch_related("users", "user_addresses")
         user_group = user_group.first()
     context["user_group"] = user_group
+    user_group_id = None
+    if context["user_group"]:
+        user_group_id = context["user_group"].id
+    else:
+        user_group_id = context["user"].user_group_id
+    payment_methods = PaymentMethod.objects.filter(user_group_id=user_group_id)
+    # Order payment methods by newest first.
+    context["payment_methods"] = payment_methods.order_by("-created_on")
+
     if request.method == "POST":
         form = UserGroupForm(request.POST, request.FILES, user=context["user"])
         context["form"] = form
