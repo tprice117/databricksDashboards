@@ -149,6 +149,11 @@ urlpatterns = [
         name="customer_checkout",
     ),
     path(
+        "customer/cart/quote/",
+        views.show_quote,
+        name="customer_show_quote",
+    ),
+    path(
         "customer/<uuid:user_address_id>/<uuid:payment_method_id>/default/payment/",
         views.make_payment_method_default,
         name="customer_default_payment_method",
