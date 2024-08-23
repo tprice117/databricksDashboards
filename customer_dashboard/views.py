@@ -2161,9 +2161,6 @@ def location_detail(request, location_id):
                 if form.cleaned_data.get("postal_code") != user_address.postal_code:
                     user_address.postal_code = form.cleaned_data.get("postal_code")
                     save_model = user_address
-                if form.cleaned_data.get("autopay") != user_address.autopay:
-                    user_address.autopay = form.cleaned_data.get("autopay")
-                    save_model = user_address
                 if form.cleaned_data.get("is_archived") != user_address.is_archived:
                     user_address.is_archived = form.cleaned_data.get("is_archived")
                     save_model = user_address
@@ -2367,7 +2364,6 @@ def new_location(request):
                     city = form.cleaned_data.get("city")
                     state = form.cleaned_data.get("state")
                     postal_code = form.cleaned_data.get("postal_code")
-                    autopay = form.cleaned_data.get("autopay")
                     is_archived = form.cleaned_data.get("is_archived")
                     access_details = form.cleaned_data.get("access_details")
                     allow_saturday_delivery = form.cleaned_data.get(
@@ -2386,7 +2382,6 @@ def new_location(request):
                         state=state,
                         country="US",
                         postal_code=postal_code,
-                        autopay=autopay,
                         is_archived=is_archived,
                         allow_saturday_delivery=allow_saturday_delivery,
                         allow_sunday_delivery=allow_sunday_delivery,
@@ -2401,9 +2396,18 @@ def new_location(request):
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
+                return redirect(
+                    reverse(
+                        "customer_location_detail",
+                        kwargs={
+                            "location_id": save_model.id,
+                        },
+                    )
+                )
             else:
                 messages.info(request, "No changes detected.")
-            return HttpResponseRedirect(reverse("customer_locations"))
+                return HttpResponseRedirect(reverse("customer_locations"))
+
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
@@ -3154,7 +3158,14 @@ def new_company(request):
                         )
                         user.save()
                         messages.success(request, "Successfully saved!")
-                        return HttpResponseRedirect(reverse("customer_companies"))
+                        return redirect(
+                            reverse(
+                                "customer_company_detail",
+                                kwargs={
+                                    "user_group_id": user_group.id,
+                                },
+                            )
+                        )
             else:
                 # This will let bootstrap know to highlight the fields with errors.
                 for field in form.errors:

@@ -219,13 +219,6 @@ class UserAddressForm(forms.Form):
         ),
         required=False,
     )
-    autopay = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
     is_archived = forms.BooleanField(
         initial=False,
         widget=forms.CheckboxInput(
