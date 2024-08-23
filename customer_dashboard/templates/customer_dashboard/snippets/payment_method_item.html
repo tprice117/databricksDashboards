@@ -3,7 +3,7 @@
 <div class="card" id="paymentMethod{{ forloop.counter }}">
     <div class="card-body">
         <div class="form-check">
-            {% if payment_method.active %}
+            {% if payment_method.active and cart %}
                 <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" id="flexRadio{{ forloop.counter }}" value="{{ payment_method.id }}" {% if forloop.first %}required{% endif %} {% if payment_method.is_default %}checked{% endif %}>
             {% endif %}
             <div class="row">
@@ -29,28 +29,32 @@
                         <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
                         <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
                             <p class="text-center dropdown-header">Actions</p>
+                            {% if user_address %}
                             <button class="dropdown-item"
                                 hx-post="{% url 'customer_default_payment_method' user_address_id=user_address.id payment_method_id=payment_method.id %}"
                                 hx-vals='{"loopcount": "{{forloop.counter}}"}'
                                 hx-swap="outerHTML" hx-target="#paymentMethod{{ forloop.counter }}"
+                                hx-indicator="#htmx-indicator-status"
                                 hx-trigger='confirmed' 
                                 onClick="event.stopPropagation();
                                 Swal.fire(
                                     {title: 'Make Default', text:'Make this card the default payment for this address?', icon: 'question', confirmButtonText: 'Confirm'}
                                 ).then((result)=>{
                                     if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
-                                })">Make Default <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                                })">Make Default</button>
+                            {% endif %}
                             <button class="dropdown-item"
                                 hx-post="{% url 'customer_remove_payment_method' payment_method_id=payment_method.id %}"
                                 hx-vals='{"loopcount": "{{forloop.counter}}"}'
                                 hx-swap="delete" hx-target="#paymentMethod{{ forloop.counter }}"
+                                hx-indicator="#htmx-indicator-status"
                                 hx-trigger='confirmed' 
                                 onClick="event.stopPropagation();
                                 Swal.fire(
                                     {title: 'Delete Payment Method', text:'Do you want to delete this Payment Method?', icon: 'question', confirmButtonText: 'Confirm'}
                                 ).then((result)=>{
                                     if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
-                                })">Delete <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                                })">Delete</button>
                         </div>
                     </div>
                 </div>
