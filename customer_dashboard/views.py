@@ -1447,6 +1447,10 @@ def make_payment_method_default(request, user_address_id, payment_method_id):
     context = get_user_context(request)
     if request.method == "POST":
         context["forloop"] = {"counter": request.POST.get("loopcount", 0)}
+        if request.POST.get("is_checkout"):
+            context["is_checkout"] = 1
+        else:
+            context["is_checkout"] = 0
         # user_address_id = request.POST.get("user_address")
         # payment_method_id = request.POST.get("payment_method")
         context["payment_method"] = PaymentMethod.objects.filter(
@@ -1543,6 +1547,7 @@ def add_payment_method(request):
 def checkout(request, user_address_id):
     context = get_user_context(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+    context["is_checkout"] = 1
     # Get all orders in the cart for this user_address_id.
     orders = get_booking_objects(
         request, context["user"], context["user_group"], exclude_in_cart=False
