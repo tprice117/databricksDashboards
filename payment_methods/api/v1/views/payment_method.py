@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from django.db.models import Q
 
 from payment_methods.api.v1.serializers import PaymentMethodSerializer
 from payment_methods.models import PaymentMethod, PaymentMethodUser
@@ -19,7 +20,6 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
                 user=self.request.user,
             ).values_list("payment_method", flat=True)
 
-            return (
-                self.queryset.filter(user=self.request.user)
-                | self.queryset.filter(id__in=payment_method_users)
+            return self.queryset.filter(
+                Q(user=self.request.user) | Q(id__in=payment_method_users)
             ).distinct()
