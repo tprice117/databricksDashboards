@@ -156,6 +156,11 @@ class UserAddressForm(forms.Form):
             }
         ),
     )
+    project_id = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
+    )
     all_address_types = get_all_address_types()
     address_type = forms.ChoiceField(
         choices=all_address_types,
@@ -200,20 +205,6 @@ class UserAddressForm(forms.Form):
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "US"}),
         disabled=True,
     )
-    autopay = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
-    is_archived = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
     allow_saturday_delivery = forms.BooleanField(
         initial=False,
         widget=forms.CheckboxInput(
@@ -222,6 +213,20 @@ class UserAddressForm(forms.Form):
         required=False,
     )
     allow_sunday_delivery = forms.BooleanField(
+        initial=False,
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
+        required=False,
+    )
+    autopay = forms.BooleanField(
+        initial=False,
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
+        required=False,
+    )
+    is_archived = forms.BooleanField(
         initial=False,
         widget=forms.CheckboxInput(
             attrs={"class": "form-check-input", "role": "switch"}

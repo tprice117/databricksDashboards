@@ -1355,6 +1355,21 @@ def cart_send_quote(request):
             if email_lst and order_id_lst:
                 order_id_1 = order_id_lst[0]
                 order = Order.objects.filter(id=order_id_1).first()
+                line_types = {}
+                for order_line_item in order.order_line_items.all():
+                    try:
+                        line_types[order_line_item.order_line_item_type.code][
+                            "items"
+                        ].append(order_line_item)
+                    except KeyError:
+                        line_types[order_line_item.order_line_item_type.code] = {
+                            "type": order_line_item.order_line_item_type,
+                            "items": [order_line_item],
+                        }
+                # Sort line_types by type["sort"] and put into a list
+                context["line_types"] = sorted(
+                    line_types.values(), key=lambda item: item["type"].sort
+                )
                 # time.sleep(4)
                 subject = (
                     "Downstream | Quote | "
@@ -1369,6 +1384,7 @@ def cart_send_quote(request):
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
                     "Content-Type": "application/json",
                 }
+                quote_expiration = timezone.now() + datetime.timedelta(days=14)
                 data = {
                     "transactional_message_id": 3,
                     "to": ",".join(email_lst),
@@ -1376,6 +1392,8 @@ def cart_send_quote(request):
                     "subject": subject,
                     "identifiers": {"email": email_lst[0]},
                     "message_data": {
+                        "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
+                        "quote_id": 1001,
                         "full_name": order.order_group.user.full_name,
                         "company_name": order.order_group.user.user_group.name,
                         "delivery_address": order.order_group.user_address.formatted_address(),
@@ -1386,31 +1404,34 @@ def cart_send_quote(request):
                         "UserAddress.City": order.order_group.user_address.city,
                         "UserAddress.State": order.order_group.user_address.state,
                         "UserAddress.Zip": order.order_group.user_address.postal_code,
+                        "two_step": [
+                            {"order": order, "line_types": context["line_types"]},
+                        ],
                     },
                 }
-                # payload = {"trigger": data["message_data"]}
-                # return render(
-                #     request, "customer_dashboard/customer_quote.html", payload
-                # )
-                response = requests.post(
-                    "https://api.customer.io/v1/send/email",
-                    headers=headers,
-                    data=json.dumps(data),
+                payload = {"trigger": data["message_data"]}
+                return render(
+                    request, "customer_dashboard/customer_quote.html", payload
                 )
-                if response.status_code < 400:
-                    ret_data = response.json()
-                    # [delivery_id:{ret_data['delivery_id']}-queued_at:{ret_data['queued_at']}]
-                    return JsonResponse(
-                        {
-                            "status": "success",
-                            "message": "Successfully sent quote.",
-                        }
-                    )
-                else:
-                    ret_data = response.json()
-                    return JsonResponse(
-                        {"status": "error", "error": ret_data["meta"]["error"]}
-                    )
+                # response = requests.post(
+                #     "https://api.customer.io/v1/send/email",
+                #     headers=headers,
+                #     data=json.dumps(data),
+                # )
+                # if response.status_code < 400:
+                #     ret_data = response.json()
+                #     # [delivery_id:{ret_data['delivery_id']}-queued_at:{ret_data['queued_at']}]
+                #     return JsonResponse(
+                #         {
+                #             "status": "success",
+                #             "message": "Successfully sent quote.",
+                #         }
+                #     )
+                # else:
+                #     ret_data = response.json()
+                #     return JsonResponse(
+                #         {"status": "error", "error": ret_data["meta"]["error"]}
+                #     )
             else:
                 return JsonResponse(
                     {"status": "error", "error": "No email or order ids."}
@@ -2086,6 +2107,17 @@ def location_detail(request, location_id):
         if invoices.exists():
             context["invoices"] = invoices[:5]
 
+    payment_methods = PaymentMethod.objects.filter(
+        user_group_id=context["user_address"].user_group_id
+    )
+    # Order payment methods by newest first.
+    payment_methods = payment_methods.order_by("-created_on")
+    context["payment_methods"] = []
+    for payment_method in payment_methods:
+        if payment_method.id == context["user_address"].default_payment_method_id:
+            setattr(payment_method, "is_default", True)
+        context["payment_methods"].append(payment_method)
+
     if request.method == "POST":
         try:
             save_model = None
@@ -2094,6 +2126,9 @@ def location_detail(request, location_id):
             if form.is_valid():
                 if form.cleaned_data.get("name") != user_address.name:
                     user_address.name = form.cleaned_data.get("name")
+                    save_model = user_address
+                if form.cleaned_data.get("project_id") != user_address.project_id:
+                    user_address.project_id = form.cleaned_data.get("project_id")
                     save_model = user_address
                 if form.cleaned_data.get("address_type") != str(
                     user_address.user_address_type_id
@@ -2168,6 +2203,7 @@ def location_detail(request, location_id):
         context["user_address_form"] = UserAddressForm(
             initial={
                 "name": user_address.name,
+                "project_id": user_address.project_id,
                 "address_type": user_address.user_address_type_id,
                 "street": user_address.street,
                 "city": user_address.city,
@@ -2310,10 +2346,10 @@ def new_location(request):
             save_model = None
             if "user_address_submit" in request.POST:
                 form = UserAddressForm(request.POST)
-                # TODO: Save country
                 context["user_address_form"] = form
                 if form.is_valid():
                     name = form.cleaned_data.get("name")
+                    project_id = form.cleaned_data.get("project_id")
                     address_type = form.cleaned_data.get("address_type")
                     street = form.cleaned_data.get("street")
                     city = form.cleaned_data.get("city")
@@ -2332,6 +2368,7 @@ def new_location(request):
                         user_group_id=context["user"].user_group_id,
                         user_id=context["user"].id,
                         name=name,
+                        project_id=project_id,
                         street=street,
                         city=city,
                         state=state,
