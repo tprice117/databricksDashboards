@@ -1481,9 +1481,9 @@ def show_quote(request):
             "multi_step": multi_step,
             "total": f"{total:,.2f}",
             "contact": {
-                "full_name": request.user.full_name,
-                "email": request.user.email,
-                "phone": request.user.phone,  # (720) 490-1823
+                "full_name": order.created_by.user.full_name,
+                "email": order.created_by.user.email,
+                "phone": order.created_by.user.phone,  # (720) 490-1823
             },
         },
     }
