@@ -1359,8 +1359,14 @@ def show_quote(request):
 
     for order in order:
         item = {
-            "order": order,
+            "product": {
+                "name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                "image": order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url,
+            },
+            "start_date": order.start_date,
+            "tonnage_quantity": order.order_group.tonnage_quantity,
             "line_types": {},
+            "addons": [],
             "subtotal": 0,
             "fuel_fees": 0,
             "estimated_taxes": 0,
@@ -1379,7 +1385,25 @@ def show_quote(request):
                 "total": 0,
             },
             "service_price": 0,
+            "schedule_window": order.schedule_window,
         }
+        if not item["schedule_window"]:
+            if item.order.order_group.time_slot:
+                item["schedule_window"] = (
+                    f"{order.order_group.time_slot.name} ({order.order_group.time_slot.start}-{order.order_group.time_slot.end})"
+                )
+            else:
+                item["schedule_window"] = "Anytime (7am-4pm)"
+        addons = (
+            order.order_group.seller_product_seller_location.seller_product.product.product_add_on_choices.all()
+        )
+        for addon in addons:
+            item["addons"].append(
+                {
+                    "key": addon.add_on_choice.add_on.name,
+                    "val": addon.add_on_choice.name,
+                }
+            )
         for order_line_item in order.order_line_items.all():
             try:
                 item["line_types"][order_line_item.order_line_item_type.code][
@@ -1443,7 +1467,12 @@ def show_quote(request):
             + item["one_time"]["estimated_taxes"],
             2,
         )
-        total += item["total"]
+        if (
+            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+        ):
+            total += item["one_time"]["total"]
+        else:
+            total += item["total"] + item["one_time"]["total"]
         if (
             order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
         ):
@@ -1455,9 +1484,56 @@ def show_quote(request):
         elif (
             order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
         ):
+            item["rental_breakdown"] = {
+                "day": {
+                    "base": order.order_group.seller_product_seller_location.rental_multi_step.day,
+                    "rpp_fee": 0,
+                },
+                "week": {
+                    "base": order.order_group.seller_product_seller_location.rental_multi_step.week,
+                    "rpp_fee": 0,
+                },
+                "month": {
+                    "base": order.order_group.seller_product_seller_location.rental_multi_step.month,
+                    "rpp_fee": 0,
+                },
+            }
+            # Add total, fuel fees, and estimated taxes to the rental breakdown.
+            for key in item["rental_breakdown"]:
+                item["rental_breakdown"][key]["fuel_fees"] = round(
+                    item["rental_breakdown"][key]["base"]
+                    * Decimal(item["fuel_fees_rate"] / 100),
+                    2,
+                )
+                item["rental_breakdown"][key]["estimated_taxes"] = round(
+                    item["rental_breakdown"][key]["base"]
+                    * Decimal(item["estimated_tax_rate"] / 100),
+                    2,
+                )
+
+                if (
+                    not order.order_group.user.user_group.owned_and_rented_equiptment_coi
+                ):
+                    # Add a 15% Rental Protection Plan fee if the user does not have their own COI.
+                    item["rental_breakdown"][key]["rpp_fee"] = round(
+                        item["rental_breakdown"][key]["base"] * Decimal(0.15), 2
+                    )
+                item["rental_breakdown"][key]["subtotal"] = round(
+                    item["rental_breakdown"][key]["base"]
+                    + item["rental_breakdown"][key]["fuel_fees"]
+                    + item["rental_breakdown"][key]["rpp_fee"],
+                    2,
+                )
+                item["rental_breakdown"][key]["total"] = round(
+                    item["rental_breakdown"][key]["base"]
+                    + item["rental_breakdown"][key]["fuel_fees"]
+                    + item["rental_breakdown"][key]["estimated_taxes"]
+                    + item["rental_breakdown"][key]["rpp_fee"],
+                    2,
+                )
+
             multi_step.append(item)
 
-    # time.sleep(4)
     subject = (
         "Downstream | Quote | " + order.order_group.user_address.formatted_address()
     )
@@ -1483,9 +1559,9 @@ def show_quote(request):
             "multi_step": multi_step,
             "total": f"{total:,.2f}",
             "contact": {
-                "full_name": order.created_by.user.full_name,
-                "email": order.created_by.user.email,
-                "phone": order.created_by.user.phone,  # (720) 490-1823
+                "full_name": order.created_by.full_name,
+                "email": order.created_by.email,
+                "phone": order.created_by.phone,  # (720) 490-1823
             },
         },
     }
