@@ -150,9 +150,10 @@ class PricingRentalMultiStep(BaseModel):
         return price
 
     def get_price_base_months(self, hours: int):
+        # NOTE: Months are concidered as 28 days (28x24=672).
         price, remaining_hours = self._get_price_base(
             hours=hours,
-            hours_per_interval=720,
+            hours_per_interval=672,
             effective_interval_rate=self.effective_month_rate,
         )
         if remaining_hours > 0:
@@ -197,13 +198,14 @@ class PricingRentalMultiStep(BaseModel):
         months = None
 
         remaining_hours = total_hours
+        # NOTE: Months are concidered as 28 days (28x24=672).
 
-        if remaining_hours // 720 > 0 and self.month:
+        if remaining_hours // 672 > 0 and self.month:
             # Get whole months.
-            months = remaining_hours // 720
+            months = remaining_hours // 672
 
             # Get remaining hours and price.
-            remaining_hours = remaining_hours % 720
+            remaining_hours = remaining_hours % 672
 
         if remaining_hours // 336 > 0 and self.two_weeks:
             # Get whole two-week periods.

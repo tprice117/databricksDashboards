@@ -309,7 +309,7 @@
         </div>
         <div class="card" style="margin-top: 20px;">
             <div class="card-header">
-                <h4 class="card-title">Select Payment Method<button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
+                <h4 class="card-title">Select Payment Method <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span><button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
             </div>
             <div class="card-body">
                 {% if user_address.user_group.credit_line_limit and user_address.user_group.credit_line_limit != 0 %}

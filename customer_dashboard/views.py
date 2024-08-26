@@ -7,6 +7,7 @@ from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
 import requests
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
@@ -59,6 +60,7 @@ from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
+from common.utils.state_sales_tax import get_state_sales_tax
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
@@ -1339,6 +1341,154 @@ def new_order_6(request, order_group_id):
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
     return HttpResponseRedirect(reverse("customer_new_order"))
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def show_quote(request):
+    context = get_user_context(request)
+    order_id_lst = ast.literal_eval(request.GET.get("ids"))
+    order = Order.objects.filter(id__in=order_id_lst)
+    order = order.prefetch_related("order_line_items")
+    one_step = []
+    two_step = []
+    multi_step = []
+    total = 0
+
+    for order in order:
+        item = {
+            "order": order,
+            "line_types": {},
+            "subtotal": 0,
+            "fuel_fees": 0,
+            "estimated_taxes": 0,
+            "estimated_tax_rate": get_state_sales_tax(
+                order.order_group.user_address.state
+            ),
+            "pre_tax_subtotal": 0,
+            "total": 0,
+            "discounts": 0,
+            "one_time": {
+                "delivery": 0,
+                "removal": 0,
+                # "service": 0,
+                "fuel_fees": 0,
+                "estimated_taxes": 0,
+                "total": 0,
+            },
+            "service_price": 0,
+        }
+        for order_line_item in order.order_line_items.all():
+            try:
+                item["line_types"][order_line_item.order_line_item_type.code][
+                    "items"
+                ].append(order_line_item)
+            except KeyError:
+                item["line_types"][order_line_item.order_line_item_type.code] = {
+                    "type": order_line_item.order_line_item_type,
+                    "items": [order_line_item],
+                }
+        # Sort line_types by type["sort"] and put into a list
+        item["subtotal"] = round(order.full_price(), 2)
+        item["fuel_fees"] = 0
+        item["fuel_fees_rate"] = 0
+        if item["line_types"].get("FUEL_AND_ENV", None):
+            ff_seller = round(
+                item["line_types"]["FUEL_AND_ENV"]["items"][0].seller_payout_price(), 2
+            )
+            item["fuel_fees"] = round(
+                item["line_types"]["FUEL_AND_ENV"]["items"][0].customer_price(), 2
+            )
+            if ff_seller != 0:
+                item["fuel_fees_rate"] = round(
+                    ((item["fuel_fees"] - ff_seller) / ff_seller) * 100, 2
+                )
+
+        item["pre_tax_subtotal"] = round(order.customer_price(), 2)
+        item["estimated_taxes"] = round(
+            item["pre_tax_subtotal"] * Decimal(item["estimated_tax_rate"] / 100), 2
+        )
+        item["total"] = round(item["estimated_taxes"] + order.customer_price(), 2)
+        item["discounts"] = item["subtotal"] - item["pre_tax_subtotal"]
+        if item["line_types"].get("DELIVERY", None):
+            item["one_time"]["delivery"] = round(
+                item["line_types"]["DELIVERY"]["items"][0].customer_price(), 2
+            )
+        if item["line_types"].get("REMOVAL", None):
+            item["one_time"]["removal"] = round(
+                item["line_types"]["REMOVAL"]["items"][0].customer_price(), 2
+            )
+        if item["line_types"].get("SERVICE", None):
+            item["service_price"] = round(
+                item["line_types"]["SERVICE"]["items"][0].customer_price(), 2
+            )
+
+        # Calculate the one-time fuel fees and estimated taxes
+        item["one_time"]["fuel_fees"] = round(
+            (item["one_time"]["delivery"] + item["one_time"]["removal"])
+            * Decimal(item["fuel_fees_rate"] / 100),
+            2,
+        )
+        item["one_time"]["estimated_taxes"] = round(
+            (item["one_time"]["delivery"] + item["one_time"]["removal"])
+            * Decimal(item["estimated_tax_rate"] / 100),
+            2,
+        )
+        item["one_time"]["total"] = round(
+            item["one_time"]["delivery"]
+            + item["one_time"]["removal"]
+            + item["one_time"]["fuel_fees"]
+            + item["one_time"]["estimated_taxes"],
+            2,
+        )
+        total += item["total"]
+        if (
+            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
+        ):
+            two_step.append(item)
+        elif (
+            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
+        ):
+            one_step.append(item)
+        elif (
+            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+        ):
+            multi_step.append(item)
+
+    # time.sleep(4)
+    subject = (
+        "Downstream | Quote | " + order.order_group.user_address.formatted_address()
+    )
+    quote_expiration = timezone.now() + datetime.timedelta(days=14)
+    data = {
+        "transactional_message_id": 3,
+        "subject": subject,
+        "message_data": {
+            "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
+            "quote_id": 1001,
+            "full_name": order.order_group.user.full_name,
+            "company_name": order.order_group.user.user_group.name,
+            "delivery_address": order.order_group.user_address.formatted_address(),
+            "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
+            "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
+            "UserAddress.ProjectID": order.order_group.user_address.name,
+            "UserAddress.Street": order.order_group.user_address.street,
+            "UserAddress.City": order.order_group.user_address.city,
+            "UserAddress.State": order.order_group.user_address.state,
+            "UserAddress.Zip": order.order_group.user_address.postal_code,
+            "one_step": one_step,
+            "two_step": two_step,
+            "multi_step": multi_step,
+            "total": f"{total:,.2f}",
+            "contact": {
+                "full_name": request.user.full_name,
+                "email": request.user.email,
+                "phone": request.user.phone,  # (720) 490-1823
+            },
+        },
+    }
+    payload = {"trigger": data["message_data"]}
+    return render(request, "customer_dashboard/customer_quote.html", payload)
 
 
 @login_required(login_url="/admin/login/")
