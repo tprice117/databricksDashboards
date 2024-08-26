@@ -1355,6 +1355,7 @@ def show_quote(request):
     one_step = []
     two_step = []
     multi_step = []
+    total = 0
 
     for order in order:
         item = {
@@ -1442,6 +1443,7 @@ def show_quote(request):
             + item["one_time"]["estimated_taxes"],
             2,
         )
+        total += item["total"]
         if (
             order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
         ):
@@ -1479,6 +1481,12 @@ def show_quote(request):
             "one_step": one_step,
             "two_step": two_step,
             "multi_step": multi_step,
+            "total": f"{total:,.2f}",
+            "contact": {
+                "full_name": request.user.full_name,
+                "email": request.user.email,
+                "phone": request.user.phone,  # (720) 490-1823
+            },
         },
     }
     payload = {"trigger": data["message_data"]}
