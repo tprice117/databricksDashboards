@@ -1369,8 +1369,14 @@ def show_quote(request):
             "pre_tax_subtotal": 0,
             "total": 0,
             "discounts": 0,
-            "delivery_price": 0,
-            "removal_price": 0,
+            "one_time": {
+                "delivery": 0,
+                "removal": 0,
+                # "service": 0,
+                "fuel_fees": 0,
+                "estimated_taxes": 0,
+                "total": 0,
+            },
             "service_price": 0,
         }
         for order_line_item in order.order_line_items.all():
@@ -1384,40 +1390,58 @@ def show_quote(request):
                     "items": [order_line_item],
                 }
         # Sort line_types by type["sort"] and put into a list
-        item["subtotal"] = order.full_price()
+        item["subtotal"] = round(order.full_price(), 2)
         item["fuel_fees"] = 0
         item["fuel_fees_rate"] = 0
         if item["line_types"].get("FUEL_AND_ENV", None):
-            ff_seller = item["line_types"]["FUEL_AND_ENV"]["items"][
-                0
-            ].seller_payout_price()
-            item["fuel_fees"] = item["line_types"]["FUEL_AND_ENV"]["items"][
-                0
-            ].customer_price()
+            ff_seller = round(
+                item["line_types"]["FUEL_AND_ENV"]["items"][0].seller_payout_price(), 2
+            )
+            item["fuel_fees"] = round(
+                item["line_types"]["FUEL_AND_ENV"]["items"][0].customer_price(), 2
+            )
             if ff_seller != 0:
                 item["fuel_fees_rate"] = round(
                     ((item["fuel_fees"] - ff_seller) / ff_seller) * 100, 2
                 )
 
-        item["pre_tax_subtotal"] = order.customer_price()
-        item["estimated_taxes"] = item["pre_tax_subtotal"] * Decimal(
-            item["estimated_tax_rate"] / 100
+        item["pre_tax_subtotal"] = round(order.customer_price(), 2)
+        item["estimated_taxes"] = round(
+            item["pre_tax_subtotal"] * Decimal(item["estimated_tax_rate"] / 100), 2
         )
-        item["total"] = item["estimated_taxes"] + order.customer_price()
+        item["total"] = round(item["estimated_taxes"] + order.customer_price(), 2)
         item["discounts"] = item["subtotal"] - item["pre_tax_subtotal"]
         if item["line_types"].get("DELIVERY", None):
-            item["delivery_price"] = item["line_types"]["DELIVERY"]["items"][
-                0
-            ].customer_price()
+            item["one_time"]["delivery"] = round(
+                item["line_types"]["DELIVERY"]["items"][0].customer_price(), 2
+            )
         if item["line_types"].get("REMOVAL", None):
-            item["removal_price"] = item["line_types"]["REMOVAL"]["items"][
-                0
-            ].customer_price()
+            item["one_time"]["removal"] = round(
+                item["line_types"]["REMOVAL"]["items"][0].customer_price(), 2
+            )
         if item["line_types"].get("SERVICE", None):
-            item["service_price"] = item["line_types"]["SERVICE"]["items"][
-                0
-            ].customer_price()
+            item["service_price"] = round(
+                item["line_types"]["SERVICE"]["items"][0].customer_price(), 2
+            )
 
+        # Calculate the one-time fuel fees and estimated taxes
+        item["one_time"]["fuel_fees"] = round(
+            (item["one_time"]["delivery"] + item["one_time"]["removal"])
+            * Decimal(item["fuel_fees_rate"] / 100),
+            2,
+        )
+        item["one_time"]["estimated_taxes"] = round(
+            (item["one_time"]["delivery"] + item["one_time"]["removal"])
+            * Decimal(item["estimated_tax_rate"] / 100),
+            2,
+        )
+        item["one_time"]["total"] = round(
+            item["one_time"]["delivery"]
+            + item["one_time"]["removal"]
+            + item["one_time"]["fuel_fees"]
+            + item["one_time"]["estimated_taxes"],
+            2,
+        )
         if (
             order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
         ):
