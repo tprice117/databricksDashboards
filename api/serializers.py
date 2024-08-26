@@ -448,8 +448,24 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class OrderLineItemTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = OrderLineItemType
+        fields = (
+            "id",
+            "name",
+            "units",
+            "code",
+            "stripe_tax_code_id",
+            "sort",
+        )
+
+
 class OrderLineItemSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    order_line_item_type = OrderLineItemTypeSerializer(read_only=True)
 
     class Meta:
         model = OrderLineItem
