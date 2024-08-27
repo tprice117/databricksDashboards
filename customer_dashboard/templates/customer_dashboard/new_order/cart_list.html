@@ -107,12 +107,12 @@
                     {% endfor %}
                     <div class="row justify-content-end mb-2 mt-4">
                         <div class="col-auto">
-                            {% if request.user.is_superuser %}
-                                <a class="btn btn-outline-success" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote (WORK IN PROGRESS)</a>
+                            <a class="btn btn-outline-success" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
+                            {% if request.user.is_staff %}
+                                <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
+                                    Send Quote (Work in Progress)
+                                </button>
                             {% endif %}
-                            {% comment %} <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
-                                Send Quote
-                            </button> {% endcomment %}
                         </div>
                         {% if request.user.is_staff %}
                             <div class="col-auto">

@@ -513,7 +513,7 @@
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <span style="word-break: break-word;">
                                                                                             {% for order_line_item in item.line_types.SERVICE.items %}
-                                                                                                ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.order_line_item_type.units|lower }}
+                                                                                                ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
                                                                                                 {% if order_line_item.description %}
                                                                                                     ({{ order_line_item.description|lower }})
                                                                                                 {% endif %}
@@ -533,7 +533,7 @@
                                                                                 </p>
                                                                                 {% for order_line_item in item.line_types.RENTAL.items %}
                                                                                     <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
-                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.order_line_item_type.units|lower }}</span></span>
+                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                     </p>
                                                                                     {% if order_line_item.description %}
                                                                                         <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
@@ -547,7 +547,7 @@
                                                                                         <strong><span style="word-break: break-word;"><span style="word-break: break-word;">Material:<br /></span></span></strong>
                                                                                         {% for order_line_item in item.line_types.MATERIAL.items %}
                                                                                             <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
-                                                                                                <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.order_line_item_type.units|lower }}</span></span>
+                                                                                                <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                             </p>
                                                                                             {% if order_line_item.description %}
                                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
@@ -605,19 +605,6 @@
                                                                     </td>
                                                                 </tr>
                                                             </table>
-                                                            <table class="text_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
-                                                                <tr>
-                                                                    <td class="pad" style="padding-left:5px">
-                                                                        <div style="font-family:sans-serif">
-                                                                            <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
-                                                                                <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Discounts</span>
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            </table>
                                                             <table class="text_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
                                                                 <tr>
                                                                     <td class="pad" style="padding-left:5px">
@@ -625,6 +612,19 @@
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_fees_rate }}%)</span>
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                            <table class="text_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                                                                <tr>
+                                                                    <td class="pad" style="padding-left:5px">
+                                                                        <div style="font-family:sans-serif">
+                                                                            <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
+                                                                                <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Discounts</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -659,19 +659,6 @@
                                                                     </td>
                                                                 </tr>
                                                             </table>
-                                                            <table class="text_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
-                                                                <tr>
-                                                                    <td class="pad" style="padding-right:5px">
-                                                                        <div style="font-family:sans-serif">
-                                                                            <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
-                                                                                <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>-${{ item.discounts|floatformat:2|intcomma }}</strong></span>
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            </table>
                                                             <table class="text_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
                                                                 <tr>
                                                                     <td class="pad" style="padding-right:5px">
@@ -679,6 +666,19 @@
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">${{ item.fuel_fees|floatformat:2|intcomma }}</span>
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                            <table class="text_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                                                                <tr>
+                                                                    <td class="pad" style="padding-right:5px">
+                                                                        <div style="font-family:sans-serif">
+                                                                            <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
+                                                                                <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
+                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>-${{ item.discounts|floatformat:2|intcomma }}</strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -1398,7 +1398,7 @@
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <span style="word-break: break-word;">
                                                                                             {% for order_line_item in item.line_types.SERVICE.items %}
-                                                                                                ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.order_line_item_type.units|lower }}
+                                                                                                ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
                                                                                                 {% if order_line_item.description %}
                                                                                                     ({{ order_line_item.description|lower }})
                                                                                                 {% endif %}
@@ -1416,7 +1416,7 @@
                                                                                 </p>
                                                                                 {% for order_line_item in item.line_types.RENTAL.items %}
                                                                                     <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
-                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.order_line_item_type.units|lower }}</span></span>
+                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                     </p>
                                                                                     {% if order_line_item.description %}
                                                                                         <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
@@ -1488,7 +1488,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Discounts</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_fees_rate }}%)</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -1501,7 +1501,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_fees_rate }}%)</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Discounts</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -1536,19 +1536,6 @@
                                                                     </td>
                                                                 </tr>
                                                             </table>
-                                                            <table class="text_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
-                                                                <tr>
-                                                                    <td class="pad" style="padding-right:5px">
-                                                                        <div style="font-family:sans-serif">
-                                                                            <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
-                                                                                <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.discounts|floatformat:2|intcomma }}</strong></span>
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            </table>
                                                             <table class="text_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
                                                                 <tr>
                                                                     <td class="pad" style="padding-right:5px">
@@ -1556,6 +1543,19 @@
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">${{ item.fuel_fees|floatformat:2|intcomma }}</span>
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                            <table class="text_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                                                                <tr>
+                                                                    <td class="pad" style="padding-right:5px">
+                                                                        <div style="font-family:sans-serif">
+                                                                            <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
+                                                                                <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
+                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>-${{ item.discounts|floatformat:2|intcomma }}</strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3553,12 +3553,12 @@
                                                             <tr>
                                                                 <td class="pad">
                                                                     <div class="alignment" align="center">
-                                                                        <!--                                                  [if mso]>
+                                                                        <!--                                                      [if mso]>
 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" style="height:42px;width:630px;v-text-anchor:middle;" arcsize="10%" stroke="false" fillcolor="#018381">
 <w:anchorlock/>
 <v:textbox inset="0px,0px,0px,0px">
 <center dir="false" style="color:#ffffff;font-family:Tahoma, Verdana, sans-serif;font-size:16px">
-<![endif]                                                  -->
+<![endif]                                                      -->
                                                                         <div style="background-color:#018381;border-bottom:0 solid transparent;border-left:0 solid transparent;border-radius:4px;border-right:0 solid transparent;border-top:0 solid transparent;color:#fff;display:block;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;font-size:16px;font-weight:undefined;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:100%;word-break:keep-all">
                                                                             <span style="word-break: break-word; padding-left: 20px; padding-right: 20px; font-size: 16px; display: inline-block; letter-spacing: normal;"><span style="word-break: break-word; line-height: 32px;"><strong>Accept Quote</strong></span></span>
                                                                         </div>
