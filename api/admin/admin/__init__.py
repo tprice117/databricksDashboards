@@ -8,6 +8,7 @@ from .main_product_waste_type import MainProductWasteTypeAdmin
 from .order import OrderAdmin
 from .order_disposal_ticket import OrderDisposalTicketAdmin
 from .order_group import OrderGroupAdmin
+from .order_group_attachment import OrderGroupAttachmentAdmin
 from .order_group_material import OrderGroupMaterialAdmin
 from .order_line_item_type import OrderLineItemTypeAdmin
 from .payout import PayoutAdmin

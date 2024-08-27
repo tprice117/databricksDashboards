@@ -13,6 +13,7 @@ from .order_group_rental_one_step import OrderGroupRentalOneStepInline
 from .order_group_service import OrderGroupServiceInline
 from .order_group_service_times_per_week import OrderGroupServiceTimesPerWeekInline
 from .order_line_item import OrderLineItemInline
+from .order_group_attachment import OrderGroupAttachmentInline
 from .payout import PayoutInline
 from .product import ProductInline
 from .product_add_on_choice import ProductAddOnChoiceInline

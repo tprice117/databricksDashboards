@@ -28,6 +28,7 @@ from .order.order_group_service_times_per_week import OrderGroupServiceTimesPerW
 from .order.order_line_item import OrderLineItem
 from .order.order_line_item_type import OrderLineItemType
 from .order.subscription import Subscription
+from .order.order_group_attachment import OrderGroupAttachment
 from .payout import Payout
 from .seller.seller import Seller
 from .seller.seller_invoice_payable import SellerInvoicePayable
