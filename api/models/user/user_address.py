@@ -80,6 +80,74 @@ class UserAddress(BaseModel):
     def formatted_address(self):
         return f"{self.street} {self.city}, {self.state} {self.postal_code}"
 
+    def update_stripe(self):
+        # Populate Stripe Customer ID, if not already populated.
+        if not self.stripe_customer_id:
+            customer = StripeUtils.Customer.create()
+            self.stripe_customer_id = customer.id
+        else:
+            customer = StripeUtils.Customer.get(self.stripe_customer_id)
+
+        # Get "name" for UserGroup/B2C user.
+        user_group_name = self.user_group.name if self.user_group else "[B2C]"
+
+        customer = StripeUtils.Customer.update(
+            customer.id,
+            name=user_group_name + " | " + self.formatted_address(),
+            email=(
+                self.user_group.billing.email
+                if self.user_group and hasattr(self.user_group, "billing")
+                else (self.user.email if self.user else None)
+            ),
+            # phone = self.user_group.billing.phone if hasattr(self.user_group, 'billing') else self.user.phone,
+            shipping={
+                "name": self.name or self.formatted_address(),
+                "address": {
+                    "line1": self.street,
+                    "city": self.city,
+                    "state": self.state,
+                    "postal_code": self.postal_code,
+                    "country": "US",
+                },
+            },
+            address={
+                "line1": (
+                    self.user_group.billing.street
+                    if self.user_group and hasattr(self.user_group, "billing")
+                    else self.street
+                ),
+                "city": (
+                    self.user_group.billing.city
+                    if self.user_group and hasattr(self.user_group, "billing")
+                    else self.city
+                ),
+                "state": (
+                    self.user_group.billing.state
+                    if self.user_group and hasattr(self.user_group, "billing")
+                    else self.state
+                ),
+                "postal_code": (
+                    self.user_group.billing.postal_code
+                    if self.user_group and hasattr(self.user_group, "billing")
+                    else self.postal_code
+                ),
+                "country": "US",
+                # "country": self.user_group.billing.country
+                # if hasattr(self.user_group, "billing")
+                # else self.country,
+            },
+            metadata={
+                "user_group_id": (str(self.user_group.id) if self.user_group else None),
+                "user_address_id": str(self.id),
+                "user_id": str(self.user.id) if self.user else None,
+            },
+            tax_exempt=(
+                self.user_group.tax_exempt_status
+                if self.user_group and hasattr(self.user_group, "billing")
+                else UserGroup.TaxExemptStatus.NONE
+            ),
+        )
+
     def pre_save(sender, instance, *args, **kwargs):
         # Populate latitude and longitude.
         latitude, longitude = geocode_address(
@@ -91,74 +159,7 @@ class UserAddress(BaseModel):
         # Populate the UserAddress, if exists. Set the [user_group] based on the [user].
         instance.user_group = instance.user.user_group
 
-        # Populate Stripe Customer ID, if not already populated.
-        if not instance.stripe_customer_id:
-            customer = StripeUtils.Customer.create()
-            instance.stripe_customer_id = customer.id
-        else:
-            customer = StripeUtils.Customer.get(instance.stripe_customer_id)
-
-        # Get "name" for UserGroup/B2C user.
-        user_group_name = instance.user_group.name if instance.user_group else "[B2C]"
-
-        customer = StripeUtils.Customer.update(
-            customer.id,
-            name=user_group_name + " | " + instance.formatted_address(),
-            email=(
-                instance.user_group.billing.email
-                if instance.user_group and hasattr(instance.user_group, "billing")
-                else (instance.user.email if instance.user else None)
-            ),
-            # phone = instance.user_group.billing.phone if hasattr(instance.user_group, 'billing') else instance.user.phone,
-            shipping={
-                "name": instance.name or instance.formatted_address(),
-                "address": {
-                    "line1": instance.street,
-                    "city": instance.city,
-                    "state": instance.state,
-                    "postal_code": instance.postal_code,
-                    "country": "US",
-                },
-            },
-            address={
-                "line1": (
-                    instance.user_group.billing.street
-                    if instance.user_group and hasattr(instance.user_group, "billing")
-                    else instance.street
-                ),
-                "city": (
-                    instance.user_group.billing.city
-                    if instance.user_group and hasattr(instance.user_group, "billing")
-                    else instance.city
-                ),
-                "state": (
-                    instance.user_group.billing.state
-                    if instance.user_group and hasattr(instance.user_group, "billing")
-                    else instance.state
-                ),
-                "postal_code": (
-                    instance.user_group.billing.postal_code
-                    if instance.user_group and hasattr(instance.user_group, "billing")
-                    else instance.postal_code
-                ),
-                "country": "US",
-                # "country": instance.user_group.billing.country
-                # if hasattr(instance.user_group, "billing")
-                # else instance.country,
-            },
-            metadata={
-                "user_group_id": (
-                    str(instance.user_group.id) if instance.user_group else None
-                ),
-                "user_address_id": str(instance.id),
-                "user_id": str(instance.user.id) if instance.user else None,
-            },
-            tax_exempt=(
-                instance.user_group.tax_exempt_status
-                if instance.user_group and hasattr(instance.user_group, "billing")
-                else UserGroup.TaxExemptStatus.NONE
-            ),
-        )
+        instance.update_stripe()
 
 
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
