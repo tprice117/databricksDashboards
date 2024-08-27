@@ -8,6 +8,7 @@ from .admin import (
     OrderAdmin,
     OrderDisposalTicketAdmin,
     OrderGroupAdmin,
+    OrderGroupAttachmentAdmin,
     PayoutAdmin,
     ProductAdmin,
     SellerAdmin,
