@@ -9,6 +9,7 @@ from api.admin.inlines import (
     OrderGroupRentalOneStepInline,
     OrderGroupServiceInline,
     OrderGroupServiceTimesPerWeekInline,
+    OrderGroupAttachmentInline,
     OrderInline,
     SubscriptionInline,
 )
@@ -44,6 +45,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
         OrderGroupServiceTimesPerWeekInline,
         OrderGroupServiceInline,
         OrderGroupMaterialInline,
+        OrderGroupAttachmentInline,
     ]
     search_fields = [
         "user__email",
