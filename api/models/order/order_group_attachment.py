@@ -12,7 +12,7 @@ class OrderGroupAttachment(BaseModel):
     order_group = models.ForeignKey(
         "OrderGroup", on_delete=models.CASCADE, related_name="attachments"
     )
-    file = models.FileField(upload_to=get_file_path, blank=True, null=True)
+    file = models.FileField(upload_to=get_file_path)
 
     def __str__(self):
         return self.file.name
