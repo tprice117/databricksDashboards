@@ -73,6 +73,20 @@ logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+ORDER_APPROVAL_SERIALIZER = None
+
+
+def get_order_approval_serializer():
+    """This imports the UserGroupAdminApprovalOrderSerializer.
+    This avoid the circular import issue."""
+    global ORDER_APPROVAL_SERIALIZER
+    if ORDER_APPROVAL_SERIALIZER is None:
+        from admin_approvals.api.v1.serializers import (
+            UserGroupAdminApprovalOrderSerializer as ORDER_APPROVAL_SERIALIZER,
+        )
+
+    return ORDER_APPROVAL_SERIALIZER
+
 
 class SellerSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
@@ -474,6 +488,7 @@ class OrderLineItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    order_approval = get_order_approval_serializer()(read_only=True)
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
     service_date = serializers.SerializerMethodField(read_only=True)
