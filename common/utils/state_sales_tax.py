@@ -1,66 +1,121 @@
+from decimal import Decimal
+
 STATE_SALES_TAX = {
-    "AL": {"name": "Alabama", "sales_tax_rate": 4.0},
-    "AK": {"name": "Alaska", "sales_tax_rate": 0.0},
-    "AZ": {"name": "Arizona", "sales_tax_rate": 5.6},
-    "AR": {"name": "Arkansas", "sales_tax_rate": 6.5},
-    "CA": {"name": "California", "sales_tax_rate": 7.25},
-    "CO": {"name": "Colorado", "sales_tax_rate": 2.9},
-    "CT": {"name": "Connecticut", "sales_tax_rate": 6.35},
-    "DE": {"name": "Delaware", "sales_tax_rate": 0.0},
-    "DC": {"name": "District of Columbia", "sales_tax_rate": 6.0},
-    "FL": {"name": "Florida", "sales_tax_rate": 6.0},
-    "GA": {"name": "Georgia", "sales_tax_rate": 7.0},
-    "HI": {"name": "Hawaii", "sales_tax_rate": 4.0},
-    "ID": {"name": "Idaho", "sales_tax_rate": 6.0},
-    "IL": {"name": "Illinois", "sales_tax_rate": 6.25},
-    "IN": {"name": "Indiana", "sales_tax_rate": 7.0},
-    "IA": {"name": "Iowa", "sales_tax_rate": 6.0},
-    "KS": {"name": "Kansas", "sales_tax_rate": 6.5},
-    "KY": {"name": "Kentucky", "sales_tax_rate": 6.0},
-    "LA": {"name": "Louisiana", "sales_tax_rate": 4.45},
-    "ME": {"name": "Maine", "sales_tax_rate": 5.5},
-    "MD": {"name": "Maryland", "sales_tax_rate": 6.0},
-    "MA": {"name": "Massachusetts", "sales_tax_rate": 6.25},
-    "MI": {"name": "Michigan", "sales_tax_rate": 6.0},
-    "MN": {"name": "Minnesota", "sales_tax_rate": 6.875},
-    "MS": {"name": "Mississippi", "sales_tax_rate": 7.0},
-    "MO": {"name": "Missouri", "sales_tax_rate": 4.225},
-    "MT": {"name": "Montana", "sales_tax_rate": 0.0},
-    "NE": {"name": "Nebraska", "sales_tax_rate": 5.5},
-    "NV": {"name": "Nevada", "sales_tax_rate": 6.85},
-    "NH": {"name": "New Hampshire", "sales_tax_rate": 0.0},
-    "NJ": {"name": "New Jersey", "sales_tax_rate": 6.625},
-    "NM": {"name": "New Mexico", "sales_tax_rate": 7.5},
-    "NY": {"name": "New York", "sales_tax_rate": 4.0},
-    "NC": {"name": "North Carolina", "sales_tax_rate": 4.25},
-    "ND": {"name": "North Dakota", "sales_tax_rate": 6.5},
-    "OH": {"name": "Ohio", "sales_tax_rate": 7.25},
-    "OK": {"name": "Oklahoma", "sales_tax_rate": 4.5},
-    "OR": {"name": "Oregon", "sales_tax_rate": 0.0},
-    "PA": {"name": "Pennsylvania", "sales_tax_rate": 6.0},
-    "RI": {"name": "Rhode Island", "sales_tax_rate": 7.0},
-    "SC": {"name": "South Carolina", "sales_tax_rate": 6.0},
-    "SD": {"name": "South Dakota", "sales_tax_rate": 4.5},
-    "TN": {"name": "Tennessee", "sales_tax_rate": 7.0},
-    "TX": {"name": "Texas", "sales_tax_rate": 6.25},
-    "UT": {"name": "Utah", "sales_tax_rate": 6.85},
-    "VT": {"name": "Vermont", "sales_tax_rate": 6.0},
-    "VA": {"name": "Virginia", "sales_tax_rate": 6.0},
-    "WA": {"name": "Washington", "sales_tax_rate": 6.5},
-    "WV": {"name": "West Virginia", "sales_tax_rate": 6.0},
-    "WI": {"name": "Wisconsin", "sales_tax_rate": 5.5},
-    "WY": {"name": "Wyoming", "sales_tax_rate": 4.0},
+    "AL": {"name": "Alabama", "rate_100": Decimal("4.0"), "rate": Decimal("0.04")},
+    "AK": {"name": "Alaska", "rate_100": Decimal("0.0"), "rate": Decimal("0.00")},
+    "AZ": {"name": "Arizona", "rate_100": Decimal("5.6"), "rate": Decimal("0.056")},
+    "AR": {"name": "Arkansas", "rate_100": Decimal("6.5"), "rate": Decimal("0.065")},
+    "CA": {
+        "name": "California",
+        "rate_100": Decimal("7.25"),
+        "rate": Decimal("0.0725"),
+    },
+    "CO": {"name": "Colorado", "rate_100": Decimal("2.9"), "rate": Decimal("0.029")},
+    "CT": {
+        "name": "Connecticut",
+        "rate_100": Decimal("6.35"),
+        "rate": Decimal("0.0635"),
+    },
+    "DE": {"name": "Delaware", "rate_100": Decimal("0.0"), "rate": Decimal("0.00")},
+    "DC": {
+        "name": "District of Columbia",
+        "rate_100": Decimal("6.0"),
+        "rate": Decimal("0.06"),
+    },
+    "FL": {"name": "Florida", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "GA": {"name": "Georgia", "rate_100": Decimal("7.0"), "rate": Decimal("0.07")},
+    "HI": {"name": "Hawaii", "rate_100": Decimal("4.0"), "rate": Decimal("0.04")},
+    "ID": {"name": "Idaho", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "IL": {"name": "Illinois", "rate_100": Decimal("6.25"), "rate": Decimal("0.0625")},
+    "IN": {"name": "Indiana", "rate_100": Decimal("7.0"), "rate": Decimal("0.07")},
+    "IA": {"name": "Iowa", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "KS": {"name": "Kansas", "rate_100": Decimal("6.5"), "rate": Decimal("0.065")},
+    "KY": {"name": "Kentucky", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "LA": {"name": "Louisiana", "rate_100": Decimal("4.45"), "rate": Decimal("0.0445")},
+    "ME": {"name": "Maine", "rate_100": Decimal("5.5"), "rate": Decimal("0.055")},
+    "MD": {"name": "Maryland", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "MA": {
+        "name": "Massachusetts",
+        "rate_100": Decimal("6.25"),
+        "rate": Decimal("0.0625"),
+    },
+    "MI": {"name": "Michigan", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "MN": {
+        "name": "Minnesota",
+        "rate_100": Decimal("6.875"),
+        "rate": Decimal("0.06875"),
+    },
+    "MS": {"name": "Mississippi", "rate_100": Decimal("7.0"), "rate": Decimal("0.07")},
+    "MO": {
+        "name": "Missouri",
+        "rate_100": Decimal("4.225"),
+        "rate": Decimal("0.04225"),
+    },
+    "MT": {"name": "Montana", "rate_100": Decimal("0.0"), "rate": Decimal("0.00")},
+    "NE": {"name": "Nebraska", "rate_100": Decimal("5.5"), "rate": Decimal("0.055")},
+    "NV": {"name": "Nevada", "rate_100": Decimal("6.85"), "rate": Decimal("0.0685")},
+    "NH": {
+        "name": "New Hampshire",
+        "rate_100": Decimal("0.0"),
+        "rate": Decimal("0.00"),
+    },
+    "NJ": {
+        "name": "New Jersey",
+        "rate_100": Decimal("6.625"),
+        "rate": Decimal("0.06625"),
+    },
+    "NM": {"name": "New Mexico", "rate_100": Decimal("7.5"), "rate": Decimal("0.075")},
+    "NY": {"name": "New York", "rate_100": Decimal("4.0"), "rate": Decimal("0.04")},
+    "NC": {
+        "name": "North Carolina",
+        "rate_100": Decimal("4.25"),
+        "rate": Decimal("0.0425"),
+    },
+    "ND": {
+        "name": "North Dakota",
+        "rate_100": Decimal("6.5"),
+        "rate": Decimal("0.065"),
+    },
+    "OH": {"name": "Ohio", "rate_100": Decimal("7.25"), "rate": Decimal("0.0725")},
+    "OK": {"name": "Oklahoma", "rate_100": Decimal("4.5"), "rate": Decimal("0.045")},
+    "OR": {"name": "Oregon", "rate_100": Decimal("0.0"), "rate": Decimal("0.00")},
+    "PA": {"name": "Pennsylvania", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "RI": {"name": "Rhode Island", "rate_100": Decimal("7.0"), "rate": Decimal("0.07")},
+    "SC": {
+        "name": "South Carolina",
+        "rate_100": Decimal("6.0"),
+        "rate": Decimal("0.06"),
+    },
+    "SD": {
+        "name": "South Dakota",
+        "rate_100": Decimal("4.5"),
+        "rate": Decimal("0.045"),
+    },
+    "TN": {"name": "Tennessee", "rate_100": Decimal("7.0"), "rate": Decimal("0.07")},
+    "TX": {"name": "Texas", "rate_100": Decimal("6.25"), "rate": Decimal("0.0625")},
+    "UT": {"name": "Utah", "rate_100": Decimal("6.85"), "rate": Decimal("0.0685")},
+    "VT": {"name": "Vermont", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "VA": {"name": "Virginia", "rate_100": Decimal("6.0"), "rate": Decimal("0.06")},
+    "WA": {"name": "Washington", "rate_100": Decimal("6.5"), "rate": Decimal("0.065")},
+    "WV": {
+        "name": "West Virginia",
+        "rate_100": Decimal("6.0"),
+        "rate": Decimal("0.06"),
+    },
+    "WI": {"name": "Wisconsin", "rate_100": Decimal("5.5"), "rate": Decimal("0.055")},
+    "WY": {"name": "Wyoming", "rate_100": Decimal("4.0"), "rate": Decimal("0.04")},
 }
 
 
 def get_state_sales_tax(state: str):
-    return STATE_SALES_TAX.get(state, {"name": "Unknown", "sales_tax_rate": 0.0})[
-        "sales_tax_rate"
-    ]
+    """Returns the sales tax for a given state."""
+    return STATE_SALES_TAX.get(
+        state, {"name": "Unknown", "rate_100": Decimal(0.0), "rate": Decimal(0.0)}
+    )
 
 
 def get_state_sales_tax_by_name(state: str):
     for state_abbr, state_data in STATE_SALES_TAX.items():
         if state_data["name"].lower() == state.lower():
-            return state_data["sales_tax_rate"]
-    return 0
+            return state_data
+    return {"name": "Unknown", "rate_100": Decimal(0.0), "rate": Decimal(0.0)}

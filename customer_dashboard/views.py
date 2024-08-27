@@ -103,6 +103,15 @@ class UserAlreadyExistsError(Exception):
     pass
 
 
+class DecimalEncoder(json.JSONEncoder):
+    """Encode Decimal objects to string."""
+
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return str(o)
+        return super(DecimalEncoder, self).default(o)
+
+
 def get_dashboard_chart_data(data_by_month: List[int]):
     # Create a list of labels along with earnings data of months going back from the current month to 8 months ago.
     data = []
@@ -1345,46 +1354,41 @@ def new_order_6(request, order_group_id):
     return HttpResponseRedirect(reverse("customer_new_order"))
 
 
-@login_required(login_url="/admin/login/")
-@catch_errors()
-def show_quote(request):
-    context = get_user_context(request)
-    order_id_lst = ast.literal_eval(request.GET.get("ids"))
+def get_quote_data(request, order_id_lst):
     order = Order.objects.filter(id__in=order_id_lst)
     order = order.prefetch_related("order_line_items")
     one_step = []
     two_step = []
     multi_step = []
-    total = 0
+    total = Decimal(0.00)
 
     for order in order:
+        sales_tax = get_state_sales_tax(order.order_group.user_address.state)
         item = {
             "product": {
                 "name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
                 "image": order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url,
             },
-            "start_date": order.start_date,
+            "start_date": order.start_date.strftime("%m/%d/%Y"),
             "tonnage_quantity": order.order_group.tonnage_quantity,
             "line_types": {},
             "addons": [],
-            "subtotal": 0,
-            "fuel_fees": 0,
-            "estimated_taxes": 0,
-            "estimated_tax_rate": get_state_sales_tax(
-                order.order_group.user_address.state
-            ),
-            "pre_tax_subtotal": 0,
-            "total": 0,
-            "discounts": 0,
+            "subtotal": Decimal(0.00),
+            "fuel_fees": Decimal(0.00),
+            "estimated_taxes": Decimal(0.00),
+            "estimated_tax_rate": sales_tax["rate_100"],
+            "pre_tax_subtotal": Decimal(0.00),
+            "total": Decimal(0.00),
+            "discounts": Decimal(0.00),
             "one_time": {
-                "delivery": 0,
-                "removal": 0,
-                # "service": 0,
-                "fuel_fees": 0,
-                "estimated_taxes": 0,
-                "total": 0,
+                "delivery": Decimal(0.00),
+                "removal": Decimal(0.00),
+                # "service": Decimal(0.00),
+                "fuel_fees": Decimal(0.00),
+                "estimated_taxes": Decimal(0.00),
+                "total": Decimal(0.00),
             },
-            "service_price": 0,
+            "service_price": Decimal(0.00),
             "schedule_window": order.schedule_window,
         }
         if not item["schedule_window"]:
@@ -1404,49 +1408,57 @@ def show_quote(request):
                     "val": addon.add_on_choice.name,
                 }
             )
+
         for order_line_item in order.order_line_items.all():
+            _dd = {
+                "rate": order_line_item.rate,
+                "quantity": order_line_item.quantity,
+                "description": order_line_item.description,
+                "units": order_line_item.order_line_item_type.units,
+                "seller_payout_price": order_line_item.seller_payout_price(),
+                "customer_price": order_line_item.customer_price(),
+            }
             try:
                 item["line_types"][order_line_item.order_line_item_type.code][
                     "items"
-                ].append(order_line_item)
+                ].append(_dd)
             except KeyError:
                 item["line_types"][order_line_item.order_line_item_type.code] = {
-                    "type": order_line_item.order_line_item_type,
-                    "items": [order_line_item],
+                    # "type": order_line_item.order_line_item_type,
+                    "items": [_dd],
                 }
-        # Sort line_types by type["sort"] and put into a list
-        item["subtotal"] = round(order.full_price(), 2)
-        item["fuel_fees"] = 0
-        item["fuel_fees_rate"] = 0
+
+        item["fuel_fees"] = Decimal(0.00)
+        item["fuel_fees_rate"] = Decimal(0.00)
         if item["line_types"].get("FUEL_AND_ENV", None):
             ff_seller = round(
-                item["line_types"]["FUEL_AND_ENV"]["items"][0].seller_payout_price(), 2
+                item["line_types"]["FUEL_AND_ENV"]["items"][0]["seller_payout_price"], 2
             )
             item["fuel_fees"] = round(
-                item["line_types"]["FUEL_AND_ENV"]["items"][0].customer_price(), 2
+                item["line_types"]["FUEL_AND_ENV"]["items"][0]["customer_price"], 2
             )
             if ff_seller != 0:
                 item["fuel_fees_rate"] = round(
                     ((item["fuel_fees"] - ff_seller) / ff_seller) * 100, 2
                 )
 
+        item["subtotal"] = round(order.full_price(), 2)
         item["pre_tax_subtotal"] = round(order.customer_price(), 2)
-        item["estimated_taxes"] = round(
-            item["pre_tax_subtotal"] * Decimal(item["estimated_tax_rate"] / 100), 2
-        )
+        item["estimated_taxes"] = round(item["pre_tax_subtotal"] * sales_tax["rate"], 2)
         item["total"] = round(item["estimated_taxes"] + order.customer_price(), 2)
         item["discounts"] = item["subtotal"] - item["pre_tax_subtotal"]
+        item["subtotal"] = item["subtotal"] - item["fuel_fees"]
         if item["line_types"].get("DELIVERY", None):
             item["one_time"]["delivery"] = round(
-                item["line_types"]["DELIVERY"]["items"][0].customer_price(), 2
+                item["line_types"]["DELIVERY"]["items"][0]["customer_price"], 2
             )
         if item["line_types"].get("REMOVAL", None):
             item["one_time"]["removal"] = round(
-                item["line_types"]["REMOVAL"]["items"][0].customer_price(), 2
+                item["line_types"]["REMOVAL"]["items"][0]["customer_price"], 2
             )
         if item["line_types"].get("SERVICE", None):
             item["service_price"] = round(
-                item["line_types"]["SERVICE"]["items"][0].customer_price(), 2
+                item["line_types"]["SERVICE"]["items"][0]["customer_price"], 2
             )
 
         # Calculate the one-time fuel fees and estimated taxes
@@ -1457,7 +1469,7 @@ def show_quote(request):
         )
         item["one_time"]["estimated_taxes"] = round(
             (item["one_time"]["delivery"] + item["one_time"]["removal"])
-            * Decimal(item["estimated_tax_rate"] / 100),
+            * sales_tax["rate"],
             2,
         )
         item["one_time"]["total"] = round(
@@ -1487,15 +1499,15 @@ def show_quote(request):
             item["rental_breakdown"] = {
                 "day": {
                     "base": order.order_group.seller_product_seller_location.rental_multi_step.day,
-                    "rpp_fee": 0,
+                    "rpp_fee": Decimal(0.00),
                 },
                 "week": {
                     "base": order.order_group.seller_product_seller_location.rental_multi_step.week,
-                    "rpp_fee": 0,
+                    "rpp_fee": Decimal(0.00),
                 },
                 "month": {
                     "base": order.order_group.seller_product_seller_location.rental_multi_step.month,
-                    "rpp_fee": 0,
+                    "rpp_fee": Decimal(0.00),
                 },
             }
             # Add total, fuel fees, and estimated taxes to the rental breakdown.
@@ -1506,8 +1518,7 @@ def show_quote(request):
                     2,
                 )
                 item["rental_breakdown"][key]["estimated_taxes"] = round(
-                    item["rental_breakdown"][key]["base"]
-                    * Decimal(item["estimated_tax_rate"] / 100),
+                    item["rental_breakdown"][key]["base"] * sales_tax["rate"],
                     2,
                 )
 
@@ -1539,7 +1550,7 @@ def show_quote(request):
     )
     quote_expiration = timezone.now() + datetime.timedelta(days=14)
     data = {
-        "transactional_message_id": 3,
+        "transactional_message_id": 4,
         "subject": subject,
         "message_data": {
             "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
@@ -1549,11 +1560,6 @@ def show_quote(request):
             "delivery_address": order.order_group.user_address.formatted_address(),
             "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
             "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
-            "UserAddress.ProjectID": order.order_group.user_address.name,
-            "UserAddress.Street": order.order_group.user_address.street,
-            "UserAddress.City": order.order_group.user_address.city,
-            "UserAddress.State": order.order_group.user_address.state,
-            "UserAddress.Zip": order.order_group.user_address.postal_code,
             "one_step": one_step,
             "two_step": two_step,
             "multi_step": multi_step,
@@ -1565,14 +1571,21 @@ def show_quote(request):
             },
         },
     }
+    return data
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def show_quote(request):
+    context = get_user_context(request)
+    order_id_lst = ast.literal_eval(request.GET.get("ids"))
+    data = get_quote_data(request, order_id_lst)
     payload = {"trigger": data["message_data"]}
     return render(request, "customer_dashboard/customer_quote.html", payload)
 
 
 @login_required(login_url="/admin/login/")
 def cart_send_quote(request):
-    # import time
-
     context = get_user_context(request)
     if request.method == "POST":
         # Get json body
@@ -1581,85 +1594,41 @@ def cart_send_quote(request):
             email_lst = list(set(data.get("emails")))
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
-                order_id_1 = order_id_lst[0]
-                order = Order.objects.filter(id=order_id_1).first()
-                line_types = {}
-                for order_line_item in order.order_line_items.all():
-                    try:
-                        line_types[order_line_item.order_line_item_type.code][
-                            "items"
-                        ].append(order_line_item)
-                    except KeyError:
-                        line_types[order_line_item.order_line_item_type.code] = {
-                            "type": order_line_item.order_line_item_type,
-                            "items": [order_line_item],
-                        }
-                # Sort line_types by type["sort"] and put into a list
-                context["line_types"] = sorted(
-                    line_types.values(), key=lambda item: item["type"].sort
-                )
-                # time.sleep(4)
-                subject = (
-                    "Downstream | Quote | "
-                    + order.order_group.user_address.formatted_address()
-                )
-                # add_email_to_queue(
-                #     to_emails=email_lst,
-                #     subject=subject,
-                # )
+                data = get_quote_data(request, order_id_lst)
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
                     "Content-Type": "application/json",
                 }
-                quote_expiration = timezone.now() + datetime.timedelta(days=14)
-                data = {
-                    "transactional_message_id": 3,
-                    "to": ",".join(email_lst),
-                    # "from": "system@trydownstream.com",
-                    "subject": subject,
-                    "identifiers": {"email": email_lst[0]},
-                    "message_data": {
-                        "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
-                        "quote_id": 1001,
-                        "full_name": order.order_group.user.full_name,
-                        "company_name": order.order_group.user.user_group.name,
-                        "delivery_address": order.order_group.user_address.formatted_address(),
-                        "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
-                        "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
-                        "UserAddress.ProjectID": order.order_group.user_address.name,
-                        "UserAddress.Street": order.order_group.user_address.street,
-                        "UserAddress.City": order.order_group.user_address.city,
-                        "UserAddress.State": order.order_group.user_address.state,
-                        "UserAddress.Zip": order.order_group.user_address.postal_code,
-                        "two_step": [
-                            {"order": order, "line_types": context["line_types"]},
-                        ],
-                    },
-                }
-                payload = {"trigger": data["message_data"]}
-                return render(
-                    request, "customer_dashboard/customer_quote.html", payload
+                ret_data = []
+                had_error = False
+                for email in email_lst:
+                    data["to"] = email
+                    data["identifiers"] = {"email": email}
+
+                    json_data = json.dumps(data, cls=DecimalEncoder)
+                    response = requests.post(
+                        "https://api.customer.io/v1/send/email",
+                        headers=headers,
+                        data=json_data,
+                    )
+                    if response.status_code < 400:
+                        ret_data.append(f"Quote sent to {email}.")
+                        # resp_json = response.json()
+                        # [delivery_id:{resp_json['delivery_id']}-queued_at:{resp_json['queued_at']}]
+                    else:
+                        had_error = True
+                        resp_json = response.json()
+                        ret_data.append(
+                            f"Error sending quote to {email} [{resp_json['meta']['error']}]"
+                        )
+                if had_error:
+                    return JsonResponse(
+                        {"status": "error", "error": " | ".join(ret_data)}
+                    )
+                return JsonResponse(
+                    {"status": "success", "message": " | ".join(ret_data)}
                 )
-                # response = requests.post(
-                #     "https://api.customer.io/v1/send/email",
-                #     headers=headers,
-                #     data=json.dumps(data),
-                # )
-                # if response.status_code < 400:
-                #     ret_data = response.json()
-                #     # [delivery_id:{ret_data['delivery_id']}-queued_at:{ret_data['queued_at']}]
-                #     return JsonResponse(
-                #         {
-                #             "status": "success",
-                #             "message": "Successfully sent quote.",
-                #         }
-                #     )
-                # else:
-                #     ret_data = response.json()
-                #     return JsonResponse(
-                #         {"status": "error", "error": ret_data["meta"]["error"]}
-                #     )
             else:
                 return JsonResponse(
                     {"status": "error", "error": "No email or order ids."}
