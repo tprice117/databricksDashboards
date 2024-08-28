@@ -157,7 +157,8 @@ class UserAddress(BaseModel):
         instance.longitude = longitude or 0
 
         # Populate the UserAddress, if exists. Set the [user_group] based on the [user].
-        instance.user_group = instance.user.user_group
+        if instance.user and instance.user.user_group:
+            instance.user_group = instance.user.user_group
 
         instance.update_stripe()
 
