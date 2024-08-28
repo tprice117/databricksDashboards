@@ -35,6 +35,7 @@ from .models import (
     OrderGroupMaterial,
     OrderGroupRental,
     OrderGroupService,
+    OrderGroupAttachment,
     OrderLineItem,
     OrderLineItemType,
     Payout,
@@ -72,6 +73,20 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+ORDER_APPROVAL_SERIALIZER = None
+
+
+def get_order_approval_serializer():
+    """This imports the UserGroupAdminApprovalOrderSerializer.
+    This avoid the circular import issue."""
+    global ORDER_APPROVAL_SERIALIZER
+    if ORDER_APPROVAL_SERIALIZER is None:
+        from admin_approvals.api.v1.serializers import (
+            UserGroupAdminApprovalOrderSerializer as ORDER_APPROVAL_SERIALIZER,
+        )
+
+    return ORDER_APPROVAL_SERIALIZER
 
 
 class SellerSerializer(serializers.ModelSerializer):
@@ -474,6 +489,7 @@ class OrderLineItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    user_group_admin_approval_order = get_order_approval_serializer()(read_only=True)
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
     service_date = serializers.SerializerMethodField(read_only=True)
@@ -798,6 +814,13 @@ class OrderGroupMaterialSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class OrderGroupAttachmentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OrderGroupAttachment
+        fields = "__all__"
+
+
 class OrderGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user = UserSerializer(read_only=True)
@@ -849,6 +872,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     material = OrderGroupMaterialSerializer(allow_null=True)
     orders = OrderSerializer(many=True, read_only=True)
     active = serializers.SerializerMethodField(read_only=True)
+    attachments = OrderGroupAttachmentSerializer(many=True, required=False)
 
     class Meta:
         model = OrderGroup
@@ -889,6 +913,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "updated_by",
             "conversation",
             "status",
+            "attachments",
         )
 
     def create(self, validated_data):

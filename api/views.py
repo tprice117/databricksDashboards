@@ -64,6 +64,7 @@ from .models import (
     OrderGroup,
     OrderLineItem,
     OrderLineItemType,
+    OrderGroupAttachment,
     Payout,
     Product,
     ProductAddOnChoice,
@@ -110,6 +111,7 @@ from .serializers import (
     MainProductWasteTypeSerializer,
     OrderDisposalTicketSerializer,
     OrderGroupSerializer,
+    OrderGroupAttachmentSerializer,
     OrderLineItemSerializer,
     OrderLineItemTypeSerializer,
     OrderSerializer,
@@ -449,6 +451,12 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(user__user_group=self.request.user.user_group)
         else:
             return self.queryset.filter(user__id=self.request.user.id)
+
+
+class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):
+    queryset = OrderGroupAttachment.objects.all()
+    serializer_class = OrderGroupAttachmentSerializer
+    filterset_fields = ["id", "order_group"]
 
 
 class OrderViewSet(viewsets.ModelViewSet):
