@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import List, Union
 
 import stripe
+from stripe import StripeError
 from django.conf import settings
 from django.db.models import DecimalField, F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Round
@@ -231,7 +232,7 @@ class PayoutUtils:
                     amount=order.needed_payout_to_seller(),
                     stripe_transfer_id=transfer.id,
                 )
-            except stripe.error.StripeError as stripe_error:
+            except StripeError as stripe_error:
                 print("Stripe error occurred:", stripe_error)
                 logger.error(
                     f"Price_Model.predict_price: [Stripe]-[{stripe_error}]",
