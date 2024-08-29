@@ -240,15 +240,23 @@ class UserGroupViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "share_code"]
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
-        if is_superuser:
-            return self.queryset
+        # Allow search of all companies when share code or id is present.
+        share_code = self.request.query_params.get("share_code", None)
+        user_group_id = self.request.query_params.get("id", None)
+        if share_code:
+            return self.queryset.filter(share_code=share_code)
+        elif user_group_id:
+            return self.queryset.filter(id=user_group_id)
         else:
-            return self.queryset.filter(id=self.request.user.user_group.id)
+            is_superuser = self.request.user == "ALL" or (
+                self.request.user.user_group.is_superuser
+                if self.request.user and self.request.user.user_group
+                else False
+            )
+            if is_superuser:
+                return self.queryset
+            else:
+                return self.queryset.filter(id=self.request.user.user_group.id)
 
 
 class UserGroupBillingViewSet(viewsets.ModelViewSet):
