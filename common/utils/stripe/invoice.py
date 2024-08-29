@@ -2,6 +2,14 @@ from typing import List
 import logging
 import stripe
 from django.conf import settings
+from stripe import (
+    CardError,
+    RateLimitError,
+    InvalidRequestError,
+    AuthenticationError,
+    APIConnectionError,
+    StripeError,
+)
 from .customer import Customer
 from .payment_method import PaymentMethod as StripePaymentMethod
 
@@ -171,7 +179,7 @@ class Invoice:
                 invoice_id,
                 payment_method=customer.invoice_settings.default_payment_method,
             )
-        except stripe.error.CardError as e:
+        except CardError as e:
             # https://docs.stripe.com/api/errors
             # Since it's a decline, stripe.error.CardError will be caught
             # TODO: Maybe, add allowed CardErrors. An allowed error would not set the PaymentMethod to inactive.
@@ -183,31 +191,31 @@ class Invoice:
                 exc_info=e,
             )
             downstream_payment_method.send_internal_email(user_address)
-        except stripe.error.RateLimitError as e:
+        except RateLimitError as e:
             # Too many requests made to the API too quickly
             logger.error(
                 f"Invoice.attempt_pay:stripe.RateLimitError: [invoice_id:{invoice_id}]-[{e}]",
                 exc_info=e,
             )
-        except stripe.error.InvalidRequestError as e:
+        except InvalidRequestError as e:
             # Invalid parameters were supplied to Stripe's API
             logger.error(
                 f"Invoice.attempt_pay:stripe.InvalidRequestError: [invoice_id:{invoice_id}]-[user_address.id:{user_address_id}]-[downstream_payment_method_id:{downstream_payment_method_id}]-[{e}]",
                 exc_info=e,
             )
-        except stripe.error.AuthenticationError as e:
+        except AuthenticationError as e:
             # Authentication with Stripe's API failed (maybe the API keys changed recently)
             logger.error(
                 f"Invoice.attempt_pay:stripe.AuthenticationError: [invoice_id:{invoice_id}]-[{e}]",
                 exc_info=e,
             )
-        except stripe.error.APIConnectionError as e:
+        except APIConnectionError as e:
             # Network communication with Stripe failed
             logger.error(
                 f"Invoice.attempt_pay:stripe.APIConnectionError: [invoice_id:{invoice_id}]-[{e}]",
                 exc_info=e,
             )
-        except stripe.error.StripeError as e:
+        except StripeError as e:
             # Display a very generic error to the user, and maybe send yourself an email
             logger.error(
                 f"Invoice.attempt_pay:stripe.StripeError: [invoice_id:{invoice_id}]-[user_address.id:{user_address_id}]-[downstream_payment_method_id:{downstream_payment_method_id}]-[{e}]",
