@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "asset_management",
     "billing",
     "canny",
+    "cart",
     "chat",
     "common",
     "communications",

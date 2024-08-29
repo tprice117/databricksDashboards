@@ -22,6 +22,13 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -1352,7 +1359,7 @@ def new_order_6(request, order_group_id):
     return HttpResponseRedirect(reverse("customer_new_order"))
 
 
-def get_quote_data(request, order_id_lst):
+def get_quote_data(request, order_id_lst, email_lst):
     order = Order.objects.filter(id__in=order_id_lst)
     order = order.prefetch_related("order_line_items")
     one_step = []
@@ -1546,13 +1553,17 @@ def get_quote_data(request, order_id_lst):
     subject = (
         "Downstream | Quote | " + order.order_group.user_address.formatted_address()
     )
+    # carts = CartOrder.objects.filter(
+    #     user_address__user_group=order.order_group.user.user_group
+    # )
+    quote_id = 1001  # carts.count() + 1
     quote_expiration = timezone.now() + datetime.timedelta(days=14)
     data = {
         "transactional_message_id": 4,
         "subject": subject,
         "message_data": {
             "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
-            "quote_id": 1001,
+            "quote_id": quote_id,
             "full_name": order.order_group.user.full_name,
             "company_name": order.order_group.user.user_group.name,
             "delivery_address": order.order_group.user_address.formatted_address(),
@@ -1569,15 +1580,51 @@ def get_quote_data(request, order_id_lst):
             },
         },
     }
+    # cart = CartOrder(
+    #     user_address=order.order_group.user_address,
+    #     quote_expiration=quote_expiration,
+    #     quote_id=quote_id,
+    #     quote=data,
+    # )
+    # if email_lst:
+    #     cart.to_emails = ",".join(email_lst)
+    # cart.save()
     return data
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([])
+def accept_quote(request):
+    # Accept the quote.
+    cart_id = request.query_params.get("cart_id", None)
+    # try:
+    #     cart = CartOrder.objects.get(id=cart_id)
+    #     cart.quote_accepted_at = timezone.now()
+    #     cart.save()
+    # except Cart.DoesNotExist as e:
+    #     logger.error(
+    #         f"accept_quote: Cart not found for cart_id[{cart_id}]",
+    #         exc_info=e,
+    #     )
+    #     return Response("error", status=status.HTTP_404_NOT_FOUND)
+    # except Exception as e:
+    #     logger.error(f"accept_quote: [{e}]-data[{request.data}]", exc_info=e)
+    #     return Response("error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return Response("OK", status=status.HTTP_200_OK)
 
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
 def show_quote(request):
     context = get_user_context(request)
+    quote_id = request.GET.get("quote_id")
+    # if quote_id:
+    #     cart = CartOrder.objects.get(id=quote_id)
+    #     payload = {"trigger": cart.quote}
+    # else:
     order_id_lst = ast.literal_eval(request.GET.get("ids"))
-    data = get_quote_data(request, order_id_lst)
+    data = get_quote_data(request, order_id_lst, None)
     payload = {"trigger": data["message_data"]}
     return render(request, "customer_dashboard/customer_quote.html", payload)
 
@@ -1592,7 +1639,7 @@ def cart_send_quote(request):
             email_lst = list(set(data.get("emails")))
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
-                data = get_quote_data(request, order_id_lst)
+                data = get_quote_data(request, order_id_lst, email_lst)
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",

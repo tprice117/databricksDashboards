@@ -139,6 +139,9 @@ class Order(BaseModel):
         blank=True,
         null=True,
     )  # 6.6.23
+    cart_order = models.ForeignKey(
+        "cart.CartOrder", models.SET_NULL, related_name="orders", blank=True, null=True
+    )
 
     @property
     def is_past_due(self):
