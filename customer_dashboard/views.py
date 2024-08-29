@@ -1851,7 +1851,7 @@ def checkout(request, user_address_id):
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
     for order in orders:
-        if order.status == Order.Status.APPROVAL:
+        if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
         customer_price = order.customer_price()
         customer_price_full = order.full_price()
