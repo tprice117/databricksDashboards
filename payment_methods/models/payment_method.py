@@ -5,7 +5,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 import logging
-from stripe.error import CardError
+from stripe import CardError
 from api.models import User, UserGroup
 from api.models.user.user_address import UserAddress
 from common.models import BaseModel

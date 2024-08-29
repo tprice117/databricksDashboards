@@ -2,7 +2,7 @@ import logging
 
 import stripe
 from django.conf import settings
-from stripe.error import InvalidRequestError
+from stripe import InvalidRequestError
 
 logger = logging.getLogger(__name__)
 
