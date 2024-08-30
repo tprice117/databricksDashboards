@@ -23,6 +23,11 @@ class UserGroupLegal(BaseModel):
 
     user_group = models.OneToOneField(UserGroup, models.CASCADE, related_name="legal")
     name = models.CharField(max_length=255)
+    tax_id = models.CharField(
+        max_length=20, blank=True, null=True, help_text="EIN/TIN or SSN"
+    )
+    accepted_net_terms = models.BooleanField(default=False)
+    years_in_business = models.PositiveIntegerField(blank=True, null=True)
     doing_business_as = models.CharField(max_length=255, blank=True, null=True)
     structure = models.CharField(max_length=20, choices=BusinessStructure.choices)
     industry = models.CharField(max_length=20, choices=Industry.choices)
