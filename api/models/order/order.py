@@ -157,48 +157,16 @@ class Order(BaseModel):
     def order_type(self):
         return self.get_order_type()
 
-    @property
-    def combined_status(self):
-        """Returns a combined status for the Order.
-        This takes Order Admin Approval as well as UserGroup Credit Application into account.
-        """
-        if self.status == Order.Status.ADMIN_APPROVAL_PENDING:
-            # If UserGroup does not have net terms or previously denied, check for pending credit application.
-            if not self.order_group.user_address.default_payment_method and (
-                self.order_group.user_address.user_group.credit_line_limit is None
-                or self.order_group.user_address.user_group.credit_line_limit == 0
-            ):
-                credit_applications = self.order_group.user_address.user_group.credit_applications.order_by(
-                    "-created_on"
-                ).first()
-                if credit_applications:
-                    if credit_applications.status == ApprovalStatus.PENDING:
-                        Order.objects.filter(id=self.id).update(
-                            status="CREDIT_APPLICATION_APPROVAL_PENDING"
-                        )
-                        self.status = "CREDIT_APPLICATION_APPROVAL_PENDING"
-                        return "CREDIT_APPLICATION_APPROVAL_PENDING"
-                    elif credit_applications.status == ApprovalStatus.DECLINED:
-                        Order.objects.filter(id=self.id).update(
-                            status="CREDIT_APPLICATION_DECLINED"
-                        )
-                        self.status = "CREDIT_APPLICATION_DECLINED"
-                        return "CREDIT_APPLICATION_DECLINED"
-                else:
-                    # Check if UserGroup has any active payment methods.
-                    payment_methods = (
-                        self.order_group.user_address.payment_methods.filter(
-                            active=True
-                        )
-                    )
-                    if payment_methods.count() == 0:
-                        Order.objects.filter(id=self.id).update(
-                            status="NO_PAYMENT_METHOD"
-                        )
-                        self.status = "NO_PAYMENT_METHOD"
-                        return "NO_PAYMENT_METHOD"
-
-        return self.status
+    def update_status_on_credit_application_approved(self):
+        """Update the Order status after the UserGroupCreditApplication is approved."""
+        self.status = Order.Status.PENDING
+        if self.user_group_admin_approval_order:
+            # Check for any Admin Policy checks.
+            if self.user_group_admin_approval_order.status == ApprovalStatus.PENDING:
+                self.status = Order.Status.ADMIN_APPROVAL_PENDING
+            elif self.user_group_admin_approval_order.status == ApprovalStatus.DECLINED:
+                self.status = Order.Status.ADMIN_APPROVAL_DECLINED
+        self.save()
 
     @property
     def seller_accept_order_url(self):
