@@ -815,10 +815,18 @@ class OrderGroupMaterialSerializer(serializers.ModelSerializer):
 
 
 class OrderGroupAttachmentSerializer(serializers.ModelSerializer):
+    file_name = serializers.CharField(read_only=True)
+    file_type = serializers.CharField(read_only=True)
 
     class Meta:
         model = OrderGroupAttachment
-        fields = "__all__"
+        fields = (
+            "id",
+            "order_group",
+            "file",
+            "file_name",
+            "file_type",
+        )
 
 
 class OrderGroupSerializer(serializers.ModelSerializer):
