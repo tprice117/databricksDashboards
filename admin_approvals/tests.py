@@ -216,7 +216,9 @@ class OrderApprovalTests(TestCase):
         print("============================")
         print("Created Order", order_member_data)
         # Check that the order status is set to approval. This means Order requires approval.
-        self.assertEqual(order_member_data["status"], Order.Status.APPROVAL)
+        self.assertEqual(
+            order_member_data["status"], Order.Status.ADMIN_APPROVAL_PENDING
+        )
 
         # Ensure policy is higher than order amount so that it doesn't require approval.
         purchase_policy = user_member.user_group.policy_purchase_approvals.filter(

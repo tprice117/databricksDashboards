@@ -90,11 +90,15 @@ class Order(BaseModel):
         ONE_TIME = "ONE_TIME"
 
     class Status(models.TextChoices):
-        APPROVAL = "APPROVAL"
-        PENDING = "PENDING"
+        ADMIN_APPROVAL_PENDING = "ADMIN_APPROVAL_PENDING"
+        ADMIN_APPROVAL_DECLINED = "ADMIN_APPROVAL_DECLINED"
+        PENDING = ("PENDING", "Supplier confirmation pending")
         SCHEDULED = "SCHEDULED"
         CANCELLED = "CANCELLED"
         COMPLETE = "COMPLETE"
+        CREDIT_APPLICATION_APPROVAL_PENDING = "CREDIT_APPLICATION_APPROVAL_PENDING"
+        CREDIT_APPLICATION_DECLINED = "CREDIT_APPLICATION_DECLINED"
+        NO_PAYMENT_METHOD = "NO_PAYMENT_METHOD"
 
     order_group = models.ForeignKey(
         "api.OrderGroup", models.PROTECT, related_name="orders"
@@ -109,7 +113,7 @@ class Order(BaseModel):
         blank=True, null=True
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
     status = models.CharField(
-        max_length=20,
+        max_length=50,
         choices=Status.choices,
         default=Status.PENDING,
     )
@@ -139,6 +143,9 @@ class Order(BaseModel):
         blank=True,
         null=True,
     )  # 6.6.23
+    cart_order = models.ForeignKey(
+        "cart.CartOrder", models.SET_NULL, related_name="orders", blank=True, null=True
+    )
 
     @property
     def is_past_due(self):
@@ -149,6 +156,17 @@ class Order(BaseModel):
     @property
     def order_type(self):
         return self.get_order_type()
+
+    def update_status_on_credit_application_approved(self):
+        """Update the Order status after the UserGroupCreditApplication is approved."""
+        self.status = Order.Status.PENDING
+        if self.user_group_admin_approval_order:
+            # Check for any Admin Policy checks.
+            if self.user_group_admin_approval_order.status == ApprovalStatus.PENDING:
+                self.status = Order.Status.ADMIN_APPROVAL_PENDING
+            elif self.user_group_admin_approval_order.status == ApprovalStatus.DECLINED:
+                self.status = Order.Status.ADMIN_APPROVAL_DECLINED
+        self.save()
 
     @property
     def seller_accept_order_url(self):
@@ -546,9 +564,9 @@ class Order(BaseModel):
                     > self.order_group.user_address.user_group.policy_monthly_limit.amount
                 ):
                     # Set Order status to Approval so that it is returned in api.
-                    self.status = Order.Status.APPROVAL
+                    self.status = Order.Status.ADMIN_APPROVAL_PENDING
                     Order.objects.filter(id=self.id).update(
-                        status=Order.Status.APPROVAL
+                        status=Order.Status.ADMIN_APPROVAL_PENDING
                     )
                     get_order_approval_model().objects.create(order_id=self.id)
                     # raise ValidationError(
@@ -567,9 +585,9 @@ class Order(BaseModel):
                         and self.customer_price() > user_group_purchase_approval.amount
                     ):
                         # Set Order status to Approval so that it is returned in api.
-                        self.status = Order.Status.APPROVAL
+                        self.status = Order.Status.ADMIN_APPROVAL_PENDING
                         Order.objects.filter(id=self.id).update(
-                            status=Order.Status.APPROVAL
+                            status=Order.Status.ADMIN_APPROVAL_PENDING
                         )
                         get_order_approval_model().objects.create(order_id=self.id)
                         # raise ValidationError(
@@ -919,7 +937,7 @@ class Order(BaseModel):
         """
         if not self.submitted_on:
             # Check if order needed approval
-            if self.status == Order.Status.APPROVAL:
+            if self.status == Order.Status.ADMIN_APPROVAL_PENDING:
                 if not override_approval_policy:
                     raise ValidationError(
                         "Order needs approval before it can be submitted."
@@ -938,6 +956,30 @@ class Order(BaseModel):
                     self.submitted_on = timezone.now()
                     self.save()
             else:
+                if self.status == Order.Status.CREDIT_APPLICATION_APPROVAL_PENDING:
+                    raise ValidationError(
+                        "Order is pending a credit application approval and cannot be submitted."
+                    )
+                if self.status == Order.Status.CREDIT_APPLICATION_DECLINED:
+                    raise ValidationError(
+                        "Order has been denied a credit application approval and cannot be submitted."
+                    )
+                if self.status == Order.Status.NO_PAYMENT_METHOD:
+                    raise ValidationError(
+                        "Order has no payment methods on file and cannot be submitted."
+                    )
+                if self.status == Order.Status.ADMIN_APPROVAL_DECLINED:
+                    raise ValidationError(
+                        "Order has been declined by Admin and cannot be submitted."
+                    )
+                if self.status == Order.Status.CANCELLED:
+                    raise ValidationError(
+                        "Order has been cancelled and cannot be submitted."
+                    )
+                if self.status == Order.Status.COMPLETE:
+                    raise ValidationError(
+                        "Order has been completed and cannot be submitted."
+                    )
                 self.status = Order.Status.PENDING
                 self.submitted_on = timezone.now()
                 self.save()
