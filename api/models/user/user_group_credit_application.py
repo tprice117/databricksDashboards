@@ -76,7 +76,7 @@ def user_group_credit_application_pre_save(
                 instance.user_group.save()
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
-                    order_group__user_group=instance.user_group,
+                    order_group__user_address__user_group=instance.user_group,
                     status=Order.Status.CREDIT_APPLICATION_APPROVAL_PENDING,
                 )
                 for order in orders:
