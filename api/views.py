@@ -468,6 +468,9 @@ class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Only allow user to see their Company's attachments.
+        logger.info(
+            f"User: {self.request.user}, {self.request.method}: {self.request.query_params} | Meta: {self.request.META}"
+        )
         return self.queryset.filter(
             order_group__user__user_group=self.request.user.user_group
         )
