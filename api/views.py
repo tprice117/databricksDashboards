@@ -466,6 +466,12 @@ class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):
     serializer_class = OrderGroupAttachmentSerializer
     filterset_fields = ["id", "order_group"]
 
+    def get_queryset(self):
+        # Only allow user to see their Company's attachments.
+        return self.queryset.filter(
+            order_group__user__user_group=self.request.user.user_group
+        )
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
