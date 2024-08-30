@@ -19,6 +19,7 @@ router.register(r"user-group-billings", views.UserGroupBillingViewSet, "api")
 router.register(
     r"user-group-credit-applications", views.UserGroupCreditApplicationViewSet, "api"
 )
+router.register(r"user-group-legal", views.UserGroupLegalViewSet, "api")
 router.register(r"user-user-addresses", views.UserUserAddressViewSet, "api")
 router.register(r"user-seller-reviews", views.UserSellerReviewViewSet, "api")
 router.register(

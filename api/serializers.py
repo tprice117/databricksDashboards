@@ -163,6 +163,9 @@ class UserGroupLegalSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "tax_id",
+            "accepted_net_terms",
+            "years_in_business",
             "doing_business_as",
             "structure",
             "industry",
