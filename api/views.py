@@ -475,6 +475,41 @@ class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):
             order_group__user__user_group=self.request.user.user_group
         )
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        logger.info(
+            f"OrderGroupAttachmentViewSet list returned: {response.status_code}-{response.data}"
+        )
+        return response
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        logger.info(
+            f"OrderGroupAttachmentViewSet retrieve returned: {response.status_code}-{response.data}"
+        )
+        return response
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        logger.info(
+            f"OrderGroupAttachmentViewSet create returned: {response.status_code}-{response.data}"
+        )
+        return response
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        logger.info(
+            f"OrderGroupAttachmentViewSet update returned: {response.status_code}-{response.data}"
+        )
+        return response
+
+    def destroy(self, request, *args, **kwargs):
+        response = super().destroy(request, *args, **kwargs)
+        logger.info(
+            f"OrderGroupAttachmentViewSet destroy returned: {response.status_code}"
+        )
+        return response
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
