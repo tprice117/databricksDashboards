@@ -88,7 +88,6 @@ class UserGroup(BaseModel):
     owned_and_rented_equiptment_coi = models.FileField(
         upload_to=get_file_path, blank=True, null=True
     )
-    credit_report = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
     intercom_id = models.CharField(
         max_length=255,
