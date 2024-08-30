@@ -64,6 +64,8 @@ def pre_save_user_group_admin_approval_order(
             instance.order.save()
         elif old_status == ApprovalStatus.DECLINED:
             # If the Status changes from PENDING to DECLINED, update Status, then do nothing else.
+            instance.order.status = Order.Status.ADMIN_APPROVAL_DECLINED
+            instance.order.save()
             logger.warning(
                 f"Approval for order {instance.order.id} has been declined. No further action will be taken."
             )
