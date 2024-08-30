@@ -163,6 +163,9 @@ class UserGroupLegalSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "tax_id",
+            "accepted_net_terms",
+            "years_in_business",
             "doing_business_as",
             "structure",
             "industry",
@@ -815,10 +818,18 @@ class OrderGroupMaterialSerializer(serializers.ModelSerializer):
 
 
 class OrderGroupAttachmentSerializer(serializers.ModelSerializer):
+    file_name = serializers.CharField(read_only=True)
+    file_type = serializers.CharField(read_only=True)
 
     class Meta:
         model = OrderGroupAttachment
-        fields = "__all__"
+        fields = (
+            "id",
+            "order_group",
+            "file",
+            "file_name",
+            "file_type",
+        )
 
 
 class OrderGroupSerializer(serializers.ModelSerializer):

@@ -16,3 +16,11 @@ class OrderGroupAttachment(BaseModel):
 
     def __str__(self):
         return self.file.name
+
+    @property
+    def file_type(self):
+        return self.file.name.split(".")[-1]
+
+    @property
+    def file_name(self):
+        return self.file.name

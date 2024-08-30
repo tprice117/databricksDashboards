@@ -7,6 +7,7 @@ from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
 from api.models.order.order import Order
 from common.models import BaseModel
+from common.utils.get_file_path import get_file_path
 from common.models.choices.approval_status import ApprovalStatus
 
 
@@ -28,6 +29,20 @@ class UserGroupCreditApplication(BaseModel):
         choices=ApprovalStatus.choices,
         default=ApprovalStatus.PENDING,
     )
+    estimated_monthly_revenue = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
+    estimated_monthly_spend = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
+    accepts_credit_authorization = models.BooleanField(default=True)
+    credit_report = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()
