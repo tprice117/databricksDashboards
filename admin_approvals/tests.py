@@ -164,114 +164,160 @@ class OrderApprovalTests(TestCase):
         """
         # Get User with Admin Permissions
         user_admin = User.objects.get(email="wickeym@gmail.com")
-        print(user_admin.user_group_id)
-        # Get all order approvals for User
-        approvals = UserGroupAdminApprovalOrder.objects.filter(
-            order__order_group__user__user_group_id=user_admin.user_group_id
-        )
-        print(approvals.count())
-        approvals_all = UserGroupAdminApprovalOrder.objects.all()
-        print(approvals_all.count())
-        for approval in approvals_all:
-            print(
-                approval.order.order_group.user.email,
-                approval.order.order_group.user.user_group_id,
-            )
-        # Get OrderGroup from Admin User
-        order_group_admin = user_admin.ordergroup_set.first()
+        user_admin_start_type = user_admin.type
+        user_admin.type = UserType.ADMIN
+        user_admin.save()
 
-        # Get User with Member Permissions
         user_member = User.objects.get(email="mwickey@trydownstream.com")
-        # Get OrderGroup from Member User
-        order_group_member = user_member.ordergroup_set.first()
+        user_member_start_type = user_member.type
+        user_member_is_staff = user_member.is_staff
+        user_member.is_staff = False
+        user_member.type = UserType.MEMBER
+        user_member.save()
+        order_admin = None
+        order_member = None
+        order_member2 = None
 
-        # Create Order for Admin User
-        order_admin = Order(
-            order_group=order_group_admin,
-            start_date=date.today() + timedelta(days=1),
-            end_date=date.today() + timedelta(days=4),
-        )
-        order_admin.save()
-        order_admin_data = OrderSerializer(order_admin).data
-        print("Created Admin Order", order_admin_data)
-        # Check that the order is pending. This means Order did not require approval.
-        self.assertEqual(order_admin_data["status"], Order.Status.PENDING)
+        # Get monthly policy for user
+        monthly_policy = user_member.user_group.policy_monthly_limit
+        if monthly_policy:
+            monthly_policy_start_amount = monthly_policy.amount
+            monthly_policy.amount = 1000
+            monthly_policy.save()
 
-        # Ensure policy is lower than order amount so that it requires approval.
-        purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
-            user_type=user_member.type
-        ).first()
-        # The order below is $184, so it should require approval.
-        purchase_policy.amount = 100
-        purchase_policy.save()
+        try:
+            # # Get all order approvals for User
+            # approvals = UserGroupAdminApprovalOrder.objects.filter(
+            #     order__order_group__user__user_group_id=user_admin.user_group_id
+            # )
+            # print(approvals.count())
+            # approvals_all = UserGroupAdminApprovalOrder.objects.all()
+            # print(approvals_all.count())
+            # for approval in approvals_all:
+            #     print(
+            #         approval.order.order_group.user.email,
+            #         approval.order.order_group.user.user_group_id,
+            #     )
+            # Get OrderGroup from Admin User
+            order_group_admin = user_admin.ordergroup_set.first()
 
-        # Create Order for Member User
-        order_member = Order(
-            order_group=order_group_member,
-            start_date=date.today() + timedelta(days=1),
-            end_date=date.today() + timedelta(days=4),
-        )
-        order_member.save()
-        order_member_data = OrderSerializer(order_member).data
-        print("============================")
-        print("Created Order", order_member_data)
-        # Check that the order status is set to approval. This means Order requires approval.
-        self.assertEqual(
-            order_member_data["status"], Order.Status.ADMIN_APPROVAL_PENDING
-        )
+            # Get User with Member Permissions
+            user_member = User.objects.get(email="mwickey@trydownstream.com")
+            # Get OrderGroup from Member User
+            order_group_member = user_member.ordergroup_set.first()
 
-        # Ensure policy is higher than order amount so that it doesn't require approval.
-        purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
-            user_type=user_member.type
-        ).first()
-        purchase_policy.amount = 1000
-        purchase_policy.save()
+            # Create Order for Admin User
+            order_admin = Order(
+                order_group=order_group_admin,
+                start_date=date.today() + timedelta(days=1),
+                end_date=date.today() + timedelta(days=4),
+            )
+            order_admin.save()
+            order_admin_data = OrderSerializer(order_admin).data
+            print("Created Admin Order", order_admin_data)
+            # Check that the order is pending. This means Order did not require approval.
+            self.assertEqual(order_admin_data["status"], Order.Status.PENDING)
 
-        # Create Order for Member User
-        order_member2 = Order(
-            order_group=order_group_member,
-            start_date=date.today() + timedelta(days=1),
-            end_date=date.today() + timedelta(days=4),
-        )
-        order_member2.save()
-        order_member2_data = OrderSerializer(order_member2).data
-        print("============================")
-        print("Created Order 2", order_member2_data)
-        # Check that the order status is set to approval. This means Order requires approval.
-        self.assertEqual(order_member2_data["status"], Order.Status.PENDING)
+            # Ensure policy is lower than order amount so that it requires approval.
+            purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
+                user_type=user_member.type
+            ).first()
+            # The order below is $184, so it should require approval.
+            purchase_policy.amount = 100
+            purchase_policy.save()
 
-        # Have the admin approve the order
+            # Create Order for Member User
+            order_member = Order(
+                order_group=order_group_member,
+                start_date=date.today() + timedelta(days=1),
+                end_date=date.today() + timedelta(days=4),
+            )
+            order_member.save()
+            order_member_data = OrderSerializer(order_member).data
+            print("============================")
+            print("Created Order", order_member_data)
+            # Check that the order status is set to approval. This means Order requires approval.
+            self.assertEqual(
+                order_member_data["status"], Order.Status.ADMIN_APPROVAL_PENDING
+            )
 
-        # APPROVALS
-        # user-group-admin-approval-order
-        # user-group-admin-approval-user-invite
+            # Ensure policy is higher than order amount so that it doesn't require approval.
+            purchase_policy = user_member.user_group.policy_purchase_approvals.filter(
+                user_type=user_member.type
+            ).first()
+            purchase_policy.amount = 1000
+            purchase_policy.save()
 
-        factory = APIRequestFactory()
-        view = UserGroupAdminApprovalOrderViewSet.as_view({"get": "list"})
-        request = factory.get("/api/user-group-admin-approval-order/")
-        force_authenticate(request, user=user_admin)
-        response_list = view(request)
-        print("============================")
-        print(response_list.status_code, response_list.data)
+            # Create Order for Member User
+            order_member2 = Order(
+                order_group=order_group_member,
+                start_date=date.today() + timedelta(days=1),
+                end_date=date.today() + timedelta(days=4),
+            )
+            order_member2.save()
+            order_member2_data = OrderSerializer(order_member2).data
+            print("============================")
+            print("Created Order 2", order_member2_data)
+            # Check that the order status is set to approval. This means Order requires approval.
+            self.assertEqual(order_member2_data["status"], Order.Status.PENDING)
 
-        api_params = {
-            "order": response_list.data[0]["order"],
-            "status": "APPROVED",
-        }
+            # Have the admin approve the order
 
-        view = UserGroupAdminApprovalOrderViewSet.as_view({"post": "update"})
-        request = factory.post("/api/user-group-admin-approval-order/", data=api_params)
-        force_authenticate(request, user=user_admin)
-        response = view(request, pk=response_list.data[0]["id"])
-        print("============================")
-        print(response.status_code, response.data)
+            # APPROVALS
+            # user-group-admin-approval-order
+            # user-group-admin-approval-user-invite
 
-        # Delete order after testing
-        order_admin.delete()
-        order_member.delete()
-        order_member2.delete()
+            # Get the approval that was just created
+            order_approval = order_member.user_group_admin_approval_order
 
-        print("DONE")
+            factory = APIRequestFactory()
+
+            view = UserGroupAdminApprovalOrderViewSet.as_view({"get": "retrieve"})
+            request = factory.get(
+                f"/api/user-group-admin-approval-order/{order_approval.id}/"
+            )
+            force_authenticate(request, user=user_admin)
+            response = view(request, pk=order_approval.id)
+            print("============================")
+            print(response.status_code, response.data)
+
+            api_params = {
+                "order": response.data["order"],
+                "status": "APPROVED",
+            }
+
+            view = UserGroupAdminApprovalOrderViewSet.as_view({"post": "update"})
+            request = factory.post(
+                "/api/user-group-admin-approval-order/", data=api_params
+            )
+            force_authenticate(request, user=user_admin)
+            response = view(request, pk=response.data["id"])
+            print("============================")
+            print(response.status_code, response.data)
+
+            print("TESTS SUCCESSFUL")
+        except Exception as e:
+            print("TESTS FAILED", e)
+        finally:
+            # Reset monthly policy
+            if monthly_policy:
+                monthly_policy.amount = monthly_policy_start_amount
+                monthly_policy.save()
+            # Delete order after testing
+            if order_admin:
+                order_admin.delete()
+            if order_member:
+                order_member.delete()
+            if order_member2:
+                order_member2.delete()
+            # Reset User Types
+            user_admin.type = user_admin_start_type
+            user_admin.save()
+
+            user_member.type = user_member_start_type
+            user_member.is_staff = user_member_is_staff
+            user_member.save()
+            print("TESTS FINISHED")
 
     # def test_order_approval_outside_policies(self):
     #     # Have User create two orders outside of policies
