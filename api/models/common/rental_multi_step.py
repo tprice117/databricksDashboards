@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List
+from typing import List, Optional
 
 from django.db import models
 
@@ -234,7 +234,11 @@ class PricingRentalMultiStep(BaseModel):
 
         return months, two_weeks, weeks, days, hours
 
-    def get_price(self, duration: timedelta) -> List[PricingLineItem]:
+    def get_price(
+        self,
+        duration: timedelta,
+        shift_count: Optional[int],
+    ) -> List[PricingLineItem]:
         """
         Calculates the most cost-efficient rental price based on duration (hours or days).
 
@@ -307,5 +311,12 @@ class PricingRentalMultiStep(BaseModel):
         #             units="hours",
         #         )
         #     )
+
+        # Handle shift-based pricing, if exists.
+        if hasattr(self, "rental_multi_step_shift"):
+            pricing_line_items = self.rental_multi_step_shift.apply_shift_surcharge(
+                shift_count=shift_count,
+                pricing_line_items=pricing_line_items,
+            )
 
         return pricing_line_items

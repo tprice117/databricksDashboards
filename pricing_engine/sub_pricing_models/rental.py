@@ -11,6 +11,7 @@ class RentalPrice:
         seller_product_seller_location: SellerProductSellerLocation,
         start_date: datetime.datetime,
         end_date: datetime.datetime,
+        shift_count: Optional[int],
     ) -> Optional[Union[Tuple[PricingLineItemGroup, list[PricingLineItem]], None]]:
         """
         This method computes the rental price based the SellerProductSellerLocation's
@@ -50,6 +51,7 @@ class RentalPrice:
             items.extend(
                 seller_product_seller_location.rental_multi_step.get_price(
                     duration=duration,
+                    shift_count=shift_count,
                 )
             )
 
