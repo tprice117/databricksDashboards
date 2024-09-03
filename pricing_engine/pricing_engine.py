@@ -22,6 +22,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: datetime.datetime,
         waste_type: Optional[WasteType],
+        shift_count: Optional[int],
         times_per_week: int = None,
         discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
@@ -32,6 +33,7 @@ class PricingEngine:
             start_date=start_date,
             end_date=end_date,
             waste_type=waste_type,
+            shift_count=shift_count,
             times_per_week=times_per_week,
             discount=discount,
         )
@@ -44,6 +46,7 @@ class PricingEngine:
         start_date: datetime.datetime,
         end_date: Optional[datetime.datetime],
         waste_type: Optional[WasteType],
+        shift_count: Optional[int],
         times_per_week: Optional[int] = None,
         discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
@@ -115,6 +118,7 @@ class PricingEngine:
             seller_product_seller_location,
             start_date=start_date,
             end_date=end_date,
+            shift_count=shift_count,
         )
         if rental:
             rental[0].sort = 1

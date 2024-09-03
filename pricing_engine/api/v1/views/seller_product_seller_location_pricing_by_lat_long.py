@@ -52,6 +52,7 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
             start_date=serializer.validated_data["start_date"],
             end_date=serializer.validated_data["end_date"],
             waste_type=serializer.validated_data["waste_type"],
+            shift_count=serializer.validated_data.get("shift_count"),
         )
 
         # Return PricingEngineResponse serialized data.

@@ -28,6 +28,7 @@ class OrderGroupRentalMultiStep(PricingRentalMultiStep):
 
         line_items = self.get_price(
             duration=order.end_date - order.start_date,
+            shift_count=self.order_group.shift_count,
         )
 
         order_line_items: List[OrderLineItem] = []

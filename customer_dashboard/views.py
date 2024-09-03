@@ -1,14 +1,14 @@
 import ast
 import datetime
+import json
 import logging
 import uuid
-import json
+from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
-import requests
-from decimal import Decimal
 
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -22,13 +22,13 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
+from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -51,11 +51,11 @@ from api.models import (
     SellerProductSellerLocation,
     ServiceRecurringFrequency,
     Subscription,
+    TimeSlot,
     User,
     UserAddress,
     UserAddressType,
     UserGroup,
-    TimeSlot,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -860,6 +860,8 @@ def new_order_3(request, product_id):
         }
         if request.POST.get("times_per_week"):
             query_params["times_per_week"] = request.POST.get("times_per_week")
+        if request.POST.get("shift_count"):
+            query_params["shift_count"] = request.POST.get("shift_count")
         if not query_params["removal_date"]:
             # This happens for one-time orders like junk removal,
             # where the removal date is the same as the delivery date.
@@ -1009,6 +1011,7 @@ def new_order_4(request):
             times_per_week=(
                 context["times_per_week"] if context["times_per_week"] else None
             ),
+            shift_count=context.get("shift_count", None),
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data

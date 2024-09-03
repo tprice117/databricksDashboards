@@ -3,7 +3,8 @@ import datetime
 from django import forms
 from django.core.exceptions import ValidationError
 
-from api.models import UserAddressType, UserGroup, UserAddress
+from api.models import UserAddress, UserAddressType, UserGroup
+from api.models.order.order_group import OrderGroup
 from common.models.choices.user_type import UserType
 
 
@@ -357,6 +358,13 @@ class OrderGroupForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"}),
         required=True,
     )
+    # Create a choice field for shift count. Only required if the product has rental_multi_step.
+    shift_count = forms.ChoiceField(
+        label="Service Times Per Week",
+        choices=OrderGroup.ShiftCount.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        required=True,
+    )
     # Add is estimated end date checkbox
     # NOTE: Maybe also say that we will assume monthly rental for now.
     # is_estimated_end_date = forms.BooleanField(
@@ -411,6 +419,12 @@ class OrderGroupForm(forms.Form):
         if not main_product.has_service_times_per_week:
             self.fields["times_per_week"].widget = forms.HiddenInput()
             self.fields["times_per_week"].required = False
+
+        # If the product does not have rental_multi_step, show the shift
+        # count field.
+        if not main_product.has_rental_multi_step:
+            self.fields["shift_count"].widget = forms.HiddenInput()
+            self.fields["shift_count"].required = False
 
     def clean_delivery_date(self):
         # Do not allow delivery date to be on a Sunday.
