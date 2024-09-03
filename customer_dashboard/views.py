@@ -22,13 +22,13 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
+from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -1011,6 +1011,7 @@ def new_order_4(request):
             times_per_week=(
                 context["times_per_week"] if context["times_per_week"] else None
             ),
+            shift_count=context.get("shift_count", None),
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
