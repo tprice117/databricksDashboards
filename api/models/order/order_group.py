@@ -40,6 +40,16 @@ class OrderGroup(BaseModel):
         INVOICED = "INVOICED"
         PAST_DUE = "PAST DUE"
 
+    class ShiftCount(models.IntegerChoices):
+        """
+        For multi-step rentals, this field contains the number
+        of daily working shifts the customer plans to use the equiptment for.
+        """
+
+        ONE_SHIFT = 1
+        TWO_SHIFTS = 2
+        THREE_SHIFTS = 3
+
     user = models.ForeignKey("api.User", models.PROTECT)
     user_address = models.ForeignKey(
         UserAddress,
@@ -74,8 +84,8 @@ class OrderGroup(BaseModel):
         help_text="Service times times per week for MainProducts that have "
         "has_service_times_per_week.",
     )
-    shift_count = models.IntegerChoices(
-        choices=[1, 2, 3],
+    shift_count = models.IntegerField(
+        choices=ShiftCount.choices,
         blank=True,
         null=True,
         help_text="For multi-step rentals, this field contains the number of daily "

@@ -1,14 +1,14 @@
 import ast
 import datetime
+import json
 import logging
 import uuid
-import json
+from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
-import requests
-from decimal import Decimal
 
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -44,11 +44,11 @@ from api.models import (
     SellerProductSellerLocation,
     ServiceRecurringFrequency,
     Subscription,
+    TimeSlot,
     User,
     UserAddress,
     UserAddressType,
     UserGroup,
-    TimeSlot,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -844,6 +844,8 @@ def new_order_3(request, product_id):
         }
         if request.POST.get("times_per_week"):
             query_params["times_per_week"] = request.POST.get("times_per_week")
+        if request.POST.get("shift_count"):
+            query_params["shift_count"] = request.POST.get("shift_count")
         if not query_params["removal_date"]:
             # This happens for one-time orders like junk removal,
             # where the removal date is the same as the delivery date.
