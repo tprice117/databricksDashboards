@@ -3,7 +3,9 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
-from pricing_engine.api.v1.serializers import PricingEngineRequestSerializer
+from pricing_engine.api.v1.serializers import (
+    PricingEngineRequestByUserAddressSerializer,
+)
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
@@ -17,7 +19,7 @@ class SellerProductSellerLocationPricingView(APIView):
     """
 
     @extend_schema(
-        request=PricingEngineRequestSerializer,
+        request=PricingEngineRequestByUserAddressSerializer,
         responses={
             200: PricingEngineResponseSerializer(),
         },
@@ -35,7 +37,7 @@ class SellerProductSellerLocationPricingView(APIView):
           A list of SellerProductSellerLocations.
         """
         # Convert request into serializer.
-        serializer = PricingEngineRequestSerializer(data=request.data)
+        serializer = PricingEngineRequestByUserAddressSerializer(data=request.data)
 
         # Validate serializer.
         if not serializer.is_valid():
@@ -51,9 +53,8 @@ class SellerProductSellerLocationPricingView(APIView):
             end_date=serializer.validated_data.get("end_date"),
             waste_type=serializer.validated_data.get("waste_type"),
             times_per_week=serializer.validated_data.get("times_per_week"),
+            shift_count=serializer.validated_data.get("shift_count"),
         )
-
-        print(pricing_line_item_groups)
 
         # Return SellerProductSellerLocations serialized data.
         data = PricingEngineResponseSerializer(

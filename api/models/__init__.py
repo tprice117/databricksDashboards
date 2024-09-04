@@ -22,6 +22,7 @@ from .order.order_group_material import OrderGroupMaterial
 from .order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from .order.order_group_rental import OrderGroupRental
 from .order.order_group_rental_multi_step import OrderGroupRentalMultiStep
+from .order.order_group_rental_multi_step_shift import OrderGroupRentalMultiStepShift
 from .order.order_group_rental_one_step import OrderGroupRentalOneStep
 from .order.order_group_service import OrderGroupService
 from .order.order_group_service_times_per_week import OrderGroupServiceTimesPerWeek
@@ -48,6 +49,9 @@ from .seller.seller_product_seller_location_rental import (
 )
 from .seller.seller_product_seller_location_rental_multi_step import (
     SellerProductSellerLocationRentalMultiStep,
+)
+from .seller.seller_product_seller_location_rental_multi_step_shift import (
+    SellerProductSellerLocationRentalMultiStepShift,
 )
 from .seller.seller_product_seller_location_rental_one_step import (
     SellerProductSellerLocationRentalOneStep,

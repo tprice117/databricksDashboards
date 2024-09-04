@@ -11,20 +11,21 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from django.db import IntegrityError
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
+from rest_framework.response import Response
 
+from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
     Order,
     OrderGroup,
@@ -42,10 +43,11 @@ from api.models.user.user_seller_location import UserSellerLocation
 from api.utils.utils import decrypt_string
 from common.models.choices.user_type import UserType
 from common.utils import DistanceUtils
+from communications.intercom.contact import Contact as IntercomContact
+from communications.intercom.conversation import Conversation as IntercomConversation
 from communications.intercom.utils.utils import get_json_safe_value
-from notifications.utils import internal_email
-from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from customer_dashboard.forms import UserInviteForm
+from notifications.utils import internal_email
 
 from .forms import (
     ChatMessageForm,
@@ -57,9 +59,6 @@ from .forms import (
     SellerPayoutForm,
     UserForm,
 )
-
-from communications.intercom.contact import Contact as IntercomContact
-from communications.intercom.conversation import Conversation as IntercomConversation
 
 logger = logging.getLogger(__name__)
 
@@ -1961,9 +1960,24 @@ def download_payouts(request):
     writer = csv.writer(response)
     # TODO: After switching to LOB, add checkbook payout id and url.
     if request.user.is_staff:
-        header_row = ["Seller", "Payout ID", "Order ID", "Amount", "Created On"]
+        header_row = [
+            "Seller",
+            "Payout ID",
+            "Order ID",
+            "Amount",
+            "Invoice ID",
+            "Check Number",
+            "Created On",
+        ]
     else:
-        header_row = ["Payout ID", "Order ID", "Amount", "Created On"]
+        header_row = [
+            "Payout ID",
+            "Order ID",
+            "Amount",
+            "Invoice ID",
+            "Check Number",
+            "Created On",
+        ]
     writer.writerow(header_row)
     for payout in payouts:
         row = []
@@ -1976,6 +1990,8 @@ def download_payouts(request):
                 str(payout.id),
                 str(payout.order_id),
                 str(payout.amount),
+                str(payout.invoice_id() if payout.invoice_id() else ""),
+                str(payout.check_number if payout.check_number else ""),
                 payout.created_on.ctime(),
                 # str(payout.checkbook_payout_id),
                 # str(payout.stripe_transfer_id),

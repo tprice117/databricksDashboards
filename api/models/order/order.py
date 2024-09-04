@@ -23,6 +23,7 @@ from api.utils.utils import encrypt_string
 from common.models import BaseModel
 from common.models.choices.approval_status import ApprovalStatus
 from common.models.choices.user_type import UserType
+from common.utils.generate_code import save_unique_code
 from communications.intercom.conversation import Conversation as IntercomConversation
 from notifications import signals as notifications_signals
 from notifications.utils.add_email_to_queue import (
@@ -145,6 +146,13 @@ class Order(BaseModel):
     )  # 6.6.23
     cart_order = models.ForeignKey(
         "cart.CartOrder", models.SET_NULL, related_name="orders", blank=True, null=True
+    )
+    code = models.CharField(
+        max_length=8,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Unique code for the Transaction.",
     )
 
     @property
@@ -516,8 +524,16 @@ class Order(BaseModel):
             else []
         )
 
+    def generate_code(self):
+        """Generate a unique code for the Transaction, if code is None."""
+        if self.code is None:
+            save_unique_code(self)
+
     @staticmethod
     def post_save(sender, instance: "Order", created, **kwargs):
+        if instance.code is None:
+            instance.generate_code()
+
         instance.add_line_items(created)
         notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
 

@@ -11,6 +11,9 @@ from api.models.order.order_group_material import OrderGroupMaterial
 from api.models.order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from api.models.order.order_group_rental import OrderGroupRental
 from api.models.order.order_group_rental_multi_step import OrderGroupRentalMultiStep
+from api.models.order.order_group_rental_multi_step_shift import (
+    OrderGroupRentalMultiStepShift,
+)
 from api.models.order.order_group_rental_one_step import OrderGroupRentalOneStep
 from api.models.order.order_group_seller_decline import OrderGroupSellerDecline
 from api.models.order.order_group_service import OrderGroupService
@@ -18,9 +21,6 @@ from api.models.order.order_group_service_times_per_week import (
     OrderGroupServiceTimesPerWeek,
 )
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
-from api.models.seller.seller_product_seller_location_material_waste_type import (
-    SellerProductSellerLocationMaterialWasteType,
-)
 from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
 from api.models.user.user_address import UserAddress
@@ -28,6 +28,7 @@ from api.models.waste_type import WasteType
 from chat.models.conversation import Conversation
 from common.models import BaseModel
 from common.utils import DistanceUtils
+from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,16 @@ class OrderGroup(BaseModel):
         IN_PROGRESS = "IN-PROGRESS"
         INVOICED = "INVOICED"
         PAST_DUE = "PAST DUE"
+
+    class ShiftCount(models.IntegerChoices):
+        """
+        For multi-step rentals, this field contains the number
+        of daily working shifts the customer plans to use the equiptment for.
+        """
+
+        ONE_SHIFT = 1
+        TWO_SHIFTS = 2
+        THREE_SHIFTS = 3
 
     user = models.ForeignKey("api.User", models.PROTECT)
     user_address = models.ForeignKey(
@@ -71,13 +82,28 @@ class OrderGroup(BaseModel):
     times_per_week = models.SmallIntegerField(
         blank=True,
         null=True,
-        help_text="Service times times per week for MainProducts that have has_service_times_per_week.",
+        help_text="Service times times per week for MainProducts that have "
+        "has_service_times_per_week.",
+    )
+    shift_count = models.IntegerField(
+        choices=ShiftCount.choices,
+        blank=True,
+        null=True,
+        help_text="For multi-step rentals, this field contains the number of daily "
+        "working shifts the customer plans to use the equiptment for.",
     )
     delivery_fee = models.DecimalField(
         max_digits=18, decimal_places=2, default=0, blank=True, null=True
     )
     removal_fee = models.DecimalField(
         max_digits=18, decimal_places=2, default=0, blank=True, null=True
+    )
+    code = models.CharField(
+        max_length=8,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Unique code for the Order.",
     )
 
     def __str__(self):
@@ -301,6 +327,11 @@ class OrderGroup(BaseModel):
             removal_order.save()
         return removal_order
 
+    def generate_code(self):
+        """Generate a unique code for the Order, if code is None."""
+        if self.code is None:
+            save_unique_code(self)
+
 
 @receiver(pre_save, sender=OrderGroup)
 def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
@@ -316,6 +347,9 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
 
 @receiver(post_save, sender=OrderGroup)
 def post_save(sender, instance: OrderGroup, created, **kwargs):
+    if instance.code is None:
+        instance.generate_code()
+
     # If creating, capture the SellerProductSellerLocation pricing
     # in the OrderGroup child objects.
     if created:
@@ -362,6 +396,17 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 two_weeks=seller_product_seller_location.rental_multi_step.two_weeks,
                 month=seller_product_seller_location.rental_multi_step.month,
             )
+
+            # Rental Multi Step Shift (if exists).
+            if hasattr(
+                seller_product_seller_location.rental_multi_step,
+                "rental_multi_step_shift",
+            ):
+                OrderGroupRentalMultiStepShift.objects.create(
+                    order_group=instance,
+                    two_shift=seller_product_seller_location.rental_multi_step.rental_multi_step_shift.two_shift,
+                    three_shift=seller_product_seller_location.rental_multi_step.rental_multi_step_shift.three_shift,
+                )
 
         # Material.
         if instance.waste_type:
