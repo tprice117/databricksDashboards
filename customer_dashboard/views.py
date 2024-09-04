@@ -1441,23 +1441,18 @@ def get_quote_data(request, order_id_lst, email_lst):
         item["fuel_fees"] = Decimal(0.00)
         item["fuel_fees_rate"] = Decimal(0.00)
         if item["line_types"].get("FUEL_AND_ENV", None):
-            ff_seller = round(
-                item["line_types"]["FUEL_AND_ENV"]["items"][0]["seller_payout_price"], 2
+            item["fuel_fees_rate"] = (
+                order.order_group.seller_product_seller_location.fuel_environmental_markup
             )
             item["fuel_fees"] = round(
                 item["line_types"]["FUEL_AND_ENV"]["items"][0]["customer_price"], 2
             )
-            if ff_seller != 0:
-                item["fuel_fees_rate"] = round(
-                    ((item["fuel_fees"] - ff_seller) / ff_seller) * 100, 2
-                )
 
         item["subtotal"] = round(order.full_price(), 2)
         item["pre_tax_subtotal"] = round(order.customer_price(), 2)
         item["estimated_taxes"] = round(item["pre_tax_subtotal"] * sales_tax["rate"], 2)
         item["total"] = round(item["estimated_taxes"] + order.customer_price(), 2)
         item["discounts"] = item["subtotal"] - item["pre_tax_subtotal"]
-        item["subtotal"] = item["subtotal"] - item["fuel_fees"]
         if item["line_types"].get("DELIVERY", None):
             item["one_time"]["delivery"] = round(
                 item["line_types"]["DELIVERY"]["items"][0]["customer_price"], 2
@@ -1489,6 +1484,13 @@ def get_quote_data(request, order_id_lst, email_lst):
             + item["one_time"]["estimated_taxes"],
             2,
         )
+        if item["one_time"]["fuel_fees"] > item["fuel_fees"]:
+            item["fuel_fees"] = item["one_time"]["fuel_fees"] - item["fuel_fees"]
+        else:
+            item["fuel_fees"] = item["fuel_fees"] - item["one_time"]["fuel_fees"]
+        item["subtotal"] = item["subtotal"] - item["fuel_fees"]
+        item["subtotal"] = item["subtotal"] - item["one_time"]["total"]
+        item["total"] = item["total"] - item["one_time"]["total"]
         if (
             order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
         ):
