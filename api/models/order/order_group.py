@@ -28,6 +28,7 @@ from api.models.waste_type import WasteType
 from chat.models.conversation import Conversation
 from common.models import BaseModel
 from common.utils import DistanceUtils
+from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
 
 logger = logging.getLogger(__name__)
@@ -96,6 +97,13 @@ class OrderGroup(BaseModel):
     )
     removal_fee = models.DecimalField(
         max_digits=18, decimal_places=2, default=0, blank=True, null=True
+    )
+    code = models.CharField(
+        max_length=8,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Unique code for the Order.",
     )
 
     def __str__(self):
@@ -319,6 +327,11 @@ class OrderGroup(BaseModel):
             removal_order.save()
         return removal_order
 
+    def generate_code(self):
+        """Generate a unique code for the Order, if code is None."""
+        if self.code is None:
+            save_unique_code(self)
+
 
 @receiver(pre_save, sender=OrderGroup)
 def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
@@ -334,6 +347,9 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
 
 @receiver(post_save, sender=OrderGroup)
 def post_save(sender, instance: OrderGroup, created, **kwargs):
+    if instance.code is None:
+        instance.generate_code()
+
     # If creating, capture the SellerProductSellerLocation pricing
     # in the OrderGroup child objects.
     if created:
