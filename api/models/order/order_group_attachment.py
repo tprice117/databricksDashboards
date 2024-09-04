@@ -1,5 +1,7 @@
 import uuid
+
 from django.db import models
+
 from common.models import BaseModel
 
 
@@ -16,6 +18,10 @@ class OrderGroupAttachment(BaseModel):
 
     def __str__(self):
         return self.file.name
+
+    class Meta:
+        verbose_name = "Booking Attachment"
+        verbose_name_plural = "Booking Attachments"
 
     @property
     def file_type(self):

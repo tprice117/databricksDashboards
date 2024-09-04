@@ -9,3 +9,7 @@ class MainProductTag(BaseModel):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Product Tag"
+        verbose_name_plural = "Product Tags"

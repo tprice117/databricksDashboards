@@ -6,6 +6,10 @@ from common.models import BaseModel
 
 
 class MainProductAddOn(BaseModel):
+    """
+    DEPRECATED: This model is no longer in use.
+    """
+
     main_product = models.ForeignKey(MainProduct, models.CASCADE)
     add_on = models.ForeignKey(AddOn, models.CASCADE)
 

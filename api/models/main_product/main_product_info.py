@@ -11,3 +11,7 @@ class MainProductInfo(BaseModel):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Product Info"
+        verbose_name_plural = "Product Infos"

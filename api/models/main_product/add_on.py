@@ -18,3 +18,7 @@ class AddOn(BaseModel):
 
     def __str__(self):
         return f"{self.main_product.name} - {self.name}"
+
+    class Meta:
+        verbose_name = "Variant"
+        verbose_name_plural = "Variants"
