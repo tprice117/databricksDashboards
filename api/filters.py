@@ -17,4 +17,4 @@ class OrderGroupFilterset(filters.FilterSet):
 
     class Meta:
         model = OrderGroup
-        fields = ["id", "user_address", "active"]
+        fields = ["id", "user_address", "active", "code"]

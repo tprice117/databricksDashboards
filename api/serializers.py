@@ -885,6 +885,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     orders = OrderSerializer(many=True, read_only=True)
     active = serializers.SerializerMethodField(read_only=True)
     attachments = OrderGroupAttachmentSerializer(many=True, required=False)
+    code = serializers.CharField(read_only=True)
 
     class Meta:
         model = OrderGroup
@@ -926,6 +927,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "conversation",
             "status",
             "attachments",
+            "code",
         )
 
     def create(self, validated_data):
