@@ -14,3 +14,7 @@ class OrderGroupSellerDecline(BaseModel):
         models.CASCADE,
         related_name="order_group_seller_declines",
     )
+
+    class Meta:
+        verbose_name = "Booking Seller Decline"
+        verbose_name_plural = "Booking Seller Declines"

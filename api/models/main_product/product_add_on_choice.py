@@ -17,6 +17,8 @@ class ProductAddOnChoice(BaseModel):
         return f"{self.product.main_product.name} - {self.add_on_choice.add_on.name} - {self.add_on_choice.name}"
 
     class Meta:
+        verbose_name = "Product Variant Choice"
+        verbose_name_plural = "Product Variants Choices"
         unique_together = (
             "product",
             "add_on_choice",

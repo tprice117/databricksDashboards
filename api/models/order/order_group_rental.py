@@ -15,6 +15,10 @@ class OrderGroupRental(PricingRentalTwoStep):
         related_name="rental",
     )
 
+    class Meta:
+        verbose_name = "Booking Rental Two Step"
+        verbose_name_plural = "Booking Rentals Two Step"
+
     def update_pricing(self):
         """
         Based on the OrderGroup.SellerProductSellerLocation's pricing, update the pricing.

@@ -15,6 +15,10 @@ class OrderGroupServiceTimesPerWeek(PricingServiceTimesPerWeek):
         related_name="service_times_per_week",
     )
 
+    class Meta:
+        verbose_name = "Booking Service Times Per Week"
+        verbose_name_plural = "Booking Services Times Per Week"
+
     def order_line_items(
         self,
         order: Order,

@@ -16,6 +16,10 @@ class OrderGroupRentalOneStep(PricingRentalOneStep):
         related_name="rental_one_step",
     )
 
+    class Meta:
+        verbose_name = "Booking Rental One Step"
+        verbose_name_plural = "Booking Rentals One Step"
+
     def order_line_items(
         self,
         order: Order,

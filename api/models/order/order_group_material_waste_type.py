@@ -11,6 +11,8 @@ class OrderGroupMaterialWasteType(PricingMaterialWasteType):
     )
 
     class Meta:
+        verbose_name = "Booking Material Waste Type"
+        verbose_name_plural = "Booking Materials Waste Type"
         unique_together = (
             "order_group_material",
             "main_product_waste_type",

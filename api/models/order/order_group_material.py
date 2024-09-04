@@ -25,6 +25,10 @@ class OrderGroupMaterial(PricingMaterial):
         help_text="Deprecated. Use OrderGroupMaterialWasteType(s) instead of this field.",
     )
 
+    class Meta:
+        verbose_name = "Booking Rental Material"
+        verbose_name_plural = "Booking Rentals Material"
+
     def update_pricing(self):
         """
         Based on the OrderGroup.SellerProductSellerLocation's pricing, update the pricing.
