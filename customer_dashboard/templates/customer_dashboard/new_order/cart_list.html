@@ -105,23 +105,23 @@
                             </div>
                         </div>
                     {% endfor %}
-                    {% if cart_address.show_quote %}
                         <div class="row justify-content-end mb-2 mt-4">
-                            <div class="col-auto">
-                                <a class="btn btn-outline-success" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
-                                {% if request.user.is_staff %}
-                                    <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
-                                        Send Quote (Work in Progress)
-                                    </button>
-                                {% endif %}
-                            </div>
+                            {% if cart_address.show_quote %}
+                                <div class="col-auto">
+                                    <a class="btn btn-outline-success" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
+                                    {% if request.user.is_staff %}
+                                        <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
+                                            Send Quote (Work in Progress)
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                             {% if request.user.is_staff %}
                                 <div class="col-auto">
                                     <a class="btn btn-primary" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
                                 </div>
                             {% endif %}
                         </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
