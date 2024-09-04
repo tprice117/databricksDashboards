@@ -155,6 +155,10 @@ class Order(BaseModel):
         help_text="Unique code for the Transaction.",
     )
 
+    class Meta:
+        verbose_name = "Transaction"
+        verbose_name_plural = "Transactions"
+
     @property
     def is_past_due(self):
         """Returns True if the Order is past due (end date is <= today), False otherwise.

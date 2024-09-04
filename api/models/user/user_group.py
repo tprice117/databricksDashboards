@@ -1,8 +1,8 @@
+import datetime
 import logging
 import random
 import string
 import threading
-import datetime
 from typing import List
 
 from django.core.exceptions import ValidationError
@@ -10,9 +10,9 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
+from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
-from api.models.order.order import Order
 from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from communications.intercom.intercom import Intercom
@@ -98,6 +98,10 @@ class UserGroup(BaseModel):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Account"
+        verbose_name_plural = "Accounts"
 
     def clean(self):
         super().clean()

@@ -33,6 +33,10 @@ class OrderLineItem(BaseModel):
     def __str__(self):
         return str(self.order) + " - " + self.order_line_item_type.name
 
+    class Meta:
+        verbose_name = "Transaction Line Item"
+        verbose_name_plural = "Transaction Line Items"
+
     def get_invoice(self):
         if self.stripe_invoice_line_item_id:
             try:

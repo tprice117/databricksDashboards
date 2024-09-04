@@ -30,6 +30,10 @@ class MainProductCategory(BaseModel):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = "Product Category"
+        verbose_name_plural = "Product Categories"
+
     @property
     def price_from(self):
         # Get all MainProducts for this MainProductCategory.
