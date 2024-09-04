@@ -479,6 +479,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     filterset_fields = {
         "id": ["exact"],
         "order_group": ["exact"],
+        "code": ["exact"],
         "submitted_on": ["isnull"],
     }
 
