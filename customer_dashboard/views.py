@@ -1484,6 +1484,14 @@ def get_quote_data(request, order_id_lst, email_lst):
             + item["one_time"]["estimated_taxes"],
             2,
         )
+        if item["one_time"]["estimated_taxes"] > item["estimated_taxes"]:
+            item["estimated_taxes"] = (
+                item["one_time"]["estimated_taxes"] - item["estimated_taxes"]
+            )
+        else:
+            item["estimated_taxes"] = (
+                item["estimated_taxes"] - item["one_time"]["estimated_taxes"]
+            )
         if item["one_time"]["fuel_fees"] > item["fuel_fees"]:
             item["fuel_fees"] = item["one_time"]["fuel_fees"] - item["fuel_fees"]
         else:
