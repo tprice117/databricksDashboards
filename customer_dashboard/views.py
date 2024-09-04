@@ -1337,6 +1337,8 @@ def new_order_5(request):
                 context["cart"][uaid]["ids"].append(str(order.id))
                 context["cart"][uaid]["count"] += 1
                 context["cart"][uaid]["total"] += customer_price
+                if order.order_type == Order.Type.DELIVERY:
+                    context["cart"][uaid]["show_quote"] = True
                 context["subtotal"] += customer_price
                 context["cart_count"] += 1
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
