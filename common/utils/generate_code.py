@@ -6,7 +6,7 @@ from django.db import IntegrityError
 logger = logging.getLogger(__name__)
 
 
-def save_unique_code(db_obj, retry_on_error=True) -> Optional[str]:
+def save_unique_code(db_obj, prefix="", retry_on_error=True) -> Optional[str]:
     """Generates a random 6 character code with the pattern letter-number-letter-number-letter-number.
     The code is saved to the db_obj and if it already exists, a new code is generated.
     "0", "O", "1", "I", "L" are excluded because they are hard to differentiate.
@@ -47,4 +47,4 @@ def save_unique_code(db_obj, retry_on_error=True) -> Optional[str]:
             return save_unique_code(db_obj, retry_on_error=False)
         else:
             return None
-    return code
+    return f"{prefix}{code}" if prefix else code

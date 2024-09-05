@@ -334,7 +334,7 @@ class OrderGroup(BaseModel):
     def generate_code(self):
         """Generate a unique code for the Order, if code is None."""
         if self.code is None:
-            save_unique_code(self)
+            save_unique_code(self, prefix="B-")
 
 
 @receiver(pre_save, sender=OrderGroup)
