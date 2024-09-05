@@ -52,6 +52,10 @@ class CartOrder(BaseModel):
     quote_expiration = models.DateTimeField(blank=True, null=True)
     quote_accepted_at = models.DateTimeField(blank=True, null=True)
 
+    class Meta:
+        verbose_name = "Order"
+        verbose_name_plural = "Orders"
+
     def __str__(self):
         return str(self.user_address)
 
