@@ -531,7 +531,7 @@ class Order(BaseModel):
     def generate_code(self):
         """Generate a unique code for the Transaction, if code is None."""
         if self.code is None:
-            save_unique_code(self)
+            save_unique_code(self, prefix="T-")
 
     @staticmethod
     def post_save(sender, instance: "Order", created, **kwargs):
