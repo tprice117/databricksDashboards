@@ -1,4 +1,5 @@
 import re
+import threading
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
@@ -206,7 +207,9 @@ class PaymentMethod(BaseModel):
 
 @receiver(post_save, sender=PaymentMethod)
 def save_payment_method(sender, instance: PaymentMethod, created, **kwargs):
-    instance.sync_stripe_payment_method()
+    # Note: This is done asynchronously because it is not critical.
+    p = threading.Thread(target=instance.sync_stripe_payment_method)
+    p.start()
 
 
 @receiver(pre_delete, sender=PaymentMethod)
@@ -225,4 +228,6 @@ def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
     DSPaymentMethods.Tokens.delete(instance.token)
 
     # Sync the Payment Method with Stripe.
-    instance.sync_stripe_payment_method()
+    # Note: This is done asynchronously because it is not critical.
+    p = threading.Thread(target=instance.sync_stripe_payment_method)
+    p.start()
