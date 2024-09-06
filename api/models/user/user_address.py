@@ -149,12 +149,20 @@ class UserAddress(BaseModel):
         )
 
     def pre_save(sender, instance, *args, **kwargs):
-        # Populate latitude and longitude.
-        latitude, longitude = geocode_address(
-            f"{instance.street} {instance.city} {instance.state} {instance.postal_code}"
-        )
-        instance.latitude = latitude or 0
-        instance.longitude = longitude or 0
+        # Only update latitude and longitude if the address has changed.
+        if (
+            instance._state.adding
+            or instance.has_changed("street")
+            or instance.has_changed("city")
+            or instance.has_changed("state")
+            or instance.has_changed("postal_code")
+        ):
+            # Populate latitude and longitude.
+            latitude, longitude = geocode_address(
+                f"{instance.street} {instance.city} {instance.state} {instance.postal_code}"
+            )
+            instance.latitude = latitude or 0
+            instance.longitude = longitude or 0
 
         # Populate the UserAddress, if exists. Set the [user_group] based on the [user].
         if instance.user and instance.user.user_group:
