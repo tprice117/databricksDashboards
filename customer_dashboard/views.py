@@ -9,6 +9,7 @@ from typing import List, Union
 from urllib.parse import urlencode
 
 import requests
+import stripe
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -67,7 +68,6 @@ from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
 from billing.models import Invoice
 from common.models.choices.user_type import UserType
-from common.utils.state_sales_tax import get_state_sales_tax
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
@@ -91,6 +91,7 @@ from .forms import (
 )
 
 logger = logging.getLogger(__name__)
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class InvalidFormError(Exception):
@@ -1366,6 +1367,95 @@ def new_order_6(request, order_group_id):
     return HttpResponseRedirect(reverse("customer_new_order"))
 
 
+def calculate_price_details(order, line_items, delivery_fee):
+    country = "US"
+    if order.order_group.user_address.country:
+        country = order.order_group.user_address.country
+        if country == "United States":
+            country = "US"
+
+    stripe_items = []
+    for key, line_item in line_items.items():
+        if key != "DELIVERY":
+            for item in line_item["items"]:
+                stripe_items.append(
+                    {
+                        "amount": int(item["customer_price"] * 100),
+                        "tax_code": item["tax_code"],
+                        "reference": key,
+                    }
+                )
+    ret = stripe.tax.Calculation.create(
+        currency="usd",
+        customer_details={
+            "address": {
+                "line1": order.order_group.user_address.street,
+                "city": order.order_group.user_address.city,
+                "state": order.order_group.user_address.state,
+                "postal_code": order.order_group.user_address.postal_code,
+                "country": country,
+            },
+            "address_source": "shipping",
+        },
+        line_items=stripe_items,
+        shipping_cost={"amount": int(delivery_fee * 100)},
+        expand=["line_items"],
+    )
+    price_details = {
+        "total": Decimal(ret["amount_total"]) / 100,
+        "taxes": Decimal(ret["tax_amount_exclusive"]) / 100,
+    }
+    price_details["rate"] = Decimal(
+        0.0
+    )  # round((price_details["taxes"] / price_details["total"]), 6)
+    # Get one-time fees: delivery, removal, fuels and fees, and taxes.
+    price_details["one_time"] = {"estimated_taxes": Decimal(0.00)}
+    price_details["one_time"]["delivery"] = (
+        Decimal(ret["shipping_cost"]["amount"]) / 100
+    )
+    price_details["one_time"]["estimated_taxes"] += (
+        Decimal(ret["shipping_cost"]["amount_tax"]) / 100
+    )
+    for item in ret["line_items"]["data"]:
+        # if item["reference"] == "DELIVERY":
+        #     price_details["one_time"]["delivery"] = Decimal(item["amount"]) / 100
+        # elif item["reference"] == "SERVICE":
+        #     price_details["one_time"]["service"] = Decimal(item["amount"]) / 100
+        # elif item["reference"] == "MATERIAL":
+        #     price_details["one_time"]["material"] = Decimal(item["amount"]) / 100
+        # elif item["reference"] == "RENTAL":
+        #     price_details["one_time"]["rental"] = Decimal(item["amount"]) / 100
+        if item["reference"] == "REMOVAL":
+            price_details["one_time"]["removal"] = Decimal(item["amount"]) / 100
+            price_details["one_time"]["estimated_taxes"] += (
+                Decimal(item["amount_tax"]) / 100
+            )
+        elif item["reference"] == "FUEL_AND_ENV":
+            price_details["one_time"]["fuel_fees"] = Decimal(item["amount"]) / 100
+
+            price_details["one_time"]["estimated_taxes"] += (
+                Decimal(item["amount_tax"]) / 100
+            )
+    price_details["tax_breakdown"] = []
+    for tax_details in ret["tax_breakdown"]:
+        tax_rate = Decimal(tax_details["tax_rate_details"]["percentage_decimal"]) / 100
+        if tax_rate > price_details["rate"]:
+            price_details["rate"] = tax_rate
+        if tax_rate > 0:
+            price_details["tax_breakdown"].append(
+                {
+                    "tax_type": tax_details["tax_rate_details"]["tax_type"],
+                    "country": tax_details["tax_rate_details"]["country"],
+                    "state": tax_details["tax_rate_details"]["state"],
+                    "taxability_reason": tax_details["taxability_reason"],
+                    "rate": tax_rate,
+                    "amount": Decimal(tax_details["amount"]) / 100,
+                    "taxable_amount": Decimal(tax_details["taxable_amount"]) / 100,
+                }
+            )
+    return price_details
+
+
 def get_quote_data(request, order_id_lst, email_lst):
     order = Order.objects.filter(id__in=order_id_lst)
     order = order.prefetch_related("order_line_items")
@@ -1375,7 +1465,6 @@ def get_quote_data(request, order_id_lst, email_lst):
     total = Decimal(0.00)
 
     for order in order:
-        sales_tax = get_state_sales_tax(order.order_group.user_address.state)
         item = {
             "product": {
                 "name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
@@ -1388,7 +1477,7 @@ def get_quote_data(request, order_id_lst, email_lst):
             "subtotal": Decimal(0.00),
             "fuel_fees": Decimal(0.00),
             "estimated_taxes": Decimal(0.00),
-            "estimated_tax_rate": sales_tax["rate_100"],
+            "estimated_tax_rate": Decimal(0.00),
             "pre_tax_subtotal": Decimal(0.00),
             "total": Decimal(0.00),
             "discounts": Decimal(0.00),
@@ -1429,6 +1518,7 @@ def get_quote_data(request, order_id_lst, email_lst):
                 "units": order_line_item.order_line_item_type.units,
                 "seller_payout_price": order_line_item.seller_payout_price(),
                 "customer_price": order_line_item.customer_price(),
+                "tax_code": order_line_item.order_line_item_type.stripe_tax_code_id,
             }
             try:
                 item["line_types"][order_line_item.order_line_item_type.code][
@@ -1450,11 +1540,6 @@ def get_quote_data(request, order_id_lst, email_lst):
                 item["line_types"]["FUEL_AND_ENV"]["items"][0]["customer_price"], 2
             )
 
-        item["subtotal"] = round(order.full_price(), 2)
-        item["pre_tax_subtotal"] = round(order.customer_price(), 2)
-        item["estimated_taxes"] = round(item["pre_tax_subtotal"] * sales_tax["rate"], 2)
-        item["total"] = round(item["estimated_taxes"] + order.customer_price(), 2)
-        item["discounts"] = item["subtotal"] - item["pre_tax_subtotal"]
         if item["line_types"].get("DELIVERY", None):
             item["one_time"]["delivery"] = round(
                 item["line_types"]["DELIVERY"]["items"][0]["customer_price"], 2
@@ -1468,17 +1553,34 @@ def get_quote_data(request, order_id_lst, email_lst):
                 item["line_types"]["SERVICE"]["items"][0]["customer_price"], 2
             )
 
+        item["pre_tax_subtotal"] = round(order.customer_price(), 2)
+        if order.order_group.user_address.user_group.tax_exempt_status == "exempt":
+            price_details = {"rate": Decimal(0.00), "total": item["pre_tax_subtotal"]}
+        else:
+            price_details = calculate_price_details(
+                order, item["line_types"], item["one_time"]["delivery"]
+            )
+
+        item["estimated_tax_rate"] = round(price_details["rate"] * 100, 2)
+        item["total"] = price_details["total"]
+        item["tax_breakdown"] = price_details.get("tax_breakdown", [])
+
         # Calculate the one-time fuel fees and estimated taxes
         item["one_time"]["fuel_fees"] = round(
             (item["one_time"]["delivery"] + item["one_time"]["removal"])
             * Decimal(item["fuel_fees_rate"] / 100),
             2,
         )
-        item["one_time"]["estimated_taxes"] = round(
-            (item["one_time"]["delivery"] + item["one_time"]["removal"])
-            * sales_tax["rate"],
-            2,
-        )
+        if price_details["rate"] > 0:
+            item["one_time"]["estimated_taxes"] = price_details["one_time"][
+                "estimated_taxes"
+            ]
+            item["estimated_taxes"] = abs(
+                price_details["taxes"] - item["one_time"]["estimated_taxes"]
+            )
+        else:
+            item["one_time"]["estimated_taxes"] = Decimal(0.00)
+
         item["one_time"]["total"] = round(
             item["one_time"]["delivery"]
             + item["one_time"]["removal"]
@@ -1486,20 +1588,20 @@ def get_quote_data(request, order_id_lst, email_lst):
             + item["one_time"]["estimated_taxes"],
             2,
         )
-        if item["one_time"]["estimated_taxes"] > item["estimated_taxes"]:
-            item["estimated_taxes"] = (
-                item["one_time"]["estimated_taxes"] - item["estimated_taxes"]
-            )
-        else:
-            item["estimated_taxes"] = (
-                item["estimated_taxes"] - item["one_time"]["estimated_taxes"]
-            )
+
         if item["one_time"]["fuel_fees"] > item["fuel_fees"]:
             item["fuel_fees"] = item["one_time"]["fuel_fees"] - item["fuel_fees"]
         else:
             item["fuel_fees"] = item["fuel_fees"] - item["one_time"]["fuel_fees"]
-        item["subtotal"] = item["subtotal"] - item["fuel_fees"]
-        item["subtotal"] = item["subtotal"] - item["one_time"]["total"]
+
+        # This is Subtotal
+        item["subtotal"] = (
+            price_details["total"]
+            - item["one_time"]["total"]
+            - item["fuel_fees"]
+            - item["estimated_taxes"]
+        )
+        # This is Total (Per Service)
         item["total"] = item["total"] - item["one_time"]["total"]
         if (
             order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
@@ -1540,7 +1642,7 @@ def get_quote_data(request, order_id_lst, email_lst):
                     2,
                 )
                 item["rental_breakdown"][key]["estimated_taxes"] = round(
-                    item["rental_breakdown"][key]["base"] * sales_tax["rate"],
+                    item["rental_breakdown"][key]["base"] * price_details["rate"],
                     2,
                 )
 
@@ -1570,6 +1672,7 @@ def get_quote_data(request, order_id_lst, email_lst):
     subject = (
         "Downstream | Quote | " + order.order_group.user_address.formatted_address()
     )
+    # TODO: Delete cart app and create checkout app. Create one model in there called Order.
     # carts = CartOrder.objects.filter(
     #     user_address__user_group=order.order_group.user.user_group
     # )
@@ -1779,6 +1882,7 @@ def add_payment_method(request):
         token = request.POST.get("token")
         if token:
             if context["user"] and context["user_group"]:
+                # TODO: PaymentMethodUserAddress
                 payment_method = PaymentMethod(
                     user=context["user"], user_group=context["user_group"], token=token
                 )
