@@ -34,8 +34,8 @@ class OrderLineItem(BaseModel):
         return str(self.order) + " - " + self.order_line_item_type.name
 
     class Meta:
-        verbose_name = "Transaction Line Item"
-        verbose_name_plural = "Transaction Line Items"
+        verbose_name = "Event Line Item"
+        verbose_name_plural = "Event Line Items"
 
     def get_invoice(self):
         if self.stripe_invoice_line_item_id:

@@ -14,5 +14,5 @@ class OrderLineItemType(BaseModel):
         return self.name
 
     class Meta:
-        verbose_name = "Transaction Line Item Type"
-        verbose_name_plural = "Transaction Line Item Types"
+        verbose_name = "Event Line Item Type"
+        verbose_name_plural = "Event Line Item Types"

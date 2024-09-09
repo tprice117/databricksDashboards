@@ -114,6 +114,10 @@ class OrderGroup(BaseModel):
         verbose_name_plural = "Bookings"
 
     @property
+    def get_code(self):
+        return f"B-{self.code}"
+
+    @property
     def status(self):
         # Get all Orders for this OrderGroup.
         orders = self.orders.all()
@@ -334,7 +338,7 @@ class OrderGroup(BaseModel):
     def generate_code(self):
         """Generate a unique code for the Order, if code is None."""
         if self.code is None:
-            save_unique_code(self, prefix="B-")
+            save_unique_code(self)
 
 
 @receiver(pre_save, sender=OrderGroup)

@@ -156,8 +156,8 @@ class Order(BaseModel):
     )
 
     class Meta:
-        verbose_name = "Transaction"
-        verbose_name_plural = "Transactions"
+        verbose_name = "Event"
+        verbose_name_plural = "Events"
 
     @property
     def is_past_due(self):
@@ -168,6 +168,10 @@ class Order(BaseModel):
     @property
     def order_type(self):
         return self.get_order_type()
+
+    @property
+    def get_code(self):
+        return f"E-{self.code}"
 
     def update_status_on_credit_application_approved(self):
         """Update the Order status after the UserGroupCreditApplication is approved."""
@@ -531,7 +535,7 @@ class Order(BaseModel):
     def generate_code(self):
         """Generate a unique code for the Transaction, if code is None."""
         if self.code is None:
-            save_unique_code(self, prefix="T-")
+            save_unique_code(self)
 
     @staticmethod
     def post_save(sender, instance: "Order", created, **kwargs):
