@@ -1716,7 +1716,7 @@ def create_quote(request, order_id_lst, email_lst, save=True):
         order.checkout_order.quote_expiration = quote_expiration
         order.checkout_order.quote = quote_data
         order.checkout_order.customer_price = total
-        order.checkout_order.seller_total = seller_total
+        order.checkout_order.seller_price = seller_total
         if save:
             order.checkout_order.save()
     else:
