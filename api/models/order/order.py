@@ -7,7 +7,7 @@ import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -144,8 +144,12 @@ class Order(BaseModel):
         blank=True,
         null=True,
     )  # 6.6.23
-    cart_order = models.ForeignKey(
-        "cart.CartOrder", models.SET_NULL, related_name="orders", blank=True, null=True
+    checkout_order = models.ForeignKey(
+        "cart.CheckoutOrder",
+        models.SET_NULL,
+        related_name="orders",
+        blank=True,
+        null=True,
     )
     code = models.CharField(
         max_length=8,

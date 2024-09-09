@@ -1,2 +1,1 @@
-from .cart import Cart
-from .cart_order import CartOrder
+from .checkout_order import CheckoutOrder

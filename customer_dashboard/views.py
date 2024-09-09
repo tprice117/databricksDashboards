@@ -78,6 +78,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
 from pricing_engine.pricing_engine import PricingEngine
+from cart.models import CheckoutOrder
 
 from .forms import (
     AccessDetailsForm,
@@ -1334,6 +1335,7 @@ def new_order_5(request):
                         "transactions": [],
                         "ids": [],
                         "count": 0,
+                        "show_quote": False,
                     }
                 # Transactions are the individual orders (delivery/swap/removal) in the order group.
                 context["cart"][uaid]["transactions"].append(order)
@@ -1342,8 +1344,21 @@ def new_order_5(request):
                 context["cart"][uaid]["total"] += customer_price
                 if order.order_type == Order.Type.DELIVERY:
                     context["cart"][uaid]["show_quote"] = True
+                    # # Hide the quote button if this event is part of an active quote.
+                    # if order.checkout_order and not order.checkout_order.is_stale:
+                    #     context["cart"][uaid]["show_quote"] = False
                 context["subtotal"] += customer_price
                 context["cart_count"] += 1
+            for addr in context["cart"]:
+                supplier_total = 0
+                # context["cart"][addr]["show_quote"] = True
+                checkout_order = None
+                for event in context["cart"][addr]["transactions"]:
+                    if event.checkout_order:
+                        checkout_order = event.checkout_order
+                    supplier_total += event.seller_price()
+                if checkout_order and supplier_total != checkout_order.seller_price:
+                    context["cart"][addr]["show_quote"] = False
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
@@ -1456,15 +1471,17 @@ def calculate_price_details(order, line_items, delivery_fee):
     return price_details
 
 
-def get_quote_data(request, order_id_lst, email_lst):
-    order = Order.objects.filter(id__in=order_id_lst)
-    order = order.prefetch_related("order_line_items")
+def create_quote(request, order_id_lst, email_lst, save=True):
+    orders = Order.objects.filter(id__in=order_id_lst)
+    orders = orders.prefetch_related("order_line_items")
     one_step = []
     two_step = []
     multi_step = []
     total = Decimal(0.00)
+    seller_total = Decimal(0.00)
 
-    for order in order:
+    for order in orders:
+        seller_total += order.seller_price()
         item = {
             "product": {
                 "name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
@@ -1672,43 +1689,62 @@ def get_quote_data(request, order_id_lst, email_lst):
     subject = (
         "Downstream | Quote | " + order.order_group.user_address.formatted_address()
     )
-    # TODO: Delete cart app and create checkout app. Create one model in there called Order.
-    # carts = CartOrder.objects.filter(
-    #     user_address__user_group=order.order_group.user.user_group
-    # )
-    quote_id = 1001  # carts.count() + 1
     quote_expiration = timezone.now() + datetime.timedelta(days=14)
+    quote_data = {
+        "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
+        "full_name": order.order_group.user.full_name,
+        "company_name": order.order_group.user.user_group.name,
+        "delivery_address": order.order_group.user_address.formatted_address(),
+        "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
+        "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
+        "one_step": one_step,
+        "two_step": two_step,
+        "multi_step": multi_step,
+        "total": f"{total:,.2f}",
+        "contact": {
+            "full_name": order.created_by.full_name,
+            "email": order.created_by.email,
+            "phone": order.created_by.phone,  # (720) 490-1823
+        },
+    }
+    if order.checkout_order:
+        # Update the checkout order
+        order.checkout_order.payment_method = (
+            order.order_group.user_address.default_payment_method
+        )
+        order.checkout_order.quote_expiration = quote_expiration
+        order.checkout_order.quote = quote_data
+        order.checkout_order.customer_price = total
+        order.checkout_order.seller_total = seller_total
+        if save:
+            order.checkout_order.save()
+    else:
+        # Create a checkout order
+        checkout_order = CheckoutOrder(
+            user_address=order.order_group.user_address,
+            payment_method=order.order_group.user_address.default_payment_method,
+            quote_expiration=quote_expiration,
+            quote=quote_data,
+            customer_price=total,
+            seller_price=seller_total,
+            subject=subject,
+        )
+        if email_lst:
+            checkout_order.to_emails = ",".join(email_lst)
+        if save:
+            checkout_order.save()
+    # Update events to point to the checkout order
+    Order.objects.filter(id__in=order_id_lst).update(checkout_order=checkout_order)
+
+    if save:
+        quote_data["quote_id"] = checkout_order.code
+    else:
+        quote_data["quote_id"] = "10001"
     data = {
         "transactional_message_id": 4,
         "subject": subject,
-        "message_data": {
-            "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
-            "quote_id": quote_id,
-            "full_name": order.order_group.user.full_name,
-            "company_name": order.order_group.user.user_group.name,
-            "delivery_address": order.order_group.user_address.formatted_address(),
-            "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
-            "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
-            "one_step": one_step,
-            "two_step": two_step,
-            "multi_step": multi_step,
-            "total": f"{total:,.2f}",
-            "contact": {
-                "full_name": order.created_by.full_name,
-                "email": order.created_by.email,
-                "phone": order.created_by.phone,  # (720) 490-1823
-            },
-        },
+        "message_data": quote_data,
     }
-    # cart = CartOrder(
-    #     user_address=order.order_group.user_address,
-    #     quote_expiration=quote_expiration,
-    #     quote_id=quote_id,
-    #     quote=data,
-    # )
-    # if email_lst:
-    #     cart.to_emails = ",".join(email_lst)
-    # cart.save()
     return data
 
 
@@ -1719,7 +1755,7 @@ def accept_quote(request):
     # Accept the quote.
     cart_id = request.query_params.get("cart_id", None)
     # try:
-    #     cart = CartOrder.objects.get(id=cart_id)
+    #     cart = CheckoutOrder.objects.get(id=cart_id)
     #     cart.quote_accepted_at = timezone.now()
     #     cart.save()
     # except Cart.DoesNotExist as e:
@@ -1740,11 +1776,11 @@ def show_quote(request):
     context = get_user_context(request)
     quote_id = request.GET.get("quote_id")
     # if quote_id:
-    #     cart = CartOrder.objects.get(id=quote_id)
+    #     cart = CheckoutOrder.objects.get(id=quote_id)
     #     payload = {"trigger": cart.quote}
     # else:
     order_id_lst = ast.literal_eval(request.GET.get("ids"))
-    data = get_quote_data(request, order_id_lst, None)
+    data = create_quote(request, order_id_lst, None, save=False)
     payload = {"trigger": data["message_data"]}
     return render(request, "customer_dashboard/customer_quote.html", payload)
 
@@ -1759,7 +1795,7 @@ def cart_send_quote(request):
             email_lst = list(set(data.get("emails")))
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
-                data = get_quote_data(request, order_id_lst, email_lst)
+                data = create_quote(request, order_id_lst, email_lst)
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
