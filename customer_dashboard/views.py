@@ -1357,7 +1357,7 @@ def new_order_5(request):
                     if event.checkout_order:
                         checkout_order = event.checkout_order
                     supplier_total += event.seller_price()
-                if checkout_order and supplier_total != checkout_order.seller_price:
+                if checkout_order and supplier_total == checkout_order.seller_price:
                     context["cart"][addr]["show_quote"] = False
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
@@ -1708,6 +1708,7 @@ def create_quote(request, order_id_lst, email_lst, save=True):
         },
     }
     if order.checkout_order:
+        checkout_order = order.checkout_order
         # Update the checkout order
         order.checkout_order.payment_method = (
             order.order_group.user_address.default_payment_method
@@ -1715,7 +1716,7 @@ def create_quote(request, order_id_lst, email_lst, save=True):
         order.checkout_order.quote_expiration = quote_expiration
         order.checkout_order.quote = quote_data
         order.checkout_order.customer_price = total
-        order.checkout_order.seller_total = seller_total
+        order.checkout_order.seller_price = seller_total
         if save:
             order.checkout_order.save()
     else:
@@ -1733,10 +1734,10 @@ def create_quote(request, order_id_lst, email_lst, save=True):
             checkout_order.to_emails = ",".join(email_lst)
         if save:
             checkout_order.save()
-    # Update events to point to the checkout order
-    Order.objects.filter(id__in=order_id_lst).update(checkout_order=checkout_order)
 
     if save:
+        # Update events to point to the checkout order
+        Order.objects.filter(id__in=order_id_lst).update(checkout_order=checkout_order)
         quote_data["quote_id"] = checkout_order.code
     else:
         quote_data["quote_id"] = "10001"
