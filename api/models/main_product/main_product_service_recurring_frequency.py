@@ -6,6 +6,10 @@ from common.models import BaseModel
 
 
 class MainProductServiceRecurringFrequency(BaseModel):
+    """
+    DEPRECATED: This model is no longer in use.
+    """
+
     main_product = models.ForeignKey(MainProduct, models.PROTECT)
     service_recurring_frequency = models.ForeignKey(
         ServiceRecurringFrequency, models.PROTECT

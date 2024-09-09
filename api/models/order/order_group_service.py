@@ -29,6 +29,10 @@ class OrderGroupService(PricingService):
         help_text="Deprecated. Use price_per_mile and flat_rate_price instead.",
     )
 
+    class Meta:
+        verbose_name = "Booking Service (Legacy)"
+        verbose_name_plural = "Booking Services (Legacy)"
+
     def update_pricing(self):
         """
         Based on the OrderGroup.SellerProductSellerLocation's pricing, update the pricing.

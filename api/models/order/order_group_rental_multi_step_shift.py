@@ -10,3 +10,7 @@ class OrderGroupRentalMultiStepShift(PricingRentalMultiStepShift):
         on_delete=models.CASCADE,
         related_name="rental_multi_step_shift",
     )
+
+    class Meta:
+        verbose_name = "Booking Rental Multi Step Shift"
+        verbose_name_plural = "Booking Rentals Multi Step Shift"

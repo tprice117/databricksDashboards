@@ -30,7 +30,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.filters import OrderGroupFilterset
+from api.filters import OrderGroupFilterset, OrderFilterset
 from api.models.order.order_group_material import OrderGroupMaterial
 from api.models.order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from api.models.order.order_group_service import OrderGroupService
@@ -476,12 +476,8 @@ class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = {
-        "id": ["exact"],
-        "order_group": ["exact"],
-        "code": ["exact"],
-        "submitted_on": ["isnull"],
-    }
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = OrderFilterset
 
     def get_queryset(self):
         self.queryset = self.queryset.prefetch_related("order_line_items")

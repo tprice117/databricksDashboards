@@ -59,6 +59,10 @@ class MainProduct(BaseModel):
     def __str__(self):
         return f"{self.main_product_category.name} - {self.name}"
 
+    class Meta:
+        verbose_name = "Product"
+        verbose_name_plural = "Products"
+
     @property
     def max_discount(self):
         """Returns the maximum discount for this MainProduct as a decimal (0 < x < 1)."""

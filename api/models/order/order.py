@@ -155,6 +155,10 @@ class Order(BaseModel):
         help_text="Unique code for the Transaction.",
     )
 
+    class Meta:
+        verbose_name = "Event"
+        verbose_name_plural = "Events"
+
     @property
     def is_past_due(self):
         """Returns True if the Order is past due (end date is <= today), False otherwise.
@@ -164,6 +168,10 @@ class Order(BaseModel):
     @property
     def order_type(self):
         return self.get_order_type()
+
+    @property
+    def get_code(self):
+        return f"E-{self.code}"
 
     def update_status_on_credit_application_approved(self):
         """Update the Order status after the UserGroupCreditApplication is approved."""

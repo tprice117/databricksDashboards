@@ -25,3 +25,7 @@ class OrderDisposalTicket(BaseModel):
 
     def __str__(self):
         return self.ticket_id + " - " + self.order.order_group.user_address.name
+
+    class Meta:
+        verbose_name = "Event Disposal Ticket"
+        verbose_name_plural = "Event Disposal Tickets"

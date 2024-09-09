@@ -12,3 +12,7 @@ class OrderLineItemType(BaseModel):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Event Line Item Type"
+        verbose_name_plural = "Event Line Item Types"

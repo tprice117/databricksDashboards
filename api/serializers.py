@@ -501,6 +501,7 @@ class OrderSerializer(serializers.ModelSerializer):
     seller_price = serializers.SerializerMethodField(read_only=True)
     intercom_id = serializers.CharField(required=False, allow_null=True)
     custmer_intercom_id = serializers.CharField(required=False, allow_null=True)
+    code = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -530,6 +531,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_seller_price(self, obj: Order):
         return obj.seller_price()
+
+    def get_code(self, obj):
+        return obj.get_code
 
     # def get_status(self, obj):
     #     return stripe.Invoice.retrieve(
@@ -885,7 +889,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     orders = OrderSerializer(many=True, read_only=True)
     active = serializers.SerializerMethodField(read_only=True)
     attachments = OrderGroupAttachmentSerializer(many=True, required=False)
-    code = serializers.CharField(read_only=True)
+    code = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderGroup
@@ -968,3 +972,6 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
     def get_active(self, obj) -> bool:
         return obj.end_date is None or obj.end_date > datetime.datetime.now().date()
+
+    def get_code(self, obj):
+        return obj.get_code

@@ -109,6 +109,14 @@ class OrderGroup(BaseModel):
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
 
+    class Meta:
+        verbose_name = "Booking"
+        verbose_name_plural = "Bookings"
+
+    @property
+    def get_code(self):
+        return f"B-{self.code}"
+
     @property
     def status(self):
         # Get all Orders for this OrderGroup.
