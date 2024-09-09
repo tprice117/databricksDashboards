@@ -207,6 +207,9 @@
                                 title: "Success",
                                 text: result.value.message,
                                 icon: "success"
+                            }).then(() => {
+                                // Reload the page
+                                location.reload();
                             });
                         }
                     }
