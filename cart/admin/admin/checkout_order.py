@@ -16,7 +16,15 @@ class UserAddressFilter(AutocompleteFilter):
 @admin.register(CheckoutOrder)
 class CheckoutOrderAdmin(admin.ModelAdmin):
     model = CheckoutOrder
-    list_display = ("user_address", "customer_price", "payment_method", "pay_later")
+    list_display = (
+        "user_address",
+        "customer_price",
+        "payment_method",
+        "pay_later",
+        "updated_on",
+        "created_on",
+    )
+    ordering = ["-updated_on"]
     list_filter = [UserAddressFilter, CreatedDateFilter]
     inlines = [OrderInline]
     search_fields = [
