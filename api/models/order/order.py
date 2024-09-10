@@ -162,8 +162,8 @@ class Order(BaseModel):
     )
 
     class Meta:
-        verbose_name = "Event"
-        verbose_name_plural = "Events"
+        verbose_name = "Transaction"
+        verbose_name_plural = "Transaction"
 
     @property
     def is_past_due(self):
@@ -177,7 +177,7 @@ class Order(BaseModel):
 
     @property
     def get_code(self):
-        return f"E-{self.code}"
+        return f"T-{self.code}"
 
     def update_status_on_credit_application_approved(self):
         """Update the Order status after the UserGroupCreditApplication is approved."""
