@@ -163,7 +163,7 @@ class Order(BaseModel):
 
     class Meta:
         verbose_name = "Transaction"
-        verbose_name_plural = "Transaction"
+        verbose_name_plural = "Transactions"
 
     @property
     def is_past_due(self):
