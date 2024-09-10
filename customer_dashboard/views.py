@@ -1480,6 +1480,7 @@ def create_quote(request, order_id_lst, email_lst, save=True):
     multi_step = []
     total = Decimal(0.00)
     seller_total = Decimal(0.00)
+    total_taxes = Decimal(0.00)
 
     for order in orders:
         seller_total += order.seller_price()
@@ -1578,6 +1579,7 @@ def create_quote(request, order_id_lst, email_lst, save=True):
             price_details = calculate_price_details(
                 order, item["line_types"], item["one_time"]["delivery"]
             )
+            total_taxes += price_details["taxes"]
 
         item["estimated_tax_rate"] = round(price_details["rate"] * 100, 2)
         item["total"] = price_details["total"]
@@ -1703,6 +1705,7 @@ def create_quote(request, order_id_lst, email_lst, save=True):
         "two_step": two_step,
         "multi_step": multi_step,
         "total": f"{total:,.2f}",
+        "estimated_taxes": total_taxes,
         "contact": {
             "full_name": order.created_by.full_name,
             "email": order.created_by.email,
@@ -1712,7 +1715,9 @@ def create_quote(request, order_id_lst, email_lst, save=True):
     if order.checkout_order:
         checkout_order = order.checkout_order
         quote_data["quote_id"] = checkout_order.code
-        quote_data["quote_expiration"] = checkout_order.quote_expiration.strftime("%B %d, %Y")
+        quote_data["quote_expiration"] = checkout_order.quote_expiration.strftime(
+            "%B %d, %Y"
+        )
         # Update the checkout order
         order.checkout_order.payment_method = (
             order.order_group.user_address.default_payment_method
@@ -1971,8 +1976,36 @@ def checkout(request, user_address_id):
             else:
                 context["user_address"].default_payment_method_id = payment_method_id
                 context["user_address"].save()
+            checkout_order = None
+            order_id_lst = []
+            customer_price = 0
+            seller_price = 0
             for order in orders:
+                seller_price += order.seller_price()
+                customer_price += order.customer_price()
+                order_id_lst.append(order.id)
+                if not checkout_order and order.checkout_order:
+                    checkout_order = order.checkout_order
                 order.submit_order(override_approval_policy=True)
+            # TODO: Create checkout
+            if checkout_order:
+                if payment_method_id != "paylater":
+                    checkout_order.payment_method = context[
+                        "user_address"
+                    ].default_payment_method
+                checkout_order.take_rate = order.order_group.take_rate
+                checkout_order.save()
+            else:
+                checkout_order = CheckoutOrder(
+                    user_address=context["user_address"],
+                    payment_method=context["user_address"].default_payment_method,
+                    customer_price=customer_price,
+                    seller_price=seller_price,
+                )
+                # Update events to point to the checkout order
+                Order.objects.filter(id__in=order_id_lst).update(
+                    checkout_order=checkout_order
+                )
             messages.success(request, "Successfully checked out!")
             return HttpResponseRedirect(reverse("customer_cart"))
         else:
@@ -2011,6 +2044,7 @@ def checkout(request, user_address_id):
             setattr(payment_method, "is_default", True)
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
+    order_id_lst = []
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
@@ -2028,6 +2062,11 @@ def checkout(request, user_address_id):
             }
         )
         context["cart_count"] += 1
+        order_id_lst.append(order.id)
+    # TODO: Use the quote to calculate the total price with tax.
+    context["quote"] = create_quote(request, order_id_lst, None)
+    context["estimated_taxes"] = context["quote"]["message_data"]["estimated_taxes"]
+    context["total"] = context["quote"]["message_data"]["total"]
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
         messages.error(request, "This Order is empty.")
