@@ -411,6 +411,10 @@
         <form id="checkoutForm" action="{{ request.get_full_path }}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="subtotal" value="{{ subtotal }}">
+            <input type="hidden" name="discounts" value="{{ discounts }}">
+            <input type="hidden" name="pre_tax_subtotal" value="{{ pre_tax_subtotal }}">
+            <input type="hidden" name="estimated_taxes" value="{{ estimated_taxes }}">
+            <input type="hidden" name="total" value="{{ total }}">
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
             <button id="form_submit" class="btn btn-primary float-end mb-4" type="submit" name="form_submit" style="margin-top: 10px;">Checkout</button>
         </form>
