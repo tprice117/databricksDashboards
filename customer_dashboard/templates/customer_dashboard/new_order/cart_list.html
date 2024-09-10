@@ -108,12 +108,19 @@
                         <div class="row justify-content-end mb-2 mt-4">
                             {% if cart_address.show_quote %}
                                 <div class="col-auto">
-                                    <a class="btn btn-outline-success" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
+                                    <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
                                     {% if request.user.is_staff %}
                                         <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
-                                            Send Quote (Work in Progress)
+                                            Send Quote
                                         </button>
                                     {% endif %}
+                                </div>
+                            {% elif cart_address.quote_sent_on %}
+                                <div class="col-auto">
+                                    <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
+                                    <button class="btn btn-outline-success" type="button" disabled>
+                                        Quote Sent {{ cart_address.quote_sent_on|date:"F j, Y" }}
+                                    </button>
                                 </div>
                             {% endif %}
                             {% if request.user.is_staff %}
