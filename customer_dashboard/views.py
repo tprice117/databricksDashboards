@@ -1693,6 +1693,7 @@ def create_quote(request, order_id_lst, email_lst, save=True):
     quote_expiration = timezone.now() + datetime.timedelta(days=14)
     quote_data = {
         "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
+        "quote_id": "N/A",
         "full_name": order.order_group.user.full_name,
         "company_name": order.order_group.user.user_group.name,
         "delivery_address": order.order_group.user_address.formatted_address(),
@@ -1710,6 +1711,8 @@ def create_quote(request, order_id_lst, email_lst, save=True):
     }
     if order.checkout_order:
         checkout_order = order.checkout_order
+        quote_data["quote_id"] = checkout_order.code
+        quote_data["quote_expiration"] = checkout_order.quote_expiration.strftime("%B %d, %Y")
         # Update the checkout order
         order.checkout_order.payment_method = (
             order.order_group.user_address.default_payment_method
@@ -1735,13 +1738,12 @@ def create_quote(request, order_id_lst, email_lst, save=True):
             checkout_order.to_emails = ",".join(email_lst)
         if save:
             checkout_order.save()
+            quote_data["quote_id"] = checkout_order.code
 
     if save:
         # Update events to point to the checkout order
         Order.objects.filter(id__in=order_id_lst).update(checkout_order=checkout_order)
-        quote_data["quote_id"] = checkout_order.code
-    else:
-        quote_data["quote_id"] = "10001"
+
     data = {
         "transactional_message_id": 4,
         "subject": subject,
@@ -1778,8 +1780,8 @@ def show_quote(request):
     context = get_user_context(request)
     quote_id = request.GET.get("quote_id")
     # if quote_id:
-    #     cart = CheckoutOrder.objects.get(id=quote_id)
-    #     payload = {"trigger": cart.quote}
+    #     checkout_order = CheckoutOrder.objects.get(id=quote_id)
+    #     payload = {"trigger": checkout_order.quote}
     # else:
     order_id_lst = ast.literal_eval(request.GET.get("ids"))
     data = create_quote(request, order_id_lst, None, save=False)
