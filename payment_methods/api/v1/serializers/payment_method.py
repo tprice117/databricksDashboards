@@ -23,10 +23,8 @@ class CreditCardType(TypedDict):
 class PaymentMethodSerializer(serializers.ModelSerializer):
     token = serializers.CharField(write_only=True)
     card = serializers.SerializerMethodField(read_only=True)
-    payment_method_user_addresses = PaymentMethodUserAddressSerializer(
-        many=True, read_only=True
-    )
-    payment_method_users = PaymentMethodUserSerializer(many=True, read_only=True)
+    active = serializers.BooleanField(read_only=True)
+    reason = serializers.CharField(read_only=True)
 
     class Meta:
         model = PaymentMethod
@@ -36,8 +34,8 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
             "user",
             "user_group",
             "card",
-            "payment_method_user_addresses",
-            "payment_method_users",
+            "active",
+            "reason",
         )
 
     def get_card(self, instance) -> CreditCardType:

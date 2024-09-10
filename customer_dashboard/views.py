@@ -78,6 +78,8 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
 from pricing_engine.pricing_engine import PricingEngine
+from cart.models import CheckoutOrder
+from cart.utils import QuoteUtils
 
 from .forms import (
     AccessDetailsForm,
@@ -1334,6 +1336,7 @@ def new_order_5(request):
                         "transactions": [],
                         "ids": [],
                         "count": 0,
+                        "show_quote": False,
                     }
                 # Transactions are the individual orders (delivery/swap/removal) in the order group.
                 context["cart"][uaid]["transactions"].append(order)
@@ -1342,8 +1345,26 @@ def new_order_5(request):
                 context["cart"][uaid]["total"] += customer_price
                 if order.order_type == Order.Type.DELIVERY:
                     context["cart"][uaid]["show_quote"] = True
+                    # # Hide the quote button if this event is part of an active quote.
+                    # if order.checkout_order and not order.checkout_order.is_stale:
+                    #     context["cart"][uaid]["show_quote"] = False
                 context["subtotal"] += customer_price
                 context["cart_count"] += 1
+            for addr in context["cart"]:
+                supplier_total = 0
+                # context["cart"][addr]["show_quote"] = True
+                checkout_order = None
+                for event in context["cart"][addr]["transactions"]:
+                    if event.checkout_order:
+                        checkout_order = event.checkout_order
+                    supplier_total += event.seller_price()
+                if (
+                    checkout_order
+                    and supplier_total == checkout_order.seller_price
+                    and checkout_order.quote_expiration
+                ):
+                    context["cart"][addr]["show_quote"] = False
+                    context["cart"][addr]["quote_sent_on"] = checkout_order.updated_on
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
@@ -1367,351 +1388,6 @@ def new_order_6(request, order_group_id):
     return HttpResponseRedirect(reverse("customer_new_order"))
 
 
-def calculate_price_details(order, line_items, delivery_fee):
-    country = "US"
-    if order.order_group.user_address.country:
-        country = order.order_group.user_address.country
-        if country == "United States":
-            country = "US"
-
-    stripe_items = []
-    for key, line_item in line_items.items():
-        if key != "DELIVERY":
-            for item in line_item["items"]:
-                stripe_items.append(
-                    {
-                        "amount": int(item["customer_price"] * 100),
-                        "tax_code": item["tax_code"],
-                        "reference": key,
-                    }
-                )
-    ret = stripe.tax.Calculation.create(
-        currency="usd",
-        customer_details={
-            "address": {
-                "line1": order.order_group.user_address.street,
-                "city": order.order_group.user_address.city,
-                "state": order.order_group.user_address.state,
-                "postal_code": order.order_group.user_address.postal_code,
-                "country": country,
-            },
-            "address_source": "shipping",
-        },
-        line_items=stripe_items,
-        shipping_cost={"amount": int(delivery_fee * 100)},
-        expand=["line_items"],
-    )
-    price_details = {
-        "total": Decimal(ret["amount_total"]) / 100,
-        "taxes": Decimal(ret["tax_amount_exclusive"]) / 100,
-    }
-    price_details["rate"] = Decimal(
-        0.0
-    )  # round((price_details["taxes"] / price_details["total"]), 6)
-    # Get one-time fees: delivery, removal, fuels and fees, and taxes.
-    price_details["one_time"] = {"estimated_taxes": Decimal(0.00)}
-    price_details["one_time"]["delivery"] = (
-        Decimal(ret["shipping_cost"]["amount"]) / 100
-    )
-    price_details["one_time"]["estimated_taxes"] += (
-        Decimal(ret["shipping_cost"]["amount_tax"]) / 100
-    )
-    for item in ret["line_items"]["data"]:
-        # if item["reference"] == "DELIVERY":
-        #     price_details["one_time"]["delivery"] = Decimal(item["amount"]) / 100
-        # elif item["reference"] == "SERVICE":
-        #     price_details["one_time"]["service"] = Decimal(item["amount"]) / 100
-        # elif item["reference"] == "MATERIAL":
-        #     price_details["one_time"]["material"] = Decimal(item["amount"]) / 100
-        # elif item["reference"] == "RENTAL":
-        #     price_details["one_time"]["rental"] = Decimal(item["amount"]) / 100
-        if item["reference"] == "REMOVAL":
-            price_details["one_time"]["removal"] = Decimal(item["amount"]) / 100
-            price_details["one_time"]["estimated_taxes"] += (
-                Decimal(item["amount_tax"]) / 100
-            )
-        elif item["reference"] == "FUEL_AND_ENV":
-            price_details["one_time"]["fuel_fees"] = Decimal(item["amount"]) / 100
-
-            price_details["one_time"]["estimated_taxes"] += (
-                Decimal(item["amount_tax"]) / 100
-            )
-    price_details["tax_breakdown"] = []
-    for tax_details in ret["tax_breakdown"]:
-        tax_rate = Decimal(tax_details["tax_rate_details"]["percentage_decimal"]) / 100
-        if tax_rate > price_details["rate"]:
-            price_details["rate"] = tax_rate
-        if tax_rate > 0:
-            price_details["tax_breakdown"].append(
-                {
-                    "tax_type": tax_details["tax_rate_details"]["tax_type"],
-                    "country": tax_details["tax_rate_details"]["country"],
-                    "state": tax_details["tax_rate_details"]["state"],
-                    "taxability_reason": tax_details["taxability_reason"],
-                    "rate": tax_rate,
-                    "amount": Decimal(tax_details["amount"]) / 100,
-                    "taxable_amount": Decimal(tax_details["taxable_amount"]) / 100,
-                }
-            )
-    return price_details
-
-
-def get_quote_data(request, order_id_lst, email_lst):
-    order = Order.objects.filter(id__in=order_id_lst)
-    order = order.prefetch_related("order_line_items")
-    one_step = []
-    two_step = []
-    multi_step = []
-    total = Decimal(0.00)
-
-    for order in order:
-        item = {
-            "product": {
-                "name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                "image": order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url,
-            },
-            "start_date": order.start_date.strftime("%m/%d/%Y"),
-            "tonnage_quantity": order.order_group.tonnage_quantity,
-            "line_types": {},
-            "addons": [],
-            "subtotal": Decimal(0.00),
-            "fuel_fees": Decimal(0.00),
-            "estimated_taxes": Decimal(0.00),
-            "estimated_tax_rate": Decimal(0.00),
-            "pre_tax_subtotal": Decimal(0.00),
-            "total": Decimal(0.00),
-            "discounts": Decimal(0.00),
-            "one_time": {
-                "delivery": Decimal(0.00),
-                "removal": Decimal(0.00),
-                # "service": Decimal(0.00),
-                "fuel_fees": Decimal(0.00),
-                "estimated_taxes": Decimal(0.00),
-                "total": Decimal(0.00),
-            },
-            "service_price": Decimal(0.00),
-            "schedule_window": order.schedule_window,
-        }
-        if not item["schedule_window"]:
-            if item.order.order_group.time_slot:
-                item["schedule_window"] = (
-                    f"{order.order_group.time_slot.name} ({order.order_group.time_slot.start}-{order.order_group.time_slot.end})"
-                )
-            else:
-                item["schedule_window"] = "Anytime (7am-4pm)"
-        addons = (
-            order.order_group.seller_product_seller_location.seller_product.product.product_add_on_choices.all()
-        )
-        for addon in addons:
-            item["addons"].append(
-                {
-                    "key": addon.add_on_choice.add_on.name,
-                    "val": addon.add_on_choice.name,
-                }
-            )
-
-        for order_line_item in order.order_line_items.all():
-            _dd = {
-                "rate": order_line_item.rate,
-                "quantity": order_line_item.quantity,
-                "description": order_line_item.description,
-                "units": order_line_item.order_line_item_type.units,
-                "seller_payout_price": order_line_item.seller_payout_price(),
-                "customer_price": order_line_item.customer_price(),
-                "tax_code": order_line_item.order_line_item_type.stripe_tax_code_id,
-            }
-            try:
-                item["line_types"][order_line_item.order_line_item_type.code][
-                    "items"
-                ].append(_dd)
-            except KeyError:
-                item["line_types"][order_line_item.order_line_item_type.code] = {
-                    # "type": order_line_item.order_line_item_type,
-                    "items": [_dd],
-                }
-
-        item["fuel_fees"] = Decimal(0.00)
-        item["fuel_fees_rate"] = Decimal(0.00)
-        if item["line_types"].get("FUEL_AND_ENV", None):
-            item["fuel_fees_rate"] = (
-                order.order_group.seller_product_seller_location.fuel_environmental_markup
-            )
-            item["fuel_fees"] = round(
-                item["line_types"]["FUEL_AND_ENV"]["items"][0]["customer_price"], 2
-            )
-
-        if item["line_types"].get("DELIVERY", None):
-            item["one_time"]["delivery"] = round(
-                item["line_types"]["DELIVERY"]["items"][0]["customer_price"], 2
-            )
-        if item["line_types"].get("REMOVAL", None):
-            item["one_time"]["removal"] = round(
-                item["line_types"]["REMOVAL"]["items"][0]["customer_price"], 2
-            )
-        if item["line_types"].get("SERVICE", None):
-            item["service_price"] = round(
-                item["line_types"]["SERVICE"]["items"][0]["customer_price"], 2
-            )
-
-        item["pre_tax_subtotal"] = round(order.customer_price(), 2)
-        if order.order_group.user_address.user_group.tax_exempt_status == "exempt":
-            price_details = {"rate": Decimal(0.00), "total": item["pre_tax_subtotal"]}
-        else:
-            price_details = calculate_price_details(
-                order, item["line_types"], item["one_time"]["delivery"]
-            )
-
-        item["estimated_tax_rate"] = round(price_details["rate"] * 100, 2)
-        item["total"] = price_details["total"]
-        item["tax_breakdown"] = price_details.get("tax_breakdown", [])
-
-        # Calculate the one-time fuel fees and estimated taxes
-        item["one_time"]["fuel_fees"] = round(
-            (item["one_time"]["delivery"] + item["one_time"]["removal"])
-            * Decimal(item["fuel_fees_rate"] / 100),
-            2,
-        )
-        if price_details["rate"] > 0:
-            item["one_time"]["estimated_taxes"] = price_details["one_time"][
-                "estimated_taxes"
-            ]
-            item["estimated_taxes"] = abs(
-                price_details["taxes"] - item["one_time"]["estimated_taxes"]
-            )
-        else:
-            item["one_time"]["estimated_taxes"] = Decimal(0.00)
-
-        item["one_time"]["total"] = round(
-            item["one_time"]["delivery"]
-            + item["one_time"]["removal"]
-            + item["one_time"]["fuel_fees"]
-            + item["one_time"]["estimated_taxes"],
-            2,
-        )
-
-        if item["one_time"]["fuel_fees"] > item["fuel_fees"]:
-            item["fuel_fees"] = item["one_time"]["fuel_fees"] - item["fuel_fees"]
-        else:
-            item["fuel_fees"] = item["fuel_fees"] - item["one_time"]["fuel_fees"]
-
-        # This is Subtotal
-        item["subtotal"] = (
-            price_details["total"]
-            - item["one_time"]["total"]
-            - item["fuel_fees"]
-            - item["estimated_taxes"]
-        )
-        # This is Total (Per Service)
-        item["total"] = item["total"] - item["one_time"]["total"]
-        if (
-            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
-        ):
-            total += item["one_time"]["total"]
-        else:
-            total += item["total"] + item["one_time"]["total"]
-        if (
-            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
-        ):
-            two_step.append(item)
-        elif (
-            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
-        ):
-            one_step.append(item)
-        elif (
-            order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
-        ):
-            item["rental_breakdown"] = {
-                "day": {
-                    "base": order.order_group.seller_product_seller_location.rental_multi_step.day,
-                    "rpp_fee": Decimal(0.00),
-                },
-                "week": {
-                    "base": order.order_group.seller_product_seller_location.rental_multi_step.week,
-                    "rpp_fee": Decimal(0.00),
-                },
-                "month": {
-                    "base": order.order_group.seller_product_seller_location.rental_multi_step.month,
-                    "rpp_fee": Decimal(0.00),
-                },
-            }
-            # Add total, fuel fees, and estimated taxes to the rental breakdown.
-            for key in item["rental_breakdown"]:
-                item["rental_breakdown"][key]["fuel_fees"] = round(
-                    item["rental_breakdown"][key]["base"]
-                    * Decimal(item["fuel_fees_rate"] / 100),
-                    2,
-                )
-                item["rental_breakdown"][key]["estimated_taxes"] = round(
-                    item["rental_breakdown"][key]["base"] * price_details["rate"],
-                    2,
-                )
-
-                if (
-                    not order.order_group.user.user_group.owned_and_rented_equiptment_coi
-                ):
-                    # Add a 15% Rental Protection Plan fee if the user does not have their own COI.
-                    item["rental_breakdown"][key]["rpp_fee"] = round(
-                        item["rental_breakdown"][key]["base"] * Decimal(0.15), 2
-                    )
-                item["rental_breakdown"][key]["subtotal"] = round(
-                    item["rental_breakdown"][key]["base"]
-                    + item["rental_breakdown"][key]["fuel_fees"]
-                    + item["rental_breakdown"][key]["rpp_fee"],
-                    2,
-                )
-                item["rental_breakdown"][key]["total"] = round(
-                    item["rental_breakdown"][key]["base"]
-                    + item["rental_breakdown"][key]["fuel_fees"]
-                    + item["rental_breakdown"][key]["estimated_taxes"]
-                    + item["rental_breakdown"][key]["rpp_fee"],
-                    2,
-                )
-
-            multi_step.append(item)
-
-    subject = (
-        "Downstream | Quote | " + order.order_group.user_address.formatted_address()
-    )
-    # TODO: Delete cart app and create checkout app. Create one model in there called Order.
-    # carts = CartOrder.objects.filter(
-    #     user_address__user_group=order.order_group.user.user_group
-    # )
-    quote_id = 1001  # carts.count() + 1
-    quote_expiration = timezone.now() + datetime.timedelta(days=14)
-    data = {
-        "transactional_message_id": 4,
-        "subject": subject,
-        "message_data": {
-            "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
-            "quote_id": quote_id,
-            "full_name": order.order_group.user.full_name,
-            "company_name": order.order_group.user.user_group.name,
-            "delivery_address": order.order_group.user_address.formatted_address(),
-            "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
-            "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
-            "one_step": one_step,
-            "two_step": two_step,
-            "multi_step": multi_step,
-            "total": f"{total:,.2f}",
-            "contact": {
-                "full_name": order.created_by.full_name,
-                "email": order.created_by.email,
-                "phone": order.created_by.phone,  # (720) 490-1823
-            },
-        },
-    }
-    # cart = CartOrder(
-    #     user_address=order.order_group.user_address,
-    #     quote_expiration=quote_expiration,
-    #     quote_id=quote_id,
-    #     quote=data,
-    # )
-    # if email_lst:
-    #     cart.to_emails = ",".join(email_lst)
-    # cart.save()
-    return data
-
-
 @api_view(["GET"])
 @authentication_classes([])
 @permission_classes([])
@@ -1719,7 +1395,7 @@ def accept_quote(request):
     # Accept the quote.
     cart_id = request.query_params.get("cart_id", None)
     # try:
-    #     cart = CartOrder.objects.get(id=cart_id)
+    #     cart = CheckoutOrder.objects.get(id=cart_id)
     #     cart.quote_accepted_at = timezone.now()
     #     cart.save()
     # except Cart.DoesNotExist as e:
@@ -1740,12 +1416,15 @@ def show_quote(request):
     context = get_user_context(request)
     quote_id = request.GET.get("quote_id")
     # if quote_id:
-    #     cart = CartOrder.objects.get(id=quote_id)
-    #     payload = {"trigger": cart.quote}
+    #     checkout_order = CheckoutOrder.objects.get(id=quote_id)
+    #     payload = {"trigger": checkout_order.quote}
     # else:
     order_id_lst = ast.literal_eval(request.GET.get("ids"))
-    data = get_quote_data(request, order_id_lst, None)
-    payload = {"trigger": data["message_data"]}
+    checkout_order = QuoteUtils.create_quote(order_id_lst, None, quote_sent=False)
+    payload = {"trigger": checkout_order.quote}
+    payload["trigger"][
+        "accept_url"
+    ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
     return render(request, "customer_dashboard/customer_quote.html", payload)
 
 
@@ -1759,7 +1438,17 @@ def cart_send_quote(request):
             email_lst = list(set(data.get("emails")))
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
-                data = get_quote_data(request, order_id_lst, email_lst)
+                checkout_order = QuoteUtils.create_quote(
+                    order_id_lst, email_lst, quote_sent=True
+                )
+                data = {
+                    "transactional_message_id": 4,
+                    "subject": checkout_order.subject,
+                    "message_data": checkout_order.quote,
+                }
+                data["message_data"][
+                    "accept_url"
+                ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
@@ -1923,6 +1612,7 @@ def checkout(request, user_address_id):
     if request.method == "POST":
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
+        estimated_taxes = request.POST.get("estimated_taxes")
         if payment_method_id:
             # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
             # For now always set as default.
@@ -1931,8 +1621,45 @@ def checkout(request, user_address_id):
             else:
                 context["user_address"].default_payment_method_id = payment_method_id
                 context["user_address"].save()
+            checkout_order = None
+            order_id_lst = []
+            customer_price = 0
+            seller_price = 0
             for order in orders:
+                seller_price += order.seller_price()
+                customer_price += order.customer_price()
+                order_id_lst.append(order.id)
+                if not checkout_order and order.checkout_order:
+                    checkout_order = order.checkout_order
                 order.submit_order(override_approval_policy=True)
+            # TODO: Create checkout
+            if checkout_order:
+                if payment_method_id == "paylater":
+                    checkout_order.pay_later = True
+                else:
+                    checkout_order.payment_method = context[
+                        "user_address"
+                    ].default_payment_method
+
+                checkout_order.take_rate = order.order_group.take_rate
+                checkout_order.save()
+            else:
+                checkout_order = CheckoutOrder(
+                    user_address=context["user_address"],
+                    customer_price=customer_price,
+                    seller_price=seller_price,
+                    estimated_taxes=estimated_taxes,
+                )
+                if payment_method_id == "paylater":
+                    checkout_order.pay_later = True
+                else:
+                    checkout_order.payment_method = context[
+                        "user_address"
+                    ].default_payment_method
+                # Update events to point to the checkout order
+                Order.objects.filter(id__in=order_id_lst).update(
+                    checkout_order=checkout_order
+                )
             messages.success(request, "Successfully checked out!")
             return HttpResponseRedirect(reverse("customer_cart"))
         else:
@@ -1971,6 +1698,7 @@ def checkout(request, user_address_id):
             setattr(payment_method, "is_default", True)
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
+    order_id_lst = []
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
@@ -1988,6 +1716,11 @@ def checkout(request, user_address_id):
             }
         )
         context["cart_count"] += 1
+        order_id_lst.append(order.id)
+    # TODO: Use the quote to calculate the total price with tax.
+    checkout_order = QuoteUtils.create_quote(order_id_lst, None, quote_sent=False)
+    context["estimated_taxes"] = checkout_order.quote["estimated_taxes"]
+    context["total"] = checkout_order.quote["total"]
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
         messages.error(request, "This Order is empty.")

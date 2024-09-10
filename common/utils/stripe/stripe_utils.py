@@ -6,3 +6,4 @@ class StripeUtils:
     from .payment_method import PaymentMethod
     from .summary_item import SummaryItems
     from .transfer import Transfer
+    from .price_calculation import PriceCalculation

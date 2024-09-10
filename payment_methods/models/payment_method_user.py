@@ -7,6 +7,10 @@ from .payment_method import PaymentMethod
 
 
 class PaymentMethodUser(BaseModel):
+    """
+    DEPRECATED: This model is no longer in use.
+    """
+
     payment_method = models.ForeignKey(
         PaymentMethod,
         on_delete=models.CASCADE,

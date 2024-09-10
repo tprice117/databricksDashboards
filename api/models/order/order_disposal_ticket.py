@@ -27,5 +27,5 @@ class OrderDisposalTicket(BaseModel):
         return self.ticket_id + " - " + self.order.order_group.user_address.name
 
     class Meta:
-        verbose_name = "Event Disposal Ticket"
-        verbose_name_plural = "Event Disposal Tickets"
+        verbose_name = "Transaction Disposal Ticket"
+        verbose_name_plural = "Transaction Disposal Tickets"
