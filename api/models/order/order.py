@@ -2,6 +2,7 @@ import datetime
 import logging
 from functools import lru_cache
 from typing import List, Optional
+from decimal import Decimal
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
@@ -24,6 +25,7 @@ from common.models import BaseModel
 from common.models.choices.approval_status import ApprovalStatus
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import save_unique_code
+from common.utils.stripe.stripe_utils import StripeUtils
 from communications.intercom.conversation import Conversation as IntercomConversation
 from notifications import signals as notifications_signals
 from notifications.utils.add_email_to_queue import (
@@ -956,6 +958,158 @@ class Order(BaseModel):
                 logger.error(
                     f"create_customer_chat:reply [{self.id}]-[{e}]", exc_info=e
                 )
+
+    def get_order_with_tax(self):
+        """Get the Order with tax details.
+        This is also used as the Quote in the Admin Portal."""
+        item = {
+            "product": {
+                "name": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                "image": self.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url,
+            },
+            "start_date": self.start_date.strftime("%m/%d/%Y"),
+            "tonnage_quantity": self.order_group.tonnage_quantity,
+            "line_types": {},
+            "addons": [],
+            "subtotal": Decimal(0.00),
+            "fuel_fees": Decimal(0.00),
+            # This is the total tax
+            "taxes": Decimal(0.00),
+            # This is the tax minus the one time tax
+            "estimated_taxes": Decimal(0.00),
+            "estimated_tax_rate": Decimal(0.00),
+            "pre_tax_subtotal": Decimal(0.00),
+            "total": Decimal(0.00),
+            "discounts": Decimal(0.00),
+            "one_time": {
+                "delivery": Decimal(0.00),
+                "removal": Decimal(0.00),
+                # "service": Decimal(0.00),
+                "fuel_fees": Decimal(0.00),
+                "estimated_taxes": Decimal(0.00),
+                "total": Decimal(0.00),
+            },
+            "service_price": Decimal(0.00),
+            "schedule_window": self.schedule_window,
+        }
+        if not item["schedule_window"]:
+            if item.order.order_group.time_slot:
+                item["schedule_window"] = (
+                    f"{self.order_group.time_slot.name} ({self.order_group.time_slot.start}-{self.order_group.time_slot.end})"
+                )
+            else:
+                item["schedule_window"] = "Anytime (7am-4pm)"
+        addons = (
+            self.order_group.seller_product_seller_location.seller_product.product.product_add_on_choices.all()
+        )
+        for addon in addons:
+            item["addons"].append(
+                {
+                    "key": addon.add_on_choice.add_on.name,
+                    "val": addon.add_on_choice.name,
+                }
+            )
+
+        for order_line_item in self.order_line_items.all():
+            _dd = {
+                "rate": order_line_item.rate,
+                "quantity": order_line_item.quantity,
+                "description": order_line_item.description,
+                "units": order_line_item.order_line_item_type.units,
+                "seller_payout_price": order_line_item.seller_payout_price(),
+                "customer_price": order_line_item.customer_price(),
+                "tax_code": order_line_item.order_line_item_type.stripe_tax_code_id,
+            }
+            try:
+                item["line_types"][order_line_item.order_line_item_type.code][
+                    "items"
+                ].append(_dd)
+            except KeyError:
+                item["line_types"][order_line_item.order_line_item_type.code] = {
+                    # "type": order_line_item.order_line_item_type,
+                    "items": [_dd],
+                }
+
+        item["fuel_fees"] = Decimal(0.00)
+        item["fuel_fees_rate"] = Decimal(0.00)
+        if item["line_types"].get("FUEL_AND_ENV", None):
+            item["fuel_fees_rate"] = (
+                self.order_group.seller_product_seller_location.fuel_environmental_markup
+            )
+            item["fuel_fees"] = round(
+                item["line_types"]["FUEL_AND_ENV"]["items"][0]["customer_price"], 2
+            )
+
+        if item["line_types"].get("DELIVERY", None):
+            item["one_time"]["delivery"] = round(
+                item["line_types"]["DELIVERY"]["items"][0]["customer_price"], 2
+            )
+        if item["line_types"].get("REMOVAL", None):
+            item["one_time"]["removal"] = round(
+                item["line_types"]["REMOVAL"]["items"][0]["customer_price"], 2
+            )
+        if item["line_types"].get("SERVICE", None):
+            item["service_price"] = round(
+                item["line_types"]["SERVICE"]["items"][0]["customer_price"], 2
+            )
+
+        item["pre_tax_subtotal"] = round(self.customer_price(), 2)
+        if self.order_group.user_address.user_group.tax_exempt_status == "exempt":
+            price_details = {
+                "rate": Decimal(0.00),
+                "taxes": Decimal(0.00),
+                "total": item["pre_tax_subtotal"],
+            }
+        else:
+            price_details = StripeUtils.PriceCalculation.calculate_price_details(
+                self, item["line_types"], item["one_time"]["delivery"]
+            )
+
+        item["taxes"] = price_details["taxes"]
+        item["estimated_tax_rate"] = round(price_details["rate"] * 100, 2)
+        item["total"] = price_details["total"]
+        item["tax_breakdown"] = price_details.get("tax_breakdown", [])
+
+        # Calculate the one-time fuel fees and estimated taxes
+        item["one_time"]["fuel_fees"] = round(
+            (item["one_time"]["delivery"] + item["one_time"]["removal"])
+            * Decimal(item["fuel_fees_rate"] / 100),
+            2,
+        )
+        if price_details["rate"] > 0:
+            item["one_time"]["estimated_taxes"] = price_details["one_time"][
+                "estimated_taxes"
+            ]
+            item["estimated_taxes"] = abs(
+                price_details["taxes"] - item["one_time"]["estimated_taxes"]
+            )
+        else:
+            item["one_time"]["estimated_taxes"] = Decimal(0.00)
+
+        item["one_time"]["total"] = round(
+            item["one_time"]["delivery"]
+            + item["one_time"]["removal"]
+            + item["one_time"]["fuel_fees"]
+            + item["one_time"]["estimated_taxes"],
+            2,
+        )
+
+        if item["one_time"]["fuel_fees"] > item["fuel_fees"]:
+            item["fuel_fees"] = item["one_time"]["fuel_fees"] - item["fuel_fees"]
+        else:
+            item["fuel_fees"] = item["fuel_fees"] - item["one_time"]["fuel_fees"]
+
+        # This is Subtotal
+        item["subtotal"] = (
+            price_details["total"]
+            - item["one_time"]["total"]
+            - item["fuel_fees"]
+            - item["estimated_taxes"]
+        )
+        # This is Total (Per Service)
+        item["total"] = item["total"] - item["one_time"]["total"]
+
+        return item
 
     def submit_order(self, override_approval_policy=False):
         """This method is used to submit an Order (set status to PENDING and set submitted_on to now).

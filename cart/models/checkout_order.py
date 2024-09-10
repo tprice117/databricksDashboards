@@ -45,6 +45,7 @@ class CheckoutOrder(BaseModel):
     )
     customer_price = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     seller_price = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    estimated_taxes = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     to_emails = models.CharField(
         max_length=255,
         blank=True,
