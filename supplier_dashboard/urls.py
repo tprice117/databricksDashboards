@@ -13,6 +13,11 @@ urlpatterns = [
         views.supplier_digest_dashboard,
         name="supplier_dashboard",
     ),
+    path(
+        "supplier/last_order/",
+        views.supplier_last_order,
+        name="supplier_last_order",
+    ),
     path("supplier/search/", views.supplier_search, name="supplier_search"),
     path(
         "supplier/search/selection/",

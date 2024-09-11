@@ -860,7 +860,7 @@ def users(request):
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
 
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -1110,7 +1110,7 @@ def new_user(request):
 def bookings(request):
     link_params = {}
     context = {}
-    pagination_limit = 25
+    pagination_limit = 50
     page_number = 1
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
@@ -1728,7 +1728,7 @@ def chat(request, order_id=None, conversation_id=None, is_customer=False):
 @login_required(login_url="/admin/login/")
 def payouts(request):
     context = {}
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -2002,11 +2002,35 @@ def download_payouts(request):
 
 
 @login_required(login_url="/admin/login/")
+def supplier_last_order(request):
+    context = {}
+    location_id = request.GET.get("location_id", None)
+    seller_id = request.GET.get("seller_id", None)
+    if location_id:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_location_id=location_id
+        )
+    elif seller_id:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_location__seller_id=seller_id
+        )
+    else:
+        return HttpRequest(status=204)
+
+    orders = orders.order_by("-end_date").first()
+    context["last_order"] = orders
+    # Assume htmx request, so only return html snippet
+    return render(
+        request, "customer_dashboard/snippets/company_last_order_col.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -2014,6 +2038,7 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
+        active = request.GET.get("active")
         seller_locations = get_location_objects(
             request, context["user"], context["seller"]
         )
@@ -2033,24 +2058,36 @@ def locations(request):
             if is_insurance_compliant and is_tax_compliant:
                 context["fully_compliant"] += 1
                 if tab == "compliant":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             elif not is_insurance_compliant:
                 context["insurance_missing"] += 1
                 if tab == "insurance":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             elif not is_tax_compliant:
                 context["tax_missing"] += 1
                 if tab == "tax":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             if is_insurance_compliant and seller_location.is_insurance_expiring_soon:
                 context["insurance_expiring"] += 1
                 if tab == "insurance_expiring":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             if seller_location.is_payout_setup is False:
                 context["payouts_missing"] += 1
                 if tab == "payouts":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             if tab is None or tab == "":
+                if active == "on" and not seller_location.is_active:
+                    continue
                 seller_locations_lst.append(seller_location)
 
         download_link = f"/supplier/locations/download/?{query_params.urlencode()}"
@@ -2648,7 +2685,7 @@ def received_invoices(request):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
