@@ -773,7 +773,7 @@ def new_order_category_price(request, category_id):
 
 @login_required(login_url="/admin/login/")
 def user_address_search(request):
-    context = {}
+    context = get_user_context(request)
     if request.method == "POST":
         search = request.POST.get("q")
         search = search.strip()
@@ -783,12 +783,8 @@ def user_address_search(request):
             user_address_id = uuid.UUID(search)
             user_addresses = UserAddress.objects.filter(id=user_address_id)
         except ValueError:
-            user_addresses = UserAddress.objects.filter(
-                Q(name__icontains=search)
-                | Q(street__icontains=search)
-                | Q(city__icontains=search)
-                | Q(state__icontains=search)
-                | Q(postal_code__icontains=search)
+            user_addresses = get_location_objects(
+                request, context["user"], context["user_group"], search_q=search
             )
         context["user_addresses"] = user_addresses
 
