@@ -25,7 +25,8 @@ class QuoteUtils:
             item = order.get_order_with_tax()
             total_taxes += item["taxes"]
             if (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+                order.order_type == Order.Type.DELIVERY
+                and order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
             ):
                 total += item["one_time"]["total"]
             else:

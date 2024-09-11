@@ -31,18 +31,18 @@
                         <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
                             <p class="text-center dropdown-header">Actions</p>
                             {% if user_address %}
-                            <button class="dropdown-item"
-                                hx-post="{% url 'customer_default_payment_method' user_address_id=user_address.id payment_method_id=payment_method.id %}"
-                                hx-vals='{"loopcount": "{{forloop.counter}}", "is_checkout": "{{ is_checkout }}"}'
-                                hx-swap="outerHTML" hx-target="#paymentMethod{{ forloop.counter }}"
-                                hx-indicator="#htmx-indicator-status"
-                                hx-trigger='confirmed' 
-                                onClick="event.stopPropagation();
-                                Swal.fire(
-                                    {title: 'Make Default', text:'Make this card the default payment for this address?', icon: 'question', confirmButtonText: 'Confirm'}
-                                ).then((result)=>{
-                                    if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
-                                })">Make Default</button>
+                                <button class="dropdown-item"
+                                    hx-post="{% url 'customer_default_payment_method' user_address_id=user_address.id payment_method_id=payment_method.id %}"
+                                    hx-vals='{"loopcount": "{{forloop.counter}}", "is_checkout": "{{ is_checkout }}"}'
+                                    hx-swap="outerHTML" hx-target="#paymentMethod{{ forloop.counter }}"
+                                    hx-indicator="#htmx-indicator-status"
+                                    hx-trigger='confirmed' 
+                                    onClick="event.stopPropagation();
+                                    Swal.fire(
+                                        {title: 'Make Default', text:'Make this card the default payment for this address?', icon: 'question', confirmButtonText: 'Confirm'}
+                                    ).then((result)=>{
+                                        if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
+                                    })">Make Default</button>
                             {% endif %}
                             <button class="dropdown-item"
                                 hx-post="{% url 'customer_remove_payment_method' payment_method_id=payment_method.id %}"
@@ -56,6 +56,20 @@
                                 ).then((result)=>{
                                     if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
                                 })">Delete</button>
+                            {% if request.user.is_superuser %}
+                                <button class="dropdown-item" {% if payment_method.active %}disabled="true" {% endif %}
+                                    hx-post="{% url 'customer_update_payment_method_status' payment_method_id=payment_method.id %}"
+                                    hx-vals='{"loopcount": "{{forloop.counter}}"}'
+                                    hx-swap="outerHTML" hx-target="#paymentMethod{{ forloop.counter }}"
+                                    hx-indicator="#htmx-indicator-status"
+                                    hx-trigger='confirmed' 
+                                    onClick="event.stopPropagation();
+                                    Swal.fire(
+                                        {title: 'Update Payment Method', text:'Do you want to update this Payment Method status?', icon: 'question', confirmButtonText: 'Confirm'}
+                                    ).then((result)=>{
+                                        if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
+                                    })">Set Active</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

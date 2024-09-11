@@ -1519,6 +1519,32 @@ def make_payment_method_default(request, user_address_id, payment_method_id):
 
 
 @login_required(login_url="/admin/login/")
+def update_payment_method_status(request, payment_method_id):
+    context = get_user_context(request)
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to update PaymentMethod.")
+        return HttpResponse("Unauthorized", status=401)
+    if request.method == "POST":
+        context["forloop"] = {"counter": request.POST.get("loopcount", 0)}
+        if request.POST.get("is_checkout"):
+            context["is_checkout"] = 1
+        else:
+            context["is_checkout"] = 0
+        # payment_method_id = request.POST.get("payment_method")
+        context["payment_method"] = PaymentMethod.objects.filter(
+            id=payment_method_id
+        ).first()
+        if context["payment_method"]:
+            context["payment_method"].active = True
+            context["payment_method"].save()
+        return render(
+            request, "customer_dashboard/snippets/payment_method_item.html", context
+        )
+    else:
+        return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
 def remove_payment_method(request, payment_method_id):
     context = get_user_context(request)
     http_status = 204
@@ -1567,7 +1593,6 @@ def add_payment_method(request):
         token = request.POST.get("token")
         if token:
             if context["user"] and context["user_group"]:
-                # TODO: PaymentMethodUserAddress
                 payment_method = PaymentMethod(
                     user=context["user"], user_group=context["user_group"], token=token
                 )
@@ -1636,7 +1661,9 @@ def checkout(request, user_address_id):
                     checkout_order.payment_method = context[
                         "user_address"
                     ].default_payment_method
-
+                checkout_order.customer_price = customer_price
+                checkout_order.seller_price = seller_price
+                checkout_order.estimated_taxes = estimated_taxes
                 checkout_order.take_rate = order.order_group.take_rate
                 checkout_order.save()
             else:
