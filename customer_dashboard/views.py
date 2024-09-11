@@ -1593,7 +1593,6 @@ def add_payment_method(request):
         token = request.POST.get("token")
         if token:
             if context["user"] and context["user_group"]:
-                # TODO: PaymentMethodUserAddress
                 payment_method = PaymentMethod(
                     user=context["user"], user_group=context["user_group"], token=token
                 )
@@ -1635,8 +1634,6 @@ def checkout(request, user_address_id):
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         estimated_taxes = request.POST.get("estimated_taxes")
-        # TODO: Put checkout process in cart/utils.py
-        # TODO: Add api endpoint for checkout.
         if payment_method_id:
             # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
             # For now always set as default.
@@ -1664,7 +1661,9 @@ def checkout(request, user_address_id):
                     checkout_order.payment_method = context[
                         "user_address"
                     ].default_payment_method
-
+                checkout_order.customer_price = customer_price
+                checkout_order.seller_price = seller_price
+                checkout_order.estimated_taxes = estimated_taxes
                 checkout_order.take_rate = order.order_group.take_rate
                 checkout_order.save()
             else:
