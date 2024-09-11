@@ -67,10 +67,14 @@ class QuoteUtils:
                         * Decimal(item["estimated_tax_rate"] / 100),
                         2,
                     )
-
-                    if (
+                    add_rpp_fee = False
+                    if order.order_group.user.user_group is None:
+                        add_rpp_fee = True
+                    elif (
                         not order.order_group.user.user_group.owned_and_rented_equiptment_coi
                     ):
+                        add_rpp_fee = True
+                    if add_rpp_fee:
                         # Add a 15% Rental Protection Plan fee if the user does not have their own COI.
                         item["rental_breakdown"][key]["rpp_fee"] = round(
                             item["rental_breakdown"][key]["base"] * Decimal(0.15), 2
@@ -95,11 +99,15 @@ class QuoteUtils:
             "Downstream | Quote | " + order.order_group.user_address.formatted_address()
         )
         quote_expiration = timezone.now() + timezone.timedelta(days=14)
+        if order.order_group.user.user_group:
+            company_name = order.order_group.user.user_group.name
+        else:
+            company_name = order.order_group.user.full_name
         quote_data = {
             "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
             "quote_id": "N/A",
             "full_name": order.order_group.user.full_name,
-            "company_name": order.order_group.user.user_group.name,
+            "company_name": company_name,
             "delivery_address": order.order_group.user_address.formatted_address(),
             "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
             "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
