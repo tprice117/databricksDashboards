@@ -18,6 +18,13 @@
                         {% endif %}" />{{ seller_location.name }}
                 </td>
                 <td>{{ seller_location.formatted_address }}</td>
+                {% if seller_location.last_order %}
+                    <td>{{ seller_location.last_order }}</td>
+                {% else %}
+                    <td hx-get="{% url 'supplier_last_order' %}?location_id={{ seller_location.id }}" hx-trigger="load" hx-swap="outerHTML">
+                        <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                    </td>
+                {% endif %}
                 <td>
                     {% if seller_location.is_payout_setup %}
                         {% if seller_location.stripe_connect_account_id %}

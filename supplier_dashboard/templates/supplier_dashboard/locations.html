@@ -21,6 +21,25 @@
         }
     </style>
 {% endblock %}
+{% block javascript %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has filter
+            const urlParams = new URLSearchParams(window.location.search);
+            const filter = urlParams.get("tab");
+            if (filter) {
+                // update filter value
+                document.getElementById("filterGroupSelect").value = filter;
+            }
+            // Check if query params has my_carts
+            const activeLocationsCheck = urlParams.get("active");
+            if (activeLocationsCheck) {
+                // update active_locations value
+                document.getElementById("activeLocationsCheck").checked = true;
+            }
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link, .clickable-header, .form-select">
         <div class="d-sm-flex justify-content-between align-items-center mb-4">
@@ -30,14 +49,33 @@
         {% if request.user.is_staff %}
             <div class="row">
                 <div class="col">
-                    <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'supplier_locations' %}" hx-target="#location-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-status">
-                        <option value="" selected>Filter Data By</option>
-                        <option value="insurance">Missing Insurance Details</option>
-                        <option value="payouts">Missing Payout Details</option>
-                        <option value="tax">Missing Tax Details</option>
-                        <option value="insurance_expiring">Insurance Expiring in Next 60 days</option>
-                        <option value="compliant">Fully Compliant</option>
-                    </select>
+                    <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
+                        <form class="row g-3" action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'supplier_locations' %}" hx-target="#location-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-status">
+                            <div class="col-12 mb-3">
+                                <div class="input-group">
+                                    <label class="input-group-text" for="filterGroupSelect">Options</label>
+                                    <select class="form-select" id="filterGroupSelect" name="tab" aria-label="Filter Data By">
+                                        <option value="" selected>Filter Data By</option>
+                                        <option value="insurance">Missing Insurance Details</option>
+                                        <option value="payouts">Missing Payout Details</option>
+                                        <option value="tax">Missing Tax Details</option>
+                                        <option value="insurance_expiring">Insurance Expiring in Next 60 days</option>
+                                        <option value="compliant">Fully Compliant</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="activeLocationsCheck" name="active" />
+                                    <label class="form-check-label" for="activeLocationsCheck">Active Locations (Has booking within last 30 days and upcoming one within 30 days.)</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         {% endif %}
@@ -58,6 +96,7 @@
                                 {% endif %}
                                 <th>Name</th>
                                 <th>Address</th>
+                                <th>Last Order</th>
                                 <th>Payout Method</th>
                                 <th>Insurance</th>
                                 <th>Tax</th>
@@ -67,25 +106,14 @@
                         <tfoot>
                             <tr>
                                 {% if request.user.is_staff %}
-                                    <td>
-                                        <strong>Seller</strong>
-                                    </td>
+                                    <td>Seller</td>
                                 {% endif %}
-                                <td>
-                                    <strong>Name</strong>
-                                </td>
-                                <td>
-                                    <strong>Address</strong>
-                                </td>
-                                <td>
-                                    <strong>Payout Method</strong>
-                                </td>
-                                <td>
-                                    <strong>Insurance</strong>
-                                </td>
-                                <td>
-                                    <strong>Tax</strong>
-                                </td>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Last Order</th>
+                                <th>Payout Method</th>
+                                <th>Insurance</th>
+                                <th>Tax</th>
                                 <td>
                                     <strong></strong>
                                 </td>
