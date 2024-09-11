@@ -1054,7 +1054,10 @@ class Order(BaseModel):
             )
 
         item["pre_tax_subtotal"] = round(self.customer_price(), 2)
-        if self.order_group.user_address.user_group.tax_exempt_status == "exempt":
+        if (
+            self.order_group.user_address.user_group
+            and self.order_group.user_address.user_group.tax_exempt_status == "exempt"
+        ):
             price_details = {
                 "rate": Decimal(0.00),
                 "taxes": Decimal(0.00),
