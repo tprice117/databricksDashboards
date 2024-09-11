@@ -19,13 +19,14 @@ class CheckoutOrderAdmin(admin.ModelAdmin):
     list_display = (
         "user_address",
         "customer_price",
-        "payment_method",
+        "estimated_taxes",
+        "price",
         "pay_later",
         "updated_on",
         "created_on",
     )
     ordering = ["-updated_on"]
-    list_filter = [UserAddressFilter, CreatedDateFilter]
+    list_filter = ["pay_later", UserAddressFilter, CreatedDateFilter]
     inlines = [OrderInline]
     search_fields = [
         "created_by__email",
