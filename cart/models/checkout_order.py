@@ -72,6 +72,10 @@ class CheckoutOrder(BaseModel):
     def __str__(self):
         return str(self.user_address)
 
+    @property
+    def price(self):
+        return self.customer_price + self.estimated_taxes
+
 
 @receiver(post_save, sender=CheckoutOrder)
 def on_checkout_order_post_save(sender, instance, created, **kwargs):
