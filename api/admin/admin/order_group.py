@@ -48,6 +48,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
         OrderGroupAttachmentInline,
     ]
     search_fields = [
+        "id",
         "user__email",
         "user_address__street",
         "user_address__city",
