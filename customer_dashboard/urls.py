@@ -169,6 +169,11 @@ urlpatterns = [
         name="customer_remove_payment_method",
     ),
     path(
+        "customer/payment/<uuid:payment_method_id>/status/",
+        views.update_payment_method_status,
+        name="customer_update_payment_method_status",
+    ),
+    path(
         "customer/new/payment/",
         views.add_payment_method,
         name="customer_new_payment",

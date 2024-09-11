@@ -1519,6 +1519,32 @@ def make_payment_method_default(request, user_address_id, payment_method_id):
 
 
 @login_required(login_url="/admin/login/")
+def update_payment_method_status(request, payment_method_id):
+    context = get_user_context(request)
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to update PaymentMethod.")
+        return HttpResponse("Unauthorized", status=401)
+    if request.method == "POST":
+        context["forloop"] = {"counter": request.POST.get("loopcount", 0)}
+        if request.POST.get("is_checkout"):
+            context["is_checkout"] = 1
+        else:
+            context["is_checkout"] = 0
+        # payment_method_id = request.POST.get("payment_method")
+        context["payment_method"] = PaymentMethod.objects.filter(
+            id=payment_method_id
+        ).first()
+        if context["payment_method"]:
+            context["payment_method"].active = True
+            context["payment_method"].save()
+        return render(
+            request, "customer_dashboard/snippets/payment_method_item.html", context
+        )
+    else:
+        return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
 def remove_payment_method(request, payment_method_id):
     context = get_user_context(request)
     http_status = 204
@@ -1609,6 +1635,8 @@ def checkout(request, user_address_id):
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         estimated_taxes = request.POST.get("estimated_taxes")
+        # TODO: Put checkout process in cart/utils.py
+        # TODO: Add api endpoint for checkout.
         if payment_method_id:
             # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
             # For now always set as default.
