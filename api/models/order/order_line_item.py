@@ -29,6 +29,7 @@ class OrderLineItem(BaseModel):
         max_length=255, blank=True, null=True
     )
     paid = models.BooleanField(default=False)
+    backbill = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.order) + " - " + self.order_line_item_type.name

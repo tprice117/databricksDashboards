@@ -21,6 +21,7 @@ class OrderLineItemInlineForm(forms.ModelForm):
             "customer_price",
             "is_paid",
             "stripe_invoice_line_item_id",
+            "backbill",
         )
         readonly_fields = (
             "seller_payout_price",
