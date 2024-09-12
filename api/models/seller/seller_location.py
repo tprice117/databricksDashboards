@@ -103,7 +103,7 @@ class SellerLocation(BaseModel):
 
     @property
     def is_tax_compliant(self):
-        return bool(self.stripe_connect_account_id and self.w9)
+        return bool(self.stripe_connect_account_id or self.w9)
 
     @property
     def is_active(self):
