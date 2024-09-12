@@ -22,6 +22,7 @@ class CheckoutOrderAdmin(admin.ModelAdmin):
         "estimated_taxes",
         "price",
         "pay_later",
+        "quote_expiration",
         "updated_on",
         "created_on",
     )

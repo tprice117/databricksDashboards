@@ -286,7 +286,7 @@
                                                                                 <span style="word-break: break-word; font-size: 12px;"><strong>Bill to (P.O. #):</strong></span>
                                                                             </p>
                                                                             <p style="margin:0;font-size:12px;mso-line-height-alt:18px">
-                                                                                <span style="word-break: break-word; font-size: 12px;">10293</span><strong><br /></strong>
+                                                                                <span style="word-break: break-word; font-size: 12px;">{{ trigger.project_id }}</span><strong><br /></strong>
                                                                             </p>
                                                                         </div>
                                                                     </div>
@@ -512,8 +512,8 @@
                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <span style="word-break: break-word;">
-                                                                                            {% for order_line_item in item.line_types.SERVICE.items %}
-                                                                                                ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
+                                                                                            {% for order_line_item in item.price_data.service.items %}
+                                                                                                ${{ order_line_item.unit_price|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
                                                                                                 {% if order_line_item.description %}
                                                                                                     ({{ order_line_item.description|lower }})
                                                                                                 {% endif %}
@@ -531,9 +531,9 @@
                                                                                         </span>
                                                                                     </strong>
                                                                                 </p>
-                                                                                {% for order_line_item in item.line_types.RENTAL.items %}
+                                                                                {% for order_line_item in item.price_data.rental.items %}
                                                                                     <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
-                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
+                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.unit_price|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                     </p>
                                                                                     {% if order_line_item.description %}
                                                                                         <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
@@ -545,9 +545,9 @@
                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <strong><span style="word-break: break-word;"><span style="word-break: break-word;">Material:<br /></span></span></strong>
-                                                                                        {% for order_line_item in item.line_types.MATERIAL.items %}
+                                                                                        {% for order_line_item in item.price_data.material.items %}
                                                                                             <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
-                                                                                                <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
+                                                                                                <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.unit_price|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                             </p>
                                                                                             {% if order_line_item.description %}
                                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
@@ -1371,8 +1371,8 @@
                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <span style="word-break: break-word;">
-                                                                                            {% for order_line_item in item.line_types.SERVICE.items %}
-                                                                                                ${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
+                                                                                            {% for order_line_item in item.price_data.service.items %}
+                                                                                                ${{ order_line_item.unit_price|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
                                                                                                 {% if order_line_item.description %}
                                                                                                     ({{ order_line_item.description|lower }})
                                                                                                 {% endif %}
@@ -1388,9 +1388,9 @@
                                                                                         </span>
                                                                                     </strong>
                                                                                 </p>
-                                                                                {% for order_line_item in item.line_types.RENTAL.items %}
+                                                                                {% for order_line_item in item.price_data.rental.items %}
                                                                                     <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
-                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.rate|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
+                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">${{ order_line_item.unit_price|floatformat:2|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                     </p>
                                                                                     {% if order_line_item.description %}
                                                                                         <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
@@ -2358,7 +2358,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.rental_breakdown.day.base }}</strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.rental_breakdown.day.base|floatformat:2|intcomma }}</strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2371,7 +2371,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.fuel_fees }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.fuel_fees|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2384,7 +2384,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.rpp_fee }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.rpp_fee|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2412,7 +2412,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <strong><span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.subtotal }}</span></strong>
+                                                                                    <strong><span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.subtotal|floatformat:2|intcomma }}</span></strong>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2425,7 +2425,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.estimated_taxes }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.day.estimated_taxes|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2522,7 +2522,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <strong><span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.base }}</span></strong>
+                                                                                    <strong><span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.base|floatformat:2|intcomma }}</span></strong>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2535,7 +2535,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.fuel_fees }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.fuel_fees|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2548,7 +2548,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.rpp_fee }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.rpp_fee|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2576,7 +2576,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <strong><span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.subtotal }}</span></strong>
+                                                                                    <strong><span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.subtotal|floatformat:2|intcomma }}</span></strong>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2589,7 +2589,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.estimated_taxes }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.week.estimated_taxes|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2686,7 +2686,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.rental_breakdown.month.base }}</strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.rental_breakdown.month.base|floatformat:2|intcomma }}</strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2699,7 +2699,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.fuel_fees }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.fuel_fees|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2712,7 +2712,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.rpp_fee }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.rpp_fee|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2740,7 +2740,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.subtotal }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.subtotal|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2753,7 +2753,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.estimated_taxes }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.rental_breakdown.month.estimated_taxes|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2913,7 +2913,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#fff;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.rental_breakdown.day.total }}</span></strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.rental_breakdown.day.total|floatformat:2|intcomma }}</span></strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2943,7 +2943,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#fff;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.rental_breakdown.week.total }}</span></strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.rental_breakdown.week.total|floatformat:2|intcomma }}</span></strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2973,7 +2973,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#fff;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.rental_breakdown.month.total }}</span></strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.rental_breakdown.month.total|floatformat:2|intcomma }}</span></strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3108,7 +3108,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.one_time.delivery }}</strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.one_time.delivery|floatformat:2|intcomma }}</strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3152,7 +3152,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.one_time.removal }}</strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;"><strong>${{ item.one_time.removal|floatformat:2|intcomma }}</strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3196,7 +3196,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.one_time.fuel_fees }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.one_time.fuel_fees|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3240,7 +3240,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.one_time.estimated_taxes }}</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">${{ item.one_time.estimated_taxes|floatformat:2|intcomma }}</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3315,7 +3315,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#fff;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.one_time.total }}</span></strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">${{ item.one_time.total|floatformat:2|intcomma }}</span></strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3501,12 +3501,12 @@
                                                             <tr>
                                                                 <td class="pad">
                                                                     <div class="alignment" align="center">
-                                                                        <!--                                                             [if mso]>
+                                                                        <!--                                                                       [if mso]>
 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" style="height:42px;width:630px;v-text-anchor:middle;" arcsize="10%" stroke="false" fillcolor="#018381">
 <w:anchorlock/>
 <v:textbox inset="0px,0px,0px,0px">
 <center dir="false" style="color:#ffffff;font-family:Tahoma, Verdana, sans-serif;font-size:16px">
-<![endif]                                                             -->
+<![endif]                                                                       -->
                                                                         <div style="background-color:#018381;border-bottom:0 solid transparent;border-left:0 solid transparent;border-radius:4px;border-right:0 solid transparent;border-top:0 solid transparent;color:#fff;display:block;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;font-size:16px;font-weight:undefined;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:100%;word-break:keep-all">
                                                                             <a href="{{ trigger.accept_url }}" target="_blank" style="text-decoration: none; color: #018381;" rel="noopener"><span style="word-break: break-word; padding-left: 20px; padding-right: 20px; font-size: 16px; display: inline-block; letter-spacing: normal;"><span style="word-break: break-word; line-height: 32px; color: white;"><strong>Accept Quote</strong></span></span></a>
                                                                         </div>
@@ -3581,7 +3581,11 @@
                                                                 <td class="pad" style="padding-left:60px;width:100%">
                                                                     <div class="alignment" align="center" style="line-height:10px">
                                                                         <div style="max-width:102.5px">
-                                                                            <img src="https://userimg-assets.customeriomail.com/images/client-env-166997/1723755972513_Untitled%20(Logo)%20(24)_01J5BXSHY9WN3Q91SZ1NPTH4PF.png" style="display:block;height:auto;border:0;width:100%" width="102.5" height="auto" />
+                                                                            {% if trigger.contact.photo %}
+                                                                                <img src="{{ trigger.contact.photo }}" style="display:block;height:auto;border:0;width:100%;border-radius:50%;" width="102.5" height="auto" />
+                                                                            {% else %}
+                                                                                <img src="https://userimg-assets.customeriomail.com/images/client-env-166997/1723755972513_Untitled%20(Logo)%20(24)_01J5BXSHY9WN3Q91SZ1NPTH4PF.png" style="display:block;height:auto;border:0;width:100%" width="102.5" height="auto" />
+                                                                            {% endif %}
                                                                         </div>
                                                                     </div>
                                                                 </td>

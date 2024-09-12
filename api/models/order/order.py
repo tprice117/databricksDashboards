@@ -2,7 +2,6 @@ import datetime
 import logging
 from functools import lru_cache
 from typing import List, Optional
-from decimal import Decimal
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
@@ -962,6 +961,11 @@ class Order(BaseModel):
     def get_order_with_tax(self):
         """Get the Order with tax details.
         This is also used as the Quote in the Admin Portal."""
+        from pricing_engine.models import PricingLineItem, PricingLineItemGroup
+        from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+            PricingEngineResponseSerializer,
+        )
+
         item = {
             "product": {
                 "name": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
@@ -969,27 +973,25 @@ class Order(BaseModel):
             },
             "start_date": self.start_date.strftime("%m/%d/%Y"),
             "tonnage_quantity": self.order_group.tonnage_quantity,
-            "line_types": {},
             "addons": [],
-            "subtotal": Decimal(0.00),
-            "fuel_fees": Decimal(0.00),
+            "subtotal": float(0.00),
+            "fuel_fees": float(0.00),
             # This is the total tax
-            "taxes": Decimal(0.00),
+            "taxes": float(0.00),
             # This is the tax minus the one time tax
-            "estimated_taxes": Decimal(0.00),
-            "estimated_tax_rate": Decimal(0.00),
-            "pre_tax_subtotal": Decimal(0.00),
-            "total": Decimal(0.00),
-            "discounts": Decimal(0.00),
+            "estimated_taxes": float(0.00),
+            "estimated_tax_rate": float(0.00),
+            "pre_tax_subtotal": float(0.00),
+            "total": float(0.00),
+            "discounts": float(0.00),
             "one_time": {
-                "delivery": Decimal(0.00),
-                "removal": Decimal(0.00),
-                # "service": Decimal(0.00),
-                "fuel_fees": Decimal(0.00),
-                "estimated_taxes": Decimal(0.00),
-                "total": Decimal(0.00),
+                "delivery": float(0.00),
+                "removal": float(0.00),
+                # "service": float(0.00),
+                "fuel_fees": float(0.00),
+                "estimated_taxes": float(0.00),
+                "total": float(0.00),
             },
-            "service_price": Decimal(0.00),
             "schedule_window": self.schedule_window,
         }
         if not item["schedule_window"]:
@@ -1010,84 +1012,90 @@ class Order(BaseModel):
                 }
             )
 
+        pricing = {}
         for order_line_item in self.order_line_items.all():
-            _dd = {
-                "rate": order_line_item.rate,
-                "quantity": order_line_item.quantity,
-                "description": order_line_item.description,
-                "units": order_line_item.order_line_item_type.units,
-                "seller_payout_price": order_line_item.seller_payout_price(),
-                "customer_price": order_line_item.customer_price(),
-                "tax_code": order_line_item.order_line_item_type.stripe_tax_code_id,
-            }
+            customer_rate = float(
+                order_line_item.rate
+                * (1 + (order_line_item.platform_fee_percent / 100))
+            )
+            _dd = PricingLineItem(
+                description=order_line_item.description,
+                unit_price=customer_rate,
+                quantity=order_line_item.quantity,
+                units=order_line_item.order_line_item_type.units,
+            )
+            key = order_line_item.order_line_item_type.code
             try:
-                item["line_types"][order_line_item.order_line_item_type.code][
-                    "items"
-                ].append(_dd)
+                pricing[key][1].append(_dd)
             except KeyError:
-                item["line_types"][order_line_item.order_line_item_type.code] = {
-                    # "type": order_line_item.order_line_item_type,
-                    "items": [_dd],
-                }
-
-        item["fuel_fees"] = Decimal(0.00)
-        item["fuel_fees_rate"] = Decimal(0.00)
-        if item["line_types"].get("FUEL_AND_ENV", None):
-            item["fuel_fees_rate"] = (
+                pricing[key] = (
+                    PricingLineItemGroup(
+                        title=order_line_item.order_line_item_type.name,
+                        code=order_line_item.order_line_item_type.code.lower(),
+                    ),
+                    [_dd],
+                )
+        pricing_list = [item for item in pricing.values()]
+        item["price_data"] = PricingEngineResponseSerializer(pricing_list).data
+        item["fuel_fees"] = 0
+        item["fuel_fees_rate"] = float(0.00)
+        if item["price_data"]["fuel_and_environmental"]:
+            item["fuel_fees_rate"] = float(
                 self.order_group.seller_product_seller_location.fuel_environmental_markup
             )
             item["fuel_fees"] = round(
-                item["line_types"]["FUEL_AND_ENV"]["items"][0]["customer_price"], 2
+                item["price_data"]["fuel_and_environmental"]["total"], 2
             )
+            fuel_rate = round(item["fuel_fees"] / item["price_data"]["total"], 2)
+            item["fuel_fees_rate2"] = round(fuel_rate * 100, 4)
 
-        if item["line_types"].get("DELIVERY", None):
+        if item["price_data"]["delivery"]:
             item["one_time"]["delivery"] = round(
-                item["line_types"]["DELIVERY"]["items"][0]["customer_price"], 2
+                item["price_data"]["delivery"]["total"], 2
             )
-        if item["line_types"].get("REMOVAL", None):
+        if item["price_data"]["removal"]:
             item["one_time"]["removal"] = round(
-                item["line_types"]["REMOVAL"]["items"][0]["customer_price"], 2
-            )
-        if item["line_types"].get("SERVICE", None):
-            item["service_price"] = round(
-                item["line_types"]["SERVICE"]["items"][0]["customer_price"], 2
+                item["price_data"]["removal"]["total"], 2
             )
 
-        item["pre_tax_subtotal"] = round(self.customer_price(), 2)
+        item["pre_tax_subtotal"] = round(float(self.customer_price()), 2)
         if (
             self.order_group.user_address.user_group
             and self.order_group.user_address.user_group.tax_exempt_status == "exempt"
         ):
             price_details = {
-                "rate": Decimal(0.00),
-                "taxes": Decimal(0.00),
+                "rate": float(0.00),
+                "taxes": float(0.00),
                 "total": item["pre_tax_subtotal"],
             }
         else:
+            delivery_fee = 0
+            if item["price_data"]["delivery"]:
+                delivery_fee = round(item["price_data"]["delivery"]["total"], 2)
             price_details = StripeUtils.PriceCalculation.calculate_price_details(
-                self, item["line_types"], item["one_time"]["delivery"]
+                self, self.order_line_items, delivery_fee
             )
 
-        item["taxes"] = price_details["taxes"]
+        item["taxes"] = round(price_details["taxes"], 2)
         item["estimated_tax_rate"] = round(price_details["rate"] * 100, 2)
-        item["total"] = price_details["total"]
+        item["total"] = round(price_details["total"], 2)
         item["tax_breakdown"] = price_details.get("tax_breakdown", [])
 
         # Calculate the one-time fuel fees and estimated taxes
         item["one_time"]["fuel_fees"] = round(
             (item["one_time"]["delivery"] + item["one_time"]["removal"])
-            * Decimal(item["fuel_fees_rate"] / 100),
+            * float(item["fuel_fees_rate"] / 100),
             2,
         )
         if price_details["rate"] > 0:
-            item["one_time"]["estimated_taxes"] = price_details["one_time"][
-                "estimated_taxes"
-            ]
-            item["estimated_taxes"] = abs(
-                price_details["taxes"] - item["one_time"]["estimated_taxes"]
+            item["one_time"]["estimated_taxes"] = round(
+                price_details["one_time"]["estimated_taxes"], 2
+            )
+            item["estimated_taxes"] = round(
+                abs(price_details["taxes"] - item["one_time"]["estimated_taxes"]), 2
             )
         else:
-            item["one_time"]["estimated_taxes"] = Decimal(0.00)
+            item["one_time"]["estimated_taxes"] = float(0.00)
 
         item["one_time"]["total"] = round(
             item["one_time"]["delivery"]
@@ -1097,20 +1105,20 @@ class Order(BaseModel):
             2,
         )
 
-        if item["one_time"]["fuel_fees"] > item["fuel_fees"]:
-            item["fuel_fees"] = item["one_time"]["fuel_fees"] - item["fuel_fees"]
-        else:
-            item["fuel_fees"] = item["fuel_fees"] - item["one_time"]["fuel_fees"]
+        item["fuel_fees"] = round(
+            abs(item["one_time"]["fuel_fees"] - item["fuel_fees"]), 2
+        )
 
         # This is Subtotal
-        item["subtotal"] = (
+        item["subtotal"] = round(
             price_details["total"]
             - item["one_time"]["total"]
             - item["fuel_fees"]
-            - item["estimated_taxes"]
+            - item["estimated_taxes"],
+            2,
         )
         # This is Total (Per Service)
-        item["total"] = item["total"] - item["one_time"]["total"]
+        item["total"] = round(item["total"] - item["one_time"]["total"], 2)
 
         return item
 
