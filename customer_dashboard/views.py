@@ -1417,7 +1417,7 @@ def show_quote(request):
     # else:
     order_id_lst = ast.literal_eval(request.GET.get("ids"))
     checkout_order = QuoteUtils.create_quote(order_id_lst, None, quote_sent=False)
-    payload = {"trigger": checkout_order.quote}
+    payload = {"trigger": checkout_order.get_quote()}
     payload["trigger"][
         "accept_url"
     ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
@@ -1434,13 +1434,14 @@ def cart_send_quote(request):
             email_lst = list(set(data.get("emails")))
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
+                # TODO: If quote is being re-created, then update the code
                 checkout_order = QuoteUtils.create_quote(
                     order_id_lst, email_lst, quote_sent=True
                 )
                 data = {
                     "transactional_message_id": 4,
                     "subject": checkout_order.subject,
-                    "message_data": checkout_order.quote,
+                    "message_data": checkout_order.get_quote(),
                 }
                 data["message_data"][
                     "accept_url"

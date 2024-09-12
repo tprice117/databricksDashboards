@@ -1,4 +1,3 @@
-from decimal import Decimal
 from django.utils import timezone
 from api.models.order.order import Order
 
@@ -16,14 +15,17 @@ class QuoteUtils:
         one_step = []
         two_step = []
         multi_step = []
-        total = Decimal(0.00)
-        seller_total = Decimal(0.00)
-        total_taxes = Decimal(0.00)
+        total = float(0.00)
+        seller_total = float(0.00)
+        total_taxes = float(0.00)
+        project_id = "N/A"
 
         for order in orders:
-            seller_total += order.seller_price()
+            seller_total += float(order.seller_price())
             item = order.get_order_with_tax()
             total_taxes += item["taxes"]
+            if order.order_group.user_address.project_id:
+                project_id = order.order_group.user_address.project_id
             if (
                 order.order_type == Order.Type.DELIVERY
                 and order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
@@ -44,28 +46,34 @@ class QuoteUtils:
             ):
                 item["rental_breakdown"] = {
                     "day": {
-                        "base": order.order_group.seller_product_seller_location.rental_multi_step.day,
-                        "rpp_fee": Decimal(0.00),
+                        "base": float(
+                            order.order_group.seller_product_seller_location.rental_multi_step.day
+                        ),
+                        "rpp_fee": float(0.00),
                     },
                     "week": {
-                        "base": order.order_group.seller_product_seller_location.rental_multi_step.week,
-                        "rpp_fee": Decimal(0.00),
+                        "base": float(
+                            order.order_group.seller_product_seller_location.rental_multi_step.week
+                        ),
+                        "rpp_fee": float(0.00),
                     },
                     "month": {
-                        "base": order.order_group.seller_product_seller_location.rental_multi_step.month,
-                        "rpp_fee": Decimal(0.00),
+                        "base": float(
+                            order.order_group.seller_product_seller_location.rental_multi_step.month
+                        ),
+                        "rpp_fee": float(0.00),
                     },
                 }
                 # Add total, fuel fees, and estimated taxes to the rental breakdown.
                 for key in item["rental_breakdown"]:
                     item["rental_breakdown"][key]["fuel_fees"] = round(
                         item["rental_breakdown"][key]["base"]
-                        * Decimal(item["fuel_fees_rate"] / 100),
+                        * float(item["fuel_fees_rate"] / 100),
                         2,
                     )
                     item["rental_breakdown"][key]["estimated_taxes"] = round(
                         item["rental_breakdown"][key]["base"]
-                        * Decimal(item["estimated_tax_rate"] / 100),
+                        * float(item["estimated_tax_rate"] / 100),
                         2,
                     )
                     add_rpp_fee = False
@@ -78,7 +86,7 @@ class QuoteUtils:
                     if add_rpp_fee:
                         # Add a 15% Rental Protection Plan fee if the user does not have their own COI.
                         item["rental_breakdown"][key]["rpp_fee"] = round(
-                            item["rental_breakdown"][key]["base"] * Decimal(0.15), 2
+                            item["rental_breakdown"][key]["base"] * float(0.15), 2
                         )
                     item["rental_breakdown"][key]["subtotal"] = round(
                         item["rental_breakdown"][key]["base"]
@@ -99,29 +107,34 @@ class QuoteUtils:
         subject = (
             "Downstream | Quote | " + order.order_group.user_address.formatted_address()
         )
-        quote_expiration = timezone.now() + timezone.timedelta(days=14)
+        quote_expiration = timezone.now() + timezone.timedelta(days=15)
         if order.order_group.user.user_group:
             company_name = order.order_group.user.user_group.name
         else:
             company_name = order.order_group.user.full_name
+        billing_address = "N/A"
+        billing_email = order.order_group.user.email
+        if order.order_group.user.user_group:
+            if hasattr(order.order_group.user.user_group, "billing"):
+                billing_address = (
+                    order.order_group.user.user_group.billing.formatted_address
+                )
+                billing_email = order.order_group.user.user_group.billing.email
+
         quote_data = {
             "quote_expiration": quote_expiration.strftime("%B %d, %Y"),
             "quote_id": "N/A",
+            "project_id": project_id,
             "full_name": order.order_group.user.full_name,
             "company_name": company_name,
             "delivery_address": order.order_group.user_address.formatted_address(),
-            "billing_address": order.order_group.seller_product_seller_location.seller_location.formatted_address,
-            "billing_email": order.order_group.seller_product_seller_location.seller_location.order_email,
+            "billing_address": billing_address,
+            "billing_email": billing_email,
             "one_step": one_step,
             "two_step": two_step,
             "multi_step": multi_step,
             "total": f"{total:,.2f}",
             "estimated_taxes": total_taxes,
-            "contact": {
-                "full_name": order.created_by.full_name,
-                "email": order.created_by.email,
-                "phone": order.created_by.phone,  # (720) 490-1823
-            },
         }
         if order.checkout_order:
             checkout_order = order.checkout_order

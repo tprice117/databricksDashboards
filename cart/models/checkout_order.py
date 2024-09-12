@@ -76,6 +76,17 @@ class CheckoutOrder(BaseModel):
     def price(self):
         return self.customer_price + self.estimated_taxes
 
+    def get_quote(self):
+        # Add contact information to the quote.
+        self.quote["contact"] = {
+            "full_name": self.created_by.full_name,
+            "email": self.created_by.email,
+            "phone": self.created_by.phone,
+        }
+        if self.created_by.photo:
+            self.quote["contact"]["photo"] = self.created_by.photo.url
+        return self.quote
+
 
 @receiver(post_save, sender=CheckoutOrder)
 def on_checkout_order_post_save(sender, instance, created, **kwargs):

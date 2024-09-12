@@ -76,7 +76,10 @@ class PricingEngineResponseSerializer(serializers.Serializer):
                 response["removal"] = PricingLineItemGroupSerializer(
                     group_and_items
                 ).data
-            elif group_and_items[0].code == "fuel_and_environmental":
+            elif (
+                group_and_items[0].code == "fuel_and_environmental"
+                or group_and_items[0].code == "fuel_and_env"
+            ):
                 response["fuel_and_environmental"] = PricingLineItemGroupSerializer(
                     group_and_items
                 ).data
