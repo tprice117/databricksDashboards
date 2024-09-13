@@ -1432,6 +1432,7 @@ def cart_send_quote(request):
         try:
             data = json.loads(request.body)
             email_lst = list(set(data.get("emails")))
+            to_emails = ",".join(email_lst)
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
                 # TODO: If quote is being re-created, then update the code
@@ -1453,26 +1454,27 @@ def cart_send_quote(request):
                 }
                 ret_data = []
                 had_error = False
-                for email in email_lst:
-                    data["to"] = email
-                    data["identifiers"] = {"email": email}
+                # https://customer.io/docs/journeys/liquid-tag-list/?version=latest
+                # for email in email_lst:
+                data["to"] = to_emails
+                data["identifiers"] = {"email": email_lst[0]}
 
-                    json_data = json.dumps(data, cls=DecimalEncoder)
-                    response = requests.post(
-                        "https://api.customer.io/v1/send/email",
-                        headers=headers,
-                        data=json_data,
+                json_data = json.dumps(data, cls=DecimalEncoder)
+                response = requests.post(
+                    "https://api.customer.io/v1/send/email",
+                    headers=headers,
+                    data=json_data,
+                )
+                if response.status_code < 400:
+                    ret_data.append(f"Quote sent to {to_emails}.")
+                    # resp_json = response.json()
+                    # [delivery_id:{resp_json['delivery_id']}-queued_at:{resp_json['queued_at']}]
+                else:
+                    had_error = True
+                    resp_json = response.json()
+                    ret_data.append(
+                        f"Error sending quote to {to_emails} [{resp_json['meta']['error']}]"
                     )
-                    if response.status_code < 400:
-                        ret_data.append(f"Quote sent to {email}.")
-                        # resp_json = response.json()
-                        # [delivery_id:{resp_json['delivery_id']}-queued_at:{resp_json['queued_at']}]
-                    else:
-                        had_error = True
-                        resp_json = response.json()
-                        ret_data.append(
-                            f"Error sending quote to {email} [{resp_json['meta']['error']}]"
-                        )
                 if had_error:
                     return JsonResponse(
                         {"status": "error", "error": " | ".join(ret_data)}
