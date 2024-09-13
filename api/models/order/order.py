@@ -249,12 +249,16 @@ class Order(BaseModel):
         order_group_end_equal = self.end_date == self.order_group.end_date
         has_subscription = hasattr(self.order_group, "subscription")
         order_count = Order.objects.filter(order_group=self.order_group).count()
+        one_day_rental = self.order_group.start_date == self.order_group.end_date
 
         # Check order types in order of precedence
         if (
             order_group_start_equal
             and order_start_end_equal
-            and not order_group_end_equal
+            and (
+                not order_group_end_equal
+                or (order_group_end_equal and not one_day_rental)
+            )
             and is_first_order
         ):
             return Order.Type.DELIVERY
@@ -266,6 +270,8 @@ class Order(BaseModel):
         ):
             return Order.Type.ONE_TIME
         elif order_group_end_equal and order_count > 1:
+            if is_first_order:
+                return Order.Type.DELIVERY
             return Order.Type.REMOVAL
         elif order_count > 1 and not order_group_end_equal and not has_subscription:
             return Order.Type.SWAP
