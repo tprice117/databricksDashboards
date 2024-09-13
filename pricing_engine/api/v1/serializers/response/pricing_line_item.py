@@ -16,4 +16,5 @@ class PricingLineItemSerializer(serializers.ModelSerializer):
             "unit_price",
             "units",
             "total",
+            "tax",
         ]
