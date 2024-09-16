@@ -1014,13 +1014,12 @@ class Order(BaseModel):
         ):
             tax_details = {"rate": float(0.00), "taxes": float(0.00)}
         else:
-            # TODO: Only get taxes if re_get_taxes is True.
+            # Only get taxes if re_get_taxes is True.
             if re_get_taxes:
-                pass
-            # Get taxes and also update the line items with the tax amount.
-            tax_details = StripeUtils.PriceCalculation.calculate_price_details(
-                self, all_line_items, delivery_fee, update_line_items=True
-            )
+                # Get taxes and also update the line items with the tax amount.
+                tax_details = StripeUtils.PriceCalculation.calculate_price_details(
+                    self, all_line_items, delivery_fee, update_line_items=True
+                )
 
         # Load all line items into a PricingEngine response
         for order_line_item in all_line_items:
