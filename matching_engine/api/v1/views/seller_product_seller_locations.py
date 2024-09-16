@@ -10,6 +10,7 @@ from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
     prep_seller_product_seller_locations_for_response,
 )
+from common.utils.json_encoders import DecimalFloatEncoder
 
 
 class GetSellerProductSellerLocationsView(APIView):
@@ -59,4 +60,4 @@ class GetSellerProductSellerLocationsView(APIView):
             seller_product_seller_locations=seller_product_seller_locations,
         )
 
-        return JsonResponse(data, safe=False)
+        return JsonResponse(data, encoder=DecimalFloatEncoder, safe=False)
