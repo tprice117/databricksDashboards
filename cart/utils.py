@@ -69,9 +69,9 @@ class QuoteUtils:
                         "val": addon.add_on_choice.name,
                     }
                 )
-            price_data = order.get_order_with_tax()
+            price_data = order.get_price()
             # load the price data into the item
-            for key in price_data:
+            for key in price_data.data:
                 item[key] = price_data[key]
             total_taxes += item["tax"]
 
