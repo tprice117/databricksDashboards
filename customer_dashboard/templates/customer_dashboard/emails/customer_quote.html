@@ -511,7 +511,7 @@
                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <span style="word-break: break-word;">
-                                                                                            {% for order_line_item in item.price_data.service.items %}
+                                                                                            {% for order_line_item in item.service.items %}
                                                                                                 {{ order_line_item.unit_price|currency:'en-us' }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
                                                                                                 {% if order_line_item.description %}
                                                                                                     ({{ order_line_item.description|lower }})
@@ -530,9 +530,9 @@
                                                                                         </span>
                                                                                     </strong>
                                                                                 </p>
-                                                                                {% for order_line_item in item.price_data.rental.items %}
+                                                                                {% for order_line_item in item.rental.items %}
                                                                                     <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
-                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">{{ order_line_item.unit_price|currency:'en-us' }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
+                                                                                        <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">{{ order_line_item.unit_price|floatformat:3|intcomma }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                     </p>
                                                                                     {% if order_line_item.description %}
                                                                                         <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
@@ -544,7 +544,7 @@
                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <strong><span style="word-break: break-word;"><span style="word-break: break-word;">Material:<br /></span></span></strong>
-                                                                                        {% for order_line_item in item.price_data.material.items %}
+                                                                                        {% for order_line_item in item.material.items %}
                                                                                             <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                                 <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">{{ order_line_item.unit_price|currency:'en-us' }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                             </p>
@@ -610,7 +610,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_fees_rate }}%)</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_and_environmental_rate|round:2 }}%)</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -739,7 +739,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#fff;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">{{ item.total|currency:'en-us' }}</span></strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">{{ item.service_total|currency:'en-us' }}</span></strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -918,7 +918,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_fees_rate }}%)</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_and_environmental_rate|round:2 }}%)</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -1370,7 +1370,7 @@
                                                                                 <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                     <span style="word-break: break-word; font-size: 10px;">
                                                                                         <span style="word-break: break-word;">
-                                                                                            {% for order_line_item in item.price_data.service.items %}
+                                                                                            {% for order_line_item in item.service.items %}
                                                                                                 {{ order_line_item.unit_price|currency:'en-us' }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}
                                                                                                 {% if order_line_item.description %}
                                                                                                     ({{ order_line_item.description|lower }})
@@ -1387,7 +1387,7 @@
                                                                                         </span>
                                                                                     </strong>
                                                                                 </p>
-                                                                                {% for order_line_item in item.price_data.rental.items %}
+                                                                                {% for order_line_item in item.rental.items %}
                                                                                     <p style="margin:0;font-size:10px;text-align:left;mso-line-height-alt:12px">
                                                                                         <span style="word-break: break-word; font-size: 10px;"><span style="word-break: break-word;">{{ order_line_item.unit_price|currency:'en-us' }} / @ {{ order_line_item.quantity|floatformat|intcomma }} {{ order_line_item.units|lower }}</span></span>
                                                                                     </p>
@@ -1461,7 +1461,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_fees_rate }}%)</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_and_environmental_rate|round:2 }}%)</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -1590,7 +1590,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#fff;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;text-align:right;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">{{ item.total|currency:'en-us' }}</span></strong></span>
+                                                                                    <span style="word-break: break-word; font-size: 22px; color: #555555;"><strong><span style="word-break: break-word; font-size: 14px;">{{ item.service_total|currency:'en-us' }}</span></strong></span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -1769,7 +1769,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_fees_rate }}%)</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel and Fees ({{ item.fuel_and_environmental_rate|round:2 }}%)</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2288,7 +2288,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_fees_rate }}%):</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_and_environmental_rate|round:2 }}%):</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2452,7 +2452,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_fees_rate }}%):</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_and_environmental_rate|round:2 }}%):</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -2616,7 +2616,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_fees_rate }}%):</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_and_environmental_rate|round:2 }}%):</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3180,7 +3180,7 @@
                                                                         <div style="font-family:sans-serif">
                                                                             <div class style="font-size:12px;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;mso-line-height-alt:14.399999999999999px;color:#555;line-height:1.2">
                                                                                 <p style="margin:0;font-size:14px;mso-line-height-alt:16.8px">
-                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_fees_rate }}%)</span>
+                                                                                    <span style="word-break: break-word; font-size: 10px;">Fuel & Fees ({{ item.fuel_and_environmental_rate|round:2 }}%)</span>
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -3500,12 +3500,12 @@
                                                             <tr>
                                                                 <td class="pad">
                                                                     <div class="alignment" align="center">
-                                                                        <!--                                                                        [if mso]>
+                                                                        <!--                                                                                [if mso]>
 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" style="height:42px;width:630px;v-text-anchor:middle;" arcsize="10%" stroke="false" fillcolor="#018381">
 <w:anchorlock/>
 <v:textbox inset="0px,0px,0px,0px">
 <center dir="false" style="color:#ffffff;font-family:Tahoma, Verdana, sans-serif;font-size:16px">
-<![endif]                                                                        -->
+<![endif]                                                                                -->
                                                                         <div style="background-color:#018381;border-bottom:0 solid transparent;border-left:0 solid transparent;border-radius:4px;border-right:0 solid transparent;border-top:0 solid transparent;color:#fff;display:block;font-family:Roboto,Tahoma,Verdana,Segoe,sans-serif;font-size:16px;font-weight:undefined;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:100%;word-break:keep-all">
                                                                             <a href="{{ trigger.accept_url }}" target="_blank" style="text-decoration: none; color: #018381;" rel="noopener"><span style="word-break: break-word; padding-left: 20px; padding-right: 20px; font-size: 16px; display: inline-block; letter-spacing: normal;"><span style="word-break: break-word; line-height: 32px; color: white;"><strong>Accept Quote</strong></span></span></a>
                                                                         </div>
