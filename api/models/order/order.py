@@ -451,13 +451,20 @@ class Order(BaseModel):
                 )
 
                 if new_order_line_items:
-                    # TODO: Get stripe taxes
-                    # Create the OrderLineItems.
-                    # calculate_price_details
-                    # Pass in line items, then update those line items with the tax amount.
-                    StripeUtils.PriceCalculation.calculate_price_details(
-                        self, new_order_line_items, float(delivery_fee)
-                    )
+                    # Get taxes, but only if this Transaction is more than $0.
+                    get_taxes = False
+                    for line_item in new_order_line_items:
+                        if line_item.customer_price() > 0:
+                            get_taxes = True
+                            break
+                    if get_taxes:
+                        StripeUtils.PriceCalculation.calculate_price_details(
+                            self, new_order_line_items, float(delivery_fee)
+                        )
+                    else:
+                        # Set to 0 to denote that taxes are not needed.
+                        for line_item in new_order_line_items:
+                            line_item.tax = 0
                     OrderLineItem.objects.bulk_create(new_order_line_items)
 
                 # Check for any Admin Policy checks.
