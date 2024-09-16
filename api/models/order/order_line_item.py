@@ -81,8 +81,6 @@ class OrderLineItem(BaseModel):
     def customer_price(self):
         seller_price = self.seller_payout_price()
         customer_price = seller_price * (1 + (self.platform_fee_percent / 100))
-        if self.tax:
-            customer_price += self.tax
         return round(customer_price, 2)
 
 
