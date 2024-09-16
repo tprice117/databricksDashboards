@@ -1111,7 +1111,7 @@ def new_order_5(request):
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=take_rate * 100,
+            take_rate=Decimal(take_rate * 100),
         )
         if times_per_week:
             order_group.times_per_week = times_per_week
@@ -1435,7 +1435,6 @@ def cart_send_quote(request):
             to_emails = ",".join(email_lst)
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
-                # TODO: If quote is being re-created, then update the code
                 checkout_order = QuoteUtils.create_quote(
                     order_id_lst, email_lst, quote_sent=True
                 )
@@ -1656,7 +1655,7 @@ def checkout(request, user_address_id):
                 if not checkout_order and order.checkout_order:
                     checkout_order = order.checkout_order
                 order.submit_order(override_approval_policy=True)
-            # TODO: Create checkout
+
             if checkout_order:
                 if payment_method_id == "paylater":
                     checkout_order.pay_later = True

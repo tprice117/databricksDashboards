@@ -7,6 +7,9 @@ class PricingLineItemSerializer(serializers.ModelSerializer):
     unit_price = serializers.FloatField(
         allow_null=True,
     )
+    tax = serializers.FloatField(
+        allow_null=True,
+    )
 
     class Meta:
         model = PricingLineItem
