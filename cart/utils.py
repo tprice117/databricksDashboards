@@ -71,8 +71,9 @@ class QuoteUtils:
                 )
             price_data = order.get_price()
             # load the price data into the item
-            for key in price_data.data:
-                item[key] = price_data.data[key]
+            for key in price_data:
+                item[key] = price_data[key]
+            item["total"] += item["tax"]
             total_taxes += item["tax"]
 
             # TODO: All calculations below should happen when displaying the data
@@ -153,7 +154,7 @@ class QuoteUtils:
             ):
                 total += item["one_time"]["total"]
             else:
-                total += item["service_total"] + item["one_time"]["total"]
+                total += item["total"]
             if (
                 order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
             ):
