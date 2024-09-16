@@ -16,6 +16,7 @@ from matching_engine.utils.prep_seller_product_seller_locations_for_response imp
 from matching_engine.utils.seller_product_seller_location_plus_take_rate import (
     seller_product_seller_location_plus_take_rate,
 )
+from common.utils.json_encoders import DecimalFloatEncoder
 
 
 class GetSellerProductSellerLocationsByLatLongView(APIView):
@@ -71,4 +72,4 @@ class GetSellerProductSellerLocationsByLatLongView(APIView):
         # For example, set the SellerProductSellerLocation.rental_multi_step to None,
         # if the MainProduct.rental_multi_step is False.
 
-        return JsonResponse(data, safe=False)
+        return JsonResponse(data, encoder=DecimalFloatEncoder, safe=False)
