@@ -50,15 +50,22 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
             email = decoded_id_token["email"]
 
             # Get or create a user based on the email address.
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    "username": email,
-                    "user_id": (
-                        decoded_id_token["sub"] if "sub" in decoded_id_token else None
-                    ),
-                },
-            )
+            user = User.objects.filter(email=email.casefold())
+            if user.exists():
+                user = user.first()
+                created = False
+            else:
+                user, created = User.objects.get_or_create(
+                    email=email,
+                    defaults={
+                        "username": email,
+                        "user_id": (
+                            decoded_id_token["sub"]
+                            if "sub" in decoded_id_token
+                            else None
+                        ),
+                    },
+                )
         else:
             return None
 
