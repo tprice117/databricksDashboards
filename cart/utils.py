@@ -73,7 +73,7 @@ class QuoteUtils:
             # load the price data into the item
             for key in price_data:
                 item[key] = price_data[key]
-            item["total"] += item["tax"]
+
             total_taxes += item["tax"]
 
             # TODO: All calculations below should happen when displaying the data
@@ -113,7 +113,13 @@ class QuoteUtils:
                 item["one_time"]["fuel_fees"] = (
                     item["fuel_and_environmental"]["total"] * one_time_total_percentage
                 )
-                # Calculate the fuel fees rate
+                # Get fuel fees for the rest of the total (not one-time)
+                item["fuel_fees"] = abs(
+                    item["fuel_and_environmental"]["total"]
+                    - item["one_time"]["fuel_fees"]
+                )
+
+                # Calculate the fuel fees rate (display only)
                 fuel_rate = item["fuel_and_environmental"]["total"] / (
                     item["total"] - item["fuel_and_environmental"]["total"]
                 )
@@ -132,19 +138,20 @@ class QuoteUtils:
                 item["one_time"]["fuel_fees"] + item["one_time"]["estimated_taxes"]
             )
 
-            # Get fuel fees for the rest of the total (not one-time)
-            item["fuel_fees"] = abs(item["one_time"]["fuel_fees"] - item["fuel_fees"])
-
-            # This is Subtotal  # - item["estimated_taxes"],
-            item["subtotal"] = (
-                item["total"]
-                - item["fuel_fees"]
-                - item["one_time"]["total"]
-                + item["one_time"]["estimated_taxes"]
-            )
+            # This is Subtotal
+            if item["service"]:
+                item["subtotal"] += item["service"]["total"]
+            if item["material"]:
+                item["subtotal"] += item["material"]["total"]
+            if item["rental"]:
+                item["subtotal"] += item["rental"]["total"]
 
             # This is Total (Per Service)
-            item["service_total"] = item["subtotal"] + item["estimated_taxes"]
+            item["service_total"] = (
+                item["subtotal"] + item["fuel_fees"] + item["estimated_taxes"]
+            )
+
+            item["total"] += item["tax"]
 
             if order.order_group.user_address.project_id:
                 project_id = order.order_group.user_address.project_id
