@@ -72,7 +72,7 @@ class QuoteUtils:
             price_data = order.get_price()
             # load the price data into the item
             for key in price_data.data:
-                item[key] = price_data[key]
+                item[key] = price_data.data[key]
             total_taxes += item["tax"]
 
             # TODO: All calculations below should happen when displaying the data
