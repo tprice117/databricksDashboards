@@ -1085,7 +1085,7 @@ class Order(BaseModel):
                         [_dd],
                     )
             pricing_list = [item for item in pricing.values()]
-            return get_pricing_engine_response_serializer()(pricing_list)
+            return get_pricing_engine_response_serializer()(pricing_list).data
         except Exception as e:
             logger.error(f"Order.get_price: [{self.id}]-[{e}]", exc_info=e)
             return None
