@@ -1578,9 +1578,8 @@ def add_payment_method(request):
             context["user_address"] = UserAddress.objects.filter(
                 id=user_address_id
             ).first()
-        # If staff, then get the user and user_group from the user_address.
-        # If impersonating, then user and user_group are already set.
-        if request.user.is_staff and not is_impersonating(request):
+        # If staff, then always get the user and user_group from POST parameters.
+        if request.user.is_staff:
             if user_address_id:
                 context["user_group"] = context["user_address"].user_group
             else:
@@ -3031,6 +3030,7 @@ def company_detail(request, user_group_id=None):
         user_group = user_group.prefetch_related("users", "user_addresses")
         user_group = user_group.first()
     context["user_group"] = user_group
+    context["user"] = user_group.users.filter(type=UserType.ADMIN).first()
     user_group_id = None
     if context["user_group"]:
         user_group_id = context["user_group"].id
