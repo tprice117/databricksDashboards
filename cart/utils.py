@@ -70,13 +70,14 @@ class QuoteUtils:
                     }
                 )
             price_data = order.get_price()
+            item["pre_tax_subtotal"] = price_data["total"] - price_data["tax"]
             # load the price data into the item
             for key in price_data:
                 item[key] = price_data[key]
 
             total_taxes += item["tax"]
 
-            # TODO: All calculations below should happen when displaying the data
+            # All calculations below should happen when displaying the data
             if item["rental"]:
                 if item["rental"]["tax"] > 0:
                     # Get estimated tax rate by checking delivery fee tax rate
@@ -87,7 +88,9 @@ class QuoteUtils:
 
             # Calculate the one-time fuel fees and estimated taxes
             if item["delivery"]:
-                item["one_time"]["delivery"] = item["delivery"]["total"]
+                item["one_time"]["delivery"] = (
+                    item["delivery"]["total"] - item["delivery"]["tax"]
+                )
                 item["one_time"]["estimated_taxes"] += item["delivery"]["tax"]
                 if item["estimated_tax_rate"] == 0 and item["delivery"]["tax"] > 0:
                     # Get estimated tax rate by checking delivery fee tax rate
@@ -96,7 +99,9 @@ class QuoteUtils:
                         4,
                     )
             if item["removal"]:
-                item["one_time"]["removal"] = item["removal"]["total"]
+                item["one_time"]["removal"] = (
+                    item["removal"]["total"] - item["removal"]["tax"]
+                )
                 item["one_time"]["estimated_taxes"] += item["removal"]["tax"]
 
             # Calculate the one-time total (delivery + removal)
@@ -105,19 +110,30 @@ class QuoteUtils:
             )
 
             if item["fuel_and_environmental"]:
-                # What percentage is one_time total of the total?
-                one_time_total_percentage = (
-                    item["one_time"]["total"] / item["pre_tax_subtotal"]
-                )
                 # Calculate the one-time fuel fees and estimated taxes
+                fuel_fees_subtotal = (
+                    item["fuel_and_environmental"]["total"]
+                    - item["fuel_and_environmental"]["tax"]
+                )
+                # Get percentage that one_time total is of total minus fuel fees
+                total_minus_fuel = item["pre_tax_subtotal"] - fuel_fees_subtotal
+                one_time_total_percentage = round(
+                    item["one_time"]["total"] / total_minus_fuel, 6
+                )
                 item["one_time"]["fuel_fees"] = (
-                    item["fuel_and_environmental"]["total"] * one_time_total_percentage
+                    fuel_fees_subtotal * one_time_total_percentage
                 )
                 # Get fuel fees for the rest of the total (not one-time)
                 item["fuel_fees"] = abs(
-                    item["fuel_and_environmental"]["total"]
-                    - item["one_time"]["fuel_fees"]
+                    fuel_fees_subtotal - item["one_time"]["fuel_fees"]
                 )
+                fuel_fees_tax = (
+                    item["fuel_and_environmental"]["tax"] * one_time_total_percentage
+                )
+                # rest_of_total_tax = abs(
+                #     item["fuel_and_environmental"]["tax"] - fuel_fees_tax
+                # )
+                item["one_time"]["estimated_taxes"] += fuel_fees_tax
 
                 # Calculate the fuel fees rate (display only)
                 fuel_rate = item["fuel_and_environmental"]["total"] / (
@@ -127,11 +143,10 @@ class QuoteUtils:
                 item["fuel_and_environmental_rate"] = round(fuel_rate * 100, 4)
 
             if item["estimated_tax_rate"] > 0:
+                # Get taxes for the Service section
                 item["estimated_taxes"] = abs(
                     item["tax"] - item["one_time"]["estimated_taxes"]
                 )
-            else:
-                item["one_time"]["estimated_taxes"] = float(0.00)
 
             # Add fuel fees and estimated taxes to the one-time total
             item["one_time"]["total"] += (
@@ -140,18 +155,16 @@ class QuoteUtils:
 
             # This is Subtotal
             if item["service"]:
-                item["subtotal"] += item["service"]["total"]
+                item["subtotal"] += item["service"]["total"] - item["service"]["tax"]
             if item["material"]:
-                item["subtotal"] += item["material"]["total"]
+                item["subtotal"] += item["material"]["total"] - item["material"]["tax"]
             if item["rental"]:
-                item["subtotal"] += item["rental"]["total"]
+                item["subtotal"] += item["rental"]["total"] - item["rental"]["tax"]
 
             # This is Total (Per Service)
             item["service_total"] = (
                 item["subtotal"] + item["fuel_fees"] + item["estimated_taxes"]
             )
-
-            item["total"] += item["tax"]
 
             if order.order_group.user_address.project_id:
                 project_id = order.order_group.user_address.project_id
