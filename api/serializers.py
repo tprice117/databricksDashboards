@@ -933,6 +933,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "take_rate",
             "tonnage_quantity",
             "times_per_week",
+            "shift_count",
             "delivery_fee",
             "removal_fee",
             "created_by",
