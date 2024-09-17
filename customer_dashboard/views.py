@@ -2788,10 +2788,10 @@ def new_user(request):
             if form.is_valid():
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
-                email = form.cleaned_data.get("email")
+                email = form.cleaned_data.get("email").casefold()
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
-                if email and User.objects.filter(email=email.casefold()).exists():
+                if User.objects.filter(email__iexact=email).exists():
                     raise UserAlreadyExistsError()
                 else:
                     if user_group_id:
@@ -3253,9 +3253,9 @@ def new_company(request):
                 )
                 if context["user_form"].is_valid():
                     # Create New User
-                    email = context["user_form"].cleaned_data.get("email")
-                    if User.objects.filter(email=email.casefold()).exists():
-                        user = User.objects.get(email=email.casefold())
+                    email = context["user_form"].cleaned_data.get("email").casefold()
+                    if User.objects.filter(email__iexact=email).exists():
+                        user = User.objects.get(email__iexact=email)
                         if user.user_group:
                             messages.error(
                                 request,
@@ -3278,7 +3278,7 @@ def new_company(request):
                             last_name=context["user_form"].cleaned_data.get(
                                 "last_name"
                             ),
-                            email=context["user_form"].cleaned_data.get("email"),
+                            email=email,
                             type=context["user_form"].cleaned_data.get("type"),
                             user_group=user_group,
                         )
