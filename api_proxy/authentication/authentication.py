@@ -47,10 +47,10 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
 
         # Check if the ID token contains the email field.
         if decoded_id_token and "email" in decoded_id_token:
-            email = decoded_id_token["email"]
+            email = decoded_id_token["email"].casefold()
 
             # Get or create a user based on the email address.
-            user = User.objects.filter(email=email.casefold())
+            user = User.objects.filter(email__iexact=email)
             if user.exists():
                 user = user.first()
                 created = False
