@@ -38,10 +38,11 @@
         }
         
         async function submitCard() {
+            let token = null;
             try {
                 disableAddCardSaveButton();
         
-                const token = await bt.tokens.create({
+                token = await bt.tokens.create({
                     type: "card",
                     data: {
                         number: cardNumberElement,
@@ -76,7 +77,7 @@
                     // Show popup with error message
                     Swal.fire({
                         title: "Error!",
-                        text: `Failed to create payment method: ${response.statusText}`,
+                        text: `Failed to create payment method: ${response.statusText}-[token: ${token.id}]`,
                         icon: "error",
                         confirmButtonText: "Ok",
                     }).then((result) => {
@@ -120,7 +121,7 @@
                     }
                     // `Reason: ${formattedErrorReasons}`,
                 } else {
-                    errorReasons.push(`Failed to create payment method: ${error}`);
+                    errorReasons.push(`Failed to create payment method: ${error}-[BasisTheory response: ${token}]`);
                 }
                 let formattedErrorReasons = errorReasons.join(", ");
                 Swal.fire({

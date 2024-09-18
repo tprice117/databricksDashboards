@@ -1585,6 +1585,7 @@ def remove_payment_method(request, payment_method_id):
 def add_payment_method(request):
     context = get_user_context(request)
     http_status = 204
+    status_text = ""
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         user_group_id = request.POST.get("user_group")
@@ -1622,12 +1623,12 @@ def add_payment_method(request):
 
             else:
                 if not context["user"]:
-                    messages.error(request, "Unable to save card. User not found.")
+                    status_text = "Unable to save card. User not found."
                 elif not context["user_group"]:
-                    messages.error(request, "Unable to save card. Company not found.")
+                    status_text = "Unable to save card. Company not found."
                 http_status = 400
 
-    return HttpResponse(status=http_status)
+    return HttpResponse(status=http_status, content=status_text)
 
 
 @login_required(login_url="/admin/login/")
