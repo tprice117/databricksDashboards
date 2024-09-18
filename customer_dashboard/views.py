@@ -1601,9 +1601,17 @@ def add_payment_method(request):
                 context["user_group"] = UserGroup.objects.filter(
                     id=user_group_id
                 ).first()
-            context["user"] = (
-                context["user_group"].users.filter(type=UserType.ADMIN).first()
-            )
+            # If context["user"].user_group_id is user_group_id,
+            # then use context["user"], else get the first user in the user group.
+            if context["user"].user_group:
+                if str(context["user"].user_group_id) != str(user_group_id):
+                    context["user"] = (
+                        context["user_group"].users.filter(type=UserType.ADMIN).first()
+                    )
+            else:
+                context["user"] = (
+                    context["user_group"].users.filter(type=UserType.ADMIN).first()
+                )
             if not context["user"]:
                 context["user"] = context["user_group"].users.first()
         token = request.POST.get("token")
