@@ -1,4 +1,4 @@
-import datetime
+from decimal import Decimal
 import logging
 from functools import lru_cache
 from typing import List, Optional
@@ -32,6 +32,7 @@ from notifications.utils.add_email_to_queue import (
     add_internal_email_to_queue,
 )
 
+
 logger = logging.getLogger(__name__)
 
 mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
@@ -39,6 +40,9 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 USER_MODEL = None
 USER_SELLER_LOCATION_MODEL = None
 ORDER_APPROVAL_MODEL = None
+PRICING_LINE_ITEM_MODEL = None
+PRICING_LINE_ITEM_GROUP_MODEL = None
+PRICING_ENGINE_RESPONSE_SERIALIZER = None
 
 
 def get_our_user_model():
@@ -73,6 +77,40 @@ def get_order_approval_model():
         )
 
     return ORDER_APPROVAL_MODEL
+
+
+def get_pricing_line_item_model():
+    """This imports the PricingLineItem model.
+    This avoid the circular import issue."""
+    global PRICING_LINE_ITEM_MODEL
+    if PRICING_LINE_ITEM_MODEL is None:
+        from pricing_engine.models import PricingLineItem as PRICING_LINE_ITEM_MODEL
+
+    return PRICING_LINE_ITEM_MODEL
+
+
+def get_pricing_line_item_group_model():
+    """This imports the PricingLineItemGroup model.
+    This avoid the circular import issue."""
+    global PRICING_LINE_ITEM_GROUP_MODEL
+    if PRICING_LINE_ITEM_GROUP_MODEL is None:
+        from pricing_engine.models import (
+            PricingLineItemGroup as PRICING_LINE_ITEM_GROUP_MODEL,
+        )
+
+    return PRICING_LINE_ITEM_GROUP_MODEL
+
+
+def get_pricing_engine_response_serializer():
+    """This imports the PricingLineItemGroup model.
+    This avoid the circular import issue."""
+    global PRICING_ENGINE_RESPONSE_SERIALIZER
+    if PRICING_ENGINE_RESPONSE_SERIALIZER is None:
+        from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+            PricingEngineResponseSerializer as PRICING_ENGINE_RESPONSE_SERIALIZER,
+        )
+
+    return PRICING_ENGINE_RESPONSE_SERIALIZER
 
 
 @track_data(
@@ -181,7 +219,7 @@ class Order(BaseModel):
     def update_status_on_credit_application_approved(self):
         """Update the Order status after the UserGroupCreditApplication is approved."""
         self.status = Order.Status.PENDING
-        if self.user_group_admin_approval_order:
+        if hasattr(self, "user_group_admin_approval_order"):
             # Check for any Admin Policy checks.
             if self.user_group_admin_approval_order.status == ApprovalStatus.PENDING:
                 self.status = Order.Status.ADMIN_APPROVAL_PENDING
@@ -374,10 +412,18 @@ class Order(BaseModel):
                     self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
                 )
 
+                delivery_fee = 0
                 if is_first_order:
                     new_order_line_items.extend(
                         self._add_order_line_item_delivery(),
                     )
+                    if (
+                        self.order_group.seller_product_seller_location.delivery_fee
+                        is not None
+                    ):
+                        delivery_fee = (
+                            self.order_group.seller_product_seller_location.delivery_fee
+                        )
 
                 # NOTE: Don't add any other OrderLineItems if this is a non equipment removal.
                 standard_removal = is_last_order and not is_equiptment_order
@@ -443,7 +489,20 @@ class Order(BaseModel):
                 )
 
                 if new_order_line_items:
-                    # Create the OrderLineItems.
+                    # Get taxes, but only if this Transaction is more than $0.
+                    get_taxes = False
+                    for line_item in new_order_line_items:
+                        if line_item.customer_price() > 0:
+                            get_taxes = True
+                            break
+                    if get_taxes:
+                        StripeUtils.PriceCalculation.calculate_price_details(
+                            self, new_order_line_items, float(delivery_fee)
+                        )
+                    else:
+                        # Set to 0 to denote that taxes are not needed.
+                        for line_item in new_order_line_items:
+                            line_item.tax = 0
                     OrderLineItem.objects.bulk_create(new_order_line_items)
 
                 # Check for any Admin Policy checks.
@@ -532,7 +591,7 @@ class Order(BaseModel):
                 OrderLineItem(
                     order=self,
                     order_line_item_type=order_line_item_type,
-                    rate=fuel_and_environmental_fee,
+                    rate=Decimal(fuel_and_environmental_fee),
                     quantity=1,
                     description="Fuel and Environmental Fee",
                     platform_fee_percent=self.order_group.take_rate,
@@ -964,169 +1023,72 @@ class Order(BaseModel):
                     f"create_customer_chat:reply [{self.id}]-[{e}]", exc_info=e
                 )
 
-    def get_order_with_tax(self):
+    def get_price(self):
         """Get the Order with tax details.
-        This is also used as the Quote in the Admin Portal."""
-        from pricing_engine.models import PricingLineItem, PricingLineItemGroup
-        from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
-            PricingEngineResponseSerializer,
-        )
+        This is also used as the Quote in the Admin Portal.
+        Returns PricingEngineResponseSerializer."""
 
-        item = {
-            "product": {
-                "name": self.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                "image": self.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url,
-            },
-            "start_date": self.start_date.strftime("%m/%d/%Y"),
-            "tonnage_quantity": self.order_group.tonnage_quantity,
-            "addons": [],
-            "subtotal": float(0.00),
-            "fuel_fees": float(0.00),
-            # This is the total tax
-            "taxes": float(0.00),
-            # This is the tax minus the one time tax
-            "estimated_taxes": float(0.00),
-            "estimated_tax_rate": float(0.00),
-            "pre_tax_subtotal": float(0.00),
-            "total": float(0.00),
-            "discounts": float(0.00),
-            "one_time": {
-                "delivery": float(0.00),
-                "removal": float(0.00),
-                # "service": float(0.00),
-                "fuel_fees": float(0.00),
-                "estimated_taxes": float(0.00),
-                "total": float(0.00),
-            },
-            "schedule_window": self.schedule_window,
-        }
-        if not item["schedule_window"]:
-            if item.order.order_group.time_slot:
-                item["schedule_window"] = (
-                    f"{self.order_group.time_slot.name} ({self.order_group.time_slot.start}-{self.order_group.time_slot.end})"
-                )
-            else:
-                item["schedule_window"] = "Anytime (7am-4pm)"
-        addons = (
-            self.order_group.seller_product_seller_location.seller_product.product.product_add_on_choices.all()
-        )
-        for addon in addons:
-            item["addons"].append(
-                {
-                    "key": addon.add_on_choice.add_on.name,
-                    "val": addon.add_on_choice.name,
-                }
-            )
-
-        pricing = {}
-        for order_line_item in self.order_line_items.all():
-            customer_rate = float(
-                order_line_item.rate
-                * (1 + (order_line_item.platform_fee_percent / 100))
-            )
-            _dd = PricingLineItem(
-                description=order_line_item.description,
-                unit_price=customer_rate,
-                quantity=order_line_item.quantity,
-                units=order_line_item.order_line_item_type.units,
-            )
-            key = order_line_item.order_line_item_type.code
-            try:
-                pricing[key][1].append(_dd)
-            except KeyError:
-                pricing[key] = (
-                    PricingLineItemGroup(
-                        title=order_line_item.order_line_item_type.name,
-                        code=order_line_item.order_line_item_type.code.lower(),
-                    ),
-                    [_dd],
-                )
-        pricing_list = [item for item in pricing.values()]
-        item["price_data"] = PricingEngineResponseSerializer(pricing_list).data
-        item["fuel_fees"] = 0
-        item["fuel_fees_rate"] = float(0.00)
-        if item["price_data"]["fuel_and_environmental"]:
-            item["fuel_fees_rate"] = float(
-                self.order_group.seller_product_seller_location.fuel_environmental_markup
-            )
-            item["fuel_fees"] = round(
-                item["price_data"]["fuel_and_environmental"]["total"], 2
-            )
-            fuel_rate = round(item["fuel_fees"] / item["price_data"]["total"], 2)
-            item["fuel_fees_rate2"] = round(fuel_rate * 100, 4)
-
-        if item["price_data"]["delivery"]:
-            item["one_time"]["delivery"] = round(
-                item["price_data"]["delivery"]["total"], 2
-            )
-        if item["price_data"]["removal"]:
-            item["one_time"]["removal"] = round(
-                item["price_data"]["removal"]["total"], 2
-            )
-
-        item["pre_tax_subtotal"] = round(float(self.customer_price()), 2)
-        if (
-            self.order_group.user_address.user_group
-            and self.order_group.user_address.user_group.tax_exempt_status == "exempt"
-        ):
-            price_details = {
-                "rate": float(0.00),
-                "taxes": float(0.00),
-                "total": item["pre_tax_subtotal"],
-            }
-        else:
+        try:
+            # Load all line items
+            pricing = {}
+            all_line_items = []
             delivery_fee = 0
-            if item["price_data"]["delivery"]:
-                delivery_fee = round(item["price_data"]["delivery"]["total"], 2)
-            price_details = StripeUtils.PriceCalculation.calculate_price_details(
-                self, self.order_line_items, delivery_fee
-            )
+            re_get_taxes = False
+            for order_line_item in self.order_line_items.all():
+                if order_line_item.stripe_invoice_line_item_id != "BYPASS":
+                    if (
+                        order_line_item.tax is None
+                        and order_line_item.customer_price() > 0
+                    ):
+                        re_get_taxes = True
+                all_line_items.append(order_line_item)
+                if order_line_item.order_line_item_type.code == "DELIVERY":
+                    delivery_fee = float(order_line_item.customer_price())
 
-        item["taxes"] = round(price_details["taxes"], 2)
-        item["estimated_tax_rate"] = round(price_details["rate"] * 100, 2)
-        item["total"] = round(price_details["total"], 2)
-        item["tax_breakdown"] = price_details.get("tax_breakdown", [])
+            # Calculate the tax details
+            if (
+                self.order_group.user_address.user_group
+                and self.order_group.user_address.user_group.tax_exempt_status
+                == "exempt"
+            ):
+                tax_details = {"rate": float(0.00), "taxes": float(0.00)}
+            else:
+                # Only get taxes if re_get_taxes is True.
+                if re_get_taxes:
+                    # Get taxes and also update the line items with the tax amount.
+                    tax_details = StripeUtils.PriceCalculation.calculate_price_details(
+                        self, all_line_items, delivery_fee, update_line_items=True
+                    )
 
-        # Calculate the one-time fuel fees and estimated taxes
-        item["one_time"]["fuel_fees"] = round(
-            (item["one_time"]["delivery"] + item["one_time"]["removal"])
-            * float(item["fuel_fees_rate"] / 100),
-            2,
-        )
-        if price_details["rate"] > 0:
-            item["one_time"]["estimated_taxes"] = round(
-                price_details["one_time"]["estimated_taxes"], 2
-            )
-            item["estimated_taxes"] = round(
-                abs(price_details["taxes"] - item["one_time"]["estimated_taxes"]), 2
-            )
-        else:
-            item["one_time"]["estimated_taxes"] = float(0.00)
-
-        item["one_time"]["total"] = round(
-            item["one_time"]["delivery"]
-            + item["one_time"]["removal"]
-            + item["one_time"]["fuel_fees"]
-            + item["one_time"]["estimated_taxes"],
-            2,
-        )
-
-        item["fuel_fees"] = round(
-            abs(item["one_time"]["fuel_fees"] - item["fuel_fees"]), 2
-        )
-
-        # This is Subtotal
-        item["subtotal"] = round(
-            price_details["total"]
-            - item["one_time"]["total"]
-            - item["fuel_fees"]
-            - item["estimated_taxes"],
-            2,
-        )
-        # This is Total (Per Service)
-        item["total"] = round(item["total"] - item["one_time"]["total"], 2)
-
-        return item
+            # Load all line items into a PricingEngine response
+            for order_line_item in all_line_items:
+                customer_rate = float(
+                    order_line_item.rate
+                    * (1 + (order_line_item.platform_fee_percent / 100))
+                )
+                _dd = get_pricing_line_item_model()(
+                    description=order_line_item.description,
+                    unit_price=customer_rate,
+                    quantity=order_line_item.quantity,
+                    units=order_line_item.order_line_item_type.units,
+                    tax=order_line_item.tax,
+                )
+                key = order_line_item.order_line_item_type.code
+                try:
+                    pricing[key][1].append(_dd)
+                except KeyError:
+                    pricing[key] = (
+                        get_pricing_line_item_group_model()(
+                            title=order_line_item.order_line_item_type.name,
+                            code=order_line_item.order_line_item_type.code.lower(),
+                        ),
+                        [_dd],
+                    )
+            pricing_list = [item for item in pricing.values()]
+            return get_pricing_engine_response_serializer()(pricing_list).data
+        except Exception as e:
+            logger.error(f"Order.get_price: [{self.id}]-[{e}]", exc_info=e)
+            return None
 
     def submit_order(self, override_approval_policy=False):
         """This method is used to submit an Order (set status to PENDING and set submitted_on to now).

@@ -70,6 +70,10 @@ from .models import (
     WasteType,
 )
 
+from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+    PricingEngineResponseSerializer,
+)
+
 logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -502,6 +506,7 @@ class OrderSerializer(serializers.ModelSerializer):
     intercom_id = serializers.CharField(required=False, allow_null=True)
     custmer_intercom_id = serializers.CharField(required=False, allow_null=True)
     code = serializers.SerializerMethodField(read_only=True)
+    price = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -534,6 +539,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_code(self, obj):
         return obj.get_code
+
+    @extend_schema_field(PricingEngineResponseSerializer)
+    def get_price(self, obj):
+        return obj.get_price()
 
     # def get_status(self, obj):
     #     return stripe.Invoice.retrieve(
@@ -924,6 +933,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "take_rate",
             "tonnage_quantity",
             "times_per_week",
+            "shift_count",
             "delivery_fee",
             "removal_fee",
             "created_by",

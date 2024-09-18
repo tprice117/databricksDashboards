@@ -38,6 +38,11 @@ class PricingEngineResponseSerializer(serializers.Serializer):
         max_digits=10,
         decimal_places=2,
     )
+    tax = serializers.DecimalField(
+        read_only=True,
+        max_digits=10,
+        decimal_places=2,
+    )
 
     def to_representation(
         self,
@@ -85,6 +90,7 @@ class PricingEngineResponseSerializer(serializers.Serializer):
                 ).data
 
         response["total"] = self.get_total(instance)
+        response["tax"] = self.get_tax(instance)
 
         return response
 
@@ -92,3 +98,9 @@ class PricingEngineResponseSerializer(serializers.Serializer):
         return sum(
             [sum([x.total for x in group_and_items[1]]) for group_and_items in instance]
         )
+
+    def get_tax(self, instance: list[(PricingLineItemGroup, list[PricingLineItem])]):
+        all_taxes = []
+        for group_and_items in instance:
+            all_taxes.extend([x.tax for x in group_and_items[1] if x.tax is not None])
+        return float(sum(all_taxes)) if all_taxes else 0.0

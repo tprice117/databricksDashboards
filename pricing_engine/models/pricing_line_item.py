@@ -1,8 +1,4 @@
-import uuid
-
 from django.db import models
-
-from pricing_engine.models.pricing_line_item_group import PricingLineItemGroup
 
 
 class PricingLineItem(models.Model):
@@ -24,9 +20,17 @@ class PricingLineItem(models.Model):
     sort = models.IntegerField(
         default=0,
     )
+    tax = models.DecimalField(
+        max_digits=18,
+        decimal_places=4,
+        blank=True,
+        null=True,
+    )
 
     @property
     def total(self):
+        if self.tax:
+            return (float(self.quantity) * float(self.unit_price)) + float(self.tax)
         return float(self.quantity) * float(self.unit_price)
 
     class Meta:

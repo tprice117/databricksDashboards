@@ -554,6 +554,7 @@ def customer_search(request, is_selection=False):
                 Q(first_name__icontains=isearch)
                 | Q(last_name__icontains=isearch)
                 | Q(email__icontains=isearch)
+                | Q(user_group__name__icontains=isearch)
             )
         context["user_groups"] = user_groups
         context["users"] = users
@@ -834,6 +835,7 @@ def new_order_3(request, product_id):
     context["product_waste_types"] = product_waste_types
     add_ons = AddOn.objects.filter(main_product_id=product_id)
     # Get addon choices for each add_on and display the choices under the add_on.
+    # TODO: Should I only show ProductAddOnChoice so we know the product actually has these?
     context["product_add_ons"] = []
     for add_on in add_ons:
         context["product_add_ons"].append(
@@ -927,6 +929,9 @@ def new_order_4(request):
     context["times_per_week"] = request.GET.get("times_per_week", "")
     if context["times_per_week"]:
         context["times_per_week"] = int(context["times_per_week"])
+    context["shift_count"] = request.GET.get("shift_count", "")
+    if context["shift_count"]:
+        context["shift_count"] = int(context["shift_count"])
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
     # step_time = time.time()
@@ -1010,7 +1015,7 @@ def new_order_4(request):
             times_per_week=(
                 context["times_per_week"] if context["times_per_week"] else None
             ),
-            shift_count=context.get("shift_count", None),
+            shift_count=(context["shift_count"] if context["shift_count"] else None),
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
@@ -1063,6 +1068,11 @@ def new_order_5(request):
             if request.POST.get("times_per_week")
             else None
         )
+        shift_count = (
+            int(request.POST.get("shift_count"))
+            if request.POST.get("shift_count")
+            else None
+        )
         delivery_date = datetime.datetime.strptime(
             request.POST.get("delivery_date"),
             "%Y-%m-%d",
@@ -1111,10 +1121,12 @@ def new_order_5(request):
             user_address=user_address,
             seller_product_seller_location_id=seller_product_seller_location_id,
             start_date=delivery_date,
-            take_rate=take_rate * 100,
+            take_rate=Decimal(take_rate * 100),
         )
         if times_per_week:
             order_group.times_per_week = times_per_week
+        if shift_count:
+            order_group.shift_count = shift_count
         if waste_type_id:
             order_group.waste_type_id = waste_type_id
         # NOTE: Commenting removal_date out for now. We may, possibly, maybe add this back in later.
@@ -1435,7 +1447,6 @@ def cart_send_quote(request):
             to_emails = ",".join(email_lst)
             order_id_lst = data.get("ids")
             if email_lst and order_id_lst:
-                # TODO: If quote is being re-created, then update the code
                 checkout_order = QuoteUtils.create_quote(
                     order_id_lst, email_lst, quote_sent=True
                 )
@@ -1579,9 +1590,8 @@ def add_payment_method(request):
             context["user_address"] = UserAddress.objects.filter(
                 id=user_address_id
             ).first()
-        # If staff, then get the user and user_group from the user_address.
-        # If impersonating, then user and user_group are already set.
-        if request.user.is_staff and not is_impersonating(request):
+        # If staff, then always get the user and user_group from POST parameters.
+        if request.user.is_staff:
             if user_address_id:
                 context["user_group"] = context["user_address"].user_group
             else:
@@ -1656,7 +1666,7 @@ def checkout(request, user_address_id):
                 if not checkout_order and order.checkout_order:
                     checkout_order = order.checkout_order
                 order.submit_order(override_approval_policy=True)
-            # TODO: Create checkout
+
             if checkout_order:
                 if payment_method_id == "paylater":
                     checkout_order.pay_later = True
@@ -2789,10 +2799,10 @@ def new_user(request):
             if form.is_valid():
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
-                email = form.cleaned_data.get("email")
+                email = form.cleaned_data.get("email").casefold()
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
-                if email and User.objects.filter(email=email.casefold()).exists():
+                if User.objects.filter(email__iexact=email).exists():
                     raise UserAlreadyExistsError()
                 else:
                     if user_group_id:
@@ -3032,6 +3042,7 @@ def company_detail(request, user_group_id=None):
         user_group = user_group.prefetch_related("users", "user_addresses")
         user_group = user_group.first()
     context["user_group"] = user_group
+    context["user"] = user_group.users.filter(type=UserType.ADMIN).first()
     user_group_id = None
     if context["user_group"]:
         user_group_id = context["user_group"].id
@@ -3254,9 +3265,9 @@ def new_company(request):
                 )
                 if context["user_form"].is_valid():
                     # Create New User
-                    email = context["user_form"].cleaned_data.get("email")
-                    if User.objects.filter(email=email.casefold()).exists():
-                        user = User.objects.get(email=email.casefold())
+                    email = context["user_form"].cleaned_data.get("email").casefold()
+                    if User.objects.filter(email__iexact=email).exists():
+                        user = User.objects.get(email__iexact=email)
                         if user.user_group:
                             messages.error(
                                 request,
@@ -3279,7 +3290,7 @@ def new_company(request):
                             last_name=context["user_form"].cleaned_data.get(
                                 "last_name"
                             ),
-                            email=context["user_form"].cleaned_data.get("email"),
+                            email=email,
                             type=context["user_form"].cleaned_data.get("type"),
                             user_group=user_group,
                         )

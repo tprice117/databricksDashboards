@@ -22,8 +22,150 @@ class QuoteUtils:
 
         for order in orders:
             seller_total += float(order.seller_price())
-            item = order.get_order_with_tax()
-            total_taxes += item["taxes"]
+            item = {
+                "product": {
+                    "name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                    "image": order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url,
+                },
+                "start_date": order.start_date.strftime("%m/%d/%Y"),
+                "tonnage_quantity": order.order_group.tonnage_quantity,
+                "addons": [],
+                "subtotal": float(0.00),
+                "fuel_fees": float(0.00),
+                # This is the total tax
+                "tax": float(0.00),
+                # This is the tax minus the one time tax
+                "estimated_taxes": float(0.00),
+                "estimated_tax_rate": float(0.00),
+                "pre_tax_subtotal": float(order.customer_price()),
+                "service_total": float(0.00),
+                # This is the total for this Transaction/Order
+                "total": float(0.00),
+                "fuel_and_environmental_rate": float(0.00),
+                "one_time": {
+                    "delivery": float(0.00),
+                    "removal": float(0.00),
+                    "fuel_fees": float(0.00),
+                    "estimated_taxes": float(0.00),
+                    # A sum of all the one-time fees
+                    "total": float(0.00),
+                },
+                "schedule_window": order.schedule_window,
+            }
+            if not item["schedule_window"]:
+                if item.order.order_group.time_slot:
+                    item["schedule_window"] = (
+                        f"{order.order_group.time_slot.name} ({order.order_group.time_slot.start}-{order.order_group.time_slot.end})"
+                    )
+                else:
+                    item["schedule_window"] = "Anytime (7am-4pm)"
+            addons = (
+                order.order_group.seller_product_seller_location.seller_product.product.product_add_on_choices.all()
+            )
+            for addon in addons:
+                item["addons"].append(
+                    {
+                        "key": addon.add_on_choice.add_on.name,
+                        "val": addon.add_on_choice.name,
+                    }
+                )
+            price_data = order.get_price()
+            item["pre_tax_subtotal"] = price_data["total"] - price_data["tax"]
+            # load the price data into the item
+            for key in price_data:
+                item[key] = price_data[key]
+
+            total_taxes += item["tax"]
+
+            # All calculations below should happen when displaying the data
+            if item["rental"]:
+                if item["rental"]["tax"] > 0:
+                    # Get estimated tax rate by checking delivery fee tax rate
+                    item["estimated_tax_rate"] = round(
+                        (item["rental"]["tax"] / item["rental"]["total"]) * 100,
+                        4,
+                    )
+
+            # Calculate the one-time fuel fees and estimated taxes
+            if item["delivery"]:
+                item["one_time"]["delivery"] = (
+                    item["delivery"]["total"] - item["delivery"]["tax"]
+                )
+                item["one_time"]["estimated_taxes"] += item["delivery"]["tax"]
+                if item["estimated_tax_rate"] == 0 and item["delivery"]["tax"] > 0:
+                    # Get estimated tax rate by checking delivery fee tax rate
+                    item["estimated_tax_rate"] = round(
+                        (item["delivery"]["tax"] / item["one_time"]["delivery"]) * 100,
+                        4,
+                    )
+            if item["removal"]:
+                item["one_time"]["removal"] = (
+                    item["removal"]["total"] - item["removal"]["tax"]
+                )
+                item["one_time"]["estimated_taxes"] += item["removal"]["tax"]
+
+            # Calculate the one-time total (delivery + removal)
+            item["one_time"]["total"] = (
+                item["one_time"]["delivery"] + item["one_time"]["removal"]
+            )
+
+            if item["fuel_and_environmental"]:
+                # Calculate the one-time fuel fees and estimated taxes
+                fuel_fees_subtotal = (
+                    item["fuel_and_environmental"]["total"]
+                    - item["fuel_and_environmental"]["tax"]
+                )
+                # Get percentage that one_time total is of total minus fuel fees
+                total_minus_fuel = item["pre_tax_subtotal"] - fuel_fees_subtotal
+                one_time_total_percentage = round(
+                    item["one_time"]["total"] / total_minus_fuel, 6
+                )
+                item["one_time"]["fuel_fees"] = (
+                    fuel_fees_subtotal * one_time_total_percentage
+                )
+                # Get fuel fees for the rest of the total (not one-time)
+                item["fuel_fees"] = abs(
+                    fuel_fees_subtotal - item["one_time"]["fuel_fees"]
+                )
+                fuel_fees_tax = (
+                    item["fuel_and_environmental"]["tax"] * one_time_total_percentage
+                )
+                # rest_of_total_tax = abs(
+                #     item["fuel_and_environmental"]["tax"] - fuel_fees_tax
+                # )
+                item["one_time"]["estimated_taxes"] += fuel_fees_tax
+
+                # Calculate the fuel fees rate (display only)
+                fuel_rate = item["fuel_and_environmental"]["total"] / (
+                    item["total"] - item["fuel_and_environmental"]["total"]
+                )
+                # From self.order_group.seller_product_seller_location.fuel_environmental_markup
+                item["fuel_and_environmental_rate"] = round(fuel_rate * 100, 4)
+
+            if item["estimated_tax_rate"] > 0:
+                # Get taxes for the Service section
+                item["estimated_taxes"] = abs(
+                    item["tax"] - item["one_time"]["estimated_taxes"]
+                )
+
+            # Add fuel fees and estimated taxes to the one-time total
+            item["one_time"]["total"] += (
+                item["one_time"]["fuel_fees"] + item["one_time"]["estimated_taxes"]
+            )
+
+            # This is Subtotal
+            if item["service"]:
+                item["subtotal"] += item["service"]["total"] - item["service"]["tax"]
+            if item["material"]:
+                item["subtotal"] += item["material"]["total"] - item["material"]["tax"]
+            if item["rental"]:
+                item["subtotal"] += item["rental"]["total"] - item["rental"]["tax"]
+
+            # This is Total (Per Service)
+            item["service_total"] = (
+                item["subtotal"] + item["fuel_fees"] + item["estimated_taxes"]
+            )
+
             if order.order_group.user_address.project_id:
                 project_id = order.order_group.user_address.project_id
             if (
@@ -32,7 +174,7 @@ class QuoteUtils:
             ):
                 total += item["one_time"]["total"]
             else:
-                total += item["total"] + item["one_time"]["total"]
+                total += item["total"]
             if (
                 order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
             ):
@@ -68,7 +210,7 @@ class QuoteUtils:
                 for key in item["rental_breakdown"]:
                     item["rental_breakdown"][key]["fuel_fees"] = round(
                         item["rental_breakdown"][key]["base"]
-                        * float(item["fuel_fees_rate"] / 100),
+                        * float(item["fuel_and_environmental_rate"] / 100),
                         2,
                     )
                     item["rental_breakdown"][key]["estimated_taxes"] = round(

@@ -1,10 +1,14 @@
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 from api.models.order.order_line_item_type import OrderLineItemType
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
+from api.models.track_data import track_data
 
 
+@track_data("rate", "quantity", "tax", "platform_fee_percent")
 class OrderLineItem(BaseModel):
     class PaymentStatus(models.TextChoices):
         NOT_INVOICED = "not_invoiced"
@@ -23,6 +27,7 @@ class OrderLineItem(BaseModel):
         default=20,
         help_text="Enter as a percentage without the percent symbol (ex: 25.00)",
     )
+    tax = models.DecimalField(max_digits=18, decimal_places=4, blank=True, null=True)
     description = models.CharField(max_length=255, blank=True, null=True)
     is_flat_rate = models.BooleanField(default=False)
     stripe_invoice_line_item_id = models.CharField(
@@ -77,3 +82,14 @@ class OrderLineItem(BaseModel):
         seller_price = self.seller_payout_price()
         customer_price = seller_price * (1 + (self.platform_fee_percent / 100))
         return round(customer_price, 2)
+
+
+@receiver(pre_save, sender=OrderLineItem)
+def order_line_item_pre_save(sender, instance, **kwargs):
+    if (
+        instance.has_changed("rate")
+        or instance.has_changed("quantity")
+        or instance.has_changed("platform_fee_percent")
+    ):
+        # Invalidate tax: It will be updated the next time this order is retrieved to be viewed via the API or Quoted
+        instance.taxes = None

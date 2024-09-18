@@ -23,7 +23,7 @@
 {% for user in users %}
     <tr>
         <td>
-            USER: {{ user.full_name }} - {{ user.email }}{% if user.user_group %}
+            {{ user.type }}: {{ user.full_name }} - {{ user.email }}{% if user.user_group %}
                 - {{ user.user_group.name }}
             {% endif %}
         </td>

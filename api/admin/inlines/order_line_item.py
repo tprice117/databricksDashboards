@@ -16,6 +16,7 @@ class OrderLineItemInlineForm(forms.ModelForm):
             "description",
             "rate",
             "quantity",
+            "tax",
             "seller_payout_price",
             "platform_fee_percent",
             "customer_price",

@@ -227,6 +227,11 @@ def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
     # Delete the token from Basis Theory.
     DSPaymentMethods.Tokens.delete(instance.token)
 
+    # Remove the Payment Method from all UserAddresses.
+    UserAddress.objects.filter(default_payment_method=instance).update(
+        default_payment_method=None
+    )
+
     # Sync the Payment Method with Stripe.
     # Note: This is done asynchronously because it is not critical.
     p = threading.Thread(target=instance.sync_stripe_payment_method)

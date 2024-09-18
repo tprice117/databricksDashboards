@@ -8,6 +8,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
 from pricing_engine.pricing_engine import PricingEngine
+from common.utils.json_encoders import DecimalFloatEncoder
 
 
 class SellerProductSellerLocationPricingByLatLongView(APIView):
@@ -60,4 +61,4 @@ class SellerProductSellerLocationPricingByLatLongView(APIView):
             pricing_line_item_groups,
         ).data
 
-        return JsonResponse(data, safe=False)
+        return JsonResponse(data, encoder=DecimalFloatEncoder, safe=False)
