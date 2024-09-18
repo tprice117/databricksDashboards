@@ -32,9 +32,10 @@ class PaymentMethod(BaseModel):
 
     @property
     def card_number(self):
+        """Return all the digits with * except the last 4 digits."""
         response = self.get_card()
         return (
-            response["data"]["number"]
+            re.sub(r"\d(?=\d{4})", "*", response["data"]["number"])
             if response and "data" in response and "number" in response["data"]
             else None
         )
