@@ -87,7 +87,7 @@ def user_group_credit_application_pre_save(
             # If old status is PENDING and new status is APPROVED,
             # update the user group's credit limit.
             if instance.status == ApprovalStatus.APPROVED:
-                instance.user_group.credit_limit = instance.requested_credit_limit
+                instance.user_group.credit_line_limit = instance.requested_credit_limit
                 instance.user_group.save()
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
@@ -96,3 +96,14 @@ def user_group_credit_application_pre_save(
                 )
                 for order in orders:
                     order.update_status_on_credit_application_approved()
+            if instance.status == ApprovalStatus.DECLINED:
+                # If the application is declined, set the credit limit to 0.
+                instance.user_group.credit_line_limit = 0
+                instance.user_group.save()
+                # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
+                orders = Order.objects.filter(
+                    order_group__user_address__user_group=instance.user_group,
+                    status=Order.Status.CREDIT_APPLICATION_APPROVAL_PENDING,
+                )
+                for order in orders:
+                    order.update_status_on_credit_application_declined()
