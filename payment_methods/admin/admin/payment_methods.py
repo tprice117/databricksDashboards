@@ -49,10 +49,7 @@ class PaymentMethodAdmin(admin.ModelAdmin):
         if obj:
             return self.readonly_fields + (
                 "token",
-                "card_number",
-                "card_brand",
-                "card_exp_month",
-                "card_exp_year",
+                "get_card",
             )
         else:
             # If PaymentMethod is being added, don't show card fields.

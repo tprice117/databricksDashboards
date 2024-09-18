@@ -24,7 +24,7 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
     token = serializers.CharField(write_only=True)
     card = serializers.SerializerMethodField(read_only=True)
     active = serializers.BooleanField(read_only=True)
-    reason = serializers.CharField(read_only=True)
+    reason = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = PaymentMethod
@@ -39,9 +39,7 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
         )
 
     def get_card(self, instance) -> CreditCardType:
-        return {
-            "number": instance.card_number,
-            "brand": instance.card_brand,
-            "expiration_month": instance.card_exp_month,
-            "expiration_year": instance.card_exp_year,
-        }
+        return instance.get_card()
+
+    def get_reason(self, instance) -> str:
+        return instance.inactive_reason
