@@ -554,6 +554,7 @@ def customer_search(request, is_selection=False):
                 Q(first_name__icontains=isearch)
                 | Q(last_name__icontains=isearch)
                 | Q(email__icontains=isearch)
+                | Q(user_group__name__icontains=isearch)
             )
         context["user_groups"] = user_groups
         context["users"] = users
@@ -834,6 +835,7 @@ def new_order_3(request, product_id):
     context["product_waste_types"] = product_waste_types
     add_ons = AddOn.objects.filter(main_product_id=product_id)
     # Get addon choices for each add_on and display the choices under the add_on.
+    # TODO: Should I only show ProductAddOnChoice so we know the product actually has these?
     context["product_add_ons"] = []
     for add_on in add_ons:
         context["product_add_ons"].append(
@@ -927,6 +929,9 @@ def new_order_4(request):
     context["times_per_week"] = request.GET.get("times_per_week", "")
     if context["times_per_week"]:
         context["times_per_week"] = int(context["times_per_week"])
+    context["shift_count"] = request.GET.get("shift_count", "")
+    if context["shift_count"]:
+        context["shift_count"] = int(context["shift_count"])
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
     # step_time = time.time()
@@ -1010,7 +1015,7 @@ def new_order_4(request):
             times_per_week=(
                 context["times_per_week"] if context["times_per_week"] else None
             ),
-            shift_count=context.get("shift_count", None),
+            shift_count=(context["shift_count"] if context["shift_count"] else None),
         )
 
         seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
@@ -1061,6 +1066,11 @@ def new_order_5(request):
         times_per_week = (
             int(request.POST.get("times_per_week"))
             if request.POST.get("times_per_week")
+            else None
+        )
+        shift_count = (
+            int(request.POST.get("shift_count"))
+            if request.POST.get("shift_count")
             else None
         )
         delivery_date = datetime.datetime.strptime(
@@ -1115,6 +1125,8 @@ def new_order_5(request):
         )
         if times_per_week:
             order_group.times_per_week = times_per_week
+        if shift_count:
+            order_group.shift_count = shift_count
         if waste_type_id:
             order_group.waste_type_id = waste_type_id
         # NOTE: Commenting removal_date out for now. We may, possibly, maybe add this back in later.
