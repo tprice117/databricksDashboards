@@ -227,6 +227,12 @@ class Order(BaseModel):
                 self.status = Order.Status.ADMIN_APPROVAL_DECLINED
         self.save()
 
+    def update_status_on_credit_application_declined(self):
+        """Update the Order status after the UserGroupCreditApplication is declined."""
+        self.submitted_on = None
+        self.status = Order.Status.PENDING
+        self.save()
+
     @property
     def seller_accept_order_url(self):
         return f"{settings.API_URL}/api/order/{self.id}/accept/?key={encrypt_string(str(self.id))}"
