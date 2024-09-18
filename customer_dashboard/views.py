@@ -1737,6 +1737,8 @@ def checkout(request, user_address_id):
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
     order_id_lst = []
+    context["estimated_taxes"] = 0
+    context["total"] = 0
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
@@ -1744,6 +1746,7 @@ def checkout(request, user_address_id):
         customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full
         context["pre_tax_subtotal"] += customer_price
+        price_data = order.get_price()
         context["cart"].append(
             {
                 "order": order,
@@ -1751,14 +1754,14 @@ def checkout(request, user_address_id):
                 "price": customer_price,
                 "count": 1,
                 "order_type": order.order_type,
+                "price_data": price_data,
             }
         )
+        context["estimated_taxes"] += price_data["tax"]
+        context["total"] += price_data["total"]
         context["cart_count"] += 1
         order_id_lst.append(order.id)
-    # TODO: Use the quote to calculate the total price with tax.
-    checkout_order = QuoteUtils.create_quote(order_id_lst, None, quote_sent=False)
-    context["estimated_taxes"] = checkout_order.quote["estimated_taxes"]
-    context["total"] = checkout_order.quote["total"]
+
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
         messages.error(request, "This Order is empty.")
