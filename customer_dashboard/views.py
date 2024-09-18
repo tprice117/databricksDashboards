@@ -594,9 +594,11 @@ def customer_impersonation_start(request):
                 user = user_group.users.filter(type=UserType.ADMIN).first()
             elif user_id:
                 user = User.objects.get(id=user_id)
-                # user_group = user.user_group
-                # if user_group:
-                #     user_group_id = user_group.id
+                # If user is an Admin, then set the user_group to enable global view.
+                if user.type == UserType.ADMIN:
+                    user_group = user.user_group
+                    if user_group:
+                        user_group_id = user_group.id
             if not user:
                 user = user_group.users.first()
                 if not user:
