@@ -13,6 +13,7 @@ from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 from payment_methods.utils import DSPaymentMethods
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
+from payment_methods.utils.detect_card_type import detect_card_type
 
 logger = logging.getLogger(__name__)
 
@@ -32,44 +33,52 @@ class PaymentMethod(BaseModel):
 
     @property
     def card_number(self):
+        """Return all the digits with * except the last 4 digits."""
         response = self.get_card()
-        return (
-            response["data"]["number"]
-            if response and "data" in response and "number" in response["data"]
-            else None
-        )
+        return response["number"]
 
     @property
     def card_brand(self):
         response = self.get_card()
-        return (
-            response["data"]["brand"]
-            if response and "data" in response and "brand" in response["data"]
-            else None
-        )
+        return response["brand"]
 
     @property
     def card_exp_month(self):
         response = self.get_card()
-        return (
-            response["data"]["expiration_month"]
-            if response
-            and "data" in response
-            and "expiration_month" in response["data"]
-            else None
-        )
+        return response["expiration_month"]
 
     @property
     def card_exp_year(self):
         response = self.get_card()
-        return (
-            response["data"]["expiration_year"]
-            if response and "data" in response and "expiration_year" in response["data"]
-            else None
-        )
+        return response["expiration_year"]
 
     def get_card(self):
-        return DSPaymentMethods.Tokens.get_card(self.token)
+        """Returns CreditCardType with the card number masked.
+        {"number": "******1111", "brand": "", ""expiration_month": 12, "expiration_year": 2023}
+        payment_methods.api.v1.serializers.payment_method.CreditCardType
+        Not imported to avoid circular import."""
+        response = DSPaymentMethods.Tokens.get_card(self.token)
+        card = {
+            "number": None,
+            "brand": None,
+            "expiration_month": None,
+            "expiration_year": None,
+        }
+        if response and "data" in response and "number" in response["data"]:
+            card["number"] = re.sub(r"\d(?=\d{4})", "*", response["data"]["number"])
+            card["brand"] = detect_card_type(response["data"]["number"])
+        if (
+            card["brand"] is None
+            and response
+            and "data" in response
+            and "brand" in response["data"]
+        ):
+            card["brand"] = response["data"]["brand"]
+        if response and "data" in response and "expiration_month" in response["data"]:
+            card["expiration_month"] = response["data"]["expiration_month"]
+        if response and "data" in response and "expiration_year" in response["data"]:
+            card["expiration_year"] = response["data"]["expiration_year"]
+        return card
 
     @property
     def inactive_reason(self):
