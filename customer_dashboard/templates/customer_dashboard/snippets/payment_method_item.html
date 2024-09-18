@@ -2,6 +2,7 @@
 <span class="badge bg-success fs-6 d-none" id="default-badge" hx-swap-oob="true"><i class="fas fa-star"></i> Default</span>
 <div class="card" id="paymentMethod{{ forloop.counter }}">
     <div class="card-body">
+        {% with card=payment_method.get_card %}
         <div class="form-check">
             <!-- Only add checkbox if this is on the checkout form. -->
             {% if payment_method.active and is_checkout %}
@@ -10,20 +11,20 @@
             <div class="row">
                 <div class="col-6">
                     <h4 style="margin-bottom: 0px;">
-                        {% if payment_method.card_brand %}
-                            {{ payment_method.card_brand }}
+                        {% if card.brand %}
+                            {{ card.brand|upper }}
                         {% else %}
                             Card
                         {% endif %} XXXX
-                        {% if payment_method.card_number %}
-                            {{ payment_method.card_number|slice:"-4:" }}
+                        {% if card.number %}
+                            {{ card.number|slice:"-4:" }}
                         {% endif %}
                         {% if payment_method.is_default %}
                             <span class="badge bg-success fs-6" id="default-badge"><i class="fas fa-star"></i> Default</span></h4>
                         {% endif %}
                 </div>
                 <div class="col-5">
-                    <p class="text-end" style="margin-bottom: 0px;">Expires {{ payment_method.card_exp_month }}/{{ payment_method.card_exp_year }}</p>
+                    <p class="text-end" style="margin-bottom: 0px;">Expires {{ card.expiration_month }}/{{ card.expiration_year }}</p>
                 </div>
                 <div class="col-1">
                     <div class="dropdown no-arrow">
@@ -82,5 +83,6 @@
                 </div>
             {% endif %}
         </div>
+        {% endwith %}
     </div>
 </div>
