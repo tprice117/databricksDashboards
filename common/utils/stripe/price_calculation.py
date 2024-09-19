@@ -75,6 +75,7 @@ class PriceCalculation:
                             "items": [line_item],
                         }
             stripe_items = [item["stripe_data"] for item in combined_items.values()]
+            # https://docs.stripe.com/api/tax/calculations/object
             ret = stripe.tax.Calculation.create(
                 currency="usd",
                 customer_details={
@@ -107,6 +108,7 @@ class PriceCalculation:
             for item in ret["line_items"]["data"]:
                 combined_item = combined_items.get(item["reference"])
                 if combined_item:
+                    # Update the line items with the tax amount.
                     for line_item in combined_item["items"]:
                         line_type_total = combined_item["stripe_data"]["amount"] / 100
                         if line_item.tax is None:

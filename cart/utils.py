@@ -1,7 +1,68 @@
+from typing import Iterable
 from django.utils import timezone
 from api.models.order.order import Order
+from api.models.user.user_address import UserAddress
 
 from .models import CheckoutOrder
+
+
+class CheckoutUtils:
+    @staticmethod
+    def checkout(
+        user_address: UserAddress, orders: Iterable[Order], payment_method_id: str
+    ) -> CheckoutOrder:
+        # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
+        # For now always set as default.
+        if payment_method_id == "paylater":
+            pass
+        else:
+            user_address.default_payment_method_id = payment_method_id
+            user_address.save()
+        checkout_order = None
+        order_id_lst = []
+        customer_price = 0
+        seller_price = 0
+        estimated_taxes = 0
+        total = 0
+        for order in orders:
+            order_id_lst.append(order.id)
+            seller_price += order.seller_price()
+            customer_price += order.customer_price()
+            price_data = order.get_price()
+            estimated_taxes += price_data["tax"]
+            total += price_data["total"]
+            if not checkout_order and order.checkout_order:
+                checkout_order: CheckoutOrder = order.checkout_order
+            order.submit_order(override_approval_policy=True)
+
+        if checkout_order:
+            if payment_method_id == "paylater":
+                checkout_order.pay_later = True
+            else:
+                checkout_order.payment_method = user_address.default_payment_method
+            checkout_order.customer_price = customer_price
+            checkout_order.seller_price = seller_price
+            checkout_order.estimated_taxes = estimated_taxes
+            checkout_order.take_rate = order.order_group.take_rate
+            checkout_order.save()
+        else:
+            checkout_order = CheckoutOrder(
+                user_address=user_address,
+                customer_price=customer_price,
+                seller_price=seller_price,
+                estimated_taxes=estimated_taxes,
+                quote="",
+            )
+            if payment_method_id == "paylater":
+                checkout_order.pay_later = True
+            else:
+                checkout_order.payment_method = user_address.default_payment_method
+            checkout_order.save()
+            # Update events to point to the checkout order
+            Order.objects.filter(id__in=order_id_lst).update(
+                checkout_order=checkout_order
+            )
+        return checkout_order
 
 
 class QuoteUtils:

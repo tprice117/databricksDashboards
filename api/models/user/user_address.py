@@ -80,6 +80,14 @@ class UserAddress(BaseModel):
     def formatted_address(self):
         return f"{self.street} {self.city}, {self.state} {self.postal_code}"
 
+    def get_cart(self):
+        """Get the cart orders for this address ordered by newest Booking/OrderGroup start date."""
+        orders = Order.objects.filter(order_group__user_address_id=self.id)
+        orders = orders.filter(submitted_on__isnull=True)
+        orders = orders.prefetch_related("order_line_items")
+        orders = orders.order_by("-order_group__start_date")
+        return orders
+
     def update_stripe(self):
         # Populate Stripe Customer ID, if not already populated.
         if not self.stripe_customer_id:
