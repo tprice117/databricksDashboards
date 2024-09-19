@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "common",
     "communications",
     "customer_dashboard",
+    "dashboards",
     "external_contracts",
     "matching_engine",
     "pricing_engine",
