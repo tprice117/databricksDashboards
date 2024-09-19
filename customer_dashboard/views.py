@@ -79,7 +79,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
 )
 from pricing_engine.pricing_engine import PricingEngine
 from cart.models import CheckoutOrder
-from cart.utils import QuoteUtils
+from cart.utils import QuoteUtils, CheckoutUtils
 
 from .forms import (
     AccessDetailsForm,
@@ -1646,67 +1646,13 @@ def checkout(request, user_address_id):
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
     context["is_checkout"] = 1
     # Get all orders in the cart for this user_address_id.
-    orders = get_booking_objects(
-        request, context["user"], context["user_group"], exclude_in_cart=False
-    )
-    orders = orders.filter(order_group__user_address_id=user_address_id)
-    orders = orders.filter(submitted_on__isnull=True)
-    orders = orders.prefetch_related("order_line_items")
-    orders = orders.order_by("-order_group__start_date")
+    orders = context["user_address"].get_cart()
 
     if request.method == "POST":
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
-        estimated_taxes = request.POST.get("estimated_taxes")
         if payment_method_id:
-            # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
-            # For now always set as default.
-            if payment_method_id == "paylater":
-                pass
-            else:
-                context["user_address"].default_payment_method_id = payment_method_id
-                context["user_address"].save()
-            checkout_order = None
-            order_id_lst = []
-            customer_price = 0
-            seller_price = 0
-            for order in orders:
-                seller_price += order.seller_price()
-                customer_price += order.customer_price()
-                order_id_lst.append(order.id)
-                if not checkout_order and order.checkout_order:
-                    checkout_order = order.checkout_order
-                order.submit_order(override_approval_policy=True)
-
-            if checkout_order:
-                if payment_method_id == "paylater":
-                    checkout_order.pay_later = True
-                else:
-                    checkout_order.payment_method = context[
-                        "user_address"
-                    ].default_payment_method
-                checkout_order.customer_price = customer_price
-                checkout_order.seller_price = seller_price
-                checkout_order.estimated_taxes = estimated_taxes
-                checkout_order.take_rate = order.order_group.take_rate
-                checkout_order.save()
-            else:
-                checkout_order = CheckoutOrder(
-                    user_address=context["user_address"],
-                    customer_price=customer_price,
-                    seller_price=seller_price,
-                    estimated_taxes=estimated_taxes,
-                )
-                if payment_method_id == "paylater":
-                    checkout_order.pay_later = True
-                else:
-                    checkout_order.payment_method = context[
-                        "user_address"
-                    ].default_payment_method
-                # Update events to point to the checkout order
-                Order.objects.filter(id__in=order_id_lst).update(
-                    checkout_order=checkout_order
-                )
+            CheckoutUtils.checkout(context["user_address"], orders, payment_method_id)
             messages.success(request, "Successfully checked out!")
             return HttpResponseRedirect(reverse("customer_cart"))
         else:

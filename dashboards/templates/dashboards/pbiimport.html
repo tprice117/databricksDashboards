@@ -1,0 +1,19 @@
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Command Center
+{% endblock %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/powerbi-client/2.18.2/powerbi.min.js"></script>
+
+
+    <div class="container-fluid">
+        <div class="row">
+            <iframe title="Sales Dashboard" width="1140" height="541.25" src="https://app.powerbi.com/reportEmbed?reportId=cbf09a4c-afd3-4b30-b682-8e9c331bdbf5&autoAuth=true&ctid=5a7d42d9-b3cf-4720-b6c0-8836594679d6" frameborder="0" allowFullScreen="true"></iframe>        
+        </div> 
+        
+    </div>
+
+{% endblock %}
