@@ -1585,6 +1585,7 @@ def remove_payment_method(request, payment_method_id):
 def add_payment_method(request):
     context = get_user_context(request)
     http_status = 204
+    status_text = ""
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         user_group_id = request.POST.get("user_group")
@@ -1600,9 +1601,17 @@ def add_payment_method(request):
                 context["user_group"] = UserGroup.objects.filter(
                     id=user_group_id
                 ).first()
-            context["user"] = (
-                context["user_group"].users.filter(type=UserType.ADMIN).first()
-            )
+            # If context["user"].user_group_id is user_group_id,
+            # then use context["user"], else get the first user in the user group.
+            if context["user"].user_group:
+                if str(context["user"].user_group_id) != str(user_group_id):
+                    context["user"] = (
+                        context["user_group"].users.filter(type=UserType.ADMIN).first()
+                    )
+            else:
+                context["user"] = (
+                    context["user_group"].users.filter(type=UserType.ADMIN).first()
+                )
             if not context["user"]:
                 context["user"] = context["user_group"].users.first()
         token = request.POST.get("token")
@@ -1622,12 +1631,12 @@ def add_payment_method(request):
 
             else:
                 if not context["user"]:
-                    messages.error(request, "Unable to save card. User not found.")
+                    status_text = "Unable to save card. User not found."
                 elif not context["user_group"]:
-                    messages.error(request, "Unable to save card. Company not found.")
+                    status_text = "Unable to save card. Company not found."
                 http_status = 400
 
-    return HttpResponse(status=http_status)
+    return HttpResponse(status=http_status, content=status_text)
 
 
 @login_required(login_url="/admin/login/")
@@ -1737,6 +1746,8 @@ def checkout(request, user_address_id):
         context["payment_methods"].append(payment_method)
     context["needs_approval"] = False
     order_id_lst = []
+    context["estimated_taxes"] = 0
+    context["total"] = 0
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
@@ -1744,6 +1755,7 @@ def checkout(request, user_address_id):
         customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full
         context["pre_tax_subtotal"] += customer_price
+        price_data = order.get_price()
         context["cart"].append(
             {
                 "order": order,
@@ -1751,14 +1763,14 @@ def checkout(request, user_address_id):
                 "price": customer_price,
                 "count": 1,
                 "order_type": order.order_type,
+                "price_data": price_data,
             }
         )
+        context["estimated_taxes"] += price_data["tax"]
+        context["total"] += price_data["total"]
         context["cart_count"] += 1
         order_id_lst.append(order.id)
-    # TODO: Use the quote to calculate the total price with tax.
-    checkout_order = QuoteUtils.create_quote(order_id_lst, None, quote_sent=False)
-    context["estimated_taxes"] = checkout_order.quote["estimated_taxes"]
-    context["total"] = checkout_order.quote["total"]
+
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
         messages.error(request, "This Order is empty.")
