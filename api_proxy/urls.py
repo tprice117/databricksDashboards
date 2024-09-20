@@ -176,6 +176,8 @@ urlpatterns = [
     path("matching-engine/", include("matching_engine.urls")),
     # Pricing Engine.
     path("pricing-engine/", include("pricing_engine.urls")),
+    # Checkout.
+    path("checkout/", include("cart.urls")),
     # API App URLs.
     path("api/", include("api.urls")),
     # Dashboard URLs.
