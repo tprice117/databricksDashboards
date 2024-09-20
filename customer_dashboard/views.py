@@ -3028,6 +3028,9 @@ def company_detail(request, user_group_id=None):
             if form.cleaned_data.get("name") != user_group.name:
                 user_group.name = form.cleaned_data.get("name")
                 save_db = True
+            if form.cleaned_data.get("apollo_id") != user_group.apollo_id:
+                user_group.apollo_id = form.cleaned_data.get("apollo_id")
+                save_db = True
             if form.cleaned_data.get("pay_later") != user_group.pay_later:
                 user_group.pay_later = form.cleaned_data.get("pay_later")
                 save_db = True
@@ -3101,6 +3104,7 @@ def company_detail(request, user_group_id=None):
             form = UserGroupForm(
                 initial={
                     "name": user_group.name,
+                    "apollo_id": user_group.apollo_id,
                     "pay_later": user_group.pay_later,
                     "autopay": user_group.autopay,
                     "net_terms": user_group.net_terms,
@@ -3128,6 +3132,7 @@ def company_detail(request, user_group_id=None):
         context["form"] = UserGroupForm(
             initial={
                 "name": user_group.name,
+                "apollo_id": user_group.apollo_id,
                 "pay_later": user_group.pay_later,
                 "autopay": user_group.autopay,
                 "net_terms": user_group.net_terms,
@@ -3219,6 +3224,7 @@ def new_company(request):
                 # Create New UserGroup
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
+                    apollo_id=form.cleaned_data.get("apollo_id"),
                     pay_later=form.cleaned_data.get("pay_later"),
                     autopay=form.cleaned_data.get("autopay"),
                     net_terms=form.cleaned_data.get("net_terms"),
