@@ -1652,9 +1652,17 @@ def checkout(request, user_address_id):
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
-            CheckoutUtils.checkout(context["user_address"], orders, payment_method_id)
-            messages.success(request, "Successfully checked out!")
-            return HttpResponseRedirect(reverse("customer_cart"))
+            if payment_method_id == "paylater":
+                payment_method_id = None
+            try:
+                CheckoutUtils.checkout(
+                    context["user_address"], orders, payment_method_id
+                )
+                messages.success(request, "Successfully checked out!")
+                return HttpResponseRedirect(reverse("customer_cart"))
+            except ValidationError as e:
+                messages.error(request, e.message)
+                context["form_error"] = e.message
         else:
             messages.error(request, "No payment method selected.")
             context["form_error"] = "No payment method selected."

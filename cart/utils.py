@@ -1,68 +1,96 @@
-from typing import Iterable
+from typing import Iterable, Union
+import logging
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from api.models.order.order import Order
 from api.models.user.user_address import UserAddress
 
 from .models import CheckoutOrder
 
+logger = logging.getLogger(__name__)
+
 
 class CheckoutUtils:
     @staticmethod
     def checkout(
-        user_address: UserAddress, orders: Iterable[Order], payment_method_id: str
+        user_address: UserAddress,
+        orders: Iterable[Order],
+        payment_method_id: Union[str, None],
     ) -> CheckoutOrder:
-        # TODO: If the payment method is not added to the user address, then how would we know which payment method to use?
-        # For now always set as default.
-        if payment_method_id == "paylater":
-            pass
-        else:
-            user_address.default_payment_method_id = payment_method_id
-            user_address.save()
-        checkout_order = None
-        order_id_lst = []
-        customer_price = 0
-        seller_price = 0
-        estimated_taxes = 0
-        total = 0
-        for order in orders:
-            order_id_lst.append(order.id)
-            seller_price += order.seller_price()
-            customer_price += order.customer_price()
-            price_data = order.get_price()
-            estimated_taxes += price_data["tax"]
-            total += price_data["total"]
-            if not checkout_order and order.checkout_order:
-                checkout_order: CheckoutOrder = order.checkout_order
-            order.submit_order(override_approval_policy=True)
+        try:
+            # TODO: Until CheckoutOrder.payment_method is used when creating invoice just set as location default.
+            if payment_method_id:
+                user_address.default_payment_method_id = payment_method_id
+                user_address.save()
+            # Get the total price of all the orders.
+            checkout_order = None
+            order_id_lst = []
+            customer_price = 0
+            seller_price = 0
+            estimated_taxes = 0
+            total = 0
+            for order in orders:
+                order_id_lst.append(order.id)
+                seller_price += order.seller_price()
+                customer_price += order.customer_price()
+                price_data = order.get_price()
+                estimated_taxes += price_data["tax"]
+                total += price_data["total"]
+                if not checkout_order and order.checkout_order:
+                    checkout_order: CheckoutOrder = order.checkout_order
 
-        if checkout_order:
-            if payment_method_id == "paylater":
-                checkout_order.pay_later = True
+            total = round(total, 2)  # Round to 2 decimal places.
+            # If payment_method is None, then assume pay_later is True.
+            if not payment_method_id:
+                if (
+                    user_address.user_group
+                    and float(user_address.user_group.credit_limit_remaining) < total
+                ):
+                    raise ValidationError(
+                        f"Company does not have enough credit to checkout [credit: {user_address.user_group.credit_limit_remaining} | total: {total:.2f}]."
+                    )
             else:
-                checkout_order.payment_method = user_address.default_payment_method
-            checkout_order.customer_price = customer_price
-            checkout_order.seller_price = seller_price
-            checkout_order.estimated_taxes = estimated_taxes
-            checkout_order.take_rate = order.order_group.take_rate
-            checkout_order.save()
-        else:
-            checkout_order = CheckoutOrder(
-                user_address=user_address,
-                customer_price=customer_price,
-                seller_price=seller_price,
-                estimated_taxes=estimated_taxes,
-                quote="",
-            )
-            if payment_method_id == "paylater":
-                checkout_order.pay_later = True
+                # TODO: Add in logic to create the invoice and check if the user has enough credit on their account in Stripe.
+                pass
+
+            # Submit all the orders.
+            for order in orders:
+                order.submit_order(override_approval_policy=True)
+
+            if checkout_order:
+                if payment_method_id:
+                    checkout_order.payment_method = user_address.default_payment_method
+                else:
+                    checkout_order.pay_later = True
+                checkout_order.customer_price = customer_price
+                checkout_order.seller_price = seller_price
+                checkout_order.estimated_taxes = estimated_taxes
+                checkout_order.take_rate = order.order_group.take_rate
+                checkout_order.save()
             else:
-                checkout_order.payment_method = user_address.default_payment_method
-            checkout_order.save()
-            # Update events to point to the checkout order
-            Order.objects.filter(id__in=order_id_lst).update(
-                checkout_order=checkout_order
+                checkout_order = CheckoutOrder(
+                    user_address=user_address,
+                    customer_price=customer_price,
+                    seller_price=seller_price,
+                    estimated_taxes=estimated_taxes,
+                    quote="",
+                )
+                if payment_method_id:
+                    checkout_order.payment_method = user_address.default_payment_method
+                else:
+                    checkout_order.pay_later = True
+                checkout_order.save()
+                # Update transactions/orders to point to the checkout order
+                Order.objects.filter(id__in=order_id_lst).update(
+                    checkout_order=checkout_order
+                )
+            return checkout_order
+        except Exception as e:
+            # Catch and log the exception and then re-raise it.
+            logger.exception(
+                f"CheckoutUtils.checkout: [{user_address}]-[{orders}]-[{payment_method_id}]-[{e}]"
             )
-        return checkout_order
+            raise e
 
 
 class QuoteUtils:
