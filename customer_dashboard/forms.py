@@ -243,6 +243,11 @@ class UserGroupForm(forms.Form):
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    apollo_id = forms.CharField(
+        max_length=128,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=True,
+    )
     pay_later = forms.BooleanField(
         initial=False,
         widget=forms.CheckboxInput(
