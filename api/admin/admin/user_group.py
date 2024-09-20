@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils.html import format_html
+from django.conf import settings
 
 from admin_approvals.admin.inlines.user_group_admin_approval_order import (
     UserGroupAdminApprovalOrderInline,
@@ -29,7 +30,7 @@ from api.admin.inlines import (
     UserInline,
 )
 from api.forms import CsvImportForm
-from api.models import UserGroup
+from api.models import UserGroup, User
 from billing.utils.billing import BillingUtils
 
 
@@ -67,6 +68,23 @@ class UserGroupAdmin(admin.ModelAdmin):
     raw_id_fields = ("seller", "created_by", "updated_by")
 
     change_list_template = "admin/entities/user_group_changelist.html"
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "account_owner":
+            # Only show users in the Downstream Team UserGroup.
+            if settings.ENVIRONMENT == "TEST":
+                kwargs["queryset"] = User.objects.filter(
+                    user_group="bd49eaab-4b46-46c0-a9bf-bace2896b795"
+                )
+            else:
+                # DEV: Customer Team #1 (CORE), Random Company
+                kwargs["queryset"] = User.objects.filter(
+                    user_group__in=[
+                        "3e717df9-f811-4ddd-8d2f-a5f19b807321",
+                        "38309b8e-0205-45dc-b12c-3bfa365825e2",
+                    ]
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_urls(self):
         urls = super().get_urls()

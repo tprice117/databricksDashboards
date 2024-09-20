@@ -34,6 +34,7 @@ class CheckoutOrderAdmin(admin.ModelAdmin):
     list_filter = ["pay_later", UserAddressFilter, CreatedDateFilter]
     inlines = [OrderInline]
     search_fields = [
+        "id",
         "created_by__email",
         "user_address__street",
         "user_address__city",

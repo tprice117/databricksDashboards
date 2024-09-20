@@ -22,6 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 class UserGroup(BaseModel):
+    class ApolloStage(models.TextChoices):
+        LEAD = "LEAD", "Active Opportunity"
+        CUSTOMER = "CUSTOMER", "Current Client"
+        CHURNED = "CHURNED", "Churned Customer"
+        DEAD_LEAD = "DEAD_LEAD", "Dead opportunity"
+
     class TaxExemptStatus(models.TextChoices):
         NONE = "none"
         EXEMPT = "exempt"
@@ -94,6 +100,21 @@ class UserGroup(BaseModel):
         blank=True,
         null=True,
         help_text="This is the company_id in Intercom.",
+    )
+    # Apollo
+    account_owner = models.ForeignKey(
+        "api.User",
+        on_delete=models.DO_NOTHING,
+        related_name="account_owner",
+        blank=True,
+        null=True,
+    )
+    apollo_id = models.CharField(max_length=128, blank=True, null=True)
+    stage = models.CharField(
+        max_length=20,
+        choices=ApolloStage.choices,
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
