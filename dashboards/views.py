@@ -181,13 +181,14 @@ def index(request):
     context["supplierAmountByDay"] = supplierAmountByDay
     supplierAmountByDay_dict = [
         (
-            float(entry["suppAmount"])
-            if isinstance(entry["suppAmount"], Decimal)
+            float(entry["suppAmount"]) if isinstance(entry["suppAmount"], Decimal)
+            else float(0) if entry[suppAmount] is None
             else entry["suppAmount"]
         )
         for entry in supplierAmount
-    ]
 
+
+    ]
     # supplierAmountSum
     supplierAmountSum = Order.objects.annotate(
         calculated_value=Sum(
@@ -263,7 +264,8 @@ def index(request):
     netRevenueByMonth_labels = []
     netRevenueByMonth_data = []
     customerAmount_dictSum = sum(customerAmountByDay_dict)
-    supplierAmount_dictSum = sum(supplierAmountByDay_dict)
+    # supplierAmount_dictSum = sum(supplierAmountByDay_dict)
+    supplierAmount_dictSum = 0
 
     netRevenueSum = customerAmount_dictSum - supplierAmount_dictSum
     context["netRevenueByMonth"] = netRevenueByDay
@@ -401,6 +403,9 @@ def pbiimport(request):
     report_url = "https://app.powerbi.com/reportEmbed?reportId=cbf09a4c-afd3-4b30-b682-8e9c331bdbf5&autoAuth=true&ctid=5a7d42d9-b3cf-4720-b6c0-8836594679d6"
     context["report_url"] = report_url
     return render(request, "dashboards/pbiimport.html", context)
+
+def poatest(request):
+    return render(request, "dashboards/poatest.html")
 
 
 @login_required(login_url="/admin/login/")

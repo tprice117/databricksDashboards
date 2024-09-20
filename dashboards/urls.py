@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path("index/", views.index, name="index"),
     path("pbiimport/", views.pbiimport, name="pbiimport"),
+    path("poatest/", views.poatest, name="poatest"),
 
     path(
         "",
