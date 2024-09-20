@@ -250,9 +250,7 @@ class UserGroupForm(forms.Form):
     )
     pay_later = forms.BooleanField(
         initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
+        widget=forms.HiddenInput(),
         required=False,
     )
     autopay = forms.BooleanField(
