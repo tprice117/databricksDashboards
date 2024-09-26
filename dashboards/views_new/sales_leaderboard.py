@@ -19,7 +19,6 @@ from api.models.user.user_group import *
 @login_required(login_url="/admin/login/")
 def sales_leaderboard(request):
     # Get the first of the month.
-    current_month = timezone.now().month
     first_of_month = timezone.now().replace(
         day=1,
         hour=0,
@@ -29,10 +28,14 @@ def sales_leaderboard(request):
     )
 
     # Get Orders for the current month.
-    orders_this_month = Order.objects.all()
+    orders_this_month = Order.objects.filter(
+        end_date__gte=first_of_month,
+    )
 
     # Get all Users.
-    users = User.objects.all()
+    users = User.objects.filter(
+        is_staff=True,
+    )
 
     # For each User, add their aggregated Order data for this month.
     for user in users:
