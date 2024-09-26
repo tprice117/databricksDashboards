@@ -37,7 +37,7 @@
         <ul class="navbar-nav flex-nowrap ms-auto">
             {% if request.user.is_staff %}
                 <a href="{% url 'sales_leaderboard' %}" style="margin-top: 24px; margin-right: 24px;">
-                    <i class="fas fa-money-bill"></i> Sales Dashboard
+                    <i class="fas fa-money-bill"></i> Sales Leaderboard
                 </a>
                 {% if user_group %}
                     <p class="text-center fw-bold" style="margin: auto;">{{ user_group.name }} |&nbsp;</p>
