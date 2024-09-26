@@ -30,7 +30,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.filters import OrderGroupFilterset, OrderFilterset
+from api.filters import OrderFilterset, OrderGroupFilterset
 from api.models.order.order_group_material import OrderGroupMaterial
 from api.models.order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from api.models.order.order_group_service import OrderGroupService
@@ -62,9 +62,9 @@ from .models import (
     Order,
     OrderDisposalTicket,
     OrderGroup,
+    OrderGroupAttachment,
     OrderLineItem,
     OrderLineItemType,
-    OrderGroupAttachment,
     Payout,
     Product,
     ProductAddOnChoice,
@@ -110,8 +110,8 @@ from .serializers import (
     MainProductServiceRecurringFrequencySerializer,
     MainProductWasteTypeSerializer,
     OrderDisposalTicketSerializer,
-    OrderGroupSerializer,
     OrderGroupAttachmentSerializer,
+    OrderGroupSerializer,
     OrderLineItemSerializer,
     OrderLineItemTypeSerializer,
     OrderSerializer,
@@ -218,18 +218,10 @@ class UserViewSet(viewsets.ModelViewSet):
         self.queryset = self.queryset.select_related(
             "user_group__seller", "user_group__legal"
         )
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
+        is_superuser = self.request.user == "ALL"
+
         if is_superuser:
             return self.queryset
-        elif self.request.user.user_group and self.request.user.is_admin:
-            user_ids = User.objects.filter(
-                user_group=self.request.user.user_group
-            ).values_list("id", flat=True)
-            return self.queryset.filter(id__in=user_ids)
         else:
             return self.queryset.filter(id=self.request.user.id)
 
@@ -1424,84 +1416,84 @@ def create_products_for_main_product(request, main_product_id):
 
 def test3(request):
     # Move the "rate" field to "flat_rate_price" for all OrderGroupServices.
-    order_group_services = OrderGroupService.objects.all()
+    # order_group_services = OrderGroupService.objects.all()
 
-    order_group_service: OrderGroupService
-    for order_group_service in order_group_services:
-        print("=================")
-        print(order_group_service.id)
-        if (
-            order_group_service.flat_rate_price is None
-            and order_group_service.price_per_mile is None
-        ):
-            try:
-                print("Updating order_group_service: {}".format(order_group_service.id))
-                order_group_service.flat_rate_price = order_group_service.rate
-                order_group_service.save()
-                print(
-                    "Updated/saved order_group_service: {}".format(
-                        order_group_service.id
-                    )
-                )
-            except Exception as error:
-                print("An exception occurred: {}".format(error))
+    # order_group_service: OrderGroupService
+    # for order_group_service in order_group_services:
+    #     print("=================")
+    #     print(order_group_service.id)
+    #     if (
+    #         order_group_service.flat_rate_price is None
+    #         and order_group_service.price_per_mile is None
+    #     ):
+    #         try:
+    #             print("Updating order_group_service: {}".format(order_group_service.id))
+    #             order_group_service.flat_rate_price = order_group_service.rate
+    #             order_group_service.save()
+    #             print(
+    #                 "Updated/saved order_group_service: {}".format(
+    #                     order_group_service.id
+    #                 )
+    #             )
+    #         except Exception as error:
+    #             print("An exception occurred: {}".format(error))
 
-    # For all OrderGroupMaterials, populate the OrderGroupMaterialWasteTypes.
-    order_group_materials = OrderGroupMaterial.objects.all()
+    # # For all OrderGroupMaterials, populate the OrderGroupMaterialWasteTypes.
+    # order_group_materials = OrderGroupMaterial.objects.all()
 
-    order_group_material: OrderGroupMaterial
-    for order_group_material in order_group_materials:
-        print("=================")
-        print(order_group_material.id)
-        # Get the SellerProductSellerLocation.
-        seller_product_seller_location = (
-            order_group_material.order_group.seller_product_seller_location
-        )
+    # order_group_material: OrderGroupMaterial
+    # for order_group_material in order_group_materials:
+    #     print("=================")
+    #     print(order_group_material.id)
+    #     # Get the SellerProductSellerLocation.
+    #     seller_product_seller_location = (
+    #         order_group_material.order_group.seller_product_seller_location
+    #     )
 
-        print(
-            "SellerProductSellerLocation: {}".format(seller_product_seller_location.id)
-        )
+    #     print(
+    #         "SellerProductSellerLocation: {}".format(seller_product_seller_location.id)
+    #     )
 
-        # Get the SellerProductSellerLocationMaterial.
-        seller_product_seller_location_material = (
-            seller_product_seller_location.material
-            if hasattr(seller_product_seller_location, "material")
-            else None
-        )
+    #     # Get the SellerProductSellerLocationMaterial.
+    #     seller_product_seller_location_material = (
+    #         seller_product_seller_location.material
+    #         if hasattr(seller_product_seller_location, "material")
+    #         else None
+    #     )
 
-        print(
-            "SellerProductSellerLocationMaterial: {}".format(
-                seller_product_seller_location_material
-            )
-        )
+    #     print(
+    #         "SellerProductSellerLocationMaterial: {}".format(
+    #             seller_product_seller_location_material
+    #         )
+    #     )
 
-        # For each SellerProductSellerLocationMaterialWasteType,
-        # create an OrderGroupMaterialWasteType.
-        if seller_product_seller_location_material:
-            print("Creating OrderGroupMaterialWasteTypes.")
-            for (
-                material_waste_type
-            ) in seller_product_seller_location_material.waste_types.all():
-                print(
-                    f"Creating OrderGroupMaterialWasteType for {material_waste_type.id}"
-                )
-                # Only create if a OrderGroupMaterialWasteType does not already exist
-                # for this OrderGroupMaterial and MainProductWasteType.
-                if not OrderGroupMaterialWasteType.objects.filter(
-                    order_group_material=order_group_material,
-                    main_product_waste_type=material_waste_type.main_product_waste_type,
-                ).exists():
-                    OrderGroupMaterialWasteType.objects.create(
-                        order_group_material=order_group_material,
-                        main_product_waste_type=material_waste_type.main_product_waste_type,
-                        price_per_ton=material_waste_type.price_per_ton,
-                        tonnage_included=material_waste_type.tonnage_included,
-                    )
-                    print(
-                        f"Created new OrderGroupMaterialWasteType for {material_waste_type.id}"
-                    )
-        else:
-            print("No SellerProductSellerLocationMaterial found.")
+    #     # For each SellerProductSellerLocationMaterialWasteType,
+    #     # create an OrderGroupMaterialWasteType.
+    #     if seller_product_seller_location_material:
+    #         print("Creating OrderGroupMaterialWasteTypes.")
+    #         for (
+    #             material_waste_type
+    #         ) in seller_product_seller_location_material.waste_types.all():
+    #             print(
+    #                 f"Creating OrderGroupMaterialWasteType for {material_waste_type.id}"
+    #             )
+    #             # Only create if a OrderGroupMaterialWasteType does not already exist
+    #             # for this OrderGroupMaterial and MainProductWasteType.
+    #             if not OrderGroupMaterialWasteType.objects.filter(
+    #                 order_group_material=order_group_material,
+    #                 main_product_waste_type=material_waste_type.main_product_waste_type,
+    #             ).exists():
+    #                 OrderGroupMaterialWasteType.objects.create(
+    #                     order_group_material=order_group_material,
+    #                     main_product_waste_type=material_waste_type.main_product_waste_type,
+    #                     price_per_ton=material_waste_type.price_per_ton,
+    #                     tonnage_included=material_waste_type.tonnage_included,
+    #                 )
+    #                 print(
+    #                     f"Created new OrderGroupMaterialWasteType for {material_waste_type.id}"
+    #                 )
+    #     else:
+    #         print("No SellerProductSellerLocationMaterial found.")
 
     return HttpResponse(status=200)
 
