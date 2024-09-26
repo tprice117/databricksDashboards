@@ -35,6 +35,7 @@ def sales_leaderboard(request):
     # Get all Users.
     users = User.objects.filter(
         is_staff=True,
+        groups__name="Sales",
     )
 
     # For each User, add their aggregated Order data for this month.
