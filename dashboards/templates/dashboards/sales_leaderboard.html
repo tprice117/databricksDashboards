@@ -1,0 +1,66 @@
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+Sales Leaderboard
+{% endblock %}
+{% block content %}
+<!-- <style>
+    .progress-bar{
+        width: {{takeRate}}%;
+    }
+</style> -->
+<div class="container-fluid">
+    <h3 class="text-light mb-4">Sales Leaderboard</h3>
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+                <table class="table my-0" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Sales Rep</th>
+                            <th>GMV</th>
+                            <th>Avg. Discount</th>
+                            <th>Net</th>
+                            <th>Order Count</th>
+                            <th>New Companies</th>
+                            <th>New Users</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                      {% for user in users %}
+                        <tr>
+                            <td>
+                              <img class="rounded-circle me-2" width="30" height="30" src="
+                                {% if user.photo %}
+                                  {{ user.photo.url }}
+                                {% else %}
+                                  {% static 'customer_dashboard/img/dogs/image2.jpeg' %}
+                                {% endif %}"
+                            >{{user.first_name}} {{user.last_name}}
+                            </td>
+                            <td>${{user.gmv|floatformat:2|intcomma}}</td>
+                            <td>{{user.avg_discount|floatformat:2|intcomma}}%</td>
+                            <td>${{user.net_revenue|floatformat:2|intcomma}}</td>
+                            <td>{{user.order_count|intcomma}}</td>
+                            <td>{{user.new_companies}}</td>
+                            <td>{{user.new_users}}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>Sales Rep</strong></td>
+                            <td><strong>GMV</strong></td>
+                            <td><strong>Avg. Discount</strong></td>
+                            <td><strong>Net</strong></td>
+                            <td><strong>New Users</strong></td>
+                            <td><strong>New Companies</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
