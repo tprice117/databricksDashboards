@@ -15,6 +15,9 @@ from admin_policies.api.v1.serializers import (
 )
 from api.models.main_product.main_product_tag import MainProductTag
 from notifications.utils.internal_email import send_email_on_new_signup
+from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+    PricingEngineResponseSerializer,
+)
 
 from .models import (
     AddOn,
@@ -32,10 +35,10 @@ from .models import (
     Order,
     OrderDisposalTicket,
     OrderGroup,
+    OrderGroupAttachment,
     OrderGroupMaterial,
     OrderGroupRental,
     OrderGroupService,
-    OrderGroupAttachment,
     OrderLineItem,
     OrderLineItemType,
     Payout,
@@ -68,10 +71,6 @@ from .models import (
     UserSellerReview,
     UserUserAddress,
     WasteType,
-)
-
-from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
-    PricingEngineResponseSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -262,17 +261,9 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         return obj.credit_limit_used()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    user_group = UserGroupSerializer(read_only=True)
-    user_group_id = serializers.PrimaryKeyRelatedField(
-        queryset=UserGroup.objects.all(),
-        required=False,
-        source="user_group",
-        write_only=True,
-        allow_null=True,
-    )
     username = serializers.CharField(
         required=False,
         allow_null=True,
@@ -311,6 +302,17 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
         validators = []
+
+
+class UserSerializer(UserSerializerWithoutUserGroup):
+    user_group = UserGroupSerializer(read_only=True)
+    user_group_id = serializers.PrimaryKeyRelatedField(
+        queryset=UserGroup.objects.all(),
+        required=False,
+        source="user_group",
+        write_only=True,
+        allow_null=True,
+    )
 
 
 class UserUserAddressSerializer(serializers.ModelSerializer):
