@@ -5,7 +5,7 @@ from api.admin.filters.seller_invoice_payable.admin_tasks import (
     SellerInvoicePayableAdminTasksFilter,
 )
 from api.admin.inlines.seller_invoice_payable_line_item import (
-    SellerInvoicePayableLineItemInline,
+    SellerInvoicePayableLineItemInline,LinkedOrdersSIPLI, ILI
 )
 from api.models import SellerInvoicePayable
 from common.admin.admin.base_admin import BaseModelAdmin
@@ -30,7 +30,8 @@ class SellerInvoicePayableAdmin(BaseModelAdmin):
         "supplier_invoice_id",
     ]
     inlines = [
-        SellerInvoicePayableLineItemInline,
+        LinkedOrdersSIPLI,
+        ILI,
     ]
     list_filter = [
         SellerLocationFilter,
@@ -66,5 +67,6 @@ class SellerInvoicePayableAdmin(BaseModelAdmin):
             },
         ),
         BaseModelAdmin.audit_fieldset,
+        
     ]
     readonly_fields = BaseModelAdmin.readonly_fields + []
