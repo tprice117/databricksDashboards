@@ -30,6 +30,7 @@ def sales_leaderboard(request):
     # Get Orders for the current month.
     orders_this_month = Order.objects.filter(
         end_date__gte=first_of_month,
+        status=Order.Status.COMPLETE,
     )
 
     # Get all Users.
