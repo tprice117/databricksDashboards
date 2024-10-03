@@ -67,6 +67,8 @@ from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
 from billing.models import Invoice
+from cart.models import CheckoutOrder
+from cart.utils import CheckoutUtils, QuoteUtils
 from common.models.choices.user_type import UserType
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
@@ -78,8 +80,6 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
 from pricing_engine.pricing_engine import PricingEngine
-from cart.models import CheckoutOrder
-from cart.utils import QuoteUtils, CheckoutUtils
 
 from .forms import (
     AccessDetailsForm,
@@ -753,7 +753,7 @@ def index(request):
 @catch_errors()
 def new_order(request):
     context = get_user_context(request)
-    main_product_categories = MainProductCategory.objects.all().order_by("sort")
+    main_product_categories = MainProductCategory.objects.all().order_by("name")
     context["main_product_categories"] = main_product_categories
 
     return render(
