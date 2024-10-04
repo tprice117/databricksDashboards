@@ -7,3 +7,6 @@ from payment_methods.models import PaymentMethodUser
 class PaymentMethodUserViewSet(viewsets.ModelViewSet):
     queryset = PaymentMethodUser.objects.all()
     serializer_class = PaymentMethodUserSerializer
+
+    def get_queryset(self):
+        return []

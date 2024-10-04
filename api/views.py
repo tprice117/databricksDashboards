@@ -149,22 +149,22 @@ logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-class SpectacularAPIViewNoAuth(SpectacularAPIView):
-    authentication_classes = []
-    permission_classes = []
+# class SpectacularAPIViewNoAuth(SpectacularAPIView):
+#     authentication_classes = []
+#     permission_classes = []
 
 
-class SpectacularRedocViewNoAuth(SpectacularRedocView):
-    authentication_classes = []
-    permission_classes = []
+# class SpectacularRedocViewNoAuth(SpectacularRedocView):
+#     authentication_classes = []
+#     permission_classes = []
 
 
-class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
-    authentication_classes = []
-    permission_classes = []
+# class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
+#     authentication_classes = []
+#     permission_classes = []
 
 
-class SellerViewSet(viewsets.ModelViewSet):
+class SellerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
     filterset_fields = ["id"]
@@ -173,13 +173,13 @@ class SellerViewSet(viewsets.ModelViewSet):
         return self.queryset.prefetch_related("seller_products")
 
 
-class SellerLocationViewSet(viewsets.ModelViewSet):
+class SellerLocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerLocation.objects.all()
     serializer_class = SellerLocationSerializer
     filterset_fields = ["id", "seller"]
 
 
-class UserAddressTypeViewSet(viewsets.ModelViewSet):
+class UserAddressTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = UserAddressType.objects.all().order_by("sort")
     serializer_class = UserAddressTypeSerializer
     filterset_fields = ["id"]
@@ -345,7 +345,7 @@ class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class AddOnChoiceViewSet(viewsets.ModelViewSet):
+class AddOnChoiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AddOnChoice.objects.all()
     serializer_class = AddOnChoiceSerializer
     filterset_fields = ["add_on", "add_on__main_product"]
@@ -353,25 +353,25 @@ class AddOnChoiceViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class AddOnViewSet(viewsets.ModelViewSet):
+class AddOnViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AddOn.objects.all()
     serializer_class = AddOnSerializer
     filterset_fields = ["main_product"]
 
 
-class DisposalLocationViewSet(viewsets.ModelViewSet):
+class DisposalLocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DisposalLocation.objects.all()
     serializer_class = DisposalLocationSerializer
     filterset_fields = ["id"]
 
 
-class DisposalLocationWasteTypeViewSet(viewsets.ModelViewSet):
+class DisposalLocationWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DisposalLocationWasteType.objects.all()
     serializer_class = DisposalLocationWasteTypeSerializer
     filterset_fields = ["id"]
 
 
-class MainProductAddOnViewSet(viewsets.ModelViewSet):
+class MainProductAddOnViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductAddOn.objects.all()
     serializer_class = MainProductAddOnSerializer
     filterset_fields = ["main_product", "add_on"]
@@ -486,49 +486,49 @@ class OrderViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(order_group__user__id=self.request.user.id)
 
 
-class OrderLineItemViewSet(viewsets.ModelViewSet):
+class OrderLineItemViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OrderLineItem.objects.all()
     serializer_class = OrderLineItemSerializer
     filterset_fields = ["id", "order"]
 
 
-class OrderLineItemTypeViewSet(viewsets.ModelViewSet):
+class OrderLineItemTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OrderLineItemType.objects.all()
     serializer_class = OrderLineItemTypeSerializer
     filterset_fields = ["id"]
 
 
-class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
+class OrderDisposalTicketViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OrderDisposalTicket.objects.all()
     serializer_class = OrderDisposalTicketSerializer
     filterset_fields = ["id"]
 
 
-class DayOfWeekViewSet(viewsets.ModelViewSet):  # added 2/25/2021
+class DayOfWeekViewSet(viewsets.ReadOnlyModelViewSet):  # added 2/25/2021
     queryset = DayOfWeek.objects.all()
     serializer_class = DayOfWeekSerializer
     filterset_fields = ["id"]
 
 
-class TimeSlotViewSet(viewsets.ModelViewSet):  # added 2/25/2021
+class TimeSlotViewSet(viewsets.ReadOnlyModelViewSet):  # added 2/25/2021
     queryset = TimeSlot.get_all_time_slots().order_by("-updated_on")
     serializer_class = TimeSlotSerializer
     filterset_fields = ["id"]
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):  # added 2/25/2021
+class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):  # added 2/25/2021
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filterset_fields = ["id"]
 
 
-class PayoutViewSet(viewsets.ModelViewSet):
+class PayoutViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Payout.objects.all()
     serializer_class = PayoutSerializer
     filterset_fields = ["order"]
 
 
-class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
+class ProductAddOnChoiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
     serializer_class = ProductAddOnChoiceSerializer
     filterset_fields = ["product", "add_on_choice", "product__main_product"]
@@ -536,19 +536,19 @@ class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class ProductViewSet(viewsets.ModelViewSet):
+class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filterset_fields = ["main_product"]
 
 
-class SellerProductViewSet(viewsets.ModelViewSet):
+class SellerProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProduct.objects.all()
     serializer_class = SellerProductSerializer
     filterset_fields = ["seller", "product"]
 
 
-class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocation.objects.all()
     serializer_class = SellerProductSellerLocationSerializer
     filterset_fields = ["seller_product", "seller_location"]
@@ -568,7 +568,7 @@ class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
         return self.queryset
 
 
-class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationServiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocationService.objects.all()
     serializer_class = SellerProductSellerLocationServiceSerializer
     filterset_fields = ["seller_product_seller_location"]
@@ -587,29 +587,29 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
             )
 
 
-class SellerInvoicePayableViewSet(viewsets.ModelViewSet):
+class SellerInvoicePayableViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerInvoicePayable.objects.all()
     serializer_class = SellerInvoicePayableSerializer
 
 
-class SellerInvoicePayableLineItemViewSet(viewsets.ModelViewSet):
+class SellerInvoicePayableLineItemViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerInvoicePayableLineItem.objects.all()
     serializer_class = SellerInvoicePayableLineItemSerializer
     filterset_fields = ["order"]
 
 
-class ServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+class ServiceRecurringFrequencyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ServiceRecurringFrequency.objects.all()
     serializer_class = ServiceRecurringFrequencySerializer
 
 
-class MainProductServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+class MainProductServiceRecurringFrequencyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductServiceRecurringFrequency.objects.all()
     serializer_class = MainProductServiceRecurringFrequencySerializer
 
 
 class SellerProductSellerLocationServiceRecurringFrequencyViewSet(
-    viewsets.ModelViewSet
+    viewsets.ReadOnlyModelViewSet
 ):
     queryset = SellerProductSellerLocationServiceRecurringFrequency.objects.all()
     serializer_class = SellerProductSellerLocationServiceRecurringFrequencySerializer
@@ -628,7 +628,7 @@ class SellerProductSellerLocationServiceRecurringFrequencyViewSet(
             )
 
 
-class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationRentalViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocationRental.objects.all()
     serializer_class = SellerProductSellerLocationRentalSerializer
     filterset_fields = ["seller_product_seller_location"]
@@ -647,7 +647,7 @@ class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
             )
 
 
-class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationMaterialViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocationMaterial.objects.all()
     serializer_class = SellerProductSellerLocationMaterialSerializer
     filterset_fields = ["seller_product_seller_location"]
@@ -666,7 +666,9 @@ class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
             )
 
 
-class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationMaterialWasteTypeViewSet(
+    viewsets.ReadOnlyModelViewSet
+):
     queryset = SellerProductSellerLocationMaterialWasteType.objects.all()
     serializer_class = SellerProductSellerLocationMaterialWasteTypeSerializer
     filterset_fields = [
@@ -690,7 +692,7 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet)
 
 @authentication_classes([])
 @permission_classes([])
-class WasteTypeViewSet(viewsets.ModelViewSet):
+class WasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
 
