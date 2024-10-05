@@ -335,9 +335,23 @@ class UserSerializer(UserSerializerWithoutUserGroup):
         allow_null=True,
     )
 
-    fields = UserSerializerWithoutUserGroup.fields + [
+    fields = [
+        "id",
         "user_group",
-        "user_group_id",
+        "user_id",
+        "phone",
+        "email",
+        "date_joined",
+        "first_name",
+        "last_name",
+        "username",
+        "photo_url",
+        "stripe_customer_id",
+        "is_admin",
+        "is_archived",
+        "is_active",
+        "terms_accepted",
+        "type",
     ]
 
 
