@@ -231,7 +231,24 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = "__all__"
+        fields = [
+            "id",
+            "user_group",
+            "user_id",
+            "phone",
+            "email",
+            "date_joined",
+            "first_name",
+            "last_name",
+            "username",
+            "photo_url",
+            "stripe_customer_id",
+            "is_admin",
+            "is_archived",
+            "is_active",
+            "terms_accepted",
+            "type",
+        ]
         validators = []
 
 
@@ -317,6 +334,11 @@ class UserSerializer(UserSerializerWithoutUserGroup):
         write_only=True,
         allow_null=True,
     )
+
+    fields = UserSerializerWithoutUserGroup.fields + [
+        "user_group",
+        "user_group_id",
+    ]
 
 
 class UserUserAddressSerializer(serializers.ModelSerializer):
