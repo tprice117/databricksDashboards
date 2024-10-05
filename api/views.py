@@ -149,19 +149,19 @@ logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-# class SpectacularAPIViewNoAuth(SpectacularAPIView):
-#     authentication_classes = []
-#     permission_classes = []
+class SpectacularAPIViewNoAuth(SpectacularAPIView):
+    authentication_classes = []
+    permission_classes = []
 
 
-# class SpectacularRedocViewNoAuth(SpectacularRedocView):
-#     authentication_classes = []
-#     permission_classes = []
+class SpectacularRedocViewNoAuth(SpectacularRedocView):
+    authentication_classes = []
+    permission_classes = []
 
 
-# class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
-#     authentication_classes = []
-#     permission_classes = []
+class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
+    authentication_classes = []
+    permission_classes = []
 
 
 class SellerViewSet(viewsets.ReadOnlyModelViewSet):
