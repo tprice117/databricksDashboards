@@ -200,11 +200,6 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
         allow_null=True,
         allow_blank=True,
     )
-    password = serializers.CharField(
-        required=False,
-        allow_null=True,
-        allow_blank=True,
-    )
     type = serializers.CharField(
         required=False,
         allow_null=True,
@@ -233,7 +228,6 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
         model = User
         fields = [
             "id",
-            "user_group",
             "user_id",
             "phone",
             "email",
@@ -242,7 +236,6 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
             "last_name",
             "username",
             "photo_url",
-            "stripe_customer_id",
             "is_admin",
             "is_archived",
             "is_active",
@@ -325,7 +318,9 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         return obj.credit_limit_used()
 
 
-class UserSerializer(UserSerializerWithoutUserGroup):
+class UserSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    user_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     user_group = UserGroupSerializer(read_only=True)
     user_group_id = serializers.PrimaryKeyRelatedField(
         queryset=UserGroup.objects.all(),
@@ -334,25 +329,38 @@ class UserSerializer(UserSerializerWithoutUserGroup):
         write_only=True,
         allow_null=True,
     )
+    username = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    type = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
 
-    fields = [
-        "id",
-        "user_group",
-        "user_id",
-        "phone",
-        "email",
-        "date_joined",
-        "first_name",
-        "last_name",
-        "username",
-        "photo_url",
-        "stripe_customer_id",
-        "is_admin",
-        "is_archived",
-        "is_active",
-        "terms_accepted",
-        "type",
-    ]
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "user_group",
+            "user_group_id",
+            "user_id",
+            "phone",
+            "email",
+            "date_joined",
+            "first_name",
+            "last_name",
+            "username",
+            "photo_url",
+            "is_admin",
+            "is_archived",
+            "is_active",
+            "terms_accepted",
+            "type",
+        ]
+        validators = []
 
 
 class UserUserAddressSerializer(serializers.ModelSerializer):
