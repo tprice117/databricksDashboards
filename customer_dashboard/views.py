@@ -1004,36 +1004,49 @@ def new_order_4(request):
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
         seller_d["seller_product_seller_location"] = seller_product_seller_location
-        pricing = PricingEngine.get_price(
-            user_address=UserAddress.objects.get(
-                id=context["user_address"],
-            ),
-            seller_product_seller_location=seller_product_seller_location,
-            start_date=datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d"),
-            end_date=datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d"),
-            waste_type=(
-                WasteType.objects.get(id=waste_type_id) if waste_type_id else None
-            ),
-            times_per_week=(
-                context["times_per_week"] if context["times_per_week"] else None
-            ),
-            shift_count=(context["shift_count"] if context["shift_count"] else None),
-        )
+        try:
+            pricing = PricingEngine.get_price(
+                user_address=UserAddress.objects.get(
+                    id=context["user_address"],
+                ),
+                seller_product_seller_location=seller_product_seller_location,
+                start_date=datetime.datetime.strptime(
+                    context["delivery_date"], "%Y-%m-%d"
+                ),
+                end_date=datetime.datetime.strptime(
+                    context["delivery_date"], "%Y-%m-%d"
+                ),
+                waste_type=(
+                    WasteType.objects.get(id=waste_type_id) if waste_type_id else None
+                ),
+                times_per_week=(
+                    context["times_per_week"] if context["times_per_week"] else None
+                ),
+                shift_count=(
+                    context["shift_count"] if context["shift_count"] else None
+                ),
+            )
 
-        seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
+            seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
+            # seller_d["price"] = QuoteUtils.get_price_breakdown(seller_d["price_data"])
 
-        # Update the SellerProductSellerLocation to default to the take rate.
-        seller_d["seller_product_seller_location"] = (
-            prep_seller_product_seller_locations_for_response(
-                main_product=context["product"].main_product,
-                seller_product_seller_locations=[seller_product_seller_location],
-            )[0]
-        )
-        # Include because SellerProductSellerLocationSerializer does not include waste types info needed
-        # needed for price_details_modal.
-        seller_d["spsl"] = seller_product_seller_location
+            # Update the SellerProductSellerLocation to default to the take rate.
+            seller_d["seller_product_seller_location"] = (
+                prep_seller_product_seller_locations_for_response(
+                    main_product=context["product"].main_product,
+                    seller_product_seller_locations=[seller_product_seller_location],
+                )[0]
+            )
+            # Include because SellerProductSellerLocationSerializer does not include waste types info needed
+            # needed for price_details_modal.
+            seller_d["spsl"] = seller_product_seller_location
 
-        context["seller_product_seller_locations"].append(seller_d)
+            context["seller_product_seller_locations"].append(seller_d)
+        except Exception as e:
+            logger.error(
+                f"new_order_4:Error getting pricing [SellerProductSellerLocation: {seller_product_seller_location.id}]-[{e}]-[{request.build_absolute_uri()}]",
+                exc_info=e,
+            )
 
     # step_time = time.time()
     # print(f"Get Prices: {step_time - start_time}")
