@@ -48,7 +48,7 @@ class PriceCalculation:
             country = "US"
             if order.order_group.user_address.country:
                 country = order.order_group.user_address.country
-                if country == "United States":
+                if country == "United States" or country == "USA":
                     country = "US"
 
             # Stripe requires reference to be unique, so we need to combine the line items.
