@@ -75,16 +75,17 @@
     <table>
         <thead>
             <tr>
-                <th>Line Item ID</th>
                 <th>Main Product</th>
+                <th>Sellerlocation_Name</th>
             </tr>
         </thead>
         <tbody>
             {{seller_product_locations}}
             {% for location in seller_product_locations %}
             <tr>
-                <td>{{ location.id }}</td>
                 <td>{{ location.seller_product.product.main_product }}</td>
+                <td>{{ location.seller_location.name }}</td>
+                <td>{{ location.ordergroup.user }}</td>
             </tr>
             {% endfor %}
         </tbody>

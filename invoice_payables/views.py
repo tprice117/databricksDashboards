@@ -23,7 +23,7 @@ def invoice_detail(request, id):
     seller_invoice_payable = SellerInvoicePayable.objects.get(id=seller_invoice_payable.id)
 
     seller_product_locations = SellerProductSellerLocation.objects.filter(
-        seller_location=seller_invoice_payable.seller_location  # Adjust based on your field names
+        seller_location=seller_invoice_payable.seller_location
     ).select_related('seller_product__product')
 
     for location in seller_product_locations:
