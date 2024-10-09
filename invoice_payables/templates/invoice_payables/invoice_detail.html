@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>invoice_detail</title>
+</head>
+<body>
+    <h1>Welcome to invoice_detail Page</h1>
+
+    <h1>invoice_detail ID: {{ invoice_payable.id }}</h1>
+    <p>invoice_detail SellerLocation: {{ invoice_payable.seller_location }}</p>
+    <p>invoice_detail Status: {{ invoice_payable.status }}</p>
+
+    <h2>invoiceDetails:</h2>
+    <p>SellerLocation: {{invoice_payable.seller_location}}</p>
+    <p></p>
+    <p>Supplier invoice ID: {{invoice_payable.supplier_invoice_id}}</p>
+    <p>Invoice File: </p>
+
+    <h2>Dates</h2>
+    <p>Invoice Date: {{invoice_payable.invoice_date}}</p>
+    <p>Due Date: {{invoice_payable.due_date}} </p>
+
+    <h2>Audit</h2>
+    <p>Created on: {{invoice_payable.created_on}}</p>
+    <p>Created by: {{invoice_payable.created_by}}</p>
+    <p>Updated on: {{invoice_payable.updated_on}}</p>
+    <p>Updated by: {{invoice_payable.updated_by}}</p>
+
+    <h2>Linked Orders</h2>
+    <p>Order:</p>
+    <p>{{related_orders}}</p>
+
+    <h2>Invoice Line Items</h2>
+
+    <footer>
+        <button onclick="window.location.href='{% url 'index' %}'">Back to Index</button>
+    </footer>
+</body>
+</html>

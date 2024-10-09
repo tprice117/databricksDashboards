@@ -184,4 +184,6 @@ urlpatterns = [
     path("dashboards/", include("dashboards.urls")),
     # Test.
     path("test/", views.test3),
+    # invoice_payables URLS.
+    path("invoice-payables/", include("invoice_payables.urls")),
 ]

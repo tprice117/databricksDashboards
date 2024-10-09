@@ -5,11 +5,9 @@ from api.admin.filters.seller_invoice_payable.admin_tasks import (
     SellerInvoicePayableAdminTasksFilter,
 )
 from api.admin.inlines.seller_invoice_payable_line_item import (
-    SellerInvoicePayableLineItemInline,
-    LinkedOrdersSIPLI,
-    InvoiceLineItem,
+    LinkedOrdersSellerInvoicePayableLineItemInline,
 )
-from api.models import SellerInvoicePayable
+from api.models import SellerInvoicePayable, SellerProduct, Order, SellerInvoicePayableLineItem, Product
 from common.admin.admin.base_admin import BaseModelAdmin
 
 
@@ -17,9 +15,16 @@ class SellerLocationFilter(AutocompleteFilter):
     title = "Seller Location"
     field_name = "seller_location"
 
-
 @admin.register(SellerInvoicePayable)
 class SellerInvoicePayableAdmin(BaseModelAdmin):
+    def get_product_names(self, obj):
+        # Use the same query logic
+        return ', '.join(
+            Product.objects.filter(
+                sellerproduct__seller__sellerlocation__sellerinvoicepayable=obj
+            ).values_list('name', flat=True)
+        )
+
     model = SellerInvoicePayable
     list_display = (
         "seller_location",
@@ -32,8 +37,8 @@ class SellerInvoicePayableAdmin(BaseModelAdmin):
         "supplier_invoice_id",
     ]
     inlines = [
-        LinkedOrdersSIPLI,
-        InvoiceLineItem,
+        LinkedOrdersSellerInvoicePayableLineItemInline,
+        
     ]
     list_filter = [
         SellerLocationFilter,
@@ -68,6 +73,10 @@ class SellerInvoicePayableAdmin(BaseModelAdmin):
                 ],
             },
         ),
+        
+
         BaseModelAdmin.audit_fieldset,
     ]
+ 
+    get_product_names.short_description = 'Product Names'
     readonly_fields = BaseModelAdmin.readonly_fields + []
