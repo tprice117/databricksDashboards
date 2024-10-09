@@ -57,7 +57,7 @@ class PriceCalculation:
             for line_item in line_items:
                 if line_item.order_line_item_type.code == "DELIVERY":
                     delivery_line_item = line_item
-                else:
+                elif line_item.stripe_invoice_line_item_id != "BYPASS":
                     try:
                         combined_items[line_item.order_line_item_type.code][
                             "amount"
