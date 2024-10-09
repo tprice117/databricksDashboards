@@ -2,6 +2,8 @@ from django.db import models
 
 from common.models import BaseModel
 from pricing_engine.models import PricingLineItem
+from decimal import Decimal
+from math import ceil
 
 
 class PricingService(BaseModel):
@@ -40,7 +42,7 @@ class PricingService(BaseModel):
 
     def get_price(
         self,
-        miles: float,
+        miles: Decimal,
     ) -> list[PricingLineItem]:
         items: list[PricingLineItem]
         items = []
@@ -51,7 +53,7 @@ class PricingService(BaseModel):
                 PricingLineItem(
                     description="Service",
                     units="Miles",
-                    quantity=miles,
+                    quantity=ceil(miles),
                     unit_price=self.price_per_mile,
                 )
             )
