@@ -12,10 +12,29 @@ def index(request):
 def invoice_detail(request, id):
     context = {}
     seller_invoice_payable = SellerInvoicePayable.objects.get(pk=id)
-    context["invoice_payable"] = seller_invoice_payable
     line_items = SellerInvoicePayableLineItem.objects.filter(seller_invoice_payable = seller_invoice_payable)
+    
     related_orders = Order.objects.filter(
         id__in=line_items.values_list('order_id', flat=True)
     )
+    line_item_order_map = {item: item.order for item in line_items}
+    
+    # Main Product query
+    seller_invoice_payable = SellerInvoicePayable.objects.get(id=seller_invoice_payable.id)
+
+    seller_product_locations = SellerProductSellerLocation.objects.filter(
+        seller_location=seller_invoice_payable.seller_location  # Adjust based on your field names
+    ).select_related('seller_product__product')
+
+    for location in seller_product_locations:
+        main_product = location.seller_product.product.main_product
+    context["seller_product_locations"] = seller_product_locations
+    context["main_product"] = main_product
+
+
+    context["invoice_payable"] = seller_invoice_payable
+    context["line_items"] = line_items
     context["related_orders"] = related_orders
+    context["line_item_order_map"] = line_item_order_map
+
     return render(request, 'invoice_payables/invoice_detail.html', context)

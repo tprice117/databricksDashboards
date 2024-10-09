@@ -4,13 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>invoice_detail</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to invoice_detail Page</h1>
 
     <h1>invoice_detail ID: {{ invoice_payable.id }}</h1>
-    <p>invoice_detail SellerLocation: {{ invoice_payable.seller_location }}</p>
-    <p>invoice_detail Status: {{ invoice_payable.status }}</p>
+    <p>SellerLocation: {{ invoice_payable.seller_location }}</p>
+    <p>Status: {{ invoice_payable.status }}</p>
 
     <h2>invoiceDetails:</h2>
     <p>SellerLocation: {{invoice_payable.seller_location}}</p>
@@ -29,10 +43,53 @@
     <p>Updated by: {{invoice_payable.updated_by}}</p>
 
     <h2>Linked Orders</h2>
-    <p>Order:</p>
-    <p>{{related_orders}}</p>
-
+    {% comment %} <p>{{related_orders}}</p>
+    <p>{{line_items}}</p>
+    <p>{{line_item_order_map}}</p> {% endcomment %}
+    <table>
+        <thead>
+            <tr>
+                <th>Line Item ID</th>
+                <th>Order</th>
+                <th>Order Amount</th>
+                <th>Line Item Description</th>
+                <th>Order Status</th>
+                <th>Order Created On</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line_item, order in line_item_order_map.items %}
+            <tr>
+                <td>{{ line_item.id }}</td> 
+                <td>{{ order }}</td>     
+                <td>{{ line_item.amount }}</td>    
+                <td>{{ line_item.description }}</td>              
+                <td>{{ order.status }}</td> 
+                <td>{{ order.created_on }}</td> 
+            </br>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     <h2>Invoice Line Items</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Line Item ID</th>
+                <th>Main Product</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{seller_product_locations}}
+            {% for location in seller_product_locations %}
+            <tr>
+                <td>{{ location.id }}</td>
+                <td>{{ location.seller_product.product.main_product }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
 
     <footer>
         <button onclick="window.location.href='{% url 'index' %}'">Back to Index</button>

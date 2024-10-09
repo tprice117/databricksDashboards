@@ -10,7 +10,6 @@ from api.admin.inlines.seller_invoice_payable_line_item import (
 from api.models import SellerInvoicePayable, SellerProduct, Order, SellerInvoicePayableLineItem, Product
 from common.admin.admin.base_admin import BaseModelAdmin
 
-
 class SellerLocationFilter(AutocompleteFilter):
     title = "Seller Location"
     field_name = "seller_location"
@@ -38,7 +37,6 @@ class SellerInvoicePayableAdmin(BaseModelAdmin):
     ]
     inlines = [
         LinkedOrdersSellerInvoicePayableLineItemInline,
-        
     ]
     list_filter = [
         SellerLocationFilter,
