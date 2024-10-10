@@ -52,6 +52,19 @@ class OrderGroupService(PricingService):
         # Get the OrderLineItemType for SERVICE.
         order_line_item_type = OrderLineItemType.objects.get(code="SERVICE")
 
+        if not self.is_complete:
+            # NOTE: This is a legacy code path until all OrderGroupService objects have price_per_mile and flat_rate_price.
+            return [
+                OrderLineItem(
+                    order=order,
+                    order_line_item_type=order_line_item_type,
+                    rate=self.order_group.service.rate,
+                    quantity=self.order_group.service.miles or 1,
+                    is_flat_rate=self.order_group.service.miles is None,
+                    platform_fee_percent=self.order_group.take_rate,
+                )
+            ]
+
         line_items = self.get_price(self.miles)
 
         order_line_items: List[OrderLineItem] = []
