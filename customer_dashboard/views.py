@@ -860,6 +860,7 @@ def new_order_3(request, product_id):
             "schedule_window": request.POST.get("schedule_window"),
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
+            "quantity": request.POST.get("quantity"),
         }
         if request.POST.get("times_per_week"):
             query_params["times_per_week"] = request.POST.get("times_per_week")
@@ -936,6 +937,7 @@ def new_order_4(request):
         context["shift_count"] = int(context["shift_count"])
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
+    context["quantity"] = int(request.GET.get("quantity"))
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
@@ -1003,8 +1005,10 @@ def new_order_4(request):
 
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
-        seller_d["seller_product_seller_location"] = seller_product_seller_location
         try:
+            # Include because SellerProductSellerLocationSerializer does not include waste types info needed for price_details_modal.
+            seller_d["seller_product_seller_location"] = seller_product_seller_location
+
             pricing = PricingEngine.get_price(
                 user_address=UserAddress.objects.get(
                     id=context["user_address"],
@@ -1027,19 +1031,14 @@ def new_order_4(request):
                 ),
             )
 
-            seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
-            # seller_d["price"] = QuoteUtils.get_price_breakdown(seller_d["price_data"])
-
-            # Update the SellerProductSellerLocation to default to the take rate.
-            seller_d["seller_product_seller_location"] = (
-                prep_seller_product_seller_locations_for_response(
-                    main_product=context["product"].main_product,
-                    seller_product_seller_locations=[seller_product_seller_location],
-                )[0]
+            price_data = PricingEngineResponseSerializer(pricing).data
+            # Breakdown of the price data because the neccessary calculations are not capable within the Django template.
+            seller_d["price_breakdown"] = QuoteUtils.get_price_breakdown(
+                price_data,
+                seller_product_seller_location,
+                context["product"].main_product,
+                user_group=context["user_group"],
             )
-            # Include because SellerProductSellerLocationSerializer does not include waste types info needed
-            # needed for price_details_modal.
-            seller_d["spsl"] = seller_product_seller_location
 
             context["seller_product_seller_locations"].append(seller_d)
         except Exception as e:
@@ -1092,6 +1091,9 @@ def new_order_5(request):
             request.POST.get("delivery_date"),
             "%Y-%m-%d",
         )
+        quantity = (
+            int(request.POST.get("quantity")) if request.POST.get("quantity") else 1
+        )
 
         # removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
@@ -1130,44 +1132,48 @@ def new_order_5(request):
         price_with_discount = default_price_multiplier * (1 - discount_percent)
         take_rate = price_with_discount - 1
 
-        # Create order group and orders
-        order_group = OrderGroup(
-            user=context["user"],
-            user_address=user_address,
-            seller_product_seller_location_id=seller_product_seller_location_id,
-            start_date=delivery_date,
-            take_rate=Decimal(take_rate * 100),
-        )
-        if times_per_week:
-            order_group.times_per_week = times_per_week
-        if shift_count:
-            order_group.shift_count = shift_count
-        if waste_type_id:
-            order_group.waste_type_id = waste_type_id
-        # NOTE: Commenting removal_date out for now. We may, possibly, maybe add this back in later.
-        # This means that we never set the removal date on the OrderGroup when creating it.
-        # if removal_date:
-        #     order_group.end_date = removal_date
-        if seller_product_location.delivery_fee:
-            order_group.delivery_fee = seller_product_location.delivery_fee
-        if seller_product_location.removal_fee:
-            order_group.removal_fee = seller_product_location.removal_fee
-        if schedule_window:
-            time_slot_name = schedule_window.split(" ")[0]
-            time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
-            if time_slot:
-                order_group.time_slot = time_slot
-        order_group.save()
+        for i in range(quantity):
+            # Create order group and orders
+            order_group = OrderGroup(
+                user=context["user"],
+                user_address=user_address,
+                seller_product_seller_location_id=seller_product_seller_location_id,
+                start_date=delivery_date,
+                take_rate=Decimal(take_rate * 100),
+            )
+            if times_per_week:
+                order_group.times_per_week = times_per_week
+            if shift_count:
+                order_group.shift_count = shift_count
+            if waste_type_id:
+                order_group.waste_type_id = waste_type_id
+            # NOTE: Commenting removal_date out for now. We may, possibly, maybe add this back in later.
+            # This means that we never set the removal date on the OrderGroup when creating it.
+            # if removal_date:
+            #     order_group.end_date = removal_date
+            if seller_product_location.delivery_fee:
+                order_group.delivery_fee = seller_product_location.delivery_fee
+            if seller_product_location.removal_fee:
+                order_group.removal_fee = seller_product_location.removal_fee
+            if schedule_window:
+                time_slot_name = schedule_window.split(" ")[0]
+                time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
+                if time_slot:
+                    order_group.time_slot = time_slot
+            order_group.save()
 
-        # Create the order (Let submitted on null, this indicates that the order is in the cart)
-        # The first order of an order group always gets the same start and end date.
-        order = order_group.create_delivery(
-            delivery_date, schedule_window=schedule_window
-        )
+            # Create the order (Let submitted on null, this indicates that the order is in the cart)
+            # The first order of an order group always gets the same start and end date.
+            order = order_group.create_delivery(
+                delivery_date, schedule_window=schedule_window
+            )
         # context["cart"][order_group.id] = {
         #     "order_group": order_group,
         #     "price": order.customer_price()
         # }
+        messages.success(request, "Successfully added to cart.")
+        # Redirect to a success page or the same page to prevent form resubmission
+        return HttpResponseRedirect(reverse("customer_cart"))
     elif request.method == "DELETE":
         # Delete the order group and orders.
         order_group_id = request.GET.get("id")

@@ -1,13 +1,50 @@
-from typing import Iterable, Union
+from typing import Iterable, Union, TypedDict
 import logging
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from api.models.order.order import Order
 from api.models.user.user_address import UserAddress
+from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
+    prep_seller_product_seller_locations_for_response,
+)
 
 from .models import CheckoutOrder
 
 logger = logging.getLogger(__name__)
+
+
+class PriceBreakdownPart(TypedDict):
+    fuel_and_environmental: float
+    tax: float
+    total: float
+
+
+class PriceBreakdown(TypedDict):
+    service: Union[None, dict]
+    rental: Union[None, dict]
+    material: Union[None, dict]
+    delivery: Union[None, dict]
+    removal: Union[None, dict]
+    fuel_and_environmental: Union[None, dict]
+    total: float
+    tax: float
+    other: PriceBreakdownPart
+    one_time: PriceBreakdownPart
+
+
+class RentalBreakdownPart(TypedDict):
+    base: float
+    rpp_fee: Union[float, None]
+    fuel_fees: float
+    estimated_taxes: Union[float, None]
+    subtotal: float
+    total: float
+
+
+class RentalBreakdown(TypedDict):
+    day: Union[RentalBreakdownPart, None]
+    week: Union[RentalBreakdownPart, None]
+    month: Union[RentalBreakdownPart, None]
 
 
 class CheckoutUtils:
@@ -94,6 +131,261 @@ class CheckoutUtils:
 
 
 class QuoteUtils:
+
+    @staticmethod
+    def get_rental_breakdown(
+        seller_product_seller_location,
+        main_product,
+        fuel_fee_rate,
+        estimated_tax_rate: float = None,
+        add_rpp_fee=True,
+    ) -> Union[RentalBreakdown, None]:
+        """Creates breakdown for rental multi-step products with fuel fees, RPP, and estimated taxes (if available).
+
+        Args:
+            seller_product_seller_location (SellerProductSellerLocation): The SellerProductSellerLocation object.
+            main_product (MainProduct): The MainProduct object.
+            fuel_fee_rate (float | decimal): Fuel fee rate.
+            estimated_tax_rate (float, optional): Estimated tax rate. Adds tax if set. Defaults to None.
+            add_rpp_fee (bool, optional): Adds RPP if set to True. Defaults to True.
+
+        Returns:
+            Union[RentalBreakdown, None]: _description_
+        """
+        # Update the SellerProductSellerLocation to default to the take rate.
+        seller_product_seller_location_resp = (
+            prep_seller_product_seller_locations_for_response(
+                main_product=main_product,
+                seller_product_seller_locations=[seller_product_seller_location],
+            )[0]
+        )
+        if seller_product_seller_location_resp["rental_multi_step"]:
+            rental_breakdown: RentalBreakdown = {
+                "day": None,
+                "week": None,
+                "month": None,
+            }
+            if (
+                seller_product_seller_location_resp["rental_multi_step"]["day"]
+                is not None
+            ):
+                rental_breakdown["day"] = {
+                    "base": float(
+                        seller_product_seller_location_resp["rental_multi_step"]["day"]
+                    ),
+                    "rpp_fee": None,
+                    "fuel_fees": 0,
+                    "estimated_taxes": None,
+                    "subtotal": 0,
+                    "total": 0,
+                }
+            if (
+                seller_product_seller_location_resp["rental_multi_step"]["week"]
+                is not None
+            ):
+                rental_breakdown["week"] = {
+                    "base": float(
+                        seller_product_seller_location_resp["rental_multi_step"]["week"]
+                    ),
+                    "rpp_fee": None,
+                    "fuel_fees": 0,
+                    "estimated_taxes": None,
+                    "subtotal": 0,
+                    "total": 0,
+                }
+            if (
+                seller_product_seller_location_resp["rental_multi_step"]["month"]
+                is not None
+            ):
+                rental_breakdown["month"] = {
+                    "base": float(
+                        seller_product_seller_location_resp["rental_multi_step"][
+                            "month"
+                        ]
+                    ),
+                    "rpp_fee": None,
+                    "fuel_fees": 0,
+                    "estimated_taxes": None,
+                    "subtotal": 0,
+                    "total": 0,
+                }
+            # Add total, fuel fees, and estimated taxes to the rental breakdown.
+            for key in rental_breakdown:
+                if rental_breakdown[key] is None:
+                    continue
+                rental_breakdown[key]["fuel_fees"] = round(
+                    rental_breakdown[key]["base"] * float(fuel_fee_rate / 100),
+                    2,
+                )
+                rental_breakdown[key]["subtotal"] += rental_breakdown[key]["base"]
+                rental_breakdown[key]["subtotal"] += rental_breakdown[key]["fuel_fees"]
+
+                if add_rpp_fee:
+                    # Add a 15% Rental Protection Plan fee if the user does not have their own COI.
+                    rental_breakdown[key]["rpp_fee"] = round(
+                        rental_breakdown[key]["base"] * float(0.15), 2
+                    )
+                    rental_breakdown[key]["subtotal"] += rental_breakdown[key][
+                        "rpp_fee"
+                    ]
+
+                rental_breakdown[key]["total"] = rental_breakdown[key]["subtotal"]
+
+                if estimated_tax_rate is not None:
+                    rental_breakdown[key]["estimated_taxes"] = round(
+                        rental_breakdown[key]["base"] * float(estimated_tax_rate / 100),
+                        2,
+                    )
+                    rental_breakdown[key]["total"] += rental_breakdown[key][
+                        "estimated_taxes"
+                    ]
+
+            return rental_breakdown
+        return None
+
+    @staticmethod
+    def get_price_breakdown(
+        price_data, seller_product_seller_location, main_product, user_group=None
+    ) -> PriceBreakdown:
+        """Accepts a price_data dictionary and returns a price breakdown dictionary.
+
+        Args:
+            price_data (PriceBreakdown): The price_data dictionary.
+            seller_product_seller_location (SellerProductSellerLocation): The SellerProductSellerLocation object.
+            main_product (MainProduct): The MainProduct object.
+            user_group (UserGroup, optional): The UserGroup object used to check if RRP is needed. Defaults to None.
+
+        Returns: PriceBreakdown"""
+
+        price_breakdown: PriceBreakdown = {
+            "service": None,
+            "rental": None,
+            "material": None,
+            "delivery": None,
+            "removal": None,
+            "fuel_and_environmental": None,
+            "total": 0,
+            "tax": 0,
+            "estimated_tax_rate": 0,
+            "pre_tax_subtotal": 0,
+            "fuel_and_environmental_rate": 0,
+            "other": {"fuel_and_environmental": 0, "tax": 0, "total": 0},
+            "one_time": {"fuel_and_environmental": 0, "tax": 0, "total": 0},
+        }
+        # load the price data into the item
+        price_breakdown["pre_tax_subtotal"] = price_data["total"] - price_data["tax"]
+        # load the price data into the item
+        for key in price_data:
+            price_breakdown[key] = price_data[key]
+
+        # All calculations below should happen when displaying the data
+        if price_breakdown["rental"]:
+            if price_breakdown["rental"]["tax"] > 0:
+                # Get estimated tax rate by checking delivery fee tax rate
+                price_breakdown["estimated_tax_rate"] = round(
+                    (
+                        price_breakdown["rental"]["tax"]
+                        / price_breakdown["rental"]["total"]
+                    )
+                    * 100,
+                    4,
+                )
+
+        # Calculate the one-time (delivery + removal) fuel fees, estimated taxes, and total
+        if price_breakdown["delivery"]:
+            price_breakdown["one_time"]["total"] += price_breakdown["delivery"]["total"]
+            price_breakdown["one_time"]["tax"] += price_breakdown["delivery"]["tax"]
+            if (
+                price_breakdown["estimated_tax_rate"] == 0
+                and price_breakdown["delivery"]["tax"] > 0
+            ):
+                # Get estimated tax rate by checking delivery fee tax rate
+                price_breakdown["estimated_tax_rate"] = round(
+                    (
+                        price_breakdown["delivery"]["tax"]
+                        / price_breakdown["delivery"]["total"]
+                    )
+                    * 100,
+                    4,
+                )
+        if price_breakdown["removal"]:
+            price_breakdown["one_time"]["total"] += price_breakdown["removal"]["total"]
+            price_breakdown["one_time"]["tax"] += price_breakdown["removal"]["tax"]
+
+        if price_breakdown["fuel_and_environmental"]:
+            # Calculate the one-time fuel fees and estimated taxes
+            fuel_fees_subtotal = (
+                price_breakdown["fuel_and_environmental"]["total"]
+                - price_breakdown["fuel_and_environmental"]["tax"]
+            )
+            # Get percentage that one_time total is of total minus fuel fees
+            total_minus_fuel = price_breakdown["pre_tax_subtotal"] - fuel_fees_subtotal
+            one_time_total_percentage = round(
+                price_breakdown["one_time"]["total"] / total_minus_fuel, 6
+            )
+            price_breakdown["one_time"]["fuel_and_environmental"] = (
+                fuel_fees_subtotal * one_time_total_percentage
+            )
+            # Get fuel fees for the rest of the total (not one-time)
+            price_breakdown["other"]["fuel_and_environmental"] = abs(
+                fuel_fees_subtotal
+                - price_breakdown["one_time"]["fuel_and_environmental"]
+            )
+            fuel_fees_tax = (
+                price_breakdown["fuel_and_environmental"]["tax"]
+                * one_time_total_percentage
+            )
+            # rest_of_total_tax = abs(
+            #     item["fuel_and_environmental"]["tax"] - fuel_fees_tax
+            # )
+            price_breakdown["one_time"]["tax"] += fuel_fees_tax
+
+            # Get the fuel fees rate
+            price_breakdown["fuel_and_environmental_rate"] = float(
+                seller_product_seller_location.fuel_environmental_markup
+            )
+
+        if price_breakdown["estimated_tax_rate"] > 0:
+            # Get taxes for the Service section
+            price_breakdown["other"]["tax"] = abs(
+                price_breakdown["tax"] - price_breakdown["one_time"]["tax"]
+            )
+
+        # Add fuel fees and estimated taxes to the one-time total
+        price_breakdown["one_time"]["total"] += (
+            price_breakdown["one_time"]["fuel_and_environmental"]
+            + price_breakdown["one_time"]["tax"]
+        )
+
+        # Add fuel fees and estimated taxes to the other total
+        price_breakdown["other"]["total"] += (
+            price_breakdown["other"]["fuel_and_environmental"]
+            + price_breakdown["other"]["tax"]
+        )
+
+        # Calculate Service total
+        if price_breakdown["service"]:
+            price_breakdown["other"]["total"] += price_breakdown["service"]["total"]
+        if price_breakdown["material"]:
+            price_breakdown["other"]["total"] += price_breakdown["material"]["total"]
+        if price_breakdown["rental"]:
+            price_breakdown["other"]["total"] += price_breakdown["rental"]["total"]
+
+        # Get rental breakdown for multi-step rentals
+        add_rpp_fee = False
+        if user_group is None:
+            add_rpp_fee = True
+        elif not user_group.owned_and_rented_equiptment_coi:
+            add_rpp_fee = True
+        price_breakdown["rental_breakdown"] = QuoteUtils.get_rental_breakdown(
+            seller_product_seller_location,
+            main_product,
+            price_breakdown["fuel_and_environmental_rate"],
+            estimated_tax_rate=price_breakdown["estimated_tax_rate"],
+            add_rpp_fee=add_rpp_fee,
+        )
+        return price_breakdown
+
     @staticmethod
     def create_quote(order_id_lst, email_lst, quote_sent=True) -> CheckoutOrder:
         # Put in checkout app.
@@ -224,12 +516,10 @@ class QuoteUtils:
                 # )
                 item["one_time"]["estimated_taxes"] += fuel_fees_tax
 
-                # Calculate the fuel fees rate (display only)
-                fuel_rate = item["fuel_and_environmental"]["total"] / (
-                    item["total"] - item["fuel_and_environmental"]["total"]
+                # Get the fuel fees rate
+                item["fuel_and_environmental_rate"] = float(
+                    order.order_group.seller_product_seller_location.fuel_environmental_markup
                 )
-                # From self.order_group.seller_product_seller_location.fuel_environmental_markup
-                item["fuel_and_environmental_rate"] = round(fuel_rate * 100, 4)
 
             if item["estimated_tax_rate"] > 0:
                 # Get taxes for the Service section
@@ -275,63 +565,21 @@ class QuoteUtils:
             elif (
                 order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
             ):
-                item["rental_breakdown"] = {
-                    "day": {
-                        "base": float(
-                            order.order_group.seller_product_seller_location.rental_multi_step.day
-                        ),
-                        "rpp_fee": float(0.00),
-                    },
-                    "week": {
-                        "base": float(
-                            order.order_group.seller_product_seller_location.rental_multi_step.week
-                        ),
-                        "rpp_fee": float(0.00),
-                    },
-                    "month": {
-                        "base": float(
-                            order.order_group.seller_product_seller_location.rental_multi_step.month
-                        ),
-                        "rpp_fee": float(0.00),
-                    },
-                }
-                # Add total, fuel fees, and estimated taxes to the rental breakdown.
-                for key in item["rental_breakdown"]:
-                    item["rental_breakdown"][key]["fuel_fees"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        * float(item["fuel_and_environmental_rate"] / 100),
-                        2,
-                    )
-                    item["rental_breakdown"][key]["estimated_taxes"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        * float(item["estimated_tax_rate"] / 100),
-                        2,
-                    )
-                    add_rpp_fee = False
-                    if order.order_group.user.user_group is None:
-                        add_rpp_fee = True
-                    elif (
-                        not order.order_group.user.user_group.owned_and_rented_equiptment_coi
-                    ):
-                        add_rpp_fee = True
-                    if add_rpp_fee:
-                        # Add a 15% Rental Protection Plan fee if the user does not have their own COI.
-                        item["rental_breakdown"][key]["rpp_fee"] = round(
-                            item["rental_breakdown"][key]["base"] * float(0.15), 2
-                        )
-                    item["rental_breakdown"][key]["subtotal"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        + item["rental_breakdown"][key]["fuel_fees"]
-                        + item["rental_breakdown"][key]["rpp_fee"],
-                        2,
-                    )
-                    item["rental_breakdown"][key]["total"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        + item["rental_breakdown"][key]["fuel_fees"]
-                        + item["rental_breakdown"][key]["estimated_taxes"]
-                        + item["rental_breakdown"][key]["rpp_fee"],
-                        2,
-                    )
+                # Get rental breakdown for multi-step rentals
+                add_rpp_fee = False
+                if order.order_group.user.user_group is None:
+                    add_rpp_fee = True
+                elif (
+                    not order.order_group.user.user_group.owned_and_rented_equiptment_coi
+                ):
+                    add_rpp_fee = True
+                item["rental_breakdown"] = QuoteUtils.get_rental_breakdown(
+                    order.order_group.seller_product_seller_location,
+                    order.order_group.seller_product_seller_location.seller_product.product.main_product,
+                    item["fuel_and_environmental_rate"],
+                    estimated_tax_rate=item["estimated_tax_rate"],
+                    add_rpp_fee=add_rpp_fee,
+                )
 
                 multi_step.append(item)
 
