@@ -229,8 +229,8 @@
                                     <strong>Material</strong>
                                 </p>
                                 <!-- Add material_waste_type.tonnage_included if larger -->
-                                {% if item.price_data.material.items.0.quantity %}
-                                    <p>Pricing is based on the amount of material produced, similar to fuel costs for a rental car. Each product has a standard base tonnage that applies to all suppliers, allowing for easy price comparisons. For this product, the base tonnage is {{ item.price_data.material.items.0.quantity }}. You'll always be charged for {{ item.price_data.material.items.0.quantity }} tons per service. If you exceed {{ item.price_data.material.items.0.quantity }} tons, an additional fee will apply based on the material type.</p>
+                                {% if item.price_breakdown.material.items.0.quantity %}
+                                    <p>Pricing is based on the amount of material produced, similar to fuel costs for a rental car. Each product has a standard base tonnage that applies to all suppliers, allowing for easy price comparisons. For this product, the base tonnage is {{ item.price_breakdown.material.items.0.quantity }}. You'll always be charged for {{ item.price_breakdown.material.items.0.quantity }} tons per service. If you exceed {{ item.price_breakdown.material.items.0.quantity }} tons, an additional fee will apply based on the material type.</p>
                                 {% else %}
                                     <p>Pricing is based on the amount of material produced, similar to fuel costs for a rental car. Each product has a standard base tonnage that applies to all suppliers, allowing for easy price comparisons. For this product, the base tonnage is {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}. You'll always be charged for {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}&nbsp;tons per service. If you exceed {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}&nbsp;tons, an additional fee will apply based on the material type.</p>
                                 {% endif %}
@@ -244,7 +244,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for material_waste_type in item.spsl.material.waste_types.all %}
+                                            {% for material_waste_type in item.seller_product_seller_location.material.waste_types.all %}
                                                 <tr>
                                                     <td>{{ material_waste_type.main_product_waste_type.waste_type.name }}</td>
                                                     <td>
