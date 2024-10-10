@@ -340,13 +340,10 @@ class QuoteUtils:
             # )
             price_breakdown["one_time"]["tax"] += fuel_fees_tax
 
-            # Calculate the fuel fees rate (display only)
-            fuel_rate = price_breakdown["fuel_and_environmental"]["total"] / (
-                price_breakdown["total"]
-                - price_breakdown["fuel_and_environmental"]["total"]
+            # Get the fuel fees rate
+            price_breakdown["fuel_and_environmental_rate"] = float(
+                seller_product_seller_location.fuel_environmental_markup
             )
-            # From self.order_group.seller_product_seller_location.fuel_environmental_markup
-            price_breakdown["fuel_and_environmental_rate"] = round(fuel_rate * 100, 4)
 
         if price_breakdown["estimated_tax_rate"] > 0:
             # Get taxes for the Service section
@@ -519,12 +516,10 @@ class QuoteUtils:
                 # )
                 item["one_time"]["estimated_taxes"] += fuel_fees_tax
 
-                # Calculate the fuel fees rate (display only)
-                fuel_rate = item["fuel_and_environmental"]["total"] / (
-                    item["total"] - item["fuel_and_environmental"]["total"]
+                # Get the fuel fees rate
+                item["fuel_and_environmental_rate"] = float(
+                    order.order_group.seller_product_seller_location.fuel_environmental_markup
                 )
-                # From self.order_group.seller_product_seller_location.fuel_environmental_markup
-                item["fuel_and_environmental_rate"] = round(fuel_rate * 100, 4)
 
             if item["estimated_tax_rate"] > 0:
                 # Get taxes for the Service section
@@ -570,63 +565,21 @@ class QuoteUtils:
             elif (
                 order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
             ):
-                item["rental_breakdown"] = {
-                    "day": {
-                        "base": float(
-                            order.order_group.seller_product_seller_location.rental_multi_step.day
-                        ),
-                        "rpp_fee": float(0.00),
-                    },
-                    "week": {
-                        "base": float(
-                            order.order_group.seller_product_seller_location.rental_multi_step.week
-                        ),
-                        "rpp_fee": float(0.00),
-                    },
-                    "month": {
-                        "base": float(
-                            order.order_group.seller_product_seller_location.rental_multi_step.month
-                        ),
-                        "rpp_fee": float(0.00),
-                    },
-                }
-                # Add total, fuel fees, and estimated taxes to the rental breakdown.
-                for key in item["rental_breakdown"]:
-                    item["rental_breakdown"][key]["fuel_fees"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        * float(item["fuel_and_environmental_rate"] / 100),
-                        2,
-                    )
-                    item["rental_breakdown"][key]["estimated_taxes"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        * float(item["estimated_tax_rate"] / 100),
-                        2,
-                    )
-                    add_rpp_fee = False
-                    if order.order_group.user.user_group is None:
-                        add_rpp_fee = True
-                    elif (
-                        not order.order_group.user.user_group.owned_and_rented_equiptment_coi
-                    ):
-                        add_rpp_fee = True
-                    if add_rpp_fee:
-                        # Add a 15% Rental Protection Plan fee if the user does not have their own COI.
-                        item["rental_breakdown"][key]["rpp_fee"] = round(
-                            item["rental_breakdown"][key]["base"] * float(0.15), 2
-                        )
-                    item["rental_breakdown"][key]["subtotal"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        + item["rental_breakdown"][key]["fuel_fees"]
-                        + item["rental_breakdown"][key]["rpp_fee"],
-                        2,
-                    )
-                    item["rental_breakdown"][key]["total"] = round(
-                        item["rental_breakdown"][key]["base"]
-                        + item["rental_breakdown"][key]["fuel_fees"]
-                        + item["rental_breakdown"][key]["estimated_taxes"]
-                        + item["rental_breakdown"][key]["rpp_fee"],
-                        2,
-                    )
+                # Get rental breakdown for multi-step rentals
+                add_rpp_fee = False
+                if order.order_group.user.user_group is None:
+                    add_rpp_fee = True
+                elif (
+                    not order.order_group.user.user_group.owned_and_rented_equiptment_coi
+                ):
+                    add_rpp_fee = True
+                item["rental_breakdown"] = QuoteUtils.get_rental_breakdown(
+                    order.order_group.seller_product_seller_location,
+                    order.order_group.seller_product_seller_location.seller_product.product.main_product,
+                    item["fuel_and_environmental_rate"],
+                    estimated_tax_rate=item["estimated_tax_rate"],
+                    add_rpp_fee=add_rpp_fee,
+                )
 
                 multi_step.append(item)
 
