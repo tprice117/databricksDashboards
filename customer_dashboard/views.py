@@ -1165,6 +1165,9 @@ def new_order_5(request):
         #     "order_group": order_group,
         #     "price": order.customer_price()
         # }
+        messages.success(request, "Successfully added to cart.")
+        # Redirect to a success page or the same page to prevent form resubmission
+        return HttpResponseRedirect(reverse("customer_cart"))
     elif request.method == "DELETE":
         # Delete the order group and orders.
         order_group_id = request.GET.get("id")
