@@ -1003,8 +1003,10 @@ def new_order_4(request):
 
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
-        seller_d["seller_product_seller_location"] = seller_product_seller_location
         try:
+            # Include because SellerProductSellerLocationSerializer does not include waste types info needed for price_details_modal.
+            seller_d["seller_product_seller_location"] = seller_product_seller_location
+
             pricing = PricingEngine.get_price(
                 user_address=UserAddress.objects.get(
                     id=context["user_address"],
@@ -1027,19 +1029,14 @@ def new_order_4(request):
                 ),
             )
 
-            seller_d["price_data"] = PricingEngineResponseSerializer(pricing).data
-            # seller_d["price"] = QuoteUtils.get_price_breakdown(seller_d["price_data"])
-
-            # Update the SellerProductSellerLocation to default to the take rate.
-            seller_d["seller_product_seller_location"] = (
-                prep_seller_product_seller_locations_for_response(
-                    main_product=context["product"].main_product,
-                    seller_product_seller_locations=[seller_product_seller_location],
-                )[0]
+            price_data = PricingEngineResponseSerializer(pricing).data
+            # Breakdown of the price data because the neccessary calculations are not capable within the Django template.
+            seller_d["price_breakdown"] = QuoteUtils.get_price_breakdown(
+                price_data,
+                seller_product_seller_location,
+                context["product"].main_product,
+                user_group=context["user_group"],
             )
-            # Include because SellerProductSellerLocationSerializer does not include waste types info needed
-            # needed for price_details_modal.
-            seller_d["spsl"] = seller_product_seller_location
 
             context["seller_product_seller_locations"].append(seller_d)
         except Exception as e:
