@@ -296,6 +296,18 @@
                                                     </div>
                                                 </div>
                                             {% endif %}
+                                            <div class="row">
+                                                <div class="col">
+                                                    <p style="margin-bottom: 0px;">
+                                                        <strong>Fuel and Fees</strong> ({{ item.price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%)
+                                                    </p>
+                                                </div>
+                                                <div class="col">
+                                                    <p style="text-align: right;margin-bottom: 0px;">
+                                                        <em><span class="price-item" data-price="{{ item.price_breakdown.one_time.fuel_and_environmental }}">${{ item.price_breakdown.one_time.fuel_and_environmental|floatformat:2|intcomma }}</span></em>
+                                                    </p>
+                                                </div>
+                                            </div>
                                             <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-bottom-style: solid;">
                                                 Freight (One time): <strong><span class="price-item" data-price="{{ item.price_breakdown.one_time.total }}">${{ item.price_breakdown.one_time.total|floatformat:2|intcomma }}</span></strong>
                                             </p>
