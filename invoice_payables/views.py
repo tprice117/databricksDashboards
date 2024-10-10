@@ -26,12 +26,16 @@ def invoice_detail(request, id):
         'order_line_items_set__orderlineitemtype',  # For OrderLineItemType
     ).annotate(
         service_address=F('order_group__user_address__name'),  # UserAddress.name
+        line_item_type = F('order_line_items__order_line_item_type__name'),
+        product_name = F('order_group__seller_product_seller_location__seller_product__product__main_product__name'),
         backbill=F('order_line_items__backbill'),  # OrderLineItem.backbill
         rate=F('order_line_items__rate'),  # OrderLineItem.rate
         quantity=F('order_line_items__quantity'),  # OrderLineItem.quantity
         order_date=F('start_date'),  # Order.start_date
     ).values(
         'service_address',  # userAddress.name
+        'line_item_type', #OrderLineItemType name
+        'product_name', #product_name
         'backbill',  # OrderLineItem backbill
         'order_date',  # Order start_date
         'rate',  # OrderLineItem rate

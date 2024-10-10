@@ -75,7 +75,9 @@
     <table>
         <thead>
             <tr>
+                <th>product_name</th>
                 <th>service_address</th>
+                <th>line_item_type</th>
                 <th>backbill</th>
                 <th>Order_Date</th>
                 <th>Order_Rate</th>
@@ -89,7 +91,9 @@
             {% comment %} {{queryset}} {% endcomment %}
             {% for orderlineitem in queryset %}
             <tr>
+                <td>{{ orderlineitem.product_name }}</td>
                 <td>{{ orderlineitem.service_address }}</td>
+                <td>{{ orderlineitem.line_item_type }}</td>                
                 <td>{{ orderlineitem.backbill }}</td>
                 <td>{{ orderlineitem.order_date }}</td>
                 <td class="order_rate">{{ orderlineitem.rate }}</td>
