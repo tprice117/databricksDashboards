@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>invoice_detail</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to invoice_detail Page</h1>
+
+    <h1>invoice_detail ID: {{ invoice_payable.id }}</h1>
+    <p>SellerLocation: {{ invoice_payable.seller_location }}</p>
+    <p>Status: {{ invoice_payable.status }}</p>
+
+    <h2>invoiceDetails:</h2>
+    <p>SellerLocation: {{invoice_payable.seller_location}}</p>
+    <p></p>
+    <p>Supplier invoice ID: {{invoice_payable.supplier_invoice_id}}</p>
+    <p>Invoice File: {{invoice_payable.invoice_file}}</p>
+
+    <h2>Dates</h2>
+    <p>Invoice Date: {{invoice_payable.invoice_date}}</p>
+    <p>Due Date: {{invoice_payable.due_date}} </p>
+
+    <h2>Audit</h2>
+    <p>Created on: {{invoice_payable.created_on}}</p>
+    <p>Created by: {{invoice_payable.created_by}}</p>
+    <p>Updated on: {{invoice_payable.updated_on}}</p>
+    <p>Updated by: {{invoice_payable.updated_by}}</p>
+
+    <h2>Invoice Line Items</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>product_name</th>
+                <th>service_address</th>
+                <th>line_item_type</th>
+                <th>backbill</th>
+                <th>Order_Date</th>
+                <th>Order_Rate</th>
+                <th>Quantity</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+            {% comment %} {{seller_product_locations}} {% endcomment %}
+            {% comment %} {{queryset}} {% endcomment %}
+            {% for orderlineitem in queryset %}
+            <tr>
+                <td>{{ orderlineitem.product_name }}</td>
+                <td>{{ orderlineitem.service_address }}</td>
+                <td>{{ orderlineitem.line_item_type }}</td>                
+                <td>{{ orderlineitem.backbill }}</td>
+                <td>{{ orderlineitem.order_date }}</td>
+                <td class="order_rate">{{ orderlineitem.rate }}</td>
+                <td>{{ orderlineitem.quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <h2>Linked Orders</h2>
+    {% comment %} <p>{{related_orders}}</p>
+    <p>{{line_items}}</p>
+    <p>{{line_item_order_map}}</p> {% endcomment %}
+    <table>
+        <thead>
+            <tr>
+                <th>Line Item ID</th>
+                <th>Order</th>
+                <th>Order Amount</th>
+                <th>Line Item Description</th>
+                <th>Order Status</th>
+                <th>Order Created On</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line_item, order in line_item_order_map.items %}
+            <tr>
+                <td>{{ line_item.id }}</td> 
+                <td>{{ order }}</td>     
+                <td>{{ line_item.amount }}</td>    
+                <td>{{ line_item.description }}</td>              
+                <td>{{ order.status }}</td> 
+                <td>{{ order.created_on }}</td> 
+            </br>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <p>Total Order Rate: <span id="totalOrderRate"></span></p>
+
+    <script>
+        function sumOrderRate() {
+            let total = 0;
+            const rates = document.querySelectorAll('.order_rate'); // Select all order_rate cells
+            
+            rates.forEach(rate => {
+                total += parseFloat(rate.textContent) || 0; // Convert the text to a number, handle any empty cells with || 0
+            });
+    
+            document.getElementById('totalOrderRate').textContent = total.toFixed(2); // Display the total, rounded to 2 decimals
+        }
+    
+        // Call the function when the page loads
+        window.onload = sumOrderRate;
+    </script>
+    
+
+    <footer>
+        <button onclick="window.location.href='{% url 'index' %}'">Back to Index</button>
+    </footer>
+</body>
+</html>
