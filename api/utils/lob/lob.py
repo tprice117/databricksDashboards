@@ -32,7 +32,11 @@ from lob_python.model.country_extended import CountryExtended
 from lob_python.model.qr_code import QrCode
 
 from django.conf import settings
-from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
+from django.template.loader import render_to_string
+from notifications.utils.add_email_to_queue import (
+    add_internal_email_to_queue,
+)
+from api.models import Order, Payout, SellerLocation
 
 logger = logging.getLogger("billing")
 
@@ -353,6 +357,7 @@ class Lob:
         Returns:
             Union[Check, CheckErrorResponse]: The check object on success or error object on failure.
         """
+        description = ""
         try:
             check_editable = CheckEditable(
                 bank_account=bank_id,
@@ -403,6 +408,7 @@ class Lob:
                 else:
                     check_editable.message = "Downstream Marketplace Bookings Payout"
 
+            description = check_editable.description
             with ApiClient(self.configuration) as api_client:
                 api = ChecksApi(api_client)
                 created_check: Check = api.create(check_editable)
@@ -412,13 +418,70 @@ class Lob:
             # e.status 422, reason Unprocessable Entity
             print("Exception when calling ChecksApi->create: %s\n" % e)
             logger.error(f"Lob.sendPhysicalCheck.api: [{e}]", exc_info=e)
+            reason = f"[ApiException-{e.status}]: {e.body}"
+            Lob.send_internal_email(
+                description, reason, seller_location, amount, orders
+            )
             return CheckErrorResponse(status_code=e.status, message=e.body)
         except lob_python.ApiValueError as e:
             logger.error(f"Lob.sendPhysicalCheck.ApiValueError: [{e}]", exc_info=e)
+            reason = f"[ApiValueError-400]: {str(e)}"
+            Lob.send_internal_email(
+                description, reason, seller_location, amount, orders
+            )
             return CheckErrorResponse(status_code=400, message=str(e))
         except Exception as e:
             logger.error(f"Lob.sendPhysicalCheck: [{e}]", exc_info=e)
+            reason = f"[Unknown Error-500]: {str(e)}"
+            Lob.send_internal_email(
+                description, reason, seller_location, amount, orders
+            )
             return CheckErrorResponse(status_code=500, message=str(e))
+
+    @staticmethod
+    def send_internal_email(
+        description: str,
+        reason: str,
+        seller_location: SellerLocation,
+        amount: float,
+        orders: List[Order],
+    ):
+        # Send email to internal team. Only on our PROD environment.
+        if settings.ENVIRONMENT == "TEST":
+            try:
+                subject = f"Lob Check Send Error: {seller_location.name}-{seller_location.mailing_address.formatted_address}"
+                seller_location_link = f"{settings.API_URL}/admin/api/sellerlocation/{str(seller_location.id)}/change/"
+                order_links = {}
+                for order in orders:
+                    order_links[str(order.id)] = (
+                        f"{settings.API_URL}/admin/api/order/{str(order.id)}/change/"
+                    )
+                payload = {
+                    "location": seller_location.name,
+                    "description": description,
+                    "amount": amount,
+                    "order_links": order_links,
+                    "payee_name": seller_location.payee_name,
+                    "order_email": seller_location.order_email,
+                    "order_phone": seller_location.order_phone,
+                    "address": seller_location.mailing_address.formatted_address,
+                    "reason": reason,
+                    "seller_location_link": seller_location_link,
+                }
+                html_content = render_to_string(
+                    "emails/internal/check_send_failure.min.html", payload
+                )
+                add_internal_email_to_queue(
+                    from_email="system@trydownstream.com",
+                    additional_to_emails=[
+                        "mwickey@trydownstream.com",
+                        "billing@trydownstream.com",
+                    ],
+                    subject=subject,
+                    html_content=html_content,
+                )
+            except Exception as e:
+                logger.error(f"Lob.send_internal_email: [{e}]", exc_info=e)
 
     def get_check(self, check_id: str) -> Union[Check, None]:
         """Get a check by ID.
