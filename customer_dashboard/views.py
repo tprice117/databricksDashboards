@@ -1899,26 +1899,50 @@ def order_group_swap(request, order_group_id, is_removal=False):
 @catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
-    pagination_limit = 25
+    pagination_limit = 50
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
     date = request.GET.get("date", None)
     location_id = request.GET.get("location_id", None)
     user_id = request.GET.get("user_id", None)
-    try:
-        is_active = int(request.GET.get("active", 1))
-    except ValueError:
-        is_active = 1
-    context["is_active"] = bool(is_active)
+
     query_params = request.GET.copy()
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
+        my_accounts = request.GET.get("my_accounts")
+        search_q = request.GET.get("q", None)
+        is_active = request.GET.get("active")
+        if is_active == "on":
+            is_active = True
+        else:
+            is_active = False
         if user_id:
             order_groups = OrderGroup.objects.filter(user_id=user_id)
         else:
             order_groups = get_order_group_objects(
                 request, context["user"], context["user_group"]
+            )
+
+        if my_accounts:
+            woner_id = "94c82745-918f-4a9f-86dc-3ce2ab6c1c89"
+            # woner_id = "32a2f4cc-c85e-4bb5-b921-470af24a6561"  # Sager
+            # context["user"].id
+            order_groups = order_groups.filter(
+                user_address__user_group__account_owner_id=woner_id
+            )
+
+        if search_q:
+            # order_group.seller_product_seller_location.seller_location.name
+            order_groups = order_groups.filter(
+                Q(user_address__name__icontains=search_q)
+                | Q(
+                    seller_product_seller_location__seller_location__name__icontains=search_q
+                )
+                | Q(user_address__street__icontains=search_q)
+                | Q(user_address__city__icontains=search_q)
+                | Q(user_address__state__icontains=search_q)
+                | Q(user_address__postal_code__icontains=search_q)
             )
 
         if date:
@@ -1981,7 +2005,9 @@ def my_order_groups(request):
         )
     else:
         if query_params.get("active") is None:
-            query_params["active"] = 1
+            query_params["active"] = "on"
+        if query_params.get("my_accounts") is None:
+            query_params["my_accounts"] = "on"
         context["active_orders_link"] = (
             f"/customer/order_groups/?{query_params.urlencode()}"
         )
