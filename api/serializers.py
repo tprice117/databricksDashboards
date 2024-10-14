@@ -192,6 +192,59 @@ class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = ["status"]
 
 
+class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    user_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    username = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    type = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+
+    def create(self, validated_data):
+        """
+        Create and return a new `User` instance, given the validated data.
+        """
+        new_user = User.objects.create(**validated_data)
+        # Send internal email to notify team.
+        if settings.ENVIRONMENT == "TEST":
+            # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
+            if validated_data.get("user_id", None) is not None:
+                send_email_on_new_signup(
+                    new_user.email, created_by_downstream_team=False
+                )
+        else:
+            logger.info(
+                f"UserSerializer.create: [New User Signup]-[{validated_data}]",
+            )
+        return new_user
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "user_id",
+            "phone",
+            "email",
+            "date_joined",
+            "first_name",
+            "last_name",
+            "username",
+            "photo_url",
+            "is_admin",
+            "is_archived",
+            "is_active",
+            "terms_accepted",
+            "type",
+        ]
+        validators = []
+
+
 class UserGroupSerializer(WritableNestedModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     seller = SellerSerializer(read_only=True)
@@ -235,6 +288,10 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         required=False,
         allow_null=True,
     )
+    users = UserSerializerWithoutUserGroup(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = UserGroup
@@ -261,15 +318,18 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         return obj.credit_limit_used()
 
 
-class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    username = serializers.CharField(
+    user_group = UserGroupSerializer(read_only=True)
+    user_group_id = serializers.PrimaryKeyRelatedField(
+        queryset=UserGroup.objects.all(),
         required=False,
+        source="user_group",
+        write_only=True,
         allow_null=True,
-        allow_blank=True,
     )
-    password = serializers.CharField(
+    username = serializers.CharField(
         required=False,
         allow_null=True,
         allow_blank=True,
@@ -280,39 +340,27 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
         allow_blank=True,
     )
 
-    def create(self, validated_data):
-        """
-        Create and return a new `User` instance, given the validated data.
-        """
-        new_user = User.objects.create(**validated_data)
-        # Send internal email to notify team.
-        if settings.ENVIRONMENT == "TEST":
-            # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
-            if validated_data.get("user_id", None) is not None:
-                send_email_on_new_signup(
-                    new_user.email, created_by_downstream_team=False
-                )
-        else:
-            logger.info(
-                f"UserSerializer.create: [New User Signup]-[{validated_data}]",
-            )
-        return new_user
-
     class Meta:
         model = User
-        fields = "__all__"
+        fields = [
+            "id",
+            "user_group",
+            "user_group_id",
+            "user_id",
+            "phone",
+            "email",
+            "date_joined",
+            "first_name",
+            "last_name",
+            "username",
+            "photo_url",
+            "is_admin",
+            "is_archived",
+            "is_active",
+            "terms_accepted",
+            "type",
+        ]
         validators = []
-
-
-class UserSerializer(UserSerializerWithoutUserGroup):
-    user_group = UserGroupSerializer(read_only=True)
-    user_group_id = serializers.PrimaryKeyRelatedField(
-        queryset=UserGroup.objects.all(),
-        required=False,
-        source="user_group",
-        write_only=True,
-        allow_null=True,
-    )
 
 
 class UserUserAddressSerializer(serializers.ModelSerializer):
