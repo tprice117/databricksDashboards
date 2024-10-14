@@ -475,6 +475,8 @@ class Lob:
                     from_email="system@trydownstream.com",
                     additional_to_emails=[
                         "mwickey@trydownstream.com",
+                        "dleyden@trydownstream.com",
+                        "ctorgerson@trydownstream.com",
                         "billing@trydownstream.com",
                     ],
                     subject=subject,
