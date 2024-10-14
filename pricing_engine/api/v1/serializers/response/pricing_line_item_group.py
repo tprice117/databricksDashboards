@@ -33,4 +33,4 @@ class PricingLineItemGroupSerializer(serializers.ModelSerializer):
 
     def get_tax(self, instance: list[PricingLineItem]):
         all_taxes = [item.tax for item in instance if item.tax is not None]
-        return float(sum(all_taxes)) if all_taxes else 0.0
+        return float(sum(all_taxes)) if all_taxes else 0

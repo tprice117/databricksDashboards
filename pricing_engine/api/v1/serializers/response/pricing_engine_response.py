@@ -103,4 +103,4 @@ class PricingEngineResponseSerializer(serializers.Serializer):
         all_taxes = []
         for group_and_items in instance:
             all_taxes.extend([x.tax for x in group_and_items[1] if x.tax is not None])
-        return float(sum(all_taxes)) if all_taxes else 0.0
+        return float(sum(all_taxes)) if all_taxes else 0

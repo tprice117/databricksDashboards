@@ -236,9 +236,10 @@ def get_user_group(request: HttpRequest) -> Union[UserGroup, None]:
         else:
             # Cache user_group id for faster lookups
             user_group = request.user.user_group
-            request.session["customer_user_group_id"] = get_json_safe_value(
-                user_group.id
-            )
+            if user_group:
+                request.session["customer_user_group_id"] = get_json_safe_value(
+                    user_group.id
+                )
 
     return user_group
 
@@ -2004,10 +2005,11 @@ def my_order_groups(request):
             request, "customer_dashboard/snippets/order_groups_table.html", context
         )
     else:
-        if query_params.get("active") is None:
-            query_params["active"] = "on"
-        if query_params.get("my_accounts") is None:
-            query_params["my_accounts"] = "on"
+        if request.user.is_staff:
+            if query_params.get("active") is None:
+                query_params["active"] = "on"
+            if query_params.get("my_accounts") is None:
+                query_params["my_accounts"] = "on"
         context["active_orders_link"] = (
             f"/customer/order_groups/?{query_params.urlencode()}"
         )
