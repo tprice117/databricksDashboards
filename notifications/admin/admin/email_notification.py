@@ -17,7 +17,7 @@ def parse_order_id(s):
 
 @admin.register(models.EmailNotification)
 class EmailNotificationAdmin(admin.ModelAdmin):
-    actions = ["view_order_email"]
+    actions = ["view_order_email", "send_email"]
 
     def view_order_email(self, request, queryset):
         view_link = None
@@ -37,6 +37,11 @@ class EmailNotificationAdmin(admin.ModelAdmin):
         if view_link:
             print(view_link)
             return HttpResponseRedirect(view_link)
+
+    def send_email(self, request, queryset):
+        for email_notification in queryset:
+            email_notification.send_email()
+        self.message_user(request, "Emails sent.")
 
     def order_link(self, obj):
         order_id = parse_order_id(obj.subject)
