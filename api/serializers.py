@@ -342,6 +342,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+        partial = True
         fields = [
             "id",
             "user_group",
