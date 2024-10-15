@@ -1,4 +1,5 @@
 from typing import Iterable, Union
+from decimal import Decimal
 import stripe
 from django.conf import settings
 import logging
@@ -75,6 +76,11 @@ class PriceCalculation:
                             "items": [line_item],
                         }
             stripe_items = [item["stripe_data"] for item in combined_items.values()]
+            if not stripe_items:
+                # NOTE: This is a workaround for Stripe not allowing empty line items.
+                stripe_items.append(
+                    {"amount": 0, "tax_code": "txcd_00000000", "reference": "EMPTY"}
+                )
             # https://docs.stripe.com/api/tax/calculations/object
             ret = stripe.tax.Calculation.create(
                 currency="usd",
@@ -121,7 +127,7 @@ class PriceCalculation:
                                 else:
                                     # Get amount of the total is line_amount to determine how to split the tax.
                                     line_amount_rate = line_amount / line_type_total
-                                line_item.tax = (
+                                line_item.tax = Decimal(
                                     line_amount_rate * item["amount_tax"] / 100
                                 )
 
@@ -145,7 +151,9 @@ class PriceCalculation:
                         float(item["amount_tax"]) / 100
                     )
             if delivery_line_item and delivery_line_item.tax is None:
-                delivery_line_item.tax = ret["shipping_cost"]["amount_tax"] / 100
+                delivery_line_item.tax = Decimal(
+                    ret["shipping_cost"]["amount_tax"] / 100
+                )
             price_details["tax_breakdown"] = []
             for tax_details in ret["tax_breakdown"]:
                 tax_rate = (
