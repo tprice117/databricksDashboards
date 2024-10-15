@@ -1909,15 +1909,17 @@ def my_order_groups(request):
     user_id = request.GET.get("user_id", None)
 
     query_params = request.GET.copy()
+    is_active = request.GET.get("active")
+    if is_active == "on":
+        is_active = True
+    else:
+        is_active = False
+    context["is_active"] = is_active
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         my_accounts = request.GET.get("my_accounts")
         search_q = request.GET.get("q", None)
-        is_active = request.GET.get("active")
-        if is_active == "on":
-            is_active = True
-        else:
-            is_active = False
+        
         if user_id:
             order_groups = OrderGroup.objects.filter(user_id=user_id)
         else:
