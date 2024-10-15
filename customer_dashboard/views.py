@@ -1926,11 +1926,8 @@ def my_order_groups(request):
             )
 
         if my_accounts:
-            woner_id = "94c82745-918f-4a9f-86dc-3ce2ab6c1c89"
-            # woner_id = "32a2f4cc-c85e-4bb5-b921-470af24a6561"  # Sager
-            # context["user"].id
             order_groups = order_groups.filter(
-                user_address__user_group__account_owner_id=woner_id
+                user_address__user_group__account_owner_id=request.user.id
             )
 
         if search_q:
