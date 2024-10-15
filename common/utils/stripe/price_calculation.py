@@ -76,6 +76,11 @@ class PriceCalculation:
                             "items": [line_item],
                         }
             stripe_items = [item["stripe_data"] for item in combined_items.values()]
+            if not stripe_items:
+                # NOTE: This is a workaround for Stripe not allowing empty line items.
+                stripe_items.append(
+                    {"amount": 0, "tax_code": "txcd_00000000", "reference": "EMPTY"}
+                )
             # https://docs.stripe.com/api/tax/calculations/object
             ret = stripe.tax.Calculation.create(
                 currency="usd",
