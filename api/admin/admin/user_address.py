@@ -62,3 +62,4 @@ class UserAddressAdmin(admin.ModelAdmin):
             # If autopay is enabled, pay the invoice.
             if user_address.user_group.autopay:
                 StripeUtils.Invoice.attempt_pay(invoice.id)
+        self.message_user(request, "Invoices created and finalized.")
