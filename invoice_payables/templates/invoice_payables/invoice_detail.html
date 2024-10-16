@@ -43,36 +43,51 @@
     <p>Updated by: {{invoice_payable.updated_by}}</p>
 
     <h2>Invoice Line Items</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>product_name</th>
-                <th>service_address</th>
-                <th>line_item_type</th>
-                <th>backbill</th>
-                <th>Order_Date</th>
-                <th>Order_Rate</th>
-                <th>Quantity</th>
-
-
-            </tr>
-        </thead>
-        <tbody>
-            {% comment %} {{seller_product_locations}} {% endcomment %}
-            {% comment %} {{queryset}} {% endcomment %}
-            {% for orderlineitem in queryset %}
-            <tr>
-                <td>{{ orderlineitem.product_name }}</td>
-                <td>{{ orderlineitem.service_address }}</td>
-                <td>{{ orderlineitem.line_item_type }}</td>                
-                <td>{{ orderlineitem.backbill }}</td>
-                <td>{{ orderlineitem.order_date }}</td>
-                <td class="order_rate">{{ orderlineitem.rate }}</td>
-                <td>{{ orderlineitem.quantity }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <form method="POST" action="{% url 'invoice_detail' invoice_payable.id %}">
+        {% csrf_token %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Service Address</th>
+                    <th>Line Item Type</th>
+                    <th>Backbill</th>
+                    <th>Order Date</th>
+                    <th>Order Rate</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orderlineitem in queryset %}
+                <tr>
+                    <td>
+                        <input type="text" name="product_name_{{ orderlineitem.id }}" value="{{ orderlineitem.product_name }}">
+                    </td>
+                    <td>
+                        <input type="text" name="service_address_{{ orderlineitem.id }}" value="{{ orderlineitem.service_address }}">
+                    </td>
+                    <td>
+                        <input type="text" name="line_item_type_{{ orderlineitem.id }}" value="{{ orderlineitem.line_item_type }}">
+                    </td>
+                    <td>
+                        <input type="checkbox" name="backbill_{{ orderlineitem.id }}" value="True" {% if orderlineitem.backbill %}checked{% endif %}>
+                    </td>
+                    <td>
+                        <input type="date" name="order_date_{{ orderlineitem.id }}" value="{{ orderlineitem.order_date|date:'Y-m-d' }}">
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="order_rate_{{ orderlineitem.id }}" value="{{ orderlineitem.rate }}">
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="quantity_{{ orderlineitem.id }}" value="{{ orderlineitem.quantity }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit">Save Changes</button>
+    </form>
+    
     
     <h2>Linked Orders</h2>
     {% comment %} <p>{{related_orders}}</p>
