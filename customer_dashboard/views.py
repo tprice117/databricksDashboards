@@ -279,7 +279,7 @@ def get_user_group_user_objects(
     Returns:
         QuerySet[User]: The users queryset.
     """
-    if not user.is_staff and user.type != UserType.ADMIN:
+    if not request.user.is_staff and user.type != UserType.ADMIN:
         users = User.objects.filter(user_group_id=user.user_group_id)
     else:
         if request.user.is_staff and not is_impersonating(request):
@@ -318,7 +318,7 @@ def get_booking_objects(
     Returns:
         QuerySet[Order]: The orders queryset.
     """
-    if not user.is_staff and user.type != UserType.ADMIN:
+    if not request.user.is_staff and user.type != UserType.ADMIN:
         user_user_location_ids = (
             UserUserAddress.objects.filter(user_id=user.id)
             .select_related("user_address")
@@ -360,7 +360,7 @@ def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGr
     Returns:
         QuerySet[OrderGroup]: The order_groups queryset.
     """
-    if not user.is_staff and user.type != UserType.ADMIN:
+    if not request.user.is_staff and user.type != UserType.ADMIN:
         user_user_location_ids = (
             UserUserAddress.objects.filter(user_id=user.id)
             .select_related("user_address")
@@ -401,7 +401,7 @@ def get_location_objects(
     Returns:
         QuerySet[Location]: The locations queryset.
     """
-    if not user.is_staff and user.type != UserType.ADMIN:
+    if not request.user.is_staff and user.type != UserType.ADMIN:
         user_user_locations = UserUserAddress.objects.filter(
             user_id=user.id
         ).select_related("user_address")
@@ -459,7 +459,7 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
         QuerySet[Invoice]: The invoices queryset.
     """
 
-    if not user.is_staff and user.type != UserType.ADMIN:
+    if not request.user.is_staff and user.type != UserType.ADMIN:
         user_user_location_ids = (
             UserUserAddress.objects.filter(user_id=user.id)
             .select_related("user_address")
@@ -596,7 +596,8 @@ def customer_impersonation_start(request):
             elif user_id:
                 user = User.objects.get(id=user_id)
                 # If user is an Admin, then set the user_group to enable global view.
-                if user.type == UserType.ADMIN:
+                # NOTE: If staff user, then always show admin view.
+                if user.type == UserType.ADMIN or request.user.is_staff:
                     user_group = user.user_group
                     if user_group:
                         user_group_id = user_group.id
@@ -1919,7 +1920,7 @@ def my_order_groups(request):
     if request.headers.get("HX-Request"):
         my_accounts = request.GET.get("my_accounts")
         search_q = request.GET.get("q", None)
-        
+
         if user_id:
             order_groups = OrderGroup.objects.filter(user_id=user_id)
         else:
@@ -2152,6 +2153,7 @@ def locations(request):
     search_q = request.GET.get("q", None)
     # location_id = request.GET.get("location_id", None)
     # This is an HTMX request, so respond with html snippet
+    # TODO: Show all locations everyone, but only show the edit button for Admins or locations that the user has access.
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
         context["tab"] = tab
@@ -2546,6 +2548,12 @@ def new_location(request):
                     raise InvalidFormError(form, "Invalid UserAddressForm")
             if save_model:
                 save_model.save()
+                # If user is not admin, then add access to the location.
+                if context["user"].type != UserType.ADMIN:
+                    UserUserAddress.objects.get_or_create(
+                        user=context["user"],
+                        user_address=save_model,
+                    )
                 messages.success(request, "Successfully saved!")
                 return redirect(
                     reverse(
