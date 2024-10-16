@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     # START:  Django Humanize (for template number formatting).
     "django.contrib.humanize",
     # END:  Django Humanize (for template number formatting).
+    "invoice_payables",
 ]
 
 MIDDLEWARE = [
@@ -302,6 +303,16 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Downstream API for the Downstream Market Network.",
     "DESCRIPTION": SPECTACULAR_DESCRIPTION,
     "VERSION": "1.0.0",
+    "SERVERS": [
+        {
+            "url": "https://api-dev.trydownstream.com",
+            "description": "Development",
+        },
+        {
+            "url": "https://api.trydownstream.com",
+            "description": "Production",
+        },
+    ],
     "ENUM_NAME_OVERRIDES": {
         "ValidationErrorEnum": "drf_standardized_errors.openapi_serializers.ValidationErrorEnum.choices",
         "ClientErrorEnum": "drf_standardized_errors.openapi_serializers.ClientErrorEnum.choices",
