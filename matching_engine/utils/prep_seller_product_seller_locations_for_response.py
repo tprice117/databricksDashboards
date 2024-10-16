@@ -11,6 +11,7 @@ from matching_engine.utils.seller_product_seller_location_plus_take_rate import 
 def prep_seller_product_seller_locations_for_response(
     main_product: MainProduct,
     seller_product_seller_locations: SellerProductSellerLocation,
+    take_rate=None,
 ):
     # Add default take rate to the price and serialize the data.
     data_with_take_rate = []
@@ -18,7 +19,7 @@ def prep_seller_product_seller_locations_for_response(
     for seller_product_seller_location in seller_product_seller_locations:
         data_with_take_rate.append(
             seller_product_seller_location_plus_take_rate(
-                seller_product_seller_location,
+                seller_product_seller_location, take_rate=take_rate
             )
         )
 

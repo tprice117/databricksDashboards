@@ -139,6 +139,7 @@ class QuoteUtils:
         fuel_fee_rate,
         estimated_tax_rate: float = None,
         add_rpp_fee=True,
+        take_rate=None,
     ) -> Union[RentalBreakdown, None]:
         """Creates breakdown for rental multi-step products with fuel fees, RPP, and estimated taxes (if available).
 
@@ -148,6 +149,7 @@ class QuoteUtils:
             fuel_fee_rate (float | decimal): Fuel fee rate.
             estimated_tax_rate (float, optional): Estimated tax rate. Adds tax if set. Defaults to None.
             add_rpp_fee (bool, optional): Adds RPP if set to True. Defaults to True.
+            take_rate (Decimal, optional): take_rate rate from 0-100. Defaults to main_product.default_take_rate.
 
         Returns:
             Union[RentalBreakdown, None]: _description_
@@ -157,6 +159,7 @@ class QuoteUtils:
             prep_seller_product_seller_locations_for_response(
                 main_product=main_product,
                 seller_product_seller_locations=[seller_product_seller_location],
+                take_rate=take_rate,
             )[0]
         )
         if seller_product_seller_location_resp["rental_multi_step"]:
@@ -579,6 +582,7 @@ class QuoteUtils:
                     item["fuel_and_environmental_rate"],
                     estimated_tax_rate=item["estimated_tax_rate"],
                     add_rpp_fee=add_rpp_fee,
+                    take_rate=order.order_group.take_rate,
                 )
 
                 multi_step.append(item)
