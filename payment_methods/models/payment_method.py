@@ -27,6 +27,8 @@ class PaymentMethod(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
         on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
     active = models.BooleanField(default=True)
     reason = models.TextField(blank=True, null=True)
