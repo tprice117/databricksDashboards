@@ -111,7 +111,7 @@
                                             <hr />
                                             <div class="row">
                                                 <div class="col-8">
-                                                    <strong>Total Per Day</strong>
+                                                    <strong>Total Per{% cycle ' Day' ' Week' ' Month' %}</strong>
                                                 </div>
                                                 <div class="col-4">
                                                     <strong><span class="price-item" data-price="{{ value.subtotal }}">${{ value.subtotal|floatformat:2|intcomma }}</span></strong>
