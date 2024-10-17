@@ -3783,6 +3783,7 @@ paths:
           - br
           - bs
           - ca
+          - ckb
           - cs
           - cy
           - da
@@ -22703,14 +22704,10 @@ components:
           enum:
           - does_not_exist
           - incorrect_type
-          - 'null'
-          - required
           type: string
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
         detail:
           type: string
       required:
@@ -22852,14 +22849,10 @@ components:
           enum:
           - does_not_exist
           - incorrect_type
-          - 'null'
-          - required
           type: string
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
         detail:
           type: string
       required:
@@ -22994,14 +22987,10 @@ components:
           enum:
           - does_not_exist
           - incorrect_type
-          - 'null'
-          - required
           type: string
           description: |-
             * `does_not_exist` - does_not_exist
             * `incorrect_type` - incorrect_type
-            * `null` - null
-            * `required` - required
         detail:
           type: string
       required:
@@ -43866,6 +43855,7 @@ components:
         user_group:
           type: string
           format: uuid
+          nullable: true
         card:
           type: object
           properties:
@@ -44097,6 +44087,7 @@ components:
           type: string
           format: uuid
           readOnly: true
+          nullable: true
         user:
           type: string
           format: uuid
@@ -44620,6 +44611,7 @@ components:
         user_group:
           type: string
           format: uuid
+          nullable: true
         card:
           type: object
           properties:
@@ -44654,7 +44646,6 @@ components:
       - reason
       - token
       - user
-      - user_group
     PaymentMethodUser:
       type: object
       properties:
@@ -47040,6 +47031,7 @@ components:
           type: string
           format: uuid
           readOnly: true
+          nullable: true
         user:
           type: string
           format: uuid
