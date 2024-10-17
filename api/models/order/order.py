@@ -358,7 +358,11 @@ class Order(BaseModel):
 
         # Return (total_customer_price, total_invoiced, total_paid).
         return total_customer_price, total_invoiced, total_paid
-
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+        
     def clean(self):
         super().clean()
 
