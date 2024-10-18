@@ -3079,7 +3079,9 @@ def company_detail(request, user_group_id=None):
                     f"No customer selected! Using first user group found: [{user_group.name}].",
                 )
     else:
-        if not request.user.is_staff:
+        # Only allow admin to save company settings.
+        if not request.user.is_staff and context["user"].type != UserType.ADMIN:
+            messages.error(request, "Only admins can edit Company Settings.")
             return HttpResponseRedirect(reverse("customer_home"))
         user_group = UserGroup.objects.filter(id=user_group_id)
         user_group = user_group.prefetch_related("users", "user_addresses")
@@ -3103,7 +3105,10 @@ def company_detail(request, user_group_id=None):
             if form.cleaned_data.get("name") != user_group.name:
                 user_group.name = form.cleaned_data.get("name")
                 save_db = True
-            if form.cleaned_data.get("apollo_id") != user_group.apollo_id:
+            if (
+                form.cleaned_data.get("apollo_id")
+                and form.cleaned_data.get("apollo_id") != user_group.apollo_id
+            ):
                 user_group.apollo_id = form.cleaned_data.get("apollo_id")
                 save_db = True
             if form.cleaned_data.get("pay_later") != user_group.pay_later:
@@ -3120,6 +3125,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("invoice_frequency")
+                and form.cleaned_data.get("invoice_frequency")
                 != user_group.invoice_frequency
             ):
                 user_group.invoice_frequency = form.cleaned_data.get(
@@ -3128,6 +3134,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("invoice_day_of_month")
+                and form.cleaned_data.get("invoice_day_of_month")
                 != user_group.invoice_day_of_month
             ):
                 user_group.invoice_day_of_month = form.cleaned_data.get(

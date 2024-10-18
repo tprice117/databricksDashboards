@@ -312,6 +312,11 @@ class UserGroupForm(forms.Form):
             self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
             self.fields["tax_exempt_status"].disabled = True
+            self.fields["apollo_id"].required = False
+            self.fields["apollo_id"].widget = forms.HiddenInput()
+            self.fields["autopay"].widget = forms.HiddenInput()
+            self.fields["invoice_frequency"].disabled = True
+            self.fields["invoice_day_of_month"].disabled = True
 
 
 # Create an Order form
