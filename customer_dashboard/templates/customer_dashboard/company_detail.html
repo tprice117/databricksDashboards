@@ -312,17 +312,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="card-title">Internal Data&nbsp;</h4>
-                                <p>Share Code: {{ user_group.share_code }}</p>
-                                <p>Account Owner: {{ user_group.account_owner.email }}</p>
-                                <p>Apollo ID: {{ user_group.apollo_id }}</p>
-                                <p>Stage: {{ user_group.stage }}</p>
+                    {% if request.user.is_staff %}
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title">Internal Data&nbsp;</h4>
+                                    <p>Share Code: {{ user_group.share_code }}</p>
+                                    <p>Account Owner: {{ user_group.account_owner.email }}</p>
+                                    <p>Apollo ID: {{ user_group.apollo_id }}</p>
+                                    <p>Stage: {{ user_group.stage }}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
