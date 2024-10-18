@@ -1357,6 +1357,7 @@ def new_order_5(request):
         else:
             # Get unique order group objects from the orders and place them in address buckets.
             for order in orders:
+                # TODO: Grab full price here and show the taxes too.
                 customer_price = order.customer_price()
                 # Create a new address bucket if it doesn't exist.
                 uaid = order.order_group.user_address_id
@@ -1607,6 +1608,7 @@ def add_payment_method(request):
     context = get_user_context(request)
     http_status = 204
     status_text = ""
+    # TODO: Make user_group optional
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         user_group_id = request.POST.get("user_group")
@@ -2502,6 +2504,11 @@ def new_location(request):
             request,
             f"No customer selected! Location would be added to your account [{request.user.email}].",
         )
+
+    # Only allow admin to create new users.
+    if context["user"].type != UserType.ADMIN:
+        messages.error(request, "Only admins can create new locations.")
+        return HttpResponseRedirect(reverse("customer_locations"))
 
     if request.method == "POST":
         try:
