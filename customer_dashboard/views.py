@@ -1357,6 +1357,7 @@ def new_order_5(request):
         else:
             # Get unique order group objects from the orders and place them in address buckets.
             for order in orders:
+                # TODO: Grab full price here and show the taxes too.
                 customer_price = order.customer_price()
                 # Create a new address bucket if it doesn't exist.
                 uaid = order.order_group.user_address_id
@@ -1607,6 +1608,7 @@ def add_payment_method(request):
     context = get_user_context(request)
     http_status = 204
     status_text = ""
+    # TODO: Make user_group optional
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         user_group_id = request.POST.get("user_group")
@@ -2005,9 +2007,9 @@ def my_order_groups(request):
             request, "customer_dashboard/snippets/order_groups_table.html", context
         )
     else:
+        if query_params.get("active") is None:
+            query_params["active"] = "on"
         if request.user.is_staff:
-            if query_params.get("active") is None:
-                query_params["active"] = "on"
             if query_params.get("my_accounts") is None:
                 query_params["my_accounts"] = "on"
         context["active_orders_link"] = (
@@ -2286,7 +2288,9 @@ def location_detail(request, location_id):
     if request.method == "POST":
         try:
             save_model = None
-            form = UserAddressForm(request.POST)
+            form = UserAddressForm(
+                request.POST, user=context["user"], auth_user=request.user
+            )
             context["user_address_form"] = form
             if form.is_valid():
                 if form.cleaned_data.get("name") != user_address.name:
@@ -2375,7 +2379,9 @@ def location_detail(request, location_id):
                 "allow_saturday_delivery": user_address.allow_saturday_delivery,
                 "allow_sunday_delivery": user_address.allow_sunday_delivery,
                 "access_details": user_address.access_details,
-            }
+            },
+            user=context["user"],
+            auth_user=request.user,
         )
 
     # For any request type, get the current UserUserAddress objects.
@@ -2503,11 +2509,18 @@ def new_location(request):
             f"No customer selected! Location would be added to your account [{request.user.email}].",
         )
 
+    # Only allow admin to create new users.
+    if context["user"].type != UserType.ADMIN:
+        messages.error(request, "Only admins can create new locations.")
+        return HttpResponseRedirect(reverse("customer_locations"))
+
     if request.method == "POST":
         try:
             save_model = None
             if "user_address_submit" in request.POST:
-                form = UserAddressForm(request.POST)
+                form = UserAddressForm(
+                    request.POST, user=context["user"], auth_user=request.user
+                )
                 context["user_address_form"] = form
                 if form.is_valid():
                     name = form.cleaned_data.get("name")
@@ -2577,7 +2590,9 @@ def new_location(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
-        context["user_address_form"] = UserAddressForm()
+        context["user_address_form"] = UserAddressForm(
+            user=context["user"], auth_user=request.user
+        )
 
     return render(request, "customer_dashboard/location_new_edit.html", context)
 
@@ -3072,7 +3087,9 @@ def company_detail(request, user_group_id=None):
                     f"No customer selected! Using first user group found: [{user_group.name}].",
                 )
     else:
-        if not request.user.is_staff:
+        # Only allow admin to save company settings.
+        if not request.user.is_staff and context["user"].type != UserType.ADMIN:
+            messages.error(request, "Only admins can edit Company Settings.")
             return HttpResponseRedirect(reverse("customer_home"))
         user_group = UserGroup.objects.filter(id=user_group_id)
         user_group = user_group.prefetch_related("users", "user_addresses")
@@ -3089,14 +3106,19 @@ def company_detail(request, user_group_id=None):
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
     if request.method == "POST":
-        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
+        form = UserGroupForm(
+            request.POST, request.FILES, user=context["user"], auth_user=request.user
+        )
         context["form"] = form
         if form.is_valid():
             save_db = False
             if form.cleaned_data.get("name") != user_group.name:
                 user_group.name = form.cleaned_data.get("name")
                 save_db = True
-            if form.cleaned_data.get("apollo_id") != user_group.apollo_id:
+            if (
+                form.cleaned_data.get("apollo_id")
+                and form.cleaned_data.get("apollo_id") != user_group.apollo_id
+            ):
                 user_group.apollo_id = form.cleaned_data.get("apollo_id")
                 save_db = True
             if form.cleaned_data.get("pay_later") != user_group.pay_later:
@@ -3113,6 +3135,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("invoice_frequency")
+                and form.cleaned_data.get("invoice_frequency")
                 != user_group.invoice_frequency
             ):
                 user_group.invoice_frequency = form.cleaned_data.get(
@@ -3121,6 +3144,7 @@ def company_detail(request, user_group_id=None):
                 save_db = True
             if (
                 form.cleaned_data.get("invoice_day_of_month")
+                and form.cleaned_data.get("invoice_day_of_month")
                 != user_group.invoice_day_of_month
             ):
                 user_group.invoice_day_of_month = form.cleaned_data.get(
@@ -3185,6 +3209,7 @@ def company_detail(request, user_group_id=None):
                     "tax_exempt_status": user_group.tax_exempt_status,
                 },
                 user=context["user"],
+                auth_user=request.user,
             )
             context["form"] = form
             # return HttpResponse("", status=200)
@@ -3213,6 +3238,7 @@ def company_detail(request, user_group_id=None):
                 "tax_exempt_status": user_group.tax_exempt_status,
             },
             user=context["user"],
+            auth_user=request.user,
         )
         context["types"] = context["user"].get_allowed_user_types()
     return render(request, "customer_dashboard/company_detail.html", context)
@@ -3275,7 +3301,12 @@ def new_company(request):
     context["help_msg"] = "Enter new or existing user email."
     if request.method == "POST":
         try:
-            form = UserGroupForm(request.POST, request.FILES, user=request.user)
+            form = UserGroupForm(
+                request.POST,
+                request.FILES,
+                user=context["user"],
+                auth_user=request.user,
+            )
             POST_COPY = request.POST.copy()
             if request.POST.get("type"):
                 context["type"] = request.POST.get("type")
@@ -3359,7 +3390,7 @@ def new_company(request):
             )
             logger.error(f"new_company: [{e}]", exc_info=e)
     else:
-        context["form"] = UserGroupForm(user=request.user)
+        context["form"] = UserGroupForm(user=context["user"], auth_user=request.user)
 
     return render(request, "customer_dashboard/company_new.html", context)
 

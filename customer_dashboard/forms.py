@@ -237,6 +237,13 @@ class UserAddressForm(forms.Form):
         required=False,
     )
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        auth_user = kwargs.pop("auth_user", None)
+        super(UserGroupForm, self).__init__(*args, **kwargs)
+        if auth_user and not auth_user.is_staff:
+            self.fields["is_archived"].widget = forms.HiddenInput()
+
 
 class UserGroupForm(forms.Form):
     name = forms.CharField(
@@ -304,14 +311,20 @@ class UserGroupForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
+        auth_user = kwargs.pop("auth_user", None)
         super(UserGroupForm, self).__init__(*args, **kwargs)
-        if user and not user.is_staff:
+        if auth_user and not auth_user.is_staff:
             self.fields["net_terms"].disabled = True
             self.fields["share_code"].disabled = True
             self.fields["share_code"].widget = forms.HiddenInput()
             self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
             self.fields["tax_exempt_status"].disabled = True
+            self.fields["apollo_id"].required = False
+            self.fields["apollo_id"].widget = forms.HiddenInput()
+            self.fields["autopay"].widget = forms.HiddenInput()
+            self.fields["invoice_frequency"].disabled = True
+            self.fields["invoice_day_of_month"].disabled = True
 
 
 # Create an Order form
