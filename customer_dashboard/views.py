@@ -2288,7 +2288,9 @@ def location_detail(request, location_id):
     if request.method == "POST":
         try:
             save_model = None
-            form = UserAddressForm(request.POST)
+            form = UserAddressForm(
+                request.POST, user=context["user"], auth_user=request.user
+            )
             context["user_address_form"] = form
             if form.is_valid():
                 if form.cleaned_data.get("name") != user_address.name:
@@ -2377,7 +2379,9 @@ def location_detail(request, location_id):
                 "allow_saturday_delivery": user_address.allow_saturday_delivery,
                 "allow_sunday_delivery": user_address.allow_sunday_delivery,
                 "access_details": user_address.access_details,
-            }
+            },
+            user=context["user"],
+            auth_user=request.user,
         )
 
     # For any request type, get the current UserUserAddress objects.
@@ -2514,7 +2518,9 @@ def new_location(request):
         try:
             save_model = None
             if "user_address_submit" in request.POST:
-                form = UserAddressForm(request.POST)
+                form = UserAddressForm(
+                    request.POST, user=context["user"], auth_user=request.user
+                )
                 context["user_address_form"] = form
                 if form.is_valid():
                     name = form.cleaned_data.get("name")
@@ -2584,7 +2590,9 @@ def new_location(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
-        context["user_address_form"] = UserAddressForm()
+        context["user_address_form"] = UserAddressForm(
+            user=context["user"], auth_user=request.user
+        )
 
     return render(request, "customer_dashboard/location_new_edit.html", context)
 
@@ -3098,7 +3106,9 @@ def company_detail(request, user_group_id=None):
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
     if request.method == "POST":
-        form = UserGroupForm(request.POST, request.FILES, user=context["user"])
+        form = UserGroupForm(
+            request.POST, request.FILES, user=context["user"], auth_user=request.user
+        )
         context["form"] = form
         if form.is_valid():
             save_db = False
@@ -3199,6 +3209,7 @@ def company_detail(request, user_group_id=None):
                     "tax_exempt_status": user_group.tax_exempt_status,
                 },
                 user=context["user"],
+                auth_user=request.user,
             )
             context["form"] = form
             # return HttpResponse("", status=200)
@@ -3227,6 +3238,7 @@ def company_detail(request, user_group_id=None):
                 "tax_exempt_status": user_group.tax_exempt_status,
             },
             user=context["user"],
+            auth_user=request.user,
         )
         context["types"] = context["user"].get_allowed_user_types()
     return render(request, "customer_dashboard/company_detail.html", context)
@@ -3289,7 +3301,12 @@ def new_company(request):
     context["help_msg"] = "Enter new or existing user email."
     if request.method == "POST":
         try:
-            form = UserGroupForm(request.POST, request.FILES, user=request.user)
+            form = UserGroupForm(
+                request.POST,
+                request.FILES,
+                user=context["user"],
+                auth_user=request.user,
+            )
             POST_COPY = request.POST.copy()
             if request.POST.get("type"):
                 context["type"] = request.POST.get("type")
@@ -3373,7 +3390,7 @@ def new_company(request):
             )
             logger.error(f"new_company: [{e}]", exc_info=e)
     else:
-        context["form"] = UserGroupForm(user=request.user)
+        context["form"] = UserGroupForm(user=context["user"], auth_user=request.user)
 
     return render(request, "customer_dashboard/company_new.html", context)
 
