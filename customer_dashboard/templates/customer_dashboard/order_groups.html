@@ -64,36 +64,36 @@
         <div class="d-sm-flex justify-content-between align-items-center mb-4">
             <h3 class="text-dark mb-0">Bookings</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{% url 'customer_new_order' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create New Booking</a>
         </div>
-        {% if request.user.is_staff %}
-            <div class="row">
-                <div class="col">
-                    <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
-                        <form class="row g-3" action="{% url 'customer_order_groups' %}" method="get" hx-get="{% url 'customer_order_groups' %}" hx-disabled-elt="button" hx-target="#order-groups-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-                            <div class="col-12">
-                                <label for="location-search-filter">Search (address or supplier)</label>
-                                <input id="location-search-filter" class="form-control" type="search" name="q" />
+        <div class="row">
+            <div class="col">
+                <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
+                    <form class="row g-3" action="{% url 'customer_order_groups' %}" method="get" hx-get="{% url 'customer_order_groups' %}" hx-disabled-elt="button" hx-target="#order-groups-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+                        <div class="col-12">
+                            <label for="location-search-filter">Search (address or supplier)</label>
+                            <input id="location-search-filter" class="form-control" type="search" name="q" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input id="order-group-active-filter" class="form-control form-check-input" type="checkbox" checked="" name="active" />
+                                <label class="form-check-label" for="order-group-active-filter">Active Bookings</label>
                             </div>
-                            <div class="col-12">
-                                <div class="form-check form-switch">
-                                    <input id="order-group-active-filter" class="form-control form-check-input" type="checkbox" checked="" name="active" />
-                                    <label class="form-check-label" for="order-group-active-filter">Active Bookings</label>
-                                </div>
-                            </div>
+                        </div>
+                        {% if request.user.is_staff %}
                             <div class="col-12">
                                 <div class="form-check form-switch">
                                     <input class="form-control form-check-input" type="checkbox" id="order-group-mine-filter" checked="" name="my_accounts" />
                                     <label class="form-check-label" for="order-group-mine-filter">My Accounts (Filters only on accounts that you manage.)</label>
                                 </div>
                             </div>
-
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
-                            </div>
-                        </form>
-                    </div>
+                        {% endif %}
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        {% endif %}
+        </div>
+
         <div class="card shadow">
             <div class="card-header py-3">
                 <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>

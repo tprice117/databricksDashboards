@@ -2007,9 +2007,9 @@ def my_order_groups(request):
             request, "customer_dashboard/snippets/order_groups_table.html", context
         )
     else:
+        if query_params.get("active") is None:
+            query_params["active"] = "on"
         if request.user.is_staff:
-            if query_params.get("active") is None:
-                query_params["active"] = "on"
             if query_params.get("my_accounts") is None:
                 query_params["my_accounts"] = "on"
         context["active_orders_link"] = (
