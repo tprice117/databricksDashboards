@@ -9,8 +9,8 @@ class RentalPrice:
     @staticmethod
     def get_price(
         seller_product_seller_location: SellerProductSellerLocation,
-        start_date: datetime.datetime,
-        end_date: datetime.datetime,
+        start_date: datetime.date,
+        end_date: datetime.date,
         shift_count: Optional[int],
     ) -> Optional[Union[Tuple[PricingLineItemGroup, list[PricingLineItem]], None]]:
         """
