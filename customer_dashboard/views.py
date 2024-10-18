@@ -1018,10 +1018,10 @@ def new_order_4(request):
                 seller_product_seller_location=seller_product_seller_location,
                 start_date=datetime.datetime.strptime(
                     context["delivery_date"], "%Y-%m-%d"
-                ),
+                ).date(),
                 end_date=datetime.datetime.strptime(
                     context["delivery_date"], "%Y-%m-%d"
-                ),
+                ).date(),
                 waste_type=(
                     WasteType.objects.get(id=waste_type_id) if waste_type_id else None
                 ),
@@ -1092,7 +1092,7 @@ def new_order_5(request):
         delivery_date = datetime.datetime.strptime(
             request.POST.get("delivery_date"),
             "%Y-%m-%d",
-        )
+        ).date()
         quantity = (
             int(request.POST.get("quantity")) if request.POST.get("quantity") else 1
         )

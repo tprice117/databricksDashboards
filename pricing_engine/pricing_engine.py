@@ -19,8 +19,8 @@ class PricingEngine:
     def get_price(
         user_address: UserAddress,
         seller_product_seller_location,  # SellerProductSellerLocation
-        start_date: datetime.datetime,
-        end_date: datetime.datetime,
+        start_date: datetime.date,
+        end_date: datetime.date,
         waste_type: Optional[WasteType],
         shift_count: Optional[int],
         times_per_week: int = None,
@@ -43,8 +43,8 @@ class PricingEngine:
         latitude: Decimal,
         longitude: Decimal,
         seller_product_seller_location,  # SellerProductSellerLocation
-        start_date: datetime.datetime,
-        end_date: Optional[datetime.datetime],
+        start_date: datetime.date,
+        end_date: Optional[datetime.date],
         waste_type: Optional[WasteType],
         shift_count: Optional[int],
         times_per_week: Optional[int] = None,
