@@ -1,5 +1,7 @@
 import logging
+import uuid
 
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
@@ -25,9 +27,11 @@ from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
+from api.utils.agreements.generate_agreement import generate_agreement_pdf
 from chat.models.conversation import Conversation
 from common.models import BaseModel
 from common.utils import DistanceUtils
+from common.utils.file_field.get_uuid_file_path import get_uuid_file_path
 from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
 
@@ -104,6 +108,11 @@ class OrderGroup(BaseModel):
         blank=True,
         null=True,
         help_text="Unique code for the Order.",
+    )
+    agreement = models.FileField(
+        upload_to=get_uuid_file_path,
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
@@ -351,6 +360,16 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
         # TODO: Create a Conversation in Intercom for the OrderGroup.
     # TODO: On OrderGroup complete, maybe close the Conversation in Intercom.
     # https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/manageconversation
+
+    # Generate agreement for the OrderGroup.
+    pdf = generate_agreement_pdf(
+        order_group=instance,
+    )
+
+    instance.agreement = ContentFile(
+        pdf.getvalue(),
+        f"{uuid.uuid4()}.pdf",
+    )
 
 
 @receiver(post_save, sender=OrderGroup)
