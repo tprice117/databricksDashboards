@@ -33,12 +33,12 @@
             <form action="{% url 'oidc_authentication_init' %}" method="get" id="login-button">
 
               <div class="submit-row">
-                <input type="submit" value="Log in to Pathminder Meetings">
+                <input type="submit" value="Log in">
               </div>
             </form>
         </div> -->
 
-    <!-- uncomment this section to add a link to the Pathminder login page -->
+    <!-- uncomment this section to add a link to the login page -->
 
     <div id="content-main" style="margin-bottom: 10px;">
         <form action="{% url 'oidc_authentication_init' %}" method="get" id="login-button">
@@ -66,6 +66,6 @@
     </div>
 
     <!-- <section class="alternative-login-section">
-        <a href="{% url 'oidc_authentication_init' %}">Pathminder Account Login 🔐</a>
+        <a href="{% url 'oidc_authentication_init' %}">Downstream Account Login 🔐</a>
     </section> -->
 {% endblock %}
