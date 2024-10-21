@@ -25,6 +25,7 @@ from api.models.order.order_group_service_times_per_week import (
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
+from api.models.track_data import track_data
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
 from api.utils.agreements.generate_agreement import generate_agreement_pdf
@@ -38,6 +39,10 @@ from matching_engine.matching_engine import MatchingEngine
 logger = logging.getLogger(__name__)
 
 
+@track_data(
+    "agreement_signed_by",
+    "agreement_signed_on",
+)
 class OrderGroup(BaseModel):
     class Status(models.TextChoices):
         PENDING = "PENDING"
@@ -111,6 +116,17 @@ class OrderGroup(BaseModel):
     )
     agreement = models.FileField(
         upload_to=get_uuid_file_path,
+        blank=True,
+        null=True,
+    )
+    agreement_signed_by = models.ForeignKey(
+        "api.User",
+        models.PROTECT,
+        blank=True,
+        null=True,
+        related_name="signed_agreements",
+    )
+    agreement_signed_on = models.DateTimeField(
         blank=True,
         null=True,
     )
@@ -349,10 +365,20 @@ class OrderGroup(BaseModel):
         if self.code is None:
             save_unique_code(self)
 
+    def generate_agreement(self) -> ContentFile:
+        """Generate an agreement for the OrderGroup."""
+        pdf = generate_agreement_pdf(
+            order_group=self,
+        )
+
+        return ContentFile(
+            pdf.getvalue(),
+            f"{uuid.uuid4()}.pdf",
+        )
+
 
 @receiver(pre_save, sender=OrderGroup)
 def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
-
     # If the OrderGroup is being created, then create a Conversation for
     # the OrderGroup.
     if instance._state.adding:
@@ -361,15 +387,23 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
     # TODO: On OrderGroup complete, maybe close the Conversation in Intercom.
     # https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/manageconversation
 
-    # Generate agreement for the OrderGroup.
-    pdf = generate_agreement_pdf(
-        order_group=instance,
-    )
+    # Generate agreement for the OrderGroup if:
+    # 1) The agreement_signed_by or agreement_signed_on is None.
+    # 2) The agreement_signed_by or agreement_signed_on has changed from None to not None.
+    old_agreement_signed_by = instance.old_value("agreement_signed_by")
+    old_agreement_signed_on = instance.old_value("agreement_signed_on")
 
-    instance.agreement = ContentFile(
-        pdf.getvalue(),
-        f"{uuid.uuid4()}.pdf",
-    )
+    if (
+        old_agreement_signed_by is None
+        or old_agreement_signed_on is None
+        or (
+            old_agreement_signed_by is None
+            and old_agreement_signed_on is None
+            and instance.agreement_signed_by is not None
+            and instance.agreement_signed_on is not None
+        )
+    ):
+        instance.agreement = instance.generate_agreement()
 
 
 @receiver(post_save, sender=OrderGroup)

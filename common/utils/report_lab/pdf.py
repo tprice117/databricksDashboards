@@ -55,8 +55,11 @@ class Pdf:
         return getSampleStyleSheet()["Heading2"]
 
     @staticmethod
-    def normal_style():
-        return getSampleStyleSheet()["BodyText"]
+    def normal_style(bold=False):
+        style = getSampleStyleSheet()["BodyText"]
+        if bold:
+            style.fontName = "Helvetica-Bold"
+        return style
 
     @staticmethod
     def link_style():
