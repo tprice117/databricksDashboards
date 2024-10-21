@@ -30,7 +30,8 @@ def invoice_detail(request, id):
             "order_group__sellerproductsellerlocation__seller_product__product",
         )
         .annotate(
-            seller_invoice_payable_line_items_id=F("seller_invoice_payable_line_items__id"),
+            # seller_invoice_payable_line_items_id=F("seller_invoice_payable_line_items__id"),
+            # orderlineitemtype_id=F("order_line_items__order_line_item_type_id"),
             service_address=F("order_group__user_address__name"),
             line_item_type=F("order_line_items__order_line_item_type__name"),
             product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
@@ -42,6 +43,7 @@ def invoice_detail(request, id):
         .values(
             "id",
             # "seller_invoice_payable_line_items_id",
+            # "orderlineitemtype_id",
             "service_address",
             "line_item_type",
             "product_name",
@@ -59,6 +61,8 @@ def invoice_detail(request, id):
             orderlineitem_id = form.cleaned_data["orderlineitem_id"]
             # seller_invoice_payable_line_items_id = form.cleaned_data["seller_invoice_payable_line_items_id"]
             orderlineitem_obj = Order.objects.get(pk=orderlineitem_id)
+            seller_invoice_payable_line_item_obj = SellerInvoicePayableLineItem.objects.get(pk=seller_invoice_payable_line_items_id)
+            # orderlineitemtype_id = OrderLineItem.objects.get(pk=orderlineitem_id)
             orderlineitem_obj.product_name = form.cleaned_data["productName"]
             orderlineitem_obj.service_address = form.cleaned_data["serviceAddress"]
             orderlineitem_obj.line_item_type = form.cleaned_data["lineItemType"]
@@ -67,6 +71,7 @@ def invoice_detail(request, id):
             orderlineitem_obj.rate = form.cleaned_data["orderRate"]
             orderlineitem_obj.quantity = form.cleaned_data["orderQuantity"]
             orderlineitem_obj.save()
+            seller_invoice_payable_line_item_obj.save()
             print(f"Updated order line item {orderlineitem_id}")
         else:
             print(f"Form is not valid: {form.errors}")
@@ -94,6 +99,7 @@ def invoice_detail(request, id):
     context["forms"] = [InvoiceLineItemForm(initial={
         "orderlineitem_id": orderlineitem["id"],
         # "seller_invoice_payable_line_items_id": orderlineitem["seller_invoice_payable_line_items_id"],
+        # "orderlineitemtype_id": orderlineitem["orderlineitemtype_id"],
         "productName": orderlineitem["product_name"],
         "serviceAddress": orderlineitem["service_address"],
         "lineItemType": orderlineitem["line_item_type"],

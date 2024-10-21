@@ -46,6 +46,9 @@
     <table>
         <thead>
             <tr>
+                <th>oli_id</th>
+                {% comment %} <th>sipli_id</th> {% endcomment %}
+                {% comment %} <th>OrderlineitemtypID</th> {% endcomment %}
                 <th>Product Name</th>
                 <th>Service Address</th>
                 <th>Line Item Type</th>
@@ -61,8 +64,9 @@
             <tr>
                 <form method="POST" action="{% url 'invoice_detail' invoice_payable.id %}">
                     {% csrf_token %}
-                    {{form.orderlineitem_id}}
-                    {{ form.seller_invoice_payable_line_items_id }}
+                    <td>{{form.orderlineitem_id}}</td>
+                    {% comment %} <td>{{ form.seller_invoice_payable_line_items_id }}</td> {% endcomment %}
+                    {% comment %} <td>{{ form.orderlineitemtype_id }}</td> {% endcomment %}
                     <td>{{ form.productName }}</td>
                     <td>{{ form.serviceAddress }}</td>
                     <td>{{ form.lineItemType }}</td>
