@@ -360,6 +360,32 @@ class Order(BaseModel):
         # Return (total_customer_price, total_invoiced, total_paid).
         return total_customer_price, total_invoiced, total_paid
 
+    def get_invoices(self) -> List[Invoice]:
+        """Return all the invoices for this Order."""
+        inv_resp = []
+        stripe_invoice_ids = []
+        for order_line_item in self.order_line_items.all():
+            if order_line_item.stripe_invoice_line_item_id:
+                try:
+                    invoice_line_item = StripeUtils.InvoiceItem.get(
+                        order_line_item.stripe_invoice_line_item_id
+                    )
+                    stripe_invoice_ids.append(invoice_line_item.invoice)
+                except Exception as e:
+                    logger.error(
+                        f"order_line_item.id:{order_line_item.id} stripe_invoice_line_item_id:{order_line_item.stripe_invoice_line_item_id} does not exist. [{e}]",
+                        exc_info=e,
+                    )
+
+        stripe_invoice_ids = list(set(stripe_invoice_ids))
+
+        if stripe_invoice_ids:
+            invoice_objs = Invoice.objects.filter(invoice_id__in=stripe_invoice_ids)
+            for inv in invoice_objs:
+                inv_resp.append(inv)
+
+        return inv_resp
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
