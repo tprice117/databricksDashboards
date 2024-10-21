@@ -240,7 +240,7 @@ class UserAddressForm(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
         auth_user = kwargs.pop("auth_user", None)
-        super(UserGroupForm, self).__init__(*args, **kwargs)
+        super(UserAddressForm, self).__init__(*args, **kwargs)
         if auth_user and not auth_user.is_staff:
             self.fields["is_archived"].widget = forms.HiddenInput()
 
