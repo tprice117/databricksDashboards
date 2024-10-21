@@ -27,7 +27,8 @@
                         {% endif %}" />&nbsp;{{ order_group.seller_product_seller_location.seller_product.product.main_product.name }}
                 </td>
                 <td>
-                    <a class="btn btn-link" href="{% url 'customer_location_detail' location_id=order_group.user_address.id %}">{{ order_group.user_address.formatted_address }}</a>
+                    {{ order_group.user_address.formatted_address }}
+                    {% comment %} <a class="btn btn-link" href="{% url 'customer_location_detail' location_id=order_group.user_address.id %}">{{ order_group.user_address.formatted_address }}</a> {% endcomment %}
                 </td>
                 <td>
                     <img class="rounded-circle me-2"

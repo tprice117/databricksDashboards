@@ -20,6 +20,7 @@ from api.models.track_data import track_data
 from api.models.waste_type import WasteType
 from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
+from billing.models import Invoice
 from common.models import BaseModel
 from common.models.choices.approval_status import ApprovalStatus
 from common.models.choices.user_type import UserType
@@ -359,6 +360,10 @@ class Order(BaseModel):
         # Return (total_customer_price, total_invoiced, total_paid).
         return total_customer_price, total_invoiced, total_paid
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
     def clean(self):
         super().clean()
 
@@ -380,7 +385,8 @@ class Order(BaseModel):
             raise ValidationError("End date must be on or before OrderGroup end date")
         # Ensure this Order doesn't overlap with any other Orders for this OrderGroup.
         elif (
-            Order.objects.filter(
+            self._state.adding
+            and Order.objects.filter(
                 order_group=self.order_group,
                 start_date__lt=self.end_date,
                 end_date__gt=self.start_date,

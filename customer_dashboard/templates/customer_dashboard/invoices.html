@@ -44,7 +44,7 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-biohazard fa-2x text-gray-300"></i>
+                                <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
                             </div>
                         </div>
                     </div>
@@ -104,7 +104,8 @@
                                     <td>{{ invoice.status }}</td>
                                     <td>{{ invoice.number }}</td>
                                     <td>
-                                        <a href="{% url 'customer_location_detail' location_id=invoice.user_address.id %}">{{ invoice.user_address.formatted_address }}</a>
+                                        {{ invoice.user_address.formatted_address }}
+                                        {% comment %} <a href="{% url 'customer_location_detail' location_id=invoice.user_address.id %}">{{ invoice.user_address.formatted_address }}</a> {% endcomment %}
                                     </td>
                                     {% if invoice.invoice_pdf %}
                                         <td>
