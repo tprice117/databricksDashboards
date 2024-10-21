@@ -1,6 +1,7 @@
 import io
 
-from reportlab.platypus import Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.platypus import KeepTogether, Paragraph, Spacer, Table
 
 from common.utils.report_lab.report_lab_utils import ReportLabUtils
 
@@ -17,6 +18,12 @@ def generate_agreement_pdf(
     items.append(Spacer(width=0, height=20))
     items.extend(_get_coverage())
     items.append(Spacer(width=0, height=20))
+    items.extend(
+        _core_agreement(
+            order_group=order_group,
+        )
+    )
+    items.append(Spacer(width=0, height=20))
     items.extend(_get_downstream_disclaimer())
     items.append(Spacer(width=0, height=20))
     items.extend(_get_important_information())
@@ -26,6 +33,12 @@ def generate_agreement_pdf(
     items.extend(_get_terms())
     items.append(Spacer(width=0, height=20))
     items.extend(_get_general())
+    items.append(Spacer(width=0, height=20))
+    items.extend(
+        _get_signed_section(
+            order_group=order_group,
+        )
+    )
 
     return ReportLabUtils.Pdf().create_pdf(
         children=items,
@@ -117,60 +130,327 @@ def _core_agreement(order_group):
     items.append(
         Paragraph(
             f"{user_name}'s agreement for {seller_location_name}'s {seller_product_name}",
-            ReportLabUtils.Pdf.title_style(),
+            ReportLabUtils.Pdf.heading_style(),
         )
     )
-    items.extend(
+    items.append(
         _get_agreement_item(
             "EQUIPMENT PROTECTION PLAN | OUT-OF-POCKET MAXIMUM",
             "Up to the full value of the equipment",
         )
     )
-    items.extend(
+    items.append(
         _get_agreement_item(
             "EQUIPMENT RENTAL COVERAGE",
             "No coverage",
         )
     )
     items.append(Spacer(width=0, height=10))
-    items.extend(
+    items.append(
         _get_agreement_item(
             "Booked On",
             order_group.created_on.strftime("%Y-%m-%d"),
         )
     )
-    items.extend(
+    items.append(
         _get_agreement_item(
             "Agreement ID",
-            order_group.id,
+            str(order_group.id),
         ),
     )
     items.append(Spacer(width=0, height=10))
-    items.extend(
+    items.append(
         _get_agreement_item(
             "Start Date",
             order_group.start_date.strftime("%Y-%m-%d"),
         )
     )
-    items.extend(
+    items.append(
         _get_agreement_item(
             "Delivery Location",
             order_group.user_address.formatted_address(),
         )
     )
-    items.extend(
+    items.append(
         _get_agreement_item(
             "Company/Individual",
             user_name,
         )
     )
-    items.extend(
+    items.append(
         _get_agreement_item(
             "Authorizing User",
             f"{order_group.user.first_name} {order_group.user.last_name}",
         ),
     )
     items.append(Spacer(width=0, height=10))
+    items.append(
+        Paragraph(
+            "Freight",
+            ReportLabUtils.Pdf.heading_style(),
+        ),
+    )
+    items.append(
+        _get_agreement_table(
+            [
+                [
+                    "Delivery Fee",
+                    "Removal Fee",
+                ],
+                [
+                    (
+                        f"${order_group.delivery_fee}"
+                        if order_group.delivery_fee
+                        else "N/A"
+                    ),
+                    f"${order_group.removal_fee}" if order_group.removal_fee else "N/A",
+                ],
+            ]
+        ),
+    )
+    # SellerProductSellerLocation.Service
+    if (
+        order_group.seller_product_seller_location.seller_product.product.main_product.has_service
+        and hasattr(order_group, "service")
+    ):
+        items.extend(
+            [
+                items.append(Spacer(width=0, height=10)),
+                Paragraph(
+                    "Service",
+                    ReportLabUtils.Pdf.heading_style(),
+                ),
+                _get_agreement_table(
+                    [
+                        [
+                            "Price Per Mile",
+                            "Flat Rate",
+                        ],
+                        [
+                            (
+                                f"${order_group.service.price_per_mile}"
+                                if order_group.service.price_per_mile
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.service.flat_rate_price}"
+                                if order_group.service.flat_rate_price
+                                else "N/A"
+                            ),
+                        ],
+                    ]
+                ),
+            ],
+        )
+    # SellerProductSellerLocation.ServiceTimesPerWeek
+    if (
+        order_group.seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
+        and hasattr(order_group, "service_times_per_week")
+    ):
+        items.extend(
+            [
+                items.append(Spacer(width=0, height=10)),
+                Paragraph(
+                    "Service",
+                    ReportLabUtils.Pdf.heading_style(),
+                ),
+                _get_agreement_table(
+                    [
+                        [
+                            "1x per week",
+                            "2x per week",
+                            "3x per week",
+                            "4x per week",
+                            "5x per week",
+                        ],
+                        [
+                            (
+                                f"${order_group.service_times_per_week.one_time_per_week}"
+                                if order_group.service_times_per_week.one_time_per_week
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.service_times_per_week.two_times_per_week}"
+                                if order_group.service_times_per_week.two_times_per_week
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.service_times_per_week.three_times_per_week}"
+                                if order_group.service_times_per_week.three_times_per_week
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.service_times_per_week.four_times_per_week}"
+                                if order_group.service_times_per_week.four_times_per_week
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.service_times_per_week.five_times_per_week}"
+                                if order_group.service_times_per_week.five_times_per_week
+                                else "N/A"
+                            ),
+                        ],
+                    ],
+                ),
+            ],
+        )
+    # SellerProductSellerLocation.RentalOneStep
+    if (
+        order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
+        and hasattr(order_group, "rental_one_step")
+    ):
+        items.extend(
+            [
+                items.append(Spacer(width=0, height=10)),
+                Paragraph(
+                    "Rental",
+                    ReportLabUtils.Pdf.heading_style(),
+                ),
+                _get_agreement_table(
+                    [
+                        "Per Month (any days < 28 days)",
+                    ],
+                    [
+                        (
+                            f"${order_group.rental_one_step.rate}"
+                            if order_group.rental_one_step.rate
+                            else "N/A"
+                        ),
+                    ],
+                ),
+            ],
+        )
+    # SellerProductSellerLocation.RentalTwoStep
+    if (
+        order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
+        and hasattr(order_group, "rental")
+    ):
+        items.extend(
+            [
+                items.append(Spacer(width=0, height=10)),
+                Paragraph(
+                    "Rental",
+                    ReportLabUtils.Pdf.heading_style(),
+                ),
+                _get_agreement_table(
+                    [
+                        [
+                            "Included Days",
+                            "Price Per Included Day",
+                            "Price Per Additional Day",
+                        ],
+                        [
+                            (
+                                order_group.rental.included_days
+                                if order_group.rental.included_days
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.rental.price_per_day_included}"
+                                if order_group.rental.price_per_day_included
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.rental.price_per_day_additional}"
+                                if order_group.rental.price_per_day_additional
+                                else "N/A"
+                            ),
+                        ],
+                    ]
+                ),
+            ],
+        )
+    # SellerProductSellerLocation.RentalMultiStep
+    if (
+        order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+        and hasattr(order_group, "rental_multi_step")
+    ):
+        items.extend(
+            [
+                items.append(Spacer(width=0, height=10)),
+                Paragraph(
+                    "Rental",
+                    ReportLabUtils.Pdf.heading_style(),
+                ),
+                _get_agreement_table(
+                    [
+                        [
+                            "Per Hour",
+                            "Per Day",
+                            "Per Week",
+                            "Per Two Weeks",
+                            "Per Month",
+                        ],
+                        [
+                            (
+                                f"${order_group.rental_multi_step.hour}"
+                                if order_group.rental_multi_step.hour
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.rental_multi_step.day}"
+                                if order_group.rental_multi_step.day
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.rental_multi_step.week}"
+                                if order_group.rental_multi_step.week
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.rental_multi_step.two_weeks}"
+                                if order_group.rental_multi_step.two_weeks
+                                else "N/A"
+                            ),
+                            (
+                                f"${order_group.rental_multi_step.month}"
+                                if order_group.rental_multi_step.month
+                                else "N/A"
+                            ),
+                        ],
+                    ]
+                ),
+            ],
+        )
+    # SellerProductSellerLocation.Material
+    if (
+        order_group.seller_product_seller_location.seller_product.product.main_product.has_material
+        and hasattr(order_group, "waste_types")
+    ):
+        items.extend(
+            [
+                items.append(Spacer(width=0, height=10)),
+                Paragraph(
+                    "Material",
+                    ReportLabUtils.Pdf.heading_style(),
+                ),
+                _get_agreement_table(
+                    [
+                        # Waste Types.
+                        [
+                            waste_type.main_product_waste_type.waste_type.name
+                            for waste_type in order_group.waste_types.all()
+                        ],
+                        [
+                            (
+                                f"${waste_type.price_per_ton} per ton"
+                                if waste_type.price_per_ton
+                                else "N/A"
+                            )
+                            for waste_type in order_group.waste_types.all()
+                        ],
+                        [
+                            (
+                                f"{waste_type.tonnage_included} tons included"
+                                if waste_type.tonnage_included
+                                else "N/A"
+                            )
+                            for waste_type in order_group.waste_types.all()
+                        ],
+                    ]
+                ),
+            ],
+        )
 
     return items
 
@@ -448,13 +728,54 @@ def _get_agreement_item(
     header: str,
     subtext: str,
 ):
+    return KeepTogether(
+        [
+            Paragraph(
+                header,
+                ReportLabUtils.Pdf.normal_style(bold=True),
+            ),
+            Paragraph(
+                subtext,
+                ReportLabUtils.Pdf.normal_style(),
+            ),
+        ]
+    )
+
+
+def _get_agreement_table(table_data):
+    return Table(
+        table_data,
+        style=[
+            ("BACKGROUND", (0, 0), (-1, 0), colors.black),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+            # Border.
+            ("BOX", (0, 0), (-1, -1), 0.25, colors.black),
+            # Only show horizontal lines, not vertical dividing lines.
+            ("LINEABOVE", (0, 1), (-1, -1), 0.25, colors.black),
+            ("LINEBELOW", (0, -1), (-1, -1), 0.25, colors.black),
+        ],
+        hAlign="LEFT",
+    )
+
+
+def _get_signed_section(
+    order_group,
+):
     return [
         Paragraph(
-            header,
+            "Customer Signature:",
             ReportLabUtils.Pdf.heading_style(),
         ),
+        Spacer(width=0, height=10),
         Paragraph(
-            subtext,
+            (
+                f"Signed digitally by: {order_group.agreement_signed_by.first_name} {order_group.agreement_signed_by.last_name} on {order_group.agreement_signed_on.strftime('%Y-%m-%d %H:%M:%S')}"
+                if order_group.agreement_signed_by and order_group.agreement_signed_on
+                else "Not yet signed"
+            ),
             ReportLabUtils.Pdf.normal_style(),
         ),
     ]
