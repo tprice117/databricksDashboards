@@ -114,6 +114,14 @@ class User(AbstractUser):
             name = self.first_name + " " + self.last_name
         return name
 
+    def reset_password(self):
+        """Sends a reset password email to the user with a link to reset their password."""
+
+        if self.user_id is not None:
+            invite_user(self, reset_password=True)
+            return True
+        return False
+
     def save(self, *args, **kwargs):
         if not self.user_id:
             # Create or attach to Auth0 user.

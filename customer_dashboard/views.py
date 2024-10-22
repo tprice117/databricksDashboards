@@ -2854,6 +2854,20 @@ def user_detail(request, user_id):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
+def user_reset_password(request, user_id):
+    # context = get_user_context(request)
+    if request.method == "POST":
+        try:
+            user = User.objects.get(id=user_id)
+            user.reset_password()
+        except User.DoesNotExist:
+            return HttpResponse("User not found", status=404)
+
+    return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
 def new_user(request):
     context = get_user_context(request)
 
