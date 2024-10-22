@@ -1,5 +1,6 @@
 import io
 
+from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.platypus import KeepTogether, Paragraph, Spacer, Table
 
@@ -766,6 +767,14 @@ def _get_agreement_table(table_data):
 def _get_signed_section(
     order_group,
 ):
+    agreement_signed_on = None
+    if order_group.agreement_signed_on:
+        # Convert to Central Standard Time.
+        central_timezone = timezone.get_fixed_timezone(-360)
+        agreement_signed_on = timezone.localtime(
+            order_group.agreement_signed_on, central_timezone
+        )
+
     return [
         Paragraph(
             "Customer Signature:",
@@ -774,7 +783,7 @@ def _get_signed_section(
         Spacer(width=0, height=10),
         Paragraph(
             (
-                f"Signed digitally by: {order_group.agreement_signed_by.first_name} {order_group.agreement_signed_by.last_name} on {order_group.agreement_signed_on.strftime('%Y-%m-%d %H:%M:%S')}"
+                f"Signed digitally by: {order_group.agreement_signed_by.first_name} {order_group.agreement_signed_by.last_name} on {agreement_signed_on.strftime('%Y-%m-%d %H:%M:%S')} (CT)"
                 if order_group.agreement_signed_by and order_group.agreement_signed_on
                 else "Not yet signed"
             ),
