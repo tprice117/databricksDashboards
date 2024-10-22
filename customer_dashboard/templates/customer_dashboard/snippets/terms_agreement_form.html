@@ -1,32 +1,41 @@
 {% load static %}
-{% if show_success %}
-    <h4 class="text-muted">Successfully signed!</h4>
-    <div class="d-flex flex-row-reverse">
-        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
+<div class="modal-body" id="terms-agreement-body">
+    <div class="border p-2 m-2">
+        {% for order in orders %}
+            <div class="row">
+                <div class="col-4">
+                    <p class="text-muted mb-1" style="font-size: 12px;">Order</p>
+                    <p class="mb-1">{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</p>
+                </div>
+                <div class="col-4">
+                    <p class="text-muted mb-1" style="font-size: 12px;">Service Date</p> <p class="mb-1">{{ order.end_date }}</p>
+                </div>
+                <div class="col-4">
+                    {% if order.order_group.agreement and not order.order_group.is_agreement_signed %}
+                        <a class="btn btn-success float-end me-2 ms-2" href="{{ order.order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf"></i>&nbsp;Download</a>
+                    {% endif %}
+                </div>
+            </div>
+            <hr class="m-2" />
+        {% endfor %}
     </div>
-{% else %}
-    <form hx-post="{% url 'customer_checkout_terms_agreement' user_address_id=user_address.id %}" hx-swap="outerHTML" hx-disabled-elt="button, .form-control">
-        {% csrf_token %}
-        <strong>Please type your name, <i>{{ user.full_name }}</i>, to agree to the terms</strong>
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label for="first_name" class="form-label">First Name</label>
-                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="{{ user.first_name }}" required />
-            </div>
-            <div class="col-md-6">
-                <label for="last_name" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="last_name" name="last_name" placeholder="{{ user.last_name }}" required />
-            </div>
-        </div>
-        <hr />
-        {% if form_error %}
-            <p class="text-danger">{{ form_error }}</p>
-        {% endif %}
-        {% if form_msg %}
-            <p class="text-danger">{{ form_msg }}</p>
-        {% endif %}
+    {% if show_success or not show_terms %}
+        <h4 class="text-muted">Successfully signed!</h4>
         <div class="d-flex flex-row-reverse">
-            <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Sign Agreement <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
+            <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
         </div>
-    </form>
-{% endif %}
+    {% else %}
+        <form hx-post="{% url 'customer_checkout_terms_agreement' user_address_id=user_address.id %}" hx-swap="outerHTML" hx-target="#terms-agreement-body" hx-disabled-elt="button, .form-control">
+            {% csrf_token %}
+            {% if form_error %}
+                <p class="text-danger">{{ form_error }}</p>
+            {% endif %}
+            {% if form_msg %}
+                <p class="text-danger">{{ form_msg }}</p>
+            {% endif %}
+            <div class="d-flex flex-row-reverse">
+                <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Sign Agreement <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
+            </div>
+        </form>
+    {% endif %}
+</div>

@@ -55,4 +55,11 @@ class OrderGroupAdmin(admin.ModelAdmin):
         "user_address__state",
         "user_address__postal_code",
     ]
-    raw_id_fields = ("user", "user_address", "conversation", "created_by", "updated_by")
+    raw_id_fields = (
+        "user",
+        "user_address",
+        "conversation",
+        "agreement_signed_by",
+        "created_by",
+        "updated_by",
+    )
