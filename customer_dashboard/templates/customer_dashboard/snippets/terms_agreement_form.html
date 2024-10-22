@@ -11,7 +11,7 @@
                     <p class="text-muted mb-1" style="font-size: 12px;">Service Date</p> <p class="mb-1">{{ order.end_date }}</p>
                 </div>
                 <div class="col-4">
-                    {% if order.order_group.agreement and not order.order_group.is_agreement_signed %}
+                    {% if order.order_group.agreement %}
                         <a class="btn btn-success float-end me-2 ms-2" href="{{ order.order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf"></i>&nbsp;Download</a>
                     {% endif %}
                 </div>
