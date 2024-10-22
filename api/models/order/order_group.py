@@ -549,3 +549,4 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
         )
     ):
         instance.agreement = instance.generate_agreement()
+        OrderGroup.objects.filter(pk=instance.pk).update(agreement=instance.agreement)
