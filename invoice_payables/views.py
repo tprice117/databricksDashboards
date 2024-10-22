@@ -61,7 +61,7 @@ def invoice_detail(request, id):
             orderlineitem_id = form.cleaned_data["orderlineitem_id"]
             # seller_invoice_payable_line_items_id = form.cleaned_data["seller_invoice_payable_line_items_id"]
             orderlineitem_obj = Order.objects.get(pk=orderlineitem_id)
-            seller_invoice_payable_line_item_obj = SellerInvoicePayableLineItem.objects.get(pk=seller_invoice_payable_line_items_id)
+            seller_invoice_payable_line_item_obj = SellerInvoicePayableLineItem.objects.get(pk=orderlineitem_id)
             # orderlineitemtype_id = OrderLineItem.objects.get(pk=orderlineitem_id)
             orderlineitem_obj.product_name = form.cleaned_data["productName"]
             orderlineitem_obj.service_address = form.cleaned_data["serviceAddress"]
