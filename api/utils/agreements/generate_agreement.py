@@ -308,15 +308,17 @@ def _core_agreement(order_group):
                 ),
                 _get_agreement_table(
                     [
-                        "Per Month (any days < 28 days)",
-                    ],
-                    [
-                        (
-                            f"${order_group.rental_one_step.rate}"
-                            if order_group.rental_one_step.rate
-                            else "N/A"
-                        ),
-                    ],
+                        [
+                            "Per Month (any days < 28 days)",
+                        ],
+                        [
+                            (
+                                f"${order_group.rental_one_step.rate}"
+                                if order_group.rental_one_step.rate
+                                else "N/A"
+                            ),
+                        ],
+                    ]
                 ),
             ],
         )
