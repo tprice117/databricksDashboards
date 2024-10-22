@@ -439,7 +439,9 @@
                 {% if request.user.is_staff %}
                     <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
                 {% else %}
-                    <button class="btn btn-danger float-end me-2 ms-2" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Sign Agreement</button>
+                    {% if show_terms %}
+                        <button class="btn btn-danger float-end me-2 ms-2" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Sign Agreement</button>
+                    {% endif %}
                     <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" {% if show_terms %}disabled=""{% endif %}>Checkout</button>
                 {% endif %}
             </div>
