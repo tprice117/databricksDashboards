@@ -1671,29 +1671,14 @@ def checkout_terms_agreement(request, user_address_id):
     context["css_class"] = "form-valid"
     # Get all orders in the cart for this user_address_id.
     orders = context["user_address"].get_cart()
+    context["orders"] = orders
     if request.method == "POST":
-        first_name = request.POST.get("first_name")
-        last_name = request.POST.get("last_name")
-        if (
-            first_name != context["user"].first_name
-            or last_name != context["user"].last_name
-        ):
-            # messages.error(
-            #     request,
-            #     f"The first and last name do not match your name: {context['user'].full_name}.",
-            # )
-            context["css_class"] = "form-error"
-            context["form_error"] = (
-                f"The first and last name do not match your name: {context['user'].full_name}."
-            )
-        else:
-            for order in orders:
-                if not order.order_group.is_agreement_signed:
-                    order.order_group.agreement_signed_by = context["user"]
-                    order.order_group.agreement_signed_on = timezone.now()
-                    order.order_group.save()
-            # messages.success(request, "Agreement successully signed.")
-            context["show_success"] = True
+        for order in orders:
+            if not order.order_group.is_agreement_signed:
+                order.order_group.agreement_signed_by = context["user"]
+                order.order_group.agreement_signed_on = timezone.now()
+                order.order_group.save()
+        context["show_success"] = True
 
     return render(
         request,
