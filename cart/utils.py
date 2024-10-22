@@ -323,9 +323,12 @@ class QuoteUtils:
             )
             # Get percentage that one_time total is of total minus fuel fees
             total_minus_fuel = price_breakdown["pre_tax_subtotal"] - fuel_fees_subtotal
-            one_time_total_percentage = round(
-                price_breakdown["one_time"]["total"] / total_minus_fuel, 6
-            )
+            if total_minus_fuel == 0:
+                one_time_total_percentage = 0
+            else:
+                one_time_total_percentage = round(
+                    price_breakdown["one_time"]["total"] / total_minus_fuel, 6
+                )
             price_breakdown["one_time"]["fuel_and_environmental"] = (
                 fuel_fees_subtotal * one_time_total_percentage
             )
