@@ -1664,14 +1664,69 @@ def add_payment_method(request):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
+def checkout_terms_agreement(request, user_address_id):
+    context = get_user_context(request)
+    context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
+    context["help_msg"] = ""
+    context["css_class"] = "form-valid"
+    # Get all orders in the cart for this user_address_id.
+    orders = context["user_address"].get_cart()
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        if (
+            first_name != context["user"].first_name
+            or last_name != context["user"].last_name
+        ):
+            # messages.error(
+            #     request,
+            #     f"The first and last name do not match your name: {context['user'].full_name}.",
+            # )
+            context["css_class"] = "form-error"
+            context["form_error"] = (
+                f"The first and last name do not match your name: {context['user'].full_name}."
+            )
+        else:
+            for order in orders:
+                if not order.order_group.is_agreement_signed:
+                    order.order_group.agreement_signed_by = context["user"]
+                    order.order_group.agreement_signed_on = timezone.now()
+                    order.order_group.save()
+            # messages.success(request, "Agreement successully signed.")
+            context["show_success"] = True
+
+    return render(
+        request,
+        "customer_dashboard/snippets/terms_agreement_form.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
 def checkout(request, user_address_id):
     context = get_user_context(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
     context["is_checkout"] = 1
     # Get all orders in the cart for this user_address_id.
     orders = context["user_address"].get_cart()
+    context["orders"] = orders
 
     if request.method == "POST":
+        for order in orders:
+            if not request.user.is_staff and not order.order_group.is_agreement_signed:
+                messages.error(
+                    request,
+                    "Please sign the agreement before checking out.",
+                )
+                return HttpResponseRedirect(
+                    reverse(
+                        "customer_checkout",
+                        kwargs={
+                            "user_address_id": user_address_id,
+                        },
+                    )
+                )
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
@@ -1725,9 +1780,12 @@ def checkout(request, user_address_id):
     order_id_lst = []
     context["estimated_taxes"] = 0
     context["total"] = 0
+    context["show_terms"] = False
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
+        if not order.order_group.is_agreement_signed:
+            context["show_terms"] = True
         customer_price = order.customer_price()
         customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full

@@ -1,0 +1,32 @@
+{% load static %}
+{% if show_success %}
+    <h4 class="text-muted">Successfully signed!</h4>
+    <div class="d-flex flex-row-reverse">
+        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
+    </div>
+{% else %}
+    <form hx-post="{% url 'customer_checkout_terms_agreement' user_address_id=user_address.id %}" hx-swap="outerHTML" hx-disabled-elt="button, .form-control">
+        {% csrf_token %}
+        <strong>Please type your name, <i>{{ user.full_name }}</i>, to agree to the terms</strong>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="first_name" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="{{ user.first_name }}" required />
+            </div>
+            <div class="col-md-6">
+                <label for="last_name" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="last_name" name="last_name" placeholder="{{ user.last_name }}" required />
+            </div>
+        </div>
+        <hr />
+        {% if form_error %}
+            <p class="text-danger">{{ form_error }}</p>
+        {% endif %}
+        {% if form_msg %}
+            <p class="text-danger">{{ form_msg }}</p>
+        {% endif %}
+        <div class="d-flex flex-row-reverse">
+            <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Sign Agreement <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
+        </div>
+    </form>
+{% endif %}

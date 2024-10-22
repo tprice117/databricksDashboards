@@ -1,5 +1,7 @@
 import logging
+import uuid
 
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
@@ -23,17 +25,24 @@ from api.models.order.order_group_service_times_per_week import (
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
+from api.models.track_data import track_data
 from api.models.user.user_address import UserAddress
 from api.models.waste_type import WasteType
+from api.utils.agreements.generate_agreement import generate_agreement_pdf
 from chat.models.conversation import Conversation
 from common.models import BaseModel
 from common.utils import DistanceUtils
+from common.utils.file_field.get_uuid_file_path import get_uuid_file_path
 from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
 
 logger = logging.getLogger(__name__)
 
 
+@track_data(
+    "agreement_signed_by",
+    "agreement_signed_on",
+)
 class OrderGroup(BaseModel):
     class Status(models.TextChoices):
         PENDING = "PENDING"
@@ -104,6 +113,22 @@ class OrderGroup(BaseModel):
         blank=True,
         null=True,
         help_text="Unique code for the Order.",
+    )
+    agreement = models.FileField(
+        upload_to=get_uuid_file_path,
+        blank=True,
+        null=True,
+    )
+    agreement_signed_by = models.ForeignKey(
+        "api.User",
+        models.PROTECT,
+        blank=True,
+        null=True,
+        related_name="signed_agreements",
+    )
+    agreement_signed_on = models.DateTimeField(
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
@@ -340,10 +365,27 @@ class OrderGroup(BaseModel):
         if self.code is None:
             save_unique_code(self)
 
+    def generate_agreement(self) -> ContentFile:
+        """Generate an agreement for the OrderGroup."""
+        pdf = generate_agreement_pdf(
+            order_group=self,
+        )
+
+        return ContentFile(
+            pdf.getvalue(),
+            f"{uuid.uuid4()}.pdf",
+        )
+
+    @property
+    def is_agreement_signed(self):
+        return (
+            self.agreement_signed_by is not None
+            and self.agreement_signed_on is not None
+        )
+
 
 @receiver(pre_save, sender=OrderGroup)
 def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
-
     # If the OrderGroup is being created, then create a Conversation for
     # the OrderGroup.
     if instance._state.adding:
@@ -489,3 +531,22 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 four_times_per_week=seller_product_seller_location.service_times_per_week.four_times_per_week,
                 five_times_per_week=seller_product_seller_location.service_times_per_week.five_times_per_week,
             )
+
+    # Generate agreement for the OrderGroup if:
+    # 1) The agreement_signed_by or agreement_signed_on is None.
+    # 2) The agreement_signed_by or agreement_signed_on has changed from None to not None.
+    old_agreement_signed_by = instance.old_value("agreement_signed_by")
+    old_agreement_signed_on = instance.old_value("agreement_signed_on")
+
+    if (
+        old_agreement_signed_by is None
+        or old_agreement_signed_on is None
+        or (
+            old_agreement_signed_by is None
+            and old_agreement_signed_on is None
+            and instance.agreement_signed_by is not None
+            and instance.agreement_signed_on is not None
+        )
+    ):
+        instance.agreement = instance.generate_agreement()
+        OrderGroup.objects.filter(pk=instance.pk).update(agreement=instance.agreement)

@@ -5,17 +5,35 @@
 {% block title %}
     Checkout
 {% endblock %}
+{% block stylesheet %}
+    <style>
+        .form-error input {
+            box-shadow: 0 0 3px #cc0000;
+        }
+        .form-valid input {
+            box-shadow: 0 0 3px #36cc00;
+        }
+    </style>
+{% endblock %}
 {% block javascript %}
     <script>
-        const checkoutModal = document.getElementById("checkout-orders-modal");
+        let checkoutModal = document.getElementById("checkout-orders-modal");
         const addCardModal = document.getElementById("add-card-modal");
         const checkoutForm = document.getElementById("checkoutForm");
+        const termsAgreementModal = document.getElementById("terms-agreement-modal");
         let checkoutItemChanged = false;
         // listen for htmx afterSettle event.
         document.body.addEventListener("htmx:afterSettle", function (event) {
+            console.log("htmx:afterSettle", event);
             checkoutItemChanged = true;
         });
         checkoutModal.addEventListener("hidden.bs.modal", (event) => {
+            if (checkoutItemChanged) {
+                // reload the page to reflect the changes
+                location.reload();
+            }
+        });
+        termsAgreementModal.addEventListener("hidden.bs.modal", (event) => {
             if (checkoutItemChanged) {
                 // reload the page to reflect the changes
                 location.reload();
@@ -417,11 +435,46 @@
             <input type="hidden" name="estimated_taxes" value="{{ estimated_taxes }}">
             <input type="hidden" name="total" value="{{ total }}">
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
-            <button id="form_submit" class="btn btn-primary float-end mb-4" type="submit" name="form_submit" style="margin-top: 10px;">Checkout</button>
+            <div class="col-12 mt-4 mb-4">
+                {% if request.user.is_staff %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
+                {% else %}
+                    {% if show_terms %}
+                        <button class="btn btn-danger float-end me-2 ms-2" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal"><i class="far fa-plus-square"></i>&nbsp;Sign Agreement</button>
+                    {% endif %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" {% if show_terms %}disabled=""{% endif %}>Checkout</button>
+                {% endif %}
+            </div>
         </form>
     </div>
 {% endblock %}
 {% block modals %}
+    <div class="modal fade" role="dialog" tabindex="-1" id="terms-agreement-modal" style="display: none;" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog" role="document" id="terms-agreement-form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Terms Agreement</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="border p-2 m-2">
+                    {% for order in orders %}
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="text-muted mb-1" style="font-size: 12px;">Order</p>
+                                <p class="mb-1">{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted mb-1" style="font-size: 12px;">Service Date</p> <p class="mb-1">{{ order.end_date }}</p>
+                            </div>
+                        </div>
+                        <hr class="m-2"/>
+                    {% endfor %}
+                    </div>
+                    {% include 'customer_dashboard/snippets/terms_agreement_form.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" role="dialog" tabindex="-1" id="checkout-orders-modal" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
         <div class="modal-dialog modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
             <div class="modal-content">
