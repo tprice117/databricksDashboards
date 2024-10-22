@@ -549,4 +549,9 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
         )
     ):
         instance.agreement = instance.generate_agreement()
+        # Ensure the file is saved to the storage backend
+        instance.agreement.save(
+            instance.agreement.name, instance.agreement.file, save=False
+        )
+        # Update the database record without triggering the pre/post_save signals.
         OrderGroup.objects.filter(pk=instance.pk).update(agreement=instance.agreement)
