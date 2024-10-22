@@ -235,6 +235,15 @@ class Order(BaseModel):
         self.save()
 
     @property
+    def requires_terms_agreement(self):
+        if (
+            self.order_type == Order.Type.DELIVERY
+            or self.order_type == Order.Type.ONE_TIME
+        ):
+            return True
+        return False
+
+    @property
     def seller_accept_order_url(self):
         return f"{settings.API_URL}/api/order/{self.id}/accept/?key={encrypt_string(str(self.id))}"
 

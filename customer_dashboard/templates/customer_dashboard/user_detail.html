@@ -77,6 +77,23 @@
                         </p>
                         <p>{{ user.date_joined|timezone:'America/Chicago' }} (CT)</p>
                         <p class="card-text"></p><a class="card-link" href="#"></a>
+                        {% if request.user.is_staff %}
+                            <!-- Show a reset password button reset_password -->
+                            <div class="d-flex flex-row-reverse">
+                                <button class="btn btn-outline-danger" type="button"
+                                    hx-post="{% url 'customer_reset_password' user_id=user.id %}"
+                                    hx-trigger="confirmed" hx-swap="none"
+                                    onClick="event.stopPropagation();
+                                    Swal.fire(
+                                        {title: 'Are you sure?', text:'Send {{ user.email }} a reset password link.', icon: 'question', confirmButtonText: 'Send'}
+                                    ).then((result)=>{
+                                        if(result.isConfirmed){htmx.trigger(this, 'confirmed');}
+                                    })">
+                                    Reset Password
+                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </button>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
