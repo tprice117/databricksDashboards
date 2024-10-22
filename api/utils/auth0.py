@@ -59,7 +59,12 @@ def get_user_from_email(email: str):
         timeout=30,
     )
     json = response.json()
-    return json[0]["user_id"] if len(json) > 0 and "user_id" in json[0] else None
+    # NOTE: Hitting KeyError json[0] here. Log this with email
+    try:
+        return json[0]["user_id"] if len(json) > 0 and "user_id" in json[0] else None
+    except Exception as e:
+        logger.error(f"get_user_from_email: [{email}]-[{json}]-[{e}]", exc_info=e)
+        raise
 
 
 def delete_user(user_id: str):
