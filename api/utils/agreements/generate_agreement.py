@@ -47,7 +47,7 @@ def generate_agreement_pdf(
 
 def _get_report_header():
     return Paragraph(
-        "Downstream Equipment Sharing Agreement",
+        "Equipment Sharing Agreement",
         ReportLabUtils.Pdf.title_style(),
     )
 
@@ -95,20 +95,14 @@ def _get_coverage():
             ReportLabUtils.Pdf.heading_style(),
         ),
         Paragraph(
-            "In addition to any commercial or personal insurance coverage the "
-            "user may have, Downstream offers supplementary protection with "
-            "varying levels of out-of-pocket maximums, which the user may or "
-            "may not have purchased. See below for details of this agreement.",
-        ),
-        Spacer(width=0, height=10),
-        Paragraph(
-            "PLEASE NOTE",
-        ),
-        Paragraph(
-            "The Company is financially responsible for any covered damage to "
-            "the Supplier's equipment, up to their purchased protection plan's "
-            "out-of-pocket maximum listed below, regardless of whether or not "
-            "the damage was their fault.",
+            "The Company is financially responsible for any damage to the Supplier's "
+            "equipment regardless of whether the damage was their fault. For all rentals "
+            "of equipment not licensed for road use, you must either show proof of property "
+            "insurance in accordance with section 2.6 of the equipment sharing agreement "
+            "or purchase the customer Rental Protection Plan. The purchase of the rental "
+            "protection plan for rentals of equipment will be automatically declined if "
+            "the customer provides proof of insurance as required section 2.6 of the "
+            "equipment sharing agreement.",
         ),
     ]
 
@@ -131,18 +125,6 @@ def _core_agreement(order_group):
         Paragraph(
             f"{user_name}'s agreement for {seller_location_name}'s {seller_product_name}",
             ReportLabUtils.Pdf.heading_style(),
-        )
-    )
-    items.append(
-        _get_agreement_item(
-            "EQUIPMENT PROTECTION PLAN | OUT-OF-POCKET MAXIMUM",
-            "Up to the full value of the equipment",
-        )
-    )
-    items.append(
-        _get_agreement_item(
-            "EQUIPMENT RENTAL COVERAGE",
-            "No coverage",
         )
     )
     items.append(Spacer(width=0, height=10))
@@ -462,14 +444,13 @@ def _get_downstream_disclaimer():
             ReportLabUtils.Pdf.heading_style(),
         ),
         Paragraph(
-            'The person or entity identified as "Supplier" and the person or '
-            'entity identified as "Company" on the Agreement Summary above were '
-            "connected online through a website, mobile application, and/or "
-            "associated services provided by Downstream Systems, Inc. "
-            '(collectively, the "Downstream Services"). As part of connecting '
-            "through the Downstream Services, the Supplier and Company agreed "
-            "to be bound by the Downstream Terms of Service "
-            "(https://trydownstream.io/terms-of-service) and incorporated policies.",
+            'The person or entity identified as "Supplier" and the person or entity '
+            'identified as "Company" on the Agreement Summary above were connected online '
+            "through a website, mobile application, and/or associated services provided by "
+            'Downstream Systems, Inc. (collectively, the "Downstream Services"). By '
+            "accepting Services, delivery of the equipment or making payment(s) to "
+            "Downstream for the same, Customer agrees to be bound by the Equipment Sharing "
+            "Agreement, even if the Equipment Sharing Agreement has not been fully executed.",
         ),
     ]
 
