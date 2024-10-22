@@ -144,6 +144,11 @@ urlpatterns = [
         name="customer_new_order_6_remove",
     ),
     path(
+        "customer/checkout/<uuid:user_address_id>/terms/",
+        views.checkout_terms_agreement,
+        name="customer_checkout_terms_agreement",
+    ),
+    path(
         "customer/checkout/<uuid:user_address_id>/",
         views.checkout,
         name="customer_checkout",
