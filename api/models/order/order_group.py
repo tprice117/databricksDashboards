@@ -376,6 +376,13 @@ class OrderGroup(BaseModel):
             f"{uuid.uuid4()}.pdf",
         )
 
+    @property
+    def is_agreement_signed(self):
+        return (
+            self.agreement_signed_by is not None
+            and self.agreement_signed_on is not None
+        )
+
 
 @receiver(pre_save, sender=OrderGroup)
 def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
@@ -386,24 +393,6 @@ def pre_save_order_group(sender, instance: OrderGroup, *args, **kwargs):
         # TODO: Create a Conversation in Intercom for the OrderGroup.
     # TODO: On OrderGroup complete, maybe close the Conversation in Intercom.
     # https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/manageconversation
-
-    # Generate agreement for the OrderGroup if:
-    # 1) The agreement_signed_by or agreement_signed_on is None.
-    # 2) The agreement_signed_by or agreement_signed_on has changed from None to not None.
-    old_agreement_signed_by = instance.old_value("agreement_signed_by")
-    old_agreement_signed_on = instance.old_value("agreement_signed_on")
-
-    if (
-        old_agreement_signed_by is None
-        or old_agreement_signed_on is None
-        or (
-            old_agreement_signed_by is None
-            and old_agreement_signed_on is None
-            and instance.agreement_signed_by is not None
-            and instance.agreement_signed_on is not None
-        )
-    ):
-        instance.agreement = instance.generate_agreement()
 
 
 @receiver(post_save, sender=OrderGroup)
@@ -542,3 +531,21 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 four_times_per_week=seller_product_seller_location.service_times_per_week.four_times_per_week,
                 five_times_per_week=seller_product_seller_location.service_times_per_week.five_times_per_week,
             )
+
+    # Generate agreement for the OrderGroup if:
+    # 1) The agreement_signed_by or agreement_signed_on is None.
+    # 2) The agreement_signed_by or agreement_signed_on has changed from None to not None.
+    old_agreement_signed_by = instance.old_value("agreement_signed_by")
+    old_agreement_signed_on = instance.old_value("agreement_signed_on")
+
+    if (
+        old_agreement_signed_by is None
+        or old_agreement_signed_on is None
+        or (
+            old_agreement_signed_by is None
+            and old_agreement_signed_on is None
+            and instance.agreement_signed_by is not None
+            and instance.agreement_signed_on is not None
+        )
+    ):
+        instance.agreement = instance.generate_agreement()
