@@ -1,6 +1,7 @@
 import csv
 
 from django.contrib import admin
+from django.db.models import F
 from django.shortcuts import redirect, render
 from django.urls import path
 
@@ -22,6 +23,7 @@ class UserAdmin(admin.ModelAdmin):
         "active_orders",
         "last_login",
     )
+    ordering = [F("last_login").desc(nulls_last=True)]
     autocomplete_fields = ["user_group"]
     list_filter = (CreatedDateFilter, "user_group")
     inlines = [
