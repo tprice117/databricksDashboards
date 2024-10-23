@@ -14,7 +14,14 @@ from api.models import Order, User, UserGroup
 class UserAdmin(admin.ModelAdmin):
     model = User
     search_fields = ["email", "first_name", "last_name"]
-    list_display = ("email", "first_name", "last_name", "cart_orders", "active_orders")
+    list_display = (
+        "email",
+        "first_name",
+        "last_name",
+        "cart_orders",
+        "active_orders",
+        "last_login",
+    )
     autocomplete_fields = ["user_group"]
     list_filter = (CreatedDateFilter, "user_group")
     inlines = [
