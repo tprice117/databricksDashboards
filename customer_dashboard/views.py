@@ -2962,7 +2962,7 @@ def new_user(request):
 @catch_errors()
 def invoices(request):
     context = get_user_context(request)
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
