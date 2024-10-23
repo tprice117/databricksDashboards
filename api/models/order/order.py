@@ -492,7 +492,8 @@ class Order(BaseModel):
                     )
 
                 # If the OrderGroup has Rental One-Step, add those line items. e.g. Porta Potty
-                if hasattr(self.order_group, "rental_one_step"):
+                # Never add Rental One-Step line items for the last Order, they are added at the beginning.
+                if not is_last_order and hasattr(self.order_group, "rental_one_step"):
                     new_order_line_items.extend(
                         self.order_group.rental_one_step.order_line_items(self)
                     )
