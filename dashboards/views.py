@@ -65,7 +65,7 @@ def index(request):
         )
         .order_by("month")
     )
-    context[customerAmountScheduled] = customerAmountScheduled
+    context["customerAmountScheduled"] = customerAmountScheduled
 
     # customerAmount
     customerAmount = (

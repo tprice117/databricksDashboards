@@ -22,7 +22,7 @@ from api.models import (
     SellerLocation,
     UserAddress,
 )
-from api.utils.lob import Lob, CheckErrorResponse
+from api.utils.lob import CheckErrorResponse, Lob
 
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -49,7 +49,8 @@ class OrderAdmin(admin.ModelAdmin):
         "total_invoiced_from_seller",
         "seller_invoice_status",
     )
-    raw_id_fields = ("order_group", "created_by", "updated_by")
+    raw_id_fields = ("order_group", "checkout_order", "created_by", "updated_by")
+    ordering = ("-created_on",)
     list_filter = (
         "status",
         CreatedDateFilter,

@@ -6,8 +6,9 @@ from .main_product_info import MainProductInfoAdmin
 from .main_product_tag import MainProductTagAdmin
 from .main_product_waste_type import MainProductWasteTypeAdmin
 from .order import OrderAdmin
-from .order_disposal_ticket import OrderDisposalTicketAdmin
 from .order_group import OrderGroupAdmin
+from .order_group_material import OrderGroupMaterialAdmin
+from .order_line_item_type import OrderLineItemTypeAdmin
 from .payout import PayoutAdmin
 from .product import ProductAdmin
 from .seller import SellerAdmin
@@ -26,9 +27,10 @@ from .seller_product_seller_location_material import (
 # from .seller_product_seller_location_rental import (
 #     SellerProductSellerLocationRentalAdmin,
 # )
-# from .seller_product_seller_location_rental_multi_step import (
-#     SellerProductSellerLocationRentalMultiStepAdmin,
-# )
+from .seller_product_seller_location_rental_multi_step import (
+    SellerProductSellerLocationRentalMultiStepAdmin,
+)
+
 # from .seller_product_seller_location_rental_one_step import (
 #     SellerProductSellerLocationRentalOneStepAdmin,
 # )

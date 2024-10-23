@@ -30,7 +30,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.filters import OrderGroupFilterset
+from api.filters import OrderFilterset, OrderGroupFilterset
+from api.models.order.order_group_material import OrderGroupMaterial
+from api.models.order.order_group_material_waste_type import OrderGroupMaterialWasteType
+from api.models.order.order_group_service import OrderGroupService
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.utils import decrypt_string
 from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
@@ -59,6 +62,7 @@ from .models import (
     Order,
     OrderDisposalTicket,
     OrderGroup,
+    OrderGroupAttachment,
     OrderLineItem,
     OrderLineItemType,
     Payout,
@@ -106,6 +110,7 @@ from .serializers import (
     MainProductServiceRecurringFrequencySerializer,
     MainProductWasteTypeSerializer,
     OrderDisposalTicketSerializer,
+    OrderGroupAttachmentSerializer,
     OrderGroupSerializer,
     OrderLineItemSerializer,
     OrderLineItemTypeSerializer,
@@ -159,7 +164,7 @@ class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
     permission_classes = []
 
 
-class SellerViewSet(viewsets.ModelViewSet):
+class SellerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Seller.objects.all()
     serializer_class = SellerSerializer
     filterset_fields = ["id"]
@@ -168,13 +173,13 @@ class SellerViewSet(viewsets.ModelViewSet):
         return self.queryset.prefetch_related("seller_products")
 
 
-class SellerLocationViewSet(viewsets.ModelViewSet):
+class SellerLocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerLocation.objects.all()
     serializer_class = SellerLocationSerializer
     filterset_fields = ["id", "seller"]
 
 
-class UserAddressTypeViewSet(viewsets.ModelViewSet):
+class UserAddressTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = UserAddressType.objects.all().order_by("sort")
     serializer_class = UserAddressTypeSerializer
     filterset_fields = ["id"]
@@ -213,18 +218,10 @@ class UserViewSet(viewsets.ModelViewSet):
         self.queryset = self.queryset.select_related(
             "user_group__seller", "user_group__legal"
         )
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
+        is_superuser = self.request.user == "ALL"
+
         if is_superuser:
             return self.queryset
-        elif self.request.user.user_group and self.request.user.is_admin:
-            user_ids = User.objects.filter(
-                user_group=self.request.user.user_group
-            ).values_list("id", flat=True)
-            return self.queryset.filter(id__in=user_ids)
         else:
             return self.queryset.filter(id=self.request.user.id)
 
@@ -235,15 +232,23 @@ class UserGroupViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "share_code"]
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
-        if is_superuser:
-            return self.queryset
+        # Allow search of all companies when share code or id is present.
+        share_code = self.request.query_params.get("share_code", None)
+        user_group_id = self.request.query_params.get("id", None)
+        if share_code:
+            return self.queryset.filter(share_code=share_code)
+        elif user_group_id:
+            return self.queryset.filter(id=user_group_id)
         else:
-            return self.queryset.filter(id=self.request.user.user_group.id)
+            is_superuser = self.request.user == "ALL" or (
+                self.request.user.user_group.is_superuser
+                if self.request.user and self.request.user.user_group
+                else False
+            )
+            if is_superuser:
+                return self.queryset
+            else:
+                return self.queryset.filter(id=self.request.user.user_group.id)
 
 
 class UserGroupBillingViewSet(viewsets.ModelViewSet):
@@ -340,7 +345,7 @@ class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class AddOnChoiceViewSet(viewsets.ModelViewSet):
+class AddOnChoiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AddOnChoice.objects.all()
     serializer_class = AddOnChoiceSerializer
     filterset_fields = ["add_on", "add_on__main_product"]
@@ -348,25 +353,25 @@ class AddOnChoiceViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class AddOnViewSet(viewsets.ModelViewSet):
+class AddOnViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AddOn.objects.all()
     serializer_class = AddOnSerializer
     filterset_fields = ["main_product"]
 
 
-class DisposalLocationViewSet(viewsets.ModelViewSet):
+class DisposalLocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DisposalLocation.objects.all()
     serializer_class = DisposalLocationSerializer
     filterset_fields = ["id"]
 
 
-class DisposalLocationWasteTypeViewSet(viewsets.ModelViewSet):
+class DisposalLocationWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DisposalLocationWasteType.objects.all()
     serializer_class = DisposalLocationWasteTypeSerializer
     filterset_fields = ["id"]
 
 
-class MainProductAddOnViewSet(viewsets.ModelViewSet):
+class MainProductAddOnViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductAddOn.objects.all()
     serializer_class = MainProductAddOnSerializer
     filterset_fields = ["main_product", "add_on"]
@@ -403,7 +408,10 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["id", "main_product_category__id"]
 
     def get_queryset(self):
-        return self.queryset.prefetch_related("add_ons", "add_ons__choices",)
+        return self.queryset.prefetch_related(
+            "add_ons",
+            "add_ons__choices",
+        )
 
 
 @authentication_classes([])
@@ -445,14 +453,23 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(user__id=self.request.user.id)
 
 
+class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):
+    queryset = OrderGroupAttachment.objects.all()
+    serializer_class = OrderGroupAttachmentSerializer
+    filterset_fields = ["id", "order_group"]
+
+    def get_queryset(self):
+        # Only allow user to see their Company's attachments.
+        return self.queryset.filter(
+            order_group__user__user_group=self.request.user.user_group
+        )
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    filterset_fields = {
-        "id": ["exact"],
-        "order_group": ["exact"],
-        "submitted_on": ["isnull"],
-    }
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = OrderFilterset
 
     def get_queryset(self):
         self.queryset = self.queryset.prefetch_related("order_line_items")
@@ -469,49 +486,49 @@ class OrderViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(order_group__user__id=self.request.user.id)
 
 
-class OrderLineItemViewSet(viewsets.ModelViewSet):
+class OrderLineItemViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OrderLineItem.objects.all()
     serializer_class = OrderLineItemSerializer
     filterset_fields = ["id", "order"]
 
 
-class OrderLineItemTypeViewSet(viewsets.ModelViewSet):
+class OrderLineItemTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OrderLineItemType.objects.all()
     serializer_class = OrderLineItemTypeSerializer
     filterset_fields = ["id"]
 
 
-class OrderDisposalTicketViewSet(viewsets.ModelViewSet):
+class OrderDisposalTicketViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OrderDisposalTicket.objects.all()
     serializer_class = OrderDisposalTicketSerializer
     filterset_fields = ["id"]
 
 
-class DayOfWeekViewSet(viewsets.ModelViewSet):  # added 2/25/2021
+class DayOfWeekViewSet(viewsets.ReadOnlyModelViewSet):  # added 2/25/2021
     queryset = DayOfWeek.objects.all()
     serializer_class = DayOfWeekSerializer
     filterset_fields = ["id"]
 
 
-class TimeSlotViewSet(viewsets.ModelViewSet):  # added 2/25/2021
-    queryset = TimeSlot.objects.all()
+class TimeSlotViewSet(viewsets.ReadOnlyModelViewSet):  # added 2/25/2021
+    queryset = TimeSlot.get_all_time_slots().order_by("-updated_on")
     serializer_class = TimeSlotSerializer
     filterset_fields = ["id"]
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):  # added 2/25/2021
+class SubscriptionViewSet(viewsets.ReadOnlyModelViewSet):  # added 2/25/2021
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filterset_fields = ["id"]
 
 
-class PayoutViewSet(viewsets.ModelViewSet):
+class PayoutViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Payout.objects.all()
     serializer_class = PayoutSerializer
     filterset_fields = ["order"]
 
 
-class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
+class ProductAddOnChoiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ProductAddOnChoice.objects.all()
     serializer_class = ProductAddOnChoiceSerializer
     filterset_fields = ["product", "add_on_choice", "product__main_product"]
@@ -519,19 +536,19 @@ class ProductAddOnChoiceViewSet(viewsets.ModelViewSet):
 
 @authentication_classes([])
 @permission_classes([])
-class ProductViewSet(viewsets.ModelViewSet):
+class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filterset_fields = ["main_product"]
 
 
-class SellerProductViewSet(viewsets.ModelViewSet):
+class SellerProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProduct.objects.all()
     serializer_class = SellerProductSerializer
     filterset_fields = ["seller", "product"]
 
 
-class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocation.objects.all()
     serializer_class = SellerProductSellerLocationSerializer
     filterset_fields = ["seller_product", "seller_location"]
@@ -551,7 +568,7 @@ class SellerProductSellerLocationViewSet(viewsets.ModelViewSet):
         return self.queryset
 
 
-class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationServiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocationService.objects.all()
     serializer_class = SellerProductSellerLocationServiceSerializer
     filterset_fields = ["seller_product_seller_location"]
@@ -570,29 +587,29 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ModelViewSet):
             )
 
 
-class SellerInvoicePayableViewSet(viewsets.ModelViewSet):
+class SellerInvoicePayableViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerInvoicePayable.objects.all()
     serializer_class = SellerInvoicePayableSerializer
 
 
-class SellerInvoicePayableLineItemViewSet(viewsets.ModelViewSet):
+class SellerInvoicePayableLineItemViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerInvoicePayableLineItem.objects.all()
     serializer_class = SellerInvoicePayableLineItemSerializer
     filterset_fields = ["order"]
 
 
-class ServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+class ServiceRecurringFrequencyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ServiceRecurringFrequency.objects.all()
     serializer_class = ServiceRecurringFrequencySerializer
 
 
-class MainProductServiceRecurringFrequencyViewSet(viewsets.ModelViewSet):
+class MainProductServiceRecurringFrequencyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductServiceRecurringFrequency.objects.all()
     serializer_class = MainProductServiceRecurringFrequencySerializer
 
 
 class SellerProductSellerLocationServiceRecurringFrequencyViewSet(
-    viewsets.ModelViewSet
+    viewsets.ReadOnlyModelViewSet
 ):
     queryset = SellerProductSellerLocationServiceRecurringFrequency.objects.all()
     serializer_class = SellerProductSellerLocationServiceRecurringFrequencySerializer
@@ -611,7 +628,7 @@ class SellerProductSellerLocationServiceRecurringFrequencyViewSet(
             )
 
 
-class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationRentalViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocationRental.objects.all()
     serializer_class = SellerProductSellerLocationRentalSerializer
     filterset_fields = ["seller_product_seller_location"]
@@ -630,7 +647,7 @@ class SellerProductSellerLocationRentalViewSet(viewsets.ModelViewSet):
             )
 
 
-class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationMaterialViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProductSellerLocationMaterial.objects.all()
     serializer_class = SellerProductSellerLocationMaterialSerializer
     filterset_fields = ["seller_product_seller_location"]
@@ -649,7 +666,9 @@ class SellerProductSellerLocationMaterialViewSet(viewsets.ModelViewSet):
             )
 
 
-class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet):
+class SellerProductSellerLocationMaterialWasteTypeViewSet(
+    viewsets.ReadOnlyModelViewSet
+):
     queryset = SellerProductSellerLocationMaterialWasteType.objects.all()
     serializer_class = SellerProductSellerLocationMaterialWasteTypeSerializer
     filterset_fields = [
@@ -673,7 +692,7 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(viewsets.ModelViewSet)
 
 @authentication_classes([])
 @permission_classes([])
-class WasteTypeViewSet(viewsets.ModelViewSet):
+class WasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
 
@@ -1398,14 +1417,86 @@ def create_products_for_main_product(request, main_product_id):
 
 
 def test3(request):
-    users = User.objects.all()
+    # Move the "rate" field to "flat_rate_price" for all OrderGroupServices.
+    # order_group_services = OrderGroupService.objects.all()
 
-    for user in users:
-        print(user.unread_conversations_count())
+    # order_group_service: OrderGroupService
+    # for order_group_service in order_group_services:
+    #     print("=================")
+    #     print(order_group_service.id)
+    #     if (
+    #         order_group_service.flat_rate_price is None
+    #         and order_group_service.price_per_mile is None
+    #     ):
+    #         try:
+    #             print("Updating order_group_service: {}".format(order_group_service.id))
+    #             order_group_service.flat_rate_price = order_group_service.rate
+    #             order_group_service.save()
+    #             print(
+    #                 "Updated/saved order_group_service: {}".format(
+    #                     order_group_service.id
+    #                 )
+    #             )
+    #         except Exception as error:
+    #             print("An exception occurred: {}".format(error))
 
-    # BillingUtils.run_interval_based_invoicing()
-    # sync_stripe_payment_methods()
-    # DSPaymentMethods.Reactors.create_stripe_payment_method_reactor()
+    # # For all OrderGroupMaterials, populate the OrderGroupMaterialWasteTypes.
+    # order_group_materials = OrderGroupMaterial.objects.all()
+
+    # order_group_material: OrderGroupMaterial
+    # for order_group_material in order_group_materials:
+    #     print("=================")
+    #     print(order_group_material.id)
+    #     # Get the SellerProductSellerLocation.
+    #     seller_product_seller_location = (
+    #         order_group_material.order_group.seller_product_seller_location
+    #     )
+
+    #     print(
+    #         "SellerProductSellerLocation: {}".format(seller_product_seller_location.id)
+    #     )
+
+    #     # Get the SellerProductSellerLocationMaterial.
+    #     seller_product_seller_location_material = (
+    #         seller_product_seller_location.material
+    #         if hasattr(seller_product_seller_location, "material")
+    #         else None
+    #     )
+
+    #     print(
+    #         "SellerProductSellerLocationMaterial: {}".format(
+    #             seller_product_seller_location_material
+    #         )
+    #     )
+
+    #     # For each SellerProductSellerLocationMaterialWasteType,
+    #     # create an OrderGroupMaterialWasteType.
+    #     if seller_product_seller_location_material:
+    #         print("Creating OrderGroupMaterialWasteTypes.")
+    #         for (
+    #             material_waste_type
+    #         ) in seller_product_seller_location_material.waste_types.all():
+    #             print(
+    #                 f"Creating OrderGroupMaterialWasteType for {material_waste_type.id}"
+    #             )
+    #             # Only create if a OrderGroupMaterialWasteType does not already exist
+    #             # for this OrderGroupMaterial and MainProductWasteType.
+    #             if not OrderGroupMaterialWasteType.objects.filter(
+    #                 order_group_material=order_group_material,
+    #                 main_product_waste_type=material_waste_type.main_product_waste_type,
+    #             ).exists():
+    #                 OrderGroupMaterialWasteType.objects.create(
+    #                     order_group_material=order_group_material,
+    #                     main_product_waste_type=material_waste_type.main_product_waste_type,
+    #                     price_per_ton=material_waste_type.price_per_ton,
+    #                     tonnage_included=material_waste_type.tonnage_included,
+    #                 )
+    #                 print(
+    #                     f"Created new OrderGroupMaterialWasteType for {material_waste_type.id}"
+    #                 )
+    #     else:
+    #         print("No SellerProductSellerLocationMaterial found.")
+
     return HttpResponse(status=200)
 
 

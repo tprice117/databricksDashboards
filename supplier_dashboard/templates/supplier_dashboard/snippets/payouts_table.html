@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 {% load humanize %}
 <tbody id="payout-results">
     {% if page_obj %}
@@ -8,7 +9,7 @@
                     <td>{{ payout.order.order_group.seller_product_seller_location.seller_location.seller.name }}</td>
                 {% endif %}
                 <td>{{ payout.invoice_id }}</td>
-                <td>{{ payout.created_on }}</td>
+                <td>{{ payout.created_on|timezone:'America/Chicago' }} (CT)</td>
                 <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
                 {% if request.user.is_staff %}
                     <td>

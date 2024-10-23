@@ -87,6 +87,16 @@
         document.body.addEventListener("htmx:afterSettle", function (event) {
             addUsergroupAutocompleteListeners();
         });
+
+        // Prevent form submission if usergroup is not selected.
+        const form = document.getElementById("userForm");
+        form.addEventListener("submit", function (event) {
+            const usergroupId = document.getElementById("usergroupId").value;
+            if (!usergroupId) {
+            event.preventDefault();
+            alert("Please select a User Group before submitting the form.");
+            }
+        });
     </script>
 {% endblock %}
 {% block content %}

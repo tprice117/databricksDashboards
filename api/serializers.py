@@ -15,6 +15,9 @@ from admin_policies.api.v1.serializers import (
 )
 from api.models.main_product.main_product_tag import MainProductTag
 from notifications.utils.internal_email import send_email_on_new_signup
+from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+    PricingEngineResponseSerializer,
+)
 
 from .models import (
     AddOn,
@@ -32,6 +35,7 @@ from .models import (
     Order,
     OrderDisposalTicket,
     OrderGroup,
+    OrderGroupAttachment,
     OrderGroupMaterial,
     OrderGroupRental,
     OrderGroupService,
@@ -72,6 +76,20 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+ORDER_APPROVAL_SERIALIZER = None
+
+
+def get_order_approval_serializer():
+    """This imports the UserGroupAdminApprovalOrderSerializer.
+    This avoid the circular import issue."""
+    global ORDER_APPROVAL_SERIALIZER
+    if ORDER_APPROVAL_SERIALIZER is None:
+        from admin_approvals.api.v1.serializers import (
+            UserGroupAdminApprovalOrderSerializer as ORDER_APPROVAL_SERIALIZER,
+        )
+
+    return ORDER_APPROVAL_SERIALIZER
 
 
 class SellerSerializer(serializers.ModelSerializer):
@@ -147,7 +165,11 @@ class UserGroupLegalSerializer(serializers.ModelSerializer):
         model = UserGroupLegal
         fields = [
             "id",
+            "user_group",
             "name",
+            "tax_id",
+            "accepted_net_terms",
+            "years_in_business",
             "doing_business_as",
             "structure",
             "industry",
@@ -168,6 +190,59 @@ class UserGroupCreditApplicationSerializer(serializers.ModelSerializer):
         model = UserGroupCreditApplication
         fields = "__all__"
         read_only_fields = ["status"]
+
+
+class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    user_id = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    username = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    type = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+
+    def create(self, validated_data):
+        """
+        Create and return a new `User` instance, given the validated data.
+        """
+        new_user = User.objects.create(**validated_data)
+        # Send internal email to notify team.
+        if settings.ENVIRONMENT == "TEST":
+            # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
+            if validated_data.get("user_id", None) is not None:
+                send_email_on_new_signup(
+                    new_user.email, created_by_downstream_team=False
+                )
+        else:
+            logger.info(
+                f"UserSerializer.create: [New User Signup]-[{validated_data}]",
+            )
+        return new_user
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "user_id",
+            "phone",
+            "email",
+            "date_joined",
+            "first_name",
+            "last_name",
+            "username",
+            "photo_url",
+            "is_admin",
+            "is_archived",
+            "is_active",
+            "terms_accepted",
+            "type",
+        ]
+        validators = []
 
 
 class UserGroupSerializer(WritableNestedModelSerializer):
@@ -213,6 +288,10 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         required=False,
         allow_null=True,
     )
+    users = UserSerializerWithoutUserGroup(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = UserGroup
@@ -255,38 +334,32 @@ class UserSerializer(serializers.ModelSerializer):
         allow_null=True,
         allow_blank=True,
     )
-    password = serializers.CharField(
-        required=False,
-        allow_null=True,
-        allow_blank=True,
-    )
     type = serializers.CharField(
         required=False,
         allow_null=True,
         allow_blank=True,
     )
 
-    def create(self, validated_data):
-        """
-        Create and return a new `User` instance, given the validated data.
-        """
-        new_user = User.objects.create(**validated_data)
-        # Send internal email to notify team.
-        if settings.ENVIRONMENT == "TEST":
-            # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
-            if validated_data.get("user_id", None) is not None:
-                send_email_on_new_signup(
-                    new_user.email, created_by_downstream_team=False
-                )
-        else:
-            logger.info(
-                f"UserSerializer.create: [New User Signup]-[{validated_data}]",
-            )
-        return new_user
-
     class Meta:
         model = User
-        fields = "__all__"
+        fields = [
+            "id",
+            "user_group",
+            "user_group_id",
+            "user_id",
+            "phone",
+            "email",
+            "date_joined",
+            "first_name",
+            "last_name",
+            "username",
+            "photo_url",
+            "is_admin",
+            "is_archived",
+            "is_active",
+            "terms_accepted",
+            "type",
+        ]
         validators = []
 
 
@@ -448,8 +521,24 @@ class MainProductWasteTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class OrderLineItemTypeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = OrderLineItemType
+        fields = (
+            "id",
+            "name",
+            "units",
+            "code",
+            "stripe_tax_code_id",
+            "sort",
+        )
+
+
 class OrderLineItemSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    order_line_item_type = OrderLineItemTypeSerializer(read_only=True)
 
     class Meta:
         model = OrderLineItem
@@ -458,6 +547,7 @@ class OrderLineItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    user_group_admin_approval_order = get_order_approval_serializer()(read_only=True)
     order_line_items = OrderLineItemSerializer(many=True, read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)
     service_date = serializers.SerializerMethodField(read_only=True)
@@ -465,6 +555,8 @@ class OrderSerializer(serializers.ModelSerializer):
     seller_price = serializers.SerializerMethodField(read_only=True)
     intercom_id = serializers.CharField(required=False, allow_null=True)
     custmer_intercom_id = serializers.CharField(required=False, allow_null=True)
+    code = serializers.SerializerMethodField(read_only=True)
+    price = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
@@ -494,6 +586,13 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_seller_price(self, obj: Order):
         return obj.seller_price()
+
+    def get_code(self, obj):
+        return obj.get_code
+
+    @extend_schema_field(PricingEngineResponseSerializer)
+    def get_price(self, obj):
+        return obj.get_price()
 
     # def get_status(self, obj):
     #     return stripe.Invoice.retrieve(
@@ -782,6 +881,21 @@ class OrderGroupMaterialSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class OrderGroupAttachmentSerializer(serializers.ModelSerializer):
+    file_name = serializers.CharField(read_only=True)
+    file_type = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = OrderGroupAttachment
+        fields = (
+            "id",
+            "order_group",
+            "file",
+            "file_name",
+            "file_type",
+        )
+
+
 class OrderGroupSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     user = UserSerializer(read_only=True)
@@ -833,6 +947,8 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     material = OrderGroupMaterialSerializer(allow_null=True)
     orders = OrderSerializer(many=True, read_only=True)
     active = serializers.SerializerMethodField(read_only=True)
+    attachments = OrderGroupAttachmentSerializer(many=True, required=False)
+    code = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderGroup
@@ -866,31 +982,30 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "end_date",
             "take_rate",
             "tonnage_quantity",
+            "times_per_week",
+            "shift_count",
             "delivery_fee",
             "removal_fee",
             "created_by",
             "updated_by",
             "conversation",
             "status",
+            "attachments",
+            "code",
         )
 
     def create(self, validated_data):
-        service_data = validated_data.pop("service")
-        rental_data = validated_data.pop("rental")
-        material_data = validated_data.pop("material")
+        validated_data.pop("service")
+        validated_data.pop("rental")
+        validated_data.pop("material")
 
         # Create order group.
         preferred_service_days = validated_data.pop("preferred_service_days")
         order_group = OrderGroup.objects.create(**validated_data)
         order_group.preferred_service_days.set(preferred_service_days)
 
-        # Create service, rental, and material.
-        if service_data:
-            OrderGroupService.objects.create(order_group=order_group, **service_data)
-        if rental_data:
-            OrderGroupRental.objects.create(order_group=order_group, **rental_data)
-        if material_data:
-            OrderGroupMaterial.objects.create(order_group=order_group, **material_data)
+        # NOTE: This has moved into the OrderGroup post_save signal.
+        # It uses the seller_product_seller_location to extract the service, rental, etc.
 
         return order_group
 
@@ -917,3 +1032,6 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
     def get_active(self, obj) -> bool:
         return obj.end_date is None or obj.end_date > datetime.datetime.now().date()
+
+    def get_code(self, obj):
+        return obj.get_code

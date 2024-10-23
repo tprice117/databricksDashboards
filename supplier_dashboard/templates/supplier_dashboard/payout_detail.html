@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Payout Details
@@ -40,7 +41,7 @@
                                     <tbody>
                                         {% for payout in related_payouts %}
                                             <tr>
-                                                <td>{{ payout.created_on }}</td>
+                                                <td>{{ payout.created_on|timezone:'America/Chicago' }} (CT)</td>
                                                 <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ payout.status }}</td>
                                                 <td>

@@ -1,8 +1,10 @@
 import datetime
+
 from django import forms
 from django.core.exceptions import ValidationError
 
-from api.models import UserAddressType, UserGroup
+from api.models import UserAddress, UserAddressType, UserGroup
+from api.models.order.order_group import OrderGroup
 from common.models.choices.user_type import UserType
 
 
@@ -155,6 +157,11 @@ class UserAddressForm(forms.Form):
             }
         ),
     )
+    project_id = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
+    )
     all_address_types = get_all_address_types()
     address_type = forms.ChoiceField(
         choices=all_address_types,
@@ -199,20 +206,6 @@ class UserAddressForm(forms.Form):
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "US"}),
         disabled=True,
     )
-    autopay = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
-    is_archived = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
     allow_saturday_delivery = forms.BooleanField(
         initial=False,
         widget=forms.CheckboxInput(
@@ -221,6 +214,13 @@ class UserAddressForm(forms.Form):
         required=False,
     )
     allow_sunday_delivery = forms.BooleanField(
+        initial=False,
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
+        required=False,
+    )
+    is_archived = forms.BooleanField(
         initial=False,
         widget=forms.CheckboxInput(
             attrs={"class": "form-check-input", "role": "switch"}
@@ -237,17 +237,27 @@ class UserAddressForm(forms.Form):
         required=False,
     )
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        auth_user = kwargs.pop("auth_user", None)
+        super(UserAddressForm, self).__init__(*args, **kwargs)
+        if auth_user and not auth_user.is_staff:
+            self.fields["is_archived"].widget = forms.HiddenInput()
+
 
 class UserGroupForm(forms.Form):
     name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    apollo_id = forms.CharField(
+        max_length=128,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=True,
+    )
     pay_later = forms.BooleanField(
         initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
+        widget=forms.HiddenInput(),
         required=False,
     )
     autopay = forms.BooleanField(
@@ -301,14 +311,20 @@ class UserGroupForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
+        auth_user = kwargs.pop("auth_user", None)
         super(UserGroupForm, self).__init__(*args, **kwargs)
-        if user and not user.is_staff:
+        if auth_user and not auth_user.is_staff:
             self.fields["net_terms"].disabled = True
             self.fields["share_code"].disabled = True
             self.fields["share_code"].widget = forms.HiddenInput()
             self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
             self.fields["tax_exempt_status"].disabled = True
+            self.fields["apollo_id"].required = False
+            self.fields["apollo_id"].widget = forms.HiddenInput()
+            self.fields["autopay"].widget = forms.HiddenInput()
+            self.fields["invoice_frequency"].disabled = True
+            self.fields["invoice_day_of_month"].disabled = True
 
 
 # Create an Order form
@@ -318,10 +334,10 @@ class OrderGroupForm(forms.Form):
     )
     product_waste_types = forms.ChoiceField(
         label="Material",
-        help_text="Hold CTRL to select multiple.",
+        help_text="Select majority material to be placed in dumpster.",
         choices=[],
         widget=forms.Select(
-            attrs={"class": "form-select", "multiple": "true", "required": "true"}
+            attrs={"class": "form-select", "required": "true"}  # "multiple": "true",
         ),
         required=True,
     )
@@ -345,6 +361,26 @@ class OrderGroupForm(forms.Form):
             }
         ),
     )
+    # Create a choice field for service times per week, where the choices are 1-5 times per week.
+    times_per_week = forms.ChoiceField(
+        label="Service Times Per Week",
+        choices=[
+            (1, "1 time per week"),
+            (2, "2 times per week"),
+            (3, "3 times per week"),
+            (4, "4 times per week"),
+            (5, "5 times per week"),
+        ],
+        widget=forms.Select(attrs={"class": "form-select"}),
+        required=True,
+    )
+    # Create a choice field for shift count. Only required if the product has rental_multi_step.
+    shift_count = forms.ChoiceField(
+        label="Service Times Per Week",
+        choices=OrderGroup.ShiftCount.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        required=True,
+    )
     # Add is estimated end date checkbox
     # NOTE: Maybe also say that we will assume monthly rental for now.
     # is_estimated_end_date = forms.BooleanField(
@@ -356,11 +392,17 @@ class OrderGroupForm(forms.Form):
     # )
     schedule_window = forms.ChoiceField(
         choices=[
+            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
             ("Morning (7am-11am)", "Morning (7am-11am)"),
             ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
-            ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
         ],
         widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    quantity = forms.IntegerField(
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        initial=1,
+        required=True,
+        help_text="Note: Currently, the prices on the next page are always for one.",
     )
 
     def __init__(self, *args, **kwargs):
@@ -368,7 +410,6 @@ class OrderGroupForm(forms.Form):
         product_waste_types = kwargs.pop("product_waste_types", None)
         product_add_ons = kwargs.pop("product_add_ons", None)
         main_product = kwargs.pop("main_product", None)
-        service_freqencies = kwargs.pop("service_freqencies", None)
 
         super(OrderGroupForm, self).__init__(*args, **kwargs)
 
@@ -379,6 +420,12 @@ class OrderGroupForm(forms.Form):
         else:
             self.fields["product_waste_types"].widget = forms.HiddenInput()
             self.fields["product_waste_types"].required = False
+
+        # Always hide. If needed, we can show it again.
+        # NOTE: If we want to show it again (even dynamically), we can remove the below line.
+        self.fields["removal_date"].widget = forms.HiddenInput()
+        self.fields["removal_date"].required = False
+
         if (
             not main_product.has_rental
             and not main_product.has_rental_one_step
@@ -391,12 +438,35 @@ class OrderGroupForm(forms.Form):
             # self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].required = False
             # self.fields["is_estimated_end_date"].required = False
+        if not main_product.has_service_times_per_week:
+            self.fields["times_per_week"].widget = forms.HiddenInput()
+            self.fields["times_per_week"].required = False
+
+        # If the product does not have rental_multi_step, show the shift
+        # count field.
+        if not main_product.has_rental_multi_step:
+            self.fields["shift_count"].widget = forms.HiddenInput()
+            self.fields["shift_count"].required = False
 
     def clean_delivery_date(self):
         # Do not allow delivery date to be on a Sunday.
         delivery_date = self.cleaned_data["delivery_date"]
         if delivery_date.weekday() == 6:  # 6 corresponds to Sunday
-            raise ValidationError("Date cannot be on a Sunday.")
+            user_address = self.cleaned_data["user_address"]
+            allow_sunday_delivery = False
+            if user_address:
+                user_address_obj = UserAddress.objects.get(id=user_address)
+                allow_sunday_delivery = user_address_obj.allow_sunday_delivery
+            if not allow_sunday_delivery:
+                raise ValidationError("Date cannot be on a Sunday.")
+        elif delivery_date.weekday() == 5:
+            user_address = self.cleaned_data["user_address"]
+            allow_saturday_delivery = False
+            if user_address:
+                user_address_obj = UserAddress.objects.get(id=user_address)
+                allow_saturday_delivery = user_address_obj.allow_saturday_delivery
+            if not allow_saturday_delivery:
+                raise ValidationError("Date cannot be on a Saturday.")
         return delivery_date
 
     def clean_removal_date(self):
@@ -439,9 +509,9 @@ class OrderGroupSwapForm(forms.Form):
     )
     schedule_window = forms.ChoiceField(
         choices=[
+            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
             ("Morning (7am-11am)", "Morning (7am-11am)"),
             ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
-            ("Evening (5pm-8pm)", "Evening (5pm-8pm)"),
         ],
         widget=forms.Select(attrs={"class": "form-select"}),
     )

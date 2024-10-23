@@ -7,8 +7,11 @@ from common.utils.get_file_path import get_file_path
 
 class MainProductCategory(BaseModel):
     def validate_file_extension(value):
-        if not value.name.endswith(".png"):
-            raise ValidationError("Only .png files are allowed.")
+        allowed_extensions = [".svg", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff"]
+        if not any(value.name.lower().endswith(ext) for ext in allowed_extensions):
+            raise ValidationError(
+                f"Only image files with extensions {', '.join(allowed_extensions)} are allowed."
+            )
 
     name = models.CharField(max_length=80)
     description = models.TextField(blank=True, null=True)
@@ -26,6 +29,10 @@ class MainProductCategory(BaseModel):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Product Category"
+        verbose_name_plural = "Product Categories"
 
     @property
     def price_from(self):

@@ -1,17 +1,30 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Checkout
 {% endblock %}
+{% block stylesheet %}
+    <style>
+        .form-error input {
+            box-shadow: 0 0 3px #cc0000;
+        }
+        .form-valid input {
+            box-shadow: 0 0 3px #36cc00;
+        }
+    </style>
+{% endblock %}
 {% block javascript %}
     <script>
-        const checkoutModal = document.getElementById("checkout-orders-modal");
+        let checkoutModal = document.getElementById("checkout-orders-modal");
         const addCardModal = document.getElementById("add-card-modal");
         const checkoutForm = document.getElementById("checkoutForm");
+        const termsAgreementModal = document.getElementById("terms-agreement-modal");
         let checkoutItemChanged = false;
         // listen for htmx afterSettle event.
         document.body.addEventListener("htmx:afterSettle", function (event) {
+            console.log("htmx:afterSettle", event);
             checkoutItemChanged = true;
         });
         checkoutModal.addEventListener("hidden.bs.modal", (event) => {
@@ -20,12 +33,21 @@
                 location.reload();
             }
         });
+        termsAgreementModal.addEventListener("hidden.bs.modal", (event) => {
+            if (checkoutItemChanged) {
+                // reload the page to reflect the changes
+                location.reload();
+            }
+        });
         function removeItemFromCart(el) {
             // Get current query params.
             let queryParams = new URLSearchParams(window.location.search);
-            // Get id of item
+            // Get order group id of item
             let id = el.getAttribute("data-id");
             queryParams.set("id", encodeURIComponent(id));
+            // Get order id
+            let orderId = el.getAttribute("data-orderid");
+            queryParams.set("order_id", encodeURIComponent(orderId));
             // Get cart-subtotal
             let cartSubtotal = document.getElementById("cart-subtotal");
             let subtotal = parseFloat(cartSubtotal.getAttribute("data-subtotal"));
@@ -78,10 +100,11 @@
         }
 
         async function submitCard () {
+            let token = null;
             try {
                 disableAddCardSaveButton();
 
-                const token = await bt.tokens.create({
+                token = await bt.tokens.create({
                     type: 'card',
                     data: {
                         number: cardNumberElement,
@@ -116,7 +139,7 @@
                     // Show popup with error message
                     Swal.fire({
                         title: 'Error!',
-                        text: `Failed to create payment method: ${response.statusText}`,
+                        text: `Failed to create payment method: ${response.statusText}-[token: ${token.id}]`,
                         icon: 'error',
                         confirmButtonText: 'Ok'
                     }).then((result) => {
@@ -160,7 +183,7 @@
                     }
                     // `Reason: ${formattedErrorReasons}`,
                 } else {
-                    errorReasons.push(`Failed to create payment method: ${error}`);
+                    errorReasons.push(`Failed to create payment method: ${error}-[BasisTheory response: ${token}]`);
                 }
                 let formattedErrorReasons = errorReasons.join(", ");
                 Swal.fire({
@@ -279,7 +302,7 @@
                         <p style="margin-bottom: 0px;">Discounts</p>
                     </div>
                     <div class="col">
-                        <p style="margin-bottom: 0px;">${{ discounts|floatformat:2|intcomma }}</p>
+                        <p style="margin-bottom: 0px;">-${{ discounts|floatformat:2|intcomma }}</p>
                     </div>
                 </div>
                 <div class="row">
@@ -294,6 +317,27 @@
                         </p>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col">
+                        <p style="margin-bottom: 0px;">Estimated Taxes</p>
+                    </div>
+                    <div class="col">
+                        <p style="margin-bottom: 0px;">${{ estimated_taxes|floatformat:2|intcomma }}
+                        </p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <p style="margin-bottom: 0px;">
+                            <strong>Total</strong>
+                        </p>
+                    </div>
+                    <div class="col">
+                        <p style="margin-bottom: 0px;">
+                            <strong>${{ total|floatformat:2|intcomma }}</strong>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card" style="margin-top: 20px;">
@@ -305,7 +349,7 @@
         </div>
         <div class="card" style="margin-top: 20px;">
             <div class="card-header">
-                <h4 class="card-title">Select Payment Method<button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
+                <h4 class="card-title">Select Payment Method <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span><button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
             </div>
             <div class="card-body">
                 {% if user_address.user_group.credit_line_limit and user_address.user_group.credit_line_limit != 0 %}
@@ -386,14 +430,40 @@
         <form id="checkoutForm" action="{{ request.get_full_path }}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="subtotal" value="{{ subtotal }}">
+            <input type="hidden" name="discounts" value="{{ discounts }}">
+            <input type="hidden" name="pre_tax_subtotal" value="{{ pre_tax_subtotal }}">
+            <input type="hidden" name="estimated_taxes" value="{{ estimated_taxes }}">
+            <input type="hidden" name="total" value="{{ total }}">
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
-            <button id="form_submit" class="btn btn-primary float-end mb-4" type="submit" name="form_submit" style="margin-top: 10px;">Checkout</button>
+            <div class="col-12 mt-4 mb-4">
+                {% if request.user.is_staff %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
+                {% else %}
+                    {% if show_terms %}
+                        <button class="btn btn-danger float-end me-2 ms-2" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal"><i class="fas fa-signature"></i>&nbsp;Sign Agreement</button>
+                    {% else %}
+                        <button class="btn btn-danger float-end me-2 ms-2" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal"><i class="far fa-eye"></i>&nbsp;See Agreement</button>
+                    {% endif %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" {% if show_terms %}disabled=""{% endif %}>Checkout</button>
+                {% endif %}
+            </div>
         </form>
+        <br>
     </div>
 {% endblock %}
 {% block modals %}
+    <div class="modal fade" role="dialog" tabindex="-1" id="terms-agreement-modal" style="display: none;" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog" role="document" id="terms-agreement-form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Terms Agreement</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                </div>
+                {% include 'customer_dashboard/snippets/terms_agreement_form.html' %}
+            </div>
+        </div>
+    </div>
     <div class="modal fade" role="dialog" tabindex="-1" id="checkout-orders-modal" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">Cart Details</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
@@ -404,18 +474,9 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col">
-                                    {% for item in cart.values %}
+                                    {% for item in cart %}
                                         <div class="row cart-item">
                                             <div class="col-auto">
-                                                <img class="img-thumbnail img-fluid"
-                                                    alt="Product category image"
-                                                    width="67"
-                                                    height="96"
-                                                    src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image %}
-                                                        {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.image }}
-                                                    {% else %}
-                                                        {% static 'customer_dashboard/img/photo-1619155442906-c8030bd86f49.jpg' %}
-                                                    {% endif %}" />
                                                 <img class="img-thumbnail img-fluid"
                                                     alt="Product image"
                                                     width="138"
@@ -437,8 +498,11 @@
                                                         <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
                                                     {% endif %}
                                                 {% endif %}
+                                                <p class="mb-1">Service date: {{ item.order.end_date }}</p>
                                                 <p class="mb-1">Order Type: {{ item.order_type }}</p>
-                                                {% comment %} <p>{{ item.order_group.start_date }} to {{ order_group.end_date }}</p> {% endcomment %}
+                                                {% if user.is_staff %}
+                                                    <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                {% endif %}
                                             </div>
                                             <div class="col-auto">
                                                 <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
@@ -446,7 +510,7 @@
                                             <div class="col-auto">
                                                 {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Remove</button> {% endcomment %}
                                                 <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ item.order_group.id }}" type="button"
-                                                    data-id="{{ item.order_group.id }}" data-price="{{ item.price }}"
+                                                    data-id="{{ item.order_group.id }}" data-orderid="{{ item.order.id }}" data-price="{{ item.price }}"
                                                     hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
                                                     onClick="event.stopPropagation();
                                                     Swal.fire(
@@ -475,7 +539,7 @@
         </div>
     </div>
     <div id="add-card-modal" class="modal fade" role="dialog" tabindex="-1" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title">New Card</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>

@@ -11,20 +11,21 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from django.db import IntegrityError
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
+from rest_framework.response import Response
 
+from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
     Order,
     OrderGroup,
@@ -42,10 +43,11 @@ from api.models.user.user_seller_location import UserSellerLocation
 from api.utils.utils import decrypt_string
 from common.models.choices.user_type import UserType
 from common.utils import DistanceUtils
+from communications.intercom.contact import Contact as IntercomContact
+from communications.intercom.conversation import Conversation as IntercomConversation
 from communications.intercom.utils.utils import get_json_safe_value
-from notifications.utils import internal_email
-from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from customer_dashboard.forms import UserInviteForm
+from notifications.utils import internal_email
 
 from .forms import (
     ChatMessageForm,
@@ -57,9 +59,6 @@ from .forms import (
     SellerPayoutForm,
     UserForm,
 )
-
-from communications.intercom.contact import Contact as IntercomContact
-from communications.intercom.conversation import Conversation as IntercomConversation
 
 logger = logging.getLogger(__name__)
 
@@ -861,7 +860,7 @@ def users(request):
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
 
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -1111,7 +1110,7 @@ def new_user(request):
 def bookings(request):
     link_params = {}
     context = {}
-    pagination_limit = 25
+    pagination_limit = 50
     page_number = 1
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
@@ -1729,7 +1728,7 @@ def chat(request, order_id=None, conversation_id=None, is_customer=False):
 @login_required(login_url="/admin/login/")
 def payouts(request):
     context = {}
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -1961,9 +1960,24 @@ def download_payouts(request):
     writer = csv.writer(response)
     # TODO: After switching to LOB, add checkbook payout id and url.
     if request.user.is_staff:
-        header_row = ["Seller", "Payout ID", "Order ID", "Amount", "Created On"]
+        header_row = [
+            "Seller",
+            "Payout ID",
+            "Order ID",
+            "Amount",
+            "Invoice ID",
+            "Check Number",
+            "Created On",
+        ]
     else:
-        header_row = ["Payout ID", "Order ID", "Amount", "Created On"]
+        header_row = [
+            "Payout ID",
+            "Order ID",
+            "Amount",
+            "Invoice ID",
+            "Check Number",
+            "Created On",
+        ]
     writer.writerow(header_row)
     for payout in payouts:
         row = []
@@ -1976,6 +1990,8 @@ def download_payouts(request):
                 str(payout.id),
                 str(payout.order_id),
                 str(payout.amount),
+                str(payout.invoice_id() if payout.invoice_id() else ""),
+                str(payout.check_number if payout.check_number else ""),
                 payout.created_on.ctime(),
                 # str(payout.checkbook_payout_id),
                 # str(payout.stripe_transfer_id),
@@ -1986,11 +2002,35 @@ def download_payouts(request):
 
 
 @login_required(login_url="/admin/login/")
+def supplier_last_order(request):
+    context = {}
+    location_id = request.GET.get("location_id", None)
+    seller_id = request.GET.get("seller_id", None)
+    if location_id:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_location_id=location_id
+        )
+    elif seller_id:
+        orders = Order.objects.filter(
+            order_group__seller_product_seller_location__seller_location__seller_id=seller_id
+        )
+    else:
+        return HttpRequest(status=204)
+
+    orders = orders.order_by("-end_date").first()
+    context["last_order"] = orders
+    # Assume htmx request, so only return html snippet
+    return render(
+        request, "customer_dashboard/snippets/company_last_order_col.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def locations(request):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -1998,6 +2038,7 @@ def locations(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
+        active = request.GET.get("active")
         seller_locations = get_location_objects(
             request, context["user"], context["seller"]
         )
@@ -2017,24 +2058,36 @@ def locations(request):
             if is_insurance_compliant and is_tax_compliant:
                 context["fully_compliant"] += 1
                 if tab == "compliant":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             elif not is_insurance_compliant:
                 context["insurance_missing"] += 1
                 if tab == "insurance":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             elif not is_tax_compliant:
                 context["tax_missing"] += 1
                 if tab == "tax":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             if is_insurance_compliant and seller_location.is_insurance_expiring_soon:
                 context["insurance_expiring"] += 1
                 if tab == "insurance_expiring":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             if seller_location.is_payout_setup is False:
                 context["payouts_missing"] += 1
                 if tab == "payouts":
+                    if active == "on" and not seller_location.is_active:
+                        continue
                     seller_locations_lst.append(seller_location)
             if tab is None or tab == "":
+                if active == "on" and not seller_location.is_active:
+                    continue
                 seller_locations_lst.append(seller_location)
 
         download_link = f"/supplier/locations/download/?{query_params.urlencode()}"
@@ -2632,7 +2685,7 @@ def received_invoices(request):
     context = {}
     context["user"] = get_user(request)
     context["seller"] = get_seller(request)
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")

@@ -12,3 +12,7 @@ class OrderLineItemType(BaseModel):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Transaction Line Item Type"
+        verbose_name_plural = "Transaction Line Item Types"

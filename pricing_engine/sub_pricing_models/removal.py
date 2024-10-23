@@ -20,7 +20,7 @@ class RemovalPrice:
             (
                 PricingLineItemGroup(
                     title="Removal",
-                    code="material",
+                    code="removal",
                 ),
                 [item],
             )

@@ -1,5 +1,6 @@
 {% extends 'supplier_dashboard/supplier_base.html' %}
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% block title %}
     Booking Details
@@ -23,7 +24,13 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
-                        <h6 class="text-muted card-subtitle mb-2">{{ order.id }}</h6>
+                        <h6 class="text-muted card-subtitle mb-2">
+                            {% if request.user.is_superuser %}
+                                <a class="btn btn-link" role="button" href="/admin/api/order/{{ order.id }}/change/">{{ order.id }}</a>
+                            {% else %}
+                                {{ order.id }}
+                            {% endif %}
+                        </h6>
                         <p style="margin-bottom: 0px;">
                             <strong>Status</strong>
                         </p>
@@ -35,7 +42,7 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Created</strong>
                         </p>
-                        <p>{{ order.created_on }}</p>
+                        <p>{{ order.created_on|timezone:'America/Chicago' }} (CT)</p>
                         <p class="card-text"></p>
                         <div id="booking-detail-actions">
                             {% include 'supplier_dashboard/snippets/booking_detail_actions.html' %}
@@ -72,14 +79,18 @@
                             <strong>Time Window</strong>
                         </p>
                         <p>
-                            {% if order.order_group.time_slot %}
-                                {{ order.order_group.time_slot.name }}
-                                <br />
-                                {{ order.order_group.time_slot.start }}
-                                -
-                                {{ order.order_group.time_slot.end }}
+                            {% if order.schedule_window %}
+                                {{ order.schedule_window }}
                             {% else %}
-                                Any
+                                {% if order.order_group.time_slot %}
+                                    {{ order.order_group.time_slot.name }}
+                                    <br />
+                                    {{ order.order_group.time_slot.start }}
+                                    -
+                                    {{ order.order_group.time_slot.end }}
+                                {% else %}
+                                    Any
+                                {% endif %}
                             {% endif %}
                         </p>
                         <a class="card-link" href="#"></a><a href="{% url 'supplier_bookings' %}?service_date={{ order.end_date|urlencode }}">See All Orders on this Service Date</a><a class="card-link" href="#"></a>
@@ -155,7 +166,7 @@
                         </p>
                         <p>
                             <!-- Show Downstream phone until a masked direct option is figured out. -->
-                            <a style="color:#020f16" href="tel:+17193949986">(719) 394-9986</a>
+                            <a style="color:#020f16" href="tel:+17372324216">(737) 232-4216</a>
                         </p>
                         {% if request.user.is_staff %}
                             <p style="margin-bottom: 0px;">
@@ -272,7 +283,7 @@
                                     <tbody>
                                         {% for payout in order.payouts.all %}
                                             <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_payout_detail' payout_id=payout.id %}'">
-                                                <td>{{ payout.created_on }}</td>
+                                                <td>{{ payout.created_on|timezone:'America/Chicago' }} (CT)</td>
                                                 <td>${{ payout.amount|stringformat:'.2f'|intcomma }}</td>
                                                 <td>{{ payout.status }}</td>
                                             </tr>

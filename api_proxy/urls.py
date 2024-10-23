@@ -19,6 +19,7 @@ router.register(r"user-group-billings", views.UserGroupBillingViewSet, "api")
 router.register(
     r"user-group-credit-applications", views.UserGroupCreditApplicationViewSet, "api"
 )
+router.register(r"user-group-legal", views.UserGroupLegalViewSet, "api")
 router.register(r"user-user-addresses", views.UserUserAddressViewSet, "api")
 router.register(r"user-seller-reviews", views.UserSellerReviewViewSet, "api")
 router.register(
@@ -38,6 +39,7 @@ router.register(r"main-products", views.MainProductViewSet, "api")
 router.register(r"main-product-waste-types", views.MainProductWasteTypeViewSet, "api")
 router.register(r"orders", views.OrderViewSet, "api")
 router.register(r"order-groups", views.OrderGroupViewSet, "api")
+router.register(r"order-group-attachments", views.OrderGroupAttachmentViewSet, "api")
 router.register(r"order-line-items", views.OrderLineItemViewSet, "api")
 router.register(r"order-line-item-types", views.OrderLineItemTypeViewSet, "api")
 router.register(r"order-disposal-tickets", views.OrderDisposalTicketViewSet, "api")
@@ -174,10 +176,16 @@ urlpatterns = [
     path("matching-engine/", include("matching_engine.urls")),
     # Pricing Engine.
     path("pricing-engine/", include("pricing_engine.urls")),
+    # Checkout.
+    path("checkout/", include("cart.urls")),
+    # Billing.
+    path("billing/", include("billing.urls")),
     # API App URLs.
     path("api/", include("api.urls")),
     # Dashboard URLs.
     path("dashboards/", include("dashboards.urls")),
     # Test.
     path("test/", views.test3),
+    # invoice_payables URLS.
+    path("invoice-payables/", include("invoice_payables.urls")),
 ]

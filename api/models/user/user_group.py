@@ -1,8 +1,8 @@
+import datetime
 import logging
 import random
 import string
 import threading
-import datetime
 from typing import List
 
 from django.core.exceptions import ValidationError
@@ -10,9 +10,9 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
+from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
-from api.models.order.order import Order
 from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from communications.intercom.intercom import Intercom
@@ -22,6 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 class UserGroup(BaseModel):
+    class ApolloStage(models.TextChoices):
+        LEAD = "LEAD", "Active Opportunity"
+        CUSTOMER = "CUSTOMER", "Current Client"
+        CHURNED = "CHURNED", "Churned Customer"
+        DEAD_LEAD = "DEAD_LEAD", "Dead opportunity"
+
     class TaxExemptStatus(models.TextChoices):
         NONE = "none"
         EXEMPT = "exempt"
@@ -88,7 +94,6 @@ class UserGroup(BaseModel):
     owned_and_rented_equiptment_coi = models.FileField(
         upload_to=get_file_path, blank=True, null=True
     )
-    credit_report = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
     intercom_id = models.CharField(
         max_length=255,
@@ -96,9 +101,28 @@ class UserGroup(BaseModel):
         null=True,
         help_text="This is the company_id in Intercom.",
     )
+    # Apollo
+    account_owner = models.ForeignKey(
+        "api.User",
+        on_delete=models.DO_NOTHING,
+        related_name="account_owner",
+        blank=True,
+        null=True,
+    )
+    apollo_id = models.CharField(max_length=128, blank=True, null=True)
+    stage = models.CharField(
+        max_length=20,
+        choices=ApolloStage.choices,
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Account"
+        verbose_name_plural = "Accounts"
 
     def clean(self):
         super().clean()
@@ -214,10 +238,18 @@ class CompanyUtils:
         return round(percentage_change)
 
     @staticmethod
-    def get_new(search_q: str = None):
-        """Get all companies created in the last 30 days."""
+    def get_new(search_q: str = None, owner_id=None):
+        """Get all companies created in the last 30 days.
+
+        :param search_q: Search query to filter UserGroups by name
+        :param owner_id: Account Owner ID to filter UserGroups by
+
+        return: Django UserGroup queryset
+        """
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         user_groups = UserGroup.objects.filter(seller__isnull=True)
+        if owner_id:
+            user_groups = user_groups.filter(account_owner_id=owner_id)
         if search_q:
             # https://docs.djangoproject.com/en/4.2/topics/db/search/
             user_groups = user_groups.filter(name__icontains=search_q)
@@ -227,9 +259,14 @@ class CompanyUtils:
         return user_groups
 
     @staticmethod
-    def get_active(search_q: str = None) -> List[UserGroup]:
+    def get_active(search_q: str = None, owner_id=None) -> List[UserGroup]:
         """Get all active companies.
         This returns all companies that have at least one active order in the last 30 days.
+
+        :param search_q: Search query to filter UserGroups by name
+        :param owner_id: Account Owner ID to filter UserGroups by
+
+        return: List of UserGroup objects
         """
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         # Active Companies is user group on an order within date range (or within last 30 days if no range)
@@ -246,6 +283,10 @@ class CompanyUtils:
             if order.order_group.user.user_group is None:
                 # This happens when a user is not part of a UserGroup.
                 continue
+            if owner_id and str(
+                order.order_group.user.user_group.account_owner_id
+            ) != str(owner_id):
+                continue
             setattr(order.order_group.user.user_group, "last_order", order.end_date)
             user_groups.append(order.order_group.user.user_group)
         # sort based on user_group.created_on
@@ -258,6 +299,7 @@ class CompanyUtils:
         tab: str = None,
         old_date: datetime.date = None,
         new_date: datetime.date = None,
+        owner_id=None,
     ) -> List[UserGroup]:
         """Get all churning companies.
         -
@@ -268,16 +310,22 @@ class CompanyUtils:
         if tab is "churning" then Get all churning companies.
         Companies that had orders in the previous 30 day period, but no orders in the last 30 day period.
 
+        :param search_q: Search query to filter UserGroups by name
+        :param tab: Tab to filter UserGroups by. Options are "fully_churned" or "churning"
+        :param old_date: Start date to filter orders by
+        :param new_date: End date to filter orders by
+        :param owner_id: Account Owner ID to filter UserGroups by
+
         return: List of UserGroup objects
         """
-        import time
+        # import time
 
         if old_date is None:
             old_date = datetime.date.today() - datetime.timedelta(days=60)
         if new_date is None:
             new_date = datetime.date.today() - datetime.timedelta(days=30)
 
-        start_time = time.time()
+        # start_time = time.time()
         # Churning = sum of all order.customer total for orders within the date range for a given User Group
         # is less than the sum of the previous date range (or within last 30 days if no range)
         # ie. If I select (1) Today to last Wednesday, it will look from (2) last Wednesday to 2 Wednesdays ago
@@ -292,9 +340,9 @@ class CompanyUtils:
             )
         orders.select_related("order_group__user__user_group")
         orders = orders.prefetch_related("order_line_items")
-        print(orders.count())
-        step_time = time.time()
-        print(f"Query count: {step_time - start_time}")
+        # print(orders.count())
+        # step_time = time.time()
+        # print(f"Query count: {step_time - start_time}")
         user_groups_d = {}
         for order in orders:
             ugid = order.order_group.user.user_group_id
@@ -319,11 +367,13 @@ class CompanyUtils:
                 user_groups_d[ugid]["last_order"] = order.end_date
             # if len(user_groups_d) == 10:
             #     break
-        step_time = time.time()
-        print(f"Loop orders: {step_time - start_time}")
+        # step_time = time.time()
+        # print(f"Loop orders: {step_time - start_time}")
 
         user_groups = []
         for ugid, data in user_groups_d.items():
+            if owner_id and str(data["user_group"].account_owner_id) != str(owner_id):
+                continue
             if data["total_old"] > data["total_new"]:
                 setattr(data["user_group"], "last_order", data["last_order"])
                 setattr(data["user_group"], "count_old", data["count_old"])
@@ -350,10 +400,10 @@ class CompanyUtils:
                         user_groups.append(data["user_group"])
                 else:
                     user_groups.append(data["user_group"])
-        step_time = time.time()
-        print(f"Filter churning: {step_time - start_time}")
+        # step_time = time.time()
+        # print(f"Filter churning: {step_time - start_time}")
         # Sort by change
         user_groups = sorted(user_groups, key=lambda x: x.change)
-        step_time = time.time()
-        print(f"Sort: {step_time - start_time}")
+        # step_time = time.time()
+        # print(f"Sort: {step_time - start_time}")
         return user_groups

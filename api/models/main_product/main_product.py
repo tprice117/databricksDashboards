@@ -59,9 +59,16 @@ class MainProduct(BaseModel):
     def __str__(self):
         return f"{self.main_product_category.name} - {self.name}"
 
+    class Meta:
+        verbose_name = "Product"
+        verbose_name_plural = "Products"
+
     @property
     def max_discount(self):
-        return self.default_take_rate - self.minimum_take_rate
+        """Returns the maximum discount for this MainProduct as a decimal (0 < x < 1)."""
+        minimum_take_rate_decimal = self.minimum_take_rate / 100
+        default_take_rate_decimal = self.default_take_rate / 100
+        return 1 - ((1 + minimum_take_rate_decimal) / (1 + default_take_rate_decimal))
 
     @property
     def price_from(self):
@@ -79,7 +86,7 @@ class MainProduct(BaseModel):
         # Get the lowest price from all SellerProductSellerLocations.
         price = None
         for seller_product_seller_location in seller_product_seller_locations:
-            price_from = seller_product_seller_location.price_from
+            price_from = seller_product_seller_location.price_from or 0
             if price is None or price_from < price:
                 price = price_from
 

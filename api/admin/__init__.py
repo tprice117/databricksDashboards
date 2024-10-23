@@ -6,7 +6,6 @@ from .admin import (
     MainProductInfoAdmin,
     MainProductWasteTypeAdmin,
     OrderAdmin,
-    OrderDisposalTicketAdmin,
     OrderGroupAdmin,
     PayoutAdmin,
     ProductAdmin,

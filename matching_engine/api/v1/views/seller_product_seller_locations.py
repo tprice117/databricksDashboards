@@ -3,9 +3,14 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
+from api.models.main_product.product import Product
 from api.serializers import SellerProductSellerLocationSerializer
 from matching_engine.api.v1.serializers import MatchingEngineRequestSerializer
 from matching_engine.matching_engine import MatchingEngine
+from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
+    prep_seller_product_seller_locations_for_response,
+)
+from common.utils.json_encoders import DecimalFloatEncoder
 
 
 class GetSellerProductSellerLocationsView(APIView):
@@ -46,10 +51,13 @@ class GetSellerProductSellerLocationsView(APIView):
             )
         )
 
-        # Return SellerProductSellerLocations serialized data.
-        data = SellerProductSellerLocationSerializer(
-            seller_product_seller_locations,
-            many=True,
-        ).data
+        # Get typed Product object.
+        product: Product = serializer.validated_data["product"]
 
-        return JsonResponse(data, safe=False)
+        # Get response data.
+        data = prep_seller_product_seller_locations_for_response(
+            main_product=product.main_product,
+            seller_product_seller_locations=seller_product_seller_locations,
+        )
+
+        return JsonResponse(data, encoder=DecimalFloatEncoder, safe=False)

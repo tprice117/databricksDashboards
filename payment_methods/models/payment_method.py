@@ -1,17 +1,19 @@
 import re
+import threading
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 import logging
-from stripe.error import CardError
+from stripe import CardError
 from api.models import User, UserGroup
 from api.models.user.user_address import UserAddress
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 from payment_methods.utils import DSPaymentMethods
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
+from payment_methods.utils.detect_card_type import detect_card_type
 
 logger = logging.getLogger(__name__)
 
@@ -25,50 +27,60 @@ class PaymentMethod(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
         on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
     active = models.BooleanField(default=True)
     reason = models.TextField(blank=True, null=True)
 
     @property
     def card_number(self):
+        """Return all the digits with * except the last 4 digits."""
         response = self.get_card()
-        return (
-            response["data"]["number"]
-            if response and "data" in response and "number" in response["data"]
-            else None
-        )
+        return response["number"]
 
     @property
     def card_brand(self):
         response = self.get_card()
-        return (
-            response["data"]["brand"]
-            if response and "data" in response and "brand" in response["data"]
-            else None
-        )
+        return response["brand"]
 
     @property
     def card_exp_month(self):
         response = self.get_card()
-        return (
-            response["data"]["expiration_month"]
-            if response
-            and "data" in response
-            and "expiration_month" in response["data"]
-            else None
-        )
+        return response["expiration_month"]
 
     @property
     def card_exp_year(self):
         response = self.get_card()
-        return (
-            response["data"]["expiration_year"]
-            if response and "data" in response and "expiration_year" in response["data"]
-            else None
-        )
+        return response["expiration_year"]
 
     def get_card(self):
-        return DSPaymentMethods.Tokens.get_card(self.token)
+        """Returns CreditCardType with the card number masked.
+        {"number": "******1111", "brand": "", ""expiration_month": 12, "expiration_year": 2023}
+        payment_methods.api.v1.serializers.payment_method.CreditCardType
+        Not imported to avoid circular import."""
+        response = DSPaymentMethods.Tokens.get_card(self.token)
+        card = {
+            "number": None,
+            "brand": None,
+            "expiration_month": None,
+            "expiration_year": None,
+        }
+        if response and "data" in response and "number" in response["data"]:
+            card["number"] = re.sub(r"\d(?=\d{4})", "*", response["data"]["number"])
+            card["brand"] = detect_card_type(response["data"]["number"])
+        if (
+            card["brand"] is None
+            and response
+            and "data" in response
+            and "brand" in response["data"]
+        ):
+            card["brand"] = response["data"]["brand"]
+        if response and "data" in response and "expiration_month" in response["data"]:
+            card["expiration_month"] = response["data"]["expiration_month"]
+        if response and "data" in response and "expiration_year" in response["data"]:
+            card["expiration_year"] = response["data"]["expiration_year"]
+        return card
 
     @property
     def inactive_reason(self):
@@ -195,6 +207,8 @@ class PaymentMethod(BaseModel):
                     from_email="system@trydownstream.com",
                     additional_to_emails=[
                         "mwickey@trydownstream.com",
+                        "dleyden@trydownstream.com",
+                        "ctorgerson@trydownstream.com",
                         "billing@trydownstream.com",
                     ],
                     subject=subject,
@@ -206,7 +220,9 @@ class PaymentMethod(BaseModel):
 
 @receiver(post_save, sender=PaymentMethod)
 def save_payment_method(sender, instance: PaymentMethod, created, **kwargs):
-    instance.sync_stripe_payment_method()
+    # Note: This is done asynchronously because it is not critical.
+    p = threading.Thread(target=instance.sync_stripe_payment_method)
+    p.start()
 
 
 @receiver(pre_delete, sender=PaymentMethod)
@@ -224,5 +240,12 @@ def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
     # Delete the token from Basis Theory.
     DSPaymentMethods.Tokens.delete(instance.token)
 
+    # Remove the Payment Method from all UserAddresses.
+    UserAddress.objects.filter(default_payment_method=instance).update(
+        default_payment_method=None
+    )
+
     # Sync the Payment Method with Stripe.
-    instance.sync_stripe_payment_method()
+    # Note: This is done asynchronously because it is not critical.
+    p = threading.Thread(target=instance.sync_stripe_payment_method)
+    p.start()

@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 
 from api.models.user.user_group import UserGroup
 from api.utils.google_maps import geocode_address
@@ -19,6 +19,10 @@ class UserGroupBilling(BaseModel):
     latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
 
+    @property
+    def formatted_address(self):
+        return f"{self.street} {self.city}, {self.state} {self.postal_code}"
+
     def pre_save(sender, instance, *args, **kwargs):
         latitude, longitude = geocode_address(
             f"{instance.street} {instance.city} {instance.state} {instance.postal_code}"
@@ -26,5 +30,13 @@ class UserGroupBilling(BaseModel):
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
 
+    def post_save(sender, instance, *args, **kwargs):
+        # Get first address from user_group
+        user_group = instance.user_group
+        addresses = user_group.user_addresses.all()
+        for address in addresses:
+            address.update_stripe()
+
 
 pre_save.connect(UserGroupBilling.pre_save, sender=UserGroupBilling)
+post_save.connect(UserGroupBilling.post_save, sender=UserGroupBilling)

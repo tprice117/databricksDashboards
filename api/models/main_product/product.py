@@ -23,6 +23,10 @@ class Product(BaseModel):
     def __str__(self):
         return f'{self.main_product.name} {"-" if self.formatted_add_on_choices != "" else ""} {self.formatted_add_on_choices}'
 
+    class Meta:
+        verbose_name = "Product Variant"
+        verbose_name_plural = "Product Variants"
+
     @property
     def formatted_add_on_choices(self):
         product_add_on_choices = ProductAddOnChoice.objects.filter(product=self)

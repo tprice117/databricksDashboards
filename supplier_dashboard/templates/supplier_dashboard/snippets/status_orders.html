@@ -1,7 +1,7 @@
 {% for order in status.orders %}
 <!-- Displays an Order with a Bootstrap Card. Hyperscript adds a small opacity transition on load. -->
 <div class="card 
-    {% if order.status == "PENDING" %}border-danger {% elif order.status == "APPROVAL" %}border-danger
+    {% if order.status == "PENDING" %}border-danger {% elif order.status == "APPROVAL" or order.status == "ADMIN_APPROVAL_PENDING" %}border-danger
     {% else %}border-success{% endif %} mb-3"
     _=" on load transition my opacity to 1 over 0.{{forloop.counter}} seconds" style="opacity: .01;max-width: 18rem;">
     <div class="card-header">{{ order.order_type }} of
@@ -16,14 +16,18 @@
                 {{ order.order_group.user_address.formatted_address }}</span><br>
             <span>
                 Time Window (Preferred):
-                {% if order.order_group.time_slot %}
-                {{ order.order_group.time_slot.name }}
-                <br>
-                {{ order.order_group.time_slot.start }}
-                -
-                {{ order.order_group.time_slot.end }}
+                {% if order.schedule_window %}
+                    {{ order.schedule_window }}
                 {% else %}
-                Any
+                    {% if order.order_group.time_slot %}
+                        {{ order.order_group.time_slot.name }}
+                        <br />
+                        {{ order.order_group.time_slot.start }}
+                        -
+                        {{ order.order_group.time_slot.end }}
+                    {% else %}
+                        Any
+                    {% endif %}
                 {% endif %}
             </span><br>
         </p>

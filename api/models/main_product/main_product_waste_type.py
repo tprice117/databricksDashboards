@@ -17,3 +17,5 @@ class MainProductWasteType(BaseModel):
             "waste_type",
             "main_product",
         )
+        verbose_name = "Product Waste Type"
+        verbose_name_plural = "Product Waste Types"

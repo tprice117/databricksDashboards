@@ -11,3 +11,7 @@ class UserGroupUser(BaseModel):
 
     def __str__(self):
         return f"{self.user_group.name} - {self.user.email}"
+
+    class Meta:
+        verbose_name = "Account User"
+        verbose_name_plural = "Account Users"

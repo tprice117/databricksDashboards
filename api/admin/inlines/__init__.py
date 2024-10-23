@@ -5,9 +5,14 @@ from .main_product_category_info import MainProductCategoryInfoInline
 from .main_product_info import MainProductInfoInline
 from .order import OrderInline
 from .order_disposal_ticket import OrderDisposalTicketInline
+from .order_group_attachment import OrderGroupAttachmentInline
 from .order_group_material import OrderGroupMaterialInline
+from .order_group_material_waste_type import OrderGroupMaterialWasteTypeInline
 from .order_group_rental import OrderGroupRentalInline
+from .order_group_rental_multi_step import OrderGroupRentalMultiStepInline
+from .order_group_rental_one_step import OrderGroupRentalOneStepInline
 from .order_group_service import OrderGroupServiceInline
+from .order_group_service_times_per_week import OrderGroupServiceTimesPerWeekInline
 from .order_line_item import OrderLineItemInline
 from .payout import PayoutInline
 from .product import ProductInline
@@ -28,6 +33,9 @@ from .seller_product_seller_location_rental import (
 )
 from .seller_product_seller_location_rental_multi_step import (
     SellerProductSellerLocationRentalMultiStepInline,
+)
+from .seller_product_seller_location_rental_multi_step_shift import (
+    SellerProductSellerLocationRentalMultiStepShiftInline,
 )
 from .seller_product_seller_location_rental_one_step import (
     SellerProductSellerLocationRentalOneStepInline,

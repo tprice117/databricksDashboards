@@ -75,6 +75,11 @@ urlpatterns = [
         views.user_detail,
         name="customer_user_detail",
     ),
+    path(
+        "customer/user/<uuid:user_id>/reset_password/",
+        views.user_reset_password,
+        name="customer_reset_password",
+    ),
     path("customer/user/new/", views.new_user, name="customer_new_user"),
     path(
         "customer/company/<uuid:user_group_id>/user/new/",
@@ -122,6 +127,11 @@ urlpatterns = [
         views.new_order_4,
         name="customer_new_order_4",
     ),
+    path(
+        "customer/cart/send_quote/",
+        views.cart_send_quote,
+        name="customer_cart_send_quote",
+    ),
     # POST: Create OrderGroup and loads cart. GET: Load cart #
     path(
         "customer/order/new/cart/",
@@ -139,9 +149,24 @@ urlpatterns = [
         name="customer_new_order_6_remove",
     ),
     path(
+        "customer/checkout/<uuid:user_address_id>/terms/",
+        views.checkout_terms_agreement,
+        name="customer_checkout_terms_agreement",
+    ),
+    path(
         "customer/checkout/<uuid:user_address_id>/",
         views.checkout,
         name="customer_checkout",
+    ),
+    path(
+        "customer/cart/quote/",
+        views.show_quote,
+        name="customer_show_quote",
+    ),
+    path(
+        "customer/accept/quote/",
+        views.accept_quote,
+        name="customer_accept_quote",
     ),
     path(
         "customer/<uuid:user_address_id>/<uuid:payment_method_id>/default/payment/",
@@ -152,6 +177,11 @@ urlpatterns = [
         "customer/<uuid:payment_method_id>/remove/payment/",
         views.remove_payment_method,
         name="customer_remove_payment_method",
+    ),
+    path(
+        "customer/payment/<uuid:payment_method_id>/status/",
+        views.update_payment_method_status,
+        name="customer_update_payment_method_status",
     ),
     path(
         "customer/new/payment/",

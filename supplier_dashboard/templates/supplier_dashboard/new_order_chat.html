@@ -68,14 +68,19 @@
         </tr>
         <tr>
             <td>{{ order.order_type }}</td>
-            <td>{% if order.order_group.time_slot %}
-                {{ order.order_group.time_slot.name }}
-                <br>
-                {{ order.order_group.time_slot.start }}
-                -
-                {{ order.order_group.time_slot.end }}
+            <td>
+                {% if order.schedule_window %}
+                    {{ order.schedule_window }}
                 {% else %}
-                Any
+                    {% if order.order_group.time_slot %}
+                        {{ order.order_group.time_slot.name }}
+                        <br />
+                        {{ order.order_group.time_slot.start }}
+                        -
+                        {{ order.order_group.time_slot.end }}
+                    {% else %}
+                        Any
+                    {% endif %}
                 {% endif %}
             </td>
             <td>{{ order.order_group.user.first_name }}
@@ -85,7 +90,7 @@
                     href="tel:{{ order.order_group.user.phone }}">{{ order.order_group.user.phone }}</a>
                 {% else %}
                 <br>
-                <a style="color:#020f16" href="tel:+17193949986">(719) 394-9986</a>
+                <a style="color:#020f16" href="tel:+17372324216">(737) 232-4216</a>
                 {% endif %}
             </td>
             {% if order.order_group.subscription and order.order_group.subscription.frequency %}

@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% if request.user.is_staff and help_text %}
     <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
@@ -79,10 +80,10 @@
                                 <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                             </td>
                         {% endif %}
-                        <td>{{ obj.date_joined }}</td>
+                        <td>{{ obj.date_joined|timezone:"America/Chicago" }} (CT)</td>
                     {% endif %}
                 {% else %}
-                    <td>{{ obj.date_joined }}</td>
+                    <td>{{ obj.date_joined|timezone:"America/Chicago" }} (CT)</td>
                 {% endif %}
             </tr>
         {% endfor %}

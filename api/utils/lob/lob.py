@@ -14,6 +14,7 @@ check = lob.sendPhysicalCheck(
 
 from typing import List, Union, Literal
 from dataclasses import dataclass
+import uuid
 import logging
 import lob_python
 from lob_python.api_client import ApiClient
@@ -31,7 +32,11 @@ from lob_python.model.country_extended import CountryExtended
 from lob_python.model.qr_code import QrCode
 
 from django.conf import settings
-from api.models import Order, Payout, SellerLocation, SellerInvoicePayable
+from django.template.loader import render_to_string
+from notifications.utils.add_email_to_queue import (
+    add_internal_email_to_queue,
+)
+from api.models import Order, Payout, SellerLocation
 
 logger = logging.getLogger("billing")
 
@@ -69,20 +74,46 @@ class CheckRemittanceVariableResponse:
     description: str
 
 
-def get_invoice_id(order: Order, default_invoice_id="No Invoice Provided") -> str:
-    """Get invoice_id and account_number for Order from SellerInvoicePayableLineItem.seller_invoice_payable."""
-    seller_invoice_payable_line_item = (
-        order.seller_invoice_payable_line_items.all().first()
+def get_invoice_id(order: Order) -> str:
+    """Get invoice_id and account_number for Order from SellerInvoicePayableLineItem.seller_invoice_payable.
+    This should be the invoice id that the seller uses to track the order line item; it is on the invoice they send us.
+    If multiple SellerInvoicePayables are found, use comma separated string of all invoice_ids found.
+    If invoice_id is not found, use uuid and log error."""
+    seller_invoice_payable_line_items = order.seller_invoice_payable_line_items.all()
+
+    # Get the unique SellerInvoicePayables.
+    seller_invoice_payables = set(
+        [
+            line_item.seller_invoice_payable
+            for line_item in seller_invoice_payable_line_items
+        ]
     )
-    invoice_id = default_invoice_id
-    account_number = "N/A"
-    if seller_invoice_payable_line_item:
-        seller_invoice_payable = seller_invoice_payable_line_item.seller_invoice_payable
-        if seller_invoice_payable:
-            invoice_id = seller_invoice_payable.supplier_invoice_id
-            if seller_invoice_payable.account_number:
-                account_number = seller_invoice_payable.account_number
-    return invoice_id, account_number
+
+    # Format the invoice_id, comma separated if multiple.
+    invoice_ids = [
+        seller_invoice_payable.supplier_invoice_id
+        for seller_invoice_payable in seller_invoice_payables
+    ]
+    if not invoice_ids:
+        invoice_ids = [str(uuid.uuid4())]
+        logger.error(
+            f"Order[{order.id}] -> SellerInvoicePayableLineItem has no parent seller_invoice_payable. Using {invoice_ids[0]} for invoice_id. {seller_invoice_payable_line_items.count()}"
+        )
+    formatted_invoice_str = ", ".join(invoice_ids)
+
+    # Get unique set of SellerInvoicePayables account numbers.
+    seller_invoice_payable_line_item = set(
+        seller_invoice_payables.account_number
+        for seller_invoice_payables in seller_invoice_payables
+        if seller_invoice_payables.account_number
+    )
+    formatted_account_str = (
+        ", ".join(seller_invoice_payable_line_item)
+        if seller_invoice_payable_line_item
+        else "N/A"
+    )
+
+    return formatted_invoice_str, formatted_account_str
 
 
 def get_check_remittance_page_html(
@@ -146,9 +177,7 @@ def get_check_remittance_item_html(
             """
 
 
-def get_check_remittance_html(
-    seller_invoice_str: str, orders: List[Order]
-) -> CheckRemittanceHTMLResponse:
+def get_check_remittance_html(orders: List[Order]) -> CheckRemittanceHTMLResponse:
     """Get the HTML for the remittance advice on the check. If there are more than 6 orders, the remittance advice
     will be an attachment. If there are 6 or fewer orders, the remittance advice will be added to the check bottom.
     check_bottom must conform to the size in this template:
@@ -180,9 +209,7 @@ def get_check_remittance_html(
             + " | "
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
-        invoice_id, account_number = get_invoice_id(
-            order, default_invoice_id=seller_invoice_str
-        )
+        invoice_id, account_number = get_invoice_id(order)
         remittance_advice.append(
             get_check_remittance_item_html(
                 invoice_id,
@@ -223,9 +250,7 @@ def get_check_remittance_html(
     )
 
 
-def get_check_remittance_variable(
-    seller_invoice_str: str, orders: List[Order]
-) -> CheckRemittanceHTMLResponse:
+def get_check_remittance_variable(orders: List[Order]) -> CheckRemittanceHTMLResponse:
     """Get merge variables for the remittance advice on the check. This assumes that the remittance advice will be
     added as an attachment to the check and will use a template already in Lob.com.
     API Docs on templates: https://help.lob.com/print-and-mail/designing-mail-creatives/dynamic-personalization
@@ -252,9 +277,7 @@ def get_check_remittance_variable(
             + order.order_group.seller_product_seller_location.seller_product.product.main_product.name
         )
         # Add invoice to remittance advice page.
-        invoice_id, account_number = get_invoice_id(
-            order, default_invoice_id=seller_invoice_str
-        )
+        invoice_id, account_number = get_invoice_id(order)
         page["invoices"].append(
             {
                 "id": invoice_id,
@@ -334,15 +357,8 @@ class Lob:
         Returns:
             Union[Check, CheckErrorResponse]: The check object on success or error object on failure.
         """
+        description = ""
         try:
-            # Get SellerInvoicePayable
-            seller_invoice_payable = SellerInvoicePayable.objects.filter(
-                seller_location_id=seller_location.id
-            ).first()
-            seller_invoice_str = "No Invoice Provided"
-            if seller_invoice_payable:
-                seller_invoice_str = seller_invoice_payable.supplier_invoice_id
-
             check_editable = CheckEditable(
                 bank_account=bank_id,
                 amount=float(amount),
@@ -371,9 +387,7 @@ class Lob:
             # Add Remittance Advice as an attachment if more than 6 orders.
             if len(orders) > CHECK_BOTTOM_ITEM_LIMIT:
                 # Add merge variables for remittance advice, which will be an attachment using a template.
-                check_remittance_merge = get_check_remittance_variable(
-                    seller_invoice_str, orders
-                )
+                check_remittance_merge = get_check_remittance_variable(orders)
                 check_editable.merge_variables = check_remittance_merge.merge_variables
                 check_editable.attachment = settings.LOB_CHECK_TEMPLATE_ID
                 check_editable.message = f"""Downstream Marketplace Bookings Payout. Check attachment for Remittance Advice of {len(orders)} items."""
@@ -382,7 +396,7 @@ class Lob:
                 )
             else:
                 # Add Remittance Advice to check bottom if 6 or fewer orders.
-                check_remittance = get_check_remittance_html(seller_invoice_str, orders)
+                check_remittance = get_check_remittance_html(orders)
                 check_editable.description = (
                     f"{len(orders)} items - {check_remittance.description[:100]}"
                 )
@@ -394,6 +408,7 @@ class Lob:
                 else:
                     check_editable.message = "Downstream Marketplace Bookings Payout"
 
+            description = check_editable.description
             with ApiClient(self.configuration) as api_client:
                 api = ChecksApi(api_client)
                 created_check: Check = api.create(check_editable)
@@ -403,13 +418,72 @@ class Lob:
             # e.status 422, reason Unprocessable Entity
             print("Exception when calling ChecksApi->create: %s\n" % e)
             logger.error(f"Lob.sendPhysicalCheck.api: [{e}]", exc_info=e)
+            reason = f"[ApiException-{e.status}]: {e.body}"
+            Lob.send_internal_email(
+                description, reason, seller_location, amount, orders
+            )
             return CheckErrorResponse(status_code=e.status, message=e.body)
         except lob_python.ApiValueError as e:
             logger.error(f"Lob.sendPhysicalCheck.ApiValueError: [{e}]", exc_info=e)
+            reason = f"[ApiValueError-400]: {str(e)}"
+            Lob.send_internal_email(
+                description, reason, seller_location, amount, orders
+            )
             return CheckErrorResponse(status_code=400, message=str(e))
         except Exception as e:
             logger.error(f"Lob.sendPhysicalCheck: [{e}]", exc_info=e)
+            reason = f"[Unknown Error-500]: {str(e)}"
+            Lob.send_internal_email(
+                description, reason, seller_location, amount, orders
+            )
             return CheckErrorResponse(status_code=500, message=str(e))
+
+    @staticmethod
+    def send_internal_email(
+        description: str,
+        reason: str,
+        seller_location: SellerLocation,
+        amount: float,
+        orders: List[Order],
+    ):
+        # Send email to internal team. Only on our PROD environment.
+        if settings.ENVIRONMENT == "TEST":
+            try:
+                subject = f"Lob Check Send Error: {seller_location.name}-{seller_location.mailing_address.formatted_address}"
+                seller_location_link = f"{settings.API_URL}/admin/api/sellerlocation/{str(seller_location.id)}/change/"
+                order_links = {}
+                for order in orders:
+                    order_links[str(order.id)] = (
+                        f"{settings.API_URL}/admin/api/order/{str(order.id)}/change/"
+                    )
+                payload = {
+                    "location": seller_location.name,
+                    "description": description,
+                    "amount": amount,
+                    "order_links": order_links,
+                    "payee_name": seller_location.payee_name,
+                    "order_email": seller_location.order_email,
+                    "order_phone": seller_location.order_phone,
+                    "address": seller_location.mailing_address.formatted_address,
+                    "reason": reason,
+                    "seller_location_link": seller_location_link,
+                }
+                html_content = render_to_string(
+                    "emails/internal/check_send_failure.min.html", payload
+                )
+                add_internal_email_to_queue(
+                    from_email="system@trydownstream.com",
+                    additional_to_emails=[
+                        "mwickey@trydownstream.com",
+                        "dleyden@trydownstream.com",
+                        "ctorgerson@trydownstream.com",
+                        "billing@trydownstream.com",
+                    ],
+                    subject=subject,
+                    html_content=html_content,
+                )
+            except Exception as e:
+                logger.error(f"Lob.send_internal_email: [{e}]", exc_info=e)
 
     def get_check(self, check_id: str) -> Union[Check, None]:
         """Get a check by ID.

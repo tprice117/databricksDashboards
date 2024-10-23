@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 {% load humanize %}
 {% if request.user.is_staff and help_text %}
     <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
@@ -45,11 +46,11 @@
                             {% if user_address.last_order %}
                                 <td>{{ user_address.last_order }}</td>
                             {% else %}
-                                <td class="text-center" hx-get="{% url 'customer_company_last_order' %}?user_address_id={{ user_address.id }}" hx-trigger="load" hx-swap="outerHTML">
+                                <td hx-get="{% url 'customer_company_last_order' %}?user_address_id={{ user_address.id }}" hx-trigger="load" hx-swap="outerHTML">
                                     <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </td>
                             {% endif %}
-                            <td>{{ user_address.created_on }}</td>
+                            <td>{{ user_address.created_on|timezone:"America/Chicago" }} (CT)</td>
                         {% endif %}
                     {% else %}
                         <td>{{ user_address.autopay }}</td>

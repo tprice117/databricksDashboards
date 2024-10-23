@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "asset_management",
     "billing",
     "canny",
+    "cart",
     "chat",
     "common",
     "communications",
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
     "payment_methods",
     "supplier_dashboard",
     # END: Django Apps.
+    "admin_auto_filters",
     "api.pricing_ml",
     "api.utils",
     "django_filters",
@@ -81,6 +83,7 @@ INSTALLED_APPS = [
     # START:  Django Humanize (for template number formatting).
     "django.contrib.humanize",
     # END:  Django Humanize (for template number formatting).
+    "invoice_payables",
 ]
 
 MIDDLEWARE = [
@@ -300,6 +303,16 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Downstream API for the Downstream Market Network.",
     "DESCRIPTION": SPECTACULAR_DESCRIPTION,
     "VERSION": "1.0.0",
+    "SERVERS": [
+        {
+            "url": "https://api-dev.trydownstream.com",
+            "description": "Development",
+        },
+        {
+            "url": "https://api.trydownstream.com",
+            "description": "Production",
+        },
+    ],
     "ENUM_NAME_OVERRIDES": {
         "ValidationErrorEnum": "drf_standardized_errors.openapi_serializers.ValidationErrorEnum.choices",
         "ClientErrorEnum": "drf_standardized_errors.openapi_serializers.ClientErrorEnum.choices",
@@ -432,7 +445,7 @@ OIDC_OP_LOGOUT_ENDPOINT = env("OIDC_OP_LOGOUT_ENDPOINT")
 OIDC_OP_LOGOUT_METHOD = env("OIDC_OP_LOGOUT_METHOD")
 ALLOW_LOGOUT_GET_METHOD = True
 # We don't want automatic user creation
-OIDC_CREATE_USER = False
+OIDC_CREATE_USER = True
 
 # Intercom Access Token.
 INTERCOM_ACCESS_TOKEN = env("INTERCOM_ACCESS_TOKEN")
@@ -443,6 +456,8 @@ MAILCHIMP_API_KEY = env("MAILCHIMP_API_KEY")
 # Canny JWT Token.
 CANNY_JWT_SECRET = env("CANNY_JWT_SECRET")
 
+# Customer IO API Key.
+CUSTOMER_IO_API_KEY = env("CUSTOMER_IO_API_KEY")
 
 # Python Logging
 # Django help: https://docs.djangoproject.com/en/5.0/topics/logging/

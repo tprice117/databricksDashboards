@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db import models
 from django.db.models.signals import post_save
+from django.utils import timezone
 
 from api.models.seller.seller_location import SellerLocation
 from api.models.seller.seller_product import SellerProduct
@@ -16,8 +17,36 @@ from api.models.seller.seller_product_seller_location_rental import (
 from api.models.seller.seller_product_seller_location_service import (
     SellerProductSellerLocationService,
 )
-from api.pricing_ml.pricing import Price_Model
 from common.models import BaseModel
+
+PRICING_ENGINE = None
+PRICING_ENGINE_RESPONSE_SERIALIZER = None
+
+
+def get_pricing_engine():
+    """This function returns the PricingEngine object. If the PricingEngine object does not exist, it creates a new one.
+    This just makes so PricingEngine is not reinstatiated every time it is called.
+    This also avoid the circular import issue."""
+    global PRICING_ENGINE
+    if PRICING_ENGINE is None:
+        from pricing_engine.pricing_engine import PricingEngine
+
+        PRICING_ENGINE = PricingEngine()
+    return PRICING_ENGINE
+
+
+def get_pricing_engine_response_serializer(pricing):
+    """This function returns the PricingEngineResponseSerializer object. If the PricingEngineResponseSerializer object does not exist, it creates a new one.
+    This just makes so PricingEngineResponseSerializer is not reinstatiated every time it is called.
+    This also avoid the circular import issue."""
+    global PRICING_ENGINE_RESPONSE_SERIALIZER
+    if PRICING_ENGINE_RESPONSE_SERIALIZER is None:
+        from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+            PricingEngineResponseSerializer,
+        )
+
+        PRICING_ENGINE_RESPONSE_SERIALIZER = PricingEngineResponseSerializer(pricing)
+    return PRICING_ENGINE_RESPONSE_SERIALIZER
 
 
 class SellerProductSellerLocation(BaseModel):
@@ -47,7 +76,11 @@ class SellerProductSellerLocation(BaseModel):
         max_digits=18, decimal_places=2, blank=True, null=True
     )
     fuel_environmental_markup = models.DecimalField(
-        max_digits=18, decimal_places=2, blank=True, null=True
+        max_digits=18,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Percentage (ex: 35 means 35%)",
     )
 
     class Meta:
@@ -68,45 +101,29 @@ class SellerProductSellerLocation(BaseModel):
         )
 
         # Get pricing information for the lowest price configuration.
-        pricing = Price_Model.get_price_for_seller_product_seller_location(
+        pricing = get_pricing_engine().get_price_by_lat_long(
+            latitude=self.seller_location.latitude,
+            longitude=self.seller_location.longitude,
             seller_product_seller_location=self,
-            customer_latitude=self.seller_location.latitude,
-            customer_longitude=self.seller_location.longitude,
+            start_date=timezone.now(),
+            end_date=timezone.now(),
             waste_type=(
                 seller_product_seller_location_waste_type.main_product_waste_type.waste_type
                 if seller_product_seller_location_waste_type
                 else None
             ),
+            times_per_week=(
+                1
+                if self.seller_product.product.main_product.has_service_times_per_week
+                else None
+            ),
         )
 
-        # Compute the price.
-        service = (
-            pricing["service"]["rate"]
-            if "service" in pricing
-            and pricing["service"]
-            and pricing["service"]["is_flat_rate"]
-            else 0
-        )
-        rental = (
-            pricing["rental"]["included_days"]
-            * pricing["rental"]["price_per_day_included"]
-            if "rental" in pricing
-            and pricing["rental"]
-            and "price_per_day_included" in pricing["rental"]
-            and "included_days" in pricing["rental"]
-            else 0
-        )
-        material = (
-            pricing["material"]["price_per_ton"]
-            * pricing["material"]["tonnage_included"]
-            if "material" in pricing
-            and pricing["material"]
-            and "price_per_ton" in pricing["material"]
-            and "tonnage_included" in pricing["material"]
-            else 0
-        )
-
-        return service + rental + material
+        # Return the total price.
+        data = get_pricing_engine_response_serializer(pricing).data
+        if "total" not in data:
+            return None
+        return data["total"] if pricing else None
 
     def __str__(self):
         return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'

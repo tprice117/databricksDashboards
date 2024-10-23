@@ -1,11 +1,14 @@
-import uuid
 import datetime
+import uuid
 
+from django.utils import timezone
 from django.db import models
 from django.db.models.signals import pre_save
 
 from api.utils.google_maps import geocode_address
 from common.models import BaseModel
+
+from api.models.order.order import Order
 
 
 class SellerLocation(BaseModel):
@@ -56,7 +59,7 @@ class SellerLocation(BaseModel):
     # END: Insurance and tax fields.
 
     def __str__(self):
-        return self.name
+        return f"{self.name} | {self.seller.name}"
 
     @property
     def formatted_address(self):
@@ -100,7 +103,27 @@ class SellerLocation(BaseModel):
 
     @property
     def is_tax_compliant(self):
-        return bool(self.stripe_connect_account_id and self.w9)
+        return bool(self.stripe_connect_account_id or self.w9)
+
+    @property
+    def is_active(self):
+        """Returns if this location is active.
+        Has booking within last 30 days and upcoming one within 30 days."""
+        old_orders = (
+            Order.objects.filter(
+                order_group__seller_product_seller_location__seller_location_id=self.id
+            )
+            .filter(end_date__gte=timezone.now() - datetime.timedelta(days=30))
+            .filter(end_date__lte=timezone.now())
+        )
+        new_orders = (
+            Order.objects.filter(
+                order_group__seller_product_seller_location__seller_location_id=self.id
+            )
+            .filter(end_date__lte=timezone.now() + datetime.timedelta(days=30))
+            .filter(end_date__gte=timezone.now())
+        )
+        return old_orders.exists() and new_orders.exists()
 
     def pre_save(sender, instance, *args, **kwargs):
         latitude, longitude = geocode_address(

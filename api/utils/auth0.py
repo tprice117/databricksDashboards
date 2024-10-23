@@ -59,7 +59,12 @@ def get_user_from_email(email: str):
         timeout=30,
     )
     json = response.json()
-    return json[0]["user_id"] if len(json) > 0 and "user_id" in json[0] else None
+    # NOTE: Hitting KeyError json[0] here. Log this with email
+    try:
+        return json[0]["user_id"] if len(json) > 0 and "user_id" in json[0] else None
+    except Exception as e:
+        logger.error(f"get_user_from_email: [{email}]-[{json}]-[{e}]", exc_info=e)
+        raise
 
 
 def delete_user(user_id: str):
@@ -96,7 +101,7 @@ def get_password_change_url(user_id: str):
         return response.json()["ticket"]
 
 
-def invite_user(user):
+def invite_user(user, reset_password=False):
     if user.user_id is not None:
         if user.redirect_url is not None:
             from api.utils.utils import encrypt_string
@@ -108,6 +113,12 @@ def invite_user(user):
         # Send User Invite Email to user.
         try:
             mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
+            if reset_password:
+                subject = "Reset your Downstream password"
+                email_template = "user_reset_password_email.html"
+            else:
+                subject = "You've been invited to Downstream!"
+                email_template = "user-invite-email.html"
             mailchimp.messages.send(
                 {
                     "message": {
@@ -119,12 +130,13 @@ def invite_user(user):
                         "to": [
                             {"email": user.email},
                         ],
-                        "subject": "You've been invited to Downstream!",
+                        "subject": subject,
                         "track_opens": True,
                         "track_clicks": True,
                         "html": render_to_string(
-                            "user-invite-email.html",
+                            email_template,
                             {
+                                "user": user,
                                 "url": password_change_url,
                             },
                         ),

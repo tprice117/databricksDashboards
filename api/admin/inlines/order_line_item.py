@@ -13,13 +13,16 @@ class OrderLineItemInlineForm(forms.ModelForm):
         model = OrderLineItem
         fields = (
             "order_line_item_type",
+            "description",
             "rate",
             "quantity",
+            "tax",
             "seller_payout_price",
             "platform_fee_percent",
             "customer_price",
             "is_paid",
             "stripe_invoice_line_item_id",
+            "backbill",
         )
         readonly_fields = (
             "seller_payout_price",

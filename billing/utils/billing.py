@@ -253,16 +253,25 @@ class BillingUtils:
             if user_address.user_group
             else True
         )
+        custom_fields = []
+        if user_address.project_id:
+            custom_fields = [
+                {
+                    "name": "project_id",
+                    "value": user_address.project_id,
+                }
+            ]
 
         if len(draft_invoices) > 0:
             stripe_invoice = draft_invoices["data"][0]
 
             # Ensure automatic taxes are set correctly.
-            stripe.Invoice.modify(
+            stripe_invoice = stripe.Invoice.modify(
                 stripe_invoice.id,
                 automatic_tax={
                     "enabled": collect_tax,
                 },
+                custom_fields=custom_fields,
             )
         else:
             stripe_invoice = stripe.Invoice.create(
@@ -275,6 +284,7 @@ class BillingUtils:
                 automatic_tax={
                     "enabled": collect_tax,
                 },
+                custom_fields=custom_fields,
             )
 
         return stripe_invoice
