@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 from django.shortcuts import render
-from django.db.models import F, Sum, Avg, ExpressionWrapper, DecimalField
+from django.db.models import F, Sum, Avg, ExpressionWrapper, DecimalField, FloatField
 from django.http import JsonResponse
 
 from django.db.models.functions import ExtractYear
@@ -499,21 +499,26 @@ def poatest(request):
 
 def payout_reconciliation(request):
     context = {}
-    order_ids = Order.objects.values_list("id", flat=True)
-    context["order_ids"] = list(order_ids)
-    # Fetch order IDs and their corresponding main product names
-    # order_main_products = Order.objects.select_related(
-    #     'order_group__seller_product_seller_location__seller_product__product__main_product__name'
-    # ).values(
-    #     'id', 'order_group__seller_product_seller_location__seller_product__product__main_product__name'
-    # )
 
-    # # Create a dictionary to map order IDs to main product names
-    # order_main_product_map = {entry['id']: entry['order_group__seller_product_seller_location__seller_product__product__main_product__name'] for entry in order_main_products}
-
-    # # Add the mapping to the context
-    # context['order_main_product_map'] = order_main_product_map
-
+    orderRelations = (
+        Order.objects.annotate(
+            main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+            seller_location_names = F("order_group__seller_product_seller_location__seller_location__name"),
+            user_address = F("order_group__user_address__name"),
+            end_date_annotate = F("end_date"),
+            # rate_annotate = F("order_line_items__rate"),
+            # quantity_annotate = F("order_line_items__quantity"),
+            supplier_amount=ExpressionWrapper(F("order_line_items__rate") * F("order_line_items__quantity"), output_field=FloatField())
+        ).values(
+            "id",
+            "main_product_name",
+            "seller_location_names",
+            "user_address",
+            "end_date_annotate",
+            "supplier_amount"
+        )
+    )
+    context["orderRelations"] = orderRelations
     return render(request, "dashboards/payout_reconciliation.html", context)
 
 

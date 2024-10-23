@@ -7,22 +7,32 @@
 </head>
 <body>
     <h1>Payout Reconciliation Dashboard</h1>
-
+    {{orderRelations}}
     <table>
         <thead>
             <tr>
                 <th>Order ID</th>
-                <th>Column 2</th>
-                <th>Column 3</th>
+                <th>Name</th>
+                <th>Seller Location</th>
+                <th>user_address</th>
+                <th>end_date</th>
+                <th>supplier_amount</th>
+
             </tr>
         </thead>
         <tbody>
-            {% for order_id in order_ids %}
+            {% for order_id in orderRelations %}
             <tr>
-                <td>{{ order_id }}</td>
-                <td>{{order_main_product_map}}</td>
-                <td></td>
+                <td>{{ order_id.id}}</td>
+                <td>{{ order_id.main_product_name }}</td>
+                <td>{{ order_id.seller_location_names }}</td>
+                <td>{{ order_id.user_address }}</td>
+                <td>{{ order_id.end_date_annotate }}</td>
+                <td>${{ order_id.supplier_amount }}</td>
+                
+
             </tr>
+
             {% endfor %}
         </tbody>
     </table>
