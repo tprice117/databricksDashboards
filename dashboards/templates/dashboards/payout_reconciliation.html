@@ -4,35 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payout Reconciliation</title>
+    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+
 </head>
 <body>
     <h1>Payout Reconciliation Dashboard</h1>
-    {{orderRelations}}
-    <table>
+    
+    {% comment %} {{orderRelations}} {% endcomment %}
+    <table id="orders-table">
         <thead>
             <tr>
                 <th>Order ID</th>
                 <th>Name</th>
                 <th>Seller Location</th>
-                <th>user_address</th>
-                <th>end_date</th>
-                <th>supplier_amount</th>
-
+                <th>User Address</th>
+                <th>End Date</th>
+                <th>Supplier Amount</th>
+                <th>SellerInvoice Amount</th>
+                <th>Payout Amount</th>
+                <th>Reconcil Status</th>
+                <th>Order URL</th>
             </tr>
         </thead>
         <tbody>
             {% for order_id in orderRelations %}
             <tr>
-                <td>{{ order_id.id}}</td>
+                <td>{{ order_id.id }}</td>
                 <td>{{ order_id.main_product_name }}</td>
                 <td>{{ order_id.seller_location_names }}</td>
                 <td>{{ order_id.user_address }}</td>
                 <td>{{ order_id.end_date_annotate }}</td>
                 <td>${{ order_id.supplier_amount }}</td>
+                <td>${{ order_id.seller_invoice_amount }}</td>
+                <td>${{ order_id.payout_amount }}</td>
+                <td>PLACEHOLDER</td>
+                <td><a href="{{ order_id.order_url_annotate }}">{{ order_id.order_url_annotate }}</a></td>
+
+
                 
-
             </tr>
-
             {% endfor %}
         </tbody>
     </table>

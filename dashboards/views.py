@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 from django.shortcuts import render
-from django.db.models import F, Sum, Avg, ExpressionWrapper, DecimalField, FloatField
+from django.db.models import F, Sum, Avg, ExpressionWrapper, DecimalField, FloatField, Case, When, Value, CharField, Count, Func
 from django.http import JsonResponse
 
 from django.db.models.functions import ExtractYear
@@ -23,6 +23,7 @@ from collections import defaultdict
 import requests
 
 from datetime import datetime, timedelta
+
 
 
 def index(request):
@@ -503,23 +504,39 @@ def payout_reconciliation(request):
     orderRelations = (
         Order.objects.annotate(
             main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
-            seller_location_names = F("order_group__seller_product_seller_location__seller_location__name"),
-            user_address = F("order_group__user_address__name"),
-            end_date_annotate = F("end_date"),
-            # rate_annotate = F("order_line_items__rate"),
-            # quantity_annotate = F("order_line_items__quantity"),
-            supplier_amount=ExpressionWrapper(F("order_line_items__rate") * F("order_line_items__quantity"), output_field=FloatField())
+            seller_location_names=F("order_group__seller_product_seller_location__seller_location__name"),
+            user_address=F("order_group__user_address__name"),
+            end_date_annotate=F("end_date"),
+            supplier_amount=ExpressionWrapper(F("order_line_items__rate") * F("order_line_items__quantity"), output_field=FloatField()),
+            seller_invoice_amount=Sum('seller_invoice_payable_line_items__amount'),
+            payout_amount=F("payouts__amount"),
+            # -- TODO -- reconcil status
+            order_url_annotate=Func(
+                Value("https://monkfish-app-donig.ondigitalocean.app/admin/api/order/"),
+                F("id"),
+                Value("/change/"),
+                function="CONCAT",
+                output_field=CharField()
+            )
+
+
         ).values(
             "id",
             "main_product_name",
             "seller_location_names",
             "user_address",
             "end_date_annotate",
-            "supplier_amount"
+            "supplier_amount",
+            "seller_invoice_amount",
+            "payout_amount",
+            # -- TODO -- reconcil status
+            "order_url_annotate"
+
         )
     )
     context["orderRelations"] = orderRelations
     return render(request, "dashboards/payout_reconciliation.html", context)
+
 
 
 @login_required(login_url="/admin/login/")
