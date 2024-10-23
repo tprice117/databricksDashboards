@@ -21,5 +21,5 @@ urlpatterns = [
         "payout-reconciliation/",
         views.payout_reconciliation,
         name="payout_reconciliation",
-    )
+    ),
 ]

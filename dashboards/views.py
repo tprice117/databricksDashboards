@@ -24,6 +24,7 @@ import requests
 
 from datetime import datetime, timedelta
 
+
 def index(request):
     # Hashmap
     context = {}
@@ -56,7 +57,10 @@ def index(request):
         # Define the date range for filtering
 
         return (
-            Order.objects.filter(status__in=["PENDING", "SCHEDULED"], end_date__range=(start_date, end_date))
+            Order.objects.filter(
+                status__in=["PENDING", "SCHEDULED"],
+                end_date__range=(start_date, end_date),
+            )
             .annotate(month=TruncMonth("end_date"))
             .values("month")
             .annotate(
@@ -71,6 +75,7 @@ def index(request):
             )
             .order_by("month")
         )
+
     customerAmountScheduled = calculate_pending_scheduled_gmv()
     context["customerAmountScheduled"] = customerAmountScheduled
 
@@ -132,7 +137,9 @@ def index(request):
 
     def calculate_supplier_amount_completed(start_date, end_date):
         return (
-            Order.objects.filter(status="COMPLETE", end_date__range=(start_date, end_date))
+            Order.objects.filter(
+                status="COMPLETE", end_date__range=(start_date, end_date)
+            )
             .annotate(month=TruncMonth("end_date"))  # Groupby month
             .values("month")
             .annotate(
@@ -152,7 +159,10 @@ def index(request):
     # supplierAmountScheduled
     def calculate_pending_scheduled_supplier_amount():
         return (
-            Order.objects.filter(status__in=["PENDING", "SCHEDULED"], end_date__range=(start_date, end_date))
+            Order.objects.filter(
+                status__in=["PENDING", "SCHEDULED"],
+                end_date__range=(start_date, end_date),
+            )
             .annotate(month=TruncMonth("end_date"))
             .values("month")
             .annotate(
@@ -165,6 +175,7 @@ def index(request):
             )
             .order_by("month")
         )
+
     supplierAmountScheduled = calculate_pending_scheduled_supplier_amount()
     context["supplierAmountScheduled"] = supplierAmountScheduled
 
@@ -211,13 +222,11 @@ def index(request):
     context["supplierAmountByDay"] = supplierAmountByDay
     supplierAmountByDay_dict = [
         (
-            float(entry["suppAmount"]) if isinstance(entry["suppAmount"], Decimal)
-            else float(0) if entry[suppAmount] is None
-            else entry["suppAmount"]
+            float(entry["suppAmount"])
+            if isinstance(entry["suppAmount"], Decimal)
+            else float(0) if entry[suppAmount] is None else entry["suppAmount"]
         )
         for entry in supplierAmount
-
-
     ]
     # supplierAmountSum
     supplierAmountSum = Order.objects.annotate(
@@ -230,43 +239,67 @@ def index(request):
 
     # Net Revenue Completed
 
-    def calculate_net_revenue_completed(customer_amount_completed, supplier_amount_completed):
+    def calculate_net_revenue_completed(
+        customer_amount_completed, supplier_amount_completed
+    ):
         net_revenue_completed = []
         for customer_entry in customer_amount_completed:
             month = customer_entry["month"]
             customer_gmv = customer_entry["gmv"]
-            
+
             # Find the corresponding supplier amount for the same month
-            supplier_entry = next((entry for entry in supplier_amount_completed if entry["month"] == month), None)
+            supplier_entry = next(
+                (
+                    entry
+                    for entry in supplier_amount_completed
+                    if entry["month"] == month
+                ),
+                None,
+            )
             if supplier_entry:
                 supplier_amount = supplier_entry["suppAmountCompleted"]
                 net_revenue = customer_gmv - supplier_amount
-                net_revenue_completed.append({"month": month, "netRevenue": net_revenue})
-        
+                net_revenue_completed.append(
+                    {"month": month, "netRevenue": net_revenue}
+                )
+
         return net_revenue_completed
 
-    net_revenue_completed_by_month = calculate_net_revenue_completed(customerAmountCompleted, supplierAmountCompleted)
-    net_revenue_completed_sum = sum(entry["netRevenue"] for entry in net_revenue_completed_by_month)
+    net_revenue_completed_by_month = calculate_net_revenue_completed(
+        customerAmountCompleted, supplierAmountCompleted
+    )
+    net_revenue_completed_sum = sum(
+        entry["netRevenue"] for entry in net_revenue_completed_by_month
+    )
     context["netRevenueCompletedSum"] = net_revenue_completed_sum
     context["netRevenueCompletedByMonth"] = net_revenue_completed_by_month
 
     # Net Revenue Scheduled
-    def calculate_net_revenue_scheduled(customer_amount_scheduled, supplier_amount_scheduled):
+    def calculate_net_revenue_scheduled(
+        customer_amount_scheduled, supplier_amount_scheduled
+    ):
         net_revenue_scheduled = []
         for customer_entry in customer_amount_scheduled:
             month = customer_entry["month"]
             customer_gmv_scheduled = customer_entry["gmvScheduled"]
-            
+
         # Find the corresponding supplier amount for the same month
-        supplier_entry = next((entry for entry in supplier_amount_scheduled if entry["month"] == month), None)
+        supplier_entry = next(
+            (entry for entry in supplier_amount_scheduled if entry["month"] == month),
+            None,
+        )
         if supplier_entry:
             supplier_amount = supplier_entry["suppAmountScheduled"]
             net_revenue = customer_gmv_scheduled - supplier_amount
-            net_revenue_scheduled.append({"month": month, "netRevenueScheduled": net_revenue})
-                
+            net_revenue_scheduled.append(
+                {"month": month, "netRevenueScheduled": net_revenue}
+            )
+
         return net_revenue_scheduled
 
-    netRevenueScheduledByMonth = calculate_net_revenue_scheduled(customerAmountScheduled, supplierAmountScheduled)
+    netRevenueScheduledByMonth = calculate_net_revenue_scheduled(
+        customerAmountScheduled, supplierAmountScheduled
+    )
     context["netRevenueScheduled"] = netRevenueScheduledByMonth
 
     # Net Revenue by day
@@ -359,9 +392,21 @@ def index(request):
 
     # GMVByMonthGraph
     labels = [entry["month"].strftime("%Y-%m") for entry in customerAmountCompleted]
-    gmv_data = {entry["month"].strftime("%Y-%m"): float(entry["gmv"]) if isinstance(entry["gmv"], Decimal) else entry["gmv"] for entry in customerAmountCompleted}
+    gmv_data = {
+        entry["month"].strftime("%Y-%m"): (
+            float(entry["gmv"]) if isinstance(entry["gmv"], Decimal) else entry["gmv"]
+        )
+        for entry in customerAmountCompleted
+    }
 
-    scheduled_data = {entry["month"].strftime("%Y-%m"): float(entry["gmvScheduled"]) if isinstance(entry["gmvScheduled"], Decimal) else entry["gmvScheduled"] for entry in customerAmountScheduled}
+    scheduled_data = {
+        entry["month"].strftime("%Y-%m"): (
+            float(entry["gmvScheduled"])
+            if isinstance(entry["gmvScheduled"], Decimal)
+            else entry["gmvScheduled"]
+        )
+        for entry in customerAmountScheduled
+    }
     all_months = sorted(set(gmv_data.keys()).union(scheduled_data.keys()))
 
     labels = all_months
@@ -371,24 +416,35 @@ def index(request):
     context["chart_labels"] = labels
     context["chart_data"] = data
     context["chart_scheduled"] = scheduleddata
- 
+
     # GMV
     GMV_Static = sum(data)
     context["GMV_Static"] = GMV_Static
 
-    #Take Rate Static
+    # Take Rate Static
     takeRate_Static = (customerAmnt - supplierAmountSum) / customerAmnt * 100
     context["takeRate_Static"] = takeRate_Static
 
- 
     # Net Revenue by Month Bar Chart
-    netRevenueCompleted_data = {entry["month"].strftime("%Y-%m"): float(entry["netRevenue"]) for entry in net_revenue_completed_by_month}
-    netRevenueScheduled_data = {entry["month"].strftime("%Y-%m"): float(entry["netRevenueScheduled"]) for entry in netRevenueScheduledByMonth}
+    netRevenueCompleted_data = {
+        entry["month"].strftime("%Y-%m"): float(entry["netRevenue"])
+        for entry in net_revenue_completed_by_month
+    }
+    netRevenueScheduled_data = {
+        entry["month"].strftime("%Y-%m"): float(entry["netRevenueScheduled"])
+        for entry in netRevenueScheduledByMonth
+    }
 
-    all_months_net_revenue = sorted(set(netRevenueCompleted_data.keys()).union(netRevenueScheduled_data.keys()))
+    all_months_net_revenue = sorted(
+        set(netRevenueCompleted_data.keys()).union(netRevenueScheduled_data.keys())
+    )
 
-    netRevenueCompletedGraph_data = [netRevenueCompleted_data.get(month, 0) for month in all_months_net_revenue]
-    netRevenueScheduledGraph_data = [netRevenueScheduled_data.get(month, 0) for month in all_months_net_revenue]
+    netRevenueCompletedGraph_data = [
+        netRevenueCompleted_data.get(month, 0) for month in all_months_net_revenue
+    ]
+    netRevenueScheduledGraph_data = [
+        netRevenueScheduled_data.get(month, 0) for month in all_months_net_revenue
+    ]
 
     context["netRevGraph_labels"] = all_months_net_revenue
     context["netRevenueCompletedGraph_data"] = netRevenueCompletedGraph_data
@@ -436,13 +492,15 @@ def pbiimport(request):
     context["report_url"] = report_url
     return render(request, "dashboards/pbiimport.html", context)
 
+
 def poatest(request):
     return render(request, "dashboards/poatest.html")
 
+
 def payout_reconciliation(request):
     context = {}
-    order_ids = Order.objects.values_list('id', flat=True)
-    context['order_ids'] = list(order_ids)
+    order_ids = Order.objects.values_list("id", flat=True)
+    context["order_ids"] = list(order_ids)
     # Fetch order IDs and their corresponding main product names
     # order_main_products = Order.objects.select_related(
     #     'order_group__seller_product_seller_location__seller_product__product__main_product__name'
@@ -457,6 +515,7 @@ def payout_reconciliation(request):
     # context['order_main_product_map'] = order_main_product_map
 
     return render(request, "dashboards/payout_reconciliation.html", context)
+
 
 @login_required(login_url="/admin/login/")
 def command_center(request):
