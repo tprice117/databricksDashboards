@@ -47,11 +47,11 @@
                                 <div class="text-uppercase text-info fw-bold text-xs mb-1"><span>TAKE RATE</span></div>
                                 <div class="row g-0 align-items-center">
                                     <div class="col-auto">
-                                        <div class="text-light fw-bold h5 mb-0 me-3"><span>{{takeRate}}%</span></div>
+                                        <div class="text-light fw-bold h5 mb-0 me-3"><span>{{takeRate_Static|floatformat:2}}%</span></div>
                                     </div>
                                     <div class="col">
                                         <div class="progress progress-sm">
-                                            <div class="progress-bar bg-info" aria-valuenow="{{takeRate}}" aria-valuemin="0" aria-valuemax="100" style="width: {{ takeRate }}%;"><span class="visually-hidden">{{takeRate}}%</span></div>
+                                            <div class="progress-bar bg-info" aria-valuenow="{{takeRate_Static|floatformat:2}}" aria-valuemin="0" aria-valuemax="100" style="width: {{ takeRate_Static }}%;"><span class="visually-hidden">{{takeRate}}%</span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -135,27 +135,31 @@
                     </div>
                     <div class="card-body">
                         <canvas id="myBarChart" width="400" height="200"></canvas>
-                        <p>{{chart_scheduled}}</p>
+                        {% comment %} {{chart_scheduled}} {% endcomment %}
                         <script>
                             const chart_labels = {{chart_labels|safe}};
                             const chart_data = {{chart_data|safe}};
                             const chart_scheduled = {{chart_scheduled|safe}}
                             const data = {
                                 labels: chart_labels,
-                                datasets: [{
-                                    label: 'Chart Data',
-                                    data: chart_data,
-                                    backgroundColor: 'rgb(5,255,0)',
-                                    borderColor: 'rgba(78, 115, 223, 1)',
-                                    borderWidth: 1
-                                },
-                                {
-                                    label: 'ScheduledData',
-                                    data: chart_scheduled,
-                                    backgroundColor: 'rgb(0,0,255)',
-                                    borderColor: 'rgba(78, 115, 223, 1)',
-                                    borderWidth: 1
-                                }]
+                                datasets: [
+                                    {
+                                        label: 'Chart Data',
+                                        data: chart_data,
+                                        backgroundColor: 'rgb(5,255,0)',
+                                        borderColor: 'rgba(78, 115, 223, 1)',
+                                        borderWidth: 1,
+                                        stack: 'combined'
+                                    },
+                                    {
+                                        label: 'Scheduled Data',
+                                        data: chart_scheduled,
+                                        backgroundColor: 'rgb(0,0,255)',
+                                        borderColor: 'rgba(78, 115, 223, 1)',
+                                        borderWidth: 1,
+                                        stack: 'combined'
+                                    }
+                                ]
                             };
 
                             const config = {
@@ -197,21 +201,33 @@
                     </div>
                     <div class="card-body">
                         <canvas id="netRevChart" width="400" height="200"></canvas>
-                        <p>{{netRevGraph_labels}}</p>
-                        <p>{{netRevGraph_data}}</p>
+                        {% comment %} {{netRevenueScheduledGraph_data}} {% endcomment %}
+                
                         <script>
                             const chart_labels2 = {{netRevGraph_labels|safe}};
-                            const chart_data2 = {{netRevGraph_data|safe}};
+                            const chart_data2 = {{netRevenueCompletedGraph_data|safe}};
+                            const chart_scheduled2 = {{netRevenueScheduledGraph_data|safe}}
 
                             const data2 = {
-                                labels: chart_labels2,
-                                datasets: [{
-                                    label: 'NetRevDataset',
-                                    data: chart_data2,
-                                    backgroundColor: 'rgb(5,255,0)',
-                                    borderColor: 'rgba(78, 115, 223, 1)',
-                                    borderWidth: 1
-                                }]
+                                labels: chart_labels,
+                                datasets: [
+                                    {
+                                        label: 'Chart Data',
+                                        data: chart_data2,
+                                        backgroundColor: 'rgb(5,255,0)',
+                                        borderColor: 'rgba(78, 115, 223, 1)',
+                                        borderWidth: 1,
+                                        stack: 'combined'
+                                    },
+                                    {
+                                        label: 'Scheduled Data',
+                                        data: chart_scheduled2,
+                                        backgroundColor: 'rgb(0,0,255)',
+                                        borderColor: 'rgba(78, 115, 223, 1)',
+                                        borderWidth: 1,
+                                        stack: 'combined'
+                                    }
+                                ]
                             };
 
                             const config2 = {
@@ -219,7 +235,11 @@
                                 data: data2,
                                 options: {
                                     scales: {
+                                        x:{
+                                            stacked: true
+                                        },
                                         y: {
+                                            stacked: true,
                                             beginAtZero: true
                                         }
                                     }
