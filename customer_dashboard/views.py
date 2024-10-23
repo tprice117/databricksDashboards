@@ -2859,6 +2859,9 @@ def user_reset_password(request, user_id):
     if request.method == "POST":
         try:
             user = User.objects.get(id=user_id)
+            if not user.redirect_url:
+                user.redirect_url = "/customer/"
+                user.save()
             user.reset_password()
         except User.DoesNotExist:
             return HttpResponse("User not found", status=404)
@@ -2906,6 +2909,7 @@ def new_user(request):
                             last_name=last_name,
                             email=email,
                             type=user_type,
+                            redirect_url="/customer/",
                         )
                         save_model = user_invite
                     elif request.user.is_staff:
@@ -2915,6 +2919,7 @@ def new_user(request):
                             last_name=last_name,
                             email=email,
                             type=user_type,
+                            redirect_url="/customer/",
                         )
                         save_model = user
                         messages.success(request, "Directly created user.")
@@ -2962,7 +2967,7 @@ def new_user(request):
 @catch_errors()
 def invoices(request):
     context = get_user_context(request)
-    pagination_limit = 25
+    pagination_limit = 100
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
