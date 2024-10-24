@@ -21,7 +21,7 @@ def post_login_router(request):
     if request.user.is_anonymous:
         return redirect(reverse("admin:index"))
     if request.user.is_staff:
-        return redirect(reverse("admin:index"))
+        return redirect(reverse("customer_home"))
     elif hasattr(request.user.user_group, "seller"):
         return redirect(reverse("supplier_bookings"))
     elif request.user.user_group:
