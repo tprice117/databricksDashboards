@@ -683,6 +683,37 @@ def _get_terms():
             "https://help.trydownstream.io/en/articles/7849472- customer-terms-of-service "
             "for any such changes and to comply with any such changes.",
         ),
+        Paragraph(
+            "2.13 Default and Termination. Failure to meet payment obligations, misuse of "
+            "equipment, or insolvency will result in default. In such cases, the "
+            "Downstream reserves the right to terminate the agreement and reclaim the "
+            "equipment. The Company waives any claims for damages related to equipment "
+            "repossession and agrees to cover any related costs. A compounding fee of 2% "
+            "per month (or the maximum allowed by law) will be applied to all overdue "
+            "payments until the balance is paid in full. Downstream reserves the right to "
+            "run any credit card on file for past due balances.",
+        ),
+        Paragraph(
+            "2.14 Company Obligations regarding Environmental Laws and Prohibited "
+            "Materials. Company represents, warrants, and covenants that: (i) Company "
+            "will provide only Accepted Materials (ii) Company will not provide Prohibited "
+            "Materials; and (iii) Company will remain in compliance with all Environmental "
+            "Laws. Company acknowledges that Downstream from time to time may supplement, "
+            "modify or otherwise change its customer policies regarding what constitutes "
+            "Acceptable Materials, Recyclable Materials and/or Prohibited Materials.",
+        ),
+        Paragraph(
+            "2.15 Handling of Hazardous and Regulated Materials. The Company agrees not to "
+            "use the equipment for hazardous materials unless expressly permitted in "
+            "writing. Prohibited materials include hazardous waste, toxic substances, and "
+            "medical waste, as defined under environmental laws. The Company remains "
+            "responsible for any violations of environmental regulations, including the "
+            "cleanup and proper disposal of hazardous substances. The Company is "
+            "responsible for ensuring the equipment is cleaned and free of any hazardous "
+            "materials before return. Failure to meet these standards may result in "
+            "additional cleaning charges, and the Company will bear liability for any "
+            "environmental compliance issues.",
+        ),
     ]
 
 
