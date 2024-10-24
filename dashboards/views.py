@@ -512,7 +512,7 @@ def payout_reconciliation(request):
             payout_amount=F("payouts__amount"),
             # -- TODO -- reconcil status
             order_url_annotate=Func(
-                Value("https://monkfish-app-donig.ondigitalocean.app/admin/api/order/"),
+                Value(settings.DASHBOARD_BASE_URL),
                 F("id"),
                 Value("/change/"),
                 function="CONCAT",
