@@ -6,7 +6,6 @@ from .views_new.sales_leaderboard import sales_leaderboard
 urlpatterns = [
     path("index/", views.index, name="index"),
     path("sales-dashboard/", views.sales_dashboard, name="sales_dashboard"),
-
     path(
         "",
         views.command_center,
@@ -22,5 +21,4 @@ urlpatterns = [
         views.payout_reconciliation,
         name="payout_reconciliation",
     ),
-
 ]
