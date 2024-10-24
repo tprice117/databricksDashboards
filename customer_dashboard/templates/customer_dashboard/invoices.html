@@ -97,7 +97,7 @@
                                         {% if invoice.due_date %}
                                             {{ invoice.due_date|timezone:'America/Chicago' }} (CT)
                                         {% else %}
-                                            -
+                                            {{ invoice.created_on|timezone:'America/Chicago' }} (CT)
                                         {% endif %}
                                     </td>
                                     <td>${{ invoice.total|stringformat:'.2f'|intcomma }}</td>
