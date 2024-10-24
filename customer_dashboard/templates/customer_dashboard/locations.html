@@ -48,7 +48,7 @@
     <div class="container-fluid">
         <div class="d-sm-flex justify-content-between align-items-center mb-4">
             <h3 class="text-dark mb-0">Locations</h3>
-            <a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{% url 'customer_new_location' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create Location</a>
+            <a class="btn btn-primary btn-sm d-sm-inline-block" role="button" href="{% url 'customer_new_location' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create Location</a>
         </div>
         {% if request.user.is_staff %}
             <div class="row">
