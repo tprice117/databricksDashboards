@@ -512,7 +512,8 @@ def payout_reconciliation(request):
             payout_amount=F("payouts__amount"),
             # -- TODO -- reconcil status
             order_url_annotate=Func(
-                Value(settings.DASHBOARD_BASE_URL),
+                Value(settings.DASHBOARD_BASE_URL + "/"),
+                Value("admin/api/order/"),
                 F("id"),
                 Value("/change/"),
                 function="CONCAT",
