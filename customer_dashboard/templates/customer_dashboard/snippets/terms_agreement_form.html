@@ -34,7 +34,7 @@
                 <p class="text-danger">{{ form_msg }}</p>
             {% endif %}
             <div class="d-flex flex-row-reverse">
-                <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Sign Agreement <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
+                {% comment %} <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Sign Agreement <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button> {% endcomment %}
             </div>
         </form>
     {% endif %}
