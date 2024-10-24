@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 import requests
 import stripe
 from django.conf import settings
+from django.db.models import F
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -2981,16 +2982,21 @@ def invoices(request):
         invoices = invoices.filter(user_address_id=location_id)
     if date:
         invoices = invoices.filter(due_date__date=date)
-    invoices = invoices.order_by("-due_date")
+    invoices = invoices.order_by(F("due_date").desc(nulls_last=True))
     today = datetime.date.today()
     context["total_paid"] = 0
     context["past_due"] = 0
     context["total_open"] = 0
     for invoice in invoices:
-        context["total_paid"] += invoice.amount_paid
-        context["total_open"] += invoice.amount_remaining
+        amount_paid = invoice.amount_paid
+        amount_remaining = invoice.amount_remaining
+        if amount_paid == 0 and invoice.status == Invoice.Status.PAID:
+            amount_paid = invoice.total
+            amount_remaining = 0
+        context["total_paid"] += amount_paid
+        context["total_open"] += amount_remaining
         if invoice.due_date and invoice.due_date.date() > today:
-            context["past_due"] += invoice.amount_remaining
+            context["past_due"] += amount_remaining
 
     paginator = Paginator(invoices, pagination_limit)
     page_obj = paginator.get_page(page_number)
