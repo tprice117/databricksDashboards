@@ -583,23 +583,32 @@ def _get_terms():
             "Supplier immediately.",
         ),
         Paragraph(
-            "2.3 Personal property, including personal information and data. Supplier is "
+            "2.3 Indemnity and Hold Harmless. To the fullest extent permitted by law, the "
+            "Company agrees to indemnify, defend, and hold harmless Downstream and the Supplier "
+            "and its affiliates, officers, agents, and employees from any liability, loss, or "
+            "costs arising out of the installation, operation, or use of the equipment. This "
+            "applies to third-party claims, including property damage, bodily injury, or death, "
+            "but does not cover instances of gross negligence or intentional misconduct by the "
+            "Supplier.",
+        ),
+        Paragraph(
+            "2.4 Personal property, including personal information and data. Supplier is "
             "not responsible for any damage to, loss or theft of, any personal property "
             "of Company or Authorized User or data contained therein, whether the damage "
             "or theft occurs during or after termination of the agreement regardless of "
             "fault or negligence. No bailment is or shall be created upon Supplier, whether "
             "actual, constructive, or otherwise, for any personal property carried in or "
-            "left in the Equipment or on Suppliers’ premises. Company acknowledges that any "
+            "left in the Equipment or on Suppliers' premises. Company acknowledges that any "
             "personal data or information downloaded or transferred to the Equipment may not "
             "be secure and may be accessible after the Agreement Period. Company releases "
             "Supplier from any liability resulting from or otherwise arising out of any such "
             "data or information being accessed and/or utilized by a third party.",
         ),
         Paragraph(
-            "2.4 Equipment Return; Late Returns. Company agrees to return the Equipment "
+            "2.5 Equipment Return; Late Returns. Company agrees to return the Equipment "
             "and any Extras to Supplier on or before end date to the address stated on the "
-            "Agreement or on Supplier’s demand and in the same condition as received, ordinary "
-            "wear and tear excepted. Extensions to Agreement Period are at Supplier’s option. "
+            "Agreement or on Supplier's demand and in the same condition as received, ordinary "
+            "wear and tear excepted. Extensions to Agreement Period are at Supplier's option. "
             "If company continues to operate the Equipment after the right to do so is terminated, "
             "Supplier and Downstream have the right to notify police that the Equipment has been "
             "embezzled and/or stolen. Company hereby releases and discharge Supplier from and "
@@ -608,14 +617,24 @@ def _get_terms():
             "scheduled end of Agreement Period, Downstream and/or Supplier will report it stolen.",
         ),
         Paragraph(
-            "2.5 Company Protection Plans. The Company rental protection plan represents the "
+            "2.6 Insurance Requirements. The Company must maintain insurance coverage during the "
+            "rental period including: (i) General liability insurance with at least $1 million "
+            "per occurrence and $2 million in aggregate. Property insurance covering the full "
+            "replacement cost of the equipment. Downstream must be named as an additional insured "
+            "for general liability and property insurance claims. Downstream may provide insurance "
+            "coverage to suppliers for equipment rented through the platform; however, this "
+            "agreement between the Customer and Downstream supersedes any separate agreements "
+            "between Downstream and suppliers in the event of any conflict.",
+        ),
+        Paragraph(
+            "2.7 Company Protection Plans. The Company rental protection plan represents the "
             "amount the Company must pay in the event of damage to the Equipment. If the "
             "Company protection plan has an “Out-of-Pocket Maximum,” that amount represents "
             "the maximum a Company will pay Supplier for amounts owed because of damage to "
             "the equipment. Exceptions and exclusions apply.",
         ),
         Paragraph(
-            "2.6 Company Financial Responsibility is Primary. As outlined in Downstream's "
+            "2.8 Company Financial Responsibility is Primary. As outlined in Downstream's "
             "Terms of Service, with regard to physical damage to or theft of the Equipment "
             "that occurs during the Agreement Period, Company is financially responsible, "
             "regardless of who is found at fault. This responsibility applies whether Company "
@@ -627,13 +646,13 @@ def _get_terms():
             "have been exhausted.",
         ),
         Paragraph(
-            "2.7 Equipment Information. Supplier listed the Equipment booked by Company "
+            "2.9 Equipment Information. Supplier listed the Equipment booked by Company "
             "through the Downstream Services. Supplier represents and warrants that the "
             "Equipment meets Downstream's requirements, and that Supplier owns or otherwise "
             "has all the necessary rights and permissions to share the Equipment for compensation.",
         ),
         Paragraph(
-            "2.8 Title to Waste Materials. Title to Waste Materials shall, at the time of "
+            "2.10 Title to Waste Materials. Title to Waste Materials shall, at the time of "
             "collection, transfer directly from Company to Supplier. At Downstream's sole "
             "discretion, title to approved Materials shall, at the time of collection, pass "
             "directly from Company to Downstream. Notwithstanding anything to the contrary "
@@ -644,13 +663,13 @@ def _get_terms():
             "not expressly accepted title in writing.",
         ),
         Paragraph(
-            "2.9 Utilization of Platform. Company and Supplier agree all related booking "
+            "2.11 Utilization of Platform. Company and Supplier agree all related booking "
             "requests, invoices, payouts, rebates, communication related to this agreement "
             "must be done exclusively within the Downstream Marketplace Platform or with a "
             "Downstream Booking Success Agent during the Agreement Period.",
         ),
         Paragraph(
-            "2.10 Pricing Adjustment. Because disposal, processing and fuel costs are a "
+            "2.11 Pricing Adjustment. Because disposal, processing and fuel costs are a "
             "significant portion of the costs of the services provided, Supplier may increase "
             "the schedule of charges proportionately to reflect any increase in such costs, "
             "plus an appropriate mark-up. Supplier may also adjust the schedule of charges "
@@ -665,23 +684,19 @@ def _get_terms():
             "charges proportionately to reflect the additional average Material weight.",
         ),
         Paragraph(
-            "2.11 Early Cancellation Fees. In the event of a termination by Company for any "
-            "reason prior to the end of the Initial Term, Company agrees to pay Supplier "
-            "50% of the remaining months at an amount equal to 50% percent the average "
-            "monthly value of this Agreement over the last 180 days. This does not apply "
-            "for on-demand or month to month short term rentals.",
-        ),
-        Paragraph(
-            "2.12 Company Obligations regarding Environmental Laws and Prohibited Materials. "
-            "Company represents, warrants, and covenants that: (i) Company will provide "
-            "only Accepted Materials (ii) Company will not provide Prohibited Materials; "
-            "and (iii) Company will remain in compliance with all Environmental Laws. "
-            "Company acknowledges that Downstream from time to time may supplement, modify "
-            "or otherwise change its customer policies with regard to what constitutes "
-            "Acceptable Materials, Recyclable Materials and/or Prohibited Materials. "
-            "Company agrees to check Downstream’s website periodically at "
-            "https://help.trydownstream.io/en/articles/7849472- customer-terms-of-service "
-            "for any such changes and to comply with any such changes.",
+            "2.12 Pricing Adjustment. Because disposal, processing and fuel costs are a "
+            "significant portion of the costs of the services provided, Supplier may "
+            "increase the schedule of charges proportionately to reflect any increase in such "
+            "costs, plus an appropriate mark-up. Supplier may also adjust the schedule of "
+            "charges based on other factors, including, without limitation, increases in "
+            "landfill fees, the Consumer Price Index, the Transportation Index and/or other "
+            "similar benchmark indices. Where the schedule of charges includes disposal as a "
+            "component of the charges, disposal will mean the posted gate rate for the "
+            "disposal at the disposal facility that Supplier(s) utilize plus an appropriate "
+            "mark-up. Company and Supplier agree that the schedule of charges is based upon "
+            "the estimated average Material weight. If Company Material exceeds the average "
+            "Material weight agreed to herein, Supplier may increase the schedule of charges "
+            "proportionately to reflect the additional average Material weight.",
         ),
         Paragraph(
             "2.13 Default and Termination. Failure to meet payment obligations, misuse of "
