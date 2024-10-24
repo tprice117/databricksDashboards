@@ -1699,20 +1699,13 @@ def checkout(request, user_address_id):
     context["orders"] = orders
 
     if request.method == "POST":
-        for order in orders:
-            if not request.user.is_staff and not order.order_group.is_agreement_signed:
-                messages.error(
-                    request,
-                    "Please sign the agreement before checking out.",
-                )
-                return HttpResponseRedirect(
-                    reverse(
-                        "customer_checkout",
-                        kwargs={
-                            "user_address_id": user_address_id,
-                        },
-                    )
-                )
+        if not is_impersonating(request):
+            for order in orders:
+                if not order.order_group.is_agreement_signed:
+                    # NOTE: Sign the agreement with signed in user, no impersonation allowed.
+                    order.order_group.agreement_signed_by = request.user
+                    order.order_group.agreement_signed_on = timezone.now()
+                    order.order_group.save()
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
