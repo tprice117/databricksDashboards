@@ -4,7 +4,20 @@ from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 from django.shortcuts import render
-from django.db.models import F, Sum, Avg, ExpressionWrapper, DecimalField, FloatField, Case, When, Value, CharField, Count, Func
+from django.db.models import (
+    F,
+    Sum,
+    Avg,
+    ExpressionWrapper,
+    DecimalField,
+    FloatField,
+    Case,
+    When,
+    Value,
+    CharField,
+    Count,
+    Func,
+)
 from django.http import JsonResponse
 
 from django.db.models.functions import ExtractYear
@@ -25,13 +38,16 @@ import requests
 from datetime import datetime, timedelta
 
 
-
 def index(request):
+    return render(request, "dashboards/index.html")
+
+
+def sales_dashboard(request):
     # Hashmap
     context = {}
 
     # Translated Measures
-    # Define the date range for filtering
+    # Define date range for filtering
     start_date = datetime(datetime.now().year - 1, 1, 1)
     end_date = datetime(datetime.now().year, 12, 31)
 
@@ -55,8 +71,6 @@ def index(request):
 
     # customerAmountScheduled
     def calculate_pending_scheduled_gmv():
-        # Define the date range for filtering
-
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
@@ -239,7 +253,6 @@ def index(request):
     context["supplierAmountSum"] = supplierAmountSum
 
     # Net Revenue Completed
-
     def calculate_net_revenue_completed(
         customer_amount_completed, supplier_amount_completed
     ):
@@ -484,60 +497,50 @@ def index(request):
     context["NetRev_labels"] = labels5
     context["NetRev_data"] = data5
 
-    return render(request, "dashboards/index.html", context)
-
-
-def pbiimport(request):
-    context = {}
-    report_url = "https://app.powerbi.com/reportEmbed?reportId=cbf09a4c-afd3-4b30-b682-8e9c331bdbf5&autoAuth=true&ctid=5a7d42d9-b3cf-4720-b6c0-8836594679d6"
-    context["report_url"] = report_url
-    return render(request, "dashboards/pbiimport.html", context)
-
-
-def poatest(request):
-    return render(request, "dashboards/poatest.html")
+    return render(request, "dashboards/sales_dashboard.html", context)
 
 
 def payout_reconciliation(request):
     context = {}
 
-    orderRelations = (
-        Order.objects.annotate(
-            main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
-            seller_location_names=F("order_group__seller_product_seller_location__seller_location__name"),
-            user_address=F("order_group__user_address__name"),
-            end_date_annotate=F("end_date"),
-            supplier_amount=ExpressionWrapper(F("order_line_items__rate") * F("order_line_items__quantity"), output_field=FloatField()),
-            seller_invoice_amount=Sum('seller_invoice_payable_line_items__amount'),
-            payout_amount=F("payouts__amount"),
-            # -- TODO -- reconcil status
-            order_url_annotate=Func(
-                Value(settings.DASHBOARD_BASE_URL + "/"),
-                Value("admin/api/order/"),
-                F("id"),
-                Value("/change/"),
-                function="CONCAT",
-                output_field=CharField()
-            )
-
-
-        ).values(
-            "id",
-            "main_product_name",
-            "seller_location_names",
-            "user_address",
-            "end_date_annotate",
-            "supplier_amount",
-            "seller_invoice_amount",
-            "payout_amount",
-            # -- TODO -- reconcil status
-            "order_url_annotate"
-
-        )
+    orderRelations = Order.objects.annotate(
+        main_product_name=F(
+            "order_group__seller_product_seller_location__seller_product__product__main_product__name"
+        ),
+        seller_location_names=F(
+            "order_group__seller_product_seller_location__seller_location__name"
+        ),
+        user_address=F("order_group__user_address__name"),
+        end_date_annotate=F("end_date"),
+        supplier_amount=ExpressionWrapper(
+            F("order_line_items__rate") * F("order_line_items__quantity"),
+            output_field=FloatField(),
+        ),
+        seller_invoice_amount=Sum("seller_invoice_payable_line_items__amount"),
+        payout_amount=F("payouts__amount"),
+        # -- TODO -- reconcil status
+        order_url_annotate=Func(
+            Value(settings.DASHBOARD_BASE_URL + "/"),
+            Value("admin/api/order/"),
+            F("id"),
+            Value("/change/"),
+            function="CONCAT",
+            output_field=CharField(),
+        ),
+    ).values(
+        "id",
+        "main_product_name",
+        "seller_location_names",
+        "user_address",
+        "end_date_annotate",
+        "supplier_amount",
+        "seller_invoice_amount",
+        "payout_amount",
+        # -- TODO -- reconcil status
+        "order_url_annotate",
     )
     context["orderRelations"] = orderRelations
     return render(request, "dashboards/payout_reconciliation.html", context)
-
 
 
 @login_required(login_url="/admin/login/")
