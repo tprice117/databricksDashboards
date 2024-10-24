@@ -25,13 +25,15 @@ import requests
 from datetime import datetime, timedelta
 
 
-
 def index(request):
+    return render(request, "dashboards/index.html")
+
+def sales_dashboard(request):
     # Hashmap
     context = {}
 
     # Translated Measures
-    # Define the date range for filtering
+    # Define date range for filtering
     start_date = datetime(datetime.now().year - 1, 1, 1)
     end_date = datetime(datetime.now().year, 12, 31)
 
@@ -55,8 +57,6 @@ def index(request):
 
     # customerAmountScheduled
     def calculate_pending_scheduled_gmv():
-        # Define the date range for filtering
-
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
@@ -239,7 +239,6 @@ def index(request):
     context["supplierAmountSum"] = supplierAmountSum
 
     # Net Revenue Completed
-
     def calculate_net_revenue_completed(
         customer_amount_completed, supplier_amount_completed
     ):
@@ -484,19 +483,7 @@ def index(request):
     context["NetRev_labels"] = labels5
     context["NetRev_data"] = data5
 
-    return render(request, "dashboards/index.html", context)
-
-
-def pbiimport(request):
-    context = {}
-    report_url = "https://app.powerbi.com/reportEmbed?reportId=cbf09a4c-afd3-4b30-b682-8e9c331bdbf5&autoAuth=true&ctid=5a7d42d9-b3cf-4720-b6c0-8836594679d6"
-    context["report_url"] = report_url
-    return render(request, "dashboards/pbiimport.html", context)
-
-
-def poatest(request):
-    return render(request, "dashboards/poatest.html")
-
+    return render(request, "dashboards/sales_dashboard.html", context)
 
 def payout_reconciliation(request):
     context = {}

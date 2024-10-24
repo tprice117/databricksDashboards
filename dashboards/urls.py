@@ -5,8 +5,8 @@ from .views_new.sales_leaderboard import sales_leaderboard
 
 urlpatterns = [
     path("index/", views.index, name="index"),
-    path("pbiimport/", views.pbiimport, name="pbiimport"),
-    path("poatest/", views.poatest, name="poatest"),
+    path("sales-dashboard/", views.sales_dashboard, name="sales_dashboard"),
+
     path(
         "",
         views.command_center,
