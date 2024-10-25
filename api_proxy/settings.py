@@ -96,6 +96,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "common.middleware.save_author.SaveAuthorMiddleware",
+    "api.middleware.user_last_active.UpdateLastActiveMiddleware",
 ]
 
 ROOT_URLCONF = "api_proxy.urls"

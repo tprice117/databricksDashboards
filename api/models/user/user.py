@@ -1,21 +1,21 @@
+import datetime
 import logging
 import threading
 import uuid
-import datetime
 from typing import List
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
-from django.db.models import Q
 from django.utils import timezone
 
+from api.models.order.order import Order
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
-from api.models.order.order import Order
 from api.utils.auth0 import create_user, delete_user, get_user_from_email, invite_user
 from chat.models.conversation import Conversation
 from chat.models.conversation_user_last_viewed import ConversationUserLastViewed
@@ -100,6 +100,10 @@ class User(AbstractUser):
     stage = models.CharField(
         max_length=20,
         choices=ApolloStage.choices,
+        blank=True,
+        null=True,
+    )
+    last_active = models.DateTimeField(
         blank=True,
         null=True,
     )
