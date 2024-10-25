@@ -7,12 +7,22 @@ class UserTypeFilter(SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return [
-            ("customer", "Customer"),
+            ("customer_business", "Customer (Business)"),
+            ("customer_consumer", "Customer (Consumer)"),
             ("supplier", "Supplier"),
         ]
 
     def queryset(self, request, queryset):
-        if self.value() == "customer":
-            return queryset.filter(seller__isnull=True)
+        if self.value() == "customer_business":
+            return queryset.filter(
+                user_group__isnull=False,
+                user_group__seller__isnull=True,
+            )
+        elif self.value() == "customer_consumer":
+            return queryset.filter(
+                user_group__isnull=True,
+            )
         elif self.value() == "supplier":
-            return queryset.filter(seller__isnull=False)
+            return queryset.filter(
+                user_group__seller__isnull=False,
+            )
