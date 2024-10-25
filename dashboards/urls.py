@@ -25,5 +25,5 @@ urlpatterns = [
         "user-sales-detail/<uuid:user_id>/",
         user_sales_detail,
         name="user_sales_detail",
-    )
+    ),
 ]

@@ -87,7 +87,6 @@ def sales_leaderboard(request):
     )
 
 
-
 def user_sales_detail(request, user_id):
     context = {}
     try:
@@ -111,15 +110,11 @@ def user_sales_detail(request, user_id):
         order_group__user_address__user_group__account_owner=user,
     )
     orders_for_user = orders_this_month.filter(
-            order_group__user_address__user_group__account_owner=user,
-        )
+        order_group__user_address__user_group__account_owner=user,
+    )
     order_count = len(orders_for_user)
     context["user"] = user
     context["orders"] = orders_this_month
     context["ordersforuser"] = orders_for_user
     context["order_count"] = order_count
-    return render(
-        request,
-        "dashboards/user_sales_detail.html",
-        context
-    )
+    return render(request, "dashboards/user_sales_detail.html", context)
