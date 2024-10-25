@@ -440,7 +440,7 @@ class QuoteUtils:
                 "schedule_window": order.schedule_window,
             }
             if not item["schedule_window"]:
-                if item.order.order_group.time_slot:
+                if order.order_group.time_slot:
                     item["schedule_window"] = (
                         f"{order.order_group.time_slot.name} ({order.order_group.time_slot.start}-{order.order_group.time_slot.end})"
                     )
