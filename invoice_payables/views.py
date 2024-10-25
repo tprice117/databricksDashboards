@@ -32,6 +32,7 @@ def invoice_detail(request, id):
             "order_group__sellerproductsellerlocation__seller_product__product",
         )
         .annotate(
+            orderlineitem_id=F("order_line_items__id"),
             # seller_invoice_payable_line_items_id=F("seller_invoice_payable_line_items__id"),
             # orderlineitemtype_id=F("order_line_items__order_line_item_type_id"),
             service_address=F("order_group__user_address__name"),
@@ -45,7 +46,7 @@ def invoice_detail(request, id):
             order_date=F("start_date"),
         )
         .values(
-            "id",
+            "orderlineitem_id",
             # "seller_invoice_payable_line_items_id",
             # "orderlineitemtype_id",
             "service_address",
@@ -105,7 +106,7 @@ def invoice_detail(request, id):
     context["forms"] = [
         InvoiceLineItemForm(
             initial={
-                "orderlineitem_id": orderlineitem["id"],
+                "orderlineitem_id": orderlineitem["orderlineitem_id"],
                 # "seller_invoice_payable_line_items_id": orderlineitem["seller_invoice_payable_line_items_id"],
                 # "orderlineitemtype_id": orderlineitem["orderlineitemtype_id"],
                 "productName": orderlineitem["product_name"],
@@ -116,7 +117,7 @@ def invoice_detail(request, id):
                 "orderRate": orderlineitem["rate"],
                 "orderQuantity": orderlineitem["quantity"],
             },
-            prefix=str(orderlineitem["id"]),
+            prefix=str(orderlineitem["orderlineitem_id"]),
         )
         for orderlineitem in queryset
     ]
