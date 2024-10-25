@@ -731,7 +731,6 @@ def _get_terms():
         ),
     ]
 
-
 def _get_general():
     return [
         Paragraph(

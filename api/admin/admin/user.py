@@ -6,6 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import path
 
 from api.admin.filters import CreatedDateFilter
+from api.admin.filters.user.user_type import UserTypeFilter
 from api.admin.inlines import UserGroupUserInline
 from api.forms import CsvImportForm
 from api.models import Order, User, UserGroup
@@ -21,11 +22,15 @@ class UserAdmin(admin.ModelAdmin):
         "last_name",
         "cart_orders",
         "active_orders",
-        "last_login",
+        "last_active",
     )
-    ordering = [F("last_login").desc(nulls_last=True)]
+    ordering = [F("last_active").desc(nulls_last=True)]
     autocomplete_fields = ["user_group"]
-    list_filter = (CreatedDateFilter, "user_group")
+    list_filter = (
+        CreatedDateFilter,
+        UserTypeFilter,
+        "user_group",
+    )
     inlines = [
         UserGroupUserInline,
     ]
