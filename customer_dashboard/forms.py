@@ -3,7 +3,7 @@ import datetime
 from django import forms
 from django.core.exceptions import ValidationError
 
-from api.models import UserAddress, UserAddressType, UserGroup
+from api.models import UserAddress, UserAddressType, UserGroup, UserGroupLegal
 from api.models.order.order_group import OrderGroup
 from common.models.choices.user_type import UserType
 
@@ -543,3 +543,76 @@ class OrderGroupSwapForm(forms.Form):
 
     #     # Always return a value to use as the new cleaned data, even if this method didn't change it.
     #     return swap_date
+
+
+class CreditApplicationForm(forms.Form):
+    structure = forms.ChoiceField(
+        choices=UserGroupLegal.BusinessStructure.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Structure",
+    )
+    tax_id = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        label="EIN/TIN",
+    )
+    legal_name = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    doing_business_as = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
+        label="Doing Business As (DBA)",
+    )
+    industry = forms.ChoiceField(
+        choices=UserGroupLegal.Industry.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    years_in_business = forms.IntegerField(
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        required=False,
+    )
+    estimated_monthly_revenue = forms.DecimalField(
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        required=False,
+    )
+    estimated_monthly_spend = forms.DecimalField(
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        required=False,
+    )
+    increase_credit = forms.DecimalField(
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        required=False,
+        label="Increase Credit Limit",
+        help_text="How much would you like to increase your credit limit by?",
+    )
+    street = forms.CharField(
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    city = forms.CharField(
+        max_length=40,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    state = forms.CharField(
+        max_length=80,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    postal_code = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        label="Zip Code",
+    )
+    accepts_terms = forms.BooleanField(
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        allow_increase = kwargs.pop("allow_increase", None)
+        super(CreditApplicationForm, self).__init__(*args, **kwargs)
+        if allow_increase:
+            self.fields["increase_credit"].required = True
+        else:
+            self.fields["increase_credit"].widget = forms.HiddenInput()
+            self.fields["increase_credit"].required = False
