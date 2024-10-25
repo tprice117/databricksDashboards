@@ -3,18 +3,22 @@ from api.models import *
 from django.db.models import F
 import logging
 from .forms import *
+from django.http import HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
 
 # Create your views here.
+@login_required(login_url="/admin/login/")
 def index(request):
     context = {}
     invoice_payables_all = SellerInvoicePayable.objects.all()
     context["invoice_payables_all"] = invoice_payables_all
     context["test"] = "test"
     return render(request, "invoice_payables/index.html", context)
-
 
 def invoice_detail(request, id):
     context = {}
@@ -33,8 +37,6 @@ def invoice_detail(request, id):
         )
         .annotate(
             orderlineitem_id=F("order_line_items__id"),
-            # seller_invoice_payable_line_items_id=F("seller_invoice_payable_line_items__id"),
-            # orderlineitemtype_id=F("order_line_items__order_line_item_type_id"),
             service_address=F("order_group__user_address__name"),
             line_item_type=F("order_line_items__order_line_item_type__name"),
             product_name=F(
@@ -63,23 +65,15 @@ def invoice_detail(request, id):
         form_prefix = request.POST.get("form_prefix")
         form = InvoiceLineItemForm(request.POST, prefix=form_prefix)
         if form.is_valid():
-            orderlineitem_id = form.cleaned_data["orderlineitem_id"]
-            # seller_invoice_payable_line_items_id = form.cleaned_data["seller_invoice_payable_line_items_id"]
-            orderlineitem_obj = Order.objects.get(pk=orderlineitem_id)
-            seller_invoice_payable_line_item_obj = (
-                SellerInvoicePayableLineItem.objects.get(pk=orderlineitem_id)
-            )
-            # orderlineitemtype_id = OrderLineItem.objects.get(pk=orderlineitem_id)
-            orderlineitem_obj.product_name = form.cleaned_data["productName"]
-            orderlineitem_obj.service_address = form.cleaned_data["serviceAddress"]
-            orderlineitem_obj.line_item_type = form.cleaned_data["lineItemType"]
-            orderlineitem_obj.backbill = form.cleaned_data["backbill"]
-            orderlineitem_obj.order_date = form.cleaned_data["orderDate"]
-            orderlineitem_obj.rate = form.cleaned_data["orderRate"]
-            orderlineitem_obj.quantity = form.cleaned_data["orderQuantity"]
-            orderlineitem_obj.save()
-            seller_invoice_payable_line_item_obj.save()
-            print(f"Updated order line item {orderlineitem_id}")
+            orderlineitem = form.save()
+            
+            if request.user.is_authenticated:
+                orderlineitem.updated_by = request.user
+            else:
+                # Handle the case where the user is not authenticated
+                return HttpResponse("User must be authenticated to update the order line item.", status=403)
+            orderlineitem.save()
+            return HttpResponseRedirect(reverse('invoice_detail', args=[id]))        
         else:
             print(f"Form is not valid: {form.errors}")
         return redirect("invoice_detail", id=id)
