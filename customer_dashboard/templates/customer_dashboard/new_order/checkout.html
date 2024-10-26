@@ -422,7 +422,12 @@
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
             <div class="col-12 mt-4 mb-4">
                 By checking out, you agree to our <button class="btn btn-link ps-1" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal">Rental Terms of Service.</button>
-                <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
+                <!-- Only customers and staff superusers can checkout -->
+                {% if request.user.is_staff and request.user.is_superuser %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
+                {% elif not request.user.is_staff %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
+                {% endif %}
             </div>
         </form>
         <br>
