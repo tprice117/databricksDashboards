@@ -7,8 +7,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.urls import reverse
-
-logger = logging.getLogger(__name__)
+from django.core.cache import cache
 
 
 # Create your views here.
@@ -20,6 +19,7 @@ def index(request):
     context["test"] = "test"
     return render(request, "invoice_payables/index.html", context)
 
+
 def invoice_detail(request, id):
     context = {}
     seller_invoice_payable = SellerInvoicePayable.objects.get(pk=id)
@@ -28,12 +28,15 @@ def invoice_detail(request, id):
         seller_invoice_payable=seller_invoice_payable
     )
 
-    # Requery the data
     queryset = (
         Order.objects.filter(seller_invoice_payable_line_items__in=line_items)
         .select_related(
             "order_group__user_address",
             "order_group__sellerproductsellerlocation__seller_product__product",
+        )
+        .prefetch_related(
+            "order_line_items",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
         )
         .annotate(
             orderlineitem_id=F("order_line_items__id"),
@@ -49,8 +52,6 @@ def invoice_detail(request, id):
         )
         .values(
             "orderlineitem_id",
-            # "seller_invoice_payable_line_items_id",
-            # "orderlineitemtype_id",
             "service_address",
             "line_item_type",
             "product_name",
@@ -60,23 +61,18 @@ def invoice_detail(request, id):
             "quantity",
         )
     )
+    # cache.set(cache_key, queryset, 60 * 15)  # Cache for 15 minutes
 
     if request.method == "POST":
         form_prefix = request.POST.get("form_prefix")
-        form = InvoiceLineItemForm(request.POST, prefix=form_prefix)
+        form = InvoiceLineItemForm(request.POST, prefix=form_prefix, user=request.user)
         if form.is_valid():
             orderlineitem = form.save()
-            
-            if request.user.is_authenticated:
-                orderlineitem.updated_by = request.user
-            else:
-                # Handle the case where the user is not authenticated
-                return HttpResponse("User must be authenticated to update the order line item.", status=403)
-            orderlineitem.save()
-            return HttpResponseRedirect(reverse('invoice_detail', args=[id]))        
+            return HttpResponseRedirect(reverse("invoice_detail", args=[id]))
         else:
             print(f"Form is not valid: {form.errors}")
         return redirect("invoice_detail", id=id)
+
     # Map line items to their orders for use in the template
     line_item_order_map = {item: item.order for item in line_items}
 
@@ -101,8 +97,6 @@ def invoice_detail(request, id):
         InvoiceLineItemForm(
             initial={
                 "orderlineitem_id": orderlineitem["orderlineitem_id"],
-                # "seller_invoice_payable_line_items_id": orderlineitem["seller_invoice_payable_line_items_id"],
-                # "orderlineitemtype_id": orderlineitem["orderlineitemtype_id"],
                 "productName": orderlineitem["product_name"],
                 "serviceAddress": orderlineitem["service_address"],
                 "lineItemType": orderlineitem["line_item_type"],
@@ -115,6 +109,7 @@ def invoice_detail(request, id):
         )
         for orderlineitem in queryset
     ]
+    # print("Queryset:", queryset)  # Debug
 
     context["queryset"] = queryset
     return render(request, "invoice_payables/invoice_detail.html", context)

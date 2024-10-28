@@ -56,6 +56,7 @@
                 <th>Order Date</th>
                 <th>Order Rate</th>
                 <th>Quantity</th>
+                <th>Amount</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -72,8 +73,9 @@
                     <td>{{ form.lineItemType }}</td>
                     <td>{{ form.backbill }}</td>
                     <td>{{ form.orderDate }}</td>
-                    <td>{{ form.orderRate }}</td>
+                    <td>${{ form.orderRate }}</td>
                     <td>{{ form.orderQuantity }}</td>
+                    <td class="calculated_total">$</td>
                     <td>
                         <input type="hidden" name="form_prefix" value="{{ form.prefix }}">
                         <button type="submit">Save</button>
@@ -82,8 +84,15 @@
             </tr>
             {% endfor %}
         </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="8" style="text-align: right;">Total Amount:</td>
+                <td class="calculated_total" id="totalOrderRate">$0.00</td>
+                <td></td>
+            </tr>
+        </tfoot>
     </table>
-    
+
     
     <h2>Linked Orders</h2>
     {% comment %} <p>{{related_orders}}</p>
@@ -115,7 +124,6 @@
         </tbody>
     </table>
     
-    <p>Total Order Rate: <span id="totalOrderRate"></span></p>
 
     <script>
         function sumOrderRate() {
@@ -131,6 +139,60 @@
     
         // Call the function when the page loads
         window.onload = sumOrderRate;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select all rows in the table body
+            const rows = document.querySelectorAll('tbody tr');
+            let totalOrderRate = 0;
+        
+            rows.forEach(row => {
+                // Retrieve the orderRate and orderQuantity values from input elements
+                const orderRateInput = row.querySelector('input[name$="-orderRate"]');
+                const orderQuantityInput = row.querySelector('input[name$="-orderQuantity"]');
+        
+                if (orderRateInput && orderQuantityInput) {
+                    const orderRate = parseFloat(orderRateInput.value);
+                    const orderQuantity = parseFloat(orderQuantityInput.value);
+        
+                    // Check if the parsed values are valid numbers
+                    if (!isNaN(orderRate) && !isNaN(orderQuantity)) {
+                        // Calculate the total
+                        const total = orderRate * orderQuantity;
+        
+                        // Insert the calculated total into the cell with the class 'calculated_total'
+                        row.querySelector('.calculated_total').textContent = `$${total.toFixed(2)}`;
+        
+                        // Add to the total order rate
+                        totalOrderRate += total;
+                    } else {
+                        console.error(`Invalid values: orderRate=${orderRateInput.value}, orderQuantity=${orderQuantityInput.value}`);
+                    }
+                } else {
+                    console.error('Order rate or quantity input not found');
+                }
+            });
+        
+            // Update the total order rate in the footer
+            document.getElementById('totalOrderRate').textContent = `$${totalOrderRate.toFixed(2)}`;
+        });
+
+        function sumCalculatedTotal() {
+            let total = 0;
+            const totals = document.querySelectorAll('.calculated_total'); // Select all calculated_total cells
+            
+            totals.forEach(cell => {
+            const value = parseFloat(cell.textContent.replace('$', '')) || 0; // Remove the $ sign and convert to number
+            total += value; // Add to the total
+            });
+        
+            document.getElementById('totalOrderRate').textContent = `$${total.toFixed(2)}`; // Display the total, rounded to 2 decimals
+        }
+        
+        // Call the function when the page loads
+        window.onload = function() {
+            sumOrderRate();
+            sumCalculatedTotal();
+        };
     </script>
     
 
