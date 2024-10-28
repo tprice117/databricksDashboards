@@ -1953,11 +1953,14 @@ def checkout(request, user_address_id):
     context["estimated_taxes"] = 0
     context["total"] = 0
     context["show_terms"] = False
+    context["has_delivery"] = False
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
         if not order.order_group.is_agreement_signed:
             context["show_terms"] = True
+        if order.order_type == Order.Type.DELIVERY or order.order_type == Order.Type.ONE_TIME:
+            context["has_delivery"] = True
         customer_price = order.customer_price()
         customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full
