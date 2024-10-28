@@ -1166,6 +1166,13 @@ def new_order_5(request):
                 time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
                 if time_slot:
                     order_group.time_slot = time_slot
+            # If Junk Removal, then set the Booking removal date to the same as the delivery date (no asset stays on site).
+            if (
+                seller_product_location.seller_product.product.main_product.has_rental is False
+                and seller_product_location.seller_product.product.main_product.has_rental_one_step is False
+                and seller_product_location.seller_product.product.main_product.has_rental_multi_step is False
+            ):
+                order_group.end_date = delivery_date
             order_group.save()
 
             # Create the order (Let submitted on null, this indicates that the order is in the cart)
