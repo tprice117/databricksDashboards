@@ -30,6 +30,31 @@
     <!-- The callback parameter is required, so we use console.debug as a noop -->
     <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCKjnDJOCuoctPWiTQLdGMqR6MiXc_XKBE&callback=console.debug&libraries=maps,marker&v=beta">
     </script>
+
+    <!-- Initialize Firebase Analytics -->
+    <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase-analytics.js"></script>
+    <script type="module">
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnA9tHeGsjRsXzzvInY9LGXexoUid_GEw",
+            authDomain: "downstream-portal.firebaseapp.com",
+            projectId: "downstream-portal",
+            storageBucket: "downstream-portal.appspot.com",
+            messagingSenderId: "862139088253",
+            appId: "1:862139088253:web:34eb84f10cf1f2d7c32014",
+            measurementId: "G-0XC2H310BR"
+        };
+        
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const analytics = firebase.analytics();
+    </script>
+
     {% block stylesheet %}{% endblock %}
     {% block javascript_head %}{% endblock %}
     <style>

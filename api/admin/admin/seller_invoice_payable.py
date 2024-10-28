@@ -7,7 +7,7 @@ from api.admin.filters.seller_invoice_payable.admin_tasks import (
 from api.admin.inlines.seller_invoice_payable_line_item import (
     LinkedOrdersSellerInvoicePayableLineItemInline,
 )
-from api.models import SellerInvoicePayable, Product
+from api.models import Product, SellerInvoicePayable
 from common.admin.admin.base_admin import BaseModelAdmin
 
 
