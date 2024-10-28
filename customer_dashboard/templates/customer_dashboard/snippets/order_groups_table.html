@@ -42,7 +42,7 @@
                 </td>
                 <td>{{ order_group.start_date }}</td>
                 {% if is_active %}
-                    {% if order_group.order_type == 'ONE_TIME' or order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name == 'Roll Off Dumpsters' %}
+                    {% if order_group.order_type != 'ONE_TIME' and order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name == 'Roll Off Dumpsters' %}
                         <td>
                             <a class="btn btn-primary btn-sm" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_swap' order_group_id=order_group.id %}">Swap <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
                         </td>
