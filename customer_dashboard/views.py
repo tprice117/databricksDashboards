@@ -2202,19 +2202,22 @@ def my_order_groups(request):
             "seller_product_seller_location__seller_product__product__main_product",
             # "user_address",
         )
-        # order_groups = order_groups.prefetch_related("orders")
+        order_groups = order_groups.prefetch_related("orders")
         order_groups = order_groups.order_by("-end_date")
 
         # Active orders are those that have an end_date in the future or are null (recurring orders).
         today = datetime.date.today()
         order_groups_lst = []
         for order_group in order_groups:
-            if order_group.end_date and order_group.end_date < today:
-                if not is_active:
-                    order_groups_lst.append(order_group)
-            else:
-                if is_active:
-                    order_groups_lst.append(order_group)
+            # Exclude orders that are still in the cart.
+            last_order = order_group.orders.order_by("-created_on").first()
+            if last_order and last_order.submitted_on:
+                if order_group.end_date and order_group.end_date < today:
+                    if not is_active:
+                        order_groups_lst.append(order_group)
+                else:
+                    if is_active:
+                        order_groups_lst.append(order_group)
 
         paginator = Paginator(order_groups_lst, pagination_limit)
         page_obj = paginator.get_page(page_number)
