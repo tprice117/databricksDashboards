@@ -1959,7 +1959,10 @@ def checkout(request, user_address_id):
             context["needs_approval"] = True
         if not order.order_group.is_agreement_signed:
             context["show_terms"] = True
-        if order.order_type == Order.Type.DELIVERY or order.order_type == Order.Type.ONE_TIME:
+        if (
+            order.order_type == Order.Type.DELIVERY
+            or order.order_type == Order.Type.ONE_TIME
+        ):
             context["has_delivery"] = True
         customer_price = order.customer_price()
         customer_price_full = order.full_price()
@@ -2136,7 +2139,7 @@ def order_group_swap(request, order_group_id, is_removal=False):
 @catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
-    pagination_limit = 50
+    pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
