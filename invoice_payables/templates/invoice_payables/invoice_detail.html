@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,8 +22,6 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to invoice_detail Page</h1>
-
     <h1>invoice_detail ID: {{ invoice_payable.orderlineitem_id }}</h1>
     <p>SellerLocation: {{ invoice_payable.seller_location }}</p>
     <p>Status: {{ invoice_payable.status }}</p>
@@ -43,12 +43,10 @@
     <p>Updated by: {{invoice_payable.updated_by}}</p>
 
     <h2>Invoice Line Items</h2>
-    <table>
+    <table id="invoiceLineItemsTable">
         <thead>
             <tr>
-                <th>oli_id</th>
-                {% comment %} <th>sipli_id</th> {% endcomment %}
-                {% comment %} <th>OrderlineitemtypID</th> {% endcomment %}
+                {% comment %} <th>oli_id</th> {% endcomment %}
                 <th>Product Name</th>
                 <th>Service Address</th>
                 <th>Line Item Type</th>
@@ -65,9 +63,9 @@
             <tr>
                 <form method="POST" action="{% url 'invoice_detail' invoice_payable.id %}">
                     {% csrf_token %}
-                    <td>{{form.orderlineitem_id}}</td>
-                    {% comment %} <td>{{ form.seller_invoice_payable_line_items_id }}</td> {% endcomment %}
-                    {% comment %} <td>{{ form.orderlineitemtype_id }}</td> {% endcomment %}
+                    <td style="display:none;">
+                        {{ form.orderlineitem_id }}
+                    </td>   
                     <td>{{ form.productName }}</td>
                     <td>{{ form.serviceAddress }}</td>
                     <td>{{ form.lineItemType }}</td>
@@ -86,7 +84,7 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="8" style="text-align: right;">Total Amount:</td>
+                <td id="totalAmountLabel" style="text-align: right;">Total Amount:</td>
                 <td class="calculated_total" id="totalOrderRate">$0.00</td>
                 <td></td>
             </tr>
@@ -95,9 +93,6 @@
 
     
     <h2>Linked Orders</h2>
-    {% comment %} <p>{{related_orders}}</p>
-    <p>{{line_items}}</p>
-    <p>{{line_item_order_map}}</p> {% endcomment %}
     <table>
         <thead>
             <tr>
@@ -118,7 +113,6 @@
                 <td>{{ line_item.description }}</td>              
                 <td>{{ order.status }}</td> 
                 <td>{{ order.created_on }}</td> 
-            </br>
             </tr>
             {% endfor %}
         </tbody>
@@ -141,7 +135,14 @@
         window.onload = sumOrderRate;
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Select all rows in the table body
+            const table = document.getElementById('invoiceLineItemsTable');
+            const headerCells = table.querySelectorAll('thead tr th');
+            const totalHeaders = headerCells.length;
+            const totalAmountLabel = document.getElementById('totalAmountLabel');
+            if (totalAmountLabel) {
+                totalAmountLabel.setAttribute('colspan', totalHeaders - 2);
+            }
+
             const rows = document.querySelectorAll('tbody tr');
             let totalOrderRate = 0;
         
@@ -196,8 +197,7 @@
     </script>
     
 
-    <footer>
-        <button onclick="window.location.href='{% url 'index' %}'">Back to Index</button>
+    <footer style="padding-top: 10px;">   <button onclick="window.location.href='{% url 'index' %}'">Back to Index</button>
     </footer>
 </body>
 </html>
