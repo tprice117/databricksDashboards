@@ -19,7 +19,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -1168,9 +1168,12 @@ def new_order_5(request):
                     order_group.time_slot = time_slot
             # If Junk Removal, then set the Booking removal date to the same as the delivery date (no asset stays on site).
             if (
-                seller_product_location.seller_product.product.main_product.has_rental is False
-                and seller_product_location.seller_product.product.main_product.has_rental_one_step is False
-                and seller_product_location.seller_product.product.main_product.has_rental_multi_step is False
+                seller_product_location.seller_product.product.main_product.has_rental
+                is False
+                and seller_product_location.seller_product.product.main_product.has_rental_one_step
+                is False
+                and seller_product_location.seller_product.product.main_product.has_rental_multi_step
+                is False
             ):
                 order_group.end_date = delivery_date
             order_group.save()
@@ -2196,30 +2199,33 @@ def my_order_groups(request):
         if location_id:
             # TODO: Ask if location is user_address_id or seller_product_seller_location__seller_location_id
             order_groups = order_groups.filter(user_address_id=location_id)
+
+        # Select only order_groups where the last order.submitted_on is not null.
+        order_groups = order_groups.annotate(
+            last_order_submitted_on=Max("orders__submitted_on")
+        ).filter(last_order_submitted_on__isnull=False)
+
+        # Active orders are those that have an end_date in the future or are null (recurring orders).
+        # if is_active: then only show order_groups where end_date is in the future or is null.
+        if is_active:
+            order_groups = order_groups.filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=datetime.date.today())
+            )
+        else:
+            order_groups = order_groups.filter(
+                Q(end_date__isnull=False) & Q(end_date__lt=datetime.date.today())
+            )
+
         # Select related fields to reduce db queries.
         order_groups = order_groups.select_related(
             "seller_product_seller_location__seller_product__seller",
             "seller_product_seller_location__seller_product__product__main_product",
             # "user_address",
         )
-        order_groups = order_groups.prefetch_related("orders")
+        # order_groups = order_groups.prefetch_related("orders")
         order_groups = order_groups.order_by("-end_date")
 
-        # Active orders are those that have an end_date in the future or are null (recurring orders).
-        today = datetime.date.today()
-        order_groups_lst = []
-        for order_group in order_groups:
-            # Exclude orders that are still in the cart.
-            last_order = order_group.orders.order_by("-created_on").first()
-            if last_order and last_order.submitted_on:
-                if order_group.end_date and order_group.end_date < today:
-                    if not is_active:
-                        order_groups_lst.append(order_group)
-                else:
-                    if is_active:
-                        order_groups_lst.append(order_group)
-
-        paginator = Paginator(order_groups_lst, pagination_limit)
+        paginator = Paginator(order_groups, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["page_obj"] = page_obj
 
