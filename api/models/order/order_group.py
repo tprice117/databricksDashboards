@@ -296,6 +296,15 @@ class OrderGroup(BaseModel):
             )
         return delivery_order
 
+    @property
+    def order_type(self):
+        orders = self.orders.order_by("-created_on")
+        if orders.count() == 0:
+            return None
+        else:
+            last_order = orders.first()
+            return last_order.order_type
+
     def create_swap(self, swap_date, schedule_window: str = None) -> Order:
         """Create a swap for the OrderGroup.
 
