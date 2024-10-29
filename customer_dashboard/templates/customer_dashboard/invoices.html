@@ -8,6 +8,61 @@
 {% block stylesheet %}
     <style></style>
 {% endblock %}
+{% block javascript %}
+    <script>
+        const searchFilter = document.getElementById("invoice-search-filter");
+        const selectFilter = document.getElementById("invoice-select-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            let queryParams = new URLSearchParams(window.location.search);
+            let searchQ = queryParams.get("q");
+            let searchTab = queryParams.get("tab");
+            console.log(searchQ, searchTab);
+            if (searchQ) {
+                // update search filter value
+                searchFilter.value = searchQ;
+            }
+            if (searchTab) {
+                // update select filter value
+                selectFilter.value = searchTab;
+            }
+        });
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            let searchQ = searchFilter.value;
+            let searchTab = selectFilter.value;
+            // let searchQ = queryParams.get("q");
+            // let searchTab = queryParams.get("tab");
+        
+            // Create new empty query params.
+            let newQueryParams = new URLSearchParams();
+            if (searchQ) {
+                // Add search filter value to new query params.
+                newQueryParams.set("q", searchQ);
+            }
+            if (searchTab) {
+                // Add select filter value to new query params.
+                newQueryParams.set("tab", searchTab);
+            }
+            // Create url with current query params.
+            const searchInvoicesUrl = "{% url 'customer_invoices' %}?" + newQueryParams.toString();
+            // TODO: Push the following URL to the browser history
+            // but first remove the current one.
+            // window.history.pushState({}, '', searchInvoicesUrl);
+            // update hx-get attribute of search filter input.
+            htmx.find("#invoice-search-filter").setAttribute("hx-get", searchInvoicesUrl);
+            // update hx-get attribute of select filter input.
+            htmx.find("#invoice-select-filter").setAttribute("hx-get", searchInvoicesUrl);
+            // force htmx to process the new hx-get attribute
+            htmx.process("#invoice-search-filter");
+            // force htmx to process the new hx-get attribute
+            htmx.process("#invoice-select-filter");
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <div class="container-fluid">
         <h3 class="text-dark mb-4">Invoices</h3>
@@ -21,7 +76,7 @@
                                     <span>OPEN</span>
                                 </div>
                                 <div class="text-dark fw-bold h5 mb-0">
-                                    <span>${{ total_open|stringformat:'.2f'|intcomma }}</span>
+                                    <span id="open-count-badge">${{ total_open|stringformat:'.2f'|intcomma }}</span>
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -40,7 +95,7 @@
                                     <span>PAST DUE</span>
                                 </div>
                                 <div class="text-dark fw-bold h5 mb-0">
-                                    <span>${{ past_due|stringformat:'.2f'|intcomma }}</span>
+                                    <span id="past-due-count-badge">${{ past_due|stringformat:'.2f'|intcomma }}</span>
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -61,7 +116,7 @@
                                 <div class="row g-0 align-items-center">
                                     <div class="col-auto">
                                         <div class="text-dark fw-bold h5 mb-0 me-3">
-                                            <span>${{ total_paid|stringformat:'.2f'|intcomma }}</span>
+                                            <span id="paid-count-badge">${{ total_paid|stringformat:'.2f'|intcomma }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -76,10 +131,32 @@
             <div class="col-md-6 col-xl-3 mb-4"></div>
         </div>
         <div class="card shadow">
-            <div class="card-header py-3"></div>
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col">
+                        <div class="row">
+                            <div class="col">
+                                <select id="invoice-select-filter" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_invoices' %}" hx-target="#invoice-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+                                    <option value="" selected>Filter Data By</option>
+                                    <option value="open">OPEN</option>
+                                    <option value="past_due">Past Due</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                        </div>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="invoice-search-filter">Filter by</label>
+                            <input id="invoice-search-filter" class="form-control" type="search" name="q" hx-push-url="true" hx-get="{% url 'customer_invoices' %}" hx-trigger="input changed delay:500ms, search" hx-target="#invoice-results" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status" />
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0" id="dataTable">
+                    <table class="table my-0" id="invoice-results" hx-get="{{ data_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
                         <thead>
                             <tr>
                                 <th>Due Date</th>
@@ -90,55 +167,10 @@
                                 <th>PDF</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for invoice in page_obj %}
-                                <tr>
-                                    <td>
-                                        {% if invoice.due_date %}
-                                            {{ invoice.due_date|timezone:'America/Chicago' }} (CT)
-                                        {% else %}
-                                            {{ invoice.created_on|timezone:'America/Chicago' }} (CT)
-                                        {% endif %}
-                                    </td>
-                                    <td>${{ invoice.total|stringformat:'.2f'|intcomma }}</td>
-                                    <td>{{ invoice.status }}</td>
-                                    <td>{{ invoice.number }}</td>
-                                    <td>
-                                        {{ invoice.user_address.formatted_address }}
-                                        {% comment %} <a href="{% url 'customer_location_detail' location_id=invoice.user_address.id %}">{{ invoice.user_address.formatted_address }}</a> {% endcomment %}
-                                    </td>
-                                    {% if invoice.invoice_pdf %}
-                                        <td>
-                                            <a class="btn btn-light" href="{{ invoice.invoice_pdf }}"><i class="fas fa-download"></i></a>
-                                        </td>
-                                    {% else %}
-                                        <td>-</td>
-                                    {% endif %}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td>
-                                    <strong>Name</strong>
-                                </td>
-                                <td>
-                                    <strong>Amount</strong>
-                                </td>
-                                <td>
-                                    <strong>Status</strong>
-                                </td>
-                                <td>
-                                    <strong>Invoice #</strong>
-                                </td>
-                                <td>
-                                    <strong>Location</strong>
-                                </td>
-                            </tr>
-                        </tfoot>
+                        <tbody></tbody>
                     </table>
                 </div>
-                {% include 'customer_dashboard/snippets/pagination.html' %}
+                <div class="row invisible" id="invoices-pagination"></div>
             </div>
         </div>
     </div>
