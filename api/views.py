@@ -45,6 +45,7 @@ from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method impor
 from billing.utils.billing import BillingUtils
 from notifications.utils import internal_email
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
+from common.models.choices.user_type import UserType
 
 from .models import (
     AddOn,
@@ -193,10 +194,10 @@ class UserAddressViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user == "ALL":
             return self.queryset
-        elif self.request.user.user_group and self.request.user.is_admin:
+        elif self.request.user.user_group and self.request.user.type == UserType.ADMIN:
             # If User is in a UserGroup and is Admin.
             return self.queryset.filter(user_group=self.request.user.user_group)
-        elif self.request.user.user_group and not self.request.user.is_admin:
+        elif self.request.user.user_group and self.request.user.type != UserType.ADMIN:
             # If User is in a UserGroup and is not Admin.
             user_address_ids = UserUserAddress.objects.filter(
                 user=self.request.user
@@ -312,7 +313,7 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
         )
         if is_superuser:
             return self.queryset
-        elif self.request.user.is_admin:
+        elif self.request.user.type == UserType.ADMIN:
             users = User.objects.filter(user_group=self.request.user.user_group)
             return self.queryset.filter(user__in=users)
         else:
@@ -447,7 +448,7 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
         )
         if self.request.user == "ALL":
             return self.queryset
-        elif self.request.user.is_admin:
+        elif self.request.user.type == UserType.ADMIN:
             return self.queryset.filter(user__user_group=self.request.user.user_group)
         else:
             return self.queryset.filter(user__id=self.request.user.id)
@@ -478,7 +479,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
         if self.request.user == "ALL":
             return self.queryset
-        elif self.request.user.is_admin:
+        elif self.request.user.type == UserType.ADMIN:
             return self.queryset.filter(
                 order_group__user__user_group=self.request.user.user_group
             )
