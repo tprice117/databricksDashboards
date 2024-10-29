@@ -30,7 +30,7 @@ from api.models.order.order import *
 from api.models.order.order_group import *
 from api.models.order.order_line_item import *
 from api.models.user.user_group import *
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Round
 from django.db.models.functions import TruncMonth, TruncDay
 from decimal import Decimal
 from django.utils import timezone
@@ -535,11 +535,11 @@ def payout_reconciliation(request):
         user_address=user_address_subquery,
         end_date_annotate=F("end_date"),
         supplier_amount=ExpressionWrapper(
-            F("order_line_items__rate") * F("order_line_items__quantity"),
-            output_field=FloatField(),
+            Round(F("order_line_items__rate") * F("order_line_items__quantity"), 2),
+            output_field=DecimalField(decimal_places=2),
         ),
-        seller_invoice_amount=F("seller_invoice_payable_line_items__amount"),
-        payout_amount=F("payouts__amount"),
+        seller_invoice_amount=Coalesce(F("seller_invoice_payable_line_items__amount"), Value(0), output_field=DecimalField(decimal_places=2)),
+        payout_amount=Coalesce(F("payouts__amount"), Value(0), output_field=DecimalField(decimal_places=2)),
         abs_difference=ExpressionWrapper(
             Abs(F('seller_invoice_amount') - F('supplier_amount')),
             output_field=FloatField()
@@ -598,39 +598,47 @@ def payout_reconciliation(request):
         "order_status_comb",
         "order_url_annotate",
     )
+
     unique_order_status_comb = set(order["order_status_comb"] for order in orderRelations)
     total_seller_invoice_amount = sum(
         float(order["seller_invoice_amount"] or 0) for order in orderRelations
     )
     context["total_seller_invoice_amount"] = total_seller_invoice_amount
 
-    # Group by month and sum seller_invoice_amount
-    monthly_data = defaultdict(float)
+    # Group by month and sum seller_invoice_amount for each order_status_comb
+    monthly_data = defaultdict(lambda: defaultdict(float))
     for order in orderRelations:
         order_date = order["end_date_annotate"]
         month = order_date.strftime("%Y-%m")  # Format as YYYY-MM
         seller_invoice_amount = order["seller_invoice_amount"] or 0  # Replace None with 0
-        monthly_data[month] += float(seller_invoice_amount)
+        order_status_comb = order["order_status_comb"]
+        monthly_data[month][order_status_comb] += float(seller_invoice_amount)
 
-    sorted_monthly_data = dict(sorted(monthly_data.items()))
-
-    # print(f"Monthly Data: {sorted_monthly_data}")
-
-    # print(f"Order: {order}")
-
-    # print(f"Number of Orders: {len(orderRelations)}")
+    sorted_monthly_data = {month: dict(status_data) for month, status_data in sorted(monthly_data.items())}
 
     # Prep for chart.js
     chart_data = {
         "labels": list(sorted_monthly_data.keys()),
-        "datasets": [{
-            "label": "Seller Invoice Amount",
-            "data": list(sorted_monthly_data.values()),
-            "backgroundColor": "rgba(75, 192, 192, 0.2)",
-            "borderColor": "rgba(75, 192, 192, 1)",
-            "borderWidth": 1
-        }]
+        "datasets": []
     }
+
+    # Define colors for each status
+    status_colors = {
+        "Paid, Reconciled": "rgba(75, 192, 192, 0.2)",
+        "Paid, Not Reconciled": "rgba(255, 206, 86, 0.2)",
+        "Unpaid, Reconciled": "rgba(153, 102, 255, 0.2)",
+        "Unpaid, Not Reconciled": "rgba(255, 99, 132, 0.2)"
+    }
+
+    for status, color in status_colors.items():
+        dataset = {
+            "label": status,
+            "data": [monthly_data[month].get(status, 0) for month in chart_data["labels"]],
+            "backgroundColor": color,
+            "borderColor": color.replace("0.2", "1"),
+            "borderWidth": 1
+        }
+        chart_data["datasets"].append(dataset)
 
     # Convert to json
     chart_data_json = json.dumps(chart_data)
