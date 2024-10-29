@@ -1389,7 +1389,10 @@ def new_order_5(request):
                 context["cart"][uaid]["ids"].append(str(order.id))
                 context["cart"][uaid]["count"] += 1
                 context["cart"][uaid]["total"] += customer_price
-                if order.order_type == Order.Type.DELIVERY:
+                if (
+                    order.order_type == Order.Type.DELIVERY
+                    or order.order_type == Order.Type.ONE_TIME
+                ):
                     context["cart"][uaid]["show_quote"] = True
                     # # Hide the quote button if this event is part of an active quote.
                     # if order.checkout_order and not order.checkout_order.is_stale:
