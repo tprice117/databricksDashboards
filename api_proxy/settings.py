@@ -143,11 +143,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "defaultdb",
+            "NAME": "dsdev-db-connection-pool",
             "USER": "doadmin",
             "PASSWORD": env("DB_DEV_PASSWORD"),
             "HOST": "db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com",
-            "PORT": "25060",
+            "PORT": "25061",
         }
     }
 
