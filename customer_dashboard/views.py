@@ -1468,9 +1468,7 @@ def show_quote(request):
     order_id_lst = ast.literal_eval(request.GET.get("ids"))
     checkout_order = QuoteUtils.create_quote(order_id_lst, None, quote_sent=False)
     payload = {"trigger": checkout_order.get_quote()}
-    payload["trigger"][
-        "accept_url"
-    ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
+    payload["trigger"]["accept_url"] = f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
     return render(request, "customer_dashboard/customer_quote.html", payload)
 
 
@@ -1495,7 +1493,7 @@ def cart_send_quote(request):
                 }
                 data["message_data"][
                     "accept_url"
-                ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
+                ] = f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
@@ -2479,7 +2477,7 @@ def locations(request):
     if query_params.get("tab", None) is not None:
         context["locations_table_link"] = request.get_full_path()
     else:
-        # Else load pending tab as default
+        # Else load pending tab as default. customer_locations
         context["locations_table_link"] = (
             f"{reverse('customer_companies')}?{query_params.urlencode()}"
         )
@@ -3182,51 +3180,97 @@ def invoices(request):
         page_number = request.GET.get("p")
     date = request.GET.get("date", None)
     location_id = request.GET.get("location_id", None)
-    # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    invoices = get_invoice_objects(request, context["user"], context["user_group"])
-    if location_id:
-        invoices = invoices.filter(user_address_id=location_id)
-    if date:
-        invoices = invoices.filter(due_date__date=date)
-    invoices = invoices.order_by(F("due_date").desc(nulls_last=True))
-    today = datetime.date.today()
-    context["total_paid"] = 0
-    context["past_due"] = 0
-    context["total_open"] = 0
-    for invoice in invoices:
-        amount_paid = invoice.amount_paid
-        amount_remaining = invoice.amount_remaining
-        if amount_paid == 0 and invoice.status == Invoice.Status.PAID:
-            amount_paid = invoice.total
-            amount_remaining = 0
-        context["total_paid"] += amount_paid
-        context["total_open"] += amount_remaining
-        if invoice.due_date and invoice.due_date.date() > today:
-            context["past_due"] += amount_remaining
+    search_q = request.GET.get("q", None)
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
 
-    paginator = Paginator(invoices, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
+        invoices = get_invoice_objects(request, context["user"], context["user_group"])
+        if location_id:
+            invoices = invoices.filter(user_address_id=location_id)
+        if date:
+            invoices = invoices.filter(due_date__date=date)
+        if search_q:
+            invoices = invoices.filter(
+                Q(number__icontains=search_q)
+                | Q(invoice_id__icontains=search_q)
+                | Q(user_address__name__icontains=search_q)
+                | Q(user_address__project_id__icontains=search_q)
+                | Q(user_address__street__icontains=search_q)
+                | Q(user_address__city__icontains=search_q)
+                | Q(user_address__state__icontains=search_q)
+                | Q(user_address__postal_code__icontains=search_q)
+            )
+        invoices = invoices.order_by(F("due_date").desc(nulls_last=True))
+        today = timezone.now().today().date()
+        if tab:
+            if tab == "past_due":
+                # Get all invoices that are past due.
+                invoices = invoices.filter(
+                    Q(due_date__date__lt=today) & Q(amount_remaining__gt=0)
+                )
+            else:
+                invoices = invoices.filter(status=tab)
+        else:
+            # Get all invoices. Calculate the total paid, past due, and total open invoices.
+            context["total_paid"] = 0
+            context["past_due"] = 0
+            context["total_open"] = 0
+            for invoice in invoices:
+                amount_paid = invoice.amount_paid
+                amount_remaining = invoice.amount_remaining
+                if amount_paid == 0 and invoice.status == Invoice.Status.PAID:
+                    amount_paid = invoice.total
+                    amount_remaining = 0
+                context["total_paid"] += amount_paid
+                context["total_open"] += amount_remaining
+                if invoice.due_date and invoice.due_date.date() > today:
+                    context["past_due"] += amount_remaining
 
-    if page_number is None:
-        page_number = 1
+        paginator = Paginator(invoices, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
+        return render(
+            request, "customer_dashboard/snippets/invoices_table.html", context
+        )
+
+    if query_params.get("tab", None) is not None:
+        context["data_link"] = request.get_full_path()
     else:
-        page_number = int(page_number)
-
-    query_params["p"] = 1
-    context["page_start_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/customer/invoices/?{query_params.urlencode()}"
+        # Else load pending tab as default
+        context["data_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
     return render(request, "customer_dashboard/invoices.html", context)
 
 
