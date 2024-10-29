@@ -616,3 +616,11 @@ class CreditApplicationForm(forms.Form):
         else:
             self.fields["increase_credit"].widget = forms.HiddenInput()
             self.fields["increase_credit"].required = False
+
+
+class UserUpdateEmailForm(forms.Form):
+    email = forms.CharField(
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "type": "email", "autocomplete": "off"}
+        ),
+    )

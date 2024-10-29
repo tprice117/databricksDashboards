@@ -94,6 +94,7 @@ from .forms import (
     UserGroupForm,
     UserInviteForm,
     CreditApplicationForm,
+    UserUpdateEmailForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -3074,6 +3075,27 @@ def user_reset_password(request, user_id):
             return HttpResponse("User not found", status=404)
 
     return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def user_update_email(request, user_id):
+    context = get_user_context(request)
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to update emails.")
+        return HttpResponseRedirect(reverse("customer_users"))
+
+    if request.method == "POST":
+        context["form"] = UserInviteForm(request.POST, request.FILES)
+        if context["form"].is_valid():
+            pass
+        else:
+            pass
+        return HttpResponseRedirect(reverse("customer_users"))
+    else:
+        context["form"] = UserUpdateEmailForm()
+
+    return render(request, "customer_dashboard/user_update_email.html", context)
 
 
 @login_required(login_url="/admin/login/")
