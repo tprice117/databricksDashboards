@@ -10,12 +10,42 @@ Reconciliation Dashboard
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payout Reconciliation</title>
     <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
 
 </head>
 <body>
     <h1>Payout Reconciliation Dashboard</h1>
-    
-    {% comment %} {{orderRelations}} {% endcomment %}
+    <div class="card shadow mb-4">
+        <div id="card-body">
+            <canvas id="orderChart" width="400" height="200"></canvas>
+            <script>
+                var ctx = document.getElementById('orderChart').getContext('2d');  
+                var chartData = {{ chart_data|safe }};
+                var myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            </script>
+        </div>
+    </div>
+    <p>{{total_seller_invoice_amount}}</p>
+    <div id="filter-menu">
+        <h3>Filter by Order Status</h3>
+        {% for status in unique_order_status_comb %}
+            <label>
+                <input type="checkbox" class="status-filter" value="{{ status }}">
+                {{ status }}
+            </label><br>
+        {% endfor %}
+    </div>
     <table id="orders-table">
         <thead>
             <tr>
@@ -27,12 +57,12 @@ Reconciliation Dashboard
                 <th>Supplier Amount</th>
                 <th>SellerInvoice Amount</th>
                 <th>Payout Amount</th>
-                <th>Reconcil Status</th>
+                <th>Order Status Comb</th>
                 <th>Order URL</th>
             </tr>
         </thead>
         <tbody>
-            {% for order_id in orderRelations %}
+            {% for order_id in page_obj %}
             <tr>
                 <td>{{ order_id.id }}</td>
                 <td>{{ order_id.main_product_name }}</td>
@@ -42,7 +72,7 @@ Reconciliation Dashboard
                 <td>${{ order_id.supplier_amount }}</td>
                 <td>${{ order_id.seller_invoice_amount }}</td>
                 <td>${{ order_id.payout_amount }}</td>
-                <td>PLACEHOLDER</td>
+                <td>{{order_id.order_status_comb}}</td>
                 <td><a href="{{ order_id.order_url_annotate }}">{{ order_id.order_url_annotate }}</a></td>
 
 
@@ -51,6 +81,42 @@ Reconciliation Dashboard
             {% endfor %}
         </tbody>
     </table>
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+    
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.status-filter').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    var selectedStatuses = Array.from(document.querySelectorAll('.status-filter:checked')).map(function(cb) {
+                        return cb.value;
+                    });
+    
+                    document.querySelectorAll('.order-row').forEach(function(row) {
+                        if (selectedStatuses.length === 0 || selectedStatuses.includes(row.dataset.status)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 
 {% endblock %}

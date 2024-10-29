@@ -1,6 +1,8 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
+from collections import defaultdict
+
 
 logger = logging.getLogger(__name__)
 from django.shortcuts import render
@@ -19,8 +21,10 @@ from django.db.models import (
     Func,
 )
 from django.http import JsonResponse
+from django.db.models import Subquery, OuterRef
 
 from django.db.models.functions import ExtractYear
+from api.models import *
 from api.models.seller.seller import *
 from api.models.order.order import *
 from api.models.order.order_group import *
@@ -29,12 +33,13 @@ from api.models.user.user_group import *
 from django.db.models.functions import Coalesce
 from django.db.models.functions import TruncMonth, TruncDay
 from decimal import Decimal
-from django.db.models import Q
 from django.utils import timezone
 from collections import defaultdict
+from django.db.models.functions import Abs
+from django.core.paginator import Paginator
 
 import requests
-
+import json
 from datetime import datetime, timedelta
 
 
@@ -502,23 +507,75 @@ def sales_dashboard(request):
 
 def payout_reconciliation(request):
     context = {}
+    order_count = Order.objects.count()
+    print(f"Order Count: {order_count}")
 
+    # Subqueries to aggregate related fields
+    # main_product_name_subquery = Subquery(
+    #     Product.objects.filter(
+    #         id=OuterRef('order_group__seller_product_seller_location__seller_product__product__main_product__id')
+    #     ).values('main_product__name')[:1]
+    # )
+    
+    seller_location_names_subquery = Subquery(
+        SellerLocation.objects.filter(
+            id=OuterRef('order_group__seller_product_seller_location__seller_location__id')
+        ).values('name')[:1]
+    )
+    
+    user_address_subquery = Subquery(
+        UserAddress.objects.filter(
+            id=OuterRef('order_group__user_address__id')
+        ).values('name')[:1]
+    )
+    
     orderRelations = Order.objects.annotate(
-        main_product_name=F(
-            "order_group__seller_product_seller_location__seller_product__product__main_product__name"
-        ),
-        seller_location_names=F(
-            "order_group__seller_product_seller_location__seller_location__name"
-        ),
-        user_address=F("order_group__user_address__name"),
+        main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+        seller_location_names=seller_location_names_subquery,
+        user_address=user_address_subquery,
         end_date_annotate=F("end_date"),
         supplier_amount=ExpressionWrapper(
             F("order_line_items__rate") * F("order_line_items__quantity"),
             output_field=FloatField(),
         ),
-        seller_invoice_amount=Sum("seller_invoice_payable_line_items__amount"),
+        seller_invoice_amount=F("seller_invoice_payable_line_items__amount"),
         payout_amount=F("payouts__amount"),
-        # -- TODO -- reconcil status
+        abs_difference=ExpressionWrapper(
+            Abs(F('seller_invoice_amount') - F('supplier_amount')),
+            output_field=FloatField()
+        ),
+        reconcil_status=Case(
+            When(
+                abs_difference__lt=0.01,
+                then=Value('Reconciled')
+            ),
+            default=Value('Not Reconciled'),
+            output_field=CharField()
+        ),
+        order_status=Case(
+            When(
+                payout_amount__isnull=True,
+                then=Value('Unpaid')
+            ),
+            When(
+                seller_invoice_amount__isnull=True,
+                payout_amount=F('supplier_amount'),
+                then=Value('Paid')
+            ),
+            When(
+                payout_amount__gte=F('seller_invoice_amount'),
+                then=Value('Paid')
+            ),
+            default=Value('Unpaid'),
+            output_field=CharField()
+        ),
+        order_status_comb=Func(
+            F('order_status'),
+            Value(', '),
+            F('reconcil_status'),
+            function='CONCAT',
+            output_field=CharField()
+        ),
         order_url_annotate=Func(
             Value(settings.DASHBOARD_BASE_URL + "/"),
             Value("admin/api/order/"),
@@ -527,7 +584,7 @@ def payout_reconciliation(request):
             function="CONCAT",
             output_field=CharField(),
         ),
-    ).values(
+    ).distinct('id').values(
         "id",
         "main_product_name",
         "seller_location_names",
@@ -536,10 +593,57 @@ def payout_reconciliation(request):
         "supplier_amount",
         "seller_invoice_amount",
         "payout_amount",
-        # -- TODO -- reconcil status
+        "reconcil_status",
+        "order_status",
+        "order_status_comb",
         "order_url_annotate",
     )
+    unique_order_status_comb = set(order["order_status_comb"] for order in orderRelations)
+    total_seller_invoice_amount = sum(
+        float(order["seller_invoice_amount"] or 0) for order in orderRelations
+    )
+    context["total_seller_invoice_amount"] = total_seller_invoice_amount
+
+    # Group by month and sum seller_invoice_amount
+    monthly_data = defaultdict(float)
+    for order in orderRelations:
+        order_date = order["end_date_annotate"]
+        month = order_date.strftime("%Y-%m")  # Format as YYYY-MM
+        seller_invoice_amount = order["seller_invoice_amount"] or 0  # Replace None with 0
+        monthly_data[month] += float(seller_invoice_amount)
+
+    sorted_monthly_data = dict(sorted(monthly_data.items()))
+
+    # print(f"Monthly Data: {sorted_monthly_data}")
+
+    # print(f"Order: {order}")
+
+    # print(f"Number of Orders: {len(orderRelations)}")
+
+    # Prep for chart.js
+    chart_data = {
+        "labels": list(sorted_monthly_data.keys()),
+        "datasets": [{
+            "label": "Seller Invoice Amount",
+            "data": list(sorted_monthly_data.values()),
+            "backgroundColor": "rgba(75, 192, 192, 0.2)",
+            "borderColor": "rgba(75, 192, 192, 1)",
+            "borderWidth": 1
+        }]
+    }
+
+    # Convert to json
+    chart_data_json = json.dumps(chart_data)
+
+    context["chart_data"] = chart_data_json
     context["orderRelations"] = orderRelations
+    paginator = Paginator(orderRelations, 30)  # Show 30 orders per page
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context["page_obj"] = page_obj
+
+    context["unique_order_status_comb"] = unique_order_status_comb
     return render(request, "dashboards/payout_reconciliation.html", context)
 
 
