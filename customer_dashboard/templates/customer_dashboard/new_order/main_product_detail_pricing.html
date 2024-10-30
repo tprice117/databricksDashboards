@@ -59,8 +59,8 @@
             <div class="col">
                 {% if request.user.is_staff %}
                     <div class="container-sm pt-4 pb-4">
-                        <label for="discount" class="form-label">Discount <b id="discountLabel">0%</b></label>
-                        <input form="orderForm" type="range" class="form-range" min="0" max="{{ max_discount_100 }}" step="0.5" id="discount" name="discount2" value="0" />
+                        <label for="discount" class="form-label">Discount <b id="discountLabel">{{ discount }}%</b> (Marketplace Discount: {{ market_discount|floatformat }}%)</label>
+                        <input form="orderForm" type="range" class="form-range" min="0" max="{{ max_discount_100 }}" step="0.5" id="discount" name="discount2" value="{{ discount }}" />
                     </div>
                 {% endif %}
                 {% for item in seller_product_seller_locations %}
@@ -76,7 +76,7 @@
                                 src="{% if item.seller_product_seller_location.seller_location.seller.location_logo_url %}
                                     {{ item.seller_product_seller_location.seller_location.seller.location_logo_url }}
                                 {% else %}
-                                    {% static 'customer_dashboard/img/photo-1545231027-637d2f6210f8.jpg' %}
+                                    {% static 'customer_dashboard/img/logo.png' %}
                                 {% endif %}" />
                             <h3 class="mt-1">{{ item.seller_product_seller_location.seller_location.name }}</h3>
                             <p>
@@ -154,6 +154,9 @@
                                         </p>
                                     </div>
                                 </div>
+                                {% if not request.user.is_staff %}
+                                    <span class="position-relative top-0 start-50 translate-middle badge rounded-pill bg-success"><i class="fas fa-bolt"></i> Online Discount {{ discount|floatformat }}%</span>
+                                {% endif %}
                             {% else %}
                                 <div class="row">
                                     <div class="card" style="width: 450px;">
@@ -322,6 +325,9 @@
                                                 Due on Delivery (plus taxes): <strong><span class="price-item" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
                                             </p>
                                         </div>
+                                        {% if not request.user.is_staff %}
+                                            <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-success"><i class="fas fa-bolt"></i> Online Discount {{ discount|floatformat }}%</span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             {% endif %}
@@ -341,7 +347,7 @@
                                 <input name="delivery_date" type="hidden" value="{{ delivery_date }}" />
                                 <input name="removal_date" type="hidden" value="{{ removal_date }}" />
                                 <input name="quantity" type="hidden" value="{{ quantity }}" />
-                                <input class="order-form-discount" type="hidden" name="discount" value="0" />
+                                <input class="order-form-discount" type="hidden" name="discount" value="{{ discount }}" />
                                 <div class="d-flex justify-content-center">
                                     <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">Add to Cart</button>
                                 </div>

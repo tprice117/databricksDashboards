@@ -105,8 +105,10 @@
                     style="border-radius: 37px;"
                     src="{% if main_product.image_del %}
                         {{ main_product.image_del }}
+                    {% elif main_product.main_product_category.icon %}
+                        {{ main_product.main_product_category.icon.url }}
                     {% else %}
-                        {% static 'customer_dashboard/img/dogs/image2.jpeg' %}
+                        {% static 'customer_dashboard/img/logo.png' %}
                     {% endif %}" />
             </div>
             <div class="col mb-4">
