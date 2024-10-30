@@ -1008,6 +1008,14 @@ def new_order_4(request):
     context["max_discount_100"] = round(
         float(context["product"].main_product.max_discount) * 100, 1
     )
+    discount = 0
+    context["market_discount"] = (
+        context["product"].main_product.max_discount * Decimal(0.8)
+    ) * 100
+    if not request.user.is_staff:
+        discount = context["market_discount"]
+
+    context["discount"] = discount
 
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
@@ -1035,6 +1043,7 @@ def new_order_4(request):
                 shift_count=(
                     context["shift_count"] if context["shift_count"] else None
                 ),
+                discount=discount,
             )
 
             price_data = PricingEngineResponseSerializer(pricing).data
