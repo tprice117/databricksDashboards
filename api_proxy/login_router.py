@@ -28,7 +28,9 @@ def post_login_router(request):
         return redirect(reverse("customer_home"))
     else:
         # Show "Nothing to see here" page
-        return HttpResponse("Nothing to see here")
+        # TODO: Add page with links to the correct pages or simply redirect to app.
+        # return HttpResponse("Nothing to see here")
+        return redirect(reverse("customer_home"))
 
 
 def login_view(request):
@@ -61,6 +63,8 @@ def login_redirect_view(request: HttpRequest):
             # TODO: Test this, but maybe it redirect_url should be deleted after use, so that subsequent
             # logins don't perform this, allowing the user to return to the last page they were on, on login.
             return redirect(request.user.redirect_url)
+        else:
+            return post_login_router(request)
     return redirect(f"{settings.BASE_URL}/login")
 
 
