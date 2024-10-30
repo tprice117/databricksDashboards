@@ -39,7 +39,7 @@
                         src="{% if order_group.seller_product_seller_location.seller_location.seller.location_logo_url %}
                             {{ order_group.seller_product_seller_location.seller_location.seller.location_logo_url }}
                         {% else %}
-                            {% static 'customer_dashboard/img/logo.png' %}
+                            {% static 'customer_dashboard/img/blank.png' %}
                         {% endif %}" />&nbsp;{{ order_group.seller_product_seller_location.seller_location.name }}
                 </td>
                 <td>{{ order_group.start_date }}</td>
