@@ -76,7 +76,7 @@
             <div class="col-lg-6 col-xl-6">
                 <div class="card shadow mb-4">
                     <div class="card-header bg-dark-subtle d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold m-0">Net Revenue by Month</h6>
+                        <h6 class="fw-bold m-0">Order Origination Total</h6>
                         <div class="dropdown no-arrow"><button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
                             <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
                                 <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
@@ -87,46 +87,42 @@
                     </div>
                     <div class="card-body">
                         <canvas id="netRevChart" width="400" height="200"></canvas>
-                        {% comment %} {{netRevenueScheduledGraph_data}} {% endcomment %}
-                
                         <script>
-                            const chart_labels2 = {{netRevGraph_labels|safe}};
-                            const chart_data2 = {{netRevenueCompletedGraph_data|safe}};
-                            const chart_scheduled2 = {{netRevenueScheduledGraph_data|safe}}
+                        const pie_labels = {{ pie_chart_data.labels|safe }};
+                        const pie_data = {{ pie_chart_data.data|safe }};
 
                             const data2 = {
-                                labels: chart_labels,
+                                labels: pie_labels,
                                 datasets: [
                                     {
-                                        label: 'Chart Data',
-                                        data: chart_data2,
-                                        backgroundColor: 'rgb(5,255,0)',
-                                        borderColor: 'rgba(78, 115, 223, 1)',
-                                        borderWidth: 1,
-                                        stack: 'combined'
-                                    },
-                                    {
-                                        label: 'Scheduled Data',
-                                        data: chart_scheduled2,
-                                        backgroundColor: 'rgb(0,0,255)',
-                                        borderColor: 'rgba(78, 115, 223, 1)',
-                                        borderWidth: 1,
-                                        stack: 'combined'
+                                        label: 'Order Origination',
+                                        data: pie_data,
+                                        backgroundColor: [
+                                            'rgb(0, 255, 0)',
+                                            'rgb(54, 162, 235)',
+                                            'rgb(255, 205, 86)'
+                                        ],
+                                        hoverOffset: 4
                                     }
                                 ]
                             };
 
                             const config2 = {
-                                type: 'bar',
+                                type: 'pie',
                                 data: data2,
                                 options: {
-                                    scales: {
-                                        x:{
-                                            stacked: true
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top',
                                         },
-                                        y: {
-                                            stacked: true,
-                                            beginAtZero: true
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(tooltipItem) {
+                                                    return tooltipItem.label + ': ' + tooltipItem.raw;
+                                                }
+                                            }
                                         }
                                     }
                                 }
