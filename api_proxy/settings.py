@@ -96,6 +96,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "common.middleware.save_author.SaveAuthorMiddleware",
+    "api.middleware.user_last_active.UpdateLastActiveMiddleware",
 ]
 
 ROOT_URLCONF = "api_proxy.urls"
@@ -121,7 +122,10 @@ TEMPLATES = [
 WSGI_APPLICATION = "api_proxy.wsgi.application"
 
 # Add 'mozilla_django_oidc' authentication backend
-AUTHENTICATION_BACKENDS = ("mozilla_django_oidc.auth.OIDCAuthenticationBackend",)
+# Was: "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+AUTHENTICATION_BACKENDS = (
+    "api_proxy.authentication.authentication.PortalOIDCAuthentication",
+)
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "admin:index"
@@ -142,11 +146,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "defaultdb",
+            "NAME": "dsdev-db-connection-pool",
             "USER": "doadmin",
             "PASSWORD": env("DB_DEV_PASSWORD"),
             "HOST": "db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com",
-            "PORT": "25060",
+            "PORT": "25061",
         }
     }
 
@@ -443,6 +447,7 @@ OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO")
 OIDC_OP_JWKS_ENDPOINT = env("OIDC_OP_JWKS_ENDPOINT")
 OIDC_OP_LOGOUT_ENDPOINT = env("OIDC_OP_LOGOUT_ENDPOINT")
 OIDC_OP_LOGOUT_METHOD = env("OIDC_OP_LOGOUT_METHOD")
+OIDC_STORE_ID_TOKEN = True
 ALLOW_LOGOUT_GET_METHOD = True
 # We don't want automatic user creation
 OIDC_CREATE_USER = True

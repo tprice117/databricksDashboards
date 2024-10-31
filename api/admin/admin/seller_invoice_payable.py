@@ -37,6 +37,9 @@ class SellerInvoicePayableAdmin(BaseModelAdmin):
         "seller_location__name",
         "supplier_invoice_id",
     ]
+    autocomplete_fields = [
+        "seller_location",
+    ]
     inlines = [
         LinkedOrdersSellerInvoicePayableLineItemInline,
     ]

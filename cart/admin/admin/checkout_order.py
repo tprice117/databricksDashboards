@@ -58,5 +58,5 @@ class CheckoutOrderAdmin(admin.ModelAdmin):
         payload = {"trigger": checkout_order.get_quote()}
         payload["trigger"][
             "accept_url"
-        ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
+        ] = f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
         return render(request, "customer_dashboard/customer_quote.html", payload)

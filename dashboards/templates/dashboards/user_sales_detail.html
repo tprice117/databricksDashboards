@@ -1,0 +1,90 @@
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+{{user.first_name}} {{user.last_name}} Sales Detail
+{% endblock %}
+{% block content %}
+<style>
+    table tbody tr:nth-child(odd) {
+        background-color: #505063;
+    }
+    table tbody tr:nth-child(even) {
+        background-color: #80808c;
+    }
+    ul #nav2  {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #333;
+      }
+    li #nav2 {
+        float: left;
+    }
+</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Sales Detail</title>
+</head>
+<body>
+    <ul id="nav2" style="display: flex; gap: 100px;">
+        <li id="nav2">Placeholder Link 1</li>
+        <li id="nav2">Placeholder Link 2</li>
+        <li id="nav2">Placeholder Link 3</li>
+        <li id="nav2">Placeholder Link 4</li>
+        <li id="nav2">Placeholder Link 5</li>
+        <li id="nav2">Placeholder Link 6</li>
+    </ul>
+    </nav>
+    <header>
+        <h1>{{user.first_name}} {{user.last_name}}</h1>
+
+    </header>
+    <main>
+        <section>
+            {{user.id}}
+            {% comment %} Sales details will be displayed here  {% endcomment %}
+            <h2>Sales Information of Past Month</h2>
+            <p>Number of Orders:
+            {{order_count}}
+            </p>
+            <table>
+                <thead>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <th style="padding-right: 100px;">Order_ID</th>
+                        <th style="padding-right: 100px;">Customer_Price</th>
+                        <th style="padding-right: 100px;">Seller_Price</th>
+                        <th style="padding-right: 100px;">End_Date</th>
+                        <th style="padding-right: 100px;">Status</th>
+                    </tr>
+ 
+                </thead>
+                <tbody>
+                    {% comment %} Sales Information Sorted by End Date {% endcomment %}
+                    {% for order in ordersforuser|dictsort:"end_date" %}
+                    <tr>
+                        <td>{{ order.id }}</td>
+                        <td>${{ order.customer_price }}</td>
+                        <td>${{ order.seller_price }}</td>
+                        <td>{{ order.end_date }}</td>
+                        <td>{{ order.status }}</td>
+
+
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 | Downstream | Sales Data by Rep</p>
+    </footer>
+</body>
+</html>
+
+{% endblock %}

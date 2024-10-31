@@ -19,6 +19,11 @@ urlpatterns = [
     path("customer/logout/", views.customer_logout, name="customer_logout"),
     path("customer/profile/", views.profile, name="customer_profile"),
     path("customer/company/", views.company_detail, name="customer_company"),
+    path(
+        "customer/credit_application/",
+        views.credit_application,
+        name="customer_credit_application",
+    ),
     path("customer/order/add/", views.index, name="customer_new_order"),
     path("customer/order_groups/", views.my_order_groups, name="customer_order_groups"),
     path(
@@ -162,11 +167,6 @@ urlpatterns = [
         "customer/cart/quote/",
         views.show_quote,
         name="customer_show_quote",
-    ),
-    path(
-        "customer/accept/quote/",
-        views.accept_quote,
-        name="customer_accept_quote",
     ),
     path(
         "customer/<uuid:user_address_id>/<uuid:payment_method_id>/default/payment/",
