@@ -2771,6 +2771,19 @@ def new_location(request):
             f"No customer selected! Location would be added to your account [{request.user.email}].",
         )
 
+    street = request.GET.get("street")
+    city = request.GET.get("city")
+    state = request.GET.get("state")
+    postal_code = request.GET.get("zip")
+    # This is a request from our website, so we want to redirect back to the bookings page on save.
+    if street or city or state or postal_code:
+        request.session["return_to"] = reverse("customer_new_order")
+
+    # If there is a return_to url, then save it in the session.
+    redirect_url = request.GET.get("return_to", None)
+    if redirect_url:
+        request.session["return_to"] = redirect_url
+
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
         messages.error(request, "Only admins can create new locations.")
@@ -2830,14 +2843,17 @@ def new_location(request):
                         user_address=save_model,
                     )
                 messages.success(request, "Successfully saved!")
-                return redirect(
+                redirect_url = request.session.get(
+                    "return_to",
                     reverse(
                         "customer_location_detail",
                         kwargs={
                             "location_id": save_model.id,
                         },
-                    )
+                    ),
                 )
+                del request.session["return_to"]
+                return HttpResponseRedirect(redirect_url)
             else:
                 messages.info(request, "No changes detected.")
                 return HttpResponseRedirect(reverse("customer_locations"))
@@ -2852,8 +2868,18 @@ def new_location(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
+        initial_data = {}
+        if street:
+            initial_data["street"] = street
+        if city:
+            initial_data["city"] = city
+        if state:
+            initial_data["state"] = state
+        if postal_code:
+            initial_data["postal_code"] = postal_code
+
         context["user_address_form"] = UserAddressForm(
-            user=context["user"], auth_user=request.user
+            initial=initial_data, user=context["user"], auth_user=request.user
         )
 
     return render(request, "customer_dashboard/location_new_edit.html", context)
