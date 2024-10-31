@@ -270,6 +270,23 @@
             reloadIntercom();
         </script>
     {% endif %}
+    {% comment %} <script>
+        function getUserTimezone() {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+        
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const timezone = getUserTimezone();
+            fetch('/set_timezone/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ timezone: timezone })
+            });
+        });
+    </script> {% endcomment %}
     <script>
         // Function to enable the submit button
         function enableAllSubmitButton() {
