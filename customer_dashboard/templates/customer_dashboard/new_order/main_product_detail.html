@@ -125,7 +125,7 @@
                     {% endfor %}
                     <!-- Include the visible fields -->
                     {% if user_addresses|length < 20 %}
-                        <label for="user_address" class="form-label">Select Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a></label>
+                        <label for="user_address" class="form-label">Select Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}?return_to={{ request.get_full_path }}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a></label>
                         <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
                             <optgroup label="Your added locations">
                                 {% for user_address in user_addresses %}
