@@ -1822,7 +1822,8 @@ def credit_application(request):
                 redirect_url = request.session.get(
                     "credit_application_return_to", reverse("customer_companies")
                 )
-                del request.session["credit_application_return_to"]
+                if "credit_application_return_to" in request.session:
+                    del request.session["credit_application_return_to"]
                 return HttpResponseRedirect(redirect_url)
             else:
                 # This will let bootstrap know to highlight the fields with errors.
@@ -2830,7 +2831,8 @@ def new_location(request):
                         },
                     ),
                 )
-                del request.session["new_location_return_to"]
+                if "new_location_return_to" in request.session:
+                    del request.session["new_location_return_to"]
                 return HttpResponseRedirect(redirect_url)
             else:
                 messages.info(request, "No changes detected.")
