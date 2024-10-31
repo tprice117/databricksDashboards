@@ -1717,7 +1717,7 @@ def credit_application(request):
     context = get_user_context(request)
     redirect_url = request.GET.get("return_to", None)
     if redirect_url:
-        request.session["return_to"] = redirect_url
+        request.session["credit_application_return_to"] = redirect_url
     if not context["user_group"]:
         messages.error(
             request,
@@ -1842,9 +1842,9 @@ def credit_application(request):
                     'Thank you for your application! Our team will review and reach out once we have a decision in the next 24-48 hours. If you need this booking sooner please use the "Pay Now" button.',
                 )
                 redirect_url = request.session.get(
-                    "return_to", reverse("customer_companies")
+                    "credit_application_return_to", reverse("customer_companies")
                 )
-                del request.session["return_to"]
+                del request.session["credit_application_return_to"]
                 return HttpResponseRedirect(redirect_url)
             else:
                 # This will let bootstrap know to highlight the fields with errors.
@@ -2777,12 +2777,12 @@ def new_location(request):
     postal_code = request.GET.get("zip")
     # This is a request from our website, so we want to redirect back to the bookings page on save.
     if street or city or state or postal_code:
-        request.session["return_to"] = reverse("customer_new_order")
+        request.session["new_location_return_to"] = reverse("customer_new_order")
 
     # If there is a return_to url, then save it in the session.
     redirect_url = request.GET.get("return_to", None)
     if redirect_url:
-        request.session["return_to"] = redirect_url
+        request.session["new_location_return_to"] = redirect_url
 
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
@@ -2844,7 +2844,7 @@ def new_location(request):
                     )
                 messages.success(request, "Successfully saved!")
                 redirect_url = request.session.get(
-                    "return_to",
+                    "new_location_return_to",
                     reverse(
                         "customer_location_detail",
                         kwargs={
@@ -2852,7 +2852,7 @@ def new_location(request):
                         },
                     ),
                 )
-                del request.session["return_to"]
+                del request.session["new_location_return_to"]
                 return HttpResponseRedirect(redirect_url)
             else:
                 messages.info(request, "No changes detected.")
