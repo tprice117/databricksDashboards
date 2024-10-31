@@ -1446,28 +1446,6 @@ def new_order_6(request, order_group_id):
     return HttpResponseRedirect(reverse("customer_new_order"))
 
 
-@api_view(["GET"])
-@authentication_classes([])
-@permission_classes([])
-def accept_quote(request):
-    # Accept the quote.
-    cart_id = request.query_params.get("cart_id", None)
-    # try:
-    #     cart = CheckoutOrder.objects.get(id=cart_id)
-    #     cart.quote_accepted_at = timezone.now()
-    #     cart.save()
-    # except Cart.DoesNotExist as e:
-    #     logger.error(
-    #         f"accept_quote: Cart not found for cart_id[{cart_id}]",
-    #         exc_info=e,
-    #     )
-    #     return Response("error", status=status.HTTP_404_NOT_FOUND)
-    # except Exception as e:
-    #     logger.error(f"accept_quote: [{e}]-data[{request.data}]", exc_info=e)
-    #     return Response("error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    return Response("OK", status=status.HTTP_200_OK)
-
-
 @login_required(login_url="/admin/login/")
 @catch_errors()
 def show_quote(request):
@@ -1844,7 +1822,8 @@ def credit_application(request):
                 redirect_url = request.session.get(
                     "credit_application_return_to", reverse("customer_companies")
                 )
-                del request.session["credit_application_return_to"]
+                if "credit_application_return_to" in request.session:
+                    del request.session["credit_application_return_to"]
                 return HttpResponseRedirect(redirect_url)
             else:
                 # This will let bootstrap know to highlight the fields with errors.
@@ -2852,7 +2831,8 @@ def new_location(request):
                         },
                     ),
                 )
-                del request.session["new_location_return_to"]
+                if "new_location_return_to" in request.session:
+                    del request.session["new_location_return_to"]
                 return HttpResponseRedirect(redirect_url)
             else:
                 messages.info(request, "No changes detected.")
