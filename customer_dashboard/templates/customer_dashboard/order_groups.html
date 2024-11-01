@@ -85,6 +85,9 @@
                                     <label class="form-check-label" for="order-group-mine-filter">My Accounts (Filters only on accounts that you manage.)</label>
                                 </div>
                             </div>
+                            <div class="col-12">
+                                <a class="btn btn-link" href="{% url 'supplier_bookings' %}?tab=PENDING&my_accounts=on">Submitted Orders for My Account</a>
+                            </div>
                         {% endif %}
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>

@@ -79,26 +79,33 @@ def delete_user(user_id: str):
 
 def get_password_change_url(user_id: str):
     if user_id is not None:
-        headers = {
-            "Authorization": "Bearer " + get_auth0_access_token(),
-            "Content-Type": "application/json",
-        }
+        response_str = None
+        try:
+            headers = {
+                "Authorization": "Bearer " + get_auth0_access_token(),
+                "Content-Type": "application/json",
+            }
 
-        response = requests.post(
-            "https://" + settings.AUTH0_DOMAIN + "/api/v2/tickets/password-change",
-            json={
-                "result_url": "https://www.google.com",
-                "user_id": user_id,
-                "ttl_sec": 0,
-                "mark_email_as_verified": True,
-                "includeEmailInRedirect": True,
-            },
-            headers=headers,
-            timeout=30,
-        )
-
-        # Return ticket url.
-        return response.json()["ticket"]
+            response = requests.post(
+                "https://" + settings.AUTH0_DOMAIN + "/api/v2/tickets/password-change",
+                json={
+                    "result_url": "https://www.google.com",
+                    "user_id": user_id,
+                    "ttl_sec": 0,
+                    "mark_email_as_verified": True,
+                    "includeEmailInRedirect": True,
+                },
+                headers=headers,
+                timeout=30,
+            )
+            response_str = f"{response.status_code}-{response.text}"
+            # Return ticket url.
+            return response.json()["ticket"]
+        except Exception as e:
+            logger.error(
+                f"get_password_change_url: [{response_str}]-[[{e}]", exc_info=e
+            )
+            return None
 
 
 def invite_user(user, reset_password=False):
