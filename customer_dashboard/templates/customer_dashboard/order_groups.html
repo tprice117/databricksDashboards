@@ -9,7 +9,7 @@
 {% endblock %}
 {% block javascript %}
     <script>
-        const activeFilter = document.getElementById("order-group-active-filter");
+        let activeFilter = document.getElementById("order-group-active-filter");
         // listen for page load event.
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
@@ -84,6 +84,9 @@
                                     <input class="form-control form-check-input" type="checkbox" id="order-group-mine-filter" checked="" name="my_accounts" />
                                     <label class="form-check-label" for="order-group-mine-filter">My Accounts (Filters only on accounts that you manage.)</label>
                                 </div>
+                            </div>
+                            <div class="col-12">
+                                <a class="btn btn-link" href="{% url 'supplier_bookings' %}?tab=PENDING&my_accounts=on">Submitted Orders for My Account</a>
                             </div>
                         {% endif %}
                         <div class="col-12">

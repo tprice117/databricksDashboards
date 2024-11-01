@@ -151,6 +151,14 @@
                 // update date filter value
                 dateFilter.value = serviceDate;
             }
+            const myAccounts = urlParams.get("my_accounts");
+            if (myAccounts) {
+                // update my_accounts value
+                let myBookingsFilter = document.getElementById("bookings-mine-filter");
+                if (myBookingsFilter) {
+                    myBookingsFilter.checked = true;
+                }
+            }
             // Check url for tab query param
             let tab = urlParams.get("tab");
             // Check if tab query param is set
@@ -168,28 +176,28 @@
                 selectCard(document.getElementById("bookings-tab-pending"));
             }
         });
-        function selectDate(el) {
-            const tabPending = document.getElementById("bookings-tab-pending");
-            const tabScheduled = document.getElementById("bookings-tab-scheduled");
-            const tabCompleted = document.getElementById("bookings-tab-completed");
-            const tabCancelled = document.getElementById("bookings-tab-cancelled");
+        function updateHTMXUrls(queryParams) {
+            let myBookingsFilter = document.getElementById("bookings-mine-filter");
             const tabCart = document.getElementById("bookings-tab-cart");
-            // Get current query params.
-            let queryParams = new URLSearchParams(window.location.search);
-            // Check if date filter has a value
-            if (el.value) {
-                // update current queryParams for date filter url
-                let urlencodeDate = encodeURIComponent(el.value);
-                queryParams.set("service_date", urlencodeDate);
-            } else {
-                // remove service_date from queryParams
-                queryParams.delete("service_date");
-            }
-            queryParams.delete("p");
             // update date filter url with current queryParams
             const dateFilterUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
         
+            if (myBookingsFilter) {
+                // Ensure there is no duplicate my_accounts query param
+                queryParams.delete("my_accounts");
+                if (myBookingsFilter.checked) {
+                    queryParams.set("my_accounts", "on");
+                } else {
+                    queryParams.delete("my_accounts");
+                }
+            }
+        
             // update current queryParams for tab urls
+            if (myBookingsFilter) {
+                let myAccountsUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
+                htmx.find("#bookings-mine-filter").setAttribute("hx-get", myAccountsUrl);
+                htmx.process("#bookings-mine-filter");
+            }
             // This is so that the tab urls will have the correct date filter value.
             queryParams.set("tab", "PENDING");
             const pendingUrl = "{% url 'supplier_bookings' %}?" + queryParams.toString();
@@ -222,6 +230,22 @@
             htmx.process("#bookings-tab-scheduled");
             htmx.process("#bookings-tab-completed");
             htmx.process("#bookings-tab-cancelled");
+        }
+        function selectDate(el) {
+            // Get current query params.
+            let queryParams = new URLSearchParams(window.location.search);
+            // Check if date filter has a value
+            if (el.value) {
+                // update current queryParams for date filter url
+                let urlencodeDate = encodeURIComponent(el.value);
+                queryParams.set("service_date", urlencodeDate);
+            } else {
+                // remove service_date from queryParams
+                queryParams.delete("service_date");
+            }
+            queryParams.delete("p");
+        
+            updateHTMXUrls(queryParams);
             // trigger onDateFilter event
             htmx.trigger(el, "onDateFilter");
         }
@@ -266,6 +290,17 @@
         if (submittedOnSort) {
             submittedOnSort.addEventListener("click", function (e) {
                 selectSortHeader(e.target);
+            });
+        }
+        let myBookingsFilter = document.getElementById("bookings-mine-filter");
+        if (myBookingsFilter) {
+            myBookingsFilter.addEventListener("change", function (e) {
+                // let isChecked = e.target.checked;
+                // Get current query params.
+                let queryParams = new URLSearchParams(window.location.search);
+                updateHTMXUrls(queryParams);
+                // trigger onSwitch event
+                htmx.trigger(e.target, "onSwitch");
             });
         }
     </script>
@@ -398,6 +433,12 @@
                 <div class="row">
                     <div class="col">
                         <p class="text-primary m-0 fw-bold">All Bookings (or Pending Bookings, etc.)</p>
+                        {% if request.user.is_staff %}
+                            <div class="form-check form-switch">
+                                <input class="form-control form-check-input" type="checkbox" id="bookings-mine-filter" name="my_accounts" hx-push-url="true" hx-target="#booking-results" hx-swap="outerHTML" hx-trigger="onSwitch" hx-indicator="#htmx-indicator-loading-status" />
+                                <label class="form-check-label" for="bookings-mine-filter">My Accounts</label>
+                            </div>
+                        {% endif %}
                         <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                     </div>
                     <div class="col">

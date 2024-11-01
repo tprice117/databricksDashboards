@@ -45,6 +45,11 @@ urlpatterns = [
         views.user_detail,
         name="supplier_user_detail",
     ),
+    path(
+        "supplier/user/<uuid:user_id>/reset_password/",
+        views.user_reset_password,
+        name="supplier_reset_password",
+    ),
     path("supplier/user/new/", views.new_user, name="supplier_new_user"),
     path("supplier/bookings/", views.bookings, name="supplier_bookings"),
     path(
