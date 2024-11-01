@@ -1131,6 +1131,7 @@ def bookings(request):
             request, context["user"], context["seller"], exclude_in_cart=False
         )
         query_params = request.GET.copy()
+        my_accounts = request.GET.get("my_accounts")
         # Ensure tab is valid. Default to PENDING if not.
         tab = request.GET.get("tab", Order.Status.PENDING)
         if tab.upper() not in [
@@ -1142,8 +1143,6 @@ def bookings(request):
         ]:
             tab = Order.Status.PENDING
         tab_status = tab.upper()
-        # orders = orders.filter(status=tab_status)
-        # TODO: Check the delay for a seller with large number of orders, like Hillen.
         # if status.upper() != Order.Status.PENDING:
         #     orders = orders.filter(end_date__gt=non_pending_cutoff)
         if link_params.get("service_date", None) is not None:
@@ -1154,36 +1153,27 @@ def bookings(request):
                     "location_id"
                 ]
             )
+        if my_accounts:
+            orders = orders.filter(
+                order_group__user_address__user_group__account_owner_id=request.user.id
+            )
+        # Get the counts for each status at this service date and location (if those exist).
+        pending_count = orders.filter(status=Order.Status.PENDING).count()
+        scheduled_count = orders.filter(status=Order.Status.SCHEDULED).count()
+        complete_count = orders.filter(status=Order.Status.COMPLETE).count()
+        cancelled_count = orders.filter(status=Order.Status.CANCELLED).count()
+        cart_count = orders.filter(submitted_on=None).count()
+
+        if tab_status == "CART":
+            orders = orders.filter(submitted_on=None)
+        else:
+            orders = orders.filter(status=tab_status)
         # Select related fields to reduce db queries.
         orders = orders.select_related(
             "order_group__seller_product_seller_location__seller_product__seller",
             "order_group__user_address",
         )
         orders = orders.order_by(*ordering)
-        status_orders = []
-        # Return the correct counts for each status.
-        pending_count = 0
-        scheduled_count = 0
-        complete_count = 0
-        cancelled_count = 0
-        cart_count = 0
-        for order in orders:
-            if order.submitted_on is None:
-                if tab_status == "CART":
-                    status_orders.append(order)
-            elif order.status == tab_status:
-                status_orders.append(order)
-            if order.submitted_on is None:
-                cart_count += 1
-            elif order.status == Order.Status.PENDING:
-                pending_count += 1
-            # if order.end_date >= non_pending_cutoff:
-            elif order.status == Order.Status.SCHEDULED:
-                scheduled_count += 1
-            elif order.status == Order.Status.COMPLETE:
-                complete_count += 1
-            elif order.status == Order.Status.CANCELLED:
-                cancelled_count += 1
 
         download_link = f"/supplier/bookings/download/?{query_params.urlencode()}"
         context["download_link"] = download_link
@@ -1198,13 +1188,14 @@ def bookings(request):
         <a id="bookings-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{download_link}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
         """
 
-        paginator = Paginator(status_orders, pagination_limit)
+        paginator = Paginator(orders, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["status"] = {
             "name": tab_status,
             "page_obj": page_obj,
         }
         context["page_obj"] = page_obj
+        print(orders.count())
         context["pages"] = []
 
         if page_number is None:
@@ -1569,6 +1560,9 @@ def booking_detail(request, order_id):
         order = order.prefetch_related(
             "payouts", "seller_invoice_payable_line_items"
         ).first()
+        if not order:
+            messages.error(request, "Order not found.")
+            return HttpResponseRedirect(reverse("supplier_bookings"))
         context["order"] = order
         seller_location = (
             order.order_group.seller_product_seller_location.seller_location
