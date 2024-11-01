@@ -1028,6 +1028,22 @@ def user_detail(request, user_id):
 
 
 @login_required(login_url="/admin/login/")
+def user_reset_password(request, user_id):
+    # context = get_user_context(request)
+    if request.method == "POST":
+        try:
+            user = User.objects.get(id=user_id)
+            if not user.redirect_url:
+                user.redirect_url = "/supplier/"
+                user.save()
+            user.reset_password()
+        except User.DoesNotExist:
+            return HttpResponse("User not found", status=404)
+
+    return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
 def new_user(request):
     # TODO: Add a form to select one or more SellerLocations to associate the user with.
     context = {}
