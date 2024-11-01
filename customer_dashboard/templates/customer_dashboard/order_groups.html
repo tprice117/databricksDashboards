@@ -9,7 +9,7 @@
 {% endblock %}
 {% block javascript %}
     <script>
-        const activeFilter = document.getElementById("order-group-active-filter");
+        let activeFilter = document.getElementById("order-group-active-filter");
         // listen for page load event.
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
