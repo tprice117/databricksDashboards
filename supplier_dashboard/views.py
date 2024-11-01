@@ -1203,15 +1203,32 @@ def bookings(request):
                 order_group__user_address__user_group__account_owner_id=request.user.id
             )
         # Get the counts for each status at this service date and location (if those exist).
-        pending_count = orders.filter(status=Order.Status.PENDING).count()
-        scheduled_count = orders.filter(status=Order.Status.SCHEDULED).count()
-        complete_count = orders.filter(status=Order.Status.COMPLETE).count()
-        cancelled_count = orders.filter(status=Order.Status.CANCELLED).count()
+        pending_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.PENDING)
+            .count()
+        )
+        scheduled_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.SCHEDULED)
+            .count()
+        )
+        complete_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.COMPLETE)
+            .count()
+        )
+        cancelled_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.CANCELLED)
+            .count()
+        )
         cart_count = orders.filter(submitted_on=None).count()
 
         if tab_status == "CART":
             orders = orders.filter(submitted_on=None)
         else:
+            orders = orders.exclude(submitted_on__isnull=True)
             orders = orders.filter(status=tab_status)
         # Select related fields to reduce db queries.
         orders = orders.select_related(
@@ -1240,7 +1257,6 @@ def bookings(request):
             "page_obj": page_obj,
         }
         context["page_obj"] = page_obj
-        print(orders.count())
         context["pages"] = []
 
         if page_number is None:
