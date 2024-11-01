@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -224,7 +225,9 @@ def get_user(request: HttpRequest) -> User:
     return user
 
 
-def get_seller_user_objects(request: HttpRequest, user: User, seller: Seller):
+def get_seller_user_objects(
+    request: HttpRequest, user: User, seller: Seller, search_q: str = None
+):
     """Returns the users for the current seller.
 
     If user is:
@@ -248,6 +251,12 @@ def get_seller_user_objects(request: HttpRequest, user: User, seller: Seller):
             seller_users = User.objects.filter(user_group__seller_id=seller.id)
         else:
             seller_users = User.objects.filter(user_group__seller__isnull=False)
+    if search_q:
+        seller_users = seller_users.filter(
+            Q(first_name__icontains=search_q)
+            | Q(last_name__icontains=search_q)
+            | Q(email__icontains=search_q)
+        )
     return seller_users
 
 
@@ -866,52 +875,72 @@ def users(request):
         page_number = request.GET.get("p")
     # user_id = request.GET.get("user_id", None)
     date = request.GET.get("date", None)
+    search_q = request.GET.get("q", None)
+
     # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request"):
+        query_params = request.GET.copy()
+        users = get_seller_user_objects(
+            request, context["user"], context["seller"], search_q=search_q
+        )
+        if date:
+            users = users.filter(date_joined__date=date)
+        users = users.order_by("-date_joined")
+
+        user_lst = []
+        for user in users:
+            user_dict = {}
+            user_dict["user"] = user
+            user_dict["meta"] = {
+                "associated_locations": UserAddress.objects.filter(
+                    user_id=user.id
+                ).count()
+            }
+            print(user.user_group.name)
+            user_lst.append(user_dict)
+
+        paginator = Paginator(user_lst, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"{reverse('supplier_users')}?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"{reverse('supplier_users')}?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+        return render(request, "supplier_dashboard/snippets/users_table.html", context)
+
     query_params = request.GET.copy()
-    users = get_seller_user_objects(request, context["user"], context["seller"])
-    if date:
-        users = users.filter(date_joined__date=date)
-    users = users.order_by("-date_joined")
-
-    user_lst = []
-    for user in users:
-        user_dict = {}
-        user_dict["user"] = user
-        user_dict["meta"] = {
-            "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
-        }
-        user_lst.append(user_dict)
-
-    paginator = Paginator(user_lst, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
-
-    if page_number is None:
-        page_number = 1
+    if query_params.get("tab", None) is not None:
+        context["users_table_link"] = request.get_full_path()
     else:
-        page_number = int(page_number)
+        # Else load pending tab as default
+        context["users_table_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
 
-    query_params["p"] = 1
-    context["page_start_link"] = (
-        f"{reverse('supplier_users')}?{query_params.urlencode()}"
-    )
-    query_params["p"] = page_number
-    context["page_current_link"] = (
-        f"{reverse('supplier_users')}?{query_params.urlencode()}"
-    )
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = (
-            f"{reverse('supplier_users')}?{query_params.urlencode()}"
-        )
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = (
-            f"{reverse('supplier_users')}?{query_params.urlencode()}"
-        )
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"{reverse('supplier_users')}?{query_params.urlencode()}"
     return render(request, "supplier_dashboard/users.html", context)
 
 
@@ -1025,6 +1054,22 @@ def user_detail(request, user_id):
         context["form"] = form
 
     return render(request, "supplier_dashboard/user_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def user_reset_password(request, user_id):
+    # context = get_user_context(request)
+    if request.method == "POST":
+        try:
+            user = User.objects.get(id=user_id)
+            if not user.redirect_url:
+                user.redirect_url = "/supplier/"
+                user.save()
+            user.reset_password()
+        except User.DoesNotExist:
+            return HttpResponse("User not found", status=404)
+
+    return HttpResponse(status=204)
 
 
 @login_required(login_url="/admin/login/")
