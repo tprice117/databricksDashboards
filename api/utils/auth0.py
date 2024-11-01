@@ -61,6 +61,8 @@ def get_user_from_email(email: str):
     json = response.json()
     # NOTE: Hitting KeyError json[0] here. Log this with email
     try:
+        if "error" in json:
+            raise ValueError(json.get("message", "Error retrieving user from auth0"))
         return json[0]["user_id"] if len(json) > 0 and "user_id" in json[0] else None
     except Exception as e:
         logger.error(f"get_user_from_email: [{email}]-[{json}]-[{e}]", exc_info=e)
