@@ -55,11 +55,22 @@ def order_origination(request):
         for item in year_months
     ]
 
+    # Calculate the total number of orders by staff and non-staff users
+    total_orders_by_staff_user = sum(orders_by_staff_user_by_month_data)
+    total_orders_by_non_staff_user = sum(orders_by_non_staff_user_by_month_data)
+
+    # Prepare data for the pie chart
+    pie_chart_data = {
+        "labels": ["Internally-Created Orders", "Customer-Created Orders"],
+        "data": [total_orders_by_staff_user, total_orders_by_non_staff_user],
+    }
+
     # Display the data in a chart.
     context = {}
     context["chart_labels"] = [
         f"{item['month'].month}/{item['year'].year}" for item in year_months
     ]
+    context["pie_chart_data"] = pie_chart_data
     context["chart_data"] = orders_by_staff_user_by_month_data
     context["chart_scheduled"] = orders_by_non_staff_user_by_month_data
 
