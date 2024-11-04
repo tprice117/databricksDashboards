@@ -41,6 +41,28 @@ def create_user(email: str):
     return response.json()["user_id"] if "user_id" in response.json() else None
 
 
+def update_user_email(user_id: str, email: str):
+    user_data = {
+        "email": email,
+        "verify_email": True,
+        "email_verified": False,
+        "connection": "Username-Password-Authentication",
+        "client_id": settings.AUTH0_CLIENT_ID,
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "authorization": "Bearer " + get_auth0_access_token(),
+    }
+    response = requests.patch(
+        "https://" + settings.AUTH0_DOMAIN + "/api/v2/users/" + user_id,
+        json=user_data,
+        headers=headers,
+    )
+    if response.status_code != 200:
+        raise ValueError(response.text)
+    return response.json()
+
+
 def get_user_data(user_id: str):
     headers = {"authorization": "Bearer " + get_auth0_access_token()}
     response = requests.get(

@@ -3099,21 +3099,55 @@ def user_reset_password(request, user_id):
 @catch_errors()
 def user_update_email(request, user_id):
     # context = get_user_context(request)
-    context = {}
-    context["user"] = User.objects.get(id=user_id)
-    if not request.user.is_superuser:
-        messages.error(request, "You do not have permission to update emails.")
-        return HttpResponseRedirect(reverse("customer_users"))
+    # from django.shortcuts import get_object_or_404
+    from api.utils import auth0
 
-    if request.method == "POST":
-        context["form"] = UserInviteForm(request.POST, request.FILES)
-        if context["form"].is_valid():
-            pass
+    context = {}
+    # context["user"] = get_object_or_404(User, pk=user_id)
+    try:
+        context["user"] = User.objects.get(id=user_id)
+        if not request.user.is_superuser:
+            messages.error(request, "You do not have permission to update emails.")
+            return HttpResponseRedirect(reverse("customer_users"))
+
+        if request.method == "POST":
+            context["form"] = UserUpdateEmailForm(request.POST, request.FILES)
+            if context["form"].is_valid():
+                # TODO: Make sure this email is not used
+                new_email = context["form"].cleaned_data.get("email")
+                try:
+                    # validate_email(new_email)
+                    if User.objects.filter(email=new_email.casefold()).exists():
+                        messages.error(request, "User with that email already exists.")
+                        context["error"] = "User with that email already exists."
+                        context["css_class"] = "form-error"
+                    else:
+                        auth0.update_user_email(context["user"].user_id, new_email)
+                        context["user"].email = new_email
+                        context["user"].save()
+                        messages.success(request, "Successfully updated email!")
+                except ValidationError as e:
+                    messages.error(request, f"{e}")
+                    context["error"] = f"{e}"
+                    context["css_class"] = "form-error"
+                except Exception as e:
+                    messages.error(request, f"Error updating email: {e}")
+                    context["error"] = f"Error updating email: {e}"
+                    context["css_class"] = "form-error"
+            else:
+                raise InvalidFormError(context["form"], "Invalid UserUpdateEmailForm")
         else:
-            pass
+            context["form"] = UserUpdateEmailForm()
+    except InvalidFormError as e:
+        # This will let bootstrap know to highlight the fields with errors.
+        for field in e.form.errors:
+            if e.form.fields[field].widget.attrs.get("class", None) is None:
+                e.form.fields[field].widget.attrs["class"] = "is-invalid"
+            else:
+                e.form.fields[field].widget.attrs["class"] += " is-invalid"
+    except User.DoesNotExist:
+        messages.error(request, "User not found.")
         return HttpResponseRedirect(reverse("customer_users"))
-    else:
-        context["form"] = UserUpdateEmailForm()
 
     return render(request, "customer_dashboard/user_update_email.html", context)
 
