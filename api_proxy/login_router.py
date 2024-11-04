@@ -14,21 +14,36 @@ def post_login_router(request):
     """Redirect to the correct page after login."""
     next_url = request.session.get("next", None)
     if next_url:
+        if not request.user.is_anonymous:
+            if next_url.startswith("/admin/") and not request.user.is_staff:
+                # A non staff user tried to access the admin page, redirect to the customer page.
+                # We could show a 403 page here, but this is more user friendly.
+                del request.session["next"]
+                return redirect(reverse("customer_home"))
+            elif (
+                next_url.startswith("/supplier/")
+                and getattr(request.user.user_group, "seller", None) is None
+            ):
+                # A customer tried to access the supplier page, redirect to the customer page.
+                # TODO: We should probably show a page to signup as a supplier here.
+                del request.session["next"]
+                return redirect(reverse("customer_home"))
         del request.session["next"]
         response = redirect(next_url)
         return response
 
     if request.user.is_anonymous:
-        return redirect(reverse("admin:index"))
+        # The user is anonymous, so assume they are a customer.
+        return redirect(reverse("customer_home"))
     if request.user.is_staff:
-        return redirect(reverse("admin:index"))
+        return redirect(reverse("customer_home"))
     elif hasattr(request.user.user_group, "seller"):
         return redirect(reverse("supplier_bookings"))
     elif request.user.user_group:
         return redirect(reverse("customer_home"))
     else:
-        # Show "Nothing to see here" page
-        return HttpResponse("Nothing to see here")
+        # TODO: Maybe add page with links to the correct pages or simply redirect to app.
+        return redirect(reverse("customer_home"))
 
 
 def login_view(request):
@@ -61,6 +76,8 @@ def login_redirect_view(request: HttpRequest):
             # TODO: Test this, but maybe it redirect_url should be deleted after use, so that subsequent
             # logins don't perform this, allowing the user to return to the last page they were on, on login.
             return redirect(request.user.redirect_url)
+        else:
+            return post_login_router(request)
     return redirect(f"{settings.BASE_URL}/login")
 
 

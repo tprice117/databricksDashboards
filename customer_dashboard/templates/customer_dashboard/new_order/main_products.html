@@ -20,8 +20,10 @@
                             style="border-radius: 37px 37px 0 0;"
                             src="{% if main_product.product.image_del %}
                                 {{ main_product.product.image_del }}
+                            {% elif main_product_category.icon %}
+                                {{ main_product_category.icon.url }}
                             {% else %}
-                                {% static 'customer_dashboard/img/dogs/image3.jpeg' %}
+                                {% static 'customer_dashboard/img/logo.png' %}
                             {% endif %}" />
                         <div class="card-body" style="padding-top: 0px;padding-right: 0px;padding-left: 0px;">
                             <div class="row">
@@ -48,5 +50,8 @@
             <div class="col"></div>
             <div class="col"></div>
         </div>
+        {% if not main_products %}
+            {% include 'customer_dashboard/new_order/chat_info_bar.html' %}
+        {% endif %}
     </div>
 {% endblock %}

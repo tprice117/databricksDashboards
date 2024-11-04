@@ -440,7 +440,7 @@ class QuoteUtils:
                 "schedule_window": order.schedule_window,
             }
             if not item["schedule_window"]:
-                if item.order.order_group.time_slot:
+                if order.order_group.time_slot:
                     item["schedule_window"] = (
                         f"{order.order_group.time_slot.name} ({order.order_group.time_slot.start}-{order.order_group.time_slot.end})"
                     )
@@ -589,6 +589,9 @@ class QuoteUtils:
                 )
 
                 multi_step.append(item)
+            else:
+                # This is likely Junk Removal (a special service since no asset remains with the user)
+                two_step.append(item)
 
         subject = (
             "Downstream | Quote | " + order.order_group.user_address.formatted_address()

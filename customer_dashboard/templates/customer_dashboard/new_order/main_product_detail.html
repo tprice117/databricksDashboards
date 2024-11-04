@@ -99,14 +99,16 @@
 {% block content %}
     <div class="container-xxl">
         <h3 class="text-dark mb-1">New Booking</h3>
-        <div class="row">
+        <div class="row row-cols-1 row-cols-sm-1 row-cols-md-2">
             <div class="col">
                 <img class="img-fluid"
                     style="border-radius: 37px;"
                     src="{% if main_product.image_del %}
                         {{ main_product.image_del }}
+                    {% elif main_product.main_product_category.icon %}
+                        {{ main_product.main_product_category.icon.url }}
                     {% else %}
-                        {% static 'customer_dashboard/img/dogs/image2.jpeg' %}
+                        {% static 'customer_dashboard/img/logo.png' %}
                     {% endif %}" />
             </div>
             <div class="col mb-4">
@@ -123,7 +125,7 @@
                     {% endfor %}
                     <!-- Include the visible fields -->
                     {% if user_addresses|length < 20 %}
-                        <label for="user_address" class="form-label">Select Address</label>
+                        <label for="user_address" class="form-label">Select Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}?return_to={{ request.get_full_path }}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a></label>
                         <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
                             <optgroup label="Your added locations">
                                 {% for user_address in user_addresses %}
@@ -137,7 +139,7 @@
                         </select>
                     {% else %}
                         <div class="dropdown mb-3">
-                            <label for="user_address-search" class="form-label">Search Address <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+                            <label for="user_address-search" class="form-label">Search Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a> <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
                             {% if selected_user_address %}
                                 <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" value="{{ selected_user_address.name }}" hx-post="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
                                 <!-- Hidden input field for user_address ID is added by forms.py with id=id_user_address -->

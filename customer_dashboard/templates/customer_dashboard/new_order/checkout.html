@@ -352,62 +352,47 @@
                 <h4 class="card-title">Select Payment Method <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span><button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
             </div>
             <div class="card-body">
-                {% if user_address.user_group.credit_line_limit and user_address.user_group.credit_line_limit != 0 %}
-                    {% if user_address.user_group.credit_limit_remaining > 0 %}
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="form-check">
-                                    <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" value="paylater" required checked>
-                                    <div class="row">
-                                        <div class="col">
-                                            <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
-                                        </div>
-                                        <div class="col">
-                                            <p class="text-end" style="margin-bottom: 0px;"><span class="badge bg-success">${{ user_address.user_group.credit_limit_remaining|floatformat:2|intcomma }} Available</span></p>
-                                        </div>
-                                    </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-check">
+                            {% if user_address.user_group.credit_line_limit and user_address.user_group.credit_limit_remaining > 0 %}
+                                <input form="checkoutForm" class="form-check-input" type="radio" name="payment_method" value="paylater" required checked>
+                            {% endif %}
+                            <div class="row">
+                                <div class="col-5">
+                                    <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
                                 </div>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="form-check">
-                                    <div class="row">
-                                        <div class="col">
-                                            <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
+                                <div class="col-7">
+                                    {% if credit_application and credit_application.status == "PENDING" %}
+                                        <p class="text-end mb-0">Thank you for your application! Our team will review and reach out once we have a decision in the next 24-48 hours. If you need this booking sooner please use the "Pay Now" button.</p>
+                                    {% else %}
+                                        <div class="row align-items-center justify-content-end">
+                                            <div class="col-auto">
+                                                {% if user_address.user_group.credit_line_limit and user_address.user_group.credit_limit_remaining > 0 %}
+                                                    <span style="margin-bottom: 0px;"><span class="badge bg-success">${{ user_address.user_group.credit_limit_remaining|floatformat:2|intcomma }} Available</span></span>
+                                                {% elif user_address.user_group.credit_line_limit and user_address.user_group.credit_limit_remaining < 0 %}
+                                                    <span style="margin-bottom: 0px;"><span class="badge bg-danger">${{ user_address.user_group.credit_limit_remaining|floatformat:2|intcomma }} Over</span></span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-auto">
+                                                <a class="btn btn-sm btn-danger" href="{% url 'customer_credit_application' %}?return_to={{ request.get_full_path }}">
+                                                    <i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;
+                                                    {% if user_address.user_group.credit_line_limit == 0 %}
+                                                        Denied, re-apply
+                                                    {% elif user_address.user_group.credit_limit_remaining < 0 or user_address.user_group.credit_limit_remaining > 0 %}
+                                                        Request Increase
+                                                    {% else %}
+                                                        Apply
+                                                    {% endif %}
+                                                </a>
+                                            </div>
                                         </div>
-                                        <div class="col">
-                                            <p class="text-end" style="margin-bottom: 0px;"><span class="badge bg-danger">${{ user_address.user_group.credit_limit_remaining|floatformat:2|intcomma }} Over</span></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% else %}
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="form-check">
-                                <div class="row">
-                                    <div class="col">
-                                        <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
-                                    </div>
-                                    <div class="col">
-                                        <p class="text-end" style="margin-bottom: 0px;"><span class="badge bg-info">
-                                            {% if user_address.user_group.credit_line_limit == 0 %}
-                                                Denied, resend application
-                                            {% else %}
-                                                Send Application
-                                            {% endif %}
-                                            </span>
-                                        </p>
-                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
-                {% endif %}
+                </div>
                 {% for payment_method in payment_methods %}
                     {% include 'customer_dashboard/snippets/payment_method_item.html' %}
                 {% endfor %}
@@ -436,15 +421,14 @@
             <input type="hidden" name="total" value="{{ total }}">
             {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
             <div class="col-12 mt-4 mb-4">
-                {% if request.user.is_staff %}
+                By checking out, you agree to our <button class="btn btn-link ps-1" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal">Rental Terms of Service.</button>
+                <!-- Only customers and staff superusers can checkout -->
+                {% if request.user.is_staff and request.user.is_superuser %}
                     <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
-                {% else %}
-                    {% if show_terms %}
-                        <button class="btn btn-danger float-end me-2 ms-2" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal"><i class="fas fa-signature"></i>&nbsp;Sign Agreement</button>
-                    {% else %}
-                        <button class="btn btn-danger float-end me-2 ms-2" type="button" data-bs-target="#terms-agreement-modal" data-bs-toggle="modal"><i class="far fa-eye"></i>&nbsp;See Agreement</button>
-                    {% endif %}
-                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" {% if show_terms %}disabled=""{% endif %}>Checkout</button>
+                {% elif request.user.is_staff and not has_delivery %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
+                {% elif not request.user.is_staff %}
+                    <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
                 {% endif %}
             </div>
         </form>
@@ -483,8 +467,10 @@
                                                     height="95"
                                                     src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
                                                         {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                    {% elif item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
+                                                        {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
                                                     {% else %}
-                                                        {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
+                                                        {% static 'customer_dashboard/img/logo.png' %}
                                                     {% endif %}" />
                                             </div>
                                             <div class="col">
@@ -545,6 +531,7 @@
               <h4 class="modal-title">New Card</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <p>Your card will not be charged until the booking has been completed.</p>
               <div id="cardNumber"></div>
               <div style="display: flex;">
                 <div id="cardExpirationDate" style="width: 100%;"></div>

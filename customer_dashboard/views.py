@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 import requests
 import stripe
 from django.conf import settings
+from django.db.models import F
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -18,7 +19,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -57,6 +58,8 @@ from api.models import (
     UserAddress,
     UserAddressType,
     UserGroup,
+    UserGroupLegal,
+    UserGroupCreditApplication,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -90,6 +93,7 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
+    CreditApplicationForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -1004,6 +1008,14 @@ def new_order_4(request):
     context["max_discount_100"] = round(
         float(context["product"].main_product.max_discount) * 100, 1
     )
+    discount = 0
+    context["market_discount"] = (
+        context["product"].main_product.max_discount * Decimal(0.8)
+    ) * 100
+    if not request.user.is_staff:
+        discount = context["market_discount"]
+
+    context["discount"] = discount
 
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
@@ -1031,6 +1043,7 @@ def new_order_4(request):
                 shift_count=(
                     context["shift_count"] if context["shift_count"] else None
                 ),
+                discount=discount,
             )
 
             price_data = PricingEngineResponseSerializer(pricing).data
@@ -1162,6 +1175,16 @@ def new_order_5(request):
                 time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
                 if time_slot:
                     order_group.time_slot = time_slot
+            # If Junk Removal, then set the Booking removal date to the same as the delivery date (no asset stays on site).
+            if (
+                seller_product_location.seller_product.product.main_product.has_rental
+                is False
+                and seller_product_location.seller_product.product.main_product.has_rental_one_step
+                is False
+                and seller_product_location.seller_product.product.main_product.has_rental_multi_step
+                is False
+            ):
+                order_group.end_date = delivery_date
             order_group.save()
 
             # Create the order (Let submitted on null, this indicates that the order is in the cart)
@@ -1375,7 +1398,10 @@ def new_order_5(request):
                 context["cart"][uaid]["ids"].append(str(order.id))
                 context["cart"][uaid]["count"] += 1
                 context["cart"][uaid]["total"] += customer_price
-                if order.order_type == Order.Type.DELIVERY:
+                if (
+                    order.order_type == Order.Type.DELIVERY
+                    or order.order_type == Order.Type.ONE_TIME
+                ):
                     context["cart"][uaid]["show_quote"] = True
                     # # Hide the quote button if this event is part of an active quote.
                     # if order.checkout_order and not order.checkout_order.is_stale:
@@ -1420,28 +1446,6 @@ def new_order_6(request, order_group_id):
     return HttpResponseRedirect(reverse("customer_new_order"))
 
 
-@api_view(["GET"])
-@authentication_classes([])
-@permission_classes([])
-def accept_quote(request):
-    # Accept the quote.
-    cart_id = request.query_params.get("cart_id", None)
-    # try:
-    #     cart = CheckoutOrder.objects.get(id=cart_id)
-    #     cart.quote_accepted_at = timezone.now()
-    #     cart.save()
-    # except Cart.DoesNotExist as e:
-    #     logger.error(
-    #         f"accept_quote: Cart not found for cart_id[{cart_id}]",
-    #         exc_info=e,
-    #     )
-    #     return Response("error", status=status.HTTP_404_NOT_FOUND)
-    # except Exception as e:
-    #     logger.error(f"accept_quote: [{e}]-data[{request.data}]", exc_info=e)
-    #     return Response("error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    return Response("OK", status=status.HTTP_200_OK)
-
-
 @login_required(login_url="/admin/login/")
 @catch_errors()
 def show_quote(request):
@@ -1454,9 +1458,7 @@ def show_quote(request):
     order_id_lst = ast.literal_eval(request.GET.get("ids"))
     checkout_order = QuoteUtils.create_quote(order_id_lst, None, quote_sent=False)
     payload = {"trigger": checkout_order.get_quote()}
-    payload["trigger"][
-        "accept_url"
-    ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
+    payload["trigger"]["accept_url"] = f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
     return render(request, "customer_dashboard/customer_quote.html", payload)
 
 
@@ -1481,7 +1483,7 @@ def cart_send_quote(request):
                 }
                 data["message_data"][
                     "accept_url"
-                ] = f"{settings.BASE_URL}/cart/{checkout_order.user_address_id}/"
+                ] = f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
@@ -1689,6 +1691,193 @@ def checkout_terms_agreement(request, user_address_id):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
+def credit_application(request):
+    context = get_user_context(request)
+    redirect_url = request.GET.get("return_to", None)
+    if redirect_url:
+        request.session["credit_application_return_to"] = redirect_url
+    if not context["user_group"]:
+        messages.error(
+            request,
+            "Unfortunately, we could not find your company in our system. Please contact us.",
+        )
+        # customer_credit_application
+        return HttpResponseRedirect(reverse("customer_cart"))
+    user_group_legal = UserGroupLegal.objects.filter(
+        user_group_id=context["user_group"].id
+    ).first()
+
+    if request.method == "POST":
+        try:
+            form = CreditApplicationForm(request.POST, request.FILES)
+            context["form"] = form
+            if context["form"].is_valid():
+                accepts_terms = form.cleaned_data.get("accepts_terms")
+                if not accepts_terms:
+                    messages.error(
+                        request,
+                        "Please accept the Terms and Conditions to authorize a credit check.",
+                    )
+                    return render(
+                        request, "customer_dashboard/credit_application.html", context
+                    )
+                # Create or Update UserGroupLegal
+                save_user_group_legal = False
+                if not user_group_legal:
+                    user_group_legal = UserGroupLegal(
+                        user_group=context["user_group"], country="US"
+                    )
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("structure")
+                    and form.cleaned_data.get("structure") != user_group_legal.structure
+                ):
+                    user_group_legal.structure = form.cleaned_data.get("structure")
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("tax_id")
+                    and form.cleaned_data.get("tax_id") != user_group_legal.tax_id
+                ):
+                    user_group_legal.tax_id = form.cleaned_data.get("tax_id")
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("legal_name")
+                    and form.cleaned_data.get("legal_name") != user_group_legal.name
+                ):
+                    user_group_legal.name = form.cleaned_data.get("legal_name")
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("doing_business_as")
+                    and form.cleaned_data.get("doing_business_as")
+                    != user_group_legal.doing_business_as
+                ):
+                    user_group_legal.doing_business_as = form.cleaned_data.get(
+                        "doing_business_as"
+                    )
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("industry")
+                    and form.cleaned_data.get("industry") != user_group_legal.industry
+                ):
+                    user_group_legal.industry = form.cleaned_data.get("industry")
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("years_in_business")
+                    and form.cleaned_data.get("years_in_business")
+                    != user_group_legal.years_in_business
+                ):
+                    user_group_legal.years_in_business = form.cleaned_data.get(
+                        "years_in_business"
+                    )
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("street")
+                    and form.cleaned_data.get("street") != user_group_legal.street
+                ):
+                    user_group_legal.street = form.cleaned_data.get("street")
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("city")
+                    and form.cleaned_data.get("city") != user_group_legal.city
+                ):
+                    user_group_legal.city = form.cleaned_data.get("city")
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("state")
+                    and form.cleaned_data.get("state") != user_group_legal.state
+                ):
+                    user_group_legal.state = form.cleaned_data.get("state")
+                    save_user_group_legal = True
+                if (
+                    form.cleaned_data.get("postal_code")
+                    and form.cleaned_data.get("postal_code")
+                    != user_group_legal.postal_code
+                ):
+                    user_group_legal.postal_code = form.cleaned_data.get("postal_code")
+                    save_user_group_legal = True
+                if save_user_group_legal:
+                    user_group_legal.save()
+
+                user_group_credit_application = UserGroupCreditApplication(
+                    user_group=context["user_group"],
+                    estimated_monthly_revenue=form.cleaned_data.get(
+                        "estimated_monthly_revenue"
+                    ),
+                    estimated_monthly_spend=form.cleaned_data.get(
+                        "estimated_monthly_spend"
+                    ),
+                )
+                if form.cleaned_data.get("increase_credit"):
+                    if context["user_group"].credit_line_limit:
+                        requested_credit_limit = context["user_group"].credit_line_limit
+                    requested_credit_limit += form.cleaned_data.get("increase_credit")
+                    user_group_credit_application.requested_credit_limit = (
+                        requested_credit_limit
+                    )
+                user_group_credit_application.save()
+                messages.success(
+                    request,
+                    'Thank you for your application! Our team will review and reach out once we have a decision in the next 24-48 hours. If you need this booking sooner please use the "Pay Now" button.',
+                )
+                redirect_url = request.session.get(
+                    "credit_application_return_to", reverse("customer_companies")
+                )
+                if "credit_application_return_to" in request.session:
+                    del request.session["credit_application_return_to"]
+                return HttpResponseRedirect(redirect_url)
+            else:
+                # This will let bootstrap know to highlight the fields with errors.
+                for field in form.errors:
+                    form[field].field.widget.attrs["class"] += " is-invalid"
+                messages.error(
+                    request, "Error saving, please contact us if this continues."
+                )
+        except Exception as e:
+            messages.error(
+                request, f"Error saving, please contact us if this continues. [{e}]"
+            )
+            logger.error(f"credit_application: [{e}]", exc_info=e)
+    else:
+        credit_application = (
+            context["user_group"].credit_applications.order_by("-created_on").first()
+        )
+        allow_increase = False
+        if (
+            context["user_group"].credit_line_limit
+            and context["user_group"].credit_line_limit != 0
+        ):
+            # Allow credit increase
+            allow_increase = True
+        initial_data = {}
+        if credit_application:
+            initial_data["estimated_monthly_revenue"] = (
+                credit_application.estimated_monthly_revenue
+            )
+            initial_data["estimated_monthly_spend"] = (
+                credit_application.estimated_monthly_spend
+            )
+
+        if user_group_legal:
+            initial_data["structure"] = user_group_legal.structure
+            initial_data["tax_id"] = user_group_legal.tax_id
+            initial_data["legal_name"] = user_group_legal.name
+            initial_data["doing_business_as"] = user_group_legal.doing_business_as
+            initial_data["industry"] = user_group_legal.industry
+            initial_data["years_in_business"] = user_group_legal.years_in_business
+            initial_data["street"] = user_group_legal.street
+            initial_data["city"] = user_group_legal.city
+            initial_data["state"] = user_group_legal.state
+            initial_data["postal_code"] = user_group_legal.postal_code
+        context["form"] = CreditApplicationForm(
+            initial=initial_data,
+            allow_increase=allow_increase,
+        )
+
+    return render(request, "customer_dashboard/credit_application.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
 def checkout(request, user_address_id):
     context = get_user_context(request)
     context["user_address"] = UserAddress.objects.filter(id=user_address_id).first()
@@ -1696,22 +1885,19 @@ def checkout(request, user_address_id):
     # Get all orders in the cart for this user_address_id.
     orders = context["user_address"].get_cart()
     context["orders"] = orders
+    if context["user_group"]:
+        context["credit_application"] = (
+            context["user_group"].credit_applications.order_by("-created_on").first()
+        )
 
     if request.method == "POST":
-        for order in orders:
-            if not request.user.is_staff and not order.order_group.is_agreement_signed:
-                messages.error(
-                    request,
-                    "Please sign the agreement before checking out.",
-                )
-                return HttpResponseRedirect(
-                    reverse(
-                        "customer_checkout",
-                        kwargs={
-                            "user_address_id": user_address_id,
-                        },
-                    )
-                )
+        if not is_impersonating(request):
+            for order in orders:
+                if not order.order_group.is_agreement_signed:
+                    # NOTE: Sign the agreement with signed in user, no impersonation allowed.
+                    order.order_group.agreement_signed_by = request.user
+                    order.order_group.agreement_signed_on = timezone.now()
+                    order.order_group.save()
         # Save access details to the user address.
         payment_method_id = request.POST.get("payment_method")
         if payment_method_id:
@@ -1766,11 +1952,17 @@ def checkout(request, user_address_id):
     context["estimated_taxes"] = 0
     context["total"] = 0
     context["show_terms"] = False
+    context["has_delivery"] = False
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
         if not order.order_group.is_agreement_signed:
             context["show_terms"] = True
+        if (
+            order.order_type == Order.Type.DELIVERY
+            or order.order_type == Order.Type.ONE_TIME
+        ):
+            context["has_delivery"] = True
         customer_price = order.customer_price()
         customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full
@@ -1946,7 +2138,7 @@ def order_group_swap(request, order_group_id, is_removal=False):
 @catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
-    pagination_limit = 50
+    pagination_limit = 25
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -1996,6 +2188,23 @@ def my_order_groups(request):
         if location_id:
             # TODO: Ask if location is user_address_id or seller_product_seller_location__seller_location_id
             order_groups = order_groups.filter(user_address_id=location_id)
+
+        # Select only order_groups where the last order.submitted_on is not null.
+        order_groups = order_groups.annotate(
+            last_order_submitted_on=Max("orders__submitted_on")
+        ).filter(last_order_submitted_on__isnull=False)
+
+        # Active orders are those that have an end_date in the future or are null (recurring orders).
+        # if is_active: then only show order_groups where end_date is in the future or is null.
+        if is_active:
+            order_groups = order_groups.filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=datetime.date.today())
+            )
+        else:
+            order_groups = order_groups.filter(
+                Q(end_date__isnull=False) & Q(end_date__lt=datetime.date.today())
+            )
+
         # Select related fields to reduce db queries.
         order_groups = order_groups.select_related(
             "seller_product_seller_location__seller_product__seller",
@@ -2005,18 +2214,7 @@ def my_order_groups(request):
         # order_groups = order_groups.prefetch_related("orders")
         order_groups = order_groups.order_by("-end_date")
 
-        # Active orders are those that have an end_date in the future or are null (recurring orders).
-        today = datetime.date.today()
-        order_groups_lst = []
-        for order_group in order_groups:
-            if order_group.end_date and order_group.end_date < today:
-                if not is_active:
-                    order_groups_lst.append(order_group)
-            else:
-                if is_active:
-                    order_groups_lst.append(order_group)
-
-        paginator = Paginator(order_groups_lst, pagination_limit)
+        paginator = Paginator(order_groups, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["page_obj"] = page_obj
 
@@ -2270,7 +2468,7 @@ def locations(request):
     if query_params.get("tab", None) is not None:
         context["locations_table_link"] = request.get_full_path()
     else:
-        # Else load pending tab as default
+        # Else load pending tab as default. customer_locations
         context["locations_table_link"] = (
             f"{reverse('customer_companies')}?{query_params.urlencode()}"
         )
@@ -2552,6 +2750,19 @@ def new_location(request):
             f"No customer selected! Location would be added to your account [{request.user.email}].",
         )
 
+    street = request.GET.get("street")
+    city = request.GET.get("city")
+    state = request.GET.get("state")
+    postal_code = request.GET.get("zip")
+    # This is a request from our website, so we want to redirect back to the bookings page on save.
+    if street or city or state or postal_code:
+        request.session["new_location_return_to"] = reverse("customer_new_order")
+
+    # If there is a return_to url, then save it in the session.
+    redirect_url = request.GET.get("return_to", None)
+    if redirect_url:
+        request.session["new_location_return_to"] = redirect_url
+
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
         messages.error(request, "Only admins can create new locations.")
@@ -2611,14 +2822,18 @@ def new_location(request):
                         user_address=save_model,
                     )
                 messages.success(request, "Successfully saved!")
-                return redirect(
+                redirect_url = request.session.get(
+                    "new_location_return_to",
                     reverse(
                         "customer_location_detail",
                         kwargs={
                             "location_id": save_model.id,
                         },
-                    )
+                    ),
                 )
+                if "new_location_return_to" in request.session:
+                    del request.session["new_location_return_to"]
+                return HttpResponseRedirect(redirect_url)
             else:
                 messages.info(request, "No changes detected.")
                 return HttpResponseRedirect(reverse("customer_locations"))
@@ -2633,8 +2848,18 @@ def new_location(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
+        initial_data = {}
+        if street:
+            initial_data["street"] = street
+        if city:
+            initial_data["city"] = city
+        if state:
+            initial_data["state"] = state
+        if postal_code:
+            initial_data["postal_code"] = postal_code
+
         context["user_address_form"] = UserAddressForm(
-            user=context["user"], auth_user=request.user
+            initial=initial_data, user=context["user"], auth_user=request.user
         )
 
     return render(request, "customer_dashboard/location_new_edit.html", context)
@@ -2973,46 +3198,97 @@ def invoices(request):
         page_number = request.GET.get("p")
     date = request.GET.get("date", None)
     location_id = request.GET.get("location_id", None)
-    # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
     query_params = request.GET.copy()
-    invoices = get_invoice_objects(request, context["user"], context["user_group"])
-    if location_id:
-        invoices = invoices.filter(user_address_id=location_id)
-    if date:
-        invoices = invoices.filter(due_date__date=date)
-    invoices = invoices.order_by("-due_date")
-    today = datetime.date.today()
-    context["total_paid"] = 0
-    context["past_due"] = 0
-    context["total_open"] = 0
-    for invoice in invoices:
-        context["total_paid"] += invoice.amount_paid
-        context["total_open"] += invoice.amount_remaining
-        if invoice.due_date and invoice.due_date.date() > today:
-            context["past_due"] += invoice.amount_remaining
+    search_q = request.GET.get("q", None)
+    # This is an HTMX request, so respond with html snippet
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
 
-    paginator = Paginator(invoices, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
+        invoices = get_invoice_objects(request, context["user"], context["user_group"])
+        if location_id:
+            invoices = invoices.filter(user_address_id=location_id)
+        if date:
+            invoices = invoices.filter(due_date__date=date)
+        if search_q:
+            invoices = invoices.filter(
+                Q(number__icontains=search_q)
+                | Q(invoice_id__icontains=search_q)
+                | Q(user_address__name__icontains=search_q)
+                | Q(user_address__project_id__icontains=search_q)
+                | Q(user_address__street__icontains=search_q)
+                | Q(user_address__city__icontains=search_q)
+                | Q(user_address__state__icontains=search_q)
+                | Q(user_address__postal_code__icontains=search_q)
+            )
+        invoices = invoices.order_by(F("due_date").desc(nulls_last=True))
+        today = timezone.now().today().date()
+        if tab:
+            if tab == "past_due":
+                # Get all invoices that are past due.
+                invoices = invoices.filter(
+                    Q(due_date__date__lt=today) & Q(amount_remaining__gt=0)
+                )
+            else:
+                invoices = invoices.filter(status=tab)
+        else:
+            # Get all invoices. Calculate the total paid, past due, and total open invoices.
+            context["total_paid"] = 0
+            context["past_due"] = 0
+            context["total_open"] = 0
+            for invoice in invoices:
+                amount_paid = invoice.amount_paid
+                amount_remaining = invoice.amount_remaining
+                if amount_paid == 0 and invoice.status == Invoice.Status.PAID:
+                    amount_paid = invoice.total
+                    amount_remaining = 0
+                context["total_paid"] += amount_paid
+                context["total_open"] += amount_remaining
+                if invoice.due_date and invoice.due_date.date() > today:
+                    context["past_due"] += amount_remaining
 
-    if page_number is None:
-        page_number = 1
+        paginator = Paginator(invoices, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
+        return render(
+            request, "customer_dashboard/snippets/invoices_table.html", context
+        )
+
+    if query_params.get("tab", None) is not None:
+        context["data_link"] = request.get_full_path()
     else:
-        page_number = int(page_number)
-
-    query_params["p"] = 1
-    context["page_start_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    query_params["p"] = page_number
-    context["page_current_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = f"/customer/invoices/?{query_params.urlencode()}"
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"/customer/invoices/?{query_params.urlencode()}"
+        # Else load pending tab as default
+        context["data_link"] = (
+            f"{reverse('customer_invoices')}?{query_params.urlencode()}"
+        )
     return render(request, "customer_dashboard/invoices.html", context)
 
 

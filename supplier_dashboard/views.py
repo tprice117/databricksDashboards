@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -224,7 +225,9 @@ def get_user(request: HttpRequest) -> User:
     return user
 
 
-def get_seller_user_objects(request: HttpRequest, user: User, seller: Seller):
+def get_seller_user_objects(
+    request: HttpRequest, user: User, seller: Seller, search_q: str = None
+):
     """Returns the users for the current seller.
 
     If user is:
@@ -248,6 +251,12 @@ def get_seller_user_objects(request: HttpRequest, user: User, seller: Seller):
             seller_users = User.objects.filter(user_group__seller_id=seller.id)
         else:
             seller_users = User.objects.filter(user_group__seller__isnull=False)
+    if search_q:
+        seller_users = seller_users.filter(
+            Q(first_name__icontains=search_q)
+            | Q(last_name__icontains=search_q)
+            | Q(email__icontains=search_q)
+        )
     return seller_users
 
 
@@ -866,52 +875,72 @@ def users(request):
         page_number = request.GET.get("p")
     # user_id = request.GET.get("user_id", None)
     date = request.GET.get("date", None)
+    search_q = request.GET.get("q", None)
+
     # This is an HTMX request, so respond with html snippet
-    # if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request"):
+        query_params = request.GET.copy()
+        users = get_seller_user_objects(
+            request, context["user"], context["seller"], search_q=search_q
+        )
+        if date:
+            users = users.filter(date_joined__date=date)
+        users = users.order_by("-date_joined")
+
+        user_lst = []
+        for user in users:
+            user_dict = {}
+            user_dict["user"] = user
+            user_dict["meta"] = {
+                "associated_locations": UserAddress.objects.filter(
+                    user_id=user.id
+                ).count()
+            }
+            print(user.user_group.name)
+            user_lst.append(user_dict)
+
+        paginator = Paginator(user_lst, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+
+        query_params["p"] = 1
+        context["page_start_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"{reverse('supplier_users')}?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"{reverse('supplier_users')}?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
+        return render(request, "supplier_dashboard/snippets/users_table.html", context)
+
     query_params = request.GET.copy()
-    users = get_seller_user_objects(request, context["user"], context["seller"])
-    if date:
-        users = users.filter(date_joined__date=date)
-    users = users.order_by("-date_joined")
-
-    user_lst = []
-    for user in users:
-        user_dict = {}
-        user_dict["user"] = user
-        user_dict["meta"] = {
-            "associated_locations": UserAddress.objects.filter(user_id=user.id).count()
-        }
-        user_lst.append(user_dict)
-
-    paginator = Paginator(user_lst, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-    context["page_obj"] = page_obj
-
-    if page_number is None:
-        page_number = 1
+    if query_params.get("tab", None) is not None:
+        context["users_table_link"] = request.get_full_path()
     else:
-        page_number = int(page_number)
+        # Else load pending tab as default
+        context["users_table_link"] = (
+            f"{reverse('supplier_users')}?{query_params.urlencode()}"
+        )
 
-    query_params["p"] = 1
-    context["page_start_link"] = (
-        f"{reverse('supplier_users')}?{query_params.urlencode()}"
-    )
-    query_params["p"] = page_number
-    context["page_current_link"] = (
-        f"{reverse('supplier_users')}?{query_params.urlencode()}"
-    )
-    if page_obj.has_previous():
-        query_params["p"] = page_obj.previous_page_number()
-        context["page_prev_link"] = (
-            f"{reverse('supplier_users')}?{query_params.urlencode()}"
-        )
-    if page_obj.has_next():
-        query_params["p"] = page_obj.next_page_number()
-        context["page_next_link"] = (
-            f"{reverse('supplier_users')}?{query_params.urlencode()}"
-        )
-    query_params["p"] = paginator.num_pages
-    context["page_end_link"] = f"{reverse('supplier_users')}?{query_params.urlencode()}"
     return render(request, "supplier_dashboard/users.html", context)
 
 
@@ -1028,6 +1057,22 @@ def user_detail(request, user_id):
 
 
 @login_required(login_url="/admin/login/")
+def user_reset_password(request, user_id):
+    # context = get_user_context(request)
+    if request.method == "POST":
+        try:
+            user = User.objects.get(id=user_id)
+            if not user.redirect_url:
+                user.redirect_url = "/supplier/"
+                user.save()
+            user.reset_password()
+        except User.DoesNotExist:
+            return HttpResponse("User not found", status=404)
+
+    return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
 def new_user(request):
     # TODO: Add a form to select one or more SellerLocations to associate the user with.
     context = {}
@@ -1131,6 +1176,7 @@ def bookings(request):
             request, context["user"], context["seller"], exclude_in_cart=False
         )
         query_params = request.GET.copy()
+        my_accounts = request.GET.get("my_accounts")
         # Ensure tab is valid. Default to PENDING if not.
         tab = request.GET.get("tab", Order.Status.PENDING)
         if tab.upper() not in [
@@ -1142,8 +1188,6 @@ def bookings(request):
         ]:
             tab = Order.Status.PENDING
         tab_status = tab.upper()
-        # orders = orders.filter(status=tab_status)
-        # TODO: Check the delay for a seller with large number of orders, like Hillen.
         # if status.upper() != Order.Status.PENDING:
         #     orders = orders.filter(end_date__gt=non_pending_cutoff)
         if link_params.get("service_date", None) is not None:
@@ -1154,36 +1198,44 @@ def bookings(request):
                     "location_id"
                 ]
             )
+        if my_accounts:
+            orders = orders.filter(
+                order_group__user_address__user_group__account_owner_id=request.user.id
+            )
+        # Get the counts for each status at this service date and location (if those exist).
+        pending_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.PENDING)
+            .count()
+        )
+        scheduled_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.SCHEDULED)
+            .count()
+        )
+        complete_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.COMPLETE)
+            .count()
+        )
+        cancelled_count = (
+            orders.exclude(submitted_on__isnull=True)
+            .filter(status=Order.Status.CANCELLED)
+            .count()
+        )
+        cart_count = orders.filter(submitted_on=None).count()
+
+        if tab_status == "CART":
+            orders = orders.filter(submitted_on=None)
+        else:
+            orders = orders.exclude(submitted_on__isnull=True)
+            orders = orders.filter(status=tab_status)
         # Select related fields to reduce db queries.
         orders = orders.select_related(
             "order_group__seller_product_seller_location__seller_product__seller",
             "order_group__user_address",
         )
         orders = orders.order_by(*ordering)
-        status_orders = []
-        # Return the correct counts for each status.
-        pending_count = 0
-        scheduled_count = 0
-        complete_count = 0
-        cancelled_count = 0
-        cart_count = 0
-        for order in orders:
-            if order.submitted_on is None:
-                if tab_status == "CART":
-                    status_orders.append(order)
-            elif order.status == tab_status:
-                status_orders.append(order)
-            if order.submitted_on is None:
-                cart_count += 1
-            elif order.status == Order.Status.PENDING:
-                pending_count += 1
-            # if order.end_date >= non_pending_cutoff:
-            elif order.status == Order.Status.SCHEDULED:
-                scheduled_count += 1
-            elif order.status == Order.Status.COMPLETE:
-                complete_count += 1
-            elif order.status == Order.Status.CANCELLED:
-                cancelled_count += 1
 
         download_link = f"/supplier/bookings/download/?{query_params.urlencode()}"
         context["download_link"] = download_link
@@ -1198,7 +1250,7 @@ def bookings(request):
         <a id="bookings-download-csv" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="{download_link}" hx-swap-oob="true"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate CSV</a>
         """
 
-        paginator = Paginator(status_orders, pagination_limit)
+        paginator = Paginator(orders, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["status"] = {
             "name": tab_status,
@@ -1569,6 +1621,9 @@ def booking_detail(request, order_id):
         order = order.prefetch_related(
             "payouts", "seller_invoice_payable_line_items"
         ).first()
+        if not order:
+            messages.error(request, "Order not found.")
+            return HttpResponseRedirect(reverse("supplier_bookings"))
         context["order"] = order
         seller_location = (
             order.order_group.seller_product_seller_location.seller_location

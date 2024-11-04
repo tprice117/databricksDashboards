@@ -71,10 +71,12 @@ class PricingEngine:
         # the difference between the MainProduct default_take_rate and the
         # minimum_take_rate.
         if discount:
-            if (
-                discount
-                > seller_product_seller_location.seller_product.product.main_product.max_discount
-            ):
+            # Convert the discount to a percentage since discount is in that format 0-100
+            max_discount_100 = (
+                seller_product_seller_location.seller_product.product.main_product.max_discount
+                * 100
+            )
+            if discount > max_discount_100:
                 raise Exception(
                     "Discount cannot be greater than "
                     f"{seller_product_seller_location.seller_product.product.main_product.max_discount}"

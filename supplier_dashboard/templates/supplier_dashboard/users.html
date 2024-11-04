@@ -55,12 +55,28 @@
             {% endif %}
         </div>
         <div class="card shadow">
-            <div class="card-header py-3"></div>
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col">
+                        <p class="text-primary m-0 fw-bold" id="table-title">Users</p>
+                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                    </div>
+                    <div class="col">
+                        <div class="col-md-6" style="margin-left: auto;">
+                            <label for="user-search-filter">Filter by name or email</label>
+                            <input id="user-search-filter" class="form-control" type="search" name="q" hx-push-url="true" hx-get="{% url 'supplier_users' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user-results" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status" />
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card-body">
                 <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0 table-hover" id="dataTable">
+                    <table class="table table-hover my-0" id="user-results" hx-get="{{ users_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
                         <thead>
                             <tr>
+                                {% if request.user.is_staff %}
+                                    <th>Company</th>
+                                {% endif %}
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Type</th>
@@ -68,52 +84,22 @@
                                 <th>Created</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for obj in page_obj %}
-                                {% if not user.is_staff and user.type != 'ADMIN' %}
-                                <tr>
-                                {% else %}
-                                <tr class="clickable-row" onclick="window.location.href='{% url 'supplier_user_detail' user_id=obj.user.id %}'">
-                                    {% endif %}
-                                    <td>
-                                        <div class="d-flex flex-row">
-                                            {% if obj.user.photo %}
-                                                <img class="border rounded-circle img-profile" style="height: 2rem; width: 2rem;" src="{{ obj.user.photo.url }}" />
-                                            {% else %}
-                                                <span class="border rounded-circle img-profile" style="height: 2rem; width: 2rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
-                                            {% endif %}
-                                            <div class="align-self-center ms-2">{{ obj.user.full_name }}</div>
-                                        </div>
-                                    </td>
-                                    <td>{{ obj.user.email }}</td>
-                                    <td>{{ obj.user.type }}</td>
-                                    <td class="text-center">{{ obj.meta.associated_locations }}</td>
-                                    <td>{{ obj.user.date_joined|timezone:"America/Chicago" }} (CT)</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
+                        <tbody></tbody>
                         <tfoot>
                             <tr>
-                                <td>
-                                    <strong>Name</strong>
-                                </td>
-                                <td>
-                                    <strong>Email</strong>
-                                </td>
-                                <td>
-                                    <strong>Type</strong>
-                                </td>
-                                <td>
-                                    <strong>Associated Locations</strong>
-                                </td>
-                                <td>
-                                    <strong>Created</strong>
-                                </td>
+                                {% if request.user.is_staff %}
+                                    <th>Company</th>
+                                {% endif %}
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Associated Locations</th>
+                                <th>Created</th>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-                {% include 'supplier_dashboard/snippets/pagination.html' %}
+                <div class="row invisible" id="users-pagination"></div>
             </div>
         </div>
     </div>

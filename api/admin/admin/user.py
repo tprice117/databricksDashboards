@@ -1,10 +1,12 @@
 import csv
 
 from django.contrib import admin
+from django.db.models import F
 from django.shortcuts import redirect, render
 from django.urls import path
 
 from api.admin.filters import CreatedDateFilter
+from api.admin.filters.user.user_type import UserTypeFilter
 from api.admin.inlines import UserGroupUserInline
 from api.forms import CsvImportForm
 from api.models import Order, User, UserGroup
@@ -14,9 +16,21 @@ from api.models import Order, User, UserGroup
 class UserAdmin(admin.ModelAdmin):
     model = User
     search_fields = ["email", "first_name", "last_name"]
-    list_display = ("email", "first_name", "last_name", "cart_orders", "active_orders")
+    list_display = (
+        "email",
+        "first_name",
+        "last_name",
+        "cart_orders",
+        "active_orders",
+        "last_active",
+    )
+    ordering = [F("last_active").desc(nulls_last=True)]
     autocomplete_fields = ["user_group"]
-    list_filter = (CreatedDateFilter, "user_group")
+    list_filter = (
+        CreatedDateFilter,
+        UserTypeFilter,
+        "user_group",
+    )
     inlines = [
         UserGroupUserInline,
     ]

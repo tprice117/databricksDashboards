@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from .views_new.order_origination import order_origination
 from .views_new.sales_leaderboard import sales_leaderboard, user_sales_detail, user_sales_product_mix, user_sales_top_accounts
 
 urlpatterns = [
@@ -20,6 +21,11 @@ urlpatterns = [
         "payout-reconciliation/",
         views.payout_reconciliation,
         name="payout_reconciliation",
+    ),
+    path(
+        "order-origination/",
+        order_origination,
+        name="order_origination",
     ),
     path(
         "user-sales-detail/<uuid:user_id>/",
