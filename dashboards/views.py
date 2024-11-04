@@ -19,6 +19,7 @@ from django.db.models import (
     CharField,
     Count,
     Func,
+    Q,
 )
 from django.http import JsonResponse
 from django.db.models import Subquery, OuterRef
@@ -544,30 +545,23 @@ def payout_reconciliation(request):
             Abs(F('seller_invoice_amount') - F('supplier_amount')),
             output_field=FloatField()
         ),
-        reconcil_status=Case(
-            When(
-                abs_difference__lt=0.01,
-                then=Value('Reconciled')
-            ),
-            default=Value('Not Reconciled'),
+        reconcil_status=
+        Case(
+            When(seller_invoice_amount=F('supplier_amount'), then=Value("Reconciled")),
+            default=Value("Not Reconciled"),
             output_field=CharField()
         ),
         order_status=Case(
+            When(payout_amount__isnull=True, then=Value("Unpaid")),
             When(
-                payout_amount__isnull=True,
-                then=Value('Unpaid')
+                Q(seller_invoice_amount__isnull=True) & Q(payout_amount=F('seller_invoice_amount')),
+                then=Value("Paid")
             ),
             When(
-                seller_invoice_amount__isnull=True,
-                payout_amount=F('supplier_amount'),
-                then=Value('Paid')
+                Q(payout_amount__gte=F('seller_invoice_amount')),
+                then=Value("Paid")
             ),
-            When(
-                payout_amount__gte=F('seller_invoice_amount'),
-                then=Value('Paid')
-            ),
-            default=Value('Unpaid'),
-            output_field=CharField()
+            default=Value("Unpaid")
         ),
         order_status_comb=Func(
             F('order_status'),

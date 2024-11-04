@@ -48,47 +48,12 @@
     </header>
     <main>
         <section>
-            {{user.id}}
-            {% comment %} Sales details will be displayed here  {% endcomment %}
-            <h2>Sales Information of Past Month</h2>
-            <p>Number of Orders:
-            {{order_count}}
-            </p>
-            <table>
-                <thead>
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 100px;">Order_ID</th>
-                        <th style="padding-right: 100px;">Customer_Price</th>
-                        <th style="padding-right: 100px;">Seller_Price</th>
-                        <th style="padding-right: 100px;">End_Date</th>
-                        <th style="padding-right: 100px;">Status</th>
-                    </tr>
- 
-                </thead>
-                <tbody>
-                    {% comment %} Sales Information Sorted by End Date {% endcomment %}
-                    {% for order in ordersforuser|dictsort:"end_date" %}
-                    <tr>
-                        <td>{{ order.id }}</td>
-                        <td>${{ order.customer_price }}</td>
-                        <td>${{ order.seller_price }}</td>
-                        <td>{{ order.end_date }}</td>
-                        <td>{{ order.status }}</td>
-
-
-                    </tr>
-                    {% endfor %}
-                    
-                </tbody>
-            </table>
+            <h3>Top Accounts of Past Month</h3>
         </section>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
-        <a href="{% url 'sales_leaderboard' %}" class="btn btn-primary">Back to Leaderboard</a>
+        <a href="{% url 'user_sales_detail' user.id %}" class="btn btn-primary">Back to Overview</a>
     </div>
-    <footer>
-        <p>&copy; 2024 | Downstream | Sales Data by Rep</p>
-    </footer>
 </body>
 </html>
 
