@@ -74,6 +74,8 @@ def order_origination(request):
     context["chart_data"] = orders_by_staff_user_by_month_data
     context["chart_scheduled"] = orders_by_non_staff_user_by_month_data
 
+
+
     return render(
         request,
         "dashboards/order_origination.html",
