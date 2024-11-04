@@ -174,11 +174,6 @@ urlpatterns = [
         name="customer_show_quote",
     ),
     path(
-        "customer/accept/quote/",
-        views.accept_quote,
-        name="customer_accept_quote",
-    ),
-    path(
         "customer/<uuid:user_address_id>/<uuid:payment_method_id>/default/payment/",
         views.make_payment_method_default,
         name="customer_default_payment_method",

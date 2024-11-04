@@ -47,8 +47,10 @@
                                                             height="95"
                                                             src="{% if order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
                                                                 {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                            {% elif order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
+                                                                {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
                                                             {% else %}
-                                                                {% static 'customer_dashboard/img/photo-1599305445671-ac291c95aaa9.jpg' %}
+                                                                {% static 'customer_dashboard/img/logo.png' %}
                                                             {% endif %}" />
                                                     </div>
                                                     <div class="col">

@@ -1,10 +1,14 @@
 import logging
 import uuid
+import requests
+import time
+import json
 
 import jwt
 from django.core.exceptions import SuspiciousOperation
 from django.urls import reverse
 from mozilla_django_oidc.contrib.drf import OIDCAuthentication
+from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import absolutify
 from requests.exceptions import HTTPError
 from rest_framework import authentication, exceptions
@@ -101,3 +105,41 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
                 f"User '{user.username}' impersonates user '{on_behalf_of_user.username}'"
             )
             return (on_behalf_of_user, user)
+
+
+class PortalOIDCAuthentication(OIDCAuthenticationBackend):
+    """Override the OIDC authentication backend to handle caching the userinfo."""
+
+    def get_userinfo(self, access_token, id_token, payload):
+        """Return user details dictionary. The id_token and payload are not used in
+        the default implementation, but may be used when overriding this method.
+        NOTE: This method caches the userinfo in the session to avoid unnecessary requests,
+        inorder to mitigate auth0 429 errors. This was one of the suggestions from auth0:
+        https://community.auth0.com/t/userinfo-endpoint-returns-429-rate-limits-error/89210
+
+        https://auth0.com/docs/troubleshoot/customer-support/operational-policies/rate-limit-policy
+        In addition, there is a same user login rate limit: If one IP address makes 20 login
+        attempts in one minute to the same user account, the rate limit comes into effect.
+        After that, Auth0 allows the user 10 attempts per minute. Any combination of successful
+        and failed login attempts count toward this limit.
+        """
+
+        session = self.request.session
+        user_info = session.get("oidc_userinfo")
+        user_info_expiration = session.get("oidc_userinfo_expiration")
+        expiration_interval = 60 * 5  # 5 minutes
+        if user_info_expiration and user_info_expiration > time.time():
+            return json.loads(user_info)
+
+        user_response = requests.get(
+            self.OIDC_OP_USER_ENDPOINT,
+            headers={"Authorization": "Bearer {0}".format(access_token)},
+            verify=self.get_settings("OIDC_VERIFY_SSL", True),
+            timeout=self.get_settings("OIDC_TIMEOUT", None),
+            proxies=self.get_settings("OIDC_PROXY", None),
+        )
+        user_response.raise_for_status()
+        session["oidc_userinfo"] = user_response.text
+        session["oidc_userinfo_expiration"] = time.time() + expiration_interval
+        session.save()
+        return user_response.json()

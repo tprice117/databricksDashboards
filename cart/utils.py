@@ -589,6 +589,9 @@ class QuoteUtils:
                 )
 
                 multi_step.append(item)
+            else:
+                # This is likely Junk Removal (a special service since no asset remains with the user)
+                two_step.append(item)
 
         subject = (
             "Downstream | Quote | " + order.order_group.user_address.formatted_address()

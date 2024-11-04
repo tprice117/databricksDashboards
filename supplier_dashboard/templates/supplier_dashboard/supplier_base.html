@@ -270,6 +270,82 @@
             reloadIntercom();
         </script>
     {% endif %}
+    {% comment %} <script>
+        function getUserTimezone() {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+        
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const timezone = getUserTimezone();
+            fetch('/set_timezone/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ timezone: timezone })
+            });
+        });
+    </script> {% endcomment %}
+    <script>
+        // Function to enable the submit button
+        function enableAllSubmitButton() {
+            document.querySelectorAll("button[type='submit']").forEach(function (button) {
+                if (button.disabled) {
+                    button.querySelector(".htmx-indicator").remove();
+                    button.disabled = false;
+                }
+            });
+        }
+
+        // Add event listener for the pageshow event
+        // Loop all submit buttons and if they are disabled, remove the htmx-indicator
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                enableAllSubmitButton();
+            }
+        });
+        // Disable submit button after the form is submitted for all non htmx forms
+        document.addEventListener("DOMContentLoaded", function () {
+            // Select all forms that do not contain an attribute that starts with hx-
+            document.querySelectorAll("form:not([hx-]").forEach(function (form) {
+                // check if form has an attribute that starts with hx-
+                // Loop all attributes of the form
+                for (let i = 0; i < form.attributes.length; i++) {
+                    // Get the attribute
+                    let attribute = form.attributes[i];
+                    // Check if the attribute name starts with hx-
+                    if (attribute.name.startsWith("hx-")) {
+                        return;
+                    }
+                }
+                form.addEventListener("submit", function () {
+                    console.log('submit non htmx form', form);
+                    // Disable the submit button
+                    setTimeout(() => {
+                        let submitButton = form.querySelector('button[type="submit"]');
+                        if (submitButton) {
+                            // Create the span element
+                            var span = document.createElement("span");
+                            span.className = "htmx-indicator htmx-request ms-2";
+            
+                            // Create the img element
+                            var img = document.createElement("img");
+                            img.className = "svg-loader";
+                            img.src = "{% static 'supplier_dashboard/svg-loaders/bars.svg' %}";
+                            // Append the img to the span
+                            span.appendChild(img);
+            
+                            // Append the span to a target element in the DOM
+                            // Replace 'targetElementId' with the actual ID of the target element
+                            submitButton.appendChild(span);
+                            submitButton.disabled = true;
+                        }
+                    }, 100);
+                });
+            });
+        });
+    </script>
     {% block javascript %}{% endblock %}
 </body>
 

@@ -1009,6 +1009,14 @@ def new_order_4(request):
     context["max_discount_100"] = round(
         float(context["product"].main_product.max_discount) * 100, 1
     )
+    discount = 0
+    context["market_discount"] = (
+        context["product"].main_product.max_discount * Decimal(0.8)
+    ) * 100
+    if not request.user.is_staff:
+        discount = context["market_discount"]
+
+    context["discount"] = discount
 
     for seller_product_seller_location in seller_product_seller_locations:
         seller_d = {}
@@ -1036,6 +1044,7 @@ def new_order_4(request):
                 shift_count=(
                     context["shift_count"] if context["shift_count"] else None
                 ),
+                discount=discount,
             )
 
             price_data = PricingEngineResponseSerializer(pricing).data
@@ -1390,7 +1399,10 @@ def new_order_5(request):
                 context["cart"][uaid]["ids"].append(str(order.id))
                 context["cart"][uaid]["count"] += 1
                 context["cart"][uaid]["total"] += customer_price
-                if order.order_type == Order.Type.DELIVERY:
+                if (
+                    order.order_type == Order.Type.DELIVERY
+                    or order.order_type == Order.Type.ONE_TIME
+                ):
                     context["cart"][uaid]["show_quote"] = True
                     # # Hide the quote button if this event is part of an active quote.
                     # if order.checkout_order and not order.checkout_order.is_stale:
@@ -1433,28 +1445,6 @@ def new_order_6(request, order_group_id):
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
     return HttpResponseRedirect(reverse("customer_new_order"))
-
-
-@api_view(["GET"])
-@authentication_classes([])
-@permission_classes([])
-def accept_quote(request):
-    # Accept the quote.
-    cart_id = request.query_params.get("cart_id", None)
-    # try:
-    #     cart = CheckoutOrder.objects.get(id=cart_id)
-    #     cart.quote_accepted_at = timezone.now()
-    #     cart.save()
-    # except Cart.DoesNotExist as e:
-    #     logger.error(
-    #         f"accept_quote: Cart not found for cart_id[{cart_id}]",
-    #         exc_info=e,
-    #     )
-    #     return Response("error", status=status.HTTP_404_NOT_FOUND)
-    # except Exception as e:
-    #     logger.error(f"accept_quote: [{e}]-data[{request.data}]", exc_info=e)
-    #     return Response("error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    return Response("OK", status=status.HTTP_200_OK)
 
 
 @login_required(login_url="/admin/login/")
@@ -1706,7 +1696,7 @@ def credit_application(request):
     context = get_user_context(request)
     redirect_url = request.GET.get("return_to", None)
     if redirect_url:
-        request.session["return_to"] = redirect_url
+        request.session["credit_application_return_to"] = redirect_url
     if not context["user_group"]:
         messages.error(
             request,
@@ -1831,9 +1821,10 @@ def credit_application(request):
                     'Thank you for your application! Our team will review and reach out once we have a decision in the next 24-48 hours. If you need this booking sooner please use the "Pay Now" button.',
                 )
                 redirect_url = request.session.get(
-                    "return_to", reverse("customer_companies")
+                    "credit_application_return_to", reverse("customer_companies")
                 )
-                del request.session["return_to"]
+                if "credit_application_return_to" in request.session:
+                    del request.session["credit_application_return_to"]
                 return HttpResponseRedirect(redirect_url)
             else:
                 # This will let bootstrap know to highlight the fields with errors.
@@ -2760,6 +2751,19 @@ def new_location(request):
             f"No customer selected! Location would be added to your account [{request.user.email}].",
         )
 
+    street = request.GET.get("street")
+    city = request.GET.get("city")
+    state = request.GET.get("state")
+    postal_code = request.GET.get("zip")
+    # This is a request from our website, so we want to redirect back to the bookings page on save.
+    if street or city or state or postal_code:
+        request.session["new_location_return_to"] = reverse("customer_new_order")
+
+    # If there is a return_to url, then save it in the session.
+    redirect_url = request.GET.get("return_to", None)
+    if redirect_url:
+        request.session["new_location_return_to"] = redirect_url
+
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
         messages.error(request, "Only admins can create new locations.")
@@ -2819,14 +2823,18 @@ def new_location(request):
                         user_address=save_model,
                     )
                 messages.success(request, "Successfully saved!")
-                return redirect(
+                redirect_url = request.session.get(
+                    "new_location_return_to",
                     reverse(
                         "customer_location_detail",
                         kwargs={
                             "location_id": save_model.id,
                         },
-                    )
+                    ),
                 )
+                if "new_location_return_to" in request.session:
+                    del request.session["new_location_return_to"]
+                return HttpResponseRedirect(redirect_url)
             else:
                 messages.info(request, "No changes detected.")
                 return HttpResponseRedirect(reverse("customer_locations"))
@@ -2841,8 +2849,18 @@ def new_location(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
+        initial_data = {}
+        if street:
+            initial_data["street"] = street
+        if city:
+            initial_data["city"] = city
+        if state:
+            initial_data["state"] = state
+        if postal_code:
+            initial_data["postal_code"] = postal_code
+
         context["user_address_form"] = UserAddressForm(
-            user=context["user"], auth_user=request.user
+            initial=initial_data, user=context["user"], auth_user=request.user
         )
 
     return render(request, "customer_dashboard/location_new_edit.html", context)
