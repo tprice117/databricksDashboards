@@ -992,6 +992,9 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "status",
             "attachments",
             "code",
+            "agreement",
+            "agreement_signed_by",
+            "agreement_signed_on",
         )
 
     def create(self, validated_data):
