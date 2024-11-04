@@ -58,7 +58,12 @@ def sales_dashboard(request):
     end_date = datetime(datetime.now().year, 12, 31)
 
     customerAmountCompleted = (
-        Order.objects.filter(status="COMPLETE", end_date__range=(start_date, end_date))
+        Order.objects.filter(
+            status="COMPLETE", 
+            end_date__range=(start_date, end_date)
+        )
+        .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
+        .exclude(order_line_items__rate=0)
         .annotate(month=TruncMonth("end_date"))  # Groupby month
         .values("month")
         .annotate(
@@ -80,8 +85,10 @@ def sales_dashboard(request):
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date),
+                end_date__range=(start_date, end_date)
             )
+            .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
+            .exclude(order_line_items__rate=0)
             .annotate(month=TruncMonth("end_date"))
             .values("month")
             .annotate(
@@ -102,7 +109,11 @@ def sales_dashboard(request):
 
     # customerAmount
     customerAmount = (
-        OrderLineItem.objects.annotate(month=TruncMonth("order__end_date"))
+        OrderLineItem.objects.exclude(
+            stripe_invoice_line_item_id="BYPASS"
+        )
+        .exclude(rate=0)
+        .annotate(month=TruncMonth("order__end_date"))
         .values("month")
         .annotate(
             customerAmnt=Sum(
@@ -130,7 +141,11 @@ def sales_dashboard(request):
     delta_month = timezone.now() - timedelta(days=30)
 
     customerAmountByDay = (
-        OrderLineItem.objects.annotate(day=TruncDay("order__end_date"))
+        OrderLineItem.objects.exclude(
+            stripe_invoice_line_item_id="BYPASS"
+        )
+        .exclude(rate=0)
+        .annotate(day=TruncDay("order__end_date"))
         .values("day")
         .annotate(
             customerAmntByDay=Sum(
@@ -159,8 +174,11 @@ def sales_dashboard(request):
     def calculate_supplier_amount_completed(start_date, end_date):
         return (
             Order.objects.filter(
-                status="COMPLETE", end_date__range=(start_date, end_date)
+                status="COMPLETE", 
+                end_date__range=(start_date, end_date)
             )
+            .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
+            .exclude(order_line_items__rate=0)
             .annotate(month=TruncMonth("end_date"))  # Groupby month
             .values("month")
             .annotate(
@@ -182,8 +200,10 @@ def sales_dashboard(request):
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date),
+                end_date__range=(start_date, end_date)
             )
+            .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
+            .exclude(order_line_items__rate=0)
             .annotate(month=TruncMonth("end_date"))
             .values("month")
             .annotate(
@@ -202,7 +222,12 @@ def sales_dashboard(request):
 
     # supplierAmount
     supplierAmount = (
-        Order.objects.annotate(month=TruncMonth("end_date"))  # Groupby month
+        Order.objects.filter(
+            end_date__year=2024
+        )
+        .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
+        .exclude(order_line_items__rate=0)
+        .annotate(month=TruncMonth("end_date"))  # Groupby month
         .values("month")
         .annotate(
             suppAmount=Sum(
@@ -227,7 +252,12 @@ def sales_dashboard(request):
 
     # SupplierAmountbyDay
     supplierAmountByDay = (
-        Order.objects.annotate(day=TruncDay("end_date"))  # Groupby day
+        Order.objects.filter(
+            end_date__year=2024
+        )
+        .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
+        .exclude(order_line_items__rate=0)
+        .annotate(day=TruncDay("end_date"))  # Groupby day
         .values("day")
         .annotate(
             suppAmount=Sum(
@@ -250,7 +280,11 @@ def sales_dashboard(request):
         for entry in supplierAmount
     ]
     # supplierAmountSum
-    supplierAmountSum = Order.objects.annotate(
+    supplierAmountSum = Order.objects.exclude(
+        order_line_items__stripe_invoice_line_item_id="BYPASS"
+    ).exclude(
+        order_line_items__rate=0
+    ).annotate(
         calculated_value=Sum(
             F("order_line_items__rate") * F("order_line_items__quantity"),
             output_field=DecimalField(),
@@ -382,7 +416,11 @@ def sales_dashboard(request):
 
     # Take Rate By Month
     takeRateByMonth = (
-        OrderLineItem.objects.annotate(month=TruncMonth("order__end_date"))
+        OrderLineItem.objects.exclude(
+            stripe_invoice_line_item_id="BYPASS"
+        )
+        .exclude(rate=0)
+        .annotate(month=TruncMonth("order__end_date"))
         .values("month")
         .annotate(
             customerAmnt=Sum(
