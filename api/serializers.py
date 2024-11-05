@@ -359,6 +359,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "terms_accepted",
             "type",
+            "last_active",
         ]
         validators = []
 
