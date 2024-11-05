@@ -11,7 +11,6 @@ from urllib.parse import urlencode
 import requests
 import stripe
 from django.conf import settings
-from django.db.models import F
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -19,7 +18,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
-from django.db.models import Q, Max
+from django.db.models import F, Max, Q
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -58,8 +57,8 @@ from api.models import (
     UserAddress,
     UserAddressType,
     UserGroup,
-    UserGroupLegal,
     UserGroupCreditApplication,
+    UserGroupLegal,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -86,6 +85,7 @@ from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
     AccessDetailsForm,
+    CreditApplicationForm,
     OrderGroupForm,
     OrderGroupSwapForm,
     PlacementDetailsForm,
@@ -93,7 +93,6 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
-    CreditApplicationForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -647,7 +646,7 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     context["BASIS_THEORY_API_KEY"] = settings.BASIS_THEORY_PUB_API_KEY
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
-    if add_user_group:
+    if request.user.is_authenticated and add_user_group:
         context["user_group"] = get_user_group(request)
     return context
 
@@ -755,7 +754,7 @@ def index(request):
         return render(request, "customer_dashboard/index.html", context)
 
 
-@login_required(login_url="/admin/login/")
+# @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order(request):
     context = get_user_context(request)
@@ -804,7 +803,7 @@ def user_address_search(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+# @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order_2(request, category_id):
     context = get_user_context(request)
@@ -825,7 +824,7 @@ def new_order_2(request, category_id):
     return render(request, "customer_dashboard/new_order/main_products.html", context)
 
 
-@login_required(login_url="/admin/login/")
+# @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order_3(request, product_id):
     context = get_user_context(request)
@@ -849,8 +848,10 @@ def new_order_3(request, product_id):
         context["product_add_ons"].append(
             {"add_on": add_on, "choices": add_on.choices.all()}
         )
-    context["user_addresses"] = get_location_objects(
-        request, context["user"], context["user_group"]
+    context["user_addresses"] = (
+        get_location_objects(request, context["user"], context["user_group"])
+        if request.user.is_authenticated
+        else []
     )
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
@@ -3290,6 +3291,40 @@ def invoices(request):
             f"{reverse('customer_invoices')}?{query_params.urlencode()}"
         )
     return render(request, "customer_dashboard/invoices.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def invoice_detail(request, invoice_id):
+    context = get_user_context(request)
+    context["invoice"] = Invoice.objects.get(id=invoice_id)
+    context["is_checkout"] = True
+    if context["user_group"]:
+        payment_methods = PaymentMethod.objects.filter(
+            user_group_id=context["user_group"].id
+        )
+    else:
+        # Get account from location. This is helpful for impersonations.
+        if context["invoice"].user_address.user_group:
+            payment_methods = PaymentMethod.objects.filter(
+                user_group_id=context["invoice"].user_address.user_group.id
+            )
+            context["user_group"] = context["invoice"].user_address.user_group
+        else:
+            payment_methods = PaymentMethod.objects.filter(user_id=context["user"].id)
+    # Order payment methods by newest first.
+    context["payment_methods"] = payment_methods.order_by("-created_on")
+
+    if request.method == "POST":
+        payment_method_id = request.POST.get("payment_method")
+        if payment_method_id:
+            payment_method = PaymentMethod.objects.get(id=payment_method_id)
+            context["invoice"].pay_invoice(payment_method)
+            messages.success(request, "Successfully paid!")
+        else:
+            messages.error(request, "Invalid payment method.")
+
+    return render(request, "customer_dashboard/invoice_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")

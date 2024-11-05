@@ -86,7 +86,9 @@ class Invoice:
         return stripe.Invoice.finalize_invoice(invoice_id)
 
     @staticmethod
-    def attempt_pay_og(invoice_id: str, payment_method: str = None):
+    def attempt_pay_og(
+        invoice_id: str, payment_method: str = None, raise_error: bool = False
+    ):
         try:
             invoice = (
                 stripe.Invoice.pay(invoice_id)
@@ -102,6 +104,8 @@ class Invoice:
                 f"Invoice.attempt_pay_og: [invoice_id:{invoice_id}]-[payment_method:{payment_method}][{e}]",
                 exc_info=e,
             )
+            if raise_error:
+                raise e
             return False
 
     @staticmethod
