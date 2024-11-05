@@ -3,6 +3,7 @@ from rest_framework import serializers
 from api.serializers import UserAddressSerializer
 from billing.models import Invoice
 from billing.typings import InvoiceItem, InvoiceGroup
+from payment_methods.models import PaymentMethod
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -41,3 +42,16 @@ class InvoiceExpandedSerializer(serializers.ModelSerializer):
 
     def get_groups(self, obj) -> InvoiceGroup:
         return obj.invoice_items["groups"]
+
+
+class PayInvoiceRequestSerializer(serializers.Serializer):
+    payment_method = serializers.PrimaryKeyRelatedField(
+        queryset=PaymentMethod.objects.all(),
+        write_only=True,
+    )
+
+
+class PayInvoiceResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    # invoice = InvoiceExpandedSerializer()

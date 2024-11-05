@@ -1,6 +1,7 @@
 import logging
 import re
 import threading
+from typing import Optional
 
 import stripe
 from django.conf import settings
@@ -223,7 +224,7 @@ class PaymentMethod(BaseModel):
     def get_stripe_payment_method(
         self,
         user_address: UserAddress,
-    ) -> stripe.PaymentMethod | None:
+    ) -> Optional[stripe.PaymentMethod]:
         """
         Get the Stripe Payment Method for passed UserAddress.
         """
@@ -238,7 +239,8 @@ class PaymentMethod(BaseModel):
             (
                 stripe_payment_method
                 for stripe_payment_method in stripe_payment_methods
-                if stripe_payment_method["metadata"]["payment_method_id"] == self.id
+                if stripe_payment_method["metadata"]["payment_method_id"]
+                == str(self.id)
             ),
             None,
         )

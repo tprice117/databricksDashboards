@@ -15,4 +15,9 @@ urlpatterns += [
         views.OrderInvoiceView.as_view(),
         name="order_invoice",
     ),
+    path(
+        "invoice/<uuid:invoice_id>/pay/",
+        views.PayInvoiceView.as_view(),
+        name="invoice_pay",
+    ),
 ]

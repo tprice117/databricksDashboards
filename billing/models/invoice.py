@@ -1,13 +1,16 @@
 from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from django.db import models
+from django.utils import timezone
 
-from api.models.main_product.add_on import AddOn
 from billing.typings import InvoiceResponse
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
-from payment_methods.models.payment_method import PaymentMethod
+
+if TYPE_CHECKING:
+    from payment_methods.models.payment_method import PaymentMethod
 
 
 class Invoice(BaseModel):
@@ -91,15 +94,43 @@ class Invoice(BaseModel):
 
     def pay_invoice(
         self,
-        payment_method: PaymentMethod,
+        payment_method: "PaymentMethod",
     ):
-        # Get Stripe Payment Method.
+        # Get Stripe Payment Method based on Payment Method.
         stripe_payment_method = payment_method.get_stripe_payment_method(
             user_address=self.user_address,
         )
+        if stripe_payment_method is None:
+            raise ValueError(
+                "Payment method not found in Stripe. Please contact us for help."
+            )
 
         # Pay the invoice.
-        StripeUtils.Invoice.attempt_pay_og(
-            invoice_id=self.invoice_id,
+        is_paid = StripeUtils.Invoice.attempt_pay_og(
+            self.invoice_id,
             payment_method=stripe_payment_method.id,
+            raise_error=True,
         )
+
+        invoice = StripeUtils.Invoice.get(self.invoice_id)
+
+        # Update the invoice.
+        self.amount_due = invoice["amount_due"] / 100
+        self.amount_paid = invoice["amount_paid"] / 100
+        self.amount_remaining = invoice["amount_remaining"] / 100
+        self.due_date = (
+            timezone.datetime.fromtimestamp(
+                invoice["due_date"],
+            )
+            if invoice["due_date"]
+            else None
+        )
+        self.hosted_invoice_url = invoice["hosted_invoice_url"]
+        self.invoice_pdf = invoice["invoice_pdf"]
+        self.metadata = invoice["metadata"]
+        self.number = invoice["number"]
+        self.paid = invoice["paid"]
+        self.status = invoice["status"]
+        self.total = invoice["total"] / 100
+        self.save()
+        return is_paid

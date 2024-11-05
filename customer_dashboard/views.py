@@ -3295,6 +3295,33 @@ def invoices(request):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
+def invoice_detail(request, invoice_id):
+    context = get_user_context(request)
+    context["invoice"] = Invoice.objects.get(id=invoice_id)
+    context["is_checkout"] = True
+    if context["user_group"]:
+        payment_methods = PaymentMethod.objects.filter(
+            user_group_id=context["user_group"].id
+        )
+    else:
+        payment_methods = PaymentMethod.objects.filter(user_id=context["user"].id)
+    # Order payment methods by newest first.
+    context["payment_methods"] = payment_methods.order_by("-created_on")
+
+    if request.method == "POST":
+        payment_method_id = request.POST.get("payment_method")
+        if payment_method_id:
+            payment_method = PaymentMethod.objects.get(id=payment_method_id)
+            context["invoice"].pay_invoice(payment_method)
+            messages.success(request, "Successfully paid!")
+        else:
+            messages.error(request, "Invalid payment method.")
+
+    return render(request, "customer_dashboard/invoice_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
 def companies(request):
     context = get_user_context(request)
     context["help_text"] = (
