@@ -1,11 +1,13 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
+
 from django.db import models
 
-from common.utils.stripe.stripe_utils import StripeUtils
 from api.models.main_product.add_on import AddOn
-from common.models import BaseModel
 from billing.typings import InvoiceResponse
+from common.models import BaseModel
+from common.utils.stripe.stripe_utils import StripeUtils
+from payment_methods.models.payment_method import PaymentMethod
 
 
 class Invoice(BaseModel):
@@ -86,3 +88,18 @@ class Invoice(BaseModel):
     @property
     def invoice_items(self) -> InvoiceResponse:
         return self._get_invoice_items()
+
+    def pay_invoice(
+        self,
+        payment_method: PaymentMethod,
+    ):
+        # Get Stripe Payment Method.
+        stripe_payment_method = payment_method.get_stripe_payment_method(
+            user_address=self.user_address,
+        )
+
+        # Pay the invoice.
+        StripeUtils.Invoice.attempt_pay_og(
+            invoice_id=self.invoice_id,
+            payment_method=stripe_payment_method.id,
+        )
