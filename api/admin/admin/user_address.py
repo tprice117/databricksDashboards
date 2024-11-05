@@ -39,6 +39,7 @@ class UserAddressAdmin(admin.ModelAdmin):
     )
     def create_invoices(self, request, queryset):
         from api.models import Order
+        from billing.models import Invoice
 
         user_address: UserAddress
         now_date = timezone.now().today()
@@ -62,4 +63,29 @@ class UserAddressAdmin(admin.ModelAdmin):
             # If autopay is enabled, pay the invoice.
             if user_address.user_group.autopay:
                 StripeUtils.Invoice.attempt_pay(invoice.id)
+            Invoice.objects.update_or_create(
+                invoice_id=invoice["id"],
+                defaults={
+                    "user_address": UserAddress.objects.get(
+                        stripe_customer_id=invoice["customer"],
+                    ),
+                    "amount_due": invoice["amount_due"] / 100,
+                    "amount_paid": invoice["amount_paid"] / 100,
+                    "amount_remaining": invoice["amount_remaining"] / 100,
+                    "due_date": (
+                        timezone.datetime.fromtimestamp(
+                            invoice["due_date"],
+                        )
+                        if invoice["due_date"]
+                        else None
+                    ),
+                    "hosted_invoice_url": invoice["hosted_invoice_url"],
+                    "invoice_pdf": invoice["invoice_pdf"],
+                    "metadata": invoice["metadata"],
+                    "number": invoice["number"],
+                    "paid": invoice["paid"],
+                    "status": invoice["status"],
+                    "total": invoice["total"] / 100,
+                },
+            )
         self.message_user(request, "Invoices created and finalized.")
