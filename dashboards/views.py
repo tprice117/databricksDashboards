@@ -58,10 +58,7 @@ def sales_dashboard(request):
     end_date = datetime(datetime.now().year, 12, 31)
 
     customerAmountCompleted = (
-        Order.objects.filter(
-            status="COMPLETE", 
-            end_date__range=(start_date, end_date)
-        )
+        Order.objects.filter(status="COMPLETE", end_date__range=(start_date, end_date))
         .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
         .exclude(order_line_items__rate=0)
         .annotate(month=TruncMonth("end_date"))  # Groupby month
@@ -85,7 +82,7 @@ def sales_dashboard(request):
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date)
+                end_date__range=(start_date, end_date),
             )
             .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
             .exclude(order_line_items__rate=0)
@@ -109,9 +106,7 @@ def sales_dashboard(request):
 
     # customerAmount
     customerAmount = (
-        OrderLineItem.objects.exclude(
-            stripe_invoice_line_item_id="BYPASS"
-        )
+        OrderLineItem.objects.exclude(stripe_invoice_line_item_id="BYPASS")
         .exclude(rate=0)
         .annotate(month=TruncMonth("order__end_date"))
         .values("month")
@@ -141,9 +136,7 @@ def sales_dashboard(request):
     delta_month = timezone.now() - timedelta(days=30)
 
     customerAmountByDay = (
-        OrderLineItem.objects.exclude(
-            stripe_invoice_line_item_id="BYPASS"
-        )
+        OrderLineItem.objects.exclude(stripe_invoice_line_item_id="BYPASS")
         .exclude(rate=0)
         .annotate(day=TruncDay("order__end_date"))
         .values("day")
@@ -174,8 +167,7 @@ def sales_dashboard(request):
     def calculate_supplier_amount_completed(start_date, end_date):
         return (
             Order.objects.filter(
-                status="COMPLETE", 
-                end_date__range=(start_date, end_date)
+                status="COMPLETE", end_date__range=(start_date, end_date)
             )
             .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
             .exclude(order_line_items__rate=0)
@@ -200,7 +192,7 @@ def sales_dashboard(request):
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date)
+                end_date__range=(start_date, end_date),
             )
             .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
             .exclude(order_line_items__rate=0)
@@ -222,9 +214,7 @@ def sales_dashboard(request):
 
     # supplierAmount
     supplierAmount = (
-        Order.objects.filter(
-            end_date__year=2024
-        )
+        Order.objects.filter(end_date__year=2024)
         .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
         .exclude(order_line_items__rate=0)
         .annotate(month=TruncMonth("end_date"))  # Groupby month
@@ -252,9 +242,7 @@ def sales_dashboard(request):
 
     # SupplierAmountbyDay
     supplierAmountByDay = (
-        Order.objects.filter(
-            end_date__year=2024
-        )
+        Order.objects.filter(end_date__year=2024)
         .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
         .exclude(order_line_items__rate=0)
         .annotate(day=TruncDay("end_date"))  # Groupby day
@@ -280,16 +268,17 @@ def sales_dashboard(request):
         for entry in supplierAmount
     ]
     # supplierAmountSum
-    supplierAmountSum = Order.objects.exclude(
-        order_line_items__stripe_invoice_line_item_id="BYPASS"
-    ).exclude(
-        order_line_items__rate=0
-    ).annotate(
-        calculated_value=Sum(
-            F("order_line_items__rate") * F("order_line_items__quantity"),
-            output_field=DecimalField(),
+    supplierAmountSum = (
+        Order.objects.exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
+        .exclude(order_line_items__rate=0)
+        .annotate(
+            calculated_value=Sum(
+                F("order_line_items__rate") * F("order_line_items__quantity"),
+                output_field=DecimalField(),
+            )
         )
-    ).aggregate(total=Sum("calculated_value"))["total"]
+        .aggregate(total=Sum("calculated_value"))["total"]
+    )
     context["supplierAmountSum"] = supplierAmountSum
 
     # Net Revenue Completed
@@ -416,9 +405,7 @@ def sales_dashboard(request):
 
     # Take Rate By Month
     takeRateByMonth = (
-        OrderLineItem.objects.exclude(
-            stripe_invoice_line_item_id="BYPASS"
-        )
+        OrderLineItem.objects.exclude(stripe_invoice_line_item_id="BYPASS")
         .exclude(rate=0)
         .annotate(month=TruncMonth("order__end_date"))
         .values("month")
@@ -555,83 +542,102 @@ def payout_reconciliation(request):
     #         id=OuterRef('order_group__seller_product_seller_location__seller_product__product__main_product__id')
     #     ).values('main_product__name')[:1]
     # )
-    
+
     seller_location_names_subquery = Subquery(
         SellerLocation.objects.filter(
-            id=OuterRef('order_group__seller_product_seller_location__seller_location__id')
-        ).values('name')[:1]
-    )
-    
-    user_address_subquery = Subquery(
-        UserAddress.objects.filter(
-            id=OuterRef('order_group__user_address__id')
-        ).values('name')[:1]
-    )
-    
-    orderRelations = Order.objects.annotate(
-        main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
-        seller_location_names=seller_location_names_subquery,
-        user_address=user_address_subquery,
-        end_date_annotate=F("end_date"),
-        supplier_amount=ExpressionWrapper(
-            Round(F("order_line_items__rate") * F("order_line_items__quantity"), 2),
-            output_field=DecimalField(decimal_places=2),
-        ),
-        seller_invoice_amount=Coalesce(F("seller_invoice_payable_line_items__amount"), Value(0), output_field=DecimalField(decimal_places=2)),
-        payout_amount=Coalesce(F("payouts__amount"), Value(0), output_field=DecimalField(decimal_places=2)),
-        abs_difference=ExpressionWrapper(
-            Abs(F('seller_invoice_amount') - F('supplier_amount')),
-            output_field=FloatField()
-        ),
-        reconcil_status=
-        Case(
-            When(seller_invoice_amount=F('supplier_amount'), then=Value("Reconciled")),
-            default=Value("Not Reconciled"),
-            output_field=CharField()
-        ),
-        order_status=Case(
-            When(payout_amount__isnull=True, then=Value("Unpaid")),
-            When(
-                Q(seller_invoice_amount__isnull=True) & Q(payout_amount=F('seller_invoice_amount')),
-                then=Value("Paid")
-            ),
-            When(
-                Q(payout_amount__gte=F('seller_invoice_amount')),
-                then=Value("Paid")
-            ),
-            default=Value("Unpaid")
-        ),
-        order_status_comb=Func(
-            F('order_status'),
-            Value(', '),
-            F('reconcil_status'),
-            function='CONCAT',
-            output_field=CharField()
-        ),
-        order_url_annotate=Func(
-            Value(settings.DASHBOARD_BASE_URL + "/"),
-            Value("admin/api/order/"),
-            F("id"),
-            Value("/change/"),
-            function="CONCAT",
-            output_field=CharField(),
-        ),
-    ).distinct('id').values(
-        "id",
-        "main_product_name",
-        "seller_location_names",
-        "user_address",
-        "end_date_annotate",
-        "supplier_amount",
-        "seller_invoice_amount",
-        "payout_amount",
-        "reconcil_status",
-        "order_status",
-        "order_status_comb",
-        "order_url_annotate",
+            id=OuterRef(
+                "order_group__seller_product_seller_location__seller_location__id"
+            )
+        ).values("name")[:1]
     )
 
-    unique_order_status_comb = set(order["order_status_comb"] for order in orderRelations)
+    user_address_subquery = Subquery(
+        UserAddress.objects.filter(id=OuterRef("order_group__user_address__id")).values(
+            "name"
+        )[:1]
+    )
+
+    orderRelations = (
+        Order.objects.annotate(
+            main_product_name=F(
+                "order_group__seller_product_seller_location__seller_product__product__main_product__name"
+            ),
+            seller_location_names=seller_location_names_subquery,
+            user_address=user_address_subquery,
+            end_date_annotate=F("end_date"),
+            supplier_amount=ExpressionWrapper(
+                Round(F("order_line_items__rate") * F("order_line_items__quantity"), 2),
+                output_field=DecimalField(decimal_places=2),
+            ),
+            seller_invoice_amount=Coalesce(
+                F("seller_invoice_payable_line_items__amount"),
+                Value(0),
+                output_field=DecimalField(decimal_places=2),
+            ),
+            payout_amount=Coalesce(
+                F("payouts__amount"),
+                Value(0),
+                output_field=DecimalField(decimal_places=2),
+            ),
+            abs_difference=ExpressionWrapper(
+                Abs(F("seller_invoice_amount") - F("supplier_amount")),
+                output_field=FloatField(),
+            ),
+            reconcil_status=Case(
+                When(
+                    seller_invoice_amount=F("supplier_amount"), then=Value("Reconciled")
+                ),
+                default=Value("Not Reconciled"),
+                output_field=CharField(),
+            ),
+            order_status=Case(
+                When(payout_amount__isnull=True, then=Value("Unpaid")),
+                When(
+                    Q(seller_invoice_amount__isnull=True)
+                    & Q(payout_amount=F("seller_invoice_amount")),
+                    then=Value("Paid"),
+                ),
+                When(
+                    Q(payout_amount__gte=F("seller_invoice_amount")), then=Value("Paid")
+                ),
+                default=Value("Unpaid"),
+            ),
+            order_status_comb=Func(
+                F("order_status"),
+                Value(", "),
+                F("reconcil_status"),
+                function="CONCAT",
+                output_field=CharField(),
+            ),
+            order_url_annotate=Func(
+                Value(settings.DASHBOARD_BASE_URL + "/"),
+                Value("admin/api/order/"),
+                F("id"),
+                Value("/change/"),
+                function="CONCAT",
+                output_field=CharField(),
+            ),
+        )
+        .distinct("id")
+        .values(
+            "id",
+            "main_product_name",
+            "seller_location_names",
+            "user_address",
+            "end_date_annotate",
+            "supplier_amount",
+            "seller_invoice_amount",
+            "payout_amount",
+            "reconcil_status",
+            "order_status",
+            "order_status_comb",
+            "order_url_annotate",
+        )
+    )
+
+    unique_order_status_comb = set(
+        order["order_status_comb"] for order in orderRelations
+    )
     total_seller_invoice_amount = sum(
         float(order["seller_invoice_amount"] or 0) for order in orderRelations
     )
@@ -642,33 +648,36 @@ def payout_reconciliation(request):
     for order in orderRelations:
         order_date = order["end_date_annotate"]
         month = order_date.strftime("%Y-%m")  # Format as YYYY-MM
-        seller_invoice_amount = order["seller_invoice_amount"] or 0  # Replace None with 0
+        seller_invoice_amount = (
+            order["seller_invoice_amount"] or 0
+        )  # Replace None with 0
         order_status_comb = order["order_status_comb"]
         monthly_data[month][order_status_comb] += float(seller_invoice_amount)
 
-    sorted_monthly_data = {month: dict(status_data) for month, status_data in sorted(monthly_data.items())}
+    sorted_monthly_data = {
+        month: dict(status_data) for month, status_data in sorted(monthly_data.items())
+    }
 
     # Prep for chart.js
-    chart_data = {
-        "labels": list(sorted_monthly_data.keys()),
-        "datasets": []
-    }
+    chart_data = {"labels": list(sorted_monthly_data.keys()), "datasets": []}
 
     # Define colors for each status
     status_colors = {
         "Paid, Reconciled": "rgba(75, 192, 192, 0.2)",
         "Paid, Not Reconciled": "rgba(255, 206, 86, 0.2)",
         "Unpaid, Reconciled": "rgba(153, 102, 255, 0.2)",
-        "Unpaid, Not Reconciled": "rgba(255, 99, 132, 0.2)"
+        "Unpaid, Not Reconciled": "rgba(255, 99, 132, 0.2)",
     }
 
     for status, color in status_colors.items():
         dataset = {
             "label": status,
-            "data": [monthly_data[month].get(status, 0) for month in chart_data["labels"]],
+            "data": [
+                monthly_data[month].get(status, 0) for month in chart_data["labels"]
+            ],
             "backgroundColor": color,
             "borderColor": color.replace("0.2", "1"),
-            "borderWidth": 1
+            "borderWidth": 1,
         }
         chart_data["datasets"].append(dataset)
 
@@ -679,7 +688,7 @@ def payout_reconciliation(request):
     context["orderRelations"] = orderRelations
     paginator = Paginator(orderRelations, 30)  # Show 30 orders per page
 
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     context["page_obj"] = page_obj
 

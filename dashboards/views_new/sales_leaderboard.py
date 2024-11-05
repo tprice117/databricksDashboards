@@ -16,6 +16,7 @@ from api.models.order.order_line_item import *
 from api.models.seller.seller import *
 from api.models.user.user_group import *
 from django.db.models import Sum, F
+from django.db.models.functions import Substr, StrIndex
 
 # Define first_of_month and orders_this_month outside the views
 first_of_month = timezone.now().replace(
@@ -30,6 +31,7 @@ orders_this_month = Order.objects.filter(
     end_date__gte=first_of_month,
     status=Order.Status.COMPLETE,
 )
+
 
 @login_required(login_url="/admin/login/")
 def sales_leaderboard(request):
@@ -104,6 +106,7 @@ def user_sales_detail(request, user_id):
     context["order_count"] = order_count
     return render(request, "dashboards/user_sales_detail.html", context)
 
+
 def user_sales_product_mix(request, user_id):
     context = {}
     try:
@@ -115,16 +118,21 @@ def user_sales_product_mix(request, user_id):
         order_group__user_address__user_group__account_owner=user,
     )
     # Group orders by product name.
-    product_sales = orders_for_user.values(
-        main_product_name=F('order_group__seller_product_seller_location__seller_product__product__main_product__name')
-    ).annotate(
-        order_count=Count('id')
-    ).order_by('order_count')
+    product_sales = (
+        orders_for_user.values(
+            main_product_name=F(
+                "order_group__seller_product_seller_location__seller_product__product__main_product__name"
+            )
+        )
+        .annotate(order_count=Count("id"))
+        .order_by("order_count")
+    )
 
     context["product_sales"] = product_sales
     context["user"] = user
     context["orders_this_month"] = orders_this_month
     return render(request, "dashboards/user_sales_product_mix.html", context)
+
 
 def user_sales_top_accounts(request, user_id):
     context = {}
@@ -135,5 +143,44 @@ def user_sales_top_accounts(request, user_id):
     orders_for_user = orders_this_month.filter(
         order_group__user_address__user_group__account_owner=user,
     )
+    # Group orders by seller location name.
+    top_accounts = (
+        orders_for_user.values(
+            seller_location_name=F(
+                "order_group__seller_product_seller_location__seller_location__name"
+            )
+        )
+        .annotate(order_count=Count("id"))
+        .order_by("-order_count")
+    )
+
+    context["top_accounts"] = top_accounts
     context["user"] = user
     return render(request, "dashboards/user_sales_top_accounts.html", context)
+
+
+def user_sales_new_accounts(request, user_id):
+    context = {}
+    try:
+        user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
+    except User.DoesNotExist:
+        return render(request, "404.html", status=404)
+    orders_for_user = orders_this_month.filter(
+        order_group__user_address__user_group__account_owner=user,
+    )
+    # Filter user groups with their order group start date and order most recent order date.
+    new_accounts = (
+        orders_for_user.filter(
+            order_group__start_date__gte=first_of_month - timezone.timedelta(days=30)
+        )
+        .values(
+            user_group_name=F("order_group__user_address__user_group__name"),
+            order_group_start_date=F("order_group__start_date"),
+            order_most_recent_order_date=F("end_date"),
+        )
+        .distinct()
+    )
+
+    context["new_accounts"] = new_accounts
+    context["user"] = user
+    return render(request, "dashboards/user_sales_new_accounts.html", context)
