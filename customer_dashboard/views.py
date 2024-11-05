@@ -3304,7 +3304,14 @@ def invoice_detail(request, invoice_id):
             user_group_id=context["user_group"].id
         )
     else:
-        payment_methods = PaymentMethod.objects.filter(user_id=context["user"].id)
+        # Get account from location. This is helpful for impersonations.
+        if context["invoice"].user_address.user_group:
+            payment_methods = PaymentMethod.objects.filter(
+                user_group_id=context["invoice"].user_address.user_group.id
+            )
+            context["user_group"] = context["invoice"].user_address.user_group
+        else:
+            payment_methods = PaymentMethod.objects.filter(user_id=context["user"].id)
     # Order payment methods by newest first.
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
