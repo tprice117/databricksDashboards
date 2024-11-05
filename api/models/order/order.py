@@ -150,6 +150,29 @@ class Order(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField()
     submitted_on = models.DateTimeField(blank=True, null=True)
+    submitted_by = models.ForeignKey(
+        "api.User",
+        models.SET_NULL,
+        related_name="submitted_orders",
+        blank=True,
+        null=True,
+    )
+    accepted_on = models.DateTimeField(blank=True, null=True)
+    accepted_by = models.ForeignKey(
+        "api.User",
+        models.SET_NULL,
+        related_name="accepted_orders",
+        blank=True,
+        null=True,
+    )
+    completed_on = models.DateTimeField(blank=True, null=True)
+    completed_by = models.ForeignKey(
+        "api.User",
+        models.SET_NULL,
+        related_name="completed_orders",
+        blank=True,
+        null=True,
+    )
     schedule_details = models.TextField(
         blank=True, null=True
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
