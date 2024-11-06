@@ -7,6 +7,7 @@ from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
+import time
 
 import requests
 import stripe
@@ -32,6 +33,7 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
+from api.utils import auth0
 from api.models import (
     AddOn,
     MainProduct,
@@ -72,6 +74,7 @@ from billing.models import Invoice
 from cart.models import CheckoutOrder
 from cart.utils import CheckoutUtils, QuoteUtils
 from common.models.choices.user_type import UserType
+from common.utils.generate_code import get_otp
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
@@ -680,9 +683,7 @@ def index(request):
                     order.customer_price()
                 )
 
-            category = (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
-            )
+            category = order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
             if category not in earnings_by_category:
                 earnings_by_category[category] = {"amount": 0, "percent": 0}
             earnings_by_category[category]["amount"] += float(order.customer_price())
@@ -1294,9 +1295,9 @@ def new_order_5(request):
                     Q(created_on__date__gte=start_date)
                     & Q(created_on__date__lte=end_date)
                 )
-                context[
-                    "help_text"
-                ] += f"open orders created between {start_date} and {end_date}."
+                context["help_text"] += (
+                    f"open orders created between {start_date} and {end_date}."
+                )
             else:
                 orders = orders.filter(created_on__date=check_date)
                 if start_date:
@@ -1311,13 +1312,13 @@ def new_order_5(request):
                 & Q(end_date__lte=check_date + datetime.timedelta(days=5))
             )
             if start_date:
-                context[
-                    "help_text"
-                ] += f"open orders expiring (Order.EndDate) within 5 days after {check_date}."
+                context["help_text"] += (
+                    f"open orders expiring (Order.EndDate) within 5 days after {check_date}."
+                )
             else:
-                context[
-                    "help_text"
-                ] += "open orders expiring (Order.EndDate) within 5 days."
+                context["help_text"] += (
+                    "open orders expiring (Order.EndDate) within 5 days."
+                )
         elif filter_qry == "inactive":
             # Displays all open orders that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
             orders = orders.filter(
@@ -1325,44 +1326,44 @@ def new_order_5(request):
                 & Q(end_date__lt=check_date)
             )
             if start_date:
-                context[
-                    "help_text"
-                ] += f"open orders that haven't been updated in more than 5 days & {check_date} is after any order's EndDate."
+                context["help_text"] += (
+                    f"open orders that haven't been updated in more than 5 days & {check_date} is after any order's EndDate."
+                )
             else:
-                context[
-                    "help_text"
-                ] += "open orders that haven't been updated in more than 5 days & today is after any order's EndDate."
+                context["help_text"] += (
+                    "open orders that haven't been updated in more than 5 days & today is after any order's EndDate."
+                )
         elif filter_qry == "expired":
             # Displays all open orders that have an Order.EndDate AFTER Today
             # expired = T - infinite .. basically these are in the last and we will start working to clear this list becuase it’s an error or expired quote now
             orders = orders.filter(end_date__lt=check_date)
             if start_date:
-                context[
-                    "help_text"
-                ] += f"open orders that have an Order.EndDate before {check_date}."
+                context["help_text"] += (
+                    f"open orders that have an Order.EndDate before {check_date}."
+                )
             else:
-                context[
-                    "help_text"
-                ] += "open orders that have an Order.EndDate before Today."
+                context["help_text"] += (
+                    "open orders that have an Order.EndDate before Today."
+                )
         else:
             # active: default filter. Displays all open orders
             if start_date and end_date:
                 orders = orders.filter(
                     Q(end_date__gte=start_date) & Q(end_date__lte=end_date)
                 )
-                context[
-                    "help_text"
-                ] += f"open orders starting on or between {start_date} and {end_date}."
+                context["help_text"] += (
+                    f"open orders starting on or between {start_date} and {end_date}."
+                )
             elif start_date:
                 orders = orders.filter(end_date__gte=start_date)
-                context[
-                    "help_text"
-                ] += f"open orders starting on or after {start_date}."
+                context["help_text"] += (
+                    f"open orders starting on or after {start_date}."
+                )
             elif end_date:
                 orders = orders.filter(end_date__lte=end_date)
-                context[
-                    "help_text"
-                ] += f"open orders starting on or before {start_date}."
+                context["help_text"] += (
+                    f"open orders starting on or before {start_date}."
+                )
             else:
                 context["help_text"] += "open orders."
 
@@ -1482,9 +1483,9 @@ def cart_send_quote(request):
                     "subject": checkout_order.subject,
                     "message_data": checkout_order.get_quote(),
                 }
-                data["message_data"][
-                    "accept_url"
-                ] = f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
+                data["message_data"]["accept_url"] = (
+                    f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
+                )
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
@@ -1648,9 +1649,9 @@ def add_payment_method(request):
                 )
                 payment_method.save()
                 if user_address_id:
-                    context["user_address"].default_payment_method_id = (
-                        payment_method.id
-                    )
+                    context[
+                        "user_address"
+                    ].default_payment_method_id = payment_method.id
                     context["user_address"].save()
                 messages.success(request, "Payment method added.")
                 http_status = 201
@@ -2418,17 +2419,17 @@ def locations(request):
             )
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
-                context["help_text"] = (
-                    f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
+                context[
+                    "help_text"
+                ] = f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
             else:
-                context["help_text"] = (
-                    f"""Churning locations are those with a smaller revenue when compared to the previous
+                context[
+                    "help_text"
+                ] = f"""Churning locations are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
         else:
             user_addresses = get_location_objects(
                 request, context["user"], context["user_group"], search_q=search_q
@@ -2674,7 +2675,6 @@ def location_detail(request, location_id):
 
 @login_required(login_url="/admin/login/")
 def customer_location_user_add(request, user_address_id, user_id):
-
     user_address = UserAddress.objects.get(id=user_address_id)
     user = User.objects.get(id=user_id)
 
@@ -2708,7 +2708,6 @@ def customer_location_user_add(request, user_address_id, user_id):
 
 @login_required(login_url="/admin/login/")
 def customer_location_user_remove(request, user_address_id, user_id):
-
     user_address = UserAddress.objects.get(id=user_address_id)
     user = User.objects.get(id=user_id)
 
@@ -2919,17 +2918,17 @@ def users(request):
             )
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
-                context["help_text"] = (
-                    f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
+                context[
+                    "help_text"
+                ] = f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
             else:
-                context["help_text"] = (
-                    f"""Churning users are those with a smaller revenue when compared to the previous
+                context[
+                    "help_text"
+                ] = f"""Churning users are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
         else:
             users = get_user_group_user_objects(
                 request, context["user"], context["user_group"], search_q=search_q
@@ -3093,6 +3092,95 @@ def user_reset_password(request, user_id):
             return HttpResponse("User not found", status=404)
 
     return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def user_update_email(request, user_id):
+    # context = get_user_context(request)
+
+    context = {}
+    context["help_msg"] = ""
+    context["css_class"] = "form-valid"
+    context["step1"] = True
+    try:
+        context["user"] = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        messages.error(request, "User not found.")
+        return HttpResponseRedirect(reverse("customer_users"))
+    if request.user.id != context["user"].id:
+        messages.error(request, "You do not have permission to update this email.")
+        return HttpResponseRedirect(reverse("customer_profile"))
+
+    if request.method == "POST":
+        # if "submit_email" in request.POST:
+        new_email = request.POST.get("email")
+        code = request.POST.get("code")
+        try:
+            if new_email:
+                new_email = new_email.casefold()
+                validate_email(new_email)
+                if User.objects.filter(email=new_email).exists():
+                    messages.error(request, "User with that email already exists.")
+                    context["error"] = "User with that email already exists."
+                    context["css_class"] = "form-error"
+                else:
+                    otp = get_otp()
+                    request.session["otp"] = otp
+                    request.session["new_email"] = new_email
+                    request.session["otp_expiration"] = time.time() + 600  # 10 minutes
+                    context["user"].send_otp_email(new_email, otp)
+                    context["help_msg"] = (
+                        f"Successfully sent verification code to {new_email}!"
+                    )
+                    messages.success(
+                        request,
+                        f"Successfully sent verification code to {new_email}! Please check your email for the code!",
+                    )
+                    context["step1"] = False
+            elif code:
+                context["step1"] = False
+                new_email = request.session.get("new_email")
+                if not new_email:
+                    raise ValidationError("Please retry.")
+                if (
+                    request.session.get("otp") == code
+                    and request.session.get("otp_expiration") > time.time()
+                ):
+                    auth0.update_user_email(
+                        context["user"].user_id, new_email, verify_email=False
+                    )
+                    context["user"].email = new_email
+                    context["user"].save()
+                    messages.success(request, "Successfully updated email!")
+                    context["step1"] = True
+                    del request.session["otp"]
+                    del request.session["new_email"]
+                    del request.session["otp_expiration"]
+                    return HttpResponseRedirect(reverse("customer_profile"))
+                else:
+                    messages.error(request, "Invalid or expired code.")
+                    context["error"] = "Invalid or expired code."
+                    context["css_class"] = "form-error"
+        except ValidationError as e:
+            messages.error(request, f"{e}")
+            context["error"] = f"{e}"
+            context["css_class"] = "form-error"
+        except Exception as e:
+            logger.error(
+                f"user_update_email: Error updating email: [{user_id}]-[{e}]",
+                exc_info=e,
+            )
+            messages.error(
+                request,
+                f"Error updating email. Please contact us if this continues. [{e}]",
+            )
+            context["error"] = f"Error updating email: {e}"
+            context["css_class"] = "form-error"
+    else:
+        pass
+
+    return render(request, "customer_dashboard/user_update_email.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -3376,17 +3464,17 @@ def companies(request):
             )
             pagination_limit = len(user_groups) or 1
             if tab == "fully_churned":
-                context["help_text"] = (
-                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
+                context[
+                    "help_text"
+                ] = f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
             else:
-                context["help_text"] = (
-                    f"""Churning Companies are those with a smaller revenue when compared to the previous
+                context[
+                    "help_text"
+                ] = f"""Churning Companies are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
         else:
             user_groups = UserGroup.objects.filter(seller__isnull=True)
             if account_owner_id:
@@ -3817,9 +3905,9 @@ def company_new_user(request, user_group_id):
             if save_model:
                 save_model.save()
                 context["form_msg"] = "Successfully saved!"
-                context["first_name"] = context["last_name"] = context["email"] = (
-                    context["type"]
-                ) = ""
+                context["first_name"] = context["last_name"] = context[
+                    "email"
+                ] = context["type"] = ""
         except UserAlreadyExistsError:
             context["form_error"] = "User with that email already exists."
         except InvalidFormError as e:

@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.template.loader import render_to_string
 
 from api.models.order.order import Order
 from api.models.track_data import track_data
@@ -125,6 +126,33 @@ class User(AbstractUser):
             invite_user(self, reset_password=True)
             return True
         return False
+
+    def send_otp_email(self, email: str, otp: str):
+        """Sends a OTP email to the user to use in verifying their email address."""
+        try:
+            mailchimp.messages.send(
+                {
+                    "message": {
+                        "headers": {
+                            "reply-to": "support@trydownstream.com",
+                        },
+                        "from_name": "Downstream",
+                        "from_email": "support@trydownstream.com",
+                        "to": [{"email": email}],
+                        "subject": "Verify your email address",
+                        "track_opens": True,
+                        "track_clicks": True,
+                        "html": render_to_string(
+                            "emails/email_verification.html", {"code": otp}
+                        ),
+                    }
+                }
+            )
+        except Exception as e:
+            logger.error(
+                f"User.send_otp_email: [{self.id}]-[{email}]-[{otp}]-[{e}]", exc_info=e
+            )
+            raise
 
     def save(self, *args, **kwargs):
         if not self.user_id:

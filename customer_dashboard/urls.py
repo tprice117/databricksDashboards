@@ -85,6 +85,11 @@ urlpatterns = [
         views.user_reset_password,
         name="customer_reset_password",
     ),
+    path(
+        "customer/user/<uuid:user_id>/update_email/",
+        views.user_update_email,
+        name="customer_update_email",
+    ),
     path("customer/user/new/", views.new_user, name="customer_new_user"),
     path(
         "customer/company/<uuid:user_group_id>/user/new/",
