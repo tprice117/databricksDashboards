@@ -41,14 +41,19 @@ def create_user(email: str):
     return response.json()["user_id"] if "user_id" in response.json() else None
 
 
-def update_user_email(user_id: str, email: str):
+def update_user_email(user_id: str, email: str, verify_email: bool = True):
+    """Update a user's email in Auth0.
+    This will trigger an email verification, from auth0 if verify_email is True.
+    NOTE: Currently, this does not mean they are not able to login, so it is
+    better to verify their email or not allow not verified emails login."""
     user_data = {
         "email": email,
-        "verify_email": True,
-        "email_verified": False,
         "connection": "Username-Password-Authentication",
         "client_id": settings.AUTH0_CLIENT_ID,
     }
+    if verify_email:
+        user_data["verify_email"] = True
+        verify_email["email_verified"] = False
     headers = {
         "Content-Type": "application/json",
         "authorization": "Bearer " + get_auth0_access_token(),

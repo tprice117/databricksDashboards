@@ -7,6 +7,7 @@ from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
+import time
 
 import requests
 import stripe
@@ -72,6 +73,7 @@ from billing.models import Invoice
 from cart.models import CheckoutOrder
 from cart.utils import CheckoutUtils, QuoteUtils
 from common.models.choices.user_type import UserType
+from common.utils.generate_code import get_otp
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
@@ -3101,51 +3103,75 @@ def user_update_email(request, user_id):
     from api.utils import auth0
 
     context = {}
+    context["help_msg"] = ""
+    context["css_class"] = "form-valid"
+    context["step1"] = True
     # context["user"] = get_object_or_404(User, pk=user_id)
     try:
         context["user"] = User.objects.get(id=user_id)
-        if not request.user.is_superuser:
-            messages.error(request, "You do not have permission to update emails.")
-            return HttpResponseRedirect(reverse("customer_users"))
-
-        if request.method == "POST":
-            context["form"] = UserUpdateEmailForm(request.POST, request.FILES)
-            if context["form"].is_valid():
-                # TODO: Make sure this email is not used
-                new_email = context["form"].cleaned_data.get("email")
-                try:
-                    # validate_email(new_email)
-                    if User.objects.filter(email=new_email.casefold()).exists():
-                        messages.error(request, "User with that email already exists.")
-                        context["error"] = "User with that email already exists."
-                        context["css_class"] = "form-error"
-                    else:
-                        auth0.update_user_email(context["user"].user_id, new_email)
-                        context["user"].email = new_email
-                        context["user"].save()
-                        messages.success(request, "Successfully updated email!")
-                except ValidationError as e:
-                    messages.error(request, f"{e}")
-                    context["error"] = f"{e}"
-                    context["css_class"] = "form-error"
-                except Exception as e:
-                    messages.error(request, f"Error updating email: {e}")
-                    context["error"] = f"Error updating email: {e}"
-                    context["css_class"] = "form-error"
-            else:
-                raise InvalidFormError(context["form"], "Invalid UserUpdateEmailForm")
-        else:
-            context["form"] = UserUpdateEmailForm()
-    except InvalidFormError as e:
-        # This will let bootstrap know to highlight the fields with errors.
-        for field in e.form.errors:
-            if e.form.fields[field].widget.attrs.get("class", None) is None:
-                e.form.fields[field].widget.attrs["class"] = "is-invalid"
-            else:
-                e.form.fields[field].widget.attrs["class"] += " is-invalid"
     except User.DoesNotExist:
         messages.error(request, "User not found.")
         return HttpResponseRedirect(reverse("customer_users"))
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to update emails.")
+        return HttpResponseRedirect(reverse("customer_users"))
+
+    if request.method == "POST":
+        # if "submit_email" in request.POST:
+        new_email = request.POST.get("email")
+        code = request.POST.get("code")
+        try:
+            if new_email:
+                new_email = new_email.casefold()
+                validate_email(new_email)
+                if User.objects.filter(email=new_email).exists():
+                    messages.error(request, "User with that email already exists.")
+                    context["error"] = "User with that email already exists."
+                    context["css_class"] = "form-error"
+                else:
+                    otp = get_otp()
+                    request.session["otp"] = otp
+                    request.session["new_email"] = new_email
+                    request.session["otp_expiration"] = time.time() + 600  # 10 minutes
+                    context["user"].send_otp_email(new_email, otp)
+                    context["help_msg"] = "Successfully sent verification code!"
+                    messages.success(
+                        request,
+                        "Successfully sent verification code! Please check your email for the code!",
+                    )
+                    context["step1"] = False
+            elif code:
+                new_email = request.session.get("new_email")
+                if not new_email:
+                    raise ValidationError("Please retry.")
+                if (
+                    request.session.get("otp") == code
+                    and request.session.get("otp_expiration") > time.time()
+                ):
+                    auth0.update_user_email(
+                        context["user"].user_id, new_email, verify_email=False
+                    )
+                    context["user"].email = new_email
+                    context["user"].save()
+                    messages.success(request, "Successfully updated email!")
+                    context["step1"] = True
+                    del request.session["otp"]
+                    del request.session["new_email"]
+                    del request.session["otp_expiration"]
+                else:
+                    messages.error(request, "Invalid or expired code.")
+                    context["error"] = "Invalid or expired code."
+                    context["css_class"] = "form-error"
+        except ValidationError as e:
+            messages.error(request, f"{e}")
+            context["error"] = f"{e}"
+            context["css_class"] = "form-error"
+        except Exception as e:
+            messages.error(request, f"Error updating email: {e}")
+            context["error"] = f"Error updating email: {e}"
+            context["css_class"] = "form-error"
+    else:
+        pass
 
     return render(request, "customer_dashboard/user_update_email.html", context)
 
