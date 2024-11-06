@@ -33,6 +33,7 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
+from api.utils import auth0
 from api.models import (
     AddOn,
     MainProduct,
@@ -3097,21 +3098,18 @@ def user_reset_password(request, user_id):
 @catch_errors()
 def user_update_email(request, user_id):
     # context = get_user_context(request)
-    # from django.shortcuts import get_object_or_404
-    from api.utils import auth0
 
     context = {}
     context["help_msg"] = ""
     context["css_class"] = "form-valid"
     context["step1"] = True
-    # context["user"] = get_object_or_404(User, pk=user_id)
     try:
         context["user"] = User.objects.get(id=user_id)
     except User.DoesNotExist:
         messages.error(request, "User not found.")
         return HttpResponseRedirect(reverse("customer_users"))
-    if not request.user.is_superuser:
-        messages.error(request, "You do not have permission to update emails.")
+    if request.user.id != context["user"].id:
+        messages.error(request, "You do not have permission to update this email.")
         return HttpResponseRedirect(reverse("customer_users"))
 
     if request.method == "POST":
@@ -3132,10 +3130,12 @@ def user_update_email(request, user_id):
                     request.session["new_email"] = new_email
                     request.session["otp_expiration"] = time.time() + 600  # 10 minutes
                     context["user"].send_otp_email(new_email, otp)
-                    context["help_msg"] = "Successfully sent verification code!"
+                    context["help_msg"] = (
+                        f"Successfully sent verification code to {new_email}!"
+                    )
                     messages.success(
                         request,
-                        "Successfully sent verification code! Please check your email for the code!",
+                        f"Successfully sent verification code to {new_email}! Please check your email for the code!",
                     )
                     context["step1"] = False
             elif code:
