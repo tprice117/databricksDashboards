@@ -97,7 +97,8 @@
                                     {% endfor %}
                                     <div class="d-flex flex-row-reverse">
                                         <!-- <input type="submit" name="action_button" id="submit-button" value="Submit"> -->
-                                        <button class="btn btn-primary btn-sm" type="submit" name="action_button" id="submit-button">Save Settings</button>
+                                        <a class="btn btn-outline-info ms-2" href="{% url 'customer_update_email' user_id=user.id %}">Update Email</a>
+                                        <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">Save Settings</button>
                                     </div>
                                 </form>
                             </div>

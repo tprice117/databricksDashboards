@@ -41,6 +41,33 @@ def create_user(email: str):
     return response.json()["user_id"] if "user_id" in response.json() else None
 
 
+def update_user_email(user_id: str, email: str, verify_email: bool = True):
+    """Update a user's email in Auth0.
+    This will trigger an email verification, from auth0 if verify_email is True.
+    NOTE: Currently, this does not mean they are not able to login, so it is
+    better to verify their email or not allow not verified emails login."""
+    user_data = {
+        "email": email,
+        "connection": "Username-Password-Authentication",
+        "client_id": settings.AUTH0_CLIENT_ID,
+    }
+    if verify_email:
+        user_data["verify_email"] = True
+        verify_email["email_verified"] = False
+    headers = {
+        "Content-Type": "application/json",
+        "authorization": "Bearer " + get_auth0_access_token(),
+    }
+    response = requests.patch(
+        "https://" + settings.AUTH0_DOMAIN + "/api/v2/users/" + user_id,
+        json=user_data,
+        headers=headers,
+    )
+    if response.status_code != 200:
+        raise ValueError(response.text)
+    return response.json()
+
+
 def get_user_data(user_id: str):
     headers = {"authorization": "Bearer " + get_auth0_access_token()}
     response = requests.get(

@@ -48,3 +48,17 @@ def save_unique_code(db_obj, prefix="", retry_on_error=True) -> Optional[str]:
         else:
             return None
     return f"{prefix}{code}" if prefix else code
+
+
+def get_otp() -> str:
+    """Generates a 6 digit random number as a string.
+    This is used for generating OTPs for 2FA/email verification."""
+    my_token = "{0}{1}{2}{3}{4}{5}".format(
+        random.randint(0, 9),
+        random.randint(0, 9),
+        random.randint(0, 9),
+        random.randint(0, 9),
+        random.randint(0, 9),
+        random.randint(0, 9),
+    )
+    return my_token
