@@ -80,7 +80,6 @@
                         {% if request.user.is_staff %}
                             <!-- Show a reset password button reset_password -->
                             <div class="d-flex flex-row-reverse">
-                                <a class="btn btn-outline-info ms-2" href="{% url 'customer_update_email' user_id=user.id %}">Update Email</a>
                                 <button class="btn btn-outline-danger" type="button"
                                     hx-post="{% url 'customer_reset_password' user_id=user.id %}"
                                     hx-trigger="confirmed" hx-swap="none"
