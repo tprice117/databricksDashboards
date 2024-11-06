@@ -759,8 +759,20 @@ def index(request):
 @catch_errors()
 def new_order(request):
     context = get_user_context(request)
+    search_q = request.GET.get("q", None)
     main_product_categories = MainProductCategory.objects.all().order_by("name")
+    if search_q:
+        main_product_categories = main_product_categories.filter(
+            name__icontains=search_q
+        )
     context["main_product_categories"] = main_product_categories
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "customer_dashboard/new_order/main_product_category_table.html",
+            context,
+        )
 
     return render(
         request, "customer_dashboard/new_order/main_product_categories.html", context
