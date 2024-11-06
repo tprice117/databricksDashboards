@@ -3167,7 +3167,14 @@ def user_update_email(request, user_id):
             context["error"] = f"{e}"
             context["css_class"] = "form-error"
         except Exception as e:
-            messages.error(request, f"Error updating email: {e}")
+            logger.error(
+                f"user_update_email: Error updating email: [{user_id}]-[{e}]",
+                exc_info=e,
+            )
+            messages.error(
+                request,
+                f"Error updating email. Please contact us if this continues. [{e}]",
+            )
             context["error"] = f"Error updating email: {e}"
             context["css_class"] = "form-error"
     else:
