@@ -93,8 +93,7 @@ class PayInvoiceView(APIView):
             )
             # Return serialized data.
             data = PayInvoiceResponseSerializer(
-                success=is_paid,
-                message=message,
+                {"success": is_paid, "message": message}
             ).data
 
             return JsonResponse(data, encoder=DecimalFloatEncoder, safe=False)
