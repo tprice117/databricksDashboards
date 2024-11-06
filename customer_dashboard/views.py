@@ -3110,7 +3110,7 @@ def user_update_email(request, user_id):
         return HttpResponseRedirect(reverse("customer_users"))
     if request.user.id != context["user"].id:
         messages.error(request, "You do not have permission to update this email.")
-        return HttpResponseRedirect(reverse("customer_users"))
+        return HttpResponseRedirect(reverse("customer_profile"))
 
     if request.method == "POST":
         # if "submit_email" in request.POST:
@@ -3157,6 +3157,7 @@ def user_update_email(request, user_id):
                     del request.session["otp"]
                     del request.session["new_email"]
                     del request.session["otp_expiration"]
+                    return HttpResponseRedirect(reverse("customer_profile"))
                 else:
                     messages.error(request, "Invalid or expired code.")
                     context["error"] = "Invalid or expired code."
