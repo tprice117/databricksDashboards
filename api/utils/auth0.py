@@ -54,6 +54,9 @@ def update_user_email(user_id: str, email: str, verify_email: bool = True):
     if verify_email:
         user_data["verify_email"] = True
         verify_email["email_verified"] = False
+    else:
+        user_data["verify_email"] = False
+        verify_email["email_verified"] = True
     headers = {
         "Content-Type": "application/json",
         "authorization": "Bearer " + get_auth0_access_token(),
