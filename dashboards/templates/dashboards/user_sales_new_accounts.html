@@ -28,7 +28,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Sales Detail</title>
+    <title>New Accounts</title>
 </head>
 <body>
     <nav>
@@ -48,20 +48,22 @@
     </header>
     <main>
         <section>
-            <h3>Top Accounts of Past Month</h3>
+            <h3>New Accounts of Past Month</h3>
             <table>
                 <thead>
                     <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">Seller_location</th>
-                        <th style="padding-right: 100px;">Count</th>
+                        <th style="padding-right: 200px;">Company_name</th>
+                        <th style="padding-right: 100px;">First_Transaction_Date</th>
+                        <th style="padding-right: 100px;">Most_Recent_Order_Date</th>
                     </tr>
  
                 </thead>
                 <tbody>
-                    {% for accounts in top_accounts|dictsortreversed:"order_count" %}
+                    {% for accounts in new_accounts%}
                     <tr>
-                        <td>{{accounts.seller_location_name}}</td>
-                        <td>{{accounts.order_count}}</td>
+                        <td>{{accounts.user_group_name}}</td>
+                        <td>{{accounts.order_group_start_date}}</td>
+                        <td>{{accounts.order_most_recent_order_date}}</td>
                     </tr>
                     {%endfor%}                    
                 </tbody>
