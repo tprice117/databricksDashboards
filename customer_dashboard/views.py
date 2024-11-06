@@ -95,8 +95,6 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
-    CreditApplicationForm,
-    UserUpdateEmailForm,
 )
 
 logger = logging.getLogger(__name__)
