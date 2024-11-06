@@ -3141,6 +3141,7 @@ def user_update_email(request, user_id):
                     )
                     context["step1"] = False
             elif code:
+                context["step1"] = False
                 new_email = request.session.get("new_email")
                 if not new_email:
                     raise ValidationError("Please retry.")
