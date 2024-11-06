@@ -82,7 +82,7 @@ def sales_dashboard(request):
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date),
+                end_date__range=(start_date, end_date)
             )
             .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
             .exclude(order_line_items__rate=0)
@@ -167,7 +167,8 @@ def sales_dashboard(request):
     def calculate_supplier_amount_completed(start_date, end_date):
         return (
             Order.objects.filter(
-                status="COMPLETE", end_date__range=(start_date, end_date)
+                status="COMPLETE", 
+                end_date__range=(start_date, end_date)
             )
             .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
             .exclude(order_line_items__rate=0)
@@ -192,7 +193,7 @@ def sales_dashboard(request):
         return (
             Order.objects.filter(
                 status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date),
+                end_date__range=(start_date, end_date)
             )
             .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
             .exclude(order_line_items__rate=0)
