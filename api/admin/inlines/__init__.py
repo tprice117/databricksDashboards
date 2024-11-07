@@ -1,6 +1,7 @@
 from .add_on import AddOnInline
 from .add_on_choice import AddOnChoiceInline
 from .main_product import MainProductInline
+from .main_product_category import MainProductCategoryInline
 from .main_product_category_info import MainProductCategoryInfoInline
 from .main_product_info import MainProductInfoInline
 from .order import OrderInline
