@@ -404,6 +404,13 @@ class OrderGroupForm(forms.Form):
         required=True,
         help_text="Note: Currently, the prices on the next page are always for one.",
     )
+    project_id = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
+        label="PO ID (optional)",
+        help_text="This is added to the booking, which is also added to the invoice.",
+    )
 
     def __init__(self, *args, **kwargs):
         user_addresses = kwargs.pop("user_addresses", None)
