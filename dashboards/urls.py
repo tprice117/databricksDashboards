@@ -47,4 +47,10 @@ urlpatterns = [
         user_sales_new_accounts,
         name="user_sales_new_accounts",
     ),
+    path(
+        "user-sales-detail/<uuid:user_id>/user-sales-churned-accounts/",
+        user_sales_churned_accounts,
+        name="user_sales_churned_accounts",
+    ),
+    
 ]

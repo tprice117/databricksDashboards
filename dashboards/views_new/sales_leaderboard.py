@@ -15,7 +15,7 @@ from api.models.order.order_group import *
 from api.models.order.order_line_item import *
 from api.models.seller.seller import *
 from api.models.user.user_group import *
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Max
 from django.db.models.functions import Substr, StrIndex
 
 # Define first_of_month and orders_this_month outside the views
@@ -184,3 +184,23 @@ def user_sales_new_accounts(request, user_id):
     context["new_accounts"] = new_accounts
     context["user"] = user
     return render(request, "dashboards/user_sales_new_accounts.html", context)
+
+def user_sales_churned_accounts(request, user_id):
+    context = {}
+    try:
+        user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
+    except User.DoesNotExist:
+        return render(request, "404.html", status=404)
+    
+    orders_for_user = Order.objects.filter(
+        order_group__user_address__user_group__account_owner=user,
+    )
+    user_groups_for_user = UserGroup.objects.filter(account_owner=user)
+
+    # Find user groups that have not placed any orders in the last 30 days.
+    churned_accounts = user_groups_for_user
+
+    context["churned_accounts"] = churned_accounts
+    context["user"] = user
+    return render(request, "dashboards/user_sales_churned_accounts.html", context)
+

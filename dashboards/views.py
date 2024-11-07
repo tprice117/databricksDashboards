@@ -1,535 +1,358 @@
 import logging
-
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
-
-
-logger = logging.getLogger(__name__)
 from django.shortcuts import render
 from django.db.models import (
-    F,
-    Sum,
-    Avg,
-    ExpressionWrapper,
-    DecimalField,
-    FloatField,
-    Case,
-    When,
-    Value,
-    CharField,
-    Count,
-    Func,
-    Q,
+    F, Sum, Avg, ExpressionWrapper, DecimalField, FloatField, Case, When, Value, CharField, Count, Func, Q, Subquery, OuterRef
 )
 from django.http import JsonResponse
-from django.db.models import Subquery, OuterRef
-
-from django.db.models.functions import ExtractYear
+from django.db.models.functions import ExtractYear, Coalesce, Round, TruncMonth, TruncDay, Abs
+from django.core.paginator import Paginator
+from django.utils import timezone
+from decimal import Decimal
+from datetime import datetime as dt, timedelta
 from api.models import *
 from api.models.seller.seller import *
 from api.models.order.order import *
 from api.models.order.order_group import *
 from api.models.order.order_line_item import *
 from api.models.user.user_group import *
-from django.db.models.functions import Coalesce, Round
-from django.db.models.functions import TruncMonth, TruncDay
-from decimal import Decimal
-from django.utils import timezone
-from collections import defaultdict
-from django.db.models.functions import Abs
-from django.core.paginator import Paginator
-
 import requests
 import json
-from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
 
 def index(request):
     return render(request, "dashboards/index.html")
 
-
 def sales_dashboard(request):
-    # Hashmap
     context = {}
-
-    # Translated Measures
-    # Define date range for filtering
-    start_date = datetime(datetime.now().year - 1, 1, 1)
-    end_date = datetime(datetime.now().year, 12, 31)
-
-    customerAmountCompleted = (
-        Order.objects.filter(status="COMPLETE", end_date__range=(start_date, end_date))
-        .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
-        .exclude(order_line_items__rate=0)
-        .annotate(month=TruncMonth("end_date"))  # Groupby month
-        .values("month")
-        .annotate(
-            gmv=Sum(
-                ExpressionWrapper(
-                    F("order_line_items__rate")
-                    * F("order_line_items__quantity")
-                    * (1 + F("order_line_items__platform_fee_percent") * 0.01),
-                    output_field=DecimalField(),
-                )
-            )
-        )
-        .order_by("month")
-    )
-    context["customerAmountCompleted"] = customerAmountCompleted
-
-    # customerAmountScheduled
-    def calculate_pending_scheduled_gmv():
-        return (
-            Order.objects.filter(
-                status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date),
-            )
-            .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
-            .exclude(order_line_items__rate=0)
-            .annotate(month=TruncMonth("end_date"))
-            .values("month")
-            .annotate(
-                gmvScheduled=Sum(
-                    ExpressionWrapper(
-                        F("order_line_items__rate")
-                        * F("order_line_items__quantity")
-                        * (1 + F("order_line_items__platform_fee_percent") * 0.01),
-                        output_field=DecimalField(),
-                    )
-                )
-            )
-            .order_by("month")
-        )
-
-    customerAmountScheduled = calculate_pending_scheduled_gmv()
-    context["customerAmountScheduled"] = customerAmountScheduled
-
-    # customerAmount
-    customerAmount = (
-        OrderLineItem.objects.exclude(stripe_invoice_line_item_id="BYPASS")
-        .exclude(rate=0)
-        .annotate(month=TruncMonth("order__end_date"))
-        .values("month")
-        .annotate(
-            customerAmnt=Sum(
-                ExpressionWrapper(
-                    F("rate") * F("quantity") * (1 + F("platform_fee_percent") * 0.01),
-                    output_field=DecimalField(),
-                )
-            )
-        )
-        .filter(order__end_date__year=2024)
-        .order_by("month")
-    )
-    customerAmount_dict = [
-        (
-            float(entry["customerAmnt"])
-            if isinstance(entry["customerAmnt"], Decimal)
-            else entry["customerAmnt"]
-        )
-        for entry in customerAmount
-    ]
-    customerAmount_dictSum = Decimal(sum(customerAmount_dict))
-    context["customerAmount"] = customerAmount
-
-    # customerAmountbyDay
+    start_date = dt(dt.now().year - 1, 1, 1)
+    end_date = dt(dt.now().year, 12, 31)
     delta_month = timezone.now() - timedelta(days=30)
 
-    customerAmountByDay = (
-        OrderLineItem.objects.exclude(stripe_invoice_line_item_id="BYPASS")
-        .exclude(rate=0)
-        .annotate(day=TruncDay("order__end_date"))
-        .values("day")
-        .annotate(
-            customerAmntByDay=Sum(
-                ExpressionWrapper(
-                    F("rate") * F("quantity") * (1 + F("platform_fee_percent") * 0.01),
-                    output_field=DecimalField(),
-                )
+    ##GMV##
+    #customer Amount Completed
+    # Customer Amount Completed
+    customer_amounts = Order.objects.annotate(
+        customer_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=ExpressionWrapper(
+                    F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01),
+                    output_field=DecimalField()
+                )),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        customer_amount=Sum(
+            ExpressionWrapper(
+                F("order_line_items__rate") * F("order_line_items__quantity") * 
+                (1 + F("order_line_items__platform_fee_percent") * 0.01),
+                output_field=DecimalField()
             )
         )
-        .filter(order__end_date__gte=delta_month)
-        .order_by("day")
+    ).aggregate(
+        total_completed=Sum('customer_amount_completed'),
+        total=Sum('customer_amount')
     )
-    customerAmountByDay_dict = [
-        (
-            float(entry["customerAmntByDay"])
-            if isinstance(entry["customerAmntByDay"], Decimal)
-            else entry["customerAmntByDay"]
+
+    customer_amount_completed = customer_amounts['total_completed'] or Decimal('0.00')
+    customer_amount = customer_amounts['total'] or Decimal('0.00')
+
+    context["customer_amount_completed"] = customer_amount_completed
+    context["customer_amount"] = customer_amount
+
+
+    ##Net Revenue##
+    # Supplier Amount Complete
+    supplier_amounts = Order.objects.annotate(
+        supplier_amount_complete=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity")),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        supplier_amount=Sum(
+            F("order_line_items__rate") * F("order_line_items__quantity"),
+            output_field=DecimalField()
         )
-        for entry in customerAmountByDay
-    ]
-    customerAmountByDay_dictSum = Decimal(sum(customerAmountByDay_dict))
-    context["customerAmountByDay"] = customerAmountByDay
-
-    # supplierAmountCompleted
-
-    def calculate_supplier_amount_completed(start_date, end_date):
-        return (
-            Order.objects.filter(
-                status="COMPLETE", end_date__range=(start_date, end_date)
-            )
-            .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
-            .exclude(order_line_items__rate=0)
-            .annotate(month=TruncMonth("end_date"))  # Groupby month
-            .values("month")
-            .annotate(
-                suppAmountCompleted=Sum(
-                    ExpressionWrapper(
-                        F("order_line_items__rate") * F("order_line_items__quantity"),
-                        output_field=DecimalField(),
-                    )
-                )
-            )
-            .order_by("month")
-        )
-
-    supplierAmountCompleted = calculate_supplier_amount_completed(start_date, end_date)
-    context["supplierAmountCompleted"] = supplierAmountCompleted
-
-    # supplierAmountScheduled
-    def calculate_pending_scheduled_supplier_amount():
-        return (
-            Order.objects.filter(
-                status__in=["PENDING", "SCHEDULED"],
-                end_date__range=(start_date, end_date),
-            )
-            .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
-            .exclude(order_line_items__rate=0)
-            .annotate(month=TruncMonth("end_date"))
-            .values("month")
-            .annotate(
-                suppAmountScheduled=Sum(
-                    ExpressionWrapper(
-                        F("order_line_items__rate") * F("order_line_items__quantity"),
-                        output_field=DecimalField(),
-                    )
-                )
-            )
-            .order_by("month")
-        )
-
-    supplierAmountScheduled = calculate_pending_scheduled_supplier_amount()
-    context["supplierAmountScheduled"] = supplierAmountScheduled
-
-    # supplierAmount
-    supplierAmount = (
-        Order.objects.filter(end_date__year=2024)
-        .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
-        .exclude(order_line_items__rate=0)
-        .annotate(month=TruncMonth("end_date"))  # Groupby month
-        .values("month")
-        .annotate(
-            suppAmount=Sum(
-                ExpressionWrapper(
-                    F("order_line_items__rate") * F("order_line_items__quantity"),
-                    output_field=DecimalField(),
-                )
+    ).aggregate(
+        total_complete=Sum('supplier_amount_complete'),
+        total=Sum('supplier_amount'),
+        total_scheduled=Sum(
+            Case(
+                When(status="SCHEDULED", then=F("order_line_items__rate") * F("order_line_items__quantity")),
+                default=Value(0),
+                output_field=DecimalField()
             )
         )
-        .order_by("month")
-        .filter(end_date__year=2024)
     )
-    context["supplierAmount"] = supplierAmount
-    supplierAmount_dict = [
-        (
-            float(entry["suppAmount"])
-            if isinstance(entry["suppAmount"], Decimal)
-            else entry["suppAmount"]
-        )
-        for entry in supplierAmount
-    ]
 
-    # SupplierAmountbyDay
-    supplierAmountByDay = (
-        Order.objects.filter(end_date__year=2024)
-        .exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
-        .exclude(order_line_items__rate=0)
-        .annotate(day=TruncDay("end_date"))  # Groupby day
-        .values("day")
-        .annotate(
-            suppAmount=Sum(
-                ExpressionWrapper(
-                    F("order_line_items__rate") * F("order_line_items__quantity"),
-                    output_field=DecimalField(),
-                )
-            )
-        )
-        .order_by("day")
-        .filter(end_date__year=2024)
-    )
-    context["supplierAmountByDay"] = supplierAmountByDay
-    supplierAmountByDay_dict = [
-        (
-            float(entry["suppAmount"])
-            if isinstance(entry["suppAmount"], Decimal)
-            else float(0) if entry[suppAmount] is None else entry["suppAmount"]
-        )
-        for entry in supplierAmount
-    ]
-    # supplierAmountSum
-    supplierAmountSum = (
-        Order.objects.exclude(order_line_items__stripe_invoice_line_item_id="BYPASS")
-        .exclude(order_line_items__rate=0)
-        .annotate(
-            calculated_value=Sum(
-                F("order_line_items__rate") * F("order_line_items__quantity"),
-                output_field=DecimalField(),
-            )
-        )
-        .aggregate(total=Sum("calculated_value"))["total"]
-    )
-    context["supplierAmountSum"] = supplierAmountSum
+    supplier_amount_complete = supplier_amounts['total_complete'] or Decimal('0.00')
+    supplier_amount_scheduled = supplier_amounts['total_scheduled'] or Decimal('0.00')
+    supplier_amount = supplier_amounts['total'] or Decimal('0.00')
 
-    # Net Revenue Completed
-    def calculate_net_revenue_completed(
-        customer_amount_completed, supplier_amount_completed
-    ):
-        net_revenue_completed = []
-        for customer_entry in customer_amount_completed:
-            month = customer_entry["month"]
-            customer_gmv = customer_entry["gmv"]
+    context["supplier_amount_scheduled"] = supplier_amount_scheduled
+    context["supplier_amount_complete"] = supplier_amount_complete
+    context["supplier_amount"] = supplier_amount
 
-            # Find the corresponding supplier amount for the same month
-            supplier_entry = next(
-                (
-                    entry
-                    for entry in supplier_amount_completed
-                    if entry["month"] == month
-                ),
-                None,
-            )
-            if supplier_entry:
-                supplier_amount = supplier_entry["suppAmountCompleted"]
-                net_revenue = customer_gmv - supplier_amount
-                net_revenue_completed.append(
-                    {"month": month, "netRevenue": net_revenue}
-                )
-
-        return net_revenue_completed
-
-    net_revenue_completed_by_month = calculate_net_revenue_completed(
-        customerAmountCompleted, supplierAmountCompleted
-    )
-    net_revenue_completed_sum = sum(
-        entry["netRevenue"] for entry in net_revenue_completed_by_month
-    )
-    context["netRevenueCompletedSum"] = net_revenue_completed_sum
-    context["netRevenueCompletedByMonth"] = net_revenue_completed_by_month
-
-    # Net Revenue Scheduled
-    def calculate_net_revenue_scheduled(
-        customer_amount_scheduled, supplier_amount_scheduled
-    ):
-        net_revenue_scheduled = []
-        for customer_entry in customer_amount_scheduled:
-            month = customer_entry["month"]
-            customer_gmv_scheduled = customer_entry["gmvScheduled"]
-
-        # Find the corresponding supplier amount for the same month
-        supplier_entry = next(
-            (entry for entry in supplier_amount_scheduled if entry["month"] == month),
-            None,
-        )
-        if supplier_entry:
-            supplier_amount = supplier_entry["suppAmountScheduled"]
-            net_revenue = customer_gmv_scheduled - supplier_amount
-            net_revenue_scheduled.append(
-                {"month": month, "netRevenueScheduled": net_revenue}
-            )
-
-        return net_revenue_scheduled
-
-    netRevenueScheduledByMonth = calculate_net_revenue_scheduled(
-        customerAmountScheduled, supplierAmountScheduled
-    )
-    context["netRevenueScheduled"] = netRevenueScheduledByMonth
-
-    # Net Revenue by day
-    netRevenueByDay = {}
-    supp_map = {entry["day"]: entry["suppAmount"] for entry in supplierAmountByDay}
-    # Filter down to the past month of data
-    past_month = timezone.now() - timedelta(days=30)
-    customerAmountByDay = customerAmountByDay.filter(day__gte=past_month)
-    supplierAmountByDay = supplierAmountByDay.filter(day__gte=past_month)
-
-    for customer_entry in customerAmountByDay:
-        day = customer_entry["day"]
-        customerAmnt = customer_entry["customerAmntByDay"]
-
-        if day in supp_map:
-            suppAmount = supp_map[day]
-            difference = customerAmnt - suppAmount
-            netRevenueByDay[day] = difference
-
-    netRevenueByMonth_labels = []
-    netRevenueByMonth_data = []
-    customerAmount_dictSum = sum(customerAmountByDay_dict)
-    # supplierAmount_dictSum = sum(supplierAmountByDay_dict)
-    supplierAmount_dictSum = 0
-
-    netRevenueSum = customerAmount_dictSum - supplierAmount_dictSum
-    context["netRevenueByMonth"] = netRevenueByDay
-    # Users Count
-    userCount = OrderGroup.objects.values("user").distinct().count()
-    context["userCount"] = userCount
-
-    # Companies Count
-    userGroupCount = UserGroup.objects.values("name").distinct().count()
-    context["userGroupCount"] = userGroupCount
-
-    # Suppliers Count
-    sellerCount = (
-        OrderGroup.objects.values("seller_product_seller_location_id")
-        .distinct()
-        .count()
-    )
-    context["sellerCount"] = sellerCount
-
-    # SPSL Count
-    spslCount = OrderGroup.objects.values("seller_product_seller_location_id").count()
-    context["spslCount"] = spslCount
-
+    # Net Revenue Measures
+    net_revenue_completed = customer_amount_completed - supplier_amount_complete
+    context["net_revenue_completed"] = net_revenue_completed
+    net_revenue = customer_amount - supplier_amount
+    context["net_revenue"] = net_revenue
+    ##AOV##
     # Average Order Value
-    orderSum = Order.objects.annotate(
-        caluclated_val=Sum(
-            F("order_line_items__rate")
-            * F("order_line_items__quantity")
-            * (1 + F("order_line_items__platform_fee_percent") * 0.01),
-            output_field=DecimalField(),
+    average_order_value = Order.objects.annotate(
+        order_value=Sum(
+            F("order_line_items__rate") * F("order_line_items__quantity") * 
+            (1 + F("order_line_items__platform_fee_percent") * 0.01),
+            output_field=DecimalField()
         )
-    )
-    avgOrderValue = orderSum.aggregate(average=Avg("caluclated_val"))["average"]
-    avgOrderValue = round(avgOrderValue, 2)
-    context["avgOrderValue"] = avgOrderValue
+    ).aggregate(average=Avg('order_value'))['average'] or Decimal('0.00')
+    context["average_order_value"] = average_order_value
 
-    # Take Rate By Month
-    takeRateByMonth = (
-        OrderLineItem.objects.exclude(stripe_invoice_line_item_id="BYPASS")
-        .exclude(rate=0)
-        .annotate(month=TruncMonth("order__end_date"))
-        .values("month")
-        .annotate(
-            customerAmnt=Sum(
-                ExpressionWrapper(
-                    F("rate") * F("quantity") * (1 + F("platform_fee_percent") * 0.01),
-                    output_field=DecimalField(),
-                )
-            ),
-            supplierAmnt=Sum(
-                F("rate") * F("quantity")
-            ),  # Assuming supplierAmountSum is calculated like this
+    ##Take Rate##
+    # Take Rate
+    take_rate = (customer_amount - supplier_amount) / customer_amount if customer_amount != 0 else Decimal('0.00')
+    take_rate_static = take_rate * 100
+    context["take_rate_static"] = take_rate_static
+    context["take_rate"] = take_rate
+
+    ##Total Users##
+    # Total Users
+    total_users = OrderGroup.objects.values('user_id').distinct().count()
+    context["total_users"] = total_users
+
+    ##Total Companies##
+    total_companies = UserGroup.objects.values('name').distinct().count()
+    context["total_companies"] = total_companies
+
+    ##Total Sellers##
+    total_sellers = OrderGroup.objects.values('seller_product_seller_location__id').distinct().count()
+    context["total_sellers"] = total_sellers
+
+    ##Total Listings##
+    total_listings = OrderGroup.objects.values('seller_product_seller_location__id').count()
+    context["total_listings"] = total_listings
+
+    ##Graphs##
+    #GMV by Month Graph
+    # GMV by Month Graph
+    gmv_by_month = Order.objects.filter(
+        Q(status="COMPLETE") | Q(status="SCHEDULED"),
+        end_date__range=[start_date, end_date]
+    ).annotate(
+        month=TruncMonth('end_date')
+    ).values(
+        'month'
+    ).annotate(
+        total_customer_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01)),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        total_customer_amount_scheduled=Sum(
+            Case(
+                When(status="SCHEDULED", then=F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01)),
+                default=Value(0),
+                output_field=DecimalField()
+            )
         )
-        .order_by("month")
-    )
-    takeRateData = []
-    for entry in takeRateByMonth:
-        customerAmount = entry["customerAmnt"]
-        supplierAmountSum = entry["supplierAmnt"]
-        takeRate = round(
-            ((customerAmount - supplierAmountSum) / customerAmount) * 100, 1
+    ).order_by('month')
+
+    # Prepare data for chart.js
+    chart_labels = [entry['month'].strftime('%Y-%m') for entry in gmv_by_month]
+    chart_data_completed = [float(entry['total_customer_amount_completed']) for entry in gmv_by_month]
+    chart_data_scheduled = [float(entry['total_customer_amount_scheduled']) for entry in gmv_by_month]
+
+    context['gmv_by_month_labels'] = json.dumps(chart_labels)
+    context['gmv_by_month_data_completed'] = json.dumps(chart_data_completed)
+    context['gmv_by_month_data_scheduled'] = json.dumps(chart_data_scheduled)
+
+    # Net Revenue by Month Graph
+    # Net Revenue by Month Graph
+    net_revenue_by_month = Order.objects.filter(
+        Q(status="COMPLETE") | Q(status="SCHEDULED"),
+        end_date__range=[start_date, end_date]
+    ).annotate(
+        month=TruncMonth('end_date')
+    ).values(
+        'month'
+    ).annotate(
+        total_customer_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01)),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        total_supplier_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity")),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        total_customer_amount_scheduled=Sum(
+            Case(
+                When(status="SCHEDULED", then=F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01)),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        total_supplier_amount_scheduled=Sum(
+            Case(
+                When(status="SCHEDULED", then=F("order_line_items__rate") * F("order_line_items__quantity")),
+                default=Value(0),
+                output_field=DecimalField()
+            )
         )
+    ).order_by('month')
 
-        takeRateData.append(
-            {"month": entry["month"].strftime("%Y-%m"), "takeRate": takeRate}
-        )
-    context["takeRateData"] = takeRateData
-
-    # GMVByMonthGraph
-    labels = [entry["month"].strftime("%Y-%m") for entry in customerAmountCompleted]
-    gmv_data = {
-        entry["month"].strftime("%Y-%m"): (
-            float(entry["gmv"]) if isinstance(entry["gmv"], Decimal) else entry["gmv"]
-        )
-        for entry in customerAmountCompleted
-    }
-
-    scheduled_data = {
-        entry["month"].strftime("%Y-%m"): (
-            float(entry["gmvScheduled"])
-            if isinstance(entry["gmvScheduled"], Decimal)
-            else entry["gmvScheduled"]
-        )
-        for entry in customerAmountScheduled
-    }
-    all_months = sorted(set(gmv_data.keys()).union(scheduled_data.keys()))
-
-    labels = all_months
-    data = [gmv_data.get(month, 0) for month in all_months]
-    scheduleddata = [scheduled_data.get(month, 0) for month in all_months]
-
-    context["chart_labels"] = labels
-    context["chart_data"] = data
-    context["chart_scheduled"] = scheduleddata
-
-    # GMV
-    GMV_Static = sum(data)
-    context["GMV_Static"] = GMV_Static
-
-    # Take Rate Static
-    takeRate_Static = (customerAmnt - supplierAmountSum) / customerAmnt * 100
-    context["takeRate_Static"] = takeRate_Static
-
-    # Net Revenue by Month Bar Chart
-    netRevenueCompleted_data = {
-        entry["month"].strftime("%Y-%m"): float(entry["netRevenue"])
-        for entry in net_revenue_completed_by_month
-    }
-    netRevenueScheduled_data = {
-        entry["month"].strftime("%Y-%m"): float(entry["netRevenueScheduled"])
-        for entry in netRevenueScheduledByMonth
-    }
-
-    all_months_net_revenue = sorted(
-        set(netRevenueCompleted_data.keys()).union(netRevenueScheduled_data.keys())
-    )
-
-    netRevenueCompletedGraph_data = [
-        netRevenueCompleted_data.get(month, 0) for month in all_months_net_revenue
+    # Calculate net revenue for each month
+    net_revenue_by_month_data = [
+        {
+            'month': entry['month'],
+            'net_revenue_completed': entry['total_customer_amount_completed'] - entry['total_supplier_amount_completed'],
+            'net_revenue_scheduled': entry['total_customer_amount_scheduled'] - entry['total_supplier_amount_scheduled']
+        }
+        for entry in net_revenue_by_month
     ]
-    netRevenueScheduledGraph_data = [
-        netRevenueScheduled_data.get(month, 0) for month in all_months_net_revenue
-    ]
 
-    context["netRevGraph_labels"] = all_months_net_revenue
-    context["netRevenueCompletedGraph_data"] = netRevenueCompletedGraph_data
-    context["netRevenueScheduledGraph_data"] = netRevenueScheduledGraph_data
-    # Daily GMV Rate LineChart
-    labels3 = [entry["day"].strftime("%Y-%m-%d") for entry in customerAmountByDay]
-    data3 = [
-        (
-            float(entry["customerAmntByDay"])
-            if isinstance(entry["customerAmntByDay"], Decimal)
-            else entry["customerAmntByDay"]
+    # Prepare data for chart.js
+    net_revenue_labels = [entry['month'].strftime('%Y-%m') for entry in net_revenue_by_month_data]
+    net_revenue_data = [float(entry['net_revenue_completed']) for entry in net_revenue_by_month_data]
+    net_revenue_scheduled_data = [float(entry['net_revenue_scheduled']) for entry in net_revenue_by_month_data]
+
+    context['net_revenue_by_month_labels'] = json.dumps(net_revenue_labels)
+    context['net_revenue_by_month_data'] = json.dumps(net_revenue_data)
+    context['net_revenue_scheduled_data'] = json.dumps(net_revenue_scheduled_data)
+
+    ##Daily GMV Rate for the Past Month##
+    # Daily GMV Rate
+    daily_gmv_rate = Order.objects.filter(
+        Q(status="COMPLETE") | Q(status="SCHEDULED"),
+        end_date__range=[delta_month, timezone.now().replace(tzinfo=None)]
+    ).annotate(
+        day=TruncDay('end_date')
+    ).values(
+        'day'
+    ).annotate(
+        total_customer_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01)),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+    ).order_by('day')
+
+    # Prepare data for chart.js
+    daily_gmv_labels = [entry['day'].strftime('%Y-%m-%d') for entry in daily_gmv_rate]
+    daily_gmv_data_completed = [float(entry['total_customer_amount_completed']) for entry in daily_gmv_rate]
+
+    context['daily_gmv_labels'] = json.dumps(daily_gmv_labels)
+    context['daily_gmv_data_completed'] = json.dumps(daily_gmv_data_completed)
+
+    ##Take Rate by Month Graph##
+    # Take Rate by Month Graph
+    take_rate_by_month = Order.objects.filter(
+        Q(status="COMPLETE") | Q(status="SCHEDULED"),
+        end_date__range=[start_date, min(end_date, timezone.now().replace(tzinfo=None))]
+    ).annotate(
+        month=TruncMonth('end_date')
+    ).values(
+        'month'
+    ).annotate(
+        total_customer_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01)),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        total_supplier_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity")),
+                default=Value(0),
+                output_field=DecimalField()
+            )
         )
-        for entry in customerAmountByDay
+    ).order_by('month')
+
+    # Calculate take rate for each month
+    take_rate_by_month_data = [
+        {
+            'month': entry['month'],
+            'take_rate': (entry['total_customer_amount_completed'] - entry['total_supplier_amount_completed']) / entry['total_customer_amount_completed'] * 100 if entry['total_customer_amount_completed'] != 0 else Decimal('0.00')
+        }
+        for entry in take_rate_by_month
     ]
 
-    context["GMVGraph_labels"] = labels3
-    context["GMVGraph_data"] = data3
+    # Prepare data for chart.js
+    take_rate_labels = [entry['month'].strftime('%Y-%m') for entry in take_rate_by_month_data]
+    take_rate_data = [float(entry['take_rate']) for entry in take_rate_by_month_data]
 
-    # TakeRate LineChart
+    context['take_rate_by_month_labels'] = json.dumps(take_rate_labels)
+    context['take_rate_by_month_data'] = json.dumps(take_rate_data)
 
-    labels4 = [entry["month"] for entry in takeRateData]
-    data4 = [
-        (
-            float(entry["takeRate"])
-            if isinstance(entry["takeRate"], Decimal)
-            else entry["takeRate"]
+    ##Daily Net Revenue Rate for the Past Month##
+    # Daily Net Revenue Rate
+    daily_net_revenue_rate = Order.objects.filter(
+        Q(status="COMPLETE") | Q(status="SCHEDULED"),
+        end_date__range=[delta_month, timezone.now().replace(tzinfo=None)]
+    ).annotate(
+        day=TruncDay('end_date')
+    ).values(
+        'day'
+    ).annotate(
+        total_customer_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity") * 
+                    (1 + F("order_line_items__platform_fee_percent") * 0.01)),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        ),
+        total_supplier_amount_completed=Sum(
+            Case(
+                When(status="COMPLETE", then=F("order_line_items__rate") * F("order_line_items__quantity")),
+                default=Value(0),
+                output_field=DecimalField()
+            )
         )
-        for entry in takeRateData
-    ]
-    context["takeRateData_labels"] = labels4
-    context["takeRateData_data"] = data4
+    ).order_by('day')
 
-    # Daily Net Revenue Rate line Chart
-    labels5 = [key.strftime("%Y-%m-%d") for key in netRevenueByDay.keys()]
-    data5 = [float(value) for value in netRevenueByDay.values()]
-    context["NetRev_labels"] = labels5
-    context["NetRev_data"] = data5
+    # Calculate daily net revenue
+    daily_net_revenue_data = [
+        {
+            'day': entry['day'],
+            'net_revenue_completed': entry['total_customer_amount_completed'] - entry['total_supplier_amount_completed']
+        }
+        for entry in daily_net_revenue_rate
+    ]
+
+    # Prepare data for chart.js
+    daily_net_revenue_labels = [entry['day'].strftime('%Y-%m-%d') for entry in daily_net_revenue_data]
+    daily_net_revenue_data_completed = [float(entry['net_revenue_completed']) for entry in daily_net_revenue_data]
+
+    context['daily_net_revenue_labels'] = json.dumps(daily_net_revenue_labels)
+    context['daily_net_revenue_data_completed'] = json.dumps(daily_net_revenue_data_completed)
+
 
     return render(request, "dashboards/sales_dashboard.html", context)
-
 
 def payout_reconciliation(request):
     context = {}
