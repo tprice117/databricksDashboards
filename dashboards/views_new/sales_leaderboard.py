@@ -185,13 +185,14 @@ def user_sales_new_accounts(request, user_id):
     context["user"] = user
     return render(request, "dashboards/user_sales_new_accounts.html", context)
 
+
 def user_sales_churned_accounts(request, user_id):
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
-    
+
     orders_for_user = Order.objects.filter(
         order_group__user_address__user_group__account_owner=user,
     )
@@ -203,4 +204,3 @@ def user_sales_churned_accounts(request, user_id):
     context["churned_accounts"] = churned_accounts
     context["user"] = user
     return render(request, "dashboards/user_sales_churned_accounts.html", context)
-

@@ -52,5 +52,4 @@ urlpatterns = [
         user_sales_churned_accounts,
         name="user_sales_churned_accounts",
     ),
-    
 ]
