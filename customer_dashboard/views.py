@@ -881,6 +881,7 @@ def new_order_3(request, product_id):
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
             "quantity": request.POST.get("quantity"),
+            "project_id": request.POST.get("project_id"),
         }
         if request.POST.get("times_per_week"):
             query_params["times_per_week"] = request.POST.get("times_per_week")
@@ -958,6 +959,7 @@ def new_order_4(request):
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
     context["quantity"] = int(request.GET.get("quantity"))
+    context["project_id"] = request.GET.get("project_id")
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
@@ -1123,6 +1125,7 @@ def new_order_5(request):
         quantity = (
             int(request.POST.get("quantity")) if request.POST.get("quantity") else 1
         )
+        project_id = request.POST.get("project_id")
 
         # removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
@@ -1132,7 +1135,6 @@ def new_order_5(request):
 
         # Set the discount. If no discount is set, then default to 0.
         discount = float(discount) if discount else 0
-        print("Discount: ", discount)
 
         context["main_product"] = main_product
         seller_product_location = SellerProductSellerLocation.objects.get(
@@ -1189,6 +1191,8 @@ def new_order_5(request):
                 time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
                 if time_slot:
                     order_group.time_slot = time_slot
+            if project_id:
+                order_group.project_id = project_id
             # If Junk Removal, then set the Booking removal date to the same as the delivery date (no asset stays on site).
             if (
                 seller_product_location.seller_product.product.main_product.has_rental

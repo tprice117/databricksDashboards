@@ -130,6 +130,7 @@ class OrderGroup(BaseModel):
         blank=True,
         null=True,
     )
+    project_id = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'

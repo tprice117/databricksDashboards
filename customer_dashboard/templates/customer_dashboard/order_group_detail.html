@@ -26,6 +26,18 @@
                             <strong>Order ID</strong>
                         </p>
                         <p>{{ order_group.id }}</p>
+                        {% if order_group.project_id or order_group.user_address.project_id %}
+                            <p style="margin-bottom: 0px;">
+                                <strong>PO ID</strong>
+                            </p>
+                            <p>
+                                {% if order_group.project_id %}
+                                    {{ order_group.project_id }}
+                                {% else %}
+                                    {{ order_group.user_address.project_id }}
+                                {% endif %}
+                            </p>
+                        {% endif %}
                         {% if order_group.agreement %}
                             <p style="margin-bottom: 0px;padding-top: 16px;">
                                 <strong>Rental Terms of Service</strong>
