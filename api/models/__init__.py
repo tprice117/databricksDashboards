@@ -6,6 +6,7 @@ from .main_product.add_on_choice import AddOnChoice
 from .main_product.main_product import MainProduct
 from .main_product.main_product_add_on import MainProductAddOn
 from .main_product.main_product_category import MainProductCategory
+from .main_product.main_product_category_group import MainProductCategoryGroup
 from .main_product.main_product_category_info import MainProductCategoryInfo
 from .main_product.main_product_info import MainProductInfo
 from .main_product.main_product_service_recurring_frequency import (
@@ -18,6 +19,7 @@ from .main_product.product_add_on_choice import ProductAddOnChoice
 from .order.order import Order
 from .order.order_disposal_ticket import OrderDisposalTicket
 from .order.order_group import OrderGroup
+from .order.order_group_attachment import OrderGroupAttachment
 from .order.order_group_material import OrderGroupMaterial
 from .order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from .order.order_group_rental import OrderGroupRental
@@ -29,7 +31,6 @@ from .order.order_group_service_times_per_week import OrderGroupServiceTimesPerW
 from .order.order_line_item import OrderLineItem
 from .order.order_line_item_type import OrderLineItemType
 from .order.subscription import Subscription
-from .order.order_group_attachment import OrderGroupAttachment
 from .payout import Payout
 from .seller.seller import Seller
 from .seller.seller_invoice_payable import SellerInvoicePayable

@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from api.models.main_product.main_product_category_group import MainProductCategoryGroup
 from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 
@@ -13,6 +14,13 @@ class MainProductCategory(BaseModel):
                 f"Only image files with extensions {', '.join(allowed_extensions)} are allowed."
             )
 
+    group = models.ForeignKey(
+        MainProductCategoryGroup,
+        on_delete=models.CASCADE,
+        related_name="main_product_categories",
+        blank=True,
+        null=True,
+    )
     name = models.CharField(max_length=80)
     description = models.TextField(blank=True, null=True)
     image = models.TextField(blank=True, null=True)
