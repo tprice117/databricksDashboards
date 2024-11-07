@@ -5,10 +5,8 @@ from typing import List
 
 import stripe
 from django.conf import settings
-from django.template.loader import render_to_string
 
 from api.models import Order, OrderLineItem, UserAddress, UserGroup
-from common.utils import get_last_day_of_previous_month
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
 from common.utils.stripe.stripe_utils import StripeUtils
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
@@ -31,10 +29,12 @@ class BillingUtils:
         try:
             # Ensure we have a Stripe Invoice Summary Item for this [Order].
             # If order.stripe_invoice_summary_item_id is None, then create a new one.
+            description, expanded_description = (
+                order.stripe_invoice_summary_item_description()
+            )
             stripe_invoice_summary_item = (
                 StripeUtils.SummaryItems.get_or_create_by_description(
-                    invoice=invoice,
-                    description=order.stripe_invoice_summary_item_description(),
+                    invoice, description, expanded_description
                 )
             )
 
