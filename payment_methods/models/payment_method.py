@@ -1,18 +1,22 @@
+import logging
 import re
 import threading
+from typing import Optional
+
+import stripe
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
-import logging
 from stripe import CardError
+
 from api.models import User, UserGroup
 from api.models.user.user_address import UserAddress
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
-from payment_methods.utils import DSPaymentMethods
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
+from payment_methods.utils import DSPaymentMethods
 from payment_methods.utils.detect_card_type import detect_card_type
 
 logger = logging.getLogger(__name__)
@@ -216,6 +220,30 @@ class PaymentMethod(BaseModel):
                 )
             except Exception as e:
                 logger.error(f"PaymentMethod.send_internal_email: [{e}]", exc_info=e)
+
+    def get_stripe_payment_method(
+        self,
+        user_address: UserAddress,
+    ) -> Optional[stripe.PaymentMethod]:
+        """
+        Get the Stripe Payment Method for passed UserAddress.
+        """
+        # Get all Payment Methods for the UserAddress.
+        stripe_payment_methods = StripeUtils.PaymentMethod.list(
+            customer_id=user_address.stripe_customer_id,
+        )
+
+        # Get the StripePayementMethod for the passed PaymentMethod
+        # (match on the metadata["payment_method_id"]) or None.
+        return next(
+            (
+                stripe_payment_method
+                for stripe_payment_method in stripe_payment_methods
+                if stripe_payment_method["metadata"]["payment_method_id"]
+                == str(self.id)
+            ),
+            None,
+        )
 
 
 @receiver(post_save, sender=PaymentMethod)

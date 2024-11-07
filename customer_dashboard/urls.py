@@ -85,6 +85,11 @@ urlpatterns = [
         views.user_reset_password,
         name="customer_reset_password",
     ),
+    path(
+        "customer/user/<uuid:user_id>/update_email/",
+        views.user_update_email,
+        name="customer_update_email",
+    ),
     path("customer/user/new/", views.new_user, name="customer_new_user"),
     path(
         "customer/company/<uuid:user_group_id>/user/new/",
@@ -92,6 +97,11 @@ urlpatterns = [
         name="customer_new_company_user",
     ),
     path("customer/invoices/", views.invoices, name="customer_invoices"),
+    path(
+        "customer/invoice/<uuid:invoice_id>/",
+        views.invoice_detail,
+        name="customer_invoice_detail",
+    ),
     path("customer/company/new/", views.new_company, name="customer_new_company"),
     path("customer/email/check/", views.user_email_check, name="customer_email_check"),
     path("customer/companies/", views.companies, name="customer_companies"),

@@ -7,7 +7,7 @@
             <h2 class="accordion-header" role="tab">
                 <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
                     <div>
-                        <span>{{ cart_address.address.formatted_address }}</span> -
+                        <span>{% if cart_address.address.name %}{{ cart_address.address.name }} - {% endif %}{{ cart_address.address.formatted_address }}</span> -
                         <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
                         <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.transactions|length }}">{{ cart_address.transactions|length }} item{{ cart_address.transactions|length|pluralize }}</span>
                     </div>
@@ -66,6 +66,9 @@
                                                         {% endif %}
                                                         <p class="mb-1">Service date: {{ order.end_date }}</p>
                                                         <p class="mb-1">Order type: {{ order.order_type }}</p>
+                                                        {% if order.order_group.project_id %}
+                                                            <p class="mb-1">PO ID: {{ order.order_group.project_id }}</p>
+                                                        {% endif %}
                                                         {% if request.user.is_staff %}
                                                             <p class="mb-1">Created by: {% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on|timezone:"America/Chicago" }} (CT)</p>
                                                         {% endif %}

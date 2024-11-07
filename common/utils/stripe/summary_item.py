@@ -24,21 +24,25 @@ class SummaryItems:
         return stripe_invoice_summary_items_response.json()["data"]
 
     @staticmethod
-    def get_or_create_by_description(invoice: stripe.Invoice, description: str):
+    def get_or_create_by_description(
+        invoice: stripe.Invoice, description: str, expanded_description: str
+    ):
         # Get existing Stripe Invoice Summary Item(s) for this Invoice.
         stripe_invoice_summary_items = SummaryItems.get_all_for_invoice(invoice.id)
 
         # Ensure we have a Stripe Invoice Summary Item for this Invoice.
         # If order.stripe_invoice_summary_item_id is None, then create a new one.
-        if any(x["description"] == description for x in stripe_invoice_summary_items):
-            return next(
-                (
-                    item
-                    for item in stripe_invoice_summary_items
-                    if item["description"] == description
-                ),
-                None,
-            )
+        existing_item = next(
+            (
+                item
+                for item in stripe_invoice_summary_items
+                if item["description"] == description
+                or item["description"] == expanded_description
+            ),
+            None,
+        )
+        if existing_item:
+            return existing_item
         else:
             new_summary_invoice_summary_item_response = requests.post(
                 f"https://api.stripe.com/v1/invoices/{invoice.id}/summary_items",

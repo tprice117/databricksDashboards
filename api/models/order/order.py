@@ -150,6 +150,29 @@ class Order(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField()
     submitted_on = models.DateTimeField(blank=True, null=True)
+    submitted_by = models.ForeignKey(
+        "api.User",
+        models.SET_NULL,
+        related_name="submitted_orders",
+        blank=True,
+        null=True,
+    )
+    accepted_on = models.DateTimeField(blank=True, null=True)
+    accepted_by = models.ForeignKey(
+        "api.User",
+        models.SET_NULL,
+        related_name="accepted_orders",
+        blank=True,
+        null=True,
+    )
+    completed_on = models.DateTimeField(blank=True, null=True)
+    completed_by = models.ForeignKey(
+        "api.User",
+        models.SET_NULL,
+        related_name="completed_orders",
+        blank=True,
+        null=True,
+    )
     schedule_details = models.TextField(
         blank=True, null=True
     )  # 6.6.23 (Modified name to schedule_details from additional_schedule_details)
@@ -271,9 +294,7 @@ class Order(BaseModel):
         )
 
     def full_price(self):
-        default_take_rate = (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
-        )
+        default_take_rate = self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
         return self.seller_price() * (1 + (default_take_rate / 100))
 
     @property
@@ -292,7 +313,26 @@ class Order(BaseModel):
         return round(self.seller_price() - self.total_paid_to_seller(), 2)
 
     def stripe_invoice_summary_item_description(self):
-        return f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type} | {str(self.id)[:5]}'
+        """Create a description for the Stripe Invoice Summary Item.
+        Create one of old style and one of new style because we need to check if
+        Stripe Invoice Summary Item exists for the old description already and only
+        create new Invoice Summary Items using the new style.
+        Return a tuple with the old style and new style descriptions.
+        Description is the old style description.
+        Description2 adds the project_id, from OrderGroup or UserAddress to the description.
+
+        Returns:
+            tuple(str, str): Orignal description and new expaned description (could be exactly the same).
+        """
+        description = f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type}'
+        description2 = description
+        if self.order_group.project_id:
+            description2 = f"{description2} | {self.order_group.project_id}"
+        elif self.order_group.user_address.project_id:
+            description2 = f"{description2} | {self.order_group.project_id}"
+        description = f"{description} | {str(self.id)[:5]}"
+        description2 = f"{description2} | {str(self.id)[:5]}"
+        return description, description2
 
     def get_order_type(self):
         # Pre-calculate conditions
@@ -437,7 +477,6 @@ class Order(BaseModel):
         order_line_items = OrderLineItem.objects.filter(order=self)
         # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
-
             try:
                 # Only add OrderLineItems if this is the first Order in the OrderGroup.
                 order_group_orders = Order.objects.filter(order_group=self.order_group)
@@ -455,9 +494,7 @@ class Order(BaseModel):
                     and order_group_orders.count() > 1
                 )
 
-                is_equiptment_order = (
-                    self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
-                )
+                is_equiptment_order = self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
 
                 delivery_fee = 0
                 if is_first_order:
@@ -902,9 +939,7 @@ class Order(BaseModel):
                 # Get all emails for this seller_location_id.
                 # Ensure all emails are non empty and unique.
                 to_emails = []
-                if (
-                    self.order_group.seller_product_seller_location.seller_location.order_email
-                ):
+                if self.order_group.seller_product_seller_location.seller_location.order_email:
                     to_emails.append(
                         self.order_group.seller_product_seller_location.seller_location.order_email
                     )

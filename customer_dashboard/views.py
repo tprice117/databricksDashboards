@@ -7,11 +7,11 @@ from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
+import time
 
 import requests
 import stripe
 from django.conf import settings
-from django.db.models import F
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -19,7 +19,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
-from django.db.models import Q, Max
+from django.db.models import F, Max, Q
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -33,6 +33,7 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
+from api.utils import auth0
 from api.models import (
     AddOn,
     MainProduct,
@@ -58,8 +59,8 @@ from api.models import (
     UserAddress,
     UserAddressType,
     UserGroup,
-    UserGroupLegal,
     UserGroupCreditApplication,
+    UserGroupLegal,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -73,6 +74,7 @@ from billing.models import Invoice
 from cart.models import CheckoutOrder
 from cart.utils import CheckoutUtils, QuoteUtils
 from common.models.choices.user_type import UserType
+from common.utils.generate_code import get_otp
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
@@ -86,6 +88,7 @@ from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
     AccessDetailsForm,
+    CreditApplicationForm,
     OrderGroupForm,
     OrderGroupSwapForm,
     PlacementDetailsForm,
@@ -93,7 +96,6 @@ from .forms import (
     UserForm,
     UserGroupForm,
     UserInviteForm,
-    CreditApplicationForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -647,7 +649,7 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     context["BASIS_THEORY_API_KEY"] = settings.BASIS_THEORY_PUB_API_KEY
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
-    if add_user_group:
+    if request.user.is_authenticated and add_user_group:
         context["user_group"] = get_user_group(request)
     return context
 
@@ -681,9 +683,7 @@ def index(request):
                     order.customer_price()
                 )
 
-            category = (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
-            )
+            category = order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
             if category not in earnings_by_category:
                 earnings_by_category[category] = {"amount": 0, "percent": 0}
             earnings_by_category[category]["amount"] += float(order.customer_price())
@@ -755,12 +755,24 @@ def index(request):
         return render(request, "customer_dashboard/index.html", context)
 
 
-@login_required(login_url="/admin/login/")
+# @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order(request):
     context = get_user_context(request)
+    search_q = request.GET.get("q", None)
     main_product_categories = MainProductCategory.objects.all().order_by("name")
+    if search_q:
+        main_product_categories = main_product_categories.filter(
+            name__icontains=search_q
+        )
     context["main_product_categories"] = main_product_categories
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "customer_dashboard/new_order/main_product_category_table.html",
+            context,
+        )
 
     return render(
         request, "customer_dashboard/new_order/main_product_categories.html", context
@@ -804,7 +816,7 @@ def user_address_search(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+# @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order_2(request, category_id):
     context = get_user_context(request)
@@ -825,7 +837,7 @@ def new_order_2(request, category_id):
     return render(request, "customer_dashboard/new_order/main_products.html", context)
 
 
-@login_required(login_url="/admin/login/")
+# @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order_3(request, product_id):
     context = get_user_context(request)
@@ -849,8 +861,10 @@ def new_order_3(request, product_id):
         context["product_add_ons"].append(
             {"add_on": add_on, "choices": add_on.choices.all()}
         )
-    context["user_addresses"] = get_location_objects(
-        request, context["user"], context["user_group"]
+    context["user_addresses"] = (
+        get_location_objects(request, context["user"], context["user_group"])
+        if request.user.is_authenticated
+        else []
     )
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
@@ -867,6 +881,7 @@ def new_order_3(request, product_id):
             "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
             "product_waste_types": request.POST.getlist("product_waste_types"),
             "quantity": request.POST.get("quantity"),
+            "project_id": request.POST.get("project_id"),
         }
         if request.POST.get("times_per_week"):
             query_params["times_per_week"] = request.POST.get("times_per_week")
@@ -944,6 +959,7 @@ def new_order_4(request):
     context["delivery_date"] = request.GET.get("delivery_date")
     context["removal_date"] = request.GET.get("removal_date", "")
     context["quantity"] = int(request.GET.get("quantity"))
+    context["project_id"] = request.GET.get("project_id")
     # step_time = time.time()
     # print(f"Extract parameters: {step_time - start_time}")
     # if product_waste_types:
@@ -1109,6 +1125,7 @@ def new_order_5(request):
         quantity = (
             int(request.POST.get("quantity")) if request.POST.get("quantity") else 1
         )
+        project_id = request.POST.get("project_id")
 
         # removal_date = request.POST.get("removal_date")
         main_product = MainProduct.objects.filter(id=product_id)
@@ -1118,7 +1135,6 @@ def new_order_5(request):
 
         # Set the discount. If no discount is set, then default to 0.
         discount = float(discount) if discount else 0
-        print("Discount: ", discount)
 
         context["main_product"] = main_product
         seller_product_location = SellerProductSellerLocation.objects.get(
@@ -1175,6 +1191,8 @@ def new_order_5(request):
                 time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
                 if time_slot:
                     order_group.time_slot = time_slot
+            if project_id:
+                order_group.project_id = project_id
             # If Junk Removal, then set the Booking removal date to the same as the delivery date (no asset stays on site).
             if (
                 seller_product_location.seller_product.product.main_product.has_rental
@@ -1293,9 +1311,9 @@ def new_order_5(request):
                     Q(created_on__date__gte=start_date)
                     & Q(created_on__date__lte=end_date)
                 )
-                context[
-                    "help_text"
-                ] += f"open orders created between {start_date} and {end_date}."
+                context["help_text"] += (
+                    f"open orders created between {start_date} and {end_date}."
+                )
             else:
                 orders = orders.filter(created_on__date=check_date)
                 if start_date:
@@ -1310,13 +1328,13 @@ def new_order_5(request):
                 & Q(end_date__lte=check_date + datetime.timedelta(days=5))
             )
             if start_date:
-                context[
-                    "help_text"
-                ] += f"open orders expiring (Order.EndDate) within 5 days after {check_date}."
+                context["help_text"] += (
+                    f"open orders expiring (Order.EndDate) within 5 days after {check_date}."
+                )
             else:
-                context[
-                    "help_text"
-                ] += "open orders expiring (Order.EndDate) within 5 days."
+                context["help_text"] += (
+                    "open orders expiring (Order.EndDate) within 5 days."
+                )
         elif filter_qry == "inactive":
             # Displays all open orders that haven't been updated in GREATER THAN 5 days & today is BEFORE any order's Order.EndDate
             orders = orders.filter(
@@ -1324,44 +1342,44 @@ def new_order_5(request):
                 & Q(end_date__lt=check_date)
             )
             if start_date:
-                context[
-                    "help_text"
-                ] += f"open orders that haven't been updated in more than 5 days & {check_date} is after any order's EndDate."
+                context["help_text"] += (
+                    f"open orders that haven't been updated in more than 5 days & {check_date} is after any order's EndDate."
+                )
             else:
-                context[
-                    "help_text"
-                ] += "open orders that haven't been updated in more than 5 days & today is after any order's EndDate."
+                context["help_text"] += (
+                    "open orders that haven't been updated in more than 5 days & today is after any order's EndDate."
+                )
         elif filter_qry == "expired":
             # Displays all open orders that have an Order.EndDate AFTER Today
             # expired = T - infinite .. basically these are in the last and we will start working to clear this list becuase it’s an error or expired quote now
             orders = orders.filter(end_date__lt=check_date)
             if start_date:
-                context[
-                    "help_text"
-                ] += f"open orders that have an Order.EndDate before {check_date}."
+                context["help_text"] += (
+                    f"open orders that have an Order.EndDate before {check_date}."
+                )
             else:
-                context[
-                    "help_text"
-                ] += "open orders that have an Order.EndDate before Today."
+                context["help_text"] += (
+                    "open orders that have an Order.EndDate before Today."
+                )
         else:
             # active: default filter. Displays all open orders
             if start_date and end_date:
                 orders = orders.filter(
                     Q(end_date__gte=start_date) & Q(end_date__lte=end_date)
                 )
-                context[
-                    "help_text"
-                ] += f"open orders starting on or between {start_date} and {end_date}."
+                context["help_text"] += (
+                    f"open orders starting on or between {start_date} and {end_date}."
+                )
             elif start_date:
                 orders = orders.filter(end_date__gte=start_date)
-                context[
-                    "help_text"
-                ] += f"open orders starting on or after {start_date}."
+                context["help_text"] += (
+                    f"open orders starting on or after {start_date}."
+                )
             elif end_date:
                 orders = orders.filter(end_date__lte=end_date)
-                context[
-                    "help_text"
-                ] += f"open orders starting on or before {start_date}."
+                context["help_text"] += (
+                    f"open orders starting on or before {start_date}."
+                )
             else:
                 context["help_text"] += "open orders."
 
@@ -1481,9 +1499,9 @@ def cart_send_quote(request):
                     "subject": checkout_order.subject,
                     "message_data": checkout_order.get_quote(),
                 }
-                data["message_data"][
-                    "accept_url"
-                ] = f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
+                data["message_data"]["accept_url"] = (
+                    f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
+                )
                 # https://customer.io/docs/api/app/#operation/sendEmail
                 headers = {
                     "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
@@ -1647,9 +1665,9 @@ def add_payment_method(request):
                 )
                 payment_method.save()
                 if user_address_id:
-                    context["user_address"].default_payment_method_id = (
-                        payment_method.id
-                    )
+                    context[
+                        "user_address"
+                    ].default_payment_method_id = payment_method.id
                     context["user_address"].save()
                 messages.success(request, "Payment method added.")
                 http_status = 201
@@ -2417,17 +2435,17 @@ def locations(request):
             )
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
-                context["help_text"] = (
-                    f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
+                context[
+                    "help_text"
+                ] = f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
             else:
-                context["help_text"] = (
-                    f"""Churning locations are those with a smaller revenue when compared to the previous
+                context[
+                    "help_text"
+                ] = f"""Churning locations are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
         else:
             user_addresses = get_location_objects(
                 request, context["user"], context["user_group"], search_q=search_q
@@ -2673,7 +2691,6 @@ def location_detail(request, location_id):
 
 @login_required(login_url="/admin/login/")
 def customer_location_user_add(request, user_address_id, user_id):
-
     user_address = UserAddress.objects.get(id=user_address_id)
     user = User.objects.get(id=user_id)
 
@@ -2707,7 +2724,6 @@ def customer_location_user_add(request, user_address_id, user_id):
 
 @login_required(login_url="/admin/login/")
 def customer_location_user_remove(request, user_address_id, user_id):
-
     user_address = UserAddress.objects.get(id=user_address_id)
     user = User.objects.get(id=user_id)
 
@@ -2918,17 +2934,17 @@ def users(request):
             )
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
-                context["help_text"] = (
-                    f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
+                context[
+                    "help_text"
+                ] = f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
             else:
-                context["help_text"] = (
-                    f"""Churning users are those with a smaller revenue when compared to the previous
+                context[
+                    "help_text"
+                ] = f"""Churning users are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
         else:
             users = get_user_group_user_objects(
                 request, context["user"], context["user_group"], search_q=search_q
@@ -3092,6 +3108,95 @@ def user_reset_password(request, user_id):
             return HttpResponse("User not found", status=404)
 
     return HttpResponse(status=204)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def user_update_email(request, user_id):
+    # context = get_user_context(request)
+
+    context = {}
+    context["help_msg"] = ""
+    context["css_class"] = "form-valid"
+    context["step1"] = True
+    try:
+        context["user"] = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        messages.error(request, "User not found.")
+        return HttpResponseRedirect(reverse("customer_users"))
+    if request.user.id != context["user"].id:
+        messages.error(request, "You do not have permission to update this email.")
+        return HttpResponseRedirect(reverse("customer_profile"))
+
+    if request.method == "POST":
+        # if "submit_email" in request.POST:
+        new_email = request.POST.get("email")
+        code = request.POST.get("code")
+        try:
+            if new_email:
+                new_email = new_email.casefold()
+                validate_email(new_email)
+                if User.objects.filter(email=new_email).exists():
+                    messages.error(request, "User with that email already exists.")
+                    context["error"] = "User with that email already exists."
+                    context["css_class"] = "form-error"
+                else:
+                    otp = get_otp()
+                    request.session["otp"] = otp
+                    request.session["new_email"] = new_email
+                    request.session["otp_expiration"] = time.time() + 600  # 10 minutes
+                    context["user"].send_otp_email(new_email, otp)
+                    context["help_msg"] = (
+                        f"Successfully sent verification code to {new_email}!"
+                    )
+                    messages.success(
+                        request,
+                        f"Successfully sent verification code to {new_email}! Please check your email for the code!",
+                    )
+                    context["step1"] = False
+            elif code:
+                context["step1"] = False
+                new_email = request.session.get("new_email")
+                if not new_email:
+                    raise ValidationError("Please retry.")
+                if (
+                    request.session.get("otp") == code
+                    and request.session.get("otp_expiration") > time.time()
+                ):
+                    auth0.update_user_email(
+                        context["user"].user_id, new_email, verify_email=False
+                    )
+                    context["user"].email = new_email
+                    context["user"].save()
+                    messages.success(request, "Successfully updated email!")
+                    context["step1"] = True
+                    del request.session["otp"]
+                    del request.session["new_email"]
+                    del request.session["otp_expiration"]
+                    return HttpResponseRedirect(reverse("customer_profile"))
+                else:
+                    messages.error(request, "Invalid or expired code.")
+                    context["error"] = "Invalid or expired code."
+                    context["css_class"] = "form-error"
+        except ValidationError as e:
+            messages.error(request, f"{e}")
+            context["error"] = f"{e}"
+            context["css_class"] = "form-error"
+        except Exception as e:
+            logger.error(
+                f"user_update_email: Error updating email: [{user_id}]-[{e}]",
+                exc_info=e,
+            )
+            messages.error(
+                request,
+                f"Error updating email. Please contact us if this continues. [{e}]",
+            )
+            context["error"] = f"Error updating email: {e}"
+            context["css_class"] = "form-error"
+    else:
+        pass
+
+    return render(request, "customer_dashboard/user_update_email.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -3294,6 +3399,40 @@ def invoices(request):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
+def invoice_detail(request, invoice_id):
+    context = get_user_context(request)
+    context["invoice"] = Invoice.objects.get(id=invoice_id)
+    context["is_checkout"] = True
+    if context["user_group"]:
+        payment_methods = PaymentMethod.objects.filter(
+            user_group_id=context["user_group"].id
+        )
+    else:
+        # Get account from location. This is helpful for impersonations.
+        if context["invoice"].user_address.user_group:
+            payment_methods = PaymentMethod.objects.filter(
+                user_group_id=context["invoice"].user_address.user_group.id
+            )
+            context["user_group"] = context["invoice"].user_address.user_group
+        else:
+            payment_methods = PaymentMethod.objects.filter(user_id=context["user"].id)
+    # Order payment methods by newest first.
+    context["payment_methods"] = payment_methods.order_by("-created_on")
+
+    if request.method == "POST":
+        payment_method_id = request.POST.get("payment_method")
+        if payment_method_id:
+            payment_method = PaymentMethod.objects.get(id=payment_method_id)
+            context["invoice"].pay_invoice(payment_method)
+            messages.success(request, "Successfully paid!")
+        else:
+            messages.error(request, "Invalid payment method.")
+
+    return render(request, "customer_dashboard/invoice_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
 def companies(request):
     context = get_user_context(request)
     context["help_text"] = (
@@ -3341,17 +3480,17 @@ def companies(request):
             )
             pagination_limit = len(user_groups) or 1
             if tab == "fully_churned":
-                context["help_text"] = (
-                    f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
+                context[
+                    "help_text"
+                ] = f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
                     (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
             else:
-                context["help_text"] = (
-                    f"""Churning Companies are those with a smaller revenue when compared to the previous
+                context[
+                    "help_text"
+                ] = f"""Churning Companies are those with a smaller revenue when compared to the previous
                     30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
-                )
         else:
             user_groups = UserGroup.objects.filter(seller__isnull=True)
             if account_owner_id:
@@ -3782,9 +3921,9 @@ def company_new_user(request, user_group_id):
             if save_model:
                 save_model.save()
                 context["form_msg"] = "Successfully saved!"
-                context["first_name"] = context["last_name"] = context["email"] = (
-                    context["type"]
-                ) = ""
+                context["first_name"] = context["last_name"] = context[
+                    "email"
+                ] = context["type"] = ""
         except UserAlreadyExistsError:
             context["form_error"] = "User with that email already exists."
         except InvalidFormError as e:

@@ -4,15 +4,40 @@
 {% block title %}
     Create New Booking
 {% endblock %}
+{% block javascript %}
+    <script>
+        // On dom load update search field
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchFilter = document.getElementById("category-search-filter");
+            const urlParams = new URLSearchParams(window.location.search);
+            const search = urlParams.get("q");
+            if (search) {
+                searchFilter.value = search;
+            }
+        });
+    </script>
+{% endblock %}
 {% block stylesheet %}
     <style></style>
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
-        <div class="d-sm-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-dark mb-0">Create New Booking</h3>
+        <div class="card-header p-3 mb-2 border">
+            <div class="row">
+                <div class="col">
+                    <p class="text-primary m-0 fw-bold" id="table-title">Create New Booking</p>
+                    {% comment %} <h3 class="text-dark mb-0">Create New Booking</h3> {% endcomment %}
+                    <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                </div>
+                <div class="col">
+                    <div class="col-md-6" style="margin-left: auto;">
+                        <label for="category-search-filter">Search</label>
+                        <input id="category-search-filter" class="form-control" type="search" name="q" hx-push-url="true" hx-get="{% url 'customer_new_order' %}" hx-trigger="input changed delay:500ms, search" hx-target="#category-results" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status" />
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
+        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4" id="category-results">
             {% for main_product_category in main_product_categories %}
                 <div class="col-lg-4 d-flex align-items-stretch">
                     <div class="card shadow mb-4">
