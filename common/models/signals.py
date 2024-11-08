@@ -19,7 +19,9 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
             authenticated_user = request.auth
         elif hasattr(request, "user"):
             authenticated_user = request.user
-
+        print(
+            f"request: {request}, {type(request)}, authenticated_user: {authenticated_user}"
+        )
         # Set the 'updated_by' user.
         instance.updated_by = authenticated_user
 
