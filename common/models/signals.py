@@ -19,9 +19,7 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
             authenticated_user = request.auth
         elif hasattr(request, "user"):
             authenticated_user = request.user
-        print(
-            f"request: {request}, {type(request)}, authenticated_user: {authenticated_user}"
-        )
+
         # Set the 'updated_by' user.
         instance.updated_by = authenticated_user
 
@@ -40,9 +38,10 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
                 and instance.old_value("submitted_on") is None
             ):
                 instance.submitted_by = authenticated_user
-                # Sign rental agreement on checkout.
-                instance.order_group.agreement_signed_by = authenticated_user
-                instance.order_group.agreement_signed_on = timezone.now()
+                if not instance.order_group.is_agreement_signed:
+                    # Sign rental agreement on checkout.
+                    instance.order_group.agreement_signed_by = authenticated_user
+                    instance.order_group.agreement_signed_on = timezone.now()
             old_status = instance.old_value("status")
             if old_status != instance.status:
                 # Status changed
