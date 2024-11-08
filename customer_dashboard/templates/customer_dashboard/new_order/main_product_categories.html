@@ -57,7 +57,7 @@
                 </div>
                 <div class="col">
                     <select id="table-filter-options" class="form-select" aria-label="Filter Data By" name="group_id" onchange="htmx.trigger(this, 'confirmed');">
-                        <option value="" selected>Filter Data By (all)</option>
+                        <option value="" selected>Filter By Category (all)</option>
                         {% for group in main_product_category_groups %}
                             <option value="{{ group.id }}">{{ group.name }}</option>
                         {% endfor %}
