@@ -61,6 +61,7 @@ from api.models import (
     UserGroup,
     UserGroupCreditApplication,
     UserGroupLegal,
+    MainProductCategoryGroup,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -760,12 +761,21 @@ def index(request):
 def new_order(request):
     context = get_user_context(request)
     search_q = request.GET.get("q", None)
+    group_id = request.GET.get("group_id", None)
     main_product_categories = MainProductCategory.objects.all().order_by("name")
     if search_q:
         main_product_categories = main_product_categories.filter(
             name__icontains=search_q
         )
     context["main_product_categories"] = main_product_categories
+    context["main_product_category_groups"] = (
+        MainProductCategoryGroup.objects.all().order_by("sort")
+    )
+    if group_id:
+        context["main_product_categories"] = context["main_product_categories"].filter(
+            group_id=group_id
+        )
+    print(context["main_product_category_groups"].count())
 
     if request.headers.get("HX-Request"):
         return render(
