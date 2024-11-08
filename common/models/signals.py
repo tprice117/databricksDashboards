@@ -11,7 +11,6 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
     # print("Running base_model_pre_save")
     # Sets the 'created_by' and 'updated_by' if 'sender' is a subclass of BaseModel
     if issubclass(sender, BaseModel):
-
         # Get current user via author backend.
         request = get_request()
 
@@ -39,6 +38,9 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
                 and instance.old_value("submitted_on") is None
             ):
                 instance.submitted_by = authenticated_user
+                # Sign rental agreement on checkout.
+                instance.order_group.agreement_signed_by = authenticated_user
+                instance.order_group.agreement_signed_on = timezone.now()
             old_status = instance.old_value("status")
             if old_status != instance.status:
                 # Status changed
