@@ -50,10 +50,10 @@ def index(request):
     return render(request, "dashboards/index.html")
 
 
-
 def sales_dashboard(request):
     context = get_sales_dashboard_context()
     return render(request, "dashboards/sales_dashboard.html", context)
+
 
 def get_sales_dashboard_context():
     context = {}
@@ -67,7 +67,9 @@ def get_sales_dashboard_context():
         customer_amount_completed=Sum(
             Case(
                 When(
-                    Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                    Q(status="COMPLETE")
+                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                    & ~Q(order_line_items__rate=0),
                     then=ExpressionWrapper(
                         F("order_line_items__rate")
                         * F("order_line_items__quantity")
@@ -86,7 +88,8 @@ def get_sales_dashboard_context():
                 * (1 + F("order_line_items__platform_fee_percent") * 0.01),
                 output_field=DecimalField(),
             ),
-            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0)
+            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+            & ~Q(order_line_items__rate=0),
         ),
     ).aggregate(
         total_completed=Sum("customer_amount_completed"), total=Sum("customer_amount")
@@ -104,7 +107,9 @@ def get_sales_dashboard_context():
         supplier_amount_complete=Sum(
             Case(
                 When(
-                    Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                    Q(status="COMPLETE")
+                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                    & ~Q(order_line_items__rate=0),
                     then=F("order_line_items__rate") * F("order_line_items__quantity"),
                 ),
                 default=Value(0),
@@ -114,7 +119,8 @@ def get_sales_dashboard_context():
         supplier_amount=Sum(
             F("order_line_items__rate") * F("order_line_items__quantity"),
             output_field=DecimalField(),
-            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0)
+            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+            & ~Q(order_line_items__rate=0),
         ),
     ).aggregate(
         total_complete=Sum("supplier_amount_complete"),
@@ -122,7 +128,9 @@ def get_sales_dashboard_context():
         total_scheduled=Sum(
             Case(
                 When(
-                    Q(status="SCHEDULED") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                    Q(status="SCHEDULED")
+                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                    & ~Q(order_line_items__rate=0),
                     then=F("order_line_items__rate") * F("order_line_items__quantity"),
                 ),
                 default=Value(0),
@@ -152,7 +160,8 @@ def get_sales_dashboard_context():
             * F("order_line_items__quantity")
             * (1 + F("order_line_items__platform_fee_percent") * 0.01),
             output_field=DecimalField(),
-            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0)
+            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+            & ~Q(order_line_items__rate=0),
         )
     ).aggregate(average=Avg("order_value"))["average"] or Decimal("0.00")
     context["average_order_value"] = average_order_value
@@ -204,7 +213,9 @@ def get_sales_dashboard_context():
             total_customer_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -216,7 +227,9 @@ def get_sales_dashboard_context():
             total_customer_amount_scheduled=Sum(
                 Case(
                     When(
-                        Q(status="SCHEDULED") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="SCHEDULED")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -254,7 +267,9 @@ def get_sales_dashboard_context():
             total_customer_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -266,7 +281,9 @@ def get_sales_dashboard_context():
             total_supplier_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -277,7 +294,9 @@ def get_sales_dashboard_context():
             total_customer_amount_scheduled=Sum(
                 Case(
                     When(
-                        Q(status="SCHEDULED") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="SCHEDULED")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -289,7 +308,9 @@ def get_sales_dashboard_context():
             total_supplier_amount_scheduled=Sum(
                 Case(
                     When(
-                        Q(status="SCHEDULED") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="SCHEDULED")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -340,7 +361,9 @@ def get_sales_dashboard_context():
             total_customer_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -377,7 +400,9 @@ def get_sales_dashboard_context():
             total_customer_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -389,7 +414,9 @@ def get_sales_dashboard_context():
             total_supplier_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -440,7 +467,9 @@ def get_sales_dashboard_context():
             total_customer_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -452,7 +481,9 @@ def get_sales_dashboard_context():
             total_supplier_amount_completed=Sum(
                 Case(
                     When(
-                        Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -489,95 +520,105 @@ def get_sales_dashboard_context():
 
     return context
 
+
 def export_sales_dashboard_csv(request):
-    # Gather data
+    # Gather ctx data from sales dashboard
     context = get_sales_dashboard_context()
 
-    # Create the HttpResponse object with the appropriate CSV header.
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="sales_dashboard.csv"'
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="sales_dashboard.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Metric', 'Value'])
+    writer.writerow(["Metric", "Value"])
 
     # Write data to CSV
-    writer.writerow(['Customer Amount Completed', context["customer_amount_completed"]])
-    writer.writerow(['Customer Amount', context["customer_amount"]])
-    writer.writerow(['Supplier Amount Scheduled', context["supplier_amount_scheduled"]])
-    writer.writerow(['Supplier Amount Completed', context["supplier_amount_complete"]])
-    writer.writerow(['Supplier Amount', context["supplier_amount"]])
-    writer.writerow(['Net Revenue Completed', context["net_revenue_completed"]])
-    writer.writerow(['Net Revenue', context["net_revenue"]])
-    writer.writerow(['Average Order Value', context["average_order_value"]])
-    writer.writerow(['Take Rate Static', context["take_rate_static"]])
-    writer.writerow(['Take Rate', context["take_rate"]])
-    writer.writerow(['Total Users', context["total_users"]])
-    writer.writerow(['Total Companies', context["total_companies"]])
-    writer.writerow(['Total Sellers', context["total_sellers"]])
-    writer.writerow(['Total Listings', context["total_listings"]])
+    writer.writerow(["Customer Amount Completed", context["customer_amount_completed"]])
+    writer.writerow(["Customer Amount", context["customer_amount"]])
+    writer.writerow(["Supplier Amount Scheduled", context["supplier_amount_scheduled"]])
+    writer.writerow(["Supplier Amount Completed", context["supplier_amount_complete"]])
+    writer.writerow(["Supplier Amount", context["supplier_amount"]])
+    writer.writerow(["Net Revenue Completed", context["net_revenue_completed"]])
+    writer.writerow(["Net Revenue", context["net_revenue"]])
+    writer.writerow(["Average Order Value", context["average_order_value"]])
+    writer.writerow(["Take Rate Static", context["take_rate_static"]])
+    writer.writerow(["Take Rate", context["take_rate"]])
+    writer.writerow(["Total Users", context["total_users"]])
+    writer.writerow(["Total Companies", context["total_companies"]])
+    writer.writerow(["Total Sellers", context["total_sellers"]])
+    writer.writerow(["Total Listings", context["total_listings"]])
 
     # Write GMV by Month data
     writer.writerow([])
-    writer.writerow(['GMV by Month'])
-    writer.writerow(['Month', 'Completed', 'Scheduled'])
+    writer.writerow(["GMV by Month"])
+    writer.writerow(["Month", "Completed", "Scheduled"])
     for month, completed, scheduled in zip(
         json.loads(context["gmv_by_month_labels"]),
         json.loads(context["gmv_by_month_data_completed"]),
-        json.loads(context["gmv_by_month_data_scheduled"])
+        json.loads(context["gmv_by_month_data_scheduled"]),
     ):
         writer.writerow([month, completed, scheduled])
 
     # Write Net Revenue by Month data
     writer.writerow([])
-    writer.writerow(['Net Revenue by Month'])
-    writer.writerow(['Month', 'Completed', 'Scheduled'])
+    writer.writerow(["Net Revenue by Month"])
+    writer.writerow(["Month", "Completed", "Scheduled"])
     for month, completed, scheduled in zip(
         json.loads(context["net_revenue_by_month_labels"]),
         json.loads(context["net_revenue_by_month_data"]),
-        json.loads(context["net_revenue_scheduled_data"])
+        json.loads(context["net_revenue_scheduled_data"]),
     ):
         writer.writerow([month, completed, scheduled])
 
     # Write Daily GMV Rate data
     writer.writerow([])
-    writer.writerow(['Daily GMV Rate'])
-    writer.writerow(['Day', 'Completed'])
+    writer.writerow(["Daily GMV Rate"])
+    writer.writerow(["Day", "Completed"])
     for day, completed in zip(
         json.loads(context["daily_gmv_labels"]),
-        json.loads(context["daily_gmv_data_completed"])
+        json.loads(context["daily_gmv_data_completed"]),
     ):
         writer.writerow([day, completed])
 
     # Write Take Rate by Month data
     writer.writerow([])
-    writer.writerow(['Take Rate by Month'])
-    writer.writerow(['Month', 'Take Rate'])
+    writer.writerow(["Take Rate by Month"])
+    writer.writerow(["Month", "Take Rate"])
     for month, take_rate in zip(
         json.loads(context["take_rate_by_month_labels"]),
-        json.loads(context["take_rate_by_month_data"])
+        json.loads(context["take_rate_by_month_data"]),
     ):
         writer.writerow([month, take_rate])
 
     # Write Daily Net Revenue Rate data
     writer.writerow([])
-    writer.writerow(['Daily Net Revenue Rate'])
-    writer.writerow(['Day', 'Completed'])
+    writer.writerow(["Daily Net Revenue Rate"])
+    writer.writerow(["Day", "Completed"])
     for day, completed in zip(
         json.loads(context["daily_net_revenue_labels"]),
-        json.loads(context["daily_net_revenue_data_completed"])
+        json.loads(context["daily_net_revenue_data_completed"]),
     ):
         writer.writerow([day, completed])
 
     # Write Order data associated with customer_amount_completed
     writer.writerow([])
-    writer.writerow(['Orders Associated with Customer Amount Completed'])
-    writer.writerow(['Order ID', 'Customer Amount Completed', 'Net Revenue Completed', 'Order Date', 'Status'])
-    
+    writer.writerow(["Orders Associated with Customer Amount Completed"])
+    writer.writerow(
+        [
+            "Order ID",
+            "Customer Amount Completed",
+            "Net Revenue Completed",
+            "Order Date",
+            "Status",
+        ]
+    )
+
     orders = Order.objects.annotate(
         customer_amount_completed=Sum(
             Case(
                 When(
-                    Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                    Q(status="COMPLETE")
+                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                    & ~Q(order_line_items__rate=0),
                     then=ExpressionWrapper(
                         F("order_line_items__rate")
                         * F("order_line_items__quantity")
@@ -592,32 +633,46 @@ def export_sales_dashboard_csv(request):
         supplier_amount_complete=Sum(
             Case(
                 When(
-                    Q(status="COMPLETE") & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS") & ~Q(order_line_items__rate=0),
+                    Q(status="COMPLETE")
+                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                    & ~Q(order_line_items__rate=0),
                     then=F("order_line_items__rate") * F("order_line_items__quantity"),
                 ),
                 default=Value(0),
                 output_field=DecimalField(),
             )
-        )
+        ),
     ).filter(customer_amount_completed__gt=0)
 
     for order in orders:
-        net_revenue_completed = order.customer_amount_completed - order.supplier_amount_complete
-        writer.writerow([
-            order.id,
-            order.customer_amount_completed,
-            net_revenue_completed,
-            order.end_date.strftime("%Y-%m-%d"),
-            order.status
-        ])
+        net_revenue_completed = (
+            order.customer_amount_completed - order.supplier_amount_complete
+        )
+        writer.writerow(
+            [
+                order.id,
+                order.customer_amount_completed,
+                net_revenue_completed,
+                order.end_date.strftime("%Y-%m-%d"),
+                order.status,
+            ]
+        )
     # Calculate totals for customer_amount_completed and net_revenue_completed
-    total_customer_amount_completed = sum(order.customer_amount_completed for order in orders)
-    total_net_revenue_completed = sum(order.customer_amount_completed - order.supplier_amount_complete for order in orders)
+    total_customer_amount_completed = sum(
+        order.customer_amount_completed for order in orders
+    )
+    total_net_revenue_completed = sum(
+        order.customer_amount_completed - order.supplier_amount_complete
+        for order in orders
+    )
 
     # Write totals to CSV
     writer.writerow([])
-    writer.writerow(['Total', total_customer_amount_completed, total_net_revenue_completed])
+    writer.writerow(
+        ["Total", total_customer_amount_completed, total_net_revenue_completed]
+    )
     return response
+
 
 def payout_reconciliation(request):
     context = {}
@@ -783,11 +838,6 @@ def payout_reconciliation(request):
     context["unique_order_status_comb"] = unique_order_status_comb
     return render(request, "dashboards/payout_reconciliation.html", context)
 
-
-def sales_dashboard_data():
-    context = {}
-    # ...existing sales_dashboard code to populate context...
-    return context
 
 @login_required(login_url="/admin/login/")
 def command_center(request):

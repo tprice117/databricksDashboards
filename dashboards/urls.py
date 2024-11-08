@@ -53,8 +53,8 @@ urlpatterns = [
         name="user_sales_churned_accounts",
     ),
     path(
-        'export_sales_dashboard_csv/',
+        "export_sales_dashboard_csv/",
         views.export_sales_dashboard_csv,
-        name='export_sales_dashboard_csv',
+        name="export_sales_dashboard_csv",
     ),
 ]
