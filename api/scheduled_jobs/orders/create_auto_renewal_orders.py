@@ -22,13 +22,21 @@ def create_auto_renewal_orders(request):
         # Only process if the OrderGroup has Orders.
         if order_group.orders.exists():
             # Get the most recent Order for the OrderGroup.
-            most_recent_order: Order = order_group.orders.order_by("-end_date").first()
+            most_recent_submitted_order: Order = (
+                order_group.orders.filter(
+                    submitted_on__isnull=False,
+                )
+                .order_by("-end_date")
+                .first()
+            )
 
             # Get the most recent Order EndDate at 11:59:59 PM.
-            most_recent_order_end_date = most_recent_order.end_date.replace(
-                hour=23,
-                minute=59,
-                second=59,
+            most_recent_submitted_order_end_date = (
+                most_recent_submitted_order.end_date.replace(
+                    hour=23,
+                    minute=59,
+                    second=59,
+                )
             )
 
             # Get 28 days ago at 12:00:00 AM.
@@ -41,10 +49,18 @@ def create_auto_renewal_orders(request):
 
             # If the most recent Order.EndDate is more than 28 days in the past,
             # create a new Order for the OrderGroup.
-            if most_recent_order_end_date < twenty_eight_days_ago:
+            if most_recent_submitted_order_end_date < twenty_eight_days_ago:
+                # If there are unsubmitted Orders after the most recent
+                # submitted Order, delete them.
+                order_group.orders.filter(
+                    submitted_on__isnull=True,
+                ).delete()
+
                 Order.objects.create(
                     order_group=order_group,
-                    start_date=most_recent_order_end_date + timezone.timedelta(days=1),
-                    end_date=most_recent_order_end_date + timezone.timedelta(days=29),
+                    start_date=most_recent_submitted_order_end_date
+                    + timezone.timedelta(days=1),
+                    end_date=most_recent_submitted_order_end_date
+                    + timezone.timedelta(days=29),
                     status=Order.Status.PENDING,
                 )
