@@ -204,3 +204,9 @@ def user_sales_churned_accounts(request, user_id):
     context["churned_accounts"] = churned_accounts
     context["user"] = user
     return render(request, "dashboards/user_sales_churned_accounts.html", context)
+
+def user_sales_28_day_list(request, user_id):
+    return render(request, "dashboards/user_sales_28_day_list.html")
+
+def user_sales_new_buyers(request, user_id):
+    return render(request, "dashboards/user_sales_new_buyers.html")
