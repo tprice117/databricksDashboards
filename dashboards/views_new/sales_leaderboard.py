@@ -205,6 +205,7 @@ def user_sales_churned_accounts(request, user_id):
     context["user"] = user
     return render(request, "dashboards/user_sales_churned_accounts.html", context)
 
+
 def user_sales_28_day_list(request, user_id):
     context = {}
     try:
@@ -219,15 +220,16 @@ def user_sales_28_day_list(request, user_id):
         order_group_end_date=F("order_group__end_date"),
         order_end_date=F("end_date"),
         order_id=F("id"),
-        user_account_owner=F("order_group__user_address__user_group__account_owner__username"),
+        user_account_owner=F(
+            "order_group__user_address__user_group__account_owner__username"
+        ),
         user_address_name=F("order_group__user_address__name"),
     )
     context["orders_for_user"] = orders_for_user
 
-
-
     context["user"] = user
     return render(request, "dashboards/user_sales_28_day_list.html", context)
+
 
 def user_sales_new_buyers(request, user_id):
     context = {}
@@ -235,7 +237,6 @@ def user_sales_new_buyers(request, user_id):
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
-    
 
     context["user"] = user
     return render(request, "dashboards/user_sales_new_buyers.html", context)

@@ -67,5 +67,4 @@ urlpatterns = [
         user_sales_new_buyers,
         name="user_sales_new_buyers",
     ),
-    
 ]
