@@ -845,3 +845,41 @@ def command_center(request):
         request,
         "dashboards/index.html",
     )
+
+def all_orders_dashboard(request):
+    context = {}
+    orders = Order.objects.annotate(
+        order_id=F("id"),
+        annotated_order_group_id=F("order_group__id"),
+        order_created_date=F("created_on"),
+        order_start_date=F("start_date"),
+        usergroup_name=F("order_group__user__user_group__name"),
+        useraddress_id=F("order_group__user_address__id"),
+        useraddress_name=F("order_group__user_address__name"),
+        user_first_name=F("order_group__user__first_name"),
+        user_last_name=F("order_group__user__last_name"),
+        user_email=F("order_group__user__email"),
+        order_status=F("status"),
+        sellerlocation_name=F("order_group__seller_product_seller_location__seller_location__name"),
+        mainproduct_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+    ).values(
+        "order_id",
+        "order_group_id",
+        "order_created_date",
+        "order_start_date",
+        "usergroup_name",
+        "useraddress_id",
+        "useraddress_name",
+        "user_first_name",
+        "user_last_name",
+        "user_email",
+        "order_status",
+        "sellerlocation_name",
+        "mainproduct_name",
+    )
+    context["orders"] = orders
+    return render(
+        request,
+        "dashboards/all_orders_dashboard.html",
+        context,
+    )

@@ -22,6 +22,17 @@
     li #nav2 {
         float: left;
     }
+    li.active a {
+        background-color: #4CAF50;
+        color: white;
+    }
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #333;
+        color: white;
+        z-index: 1;
+    }
 </style>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,13 +44,13 @@
 <body>
     <nav>
         <ul id="nav2" style="display: flex; gap: 100px;">
-            <li id="nav2"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_detail' %}active{% endif %}"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_product_mix' %}active{% endif %}"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_top_accounts' %}active{% endif %}"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_accounts' %}active{% endif %}"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_buyers' %}active{% endif %}"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_churned_accounts' %}active{% endif %}"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_28_day_list' %}active{% endif %}"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
         </ul>
     </nav>
     <header>
@@ -49,31 +60,45 @@
     <main>
         <section>
             <h3>28 Day list for {{user.first_name}}, {{user.last_name}}</h3>
-            <table>
-                <thead>
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">order_group_id</th>
-                        <th style="padding-right: 100px;">order_id</th>
-                        <th style="padding-right: 100px;">order_end_date</th>
-                        <th style="padding-right: 100px;">order_id</th>
-                        <th style="padding-right: 100px;">user_account_owner</th>
-                        <th style="padding-right: 100px;">user_address_name</th>
-                    </tr>
- 
-                </thead>
-                <tbody>
-                    {% for order in orders_for_user%}
-                    <tr>
-                        <td>{{order.annotated_order_group_id}}</td>     
-                        <td>{{order.order_group_id}}</td>
-                        <td>{{order.order_end_date}}</td>            
-                        <td>{{order.order_id}}</td>            
-                        <td>{{order.user_account_owner}}</td>            
-                        <td>{{order.user_address_name}}</td>                      
-                    </tr>
-                    {%endfor%}                    
-                </tbody>
-            </table>
+            <div style="overflow-x: auto; max-height: 42em;">
+                <table>
+                    <thead>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <th style="padding-right: 200px;">order_group_id</th>
+                            <th style="padding-right: 100px;">order_end_date</th>
+                            <th style="padding-right: 100px;">order_id</th>
+                            <th style="padding-right: 100px;">Downstream account_owner</th>
+                            <th style="padding-right: 100px;">user_address_name</th>
+                            <th style="padding-right: 100px;">first_name</th>
+                            <th style="padding-right: 100px;">last_name</th>
+                            <th style="padding-right: 100px;">email</th>
+                            <th style="padding-right: 100px;">status</th>
+                            <th style="padding-right: 100px;">seller_location_name</th>
+                            <th style="padding-right: 100px;">Product name</th>
+                            <th style="padding-right: 100px;">Take Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders_for_user%}
+                        <tr>
+                            <td>{{order.annotated_order_group_id}}</td>     
+                            <td>{{order.order_end_date}}</td>            
+                            <td>{{order.order_id}}</td>            
+                            <td>{{order.user_account_owner}}</td>            
+                            <td>{{order.user_address_name}}</td>     
+                            <td>{{order.user_first_name}}</td>     
+                            <td>{{order.user_last_name}}</td>     
+                            <td>{{order.user_email}}</td>     
+                            <td>{{order.order_status}}</td>     
+                            <td>{{order.seller_location_name}}</td>     
+                            <td>{{order.main_product_name}}</td>  
+                            <td>{{order.take_action}}</td>   
+
+                        </tr>
+                        {%endfor%}                    
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
