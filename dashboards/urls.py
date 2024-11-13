@@ -52,4 +52,19 @@ urlpatterns = [
         user_sales_churned_accounts,
         name="user_sales_churned_accounts",
     ),
+    path(
+        "export_sales_dashboard_csv/",
+        views.export_sales_dashboard_csv,
+        name="export_sales_dashboard_csv",
+    ),
+    path(
+        "user-sales-detail/<uuid:user_id>/user-sales-28-day-list/",
+        user_sales_28_day_list,
+        name="user_sales_28_day_list",
+    ),
+    path(
+        "user-sales-detail/<uuid:user_id>/user-sales-new-buyers/",
+        user_sales_new_buyers,
+        name="user_sales_new_buyers",
+    ),
 ]

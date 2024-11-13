@@ -92,6 +92,25 @@ class MainProduct(BaseModel):
 
         return price
 
+    @property
+    def auto_renews(self):
+        """
+        Determines if the MainProduct auto-renews based on the MainProduct's
+        rental, service, and material attributes. Currently, we want to auto-renew
+        all MainProducts except RollOffs and one-time products (like Junk Removal).
+
+        - A MainProduct is a RollOff if it has_service = True and has_rental = True.
+        - A MainProduct is a one-time product if it has_service = False and does not
+            have a rental attribute.
+        """
+        is_roll_off = self.has_service and self.has_rental
+        is_one_time = self.has_service and (
+            not self.has_rental
+            and not self.has_rental_one_step
+            and not self.has_rental_multi_step
+        )
+        return not is_roll_off and not is_one_time
+
     def _is_complete(self) -> bool:
         # Given all related AddOns, ensure that we have a Product
         # for each combination of MainProduct AddOnsChoices.

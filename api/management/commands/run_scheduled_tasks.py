@@ -7,6 +7,9 @@ from django.core.management.base import BaseCommand
 from django_apscheduler.jobstores import DjangoJobStore
 
 from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
+from api.scheduled_jobs.orders.create_auto_renewal_orders import (
+    create_auto_renewal_orders,
+)
 from api.scheduled_jobs.update_order_line_item_paid_status import (
     update_order_line_item_paid_status,
 )
@@ -159,6 +162,19 @@ class Command(BaseCommand):
                 jitter=640,
             ),
             id="ensure_invoice_settings_default_payment_method",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Create auto-renewal Orders for OrderGroups that need them.
+        # Run every day at 3am.
+        scheduler.add_job(
+            create_auto_renewal_orders,
+            trigger=CronTrigger(
+                hour="3",
+                jitter=640,
+            ),
+            id="create_auto_renewal_orders",
             max_instances=1,
             replace_existing=True,
         )
