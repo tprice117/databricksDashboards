@@ -3342,7 +3342,9 @@ def invoices(request):
             if tab == "past_due":
                 # Get all invoices that are past due.
                 invoices = invoices.filter(
-                    Q(due_date__date__lt=today) & Q(amount_remaining__gt=0)
+                    Q(due_date__date__lt=today)
+                    & Q(status=Invoice.Status.OPEN)
+                    & Q(amount_remaining__gt=0)
                 )
             else:
                 invoices = invoices.filter(status=tab)
@@ -3359,7 +3361,7 @@ def invoices(request):
                     amount_remaining = 0
                 context["total_paid"] += amount_paid
                 context["total_open"] += amount_remaining
-                if invoice.due_date and invoice.due_date.date() > today:
+                if invoice.due_date and invoice.due_date.date() < today:
                     context["past_due"] += amount_remaining
 
         paginator = Paginator(invoices, pagination_limit)
