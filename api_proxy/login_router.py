@@ -37,7 +37,7 @@ def post_login_router(request):
         return redirect(reverse("customer_home"))
     if request.user.is_staff:
         return redirect(reverse("customer_home"))
-    elif hasattr(request.user.user_group, "seller"):
+    elif hasattr(request.user.user_group, "seller") and request.user.user_group.seller:
         return redirect(reverse("supplier_bookings"))
     elif request.user.user_group:
         return redirect(reverse("customer_home"))
