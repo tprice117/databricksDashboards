@@ -22,6 +22,31 @@
     li #nav2 {
         float: left;
     }
+    li.active a {
+        background-color: #4CAF50;
+        color: white;
+    }
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #333;
+        color: white;
+        z-index: 1;
+    }
+    .flex-container {
+        display: flex;
+        justify-content: space-between;
+    }
+    .chart-container {
+        width: 45%;
+        background-color: #333; /* Add darker background */
+        padding: 10px 20px 10px 10px; /* Add padding to the right */
+        border-radius: 5px;
+    }
+    .table-container {
+        width: 50%;
+        padding-left: 20px; /* Add padding to the left */
+    }
 </style>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,15 +56,17 @@
     <title>User Sales Detail</title>
 </head>
 <body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <nav>
         <ul id="nav2" style="display: flex; gap: 100px;">
-            <li id="nav2"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_detail' %}active{% endif %}"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_product_mix' %}active{% endif %}"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_top_accounts' %}active{% endif %}"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_accounts' %}active{% endif %}"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_buyers' %}active{% endif %}"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_churned_accounts' %}active{% endif %}"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_28_day_list' %}active{% endif %}"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
         </ul>
     </nav>
     <header>
@@ -47,26 +74,55 @@
 
     </header>
     <main>
-        <section>
-            <h3>Product Mix of Past Month</h3>
-            <table>
-                <thead>
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">Product_name</th>
-                        <th style="padding-right: 100px;">Count</th>
-                    </tr>
- 
-                </thead>
-                <tbody>
-                    {% for product in product_sales|dictsortreversed:"order_count" %}
-                    <tr>
-                        <td>{{product.main_product_name}}</td>
-                        <td>{{product.order_count}}</td>
-                    </tr>
-                    {%endfor%}                    
-                </tbody>
-            </table>
+        <section class="flex-container">
+            <div class="table-container">
+                <h3>Product Mix of Past Month</h3>
+                <table>
+                    <thead>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <th style="padding-right: 200px;">Product_name</th>
+                            <th style="padding-right: 100px;">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in product_sales|dictsortreversed:"order_count" %}
+                        <tr>
+                            <td>{{product.main_product_name}}</td>
+                            <td>{{product.order_count}}</td>
+                        </tr>
+                        {%endfor%}                    
+                    </tbody>
+                </table>
+            </div>
+            <div class="chart-container">
+                <canvas id="productMixChart" width="100" height="100"></canvas>
+            </div>
         </section>
+        <script>
+            var ctx = document.getElementById('productMixChart').getContext('2d');
+            var chartData = {{ chart_data|safe }};
+            var productMixChart = new Chart(ctx, {
+                type: 'pie',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 1, // Adjust this value to control the size of the chart
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.label + ': ' + tooltipItem.raw + ' orders';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
         <a href="{% url 'user_sales_detail' user.id %}" class="btn btn-primary">Back to Overview</a>
