@@ -5,10 +5,9 @@ from django.contrib.auth.decorators import login_required
 from api.models import User
 
 logger = logging.getLogger(__name__)
-
 from django.shortcuts import render
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Case, When, BooleanField
 
 from api.models.order.order import *
 from api.models.order.order_group import *
@@ -69,6 +68,8 @@ def sales_leaderboard(request):
             else 0
         )
 
+
+
         # Net Revenue.
         user.net_revenue = sum(
             [order.customer_price() - order.seller_price() for order in orders_for_user]
@@ -76,6 +77,8 @@ def sales_leaderboard(request):
 
         # Order Count.
         user.order_count = len(orders_for_user)
+
+
 
     # Sort Users by GMV (descending).
     users = sorted(users, key=lambda user: user.gmv, reverse=True)
@@ -128,6 +131,27 @@ def user_sales_product_mix(request, user_id):
         .order_by("order_count")
     )
 
+    # Prepare data for the pie chart.
+    product_names = [product['main_product_name'] for product in product_sales]
+    order_counts = [product['order_count'] for product in product_sales]
+
+    # Include Chart.js script and data in the context.
+    context["chart_data"] = {
+        "labels": product_names,
+        "datasets": [
+            {
+                "data": order_counts,
+                "backgroundColor": [
+                    "#FF6384",
+                    "#36A2EB",
+                    "#FFCE56",
+                    "#4BC0C0",
+                    "#9966FF",
+                    "#FF9F40",
+                ],
+            }
+        ],
+    }
     context["product_sales"] = product_sales
     context["user"] = user
     context["orders_this_month"] = orders_this_month
@@ -174,7 +198,7 @@ def user_sales_new_accounts(request, user_id):
             order_group__start_date__gte=first_of_month - timezone.timedelta(days=30)
         )
         .values(
-            user_group_name=F("order_group__user_address__user_group__name"),
+            seller_location_name=F("order_group__seller_product_seller_location__seller_location__name"),
             order_group_start_date=F("order_group__start_date"),
             order_most_recent_order_date=F("end_date"),
         )
@@ -215,6 +239,7 @@ def user_sales_28_day_list(request, user_id):
     orders_for_user = Order.objects.filter(
         order_group__user_address__user_group__account_owner=user,
         end_date__gte=timezone.now() - timezone.timedelta(days=28),
+        status=Order.Status.COMPLETE,
     ).annotate(
         annotated_order_group_id=F("order_group__id"),
         order_group_end_date=F("order_group__end_date"),
@@ -224,7 +249,19 @@ def user_sales_28_day_list(request, user_id):
             "order_group__user_address__user_group__account_owner__username"
         ),
         user_address_name=F("order_group__user_address__name"),
+        user_first_name=F("order_group__user_address__user_group__account_owner__first_name"),
+        user_last_name=F("order_group__user_address__user_group__account_owner__last_name"),
+        user_email=F("order_group__user_address__user_group__account_owner__email"),
+        order_status=F("status"),
+        seller_location_name=F("order_group__seller_product_seller_location__seller_location__name"),
+        main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+        take_action=Case(
+            When(end_date__lte=timezone.now() + timezone.timedelta(days=10), then=True),
+            default=False,
+            output_field=BooleanField(),
+        )
     )
+
     context["orders_for_user"] = orders_for_user
 
     context["user"] = user
