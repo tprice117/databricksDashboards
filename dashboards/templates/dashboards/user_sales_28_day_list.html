@@ -48,20 +48,28 @@
     </header>
     <main>
         <section>
-            <h3>Product Mix of Past Month</h3>
+            <h3>28 Day list for {{user.first_name}}, {{user.last_name}}</h3>
             <table>
                 <thead>
                     <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">Product_name</th>
-                        <th style="padding-right: 100px;">Count</th>
+                        <th style="padding-right: 200px;">order_group_id</th>
+                        <th style="padding-right: 100px;">order_id</th>
+                        <th style="padding-right: 100px;">order_end_date</th>
+                        <th style="padding-right: 100px;">order_id</th>
+                        <th style="padding-right: 100px;">user_account_owner</th>
+                        <th style="padding-right: 100px;">user_address_name</th>
                     </tr>
  
                 </thead>
                 <tbody>
-                    {% for product in product_sales|dictsortreversed:"order_count" %}
+                    {% for order in orders_for_user%}
                     <tr>
-                        <td>{{product.main_product_name}}</td>
-                        <td>{{product.order_count}}</td>
+                        <td>{{order.annotated_order_group_id}}</td>     
+                        <td>{{order.order_group_id}}</td>
+                        <td>{{order.order_end_date}}</td>            
+                        <td>{{order.order_id}}</td>            
+                        <td>{{order.user_account_owner}}</td>            
+                        <td>{{order.user_address_name}}</td>                      
                     </tr>
                     {%endfor%}                    
                 </tbody>
@@ -69,8 +77,11 @@
         </section>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
-        <a href="{% url 'user_sales_detail' user.id %}" class="btn btn-primary">Back to Overview</a>
+        <a href="{% url 'sales_leaderboard' %}" class="btn btn-primary">Back to Leaderboard</a>
     </div>
+    <footer>
+        <p>&copy; 2024 | Downstream | Sales Data by Rep</p>
+    </footer>
 </body>
 </html>
 

@@ -13,6 +13,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <div class="container-fluid">
     <div class="row">
+        <!-- Add a button to download the CSV file -->
+        <div class="col-md-12 mb-4">
+            <a href="{% url 'export_sales_dashboard_csv' %}" class="btn btn-primary">Download CSV</a>
+        </div>
         <div class="col-md-6 col-xl-3 mb-4">
             <div class="card shadow border-left-primary py-2">
                 <div class="card-body">
