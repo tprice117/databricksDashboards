@@ -22,6 +22,17 @@
     li #nav2 {
         float: left;
     }
+    li.active a {
+        background-color: #4CAF50;
+        color: white;
+    }
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #333;
+        color: white;
+        z-index: 1;
+    }
 </style>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,13 +44,13 @@
 <body>
     <nav>
         <ul id="nav2" style="display: flex; gap: 100px;">
-            <li id="nav2"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
-            <li id="nav2"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_detail' %}active{% endif %}"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_product_mix' %}active{% endif %}"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_top_accounts' %}active{% endif %}"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_accounts' %}active{% endif %}"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_buyers' %}active{% endif %}"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_churned_accounts' %}active{% endif %}"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_28_day_list' %}active{% endif %}"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
         </ul>
     </nav>
     <header>
@@ -52,7 +63,7 @@
             <table>
                 <thead>
                     <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">Company_name</th>
+                        <th style="padding-right: 200px;">seller_location_name</th>
                         <th style="padding-right: 100px;">First_Transaction_Date</th>
                         <th style="padding-right: 100px;">Most_Recent_Order_Date</th>
                     </tr>
@@ -61,7 +72,7 @@
                 <tbody>
                     {% for accounts in new_accounts%}
                     <tr>
-                        <td>{{accounts.user_group_name}}</td>
+                        <td>{{accounts.seller_location_name}}</td>
                         <td>{{accounts.order_group_start_date}}</td>
                         <td>{{accounts.order_most_recent_order_date}}</td>
                     </tr>
