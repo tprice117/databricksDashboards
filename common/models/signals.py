@@ -15,9 +15,9 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
         request = get_request()
 
         authenticated_user = None
-        if hasattr(request, "auth"):
+        if getattr(request, "auth", None) is not None:
             authenticated_user = request.auth
-        elif hasattr(request, "user"):
+        elif getattr(request, "user", None) is not None:
             authenticated_user = request.user
 
         # Set the 'updated_by' user.

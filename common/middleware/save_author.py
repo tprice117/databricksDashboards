@@ -9,13 +9,6 @@ def get_request():
     return getattr(_thread_locals, "request", None)
 
 
-def set_user(user):
-    """Sets the current user in request stored in current thread"""
-    request = get_request()
-    if request:
-        setattr(request, "user", user)
-
-
 class SaveAuthorMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
