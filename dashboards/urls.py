@@ -72,4 +72,9 @@ urlpatterns = [
         views.all_orders_dashboard,
         name="all_orders_dashboard",
     ),
+    path(
+        "seller-location-dashboard/",
+        views.seller_location_dashboard,
+        name="seller_location_dashboard",
+    ),
 ]
