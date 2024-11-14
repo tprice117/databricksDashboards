@@ -2120,7 +2120,9 @@ def order_group_swap(request, order_group_id, is_removal=False):
 
     if request.method == "POST":
         try:
-            form = OrderGroupSwapForm(request.POST, request.FILES)
+            form = OrderGroupSwapForm(
+                request.POST, request.FILES, auth_user=request.user
+            )
             context["form"] = form
             if form.is_valid():
                 swap_date = form.cleaned_data.get("swap_date")
@@ -2146,6 +2148,8 @@ def order_group_swap(request, order_group_id, is_removal=False):
                     e.form.fields[field].widget.attrs["class"] = "is-invalid"
                 else:
                     e.form.fields[field].widget.attrs["class"] += " is-invalid"
+        except ValidationError as e:
+            context["form_error"] = " | ".join(e.messages)
         except Exception as e:
             context["form_error"] = (
                 f"Error saving, please contact us if this continues: [{e}]."
@@ -2155,7 +2159,8 @@ def order_group_swap(request, order_group_id, is_removal=False):
             initial={
                 "order_group_id": order_group.id,
                 "order_group_start_date": order_group.start_date,
-            }
+            },
+            auth_user=request.user,
         )
 
     return render(request, "customer_dashboard/snippets/order_group_swap.html", context)
