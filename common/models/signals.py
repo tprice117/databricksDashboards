@@ -20,34 +20,35 @@ def base_model_pre_save(sender, instance: BaseModel, **kwargs):
         elif getattr(request, "user", None) is not None:
             authenticated_user = request.user
 
-        # Set the 'updated_by' user.
-        instance.updated_by = authenticated_user
+        if authenticated_user and not authenticated_user.is_anonymous:
+            # Set the 'updated_by' user.
+            instance.updated_by = authenticated_user
 
-        # If creating object, set the 'created_by' field.
-        if (
-            sender.objects.filter(pk=instance.pk).exists() is False
-            and authenticated_user is not None
-        ):
-            instance.created_by = authenticated_user
-
-        # Check if instance is Order instance(instance, Order)
-        if hasattr(instance, "submitted_by") and hasattr(instance, "accepted_by"):
-            # This is an Order instance
+            # If creating object, set the 'created_by' field.
             if (
-                instance.submitted_on is not None
-                and instance.old_value("submitted_on") is None
+                sender.objects.filter(pk=instance.pk).exists() is False
+                and authenticated_user is not None
             ):
-                instance.submitted_by = authenticated_user
-                if not instance.order_group.is_agreement_signed:
-                    # Sign rental agreement on checkout.
-                    instance.order_group.agreement_signed_by = authenticated_user
-                    instance.order_group.agreement_signed_on = timezone.now()
-            old_status = instance.old_value("status")
-            if old_status != instance.status:
-                # Status changed
-                if instance.status == instance.Status.SCHEDULED:
-                    instance.accepted_by = authenticated_user
-                    instance.accepted_on = timezone.now()
-                elif instance.status == instance.Status.COMPLETE:
-                    instance.completed_by = authenticated_user
-                    instance.completed_on = timezone.now()
+                instance.created_by = authenticated_user
+
+            # Check if instance is Order instance(instance, Order)
+            if hasattr(instance, "submitted_by") and hasattr(instance, "accepted_by"):
+                # This is an Order instance
+                if (
+                    instance.submitted_on is not None
+                    and instance.old_value("submitted_on") is None
+                ):
+                    instance.submitted_by = authenticated_user
+                    if not instance.order_group.is_agreement_signed:
+                        # Sign rental agreement on checkout.
+                        instance.order_group.agreement_signed_by = authenticated_user
+                        instance.order_group.agreement_signed_on = timezone.now()
+                old_status = instance.old_value("status")
+                if old_status != instance.status:
+                    # Status changed
+                    if instance.status == instance.Status.SCHEDULED:
+                        instance.accepted_by = authenticated_user
+                        instance.accepted_on = timezone.now()
+                    elif instance.status == instance.Status.COMPLETE:
+                        instance.completed_by = authenticated_user
+                        instance.completed_on = timezone.now()
