@@ -12,6 +12,7 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import absolutify
 from requests.exceptions import HTTPError
 from rest_framework import authentication, exceptions
+from common.middleware.save_author import set_user
 
 from api.models.user.user import User
 
@@ -24,7 +25,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
     def authenticate(self, request, **kwargs):
         """Authenticates a user based on the OIDC code flow, with additional checks for admin tokens and impersonation."""
 
-        print("CustomOIDCAuthenticationBackend")
+        # print("CustomOIDCAuthenticationBackend")
         # 1. Check for pre-defined admin tokens (stored securely)
         #  - This bypasses the OIDC flow for authorized admins.
         admin_tokens = [
@@ -70,6 +71,8 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
                         ),
                     },
                 )
+            # Set the user on request in a local thread so it can be accessed in signals.
+            set_user(user)
         else:
             return None
 
