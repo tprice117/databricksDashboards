@@ -16,6 +16,7 @@
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'users_dashboard' %}active{% endif %}" href="{% url 'users_dashboard' %}"><i class="fas fa-users"></i><span>Users Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'user_groups_dashboard' %}active{% endif %}" href="{% url 'user_groups_dashboard' %}"><i class="fas fa-users-cog"></i><span>User Groups Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'user_addresses_dashboard' %}active{% endif %}" href="{% url 'user_addresses_dashboard' %}"><i class="fas fa-address-book"></i><span>User Addresses Dashboard</span></a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'auto_renewal_list_dashboard' %}active{% endif %}" href="{% url 'auto_renewal_list_dashboard' %}"><i class="fas fa-sync-alt"></i><span>Auto Renewal List Dashboard</span></a></li>
       </ul>
       <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
   </div>

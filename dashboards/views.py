@@ -1,6 +1,7 @@
 import logging
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
+from django.db.models import DateField
 from django.shortcuts import render
 from django.db.models import (
     F,
@@ -18,6 +19,8 @@ from django.db.models import (
     Q,
     Subquery,
     OuterRef,
+    Max,
+    BooleanField,
 )
 from django.http import JsonResponse
 from django.db.models.functions import (
@@ -30,6 +33,7 @@ from django.db.models.functions import (
 )
 from django.core.paginator import Paginator
 from django.utils import timezone
+from django.utils.timezone import now
 from decimal import Decimal
 from datetime import datetime as dt, timedelta
 from api.models import *
@@ -1448,6 +1452,65 @@ def user_addresses_dashboard(request):
 
     context["total_user_addresses"] = total_user_addresses
     return render(request, "dashboards/user_addresses_dashboard.html", context)
+
+
+def auto_renewal_list_dashboard(request):
+    context = {}
+    #MAx end date subquery
+    max_end_date_subquery = Order.objects.filter(
+        order_group=OuterRef('order_group')
+    ).values('order_group').annotate(
+        max_end_date=Max('end_date')
+    ).values('max_end_date')
+    today = now().date()
+    orders = Order.objects.annotate(
+        order_id=F("id"),
+        annotated_order_group_id=F("order_group__id"),
+        order_end_date=F("end_date"),
+        user_address_name=F("order_group__user_address__name"),
+        account_owner_first_name=F("order_group__user_address__user_group__account_owner__first_name"),
+        account_owner_last_name=F("order_group__user_address__user_group__account_owner__last_name"),
+        user_first_name=F("order_group__user__first_name"),
+        user_last_name=F("order_group__user__last_name"),
+        user_email=F("order_group__user__email"),
+        order_status=F("status"),
+        sellerlocation_name=F("order_group__seller_product_seller_location__seller_location__name"),
+        mainproduct_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+        is_most_recent_order=Case(
+            When(order_end_date=Subquery(max_end_date_subquery), then=True),
+            default=False,
+            output_field=BooleanField()
+                ),
+        autorenewal_date=ExpressionWrapper(
+            F("order_end_date") + timedelta(days=28),
+            output_field=DateField(),
+        ),
+        take_action=Case(
+            When(autorenewal_date__lte=today + timedelta(days=10), then=True),
+            default=False,
+            output_field=BooleanField()
+        ),
+        order_group_url_annotate=Func(
+                Value(settings.DASHBOARD_BASE_URL + "/"),
+                Value("admin/api/ordergroup/"),
+                F("order_group__id"),
+                Value("/change/"),
+                function="CONCAT",
+                output_field=CharField(),
+            ),
+    ).values(
+        "order_id", "annotated_order_group_id", "order_end_date", "user_address_name", "account_owner_first_name",
+        "account_owner_last_name", "user_first_name", "user_last_name", "user_email", "order_status",
+        "sellerlocation_name", "mainproduct_name", "is_most_recent_order", "autorenewal_date", "take_action", 
+        "order_group_url_annotate"
+    )
+
+    context["orders"] = orders
+    return render(
+        request,
+        "dashboards/auto_renewal_list_dashboard.html",
+        context
+    )
 
 
 @login_required(login_url="/admin/login/")

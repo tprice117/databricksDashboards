@@ -92,4 +92,9 @@ urlpatterns = [
         views.user_addresses_dashboard,
         name="user_addresses_dashboard",
     ),
+    path(
+        "auto-renewal-list-dashboard/",
+        views.auto_renewal_list_dashboard,
+        name="auto_renewal_list_dashboard",
+    ),
 ]
