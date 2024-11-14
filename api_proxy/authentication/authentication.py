@@ -6,13 +6,11 @@ import json
 
 import jwt
 from django.core.exceptions import SuspiciousOperation
-from django.urls import reverse
 from mozilla_django_oidc.contrib.drf import OIDCAuthentication
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import absolutify
 from requests.exceptions import HTTPError
 from rest_framework import authentication, exceptions
-from common.middleware.save_author import set_user
 
 from api.models.user.user import User
 
@@ -71,8 +69,6 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
                         ),
                     },
                 )
-            # Set the user on request in a local thread so it can be accessed in signals.
-            set_user(user)
         else:
             return None
 
