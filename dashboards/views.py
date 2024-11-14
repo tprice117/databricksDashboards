@@ -840,13 +840,6 @@ def payout_reconciliation(request):
     return render(request, "dashboards/payout_reconciliation.html", context)
 
 
-@login_required(login_url="/admin/login/")
-def command_center(request):
-    return render(
-        request,
-        "dashboards/index.html",
-    )
-
 def all_orders_dashboard(request):
     context = {}
     orders = Order.objects.annotate(
@@ -992,4 +985,368 @@ def seller_location_dashboard(request):
         request,
         "dashboards/seller_location_dashboard.html",
         context,
+    )
+def users_dashboard(request):
+    context = {}
+    total_users = User.objects.values("id").distinct().count()
+
+    # Get the current month and the previous month
+    current_month = timezone.now().replace(day=1)
+    previous_month = (current_month - timedelta(days=1)).replace(day=1)
+
+    # Count users for the current month
+    current_month_users = User.objects.filter(date_joined__gte=current_month).count()
+
+    # Count users for the previous month
+    previous_month_users = User.objects.filter(
+        date_joined__gte=previous_month, date_joined__lt=current_month
+    ).count()
+
+    # Calculate the percentage change
+    if previous_month_users > 0:
+        percent_change_users = (
+            (current_month_users - previous_month_users) / previous_month_users
+        ) * 100
+    else:
+        percent_change_users = 100.0 if current_month_users > 0 else 0.0
+
+    # Calculate the number of users who have placed an order in the last 28 days
+    last_28_days = timezone.now() - timedelta(days=28)
+    users_with_orders_last_28_days = User.objects.filter(
+        useraddress__order_groups__orders__end_date__gte=last_28_days
+    ).distinct().count()
+
+    # Calculate the average order value for active users (users who have placed an order in the last 28 days)
+    average_order_value_per_active_user = (
+        Order.objects.filter(
+            order_group__user__in=User.objects.filter(
+                useraddress__order_groups__orders__end_date__gte=last_28_days
+            )
+        )
+        .annotate(
+            order_value=Sum(
+                F("order_line_items__rate")
+                * F("order_line_items__quantity")
+                * (1 + F("order_line_items__platform_fee_percent") * 0.01),
+                output_field=DecimalField(),
+                filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                & ~Q(order_line_items__rate=0),
+            )
+        )
+        .aggregate(average=Avg("order_value"))["average"]
+        or Decimal("0.00")
+    )
+
+    # Calculate the number of users created each month for the past year
+    one_year_ago = timezone.now() - timedelta(days=365)
+    users_by_month = (
+        User.objects.filter(date_joined__gte=one_year_ago)
+        .annotate(month=TruncMonth("date_joined"))
+        .values("month")
+        .annotate(count=Count("id"))
+        .order_by("month")
+    )
+
+    # Prepare data for chart.js
+    user_chart_labels = [entry["month"].strftime("%b-%Y") for entry in users_by_month]
+    user_chart_data = [entry["count"] for entry in users_by_month]
+
+    context["user_chart_labels"] = json.dumps(user_chart_labels)
+    context["user_chart_data"] = json.dumps(user_chart_data)
+
+    # Calculate the average order value per user by month for the past year
+    avg_order_value_per_user_by_month = (
+        Order.objects.filter(
+            order_group__user__in=User.objects.filter(
+                useraddress__order_groups__orders__end_date__gte=last_28_days
+            )
+        )
+        .annotate(month=TruncMonth("order_group__user__date_joined"))
+        .values("month")
+        .annotate(
+            avg_order_value=Avg(
+                Case(
+                    When(
+                        ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
+                        then=F("order_line_items__rate")
+                        * F("order_line_items__quantity")
+                        * (1 + F("order_line_items__platform_fee_percent") * 0.01),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+        .order_by("month")
+    )
+
+    # Prepare data for chart.js
+    avg_order_value_chart_labels = [
+        entry["month"].strftime("%b-%Y") for entry in avg_order_value_per_user_by_month
+    ]
+    avg_order_value_chart_data = [
+        float(entry["avg_order_value"]) for entry in avg_order_value_per_user_by_month
+    ]
+
+    context["avg_order_value_per_user_by_month_labels"] = json.dumps(
+        avg_order_value_chart_labels
+    )
+    context["avg_order_value_per_user_by_month_data"] = json.dumps(
+        avg_order_value_chart_data
+    )
+
+    context["average_order_value_per_user"] = average_order_value_per_active_user
+
+    context["users_with_orders_last_28_days"] = users_with_orders_last_28_days
+
+    context["montly_percent_change_users"] = percent_change_users
+
+    context["total_users"] = total_users
+    return render(
+        request,
+        "dashboards/users_dashboard.html",
+        context
+    )
+
+
+def user_groups_dashboard(request):
+    context = {}
+    total_user_groups = UserGroup.objects.values("name").distinct().count()
+
+    # Get the current month and the previous month
+    current_month = timezone.now().replace(day=1)
+    previous_month = (current_month - timedelta(days=1)).replace(day=1)
+
+    # Count user groups for the current month
+    current_month_user_groups = UserGroup.objects.filter(created_on__gte=current_month).count()
+
+    # Count user groups for the previous month
+    previous_month_user_groups = UserGroup.objects.filter(
+        created_on__gte=previous_month, created_on__lt=current_month
+    ).count()
+
+    # Calculate the percentage change
+    if previous_month_user_groups > 0:
+        percent_change_user_groups = (
+            (current_month_user_groups - previous_month_user_groups) / previous_month_user_groups
+        ) * 100
+    else:
+        percent_change_user_groups = 100.0 if current_month_user_groups > 0 else 0.0
+
+    # Calculate the number of active user groups (user groups with orders in the last 28 days)
+    last_28_days = timezone.now() - timedelta(days=28)
+    active_user_groups = UserGroup.objects.filter(
+        users__useraddress__order_groups__orders__end_date__gte=last_28_days
+    ).distinct().count()
+
+    # Calculate the average spend per user group
+    average_spend_per_active_user_group = (
+        UserGroup.objects.filter(
+            users__useraddress__order_groups__orders__end_date__gte=last_28_days
+        )
+        .annotate(
+            total_spend=Sum(
+                Case(
+                    When(
+                        users__useraddress__order_groups__orders__status="COMPLETE",
+                        then=F("users__useraddress__order_groups__orders__order_line_items__rate")
+                        * F("users__useraddress__order_groups__orders__order_line_items__quantity")
+                        * (1 + F("users__useraddress__order_groups__orders__order_line_items__platform_fee_percent") * 0.01),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+        .aggregate(average=Avg("total_spend"))["average"]
+        or Decimal("0.00")
+    )
+
+    # Calculate the count of user groups by month for the past year
+    one_year_ago = timezone.now() - timedelta(days=365)
+    user_groups_by_month = (
+        UserGroup.objects.filter(created_on__gte=one_year_ago)
+        .annotate(month=TruncMonth("created_on"))
+        .values("month")
+        .annotate(count=Count("id"))
+        .order_by("month")
+    )
+
+    # Prepare data for chart.js
+    user_groups_chart_labels = [entry["month"].strftime("%b-%Y") for entry in user_groups_by_month]
+    user_groups_chart_data = [entry["count"] for entry in user_groups_by_month]
+
+    context["user_groups_chart_labels"] = json.dumps(user_groups_chart_labels)
+    context["user_groups_chart_data"] = json.dumps(user_groups_chart_data)
+
+    # Calculate the average spend per user group by month for the past year
+    avg_spend_per_user_group_by_month = (
+        UserGroup.objects.filter(users__useraddress__order_groups__orders__end_date__gte=one_year_ago)
+        .annotate(month=TruncMonth("users__useraddress__order_groups__orders__end_date"))
+        .values("month")
+        .annotate(
+            avg_spend=Avg(
+                Case(
+                    When(
+                        users__useraddress__order_groups__orders__status="COMPLETE",
+                        then=F("users__useraddress__order_groups__orders__order_line_items__rate")
+                        * F("users__useraddress__order_groups__orders__order_line_items__quantity")
+                        * (1 + F("users__useraddress__order_groups__orders__order_line_items__platform_fee_percent") * 0.01),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+        .order_by("month")
+    )
+
+    # Filter out entries with avg_spend of 0
+    avg_spend_per_user_group_by_month = [
+        entry for entry in avg_spend_per_user_group_by_month if entry["avg_spend"] != 0
+    ]
+
+    # Prepare data for chart.js
+    avg_spend_chart_labels = [entry["month"].strftime("%b-%Y") for entry in avg_spend_per_user_group_by_month]
+    avg_spend_chart_data = [float(entry["avg_spend"]) for entry in avg_spend_per_user_group_by_month]
+
+    context["avg_spend_per_user_group_by_month_labels"] = json.dumps(avg_spend_chart_labels)
+    context["avg_spend_per_user_group_by_month_data"] = json.dumps(avg_spend_chart_data)
+    context["average_spend_per_active_user_group"] = average_spend_per_active_user_group
+
+    context["active_user_groups"] = active_user_groups
+
+    context["percent_change_user_groups"] = percent_change_user_groups
+
+    context["total_user_groups"] = total_user_groups
+
+    return render(
+        request,
+        "dashboards/user_groups_dashboard.html",
+        context
+    )
+
+
+def user_addresses_dashboard(request):
+    context = {}
+    total_user_addresses = UserAddress.objects.values("id").distinct().count()
+
+    # Get the current month and the previous month
+    current_month = timezone.now().replace(day=1)
+    previous_month = (current_month - timedelta(days=1)).replace(day=1)
+
+    # Count user addresses for the current month
+    current_month_user_addresses = UserAddress.objects.filter(created_on__gte=current_month).count()
+
+    # Count user addresses for the previous month
+    previous_month_user_addresses = UserAddress.objects.filter(
+        created_on__gte=previous_month, created_on__lt=current_month
+    ).count()
+
+    # Calculate the percentage change
+    if previous_month_user_addresses > 0:
+        percent_change_user_addresses = (
+            (current_month_user_addresses - previous_month_user_addresses) / previous_month_user_addresses
+        ) * 100
+    else:
+        percent_change_user_addresses = 100.0 if current_month_user_addresses > 0 else 0.0
+
+    # Calculate the number of active user addresses (user addresses with orders in the last 28 days)
+    last_28_days = timezone.now() - timedelta(days=28)
+    active_user_addresses = UserAddress.objects.filter(
+        order_groups__orders__end_date__gte=last_28_days
+    ).distinct().count()
+
+    # Calculate the average total spend per user address
+    average_spend_per_user_address = (
+        UserAddress.objects.filter(order_groups__orders__end_date__gte=last_28_days)
+        .annotate(
+            total_spend=Sum(
+                Case(
+                    When(
+                        order_groups__orders__status="COMPLETE",
+                        then=F("order_groups__orders__order_line_items__rate")
+                        * F("order_groups__orders__order_line_items__quantity")
+                        * (1 + F("order_groups__orders__order_line_items__platform_fee_percent") * 0.01),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+        .aggregate(average=Avg("total_spend"))["average"]
+        or Decimal("0.00")
+    )
+
+    # Calculate the count of user addresses by month for the past year
+    one_year_ago = timezone.now() - timedelta(days=365)
+    user_addresses_by_month = (
+        UserAddress.objects.filter(created_on__gte=one_year_ago)
+        .annotate(month=TruncMonth("created_on"))
+        .values("month")
+        .annotate(count=Count("id"))
+        .order_by("month")
+    )
+
+    # Prepare data for chart.js
+    user_addresses_chart_labels = [entry["month"].strftime("%b-%Y") for entry in user_addresses_by_month]
+    user_addresses_chart_data = [entry["count"] for entry in user_addresses_by_month]
+
+    context["user_addresses_chart_labels"] = json.dumps(user_addresses_chart_labels)
+    context["user_addresses_chart_data"] = json.dumps(user_addresses_chart_data)
+
+    # Calculate the average spend per user address by month for the past year
+    avg_spend_per_user_address_by_month = (
+        UserAddress.objects.filter(order_groups__orders__end_date__gte=one_year_ago)
+        .annotate(month=TruncMonth("order_groups__orders__end_date"))
+        .values("month")
+        .annotate(
+            avg_spend=Avg(
+                Case(
+                    When(
+                        order_groups__orders__status="COMPLETE",
+                        then=F("order_groups__orders__order_line_items__rate")
+                        * F("order_groups__orders__order_line_items__quantity")
+                        * (1 + F("order_groups__orders__order_line_items__platform_fee_percent") * 0.01),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+        .order_by("month")
+    )
+
+    # Filter out entries with avg_spend of 0
+    avg_spend_per_user_address_by_month = [
+        entry for entry in avg_spend_per_user_address_by_month if entry["avg_spend"] != 0
+    ]
+
+    # Prepare data for chart.js
+    avg_spend_chart_labels = [entry["month"].strftime("%b-%Y") for entry in avg_spend_per_user_address_by_month]
+    avg_spend_chart_data = [float(entry["avg_spend"]) for entry in avg_spend_per_user_address_by_month]
+
+    context["avg_spend_per_user_address_by_month_labels"] = json.dumps(avg_spend_chart_labels)
+    context["avg_spend_per_user_address_by_month_data"] = json.dumps(avg_spend_chart_data)
+
+    context["average_spend_per_user_address"] = average_spend_per_user_address
+
+    context["active_user_addresses"] = active_user_addresses
+
+    context["percent_change_user_addresses"] = percent_change_user_addresses
+
+    context["total_user_addresses"] = total_user_addresses
+    return render(
+        request,
+        "dashboards/user_addresses_dashboard.html",
+        context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def command_center(request):
+    return render(
+        request,
+        "dashboards/index.html",
     )
