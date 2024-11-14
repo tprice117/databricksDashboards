@@ -531,25 +531,33 @@ class OrderGroupSwapForm(forms.Form):
     # )
 
     # NOTE: Below is an example of how to validate against a dynamic swap_date field.
-    # def __init__(self, *args, **kwargs):
-    #     super(OrderGroupSwapForm, self).__init__(*args, **kwargs)
-    #     # Set min attribute for swap_date input
-    #     self.fields["swap_date"].widget.attrs["min"] = self.initial.get(
-    #         "order_group_start_date"
-    #     )
+    def __init__(self, *args, **kwargs):
+        auth_user = kwargs.pop("auth_user", None)
+        super(OrderGroupSwapForm, self).__init__(*args, **kwargs)
+        # Do not allow same day swaps for customers
+        # Set min attribute for swap_date input
+        today = datetime.date.today()
+        start_date = self.initial.get("order_group_start_date")
+        min_date = today if start_date < today else start_date
+        if auth_user and auth_user.is_staff:
+            self.fields["swap_date"].widget.attrs["min"] = min_date
+        else:
+            self.fields["swap_date"].widget.attrs["min"] = (
+                min_date + datetime.timedelta(days=1)
+            )
 
-    # def clean_swap_date(self):
-    #     # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
-    #     swap_date = self.cleaned_data["swap_date"]
-    #     order_group_start_date = self.cleaned_data["order_group_start_date"]
-    #     if swap_date < order_group_start_date:
-    #         raise ValidationError(
-    #             "Start date must be after the order group start date: %(allowed_start_date)s",
-    #             params={"allowed_start_date": order_group_start_date},
-    #         )
+    def clean_swap_date(self):
+        # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
+        swap_date = self.cleaned_data["swap_date"]
+        order_group_start_date = self.cleaned_data["order_group_start_date"]
+        if swap_date < order_group_start_date:
+            raise ValidationError(
+                "Start date must be after the order group start date: %(allowed_start_date)s",
+                params={"allowed_start_date": order_group_start_date},
+            )
 
-    #     # Always return a value to use as the new cleaned data, even if this method didn't change it.
-    #     return swap_date
+        # Always return a value to use as the new cleaned data, even if this method didn't change it.
+        return swap_date
 
 
 class CreditApplicationForm(forms.Form):
