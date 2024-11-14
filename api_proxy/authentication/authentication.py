@@ -6,7 +6,6 @@ import json
 
 import jwt
 from django.core.exceptions import SuspiciousOperation
-from django.urls import reverse
 from mozilla_django_oidc.contrib.drf import OIDCAuthentication
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import absolutify
@@ -24,7 +23,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthentication):
     def authenticate(self, request, **kwargs):
         """Authenticates a user based on the OIDC code flow, with additional checks for admin tokens and impersonation."""
 
-        print("CustomOIDCAuthenticationBackend")
+        # print("CustomOIDCAuthenticationBackend")
         # 1. Check for pre-defined admin tokens (stored securely)
         #  - This bypasses the OIDC flow for authorized admins.
         admin_tokens = [

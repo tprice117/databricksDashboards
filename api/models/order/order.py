@@ -1,5 +1,5 @@
-from decimal import Decimal
 import logging
+from decimal import Decimal
 from functools import lru_cache
 from typing import List, Optional
 
@@ -32,7 +32,6 @@ from notifications.utils.add_email_to_queue import (
     add_email_to_queue,
     add_internal_email_to_queue,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +293,9 @@ class Order(BaseModel):
         )
 
     def full_price(self):
-        default_take_rate = self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
+        default_take_rate = (
+            self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
+        )
         return self.seller_price() * (1 + (default_take_rate / 100))
 
     @property
@@ -341,7 +342,9 @@ class Order(BaseModel):
         order_start_end_equal = self.start_date == self.end_date
         order_group_start_equal = self.start_date == self.order_group.start_date
         order_group_end_equal = self.end_date == self.order_group.end_date
-        has_subscription = hasattr(self.order_group, "subscription")
+        auto_renews = (
+            self.order_group.seller_product_seller_location.seller_product.product.main_product.auto_renews
+        )
         order_count = Order.objects.filter(order_group=self.order_group).count()
         one_day_rental = self.order_group.start_date == self.order_group.end_date
 
@@ -360,16 +363,16 @@ class Order(BaseModel):
             order_count == 1
             and order_group_start_equal
             and order_group_end_equal
-            and not has_subscription
+            and not auto_renews
         ):
             return Order.Type.ONE_TIME
         elif order_group_end_equal and order_count > 1:
             if is_first_order:
                 return Order.Type.DELIVERY
             return Order.Type.REMOVAL
-        elif order_count > 1 and not order_group_end_equal and not has_subscription:
+        elif order_count > 1 and not order_group_end_equal and not auto_renews:
             return Order.Type.SWAP
-        elif has_subscription:
+        elif auto_renews:
             return Order.Type.AUTO_RENEWAL
         else:
             return None
@@ -494,7 +497,9 @@ class Order(BaseModel):
                     and order_group_orders.count() > 1
                 )
 
-                is_equiptment_order = self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+                is_equiptment_order = (
+                    self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+                )
 
                 delivery_fee = 0
                 if is_first_order:
@@ -939,7 +944,9 @@ class Order(BaseModel):
                 # Get all emails for this seller_location_id.
                 # Ensure all emails are non empty and unique.
                 to_emails = []
-                if self.order_group.seller_product_seller_location.seller_location.order_email:
+                if (
+                    self.order_group.seller_product_seller_location.seller_location.order_email
+                ):
                     to_emails.append(
                         self.order_group.seller_product_seller_location.seller_location.order_email
                     )

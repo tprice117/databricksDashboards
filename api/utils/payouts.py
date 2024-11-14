@@ -88,9 +88,7 @@ class PayoutUtils:
                     if payout_response:
                         if isinstance(payout_response, CheckErrorResponse):
                             # If there was an error sending the check, add error message to email report data.
-                            email_report_data[
-                                "error"
-                            ] = f"""Checkbook error occurred:
+                            email_report_data["error"] = f"""Checkbook error occurred:
                              [{payout_response.status_code}]-{payout_response.message} on
                              seller_location id: {str(seller_location.id)}. Please check BetterStack logs."""
                         else:
@@ -360,6 +358,7 @@ class PayoutUtils:
             subject=f"Payout Batch Report: ${total_paid}",
             additional_to_emails=[
                 "lgeber@trydownstream.com",
+                "hrobbins@trydownstream.com",
             ],
             html_content=render_to_string(
                 "emails/internal/payout_batch_report.html",
