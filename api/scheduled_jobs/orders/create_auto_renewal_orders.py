@@ -5,7 +5,7 @@ from api.models import Order, OrderGroup
 from notifications.utils.add_email_to_queue import add_email_to_queue
 
 
-def create_auto_renewal_orders(request):
+def create_auto_renewal_orders():
     """
     For any OrderGroup, if the most recent Order.EndDate is more than 28
     days in the past, create a new Order for the OrderGroup with a StartDate
