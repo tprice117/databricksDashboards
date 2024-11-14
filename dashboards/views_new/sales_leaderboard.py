@@ -68,8 +68,6 @@ def sales_leaderboard(request):
             else 0
         )
 
-
-
         # Net Revenue.
         user.net_revenue = sum(
             [order.customer_price() - order.seller_price() for order in orders_for_user]
@@ -77,8 +75,6 @@ def sales_leaderboard(request):
 
         # Order Count.
         user.order_count = len(orders_for_user)
-
-
 
     # Sort Users by GMV (descending).
     users = sorted(users, key=lambda user: user.gmv, reverse=True)
@@ -132,8 +128,8 @@ def user_sales_product_mix(request, user_id):
     )
 
     # Prepare data for the pie chart.
-    product_names = [product['main_product_name'] for product in product_sales]
-    order_counts = [product['order_count'] for product in product_sales]
+    product_names = [product["main_product_name"] for product in product_sales]
+    order_counts = [product["order_count"] for product in product_sales]
 
     # Include Chart.js script and data in the context.
     context["chart_data"] = {
@@ -198,7 +194,9 @@ def user_sales_new_accounts(request, user_id):
             order_group__start_date__gte=first_of_month - timezone.timedelta(days=30)
         )
         .values(
-            seller_location_name=F("order_group__seller_product_seller_location__seller_location__name"),
+            seller_location_name=F(
+                "order_group__seller_product_seller_location__seller_location__name"
+            ),
             order_group_start_date=F("order_group__start_date"),
             order_most_recent_order_date=F("end_date"),
         )
@@ -249,17 +247,25 @@ def user_sales_28_day_list(request, user_id):
             "order_group__user_address__user_group__account_owner__username"
         ),
         user_address_name=F("order_group__user_address__name"),
-        user_first_name=F("order_group__user_address__user_group__account_owner__first_name"),
-        user_last_name=F("order_group__user_address__user_group__account_owner__last_name"),
+        user_first_name=F(
+            "order_group__user_address__user_group__account_owner__first_name"
+        ),
+        user_last_name=F(
+            "order_group__user_address__user_group__account_owner__last_name"
+        ),
         user_email=F("order_group__user_address__user_group__account_owner__email"),
         order_status=F("status"),
-        seller_location_name=F("order_group__seller_product_seller_location__seller_location__name"),
-        main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+        seller_location_name=F(
+            "order_group__seller_product_seller_location__seller_location__name"
+        ),
+        main_product_name=F(
+            "order_group__seller_product_seller_location__seller_product__product__main_product__name"
+        ),
         take_action=Case(
             When(end_date__lte=timezone.now() + timezone.timedelta(days=10), then=True),
             default=False,
             output_field=BooleanField(),
-        )
+        ),
     )
 
     context["orders_for_user"] = orders_for_user
