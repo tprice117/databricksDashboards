@@ -1449,7 +1449,6 @@ def new_order_5(request):
                     and supplier_total == checkout_order.seller_price
                     and checkout_order.quote_expiration
                 ):
-                    context["cart"][addr]["show_quote"] = False
                     context["cart"][addr]["quote_sent_on"] = checkout_order.updated_on
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
