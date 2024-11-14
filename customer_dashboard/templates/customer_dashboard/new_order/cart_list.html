@@ -120,24 +120,17 @@
                         </div>
                     {% endfor %}
                         <div class="row justify-content-end mb-2 mt-4">
-                            {% if request.user.is_staff %}
-                                {% if cart_address.show_quote %}
-                                    <div class="col-auto">
-                                        <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
-                                        {% if request.user.is_staff %}
-                                            <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
-                                                Send Quote
-                                            </button>
+                            {% if request.user.is_staff and cart_address.show_quote %}
+                                <div class="col-auto">
+                                    <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
+                                    <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
+                                        {% if cart_address.quote_sent_on %}
+                                            Resend Quote (sent {{ cart_address.quote_sent_on|date:"F j, Y" }})
+                                        {% else %}
+                                            Send Quote
                                         {% endif %}
-                                    </div>
-                                {% elif cart_address.quote_sent_on %}
-                                    <div class="col-auto">
-                                        <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
-                                        <button class="btn btn-outline-success" type="button" disabled>
-                                            Quote Sent {{ cart_address.quote_sent_on|date:"F j, Y" }}
-                                        </button>
-                                    </div>
-                                {% endif %}
+                                    </button>
+                                </div>
                             {% endif %}
                             <div class="col-auto">
                                 <a class="btn btn-primary" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
