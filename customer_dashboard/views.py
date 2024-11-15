@@ -3339,6 +3339,7 @@ def invoices(request):
                 | Q(user_address__city__icontains=search_q)
                 | Q(user_address__state__icontains=search_q)
                 | Q(user_address__postal_code__icontains=search_q)
+                | Q(user_address__project_id__icontains=search_q)
             )
         invoices = invoices.order_by(F("due_date").desc(nulls_last=True))
         today = timezone.now().today().date()
