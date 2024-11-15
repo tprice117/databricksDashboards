@@ -98,4 +98,9 @@ urlpatterns = [
         views.auto_renewal_list_dashboard,
         name="auto_renewal_list_dashboard",
     ),
+    path(
+        "time-to-acceptance/",
+        time_to_acceptance,
+        name="time_to_acceptance",
+    ),
 ]

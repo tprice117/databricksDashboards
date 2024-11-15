@@ -1,6 +1,7 @@
+
 import logging
 from django.contrib.auth.decorators import login_required
-from django.forms import DateField
+from django.forms import DateField, FloatField
 from django.shortcuts import render
 from django.db.models import (
     F,
@@ -12,6 +13,7 @@ from django.db.models import (
     When,
     Value,
     CharField,
+    FloatField,
     Count,
     Q,
     Subquery,
@@ -20,6 +22,8 @@ from django.db.models import (
     BooleanField,
     Func,
 )
+from django.db.models import F, ExpressionWrapper, FloatField
+from django.db.models.functions import Cast, Extract
 from django.utils import timezone
 from django.utils.timezone import now
 from decimal import Decimal
@@ -33,6 +37,7 @@ from api.models.user.user_group import *
 import json
 from django.db.models.functions import TruncMonth
 from django.conf import settings
+from django.db.models import DurationField
 
 def seller_location_dashboard(request):
     context = {}
@@ -601,4 +606,53 @@ def user_addresses_dashboard(request):
     return render(request, "dashboards/user_addresses_dashboard.html", context)
 
 
+def time_to_acceptance(request):
+    context = {}
+    orders_with_time_to_acceptance = Order.objects.filter(
+        accepted_on__isnull=False,
+        completed_on__isnull=False,
+        submitted_on__isnull=False,
+    ).values(
+        "id",
+        "end_date",
+        "accepted_on",
+        "accepted_by",
+        "completed_on",
+        "completed_by",
+        "submitted_on",
+        "submitted_by",
+    ).annotate(
+        time_to_accepted=ExpressionWrapper(
+            F('accepted_on') - F('submitted_on'),
+            output_field=DurationField()
+        )
+    ).annotate(
+        time_to_accepted_hours=ExpressionWrapper(
+            Cast(Extract(F('time_to_accepted'), 'epoch'), output_field=FloatField()) / 3600,
+            output_field=FloatField()
+        )
+    )
 
+    # Fetch user details for accepted_by, submitted_by, and completed_by
+    user_ids = set(
+        order['accepted_by'] for order in orders_with_time_to_acceptance
+    ).union(
+        order['submitted_by'] for order in orders_with_time_to_acceptance
+    ).union(
+        order['completed_by'] for order in orders_with_time_to_acceptance
+    )
+
+    users = User.objects.filter(id__in=user_ids).values('id', 'username')
+    user_dict = {user['id']: user['username'] for user in users}
+
+    # Add user details to the orders
+    for order in orders_with_time_to_acceptance:
+        order['accepted_by_username'] = user_dict.get(order['accepted_by'], 'Unknown')
+        order['submitted_by_username'] = user_dict.get(order['submitted_by'], 'Unknown')
+        order['completed_by_username'] = user_dict.get(order['completed_by'], 'Unknown')
+
+    orders_count = orders_with_time_to_acceptance.count()
+    context["orders_count"] = orders_count
+
+    context["orders"] = list(orders_with_time_to_acceptance)
+    return render(request, "dashboards/time_to_acceptance.html", context)
