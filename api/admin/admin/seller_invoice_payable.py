@@ -36,6 +36,7 @@ class SellerInvoicePayableAdmin(BaseModelAdmin):
         "id",
         "seller_location__name",
         "supplier_invoice_id",
+        "account_number",
     ]
     autocomplete_fields = [
         "seller_location",
