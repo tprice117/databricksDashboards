@@ -1,6 +1,6 @@
 import datetime
 
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from api.models import Order, OrderGroup
@@ -28,7 +28,9 @@ def create_auto_renewal_orders():
         # Only process if the OrderGroup has submitted Orders.
         submitted_orders = order_group.orders.filter(
             submitted_on__isnull=False,
-        ).order_by("-start_date")
+        ).order_by(
+            F("end_date").desc(nulls_first=True),
+        )
 
         if submitted_orders.exists():
             # Get the most recent Order for the OrderGroup.
