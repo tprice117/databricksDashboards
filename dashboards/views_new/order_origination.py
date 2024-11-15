@@ -35,7 +35,7 @@ def order_origination(request):
 
     # Get all months in the Orders data.
     year_months = orders.values("year", "month").distinct()
-    print(year_months)
+    # print(year_months)
 
     # Get count of Orders created by is_staff Users, by month.
     orders_by_staff_user_by_month_data = [

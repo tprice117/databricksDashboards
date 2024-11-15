@@ -1,0 +1,98 @@
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+28 Day List Dashboard
+{% endblock %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
+    <script defer src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script defer src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            new DataTable('#orders-table');
+        });
+    </script>
+</head>
+<body>
+    <h1>28 Day List Dashboard</h1>
+    <div>
+    </div>
+    <div style="overflow-x: auto; max-height: 42em;">
+        <table id="orders-table" class="display">
+            <thead>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <th>order_group_id</th>
+                    <th>order_id</th>
+                    <th>end_date</th>
+                    <th>28th_day</th>
+                    <th>account_owner</th>
+                    <th>user_address_name</th>
+                    <th>userFirstName</th>
+                    <th>userLastName</th>
+                    <th>userEmail</th>
+                    <th>status</th>
+                    <th>seller_location_name</th>
+                    <th>main_product_name</th>
+                    <th>is_most_recent_order</th>
+                    <th>take_action</th>
+                    <th>order_group_url</th>
+
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders%}
+                <tr>
+                    <td>{{order.annotated_order_group_id}}</td> 
+                    <td>{{order.order_id}}</td>
+                    <td>{{order.order_end_date}}</td>
+                    <td>{{order.autorenewal_date}}</td>
+                    <td>{{order.account_owner_first_name}} {{order.account_owner_last_name}}</td>
+                    <td>{{order.user_address_name}}</td>    
+                    <td>{{order.user_first_name}}</td>
+                    <td>{{order.user_last_name}}</td>
+                    <td>{{order.user_email}}</td>
+                    <td>{{order.order_status}}</td>
+                    <td>{{order.sellerlocation_name}}</td>
+                    <td>{{order.mainproduct_name}}</td>
+                    <td>{{order.is_most_recent_order}}</td>
+                    <td>{{order.take_action}}</td>
+                    <td><a href="{{order.order_group_url_annotate}}">{{order.order_group_url_annotate}}</a></td>
+
+                </tr>
+                {%endfor%}                    
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var table = new DataTable('#orders-table');
+            document.querySelectorAll('.status-filter').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    var selectedStatuses = Array.from(document.querySelectorAll('.status-filter:checked')).map(function(cb) {
+                        return cb.value;
+                    });
+    
+                    document.querySelectorAll('.order-row').forEach(function(row) {
+                        if (selectedStatuses.length === 0 || selectedStatuses.includes(row.dataset.status)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                    table.draw();
+                });
+            });
+        });
+    </script>
+</body>
+
+{% endblock %}
