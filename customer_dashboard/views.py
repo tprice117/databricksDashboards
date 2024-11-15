@@ -2150,9 +2150,17 @@ def order_group_swap(request, order_group_id, is_removal=False):
                     e.form.fields[field].widget.attrs["class"] += " is-invalid"
         except ValidationError as e:
             context["form_error"] = " | ".join(e.messages)
+            logger.error(
+                f"order_group_swap:ValidationError: [{order_group_id}]-[{is_removal}]-[{request.POST}]-[{e.messages}]",
+                exc_info=e,
+            )
         except Exception as e:
             context["form_error"] = (
                 f"Error saving, please contact us if this continues: [{e}]."
+            )
+            logger.error(
+                f"order_group_swap: [{order_group_id}]-[{is_removal}]-[{request.POST}]-[{e}]",
+                exc_info=e,
             )
     else:
         context["form"] = OrderGroupSwapForm(
