@@ -1,5 +1,6 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
+from import_export.tmp_storages import CacheStorage
 
 
 class BaseModelAdmin(admin.ModelAdmin):
@@ -27,6 +28,8 @@ class BaseModelImportExportAdmin(ImportExportModelAdmin):
     """
     The base model admin class
     """
+
+    tmp_storage_class = CacheStorage
 
     audit_fields = [
         "created_on",

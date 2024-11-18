@@ -10,6 +10,7 @@ from common.admin.admin.base_admin import BaseModelImportExportAdmin
 class ProductResource(resources.ModelResource):
     class Meta:
         model = Product
+        skip_unchanged = True
 
 
 @admin.register(Product)
