@@ -109,8 +109,7 @@ class MainProduct(BaseModel):
             and not self.has_rental_one_step
             and not self.has_rental_multi_step
         )
-        is_fencing = self.main_product_category.name == "Temporary Fencing"
-        return not is_roll_off and not is_one_time and not is_fencing
+        return not is_roll_off and not is_one_time
 
     def _is_complete(self) -> bool:
         # Given all related AddOns, ensure that we have a Product
