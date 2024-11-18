@@ -2,6 +2,7 @@ import datetime
 
 from django.db.models import F, Q
 from django.utils import timezone
+from django.conf import settings
 
 from api.models import Order, OrderGroup
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
@@ -110,17 +111,19 @@ def create_auto_renewal_orders():
                 #     status=Order.Status.PENDING,
                 # )
 
-    # Send email to admins showing the OrderGroup that needs to auto-renew.
-    # In the html_content, show a list of the OrderGroups that need to auto-renew.
-    # The list should be a bulleted list of OrderGroup admin URLs.
-    add_internal_email_to_queue(
-        subject="BETA (Not Creating Orders): OrderGroups That Need Auto-Renewal",
-        html_content="OrderGroups that need to auto-renew: <ul>{}</ul>".format(
-            "".join(
-                [
-                    f"<li><a href='https://portal.trydownstream.com/admin/api/ordergroup/{order_group.id}/change/'>{order_group.id}</a></li>"
-                    for order_group in order_groups_that_needs_to_auto_renew
-                ]
-            )
-        ),
-    )
+    # Only send emails in the PROD environment.
+    if settings.ENVIRONMENT == "TEST":
+        # Send email to admins showing the OrderGroup that needs to auto-renew.
+        # In the html_content, show a list of the OrderGroups that need to auto-renew.
+        # The list should be a bulleted list of OrderGroup admin URLs.
+        add_internal_email_to_queue(
+            subject="BETA (Not Creating Orders): OrderGroups That Need Auto-Renewal",
+            html_content="OrderGroups that need to auto-renew: <ul>{}</ul>".format(
+                "".join(
+                    [
+                        f"<li><a href='{settings.DASHBOARD_BASE_URL}/admin/api/ordergroup/{order_group.id}/change/'>{order_group.id}</a></li>"
+                        for order_group in order_groups_that_needs_to_auto_renew
+                    ]
+                )
+            ),
+        )
