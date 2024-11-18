@@ -9,6 +9,7 @@ from .admin import (
     OrderGroupAdmin,
     PayoutAdmin,
     ProductAdmin,
+    ProductAddOnChoiceAdmin,
     SellerAdmin,
     SellerInvoicePayableAdmin,
     SellerInvoicePayableLineItemAdmin,

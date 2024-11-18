@@ -12,6 +12,7 @@ from .order_group_material import OrderGroupMaterialAdmin
 from .order_line_item_type import OrderLineItemTypeAdmin
 from .payout import PayoutAdmin
 from .product import ProductAdmin
+from .product_addon_choice import ProductAddOnChoiceAdmin
 from .seller import SellerAdmin
 from .seller_invoice_payable import SellerInvoicePayableAdmin
 from .seller_invoice_payable_line_item import SellerInvoicePayableLineItemAdmin
