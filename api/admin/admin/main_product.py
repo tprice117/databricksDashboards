@@ -1,12 +1,19 @@
 from django.contrib import admin
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.inlines import AddOnInline, MainProductInfoInline, ProductInline
 from api.models import MainProduct
-from common.admin.admin.base_admin import BaseModelAdmin
+from common.admin.admin.base_admin import BaseModelImportExportAdmin
+
+
+class ProductResource(resources.ModelResource):
+    class Meta:
+        model = MainProduct
 
 
 @admin.register(MainProduct)
-class MainProductAdmin(BaseModelAdmin):
+class MainProductAdmin(BaseModelImportExportAdmin, ExportActionMixin):
     search_fields = ["name", "main_product_category__name"]
     list_display = ("name", "main_product_category", "sort", "_is_complete")
     fieldsets = [
@@ -71,9 +78,9 @@ class MainProductAdmin(BaseModelAdmin):
                 ]
             },
         ),
-        BaseModelAdmin.audit_fieldset,
+        BaseModelImportExportAdmin.audit_fieldset,
     ]
-    readonly_fields = BaseModelAdmin.readonly_fields + [
+    readonly_fields = BaseModelImportExportAdmin.readonly_fields + [
         "max_discount",
     ]
     inlines = [
