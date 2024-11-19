@@ -1,7 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.conf import settings
 
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
@@ -9,6 +10,11 @@ from api.models.order.order import Order
 from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from common.models.choices.approval_status import ApprovalStatus
+import requests
+import json
+from decimal import Decimal
+import uuid
+
 
 
 @track_data("status")
@@ -44,6 +50,40 @@ class UserGroupCreditApplication(BaseModel):
     accepts_credit_authorization = models.BooleanField(default=True)
     credit_report = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
+##TRIGGER CUSTOMERIO EMAILS
+def trigger_customerio_email(transactional_message_id, user_group_name, user_first_name, user_id, user_email,  user_group_credit_line_limit=None, user_group_invoice_frequency=None, user_group_net_terms=None ):
+    url = "https://api.customer.io/v1/send/email"
+    headers = {
+                "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
+                "Content-Type": "application/json",
+            }
+    data = {
+        "transactional_message_id": transactional_message_id,  
+        "message_data": {
+            "user_group_name": user_group_name,
+            "user_first_name": user_first_name,
+            "user_group_credit_line_limit": user_group_credit_line_limit,
+            "user_group_invoice_frequency": user_group_invoice_frequency,
+            "user_group_net_terms": user_group_net_terms,
+        },
+     
+
+        "identifiers": {
+            "id": str(user_id),  
+        },
+        "to": user_email
+    }
+    
+    #json_data = json.dumps(data, cls=DecimalEncoder)
+    response = requests.post(url, json=data, headers=headers)
+    
+    if response.status_code == 200:
+       print("Email sent successfully.")
+    else:
+        print(f"Failed to send email: {response.status_code} - {response.text}")
+
+
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
@@ -63,7 +103,55 @@ class UserGroupCreditApplication(BaseModel):
                     "A pending credit application already exists for this user group."
                 )
         return self
+    
+   
+# Signal to handle post_save event for new instances with PENDING status
+@receiver(post_save, sender=UserGroupCreditApplication)
+def user_group_credit_application_post_save(
+    sender, 
+    instance: UserGroupCreditApplication, 
+    created, 
+    **kwargs
+    ):
+    
+    # Check if the instance is newly created and the status is PENDING
+    if created and instance.status == ApprovalStatus.PENDING:
+        # Retrieve the user group name
+        user_group_name = instance.user_group.name  
+        # Create a list of dictionaries for users
+        user_dicts = [
+            {
+                'user_group_name': user_group_name,
+                'user_first_name': user.first_name,
+                'user_id': user.id,
+                'user_email': user.email
+            }
+            for user in instance.user_group.users.all()
+        ]
 
+        # Add the billing email to the list
+        user_dicts.append({
+            'user_group_name': user_group_name,
+            'user_first_name': user_group_name,  # Assuming no first name for billing email
+            'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
+            'user_email': instance.user_group.billing.email
+        })
+
+        # Loop through each dictionary in the list
+        for user_dict in user_dicts:
+            user_group_name = user_dict['user_group_name']
+            user_first_name = user_dict['user_first_name']
+            user_id = user_dict['user_id']
+            user_email = user_dict['user_email']
+
+            # Trigger the Customer.io email for each user and the billing email
+            trigger_customerio_email(
+                transactional_message_id="9", 
+                user_group_name=user_group_name,
+                user_first_name=user_first_name,
+                user_id=user_id,
+                user_email=user_email
+            )
 
 @receiver(pre_save, sender=UserGroupCreditApplication)
 def user_group_credit_application_pre_save(
@@ -89,6 +177,51 @@ def user_group_credit_application_pre_save(
             if instance.status == ApprovalStatus.APPROVED:
                 instance.user_group.credit_line_limit = instance.requested_credit_limit
                 instance.user_group.save()
+                ##INSERT APPROVAL CREDIT EMAIL HERE 
+                user_group_name = instance.user_group.name,
+                user_group_credit_line_limit = str(instance.user_group.credit_line_limit), 
+                user_group_invoice_frequency=instance.user_group.invoice_frequency, 
+                user_group_net_terms=instance.user_group.net_terms,
+                user_dicts = [
+                    {
+                        'user_group_name': user_group_name,
+                        'user_first_name': user.first_name,
+                        'user_id': user.id,
+                        'user_email': user.email
+                    }
+                    for user in instance.user_group.users.all()
+                ]
+
+                # Add the billing email to the list
+                user_dicts.append({
+                    'user_group_name': user_group_name,
+                    'user_first_name': user_group_name,  # Assuming no first name for billing email
+                    'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
+                    'user_email': instance.user_group.billing.email
+                })
+
+                # Loop through each dictionary in the list
+                for user_dict in user_dicts:
+                    user_group_name = user_dict['user_group_name']
+                    user_first_name = user_dict['user_first_name']
+                    user_id = user_dict['user_id']
+                    user_email = user_dict['user_email']
+                
+
+                    # Trigger the Customer.io email for each user
+                    trigger_customerio_email(
+                        transactional_message_id="10", 
+                        user_group_name=user_group_name,
+                        user_group_credit_line_limit=user_group_credit_line_limit,
+                        user_group_invoice_frequency=user_group_invoice_frequency,
+                        user_group_net_terms=user_group_net_terms,
+                        user_first_name=user_first_name,
+                        user_id=user_id,
+                        user_email=user_email
+                        
+                    )
+                
+                
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
                     order_group__user_address__user_group=instance.user_group,
@@ -105,6 +238,41 @@ def user_group_credit_application_pre_save(
                     # If the application is declined, set the credit limit to 0.
                     instance.user_group.credit_line_limit = 0
                     instance.user_group.save()
+                    # INSERT CREDIT DECLINED EMAIL HERE
+                    user_group_name = instance.user_group.name,
+                    user_dicts = [
+                    {
+                        'user_group_name': user_group_name,
+                        'user_first_name': user.first_name,
+                        'user_id': user.id,
+                        'user_email': user.email
+                    }
+                    for user in instance.user_group.users.all()
+                ]
+
+                # Add the billing email to the list
+                user_dicts.append({
+                    'user_group_name': user_group_name,
+                    'user_first_name': user_group_name,  # Assuming no first name for billing email
+                    'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
+                    'user_email': instance.user_group.billing.email
+                })
+
+                # Loop through each dictionary in the list
+                for user_dict in user_dicts:
+                    user_group_name = user_dict['user_group_name']
+                    user_first_name = user_dict['user_first_name']
+                    user_id = user_dict['user_id']
+                    user_email = user_dict['user_email']
+
+                        # Trigger the Customer.io email for each user
+                    trigger_customerio_email(
+                        transactional_message_id="11", 
+                        user_group_name=user_group_name,
+                        user_first_name=user_first_name,
+                        user_id=user_id,
+                        user_email=user_email
+                ) 
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
                     order_group__user_address__user_group=instance.user_group,
@@ -112,3 +280,6 @@ def user_group_credit_application_pre_save(
                 )
                 for order in orders:
                     order.update_status_on_credit_application_declined()
+
+#print()
+#to_emails = ",".join(email_lst)

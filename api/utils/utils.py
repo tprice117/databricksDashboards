@@ -6,7 +6,8 @@ import math
 from cryptography.fernet import Fernet
 import base64
 import hashlib
-
+import json
+from decimal import Decimal
 
 def get_fernet():
     # Create a key from the SECRET_KEY
@@ -127,3 +128,4 @@ def get_price_for_seller(
             },
         ],
     }
+
