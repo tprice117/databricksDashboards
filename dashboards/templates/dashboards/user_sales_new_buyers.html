@@ -55,11 +55,29 @@
     </nav>
     <header>
         <h1>{{user.first_name}} {{user.last_name}}</h1>
-
+        <h2>New Buyers of Past 30 Days</h2>
     </header>
     <main>
         <section>
-            {{user.id}}
+            <table>
+                <thead>
+                    <tr>
+                        <th>User Group ID</th>
+                        <th>User Group Name</th>
+                        <th>First Company Transaction Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in user_groups %}
+                    <tr>
+                        <td>{{ group.id }}</td>
+                        <td>{{ group.name }}</td>
+                        <td>{{ group.user_addresses__order_groups__start_date }}</td>
+                        <td>{{ group.user_addresses__order_groups__orders__end_date__gte }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </section>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
