@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 from .views_new.order_origination import order_origination
 from .views_new.sales_leaderboard import *
+from .views_new.metrics_dashboards import *
 
 urlpatterns = [
     path("index/", views.index, name="index"),
@@ -74,22 +75,32 @@ urlpatterns = [
     ),
     path(
         "seller-location-dashboard/",
-        views.seller_location_dashboard,
+        seller_location_dashboard,
         name="seller_location_dashboard",
     ),
     path(
         "users-dashboard/",
-        views.users_dashboard,
+        users_dashboard,
         name="users_dashboard",
     ),
     path(
         "user-groups-dashboard/",
-        views.user_groups_dashboard,
+        user_groups_dashboard,
         name="user_groups_dashboard",
     ),
     path(
         "user-addresses-dashboard/",
-        views.user_addresses_dashboard,
+        user_addresses_dashboard,
         name="user_addresses_dashboard",
+    ),
+    path(
+        "auto-renewal-list-dashboard/",
+        views.auto_renewal_list_dashboard,
+        name="auto_renewal_list_dashboard",
+    ),
+    path(
+        "time-to-acceptance/",
+        time_to_acceptance,
+        name="time_to_acceptance",
     ),
 ]

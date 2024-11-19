@@ -1,0 +1,93 @@
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+timetoacceptance
+{% endblock %}
+{% block content %}
+<style>
+    table tbody tr:nth-child(odd) {
+        background-color: #505063;
+    }
+    table tbody tr:nth-child(even) {
+        background-color: #80808c;
+    }
+    ul #nav2  {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #333;
+      }
+    li #nav2 {
+        float: left;
+    }
+    li.active a {
+        background-color: #4CAF50;
+        color: white;
+    }
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #333;
+        color: white;
+        z-index: 1;
+    }
+</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Sales Detail</title>
+</head>
+<body>
+    <nav>
+    </nav>
+    <header>
+
+    </header>
+    <main>
+        <section>
+            <h3>Time to Acceptance: {{orders_count}} Orders Tracked</h3>
+            <div style="overflow-x: auto; max-height: 42em;">
+                <table>
+                    <thead>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <th style="padding-right: 200px;">id</th>
+                            <th style="padding-right: 200px;">end_date</th>
+                            <th style="padding-right: 200px;">accepted_on</th>
+                            <th style="padding-right: 200px;">accepted_by</th>
+                            <th style="padding-right: 200px;">completed_on</th>
+                            <th style="padding-right: 200px;">completed_by</th>
+                            <th style="padding-right: 200px;">submitted_on</th>
+                            <th style="padding-right: 200px;">submitted_by</th>
+                            <th style="padding-right: 200px;">time_accepted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders|dictsortreversed:"time_to_accepted_hours" %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.end_date }}</td>
+                            <td>{{ order.accepted_on }}</td>
+                            <td>{{ order.accepted_by_username }}</td>
+                            <td>{{ order.completed_on }}</td>
+                            <td>{{ order.completed_by_username }}</td>
+                            <td>{{ order.submitted_on }}</td>
+                            <td>{{ order.submitted_by_username }}</td>
+                            <td>{{ order.time_to_accepted_hours }}</td>
+                        </tr>
+                        {% endfor %}                    
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 | Downstream | Sales Data by Rep</p>
+    </footer>
+</body>
+</html>
+
+{% endblock %}
