@@ -66,6 +66,7 @@
                         <tr style="border-bottom: 1px solid #ddd;">
                             <th style="padding-right: 200px;">order_group_id</th>
                             <th style="padding-right: 100px;">order_end_date</th>
+                            <th style="padding-right: 100px;">AutoRenewalDate</th>
                             <th style="padding-right: 100px;">order_id</th>
                             <th style="padding-right: 100px;">Downstream account_owner</th>
                             <th style="padding-right: 100px;">user_address_name</th>
@@ -75,25 +76,29 @@
                             <th style="padding-right: 100px;">status</th>
                             <th style="padding-right: 100px;">seller_location_name</th>
                             <th style="padding-right: 100px;">Product name</th>
+                            <th style="padding-right: 100px;">IsMostRecentOrder</th>
                             <th style="padding-right: 100px;">Take Action</th>
+                            <th style="padding-right: 100px;">OrderGroupURL</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for order in orders_for_user%}
+                        {% for order in orders%}
                         <tr>
                             <td>{{order.annotated_order_group_id}}</td>     
-                            <td>{{order.order_end_date}}</td>            
+                            <td>{{order.order_end_date}}</td>   
+                            <td>{{order.autorenewal_date}}</td>            
                             <td>{{order.order_id}}</td>            
-                            <td>{{order.user_account_owner}}</td>            
-                            <td>{{order.user_address_name}}</td>     
+                            <td>{{order.account_owner_first_name}} {{order.account_owner_last_name}}</td>                            <td>{{order.user_address_name}}</td>     
                             <td>{{order.user_first_name}}</td>     
                             <td>{{order.user_last_name}}</td>     
                             <td>{{order.user_email}}</td>     
                             <td>{{order.order_status}}</td>     
-                            <td>{{order.seller_location_name}}</td>     
-                            <td>{{order.main_product_name}}</td>  
+                            <td>{{order.sellerlocation_name}}</td>     
+                            <td>{{order.mainproduct_name}}</td>  
+                            <td>{{order.is_most_recent_order}}</td>   
                             <td>{{order.take_action}}</td>   
-
+                            <td><a href="{{ order.order_group_url_annotate }}">{{ order.order_group_url_annotate }}</a></td>
+                            
                         </tr>
                         {%endfor%}                    
                     </tbody>
