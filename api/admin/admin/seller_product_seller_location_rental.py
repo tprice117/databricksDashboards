@@ -4,26 +4,35 @@ import logging
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.forms import CsvImportForm
-from api.models import SellerProductSellerLocationMaterial
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.seller.seller_product_seller_location_rental import (
     SellerProductSellerLocationRental,
 )
+from common.admin.admin.base_admin import BaseModelAdmin
 
 logger = logging.getLogger(__name__)
 
 
+class SellerProductSellerLocationRentalResource(resources.ModelResource):
+    class Meta:
+        model = SellerProductSellerLocationRental
+        skip_unchanged = True
+
+
 @admin.register(SellerProductSellerLocationRental)
-class SellerProductSellerLocationRentalAdmin(admin.ModelAdmin):
+class SellerProductSellerLocationRentalAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerProductSellerLocationRentalResource]
     raw_id_fields = (
         "seller_product_seller_location",
         "created_by",
         "updated_by",
     )
 
-    change_list_template = (
+    import_export_change_list_template = (
         "admin/entities/seller_product_seller_location_rental_changelist.html"
     )
 
