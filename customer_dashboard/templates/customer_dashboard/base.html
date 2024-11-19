@@ -57,6 +57,20 @@
 
     {% block stylesheet %}{% endblock %}
     {% block javascript_head %}{% endblock %}
+    {% if user_group.branding %}
+    <style>
+        /* EDIT THEME HERE  */
+        :root {
+            --bs-primary: {{ theme.primary }};
+        }
+        .btn-primary {
+            --bs-btn-hover-bg: {{ theme.primary_hover }};
+            --bs-btn-hover-border-color: {{ theme.primary_hover }};
+            --bs-btn-active-bg: {{ theme.primary_active }};
+            --bs-btn-active-border-color: {{ theme.primary_active }};
+        }
+    </style>
+    {% endif %}
     <style>
         /* Always set the map height explicitly to define the size of the div
         * element that contains the map. */
