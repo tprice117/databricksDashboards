@@ -4,7 +4,7 @@ from import_export import resources
 
 from api.admin.inlines import ProductAddOnChoiceInline, SellerProductInline
 from api.models import Product
-from common.admin.admin.base_admin import BaseModelImportExportAdmin
+from common.admin.admin.base_admin import BaseModelAdmin
 
 
 class ProductResource(resources.ModelResource):
@@ -14,7 +14,7 @@ class ProductResource(resources.ModelResource):
 
 
 @admin.register(Product)
-class ProductAdmin(BaseModelImportExportAdmin, ExportActionMixin):
+class ProductAdmin(BaseModelAdmin, ExportActionMixin):
     resource_classes = [ProductResource]
     search_fields = ["description", "main_product__name"]
     list_display = ("__str__", "main_product")
@@ -30,5 +30,5 @@ class ProductAdmin(BaseModelImportExportAdmin, ExportActionMixin):
                 ]
             },
         ),
-        BaseModelImportExportAdmin.audit_fieldset,
+        BaseModelAdmin.audit_fieldset,
     ]
