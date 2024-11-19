@@ -543,6 +543,8 @@ class OrderGroupSwapForm(forms.Form):
             start_date = self.initial.get("order_group_start_date")
         # Check for null start_date because we only care about the initial form, not the POST form.
         min_date = today if start_date and start_date < today else start_date
+        if min_date is None:
+            min_date = today
         if auth_user and auth_user.is_staff:
             self.fields["swap_date"].widget.attrs["min"] = min_date
         else:
