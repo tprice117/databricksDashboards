@@ -3,6 +3,8 @@ import csv
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.inlines import (
     SellerProductSellerLocationMaterialInline,
@@ -17,8 +19,14 @@ from api.models import SellerLocation, SellerProduct, SellerProductSellerLocatio
 from common.admin.admin.base_admin import BaseModelAdmin
 
 
+class SellerProductSellerLocationResource(resources.ModelResource):
+    class Meta:
+        model = SellerProductSellerLocation
+        skip_unchanged = True
+
+
 @admin.register(SellerProductSellerLocation)
-class SellerProductSellerLocationAdmin(BaseModelAdmin):
+class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
     search_fields = [
         "seller_location__name",
         "seller_location__seller__name",

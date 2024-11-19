@@ -4,17 +4,18 @@ from import_export import resources
 
 from api.admin.inlines import AddOnInline, MainProductInfoInline, ProductInline
 from api.models import MainProduct
-from common.admin.admin.base_admin import BaseModelImportExportAdmin
+from common.admin.admin.base_admin import BaseModelAdmin
 
 
-class ProductResource(resources.ModelResource):
+class MainProductResource(resources.ModelResource):
     class Meta:
         model = MainProduct
         skip_unchanged = True
 
 
 @admin.register(MainProduct)
-class MainProductAdmin(BaseModelImportExportAdmin, ExportActionMixin):
+class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [MainProductResource]
     search_fields = ["name", "main_product_category__name"]
     list_display = ("name", "main_product_category", "sort", "_is_complete")
     fieldsets = [
@@ -79,9 +80,9 @@ class MainProductAdmin(BaseModelImportExportAdmin, ExportActionMixin):
                 ]
             },
         ),
-        BaseModelImportExportAdmin.audit_fieldset,
+        BaseModelAdmin.audit_fieldset,
     ]
-    readonly_fields = BaseModelImportExportAdmin.readonly_fields + [
+    readonly_fields = BaseModelAdmin.readonly_fields + [
         "max_discount",
     ]
     inlines = [
