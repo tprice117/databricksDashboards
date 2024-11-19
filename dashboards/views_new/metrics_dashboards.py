@@ -611,6 +611,8 @@ def time_to_acceptance(request):
     context = {}
     one_month_ago = timezone.now() - timedelta(days=30)
 
+    
+
     orders_with_time_to_acceptance = Order.objects.filter(
         accepted_on__isnull=False,
         completed_on__isnull=False,
@@ -663,24 +665,6 @@ def time_to_acceptance(request):
     context["avg_time_to_accepted_hours"] = avg_time_to_accepted_hours
     context["avg_time_to_completed_hours"] = avg_time_to_completed_hours
 
-    # Fetch user details for accepted_by, submitted_by, and completed_by
-    user_ids = set(
-        order['accepted_by'] for order in orders_with_time_to_acceptance
-    ).union(
-        order['submitted_by'] for order in orders_with_time_to_acceptance
-    ).union(
-        order['completed_by'] for order in orders_with_time_to_acceptance
-    )
-
-    users = User.objects.filter(id__in=user_ids).values('id', 'username')
-    user_dict = {user['id']: user['username'] for user in users}
-
-    # Add user details to the orders
-    for order in orders_with_time_to_acceptance:
-        order['accepted_by_username'] = user_dict.get(order['accepted_by'], 'Unknown')
-        order['submitted_by_username'] = user_dict.get(order['submitted_by'], 'Unknown')
-        order['completed_by_username'] = user_dict.get(order['completed_by'], 'Unknown')
-
     orders_count = orders_with_time_to_acceptance.count()
 
     # Calculate the count of orders created internally and externally by month for the past year
@@ -729,14 +713,51 @@ def time_to_acceptance(request):
         entry["avg_time_to_completed"] for entry in avg_time_to_completed_by_day
     ]
 
+    # Calculate the count of completed_by_ids by day for the past month
+    completed_by_count_by_day = (
+        orders_with_time_to_acceptance
+        .values("end_date")
+        .annotate(count=Count("completed_by"))
+        .order_by("end_date")
+    )
+
+    # Prepare data for chart.js
+    completed_by_chart_labels = [
+        entry["end_date"].strftime("%d-%b-%Y") for entry in completed_by_count_by_day
+    ]
+    completed_by_chart_data = [entry["count"] for entry in completed_by_count_by_day]
+
+    context["completed_by_chart_labels"] = json.dumps(completed_by_chart_labels)
+    context["completed_by_chart_data"] = json.dumps(completed_by_chart_data)
+
+    ##TABLE DEFINTIONS##
+    # Fetch user details for accepted_by, submitted_by, and completed_by
+    user_ids = set(
+        order['accepted_by'] for order in orders_with_time_to_acceptance
+    ).union(
+        order['submitted_by'] for order in orders_with_time_to_acceptance
+    ).union(
+        order['completed_by'] for order in orders_with_time_to_acceptance
+    )
+
+    users = User.objects.filter(id__in=user_ids).values('id', 'username')
+    user_dict = {user['id']: user['username'] for user in users}
+
+    # Add user details to the orders
+    for order in orders_with_time_to_acceptance:
+        order['accepted_by_username'] = user_dict.get(order['accepted_by'], 'Unknown')
+        order['submitted_by_username'] = user_dict.get(order['submitted_by'], 'Unknown')
+        order['completed_by_username'] = user_dict.get(order['completed_by'], 'Unknown')
+
+
+
+    #hashmap data
     context["avg_time_to_completed_chart_data"] = json.dumps(avg_time_to_completed_chart_data)
     context["avg_time_to_accepted_chart_data"] = json.dumps(avg_time_to_accepted_chart_data)
     context["orders_chart_labels"] = json.dumps(orders_chart_labels)
     context["internal_orders_chart_data"] = json.dumps(internal_orders_chart_data)
     context["external_orders_chart_data"] = json.dumps(external_orders_chart_data)
-
     context["orders_count"] = orders_count
-
     context["orders"] = list(orders_with_time_to_acceptance)
 
     return render(request, "dashboards/time_to_acceptance.html", context)
