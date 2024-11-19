@@ -16,6 +16,9 @@ from api.models.seller.seller import *
 from api.models.user.user_group import *
 from django.db.models import Sum, F, Max
 from django.db.models.functions import Substr, StrIndex
+from django.db.models import OuterRef, Subquery, ExpressionWrapper, DateField, Func, Value, CharField
+from django.utils.timezone import now
+from datetime import timedelta
 
 # Define first_of_month and orders_this_month outside the views
 first_of_month = timezone.now().replace(
@@ -75,6 +78,20 @@ def sales_leaderboard(request):
 
         # Order Count.
         user.order_count = len(orders_for_user)
+
+        # New Buyers.
+        new_buyers = UserGroup.objects.filter(
+            account_owner=user,
+            user_addresses__order_groups__orders__start_date__gte=first_of_month
+        ).distinct().count()
+        user.new_buyers = new_buyers
+
+        # Orders created internally vs externally
+        internal_orders_count = orders_for_user.filter(created_by__is_staff=True).count()
+        external_orders_count = orders_for_user.filter(created_by__is_staff=False).count()
+
+        user.internal_orders_count = internal_orders_count
+        user.external_orders_count = external_orders_count
 
     # Sort Users by GMV (descending).
     users = sorted(users, key=lambda user: user.gmv, reverse=True)
@@ -234,41 +251,59 @@ def user_sales_28_day_list(request, user_id):
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
-    orders_for_user = Order.objects.filter(
-        order_group__user_address__user_group__account_owner=user,
-        end_date__gte=timezone.now() - timezone.timedelta(days=28),
-        status=Order.Status.COMPLETE,
+    max_end_date_subquery = Order.objects.filter(
+        order_group=OuterRef('order_group')
+    ).values('order_group').annotate(
+        max_end_date=Max('end_date')
+    ).values('max_end_date')
+
+    today = now().date()
+
+    orders = Order.objects.filter(
+        order_group__user_address__user_group__account_owner_id=user_id
     ).annotate(
-        annotated_order_group_id=F("order_group__id"),
-        order_group_end_date=F("order_group__end_date"),
-        order_end_date=F("end_date"),
         order_id=F("id"),
-        user_account_owner=F(
-            "order_group__user_address__user_group__account_owner__username"
-        ),
+        annotated_order_group_id=F("order_group__id"),
+        order_end_date=F("end_date"),
         user_address_name=F("order_group__user_address__name"),
-        user_first_name=F(
-            "order_group__user_address__user_group__account_owner__first_name"
-        ),
-        user_last_name=F(
-            "order_group__user_address__user_group__account_owner__last_name"
-        ),
-        user_email=F("order_group__user_address__user_group__account_owner__email"),
+        account_owner_first_name=F("order_group__user_address__user_group__account_owner__first_name"),
+        account_owner_last_name=F("order_group__user_address__user_group__account_owner__last_name"),
+        user_first_name=F("order_group__user__first_name"),
+        user_last_name=F("order_group__user__last_name"),
+        user_email=F("order_group__user__email"),
         order_status=F("status"),
-        seller_location_name=F(
-            "order_group__seller_product_seller_location__seller_location__name"
+        sellerlocation_name=F("order_group__seller_product_seller_location__seller_location__name"),
+        mainproduct_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+        is_most_recent_order=Case(
+            When(order_end_date=Subquery(max_end_date_subquery), then=True),
+            default=False,
+            output_field=BooleanField()
         ),
-        main_product_name=F(
-            "order_group__seller_product_seller_location__seller_product__product__main_product__name"
+        autorenewal_date=ExpressionWrapper(
+            F("order_end_date") + timedelta(days=28),
+            output_field=DateField(),
         ),
         take_action=Case(
-            When(end_date__lte=timezone.now() + timezone.timedelta(days=10), then=True),
+            When(autorenewal_date__lte=today + timedelta(days=10), then=True),
             default=False,
-            output_field=BooleanField(),
+            output_field=BooleanField()
         ),
+        order_group_url_annotate=Func(
+            Value(settings.DASHBOARD_BASE_URL + "/"),
+            Value("admin/api/ordergroup/"),
+            F("order_group__id"),
+            Value("/change/"),
+            function="CONCAT",
+            output_field=CharField(),
+        ),
+    ).values(
+        "order_id", "annotated_order_group_id", "order_end_date", "user_address_name", "account_owner_first_name",
+        "account_owner_last_name", "user_first_name", "user_last_name", "user_email", "order_status",
+        "sellerlocation_name", "mainproduct_name", "is_most_recent_order", "autorenewal_date", "take_action", 
+        "order_group_url_annotate"
     )
 
-    context["orders_for_user"] = orders_for_user
+    context["orders"] = orders
 
     context["user"] = user
     return render(request, "dashboards/user_sales_28_day_list.html", context)
@@ -280,6 +315,15 @@ def user_sales_new_buyers(request, user_id):
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
+    
+    
+    user_groups = UserGroup.objects.filter(
+        account_owner=user,
+        user_addresses__order_groups__orders__end_date__gte=timezone.now() - timedelta(days=30)
+    ).distinct().values('id', 'name', 'user_addresses__order_groups__start_date')
 
+
+    context["user_groups"] = user_groups
     context["user"] = user
+
     return render(request, "dashboards/user_sales_new_buyers.html", context)
