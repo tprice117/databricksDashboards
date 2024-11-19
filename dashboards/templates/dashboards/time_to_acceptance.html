@@ -40,6 +40,9 @@ timetoacceptance
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Sales Detail</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
+    <script defer src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script defer src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
 </head>
 <body>
     <nav>
@@ -50,8 +53,99 @@ timetoacceptance
     <main>
         <section>
             <h3>Time to Acceptance: {{orders_count}} Orders Tracked</h3>
-            <div style="overflow-x: auto; max-height: 42em;">
-                <table>
+            <div class="row">
+                <div class="col-md-6 col-xl-3 mb-4">
+                    <div class="card shadow border-left-primary py-2">
+                        <div class="card-body">
+                            <div class="row g-0 align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-uppercase text-primary fw-bold text-xs mb-1"><span>Avg Time To Acceptance
+                                    </span></div>
+                                    <div class="text-light fw-bold h5 mb-0"><span>{{avg_time_to_accepted_hours|floatformat:2}}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3 mb-4">
+                    <div class="card shadow border-left-success py-2">
+                        <div class="card-body">
+                            <div class="row g-0 align-items-center">
+                                <div class="col me-2">
+                                    <div class="text-uppercase text-success fw-bold text-xs mb-1"><span>Avg Time To Completed
+                                    </span></div>
+                                    <div class="text-light fw-bold h5 mb-0"><span>{{avg_time_to_completed_hours|floatformat:2}}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <canvas id="ordersChart" width="400" height="200" style="background-color: #4a4949;"></canvas>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                var ctx = document.getElementById('ordersChart').getContext('2d');
+                var ordersChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ orders_chart_labels|safe }},
+                        datasets: [
+                            {
+                                label: 'Internal Orders',
+                                data: {{ internal_orders_chart_data|safe }},
+                                backgroundColor: 'rgba(54, 162, 235, 0.4)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'External Orders',
+                                data: {{ external_orders_chart_data|safe }},
+                                backgroundColor: 'rgba(255, 99, 132, 0.4)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                type: 'line',
+                                label: 'Average Time to Acceptance',
+                                data: {{ avg_time_to_accepted_chart_data|safe }},
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                fill: false
+                            }
+                        ] 
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: 'white'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            </script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    new DataTable('#orders-table');
+                });
+            </script>
+            <div style="overflow-x: auto; max-height: 60em;">
+                <table id="orders-table" class="display">
                     <thead>
                         <tr style="border-bottom: 1px solid #ddd;">
                             <th style="padding-right: 200px;">id</th>
@@ -63,10 +157,11 @@ timetoacceptance
                             <th style="padding-right: 200px;">submitted_on</th>
                             <th style="padding-right: 200px;">submitted_by</th>
                             <th style="padding-right: 200px;">time_accepted</th>
+                            <th style="padding-right: 200px;">time_to_completed_hours</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for order in orders|dictsortreversed:"time_to_accepted_hours" %}
+                        {% for order in orders %}
                         <tr>
                             <td>{{ order.id }}</td>
                             <td>{{ order.end_date }}</td>
@@ -77,6 +172,7 @@ timetoacceptance
                             <td>{{ order.submitted_on }}</td>
                             <td>{{ order.submitted_by_username }}</td>
                             <td>{{ order.time_to_accepted_hours }}</td>
+                            <td>{{ order.time_to_completed_hours }}</td>
                         </tr>
                         {% endfor %}                    
                     </tbody>
