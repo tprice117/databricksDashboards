@@ -145,40 +145,7 @@ timetoacceptance
                     new DataTable('#orders-table');
                 });
             </script>
-            <div style="overflow-x: auto; max-height: 60em;">
-                <table id="orders-table" class="display">
-                    <thead>
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <th style="padding-right: 200px;">id</th>
-                            <th style="padding-right: 200px;">end_date</th>
-                            <th style="padding-right: 200px;">accepted_on</th>
-                            <th style="padding-right: 200px;">accepted_by</th>
-                            <th style="padding-right: 200px;">completed_on</th>
-                            <th style="padding-right: 200px;">completed_by</th>
-                            <th style="padding-right: 200px;">submitted_on</th>
-                            <th style="padding-right: 200px;">submitted_by</th>
-                            <th style="padding-right: 200px;">time_accepted</th>
-                            <th style="padding-right: 200px;">time_to_completed_hours</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in orders %}
-                        <tr>
-                            <td>{{ order.id }}</td>
-                            <td>{{ order.end_date }}</td>
-                            <td>{{ order.accepted_on }}</td>
-                            <td>{{ order.accepted_by_username }}</td>
-                            <td>{{ order.completed_on }}</td>
-                            <td>{{ order.completed_by_username }}</td>
-                            <td>{{ order.submitted_on }}</td>
-                            <td>{{ order.submitted_by_username }}</td>
-                            <td>{{ order.time_to_accepted_hours }}</td>
-                            <td>{{ order.time_to_completed_hours }}</td>
-                        </tr>
-                        {% endfor %}                    
-                    </tbody>
-                </table>
-            </div>
+            
         </section>
         <section id="section2" style="display: none;">
             <h3>Time to Completion: {{orders_count}} Orders Tracked</h3>
@@ -261,6 +228,40 @@ timetoacceptance
                     });
                 </script>
         </section>
+        <div style="overflow-x: auto; max-height: 60em;">
+            <table id="orders-table" class="display">
+                <thead>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <th style="padding-right: 200px;">id</th>
+                        <th style="padding-right: 200px;">end_date</th>
+                        <th style="padding-right: 200px;">accepted_on</th>
+                        <th style="padding-right: 200px;">accepted_by</th>
+                        <th style="padding-right: 200px;">completed_on</th>
+                        <th style="padding-right: 200px;">completed_by</th>
+                        <th style="padding-right: 200px;">submitted_on</th>
+                        <th style="padding-right: 200px;">submitted_by</th>
+                        <th style="padding-right: 200px;">time_accepted</th>
+                        <th style="padding-right: 200px;">time_to_completed_hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.id }}</td>
+                        <td>{{ order.end_date }}</td>
+                        <td>{{ order.accepted_on}}</td>
+                        <td>{{ order.accepted_by_username }}</td>
+                        <td>{{ order.completed_on }}</td>
+                        <td>{{ order.completed_by_username }}</td>
+                        <td>{{ order.submitted_on }}</td>
+                        <td>{{ order.submitted_by_username }}</td>
+                        <td>{{ order.time_to_accepted_hours|floatformat:2 }}</td>
+                        <td>{{ order.time_to_completed_hours|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}                    
+                </tbody>
+            </table>
+        </div>
         <script>
             document.getElementById('toggleSectionBtn').addEventListener('click', function() {
                 var section1 = document.getElementById('section1');
