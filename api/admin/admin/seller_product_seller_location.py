@@ -27,6 +27,7 @@ class SellerProductSellerLocationResource(resources.ModelResource):
 
 @admin.register(SellerProductSellerLocation)
 class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerProductSellerLocationResource]
     search_fields = [
         "seller_location__name",
         "seller_location__seller__name",
@@ -77,7 +78,7 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
     def get_seller(self, obj):
         return obj.seller_location.seller
 
-    change_list_template = (
+    import_export_change_list_template = (
         "admin/entities/seller_product_seller_location_changelist.html"
     )
 
