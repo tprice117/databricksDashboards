@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils.html import format_html
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.filters.seller_location.admin_tasks import SellerLocationAdminTasksFilter
 from api.admin.inlines import (
@@ -18,10 +20,18 @@ from api.models import (
     SellerInvoicePayableLineItem,
     SellerLocation,
 )
+from common.admin.admin.base_admin import BaseModelAdmin
+
+
+class SellerLocationResource(resources.ModelResource):
+    class Meta:
+        model = SellerLocation
+        skip_unchanged = True
 
 
 @admin.register(SellerLocation)
-class SellerLocationAdmin(admin.ModelAdmin):
+class SellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerLocationResource]
     search_fields = ["name", "seller__name"]
     list_display = (
         "name",
@@ -105,7 +115,9 @@ class SellerLocationAdmin(admin.ModelAdmin):
         else:
             return format_html("<p>&#128308;</p>")
 
-    change_list_template = "admin/entities/seller_location_changelist.html"
+    import_export_change_list_template = (
+        "admin/entities/seller_location_changelist.html"
+    )
 
     def get_urls(self):
         urls = super().get_urls()

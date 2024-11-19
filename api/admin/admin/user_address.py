@@ -1,12 +1,21 @@
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 from django.utils import timezone
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.filters.user_address.admin_tasks import UserAdddressAdminTasksFilter
 from api.models import UserAddress
 from billing.utils.billing import BillingUtils
 from common.utils.stripe.stripe_utils import StripeUtils
 from external_contracts.admin.inlines import ExternalContractInline
+from common.admin.admin.base_admin import BaseModelAdmin
+
+
+class UserAddressResource(resources.ModelResource):
+    class Meta:
+        model = UserAddress
+        skip_unchanged = True
 
 
 class UserGroupFilter(AutocompleteFilter):
@@ -15,8 +24,9 @@ class UserGroupFilter(AutocompleteFilter):
 
 
 @admin.register(UserAddress)
-class UserAddressAdmin(admin.ModelAdmin):
+class UserAddressAdmin(BaseModelAdmin, ExportActionMixin):
     model = UserAddress
+    resource_classes = [UserAddressResource]
     list_display = ("name", "user_group", "project_id")
     autocomplete_fields = ["user_group", "user"]
     readonly_fields = [
@@ -32,6 +42,13 @@ class UserAddressAdmin(admin.ModelAdmin):
     ]
     inlines = [
         ExternalContractInline,
+    ]
+    raw_id_fields = [
+        "user_group",
+        "user",
+        "default_payment_method",
+        "created_by",
+        "updated_by",
     ]
 
     @admin.action(

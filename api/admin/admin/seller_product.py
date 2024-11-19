@@ -3,13 +3,24 @@ import csv
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from import_export.admin import ExportActionMixin
+from import_export import resources
+
 
 from api.forms import CsvImportForm
 from api.models import Product, Seller, SellerProduct
+from common.admin.admin.base_admin import BaseModelAdmin
+
+
+class SellerProductResource(resources.ModelResource):
+    class Meta:
+        model = SellerProduct
+        skip_unchanged = True
 
 
 @admin.register(SellerProduct)
-class SellerProductAdmin(admin.ModelAdmin):
+class SellerProductAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerProductResource]
     search_fields = ["product__product_code", "seller__name"]
     list_display = ("product", "seller")
     list_filter = ("product__main_product__main_product_category", "seller")
@@ -21,7 +32,7 @@ class SellerProductAdmin(admin.ModelAdmin):
         "updated_by",
     )
 
-    change_list_template = "admin/entities/seller_product_changelist.html"
+    import_export_change_list_template = "admin/entities/seller_product_changelist.html"
 
     def get_urls(self):
         urls = super().get_urls()

@@ -4,15 +4,25 @@ from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 from django.http import HttpResponseRedirect
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.filters.seller.admin_tasks import SellerAdminTasksFilter
 from api.admin.inlines import SellerLocationInline, SellerProductInline
 from api.forms import CsvImportForm
 from api.models import Seller
+from common.admin.admin.base_admin import BaseModelAdmin
+
+
+class SellerResource(resources.ModelResource):
+    class Meta:
+        model = Seller
+        skip_unchanged = True
 
 
 @admin.register(Seller)
-class SellerAdmin(admin.ModelAdmin):
+class SellerAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerResource]
     # Add dropdown to see seller dashboard.
     actions = ["view_seller_dashboard"]
 
@@ -32,7 +42,7 @@ class SellerAdmin(admin.ModelAdmin):
     ]
     raw_id_fields = ("created_by", "updated_by")
 
-    change_list_template = "admin/entities/seller_changelist.html"
+    import_export_change_list_template = "admin/entities/seller_changelist.html"
 
     def get_urls(self):
         urls = super().get_urls()

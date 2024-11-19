@@ -5,6 +5,8 @@ from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils.html import format_html
 from django.conf import settings
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from admin_approvals.admin.inlines.user_group_admin_approval_order import (
     UserGroupAdminApprovalOrderInline,
@@ -32,11 +34,19 @@ from api.admin.inlines import (
 from api.forms import CsvImportForm
 from api.models import UserGroup, User
 from billing.utils.billing import BillingUtils
+from common.admin.admin.base_admin import BaseModelAdmin
+
+
+class UserGroupResource(resources.ModelResource):
+    class Meta:
+        model = UserGroup
+        skip_unchanged = True
 
 
 @admin.register(UserGroup)
-class UserGroupAdmin(admin.ModelAdmin):
+class UserGroupAdmin(BaseModelAdmin, ExportActionMixin):
     model = UserGroup
+    resource_classes = [UserGroupResource]
     list_display = (
         "name",
         "seller",
@@ -67,7 +77,7 @@ class UserGroupAdmin(admin.ModelAdmin):
     ]
     raw_id_fields = ("seller", "created_by", "updated_by")
 
-    change_list_template = "admin/entities/user_group_changelist.html"
+    import_export_change_list_template = "admin/entities/user_group_changelist.html"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "account_owner":

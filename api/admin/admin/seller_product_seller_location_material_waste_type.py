@@ -4,6 +4,8 @@ import logging
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.forms import CsvImportForm
 from api.models import SellerProductSellerLocationMaterialWasteType
@@ -11,13 +13,23 @@ from api.models.main_product.main_product_waste_type import MainProductWasteType
 from api.models.seller.seller_product_seller_location_material import (
     SellerProductSellerLocationMaterial,
 )
+from common.admin.admin.base_admin import BaseModelAdmin
 
 logger = logging.getLogger(__name__)
 
 
+class SellerProductSellerLocationMaterialWasteTypeResource(resources.ModelResource):
+    class Meta:
+        model = SellerProductSellerLocationMaterialWasteType
+        skip_unchanged = True
+
+
 @admin.register(SellerProductSellerLocationMaterialWasteType)
-class SellerProductSellerLocationMaterialWasteTypeAdmin(admin.ModelAdmin):
-    change_list_template = "admin/entities/seller_product_seller_location_material_waste_type_changelist.html"
+class SellerProductSellerLocationMaterialWasteTypeAdmin(
+    BaseModelAdmin, ExportActionMixin
+):
+    resource_classes = [SellerProductSellerLocationMaterialWasteTypeResource]
+    import_export_change_list_template = "admin/entities/seller_product_seller_location_material_waste_type_changelist.html"
 
     raw_id_fields = (
         "seller_product_seller_location_material",
