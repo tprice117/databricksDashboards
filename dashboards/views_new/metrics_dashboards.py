@@ -609,11 +609,14 @@ def user_addresses_dashboard(request):
 
 def time_to_acceptance(request):
     context = {}
+    one_month_ago = timezone.now() - timedelta(days=30)
+
     orders_with_time_to_acceptance = Order.objects.filter(
         accepted_on__isnull=False,
         completed_on__isnull=False,
         submitted_on__isnull=False,
-    ).values(
+        end_date__gt=one_month_ago,
+        ).values(
         "id",
         "end_date",
         "accepted_on",
@@ -622,7 +625,7 @@ def time_to_acceptance(request):
         "completed_by",
         "submitted_on",
         "submitted_by",
-    ).annotate(
+        ).annotate(
         new_end_date=ExpressionWrapper(
             F('end_date') + timedelta(hours=15),
             output_field=DateField()
@@ -636,7 +639,7 @@ def time_to_acceptance(request):
             output_field=DurationField()
         ),
         
-    ).annotate(
+        ).annotate(
         time_to_accepted_hours=ExpressionWrapper(
             Cast(Extract(F('time_to_accepted'), 'epoch'), output_field=FloatField()) / 3600,
             output_field=FloatField()
@@ -645,8 +648,7 @@ def time_to_acceptance(request):
             Cast(Extract(F('time_to_completed'), 'epoch'), output_field=FloatField()) / 3600,
             output_field=FloatField()
         )
-
-    )
+        )
 
     # Calculate the average time to accepted in hours
     avg_time_to_accepted_hours = orders_with_time_to_acceptance.aggregate(
@@ -660,6 +662,7 @@ def time_to_acceptance(request):
 
     context["avg_time_to_accepted_hours"] = avg_time_to_accepted_hours
     context["avg_time_to_completed_hours"] = avg_time_to_completed_hours
+
     # Fetch user details for accepted_by, submitted_by, and completed_by
     user_ids = set(
         order['accepted_by'] for order in orders_with_time_to_acceptance
@@ -681,7 +684,6 @@ def time_to_acceptance(request):
     orders_count = orders_with_time_to_acceptance.count()
 
     # Calculate the count of orders created internally and externally by month for the past year
-    one_month_ago = timezone.now() - timedelta(days=30)
     orders_by_day = (
         Order.objects.filter(
             end_date__gt=one_month_ago,
@@ -708,7 +710,7 @@ def time_to_acceptance(request):
         .values("end_date")
         .annotate(avg_time_to_accepted=Avg("time_to_accepted_hours"))
         .order_by("end_date")
-        )
+    )
 
     # Prepare data for chart.js
     avg_time_to_accepted_chart_data = [
