@@ -24,6 +24,9 @@ from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method impor
     ensure_invoice_settings_default_payment_method,
 )
 from billing.scheduled_jobs.sync_invoices import sync_invoices
+from billing.scheduled_jobs.consolidated_account_summary import (
+    send_account_summary_emails,
+)
 from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import (
     send_emails,
@@ -178,6 +181,19 @@ class Command(BaseCommand):
             max_instances=1,
             replace_existing=True,
         )
+
+        # Send consolidated account summary emails. Run every Monday at 6am.
+        # scheduler.add_job(
+        #     send_account_summary_emails,
+        #     trigger=CronTrigger(
+        #         day_of_week="mon",
+        #         hour="6",
+        #         jitter=360,
+        #     ),
+        #     id="send_account_summary_emails",
+        #     max_instances=1,
+        #     replace_existing=True,
+        # )
 
         try:
             logger.info("Starting scheduler...")
