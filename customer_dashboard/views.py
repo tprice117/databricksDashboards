@@ -3369,7 +3369,8 @@ def invoices(request):
             for invoice in invoices:
                 amount_paid = invoice.amount_paid
                 amount_remaining = invoice.amount_remaining
-                if amount_paid == 0 and invoice.status == Invoice.Status.PAID:
+                # Manually setting Stripe invoice to paid does not update the amount_paid, so assume it is paid.
+                if invoice.status == Invoice.Status.PAID:
                     amount_paid = invoice.total
                     amount_remaining = 0
                 context["total_paid"] += amount_paid
