@@ -1,3 +1,4 @@
+from .branding import Branding
 from .day_of_week import DayOfWeek
 from .disposal_location.disposal_location import DisposalLocation
 from .disposal_location.disposal_location_waste_type import DisposalLocationWasteType
