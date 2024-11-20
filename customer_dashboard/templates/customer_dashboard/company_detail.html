@@ -189,6 +189,32 @@
                 Swal.fire({ title: "Error", text: `${evt.detail.xhr.response}`, icon: "error" });
             }
         });
+
+        // Shade color function
+        function shadeHexColor(color, percent) {
+            var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+            return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+        }
+
+        // Color preview listener
+        document.getElementById("primary_color").addEventListener("input", function(event) {
+            // Get colors
+            const color = event.target.value;
+            const activeColor = shadeHexColor(color, -0.1);
+            const darkerColor = shadeHexColor(color, -0.15);
+
+            // Update colors on page for preview
+            document.documentElement.style.setProperty("--bs-primary", color);
+            const btns = document.getElementsByClassName("btn-primary");
+            for(i = 0; i < btns.length; i++) {
+                btns[i].style.setProperty("--bs-btn-bg", color);
+                btns[i].style.setProperty("--bs-btn-border-color", color);
+                btns[i].style.setProperty("--bs-btn-hover-bg", darkerColor);
+                btns[i].style.setProperty("--bs-btn-hover-border-color", darkerColor);
+                btns[i].style.setProperty("--bs-btn-active-bg", activeColor);
+                btns[i].style.setProperty("--bs-btn-active-border-color", activeColor);
+            }
+        });
     </script>
 {% endblock %}
 {% block content %}
@@ -244,7 +270,7 @@
                         </form>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
                         <div>
                             {% if request.user.is_staff and not is_impersonating %}
@@ -276,6 +302,22 @@
                         </div>
                     </div>
                 </div>
+                <div class="card">
+                        <div class="card-body">
+                            <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post">
+                                {% csrf_token %}
+                            <h4 class="card-title">Branding&nbsp;</h4>
+                            <p>Make sure to press "Save" to keep changes.</p>
+                            {{ branding_formset.management_form }}
+                            {% for form in branding_formset %}
+                                {{ form.as_p }}
+                            {% endfor %}
+                            <div class="d-flex flex-row-reverse">
+                                <button class="btn btn-primary btn-sm" type="submit" name="branding_form" style="margin-top: 12px;">Save</button>
+                            </div>
+                            </form>
+                        </div>
+                    </div>
             </div>
             <div class="col-md-6 mb-2">
                 <div class="row">

@@ -33,6 +33,7 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
+from api.models.branding import Branding
 from api.utils import auth0
 from api.models import (
     AddOn,
@@ -76,6 +77,7 @@ from cart.models import CheckoutOrder
 from cart.utils import CheckoutUtils, QuoteUtils
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
+from common.utils.shade_hex import shade_hex_color
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
@@ -89,6 +91,7 @@ from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
     AccessDetailsForm,
+    BrandingFormSet,
     CreditApplicationForm,
     OrderGroupForm,
     OrderGroupSwapForm,
@@ -487,6 +490,7 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
     return invoices
 
 
+
 ########################
 # Page views
 ########################
@@ -652,8 +656,24 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     context["is_impersonating"] = is_impersonating(request)
     if request.user.is_authenticated and add_user_group:
         context["user_group"] = get_user_group(request)
+    context["theme"] = get_theme(get_user_group(request))
     return context
 
+def get_theme(user_group: UserGroup):
+    """Returns the theme colors for the given user group, or the default theme"""
+    if user_group and hasattr(user_group, "branding"):
+        return {
+            "primary": user_group.branding.primary,
+            "primary_hover": shade_hex_color(user_group.branding.primary, -0.15),
+            "primary_active": shade_hex_color(user_group.branding.primary, -0.1),
+            "secondary": user_group.branding.secondary,
+        }
+    return {
+        "primary": "#018381",
+        "primary_hover": "#016F6E",
+        "primary_active": "#016967",
+        "secondary": "#044162",
+    }
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
@@ -3608,7 +3628,46 @@ def company_detail(request, user_group_id=None):
     # Order payment methods by newest first.
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
+    # Fill forms with initial data
+    context["form"] = UserGroupForm(
+            initial={
+                "name": user_group.name,
+                "apollo_id": user_group.apollo_id,
+                "pay_later": user_group.pay_later,
+                "autopay": user_group.autopay,
+                "net_terms": user_group.net_terms,
+                "invoice_frequency": user_group.invoice_frequency,
+                "invoice_day_of_month": user_group.invoice_day_of_month,
+                "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                "share_code": user_group.share_code,
+                "credit_line_limit": user_group.credit_line_limit,
+                "compliance_status": user_group.compliance_status,
+                "tax_exempt_status": user_group.tax_exempt_status,
+            },
+            user=context["user"],
+            auth_user=request.user,
+        )
+    context["branding_formset"] = BrandingFormSet(instance=user_group)
+
     if request.method == "POST":
+        # Update branding settings.
+        if "branding_form" in request.POST:
+            branding_formset = BrandingFormSet(request.POST, request.FILES, instance=user_group)
+            context["branding_formset"] = branding_formset
+            
+            if branding_formset.is_valid():
+                # Check if any changes to form were made
+                if branding_formset.has_changed():
+                    branding_formset.save()
+                    # Update theme to render new branding
+                    context["theme"] = get_theme(user_group)
+                    messages.success(request, "Successfully saved!")
+                else:
+                    messages.info(request, "No changes detected.")
+
+            return render(request, "customer_dashboard/company_detail.html", context)
+
+        # Update UserGroup
         form = UserGroupForm(
             request.POST, request.FILES, user=context["user"], auth_user=request.user
         )
@@ -3725,25 +3784,8 @@ def company_detail(request, user_group_id=None):
                 form[field].field.widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
-        context["form"] = UserGroupForm(
-            initial={
-                "name": user_group.name,
-                "apollo_id": user_group.apollo_id,
-                "pay_later": user_group.pay_later,
-                "autopay": user_group.autopay,
-                "net_terms": user_group.net_terms,
-                "invoice_frequency": user_group.invoice_frequency,
-                "invoice_day_of_month": user_group.invoice_day_of_month,
-                "invoice_at_project_completion": user_group.invoice_at_project_completion,
-                "share_code": user_group.share_code,
-                "credit_line_limit": user_group.credit_line_limit,
-                "compliance_status": user_group.compliance_status,
-                "tax_exempt_status": user_group.tax_exempt_status,
-            },
-            user=context["user"],
-            auth_user=request.user,
-        )
         context["types"] = context["user"].get_allowed_user_types()
+
     return render(request, "customer_dashboard/company_detail.html", context)
 
 

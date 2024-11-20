@@ -26,6 +26,7 @@ from admin_policies.admin.inlines.user_group_policy_purchase_approval import (
 from api.admin.filters import UserGroupTypeFilter
 from api.admin.filters.user_group.admin_tasks import UserGroupAdminTasksFilter
 from api.admin.inlines import (
+     BrandingInline,
     UserGroupBillingInline,
     UserGroupCreditApplicationInline,
     UserGroupLegalInline,
@@ -61,6 +62,7 @@ class UserGroupAdmin(BaseModelAdmin, ExportActionMixin):
         UserGroupAdminTasksFilter,
     )
     inlines = [
+        BrandingInline,
         UserGroupBillingInline,
         UserGroupLegalInline,
         UserGroupCreditApplicationInline,
