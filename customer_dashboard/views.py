@@ -4018,16 +4018,27 @@ def company_new_user(request, user_group_id):
 @catch_errors()
 def reports(request):
     from billing.scheduled_jobs.consolidated_account_summary import get_account_summary
+    from billing.transactional_email.account_summary import (
+        send_consolidated_account_summary,
+    )
 
     context = get_user_context(request)
     if not request.user.is_staff or not context["user_group"]:
         return HttpResponseRedirect(reverse("customer_home"))
 
     tab = request.GET.get("tab", None)
-    context["help_text"] = "Reports [ list of reports ]"
-    if request.headers.get("HX-Request"):
-        if tab == "account_summary":
-            pass
-        pass
     context["report_results"] = get_account_summary(context["user_group"])
+    if request.headers.get("HX-Request"):
+        if request.method == "POST":
+            if tab == "account_summary" or tab is None:
+                send_consolidated_account_summary(
+                    ["mwickey@trydownstream.com"], context["report_results"]
+                )
+            return HttpResponse("", status=200)
+        else:
+            return render(
+                request,
+                "customer_dashboard/snippets/account_summary_report.html",
+                context,
+            )
     return render(request, "customer_dashboard/reports.html", context)

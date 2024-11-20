@@ -10,7 +10,7 @@
 {% endblock %}
 {% block javascript %}
     <script>
-        const selectFilter = document.getElementById("invoice-select-filter");
+        const selectFilter = document.getElementById("report-select-filter");
         // listen for page load event.
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
@@ -30,7 +30,7 @@
             <div class="card-header py-3">
                 <div class="row">
                     <div class="col">
-                        <select id="invoice-select-filter" class="form-select form-select-lg mb-3" aria-label="Select Report" name="tab" hx-get="{% url 'customer_reports' %}" hx-target="#invoice-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+                        <select id="report-select-filter" class="form-select form-select-lg mb-3" aria-label="Select Report" name="tab" hx-get="{% url 'customer_reports' %}" hx-target="#report-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
                             <option value="" selected>Select Report</option>
                             <option value="summary">Account Summary</option>
                             {% comment %} <option value="past_due">Past Due</option>
@@ -41,67 +41,9 @@
                 <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
             <div class="card-body">
+                <button class="btn btn-primary" hx-post="{% url 'customer_reports' %}" type="button" hx-indicator="#htmx-indicator-loading-status" hx-swap="none">Send Email</button>
                 <div id="report-results">
-                    <h3 class="text-dark mb-4 text-center">{{ report_results.user_group_name }}'s Account Summary</h3>
-                    <p class="text-muted text-center">Here's a quick summary of your current account details to help you stay informed and on top of invoices.</p>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card shadow">
-                                <div class="card-header py-3">
-                                    <h5 class="card-title">Total Balance</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p class="card-text">${{ report_results.total_invoices_not_paid_or_void|floatformat:3|intcomma }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card shadow">
-                                <div class="card-header py-3">
-                                    <h5 class="card-title text-danger">Past Due</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p class="card-text">${{ report_results.total_invoices_past_due|floatformat:3|intcomma }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card shadow">
-                                <div class="card-header py-3">
-                                    <h5 class="card-title text-success">Credit Available</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p class="card-text">${{ report_results.total_credit_limit_minus_total_balance|floatformat:3|intcomma }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                        <table class="table my-0">
-                            <thead>
-                                <tr>
-                                    <th>Invoice ID</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for invoice in report_results.invoices %}
-                                    <tr>
-                                        <td>{{ invoice.number }}</td>
-                                        <td>{{ invoice.invoice_due_date|date:'D d M Y' }}</td>
-                                        <td>
-                                            {{ invoice.invoice_status }}{% if invoice.invoice_past_due %}
-                                                <span class="text-danger">Past Due</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>${{ invoice.invoice_amount_due }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    {% include 'customer_dashboard/snippets/account_summary_report.html' %}
                 </div>
             </div>
         </div>
