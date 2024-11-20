@@ -198,4 +198,9 @@ urlpatterns = [
         views.add_payment_method,
         name="customer_new_payment",
     ),
+    path(
+        "customer/reports/",
+        views.reports,
+        name="customer_reports",
+    ),
 ]

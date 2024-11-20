@@ -3969,3 +3969,22 @@ def company_new_user(request, user_group_id):
         context["types"] = context["user"].get_allowed_user_types()
 
     return render(request, "customer_dashboard/snippets/company_new_user.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def reports(request):
+    from billing.transactional_email.account_summary import get_account_summary
+
+    context = get_user_context(request)
+    if not request.user.is_staff or not context["user_group"]:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    tab = request.GET.get("tab", None)
+    context["help_text"] = "Reports [ list of reports ]"
+    if request.headers.get("HX-Request"):
+        if tab == "account_summary":
+            pass
+        pass
+    context["report_results"] = get_account_summary(context["user_group"])
+    return render(request, "customer_dashboard/reports.html", context)
