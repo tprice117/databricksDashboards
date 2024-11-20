@@ -304,10 +304,11 @@
                 </div>
                 <div class="card">
                         <div class="card-body">
-                            <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post">
+                            <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post" enctype="multipart/form-data">
                                 {% csrf_token %}
                             <h4 class="card-title">Branding&nbsp;</h4>
                             <p>Make sure to press "Save" to keep changes.</p>
+                            <hr />
                             {{ branding_formset.management_form }}
                             {% for form in branding_formset %}
                                 {{ form.as_p }}

@@ -3660,7 +3660,11 @@ def company_detail(request, user_group_id=None):
                 if branding_formset.has_changed():
                     branding_formset.save()
                     # Update theme to render new branding
-                    context["theme"] = get_theme(user_group)
+                    context.update({
+                        "branding_formset": BrandingFormSet(instance=user_group),
+                        "user_group": user_group,
+                        "theme": get_theme(user_group)
+                    })
                     messages.success(request, "Successfully saved!")
                 else:
                     messages.info(request, "No changes detected.")
