@@ -660,6 +660,7 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     return context
 
 def get_theme(user_group: UserGroup):
+    """Returns the theme colors for the given user group, or the default theme"""
     if user_group and hasattr(user_group, "branding"):
         return {
             "primary": user_group.branding.primary,
@@ -3626,22 +3627,46 @@ def company_detail(request, user_group_id=None):
     # Order payment methods by newest first.
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
-    # Ensure the UserGroup has a Branding instance
-    if not hasattr(user_group, 'branding') or user_group.branding is None:
-        branding = Branding.objects.create(account=user_group)
-        user_group.branding = branding
-        user_group.save()
+    # Fill forms with initial data
+    context["form"] = UserGroupForm(
+            initial={
+                "name": user_group.name,
+                "apollo_id": user_group.apollo_id,
+                "pay_later": user_group.pay_later,
+                "autopay": user_group.autopay,
+                "net_terms": user_group.net_terms,
+                "invoice_frequency": user_group.invoice_frequency,
+                "invoice_day_of_month": user_group.invoice_day_of_month,
+                "invoice_at_project_completion": user_group.invoice_at_project_completion,
+                "share_code": user_group.share_code,
+                "credit_line_limit": user_group.credit_line_limit,
+                "compliance_status": user_group.compliance_status,
+                "tax_exempt_status": user_group.tax_exempt_status,
+            },
+            user=context["user"],
+            auth_user=request.user,
+        )
+    context["branding_formset"] = BrandingFormSet(instance=user_group)
 
     if request.method == "POST":
+        # Update branding settings.
         if "branding_form" in request.POST:
             branding_formset = BrandingFormSet(request.POST, request.FILES, instance=user_group)
             context["branding_formset"] = branding_formset
+            
             if branding_formset.is_valid():
-                branding_formset.save()
-                messages.success(request, "Successfully saved!")
-                context.update({"theme": get_theme(user_group)})
-            return render(request, 'customer_dashboard/company_detail.html', context)
+                # Check if any changes to form were made
+                if branding_formset.has_changed():
+                    branding_formset.save()
+                    # Update theme to render new branding
+                    context["theme"] = get_theme(user_group)
+                    messages.success(request, "Successfully saved!")
+                else:
+                    messages.info(request, "No changes detected.")
 
+            return render(request, "customer_dashboard/company_detail.html", context)
+
+        # Update UserGroup
         form = UserGroupForm(
             request.POST, request.FILES, user=context["user"], auth_user=request.user
         )
@@ -3758,25 +3783,6 @@ def company_detail(request, user_group_id=None):
                 form[field].field.widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
-        context["form"] = UserGroupForm(
-            initial={
-                "name": user_group.name,
-                "apollo_id": user_group.apollo_id,
-                "pay_later": user_group.pay_later,
-                "autopay": user_group.autopay,
-                "net_terms": user_group.net_terms,
-                "invoice_frequency": user_group.invoice_frequency,
-                "invoice_day_of_month": user_group.invoice_day_of_month,
-                "invoice_at_project_completion": user_group.invoice_at_project_completion,
-                "share_code": user_group.share_code,
-                "credit_line_limit": user_group.credit_line_limit,
-                "compliance_status": user_group.compliance_status,
-                "tax_exempt_status": user_group.tax_exempt_status,
-            },
-            user=context["user"],
-            auth_user=request.user,
-        )
-        context["branding_formset"] = BrandingFormSet(instance=user_group)
         context["types"] = context["user"].get_allowed_user_types()
 
     return render(request, "customer_dashboard/company_detail.html", context)

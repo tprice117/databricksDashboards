@@ -641,23 +641,18 @@ class CreditApplicationForm(forms.Form):
 class BrandingForm(forms.ModelForm):
     class Meta:
         model = Branding
-        fields = ["display_name", "logo", "primary", "secondary"]
+        fields = ["primary"]
         widgets = {
             "primary": forms.TextInput(attrs={"type": "color", "id": "primary_color"}),
-            "secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
+            #"secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Hide unsupported fields for now
-        self.fields['display_name'].widget = forms.HiddenInput()
-        self.fields['logo'].widget = forms.HiddenInput()
-        self.fields['secondary'].widget = forms.HiddenInput()
-
 class BaseBrandingFormSet(forms.BaseInlineFormSet):
+    """Using this formset to hide the delete field in the formset"""
     def add_fields(self, form, index):
         super().add_fields(form, index)
         if 'DELETE' in form.fields:
             form.fields['DELETE'].widget = forms.HiddenInput()
 
+# Using Formset to take advantage of inlineformset_factory, allowing to set UserGroup as instance
 BrandingFormSet = forms.inlineformset_factory(UserGroup, Branding, form=BrandingForm, formset=BaseBrandingFormSet, extra=1)

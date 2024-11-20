@@ -57,9 +57,9 @@
 
     {% block stylesheet %}{% endblock %}
     {% block javascript_head %}{% endblock %}
-    {% if user_group.branding %}
+    {% if user_group %}
     <style>
-        /* EDIT THEME HERE  */
+        /* OVERRIDE THEME HERE  */
         :root {
             --bs-primary: {{ theme.primary }};
         }

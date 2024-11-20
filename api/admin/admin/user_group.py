@@ -62,7 +62,7 @@ class UserGroupAdmin(BaseModelAdmin, ExportActionMixin):
         UserGroupAdminTasksFilter,
     )
     inlines = [
-         BrandingInline,
+        BrandingInline,
         UserGroupBillingInline,
         UserGroupLegalInline,
         UserGroupCreditApplicationInline,

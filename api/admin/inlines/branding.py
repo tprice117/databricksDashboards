@@ -11,5 +11,5 @@ class BrandingInline(admin.TabularInline):
         "primary",
         "secondary",
     )
-    show_change_link = True
+    show_change_link = False
     extra = 0

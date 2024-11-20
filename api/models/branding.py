@@ -24,4 +24,4 @@ class Branding(models.Model):
     secondary = models.CharField(max_length=7, default='#044162')
 
     def __str__(self):
-        return f"Branding - {self.account.name}"
+        return f"Branding{self.id}"
