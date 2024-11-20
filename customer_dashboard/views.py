@@ -3975,7 +3975,7 @@ def company_new_user(request, user_group_id):
 @login_required(login_url="/admin/login/")
 @catch_errors()
 def reports(request):
-    from billing.transactional_email.account_summary import get_account_summary
+    from billing.scheduled_jobs.consolidated_account_summary import get_account_summary
 
     context = get_user_context(request)
     if not request.user.is_staff or not context["user_group"]:
