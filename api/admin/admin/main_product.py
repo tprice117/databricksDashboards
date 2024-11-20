@@ -18,6 +18,7 @@ class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
     resource_classes = [MainProductResource]
     search_fields = ["name", "main_product_category__name"]
     list_display = ("name", "main_product_category", "sort", "_is_complete")
+    change_form_template = "admin/api/mainproduct/change_form.html"
     fieldsets = [
         (
             None,
