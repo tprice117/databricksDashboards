@@ -87,7 +87,7 @@
                     <tbody>
                         {% for product in product_sales|dictsortreversed:"order_count" %}
                         <tr>
-                            <td>{{product.main_product_name}}</td>
+                            <td>{{product.main_product_category}}</td>
                             <td>{{product.order_count}}</td>
                         </tr>
                         {%endfor%}                    
