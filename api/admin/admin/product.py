@@ -17,6 +17,7 @@ class ProductResource(resources.ModelResource):
 class ProductAdmin(BaseModelAdmin, ExportActionMixin):
     resource_classes = [ProductResource]
     search_fields = ["description", "main_product__name"]
+    raw_id_fields = ["main_product"]
     list_display = ("__str__", "main_product")
     inlines = [ProductAddOnChoiceInline, SellerProductInline]
     fieldsets = [
