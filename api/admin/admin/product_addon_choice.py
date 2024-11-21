@@ -15,7 +15,13 @@ class ProductAddOnChoiceResource(resources.ModelResource):
 @admin.register(ProductAddOnChoice)
 class ProductAddOnChoiceAdmin(BaseModelAdmin, ExportActionMixin):
     resource_classes = [ProductAddOnChoiceResource]
-    search_fields = ["name", "product__main_product__name"]
+    search_fields = (
+        "id",
+        "name",
+        "product__main_product__name",
+        "add_on_choice__name",
+        "add_on_choice__add_on__name",
+    )
     list_display = ("__str__",)
     fieldsets = [
         (

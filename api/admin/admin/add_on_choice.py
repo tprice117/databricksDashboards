@@ -15,7 +15,7 @@ class AddOnChoiceResource(resources.ModelResource):
 @admin.register(AddOnChoice)
 class AddOnChoiceAdmin(BaseModelAdmin, ExportActionMixin):
     resource_classes = [AddOnChoiceResource]
-    search_fields = ["id", "name", "add_on__name"]
+    search_fields = ["id", "name", "add_on__name", "add_on__main_product__name"]
     list_display = ("name", "add_on")
     raw_id_fields = ["add_on"]
 
