@@ -3017,7 +3017,9 @@ def user_detail(request, user_id):
     # if request.headers.get("HX-Request"):
     user = User.objects.get(id=user_id)
     context["user"] = user
-    context["user_group"] = get_user_group(request)
+    user_group = get_user_group(request)
+    context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
     if user.user_group_id:
         context["user_addresses"] = UserAddress.objects.filter(user_id=user.id)[0:3]
         order_groups = OrderGroup.objects.filter(user_id=user.id)
@@ -3628,6 +3630,9 @@ def company_detail(request, user_group_id=None):
             auth_user=request.user,
         )
     context["branding_formset"] = BrandingFormSet(instance=user_group)
+    
+    if context.get("user"):
+            context["types"] = context["user"].get_allowed_user_types()
 
     if request.method == "POST":
         # Update branding settings.
@@ -3767,8 +3772,6 @@ def company_detail(request, user_group_id=None):
             for field in form.errors:
                 form[field].field.widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
-    else:
-        context["types"] = context["user"].get_allowed_user_types()
 
     return render(request, "customer_dashboard/company_detail.html", context)
 
