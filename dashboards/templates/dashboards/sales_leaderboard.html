@@ -139,6 +139,33 @@ Sales Leaderboard
                     </tbody>
                 </table>
             </div>
+            <div class="table-responsive table mt-4">
+                <h4 class="text-light mb-4">Presidents Club Leaderboard - Discount Rate (10% of score)</h4>
+                <table class="table my-0">
+                    <thead>
+                        <tr>
+                            <th>Discount Rate</th>
+                            <th>Points</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users|dictsortreversed:"external_orders_count" %}
+                            <tr>
+                                <td>
+                                    <img class="rounded-circle me-2" width="30" height="30" src="
+                                        {% if user.photo %}
+                                            {{ user.photo.url }}
+                                        {% else %}
+                                            {% static 'customer_dashboard/img/dogs/image2.jpeg' %}
+                                        {% endif %}">
+                                    <a href="{% url 'user_sales_detail' user.id %}">{{user.first_name}} {{user.last_name}}</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
