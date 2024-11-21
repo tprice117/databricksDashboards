@@ -2,12 +2,12 @@ import ast
 import datetime
 import json
 import logging
+import time
 import uuid
 from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
-import time
 
 import requests
 import stripe
@@ -24,45 +24,26 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework import status
-from rest_framework.decorators import (
-    api_view,
-    authentication_classes,
-    permission_classes,
-)
-from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
-from api.models.branding import Branding
-from api.utils import auth0
 from api.models import (
     AddOn,
     MainProduct,
-    MainProductAddOn,
     MainProductCategory,
-    MainProductCategoryInfo,
-    MainProductInfo,
-    MainProductServiceRecurringFrequency,
+    MainProductCategoryGroup,
     MainProductWasteType,
     Order,
     OrderGroup,
-    OrderGroupMaterial,
-    OrderLineItemType,
     Product,
     ProductAddOnChoice,
-    SellerLocation,
-    SellerProduct,
     SellerProductSellerLocation,
-    ServiceRecurringFrequency,
     Subscription,
     TimeSlot,
     User,
     UserAddress,
-    UserAddressType,
     UserGroup,
     UserGroupCreditApplication,
     UserGroupLegal,
-    MainProductCategoryGroup,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -72,17 +53,14 @@ from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
+from api.utils import auth0
 from billing.models import Invoice
-from cart.models import CheckoutOrder
 from cart.utils import CheckoutUtils, QuoteUtils
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
 from common.utils.shade_hex import shade_hex_color
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
-from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
-    prep_seller_product_seller_locations_for_response,
-)
 from payment_methods.models import PaymentMethod
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
@@ -655,8 +633,9 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     if request.user.is_authenticated and add_user_group:
-        context["user_group"] = get_user_group(request)
-    context["theme"] = get_theme(get_user_group(request))
+        user_group = get_user_group(request)
+        context["user_group"] = user_group
+        context["theme"] = get_theme(user_group) 
     return context
 
 def get_theme(user_group: UserGroup):
@@ -3618,6 +3597,7 @@ def company_detail(request, user_group_id=None):
         user_group = user_group.prefetch_related("users", "user_addresses")
         user_group = user_group.first()
     context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
     context["user"] = user_group.users.filter(type=UserType.ADMIN).first()
     user_group_id = None
     if context["user_group"]:
@@ -3660,7 +3640,11 @@ def company_detail(request, user_group_id=None):
                 if branding_formset.has_changed():
                     branding_formset.save()
                     # Update theme to render new branding
-                    context["theme"] = get_theme(user_group)
+                    context.update({
+                        "branding_formset": BrandingFormSet(instance=user_group),
+                        "user_group": user_group,
+                        "theme": get_theme(user_group)
+                    })
                     messages.success(request, "Successfully saved!")
                 else:
                     messages.info(request, "No changes detected.")
@@ -3944,7 +3928,9 @@ def new_company(request):
 @catch_errors()
 def company_new_user(request, user_group_id):
     context = get_user_context(request, add_user_group=False)
-    context["user_group"] = UserGroup.objects.get(id=user_group_id)
+    user_group = UserGroup.objects.get(id=user_group_id)
+    context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
 
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:

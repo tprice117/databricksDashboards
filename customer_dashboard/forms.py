@@ -641,8 +641,9 @@ class CreditApplicationForm(forms.Form):
 class BrandingForm(forms.ModelForm):
     class Meta:
         model = Branding
-        fields = ["primary"]
+        fields = ["logo", "primary"]
         widgets = {
+            "logo": forms.ClearableFileInput(attrs={"type": "file", "class": "form-control"}),
             "primary": forms.TextInput(attrs={"type": "color", "id": "primary_color"}),
             #"secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
         }

@@ -304,13 +304,24 @@
                 </div>
                 <div class="card">
                         <div class="card-body">
-                            <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post">
+                            <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post" enctype="multipart/form-data">
                                 {% csrf_token %}
                             <h4 class="card-title">Branding&nbsp;</h4>
                             <p>Make sure to press "Save" to keep changes.</p>
+                            <hr />
                             {{ branding_formset.management_form }}
+                            <!-- There is only one form since this is a OneToOne field -->
                             {% for form in branding_formset %}
-                                {{ form.as_p }}
+                                <!-- Hidden fields -->
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                                <!-- Include the visible fields -->
+                                <p>{{ form.logo.label }}
+                                    <span>(Preferred Size: 16x9, e.g. 1920x1080px)</span>
+                                    {% if form.logo.value %}<br/>{% endif %}
+                                    {{ form.logo }}</p>
+                                <p>{{ form.primary.label }} {{ form.primary }}</p>
                             {% endfor %}
                             <div class="d-flex flex-row-reverse">
                                 <button class="btn btn-primary btn-sm" type="submit" name="branding_form" style="margin-top: 12px;">Save</button>
