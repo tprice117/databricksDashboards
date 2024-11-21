@@ -633,8 +633,9 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     if request.user.is_authenticated and add_user_group:
-        context["user_group"] = get_user_group(request)
-    context["theme"] = get_theme(get_user_group(request))
+        user_group = get_user_group(request)
+        context["user_group"] = user_group
+        context["theme"] = get_theme(user_group) 
     return context
 
 def get_theme(user_group: UserGroup):
@@ -3596,6 +3597,7 @@ def company_detail(request, user_group_id=None):
         user_group = user_group.prefetch_related("users", "user_addresses")
         user_group = user_group.first()
     context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
     context["user"] = user_group.users.filter(type=UserType.ADMIN).first()
     user_group_id = None
     if context["user_group"]:
@@ -3926,7 +3928,9 @@ def new_company(request):
 @catch_errors()
 def company_new_user(request, user_group_id):
     context = get_user_context(request, add_user_group=False)
-    context["user_group"] = UserGroup.objects.get(id=user_group_id)
+    user_group = UserGroup.objects.get(id=user_group_id)
+    context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
 
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
