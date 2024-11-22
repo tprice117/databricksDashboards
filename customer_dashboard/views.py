@@ -468,7 +468,6 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
     return invoices
 
 
-
 ########################
 # Page views
 ########################
@@ -635,8 +634,9 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     if request.user.is_authenticated and add_user_group:
         user_group = get_user_group(request)
         context["user_group"] = user_group
-        context["theme"] = get_theme(user_group) 
+        context["theme"] = get_theme(user_group)
     return context
+
 
 def get_theme(user_group: UserGroup):
     """Returns the theme colors for the given user group, or the default theme"""
@@ -653,6 +653,7 @@ def get_theme(user_group: UserGroup):
         "primary_active": "#016967",
         "secondary": "#044162",
     }
+
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
@@ -3612,44 +3613,48 @@ def company_detail(request, user_group_id=None):
 
     # Fill forms with initial data
     context["form"] = UserGroupForm(
-            initial={
-                "name": user_group.name,
-                "apollo_id": user_group.apollo_id,
-                "pay_later": user_group.pay_later,
-                "autopay": user_group.autopay,
-                "net_terms": user_group.net_terms,
-                "invoice_frequency": user_group.invoice_frequency,
-                "invoice_day_of_month": user_group.invoice_day_of_month,
-                "invoice_at_project_completion": user_group.invoice_at_project_completion,
-                "share_code": user_group.share_code,
-                "credit_line_limit": user_group.credit_line_limit,
-                "compliance_status": user_group.compliance_status,
-                "tax_exempt_status": user_group.tax_exempt_status,
-            },
-            user=context["user"],
-            auth_user=request.user,
-        )
+        initial={
+            "name": user_group.name,
+            "apollo_id": user_group.apollo_id,
+            "pay_later": user_group.pay_later,
+            "autopay": user_group.autopay,
+            "net_terms": user_group.net_terms,
+            "invoice_frequency": user_group.invoice_frequency,
+            "invoice_day_of_month": user_group.invoice_day_of_month,
+            "invoice_at_project_completion": user_group.invoice_at_project_completion,
+            "share_code": user_group.share_code,
+            "credit_line_limit": user_group.credit_line_limit,
+            "compliance_status": user_group.compliance_status,
+            "tax_exempt_status": user_group.tax_exempt_status,
+        },
+        user=context["user"],
+        auth_user=request.user,
+    )
     context["branding_formset"] = BrandingFormSet(instance=user_group)
-    
+
     if context.get("user"):
-            context["types"] = context["user"].get_allowed_user_types()
+        context["types"] = context["user"].get_allowed_user_types()
 
     if request.method == "POST":
         # Update branding settings.
         if "branding_form" in request.POST:
-            branding_formset = BrandingFormSet(request.POST, request.FILES, instance=user_group)
+            branding_formset = BrandingFormSet(
+                request.POST, request.FILES, instance=user_group
+            )
             context["branding_formset"] = branding_formset
-            
+
             if branding_formset.is_valid():
                 # Check if any changes to form were made
                 if branding_formset.has_changed():
                     branding_formset.save()
                     # Update theme to render new branding
-                    context.update({
-                        "branding_formset": BrandingFormSet(instance=user_group),
-                        "user_group": user_group,
-                        "theme": get_theme(user_group)
-                    })
+                    context.update(
+                        {
+                            "branding_formset": BrandingFormSet(instance=user_group),
+                            "user_group": user_group,
+                            "theme": get_theme(user_group),
+                        }
+                    )
                     messages.success(request, "Successfully saved!")
                 else:
                     messages.info(request, "No changes detected.")
@@ -4007,27 +4012,40 @@ def company_new_user(request, user_group_id):
 @catch_errors()
 def reports(request):
     from billing.scheduled_jobs.consolidated_account_summary import get_account_summary
-    from billing.transactional_email.account_summary import (
-        send_consolidated_account_summary,
+    from billing.scheduled_jobs.consolidated_account_past_due import (
+        get_account_past_due,
     )
+    from common.utils import customerio
 
     context = get_user_context(request)
     if not request.user.is_staff or not context["user_group"]:
         return HttpResponseRedirect(reverse("customer_home"))
 
     tab = request.GET.get("tab", None)
-    context["report_results"] = get_account_summary(context["user_group"])
+    if tab is None:
+        tab = request.POST.get("tab", None)
+    context["tab"] = tab
+    template = "customer_dashboard/snippets/account_summary_report.html"
+    if tab == "past_due":
+        template = "customer_dashboard/snippets/account_past_due_report.html"
+        context["report_results"] = get_account_past_due(context["user_group"])
+    else:
+        context["report_results"] = get_account_summary(context["user_group"])
     if request.headers.get("HX-Request"):
         if request.method == "POST":
-            if tab == "account_summary" or tab is None:
-                send_consolidated_account_summary(
-                    ["mwickey@trydownstream.com"], context["report_results"]
-                )
+            customerid_id = 7
+            if tab == "past_due":
+                customerid_id = 8
+                subject = f"{context['user_group'].name}'s Past Due Notice From Downstream Marketplace"
+            else:
+                subject = f"{context['user_group'].name}'s Account Summary With Downstream Marketplace"
+            customerio.send_email(
+                ["mwickey@trydownstream.com"],
+                context["report_results"],
+                subject,
+                customerid_id,
+            )
             return HttpResponse("", status=200)
         else:
-            return render(
-                request,
-                "customer_dashboard/snippets/account_summary_report.html",
-                context,
-            )
+            return render(request, template, context)
     return render(request, "customer_dashboard/reports.html", context)

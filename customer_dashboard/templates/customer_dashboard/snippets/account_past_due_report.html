@@ -1,0 +1,78 @@
+{% load static %}
+{% load tz %}
+{% load humanize %}
+<h3 class="text-dark mb-4 text-center text-danger">{{ report_results.user_group_name }}'s Past Due Notice</h3>
+<div class="">
+    <p class="text-muted">Our records show that your account has an outstanding invoice that is now past due. Please be advised that failure to remit payment promptly may lead to the following actions:</p>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+            <strong>Late Fees</strong> applied to your outstanding balance
+        </li>
+        <li class="list-group-item">
+            <strong>Service Suspension</strong> until the account is settled
+        </li>
+        <li class="list-group-item">
+            <strong>Collections Reporting</strong> that may affect your business credit and trade references for up to seven years
+        </li>
+    </ul>
+    <p class="text-muted">To prevent these actions, please ensure payment is made as soon as possible. If payment has already been processed for all of these invoices, you'll stop receiving this notice when the payments has been applied.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h5 class="card-title">1 - 30 Days</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">${{ report_results.total_past_due_30|floatformat:3|intcomma }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h5 class="card-title">31 - 60 Days</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">${{ report_results.total_past_due_31|floatformat:3|intcomma }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h5 class="card-title">61+ Days</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">${{ report_results.total_past_due_61|floatformat:3|intcomma }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+    <table class="table my-0">
+        <thead>
+            <tr>
+                <th>Invoice ID</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in report_results.invoices %}
+                <tr>
+                    <td>{{ invoice.number }}</td>
+                    <td>{{ invoice.invoice_due_date|date:'D d M Y' }}</td>
+                    <td>
+                        {% if invoice.invoice_past_due %}
+                            <span class="text-danger">Past Due</span>
+                        {% endif %}
+                    </td>
+                    <td>${{ invoice.invoice_amount_due }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
