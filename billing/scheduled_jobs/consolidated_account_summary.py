@@ -62,6 +62,8 @@ def get_account_summary(user_group) -> AccountSummary:
     else:
         total_credit_limit_minus_total_balance = "N/A"
 
+    invoices = invoices.order_by("due_date")
+
     account_summary: AccountSummary = {
         "user_group_name": user_group.name,
         "total_invoices_not_paid_or_void": total_invoices_not_paid_or_void,
