@@ -45,7 +45,7 @@ def get_account_past_due(user_group) -> AccountPastDue:
     now_midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Get all invoices for this UserGroup that are past due.
-    invoices_past_due = invoices.filter(due_date__lt=now_midnight)
+    invoices_past_due = invoices.filter(due_date__lt=now_midnight).order_by("due_date")
 
     total_past_due_30 = 0
     total_past_due_31 = 0
