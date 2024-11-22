@@ -1,3 +1,4 @@
+{% load static %}
 {% block javascript %}
 <script>
     function handleSidebarToggle() {
@@ -21,12 +22,10 @@
             <img src="{{ user_group.branding.logo.url }}" alt="Company Logo" class="object-fit-contain rounded mw-100 mh-100" />
         </a>
         {% else %}
-        <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="#">
-            <div class="sidebar-brand-icon">
-                <i class="fas fa-truck rotate-n-15"></i>
-            </div>
+        <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0 p-3" href="#">
+            <img src="{% static 'customer_dashboard/img/logo-white.png' %}" alt="Company Logo" class="object-fit-contain rounded mw-100 mh-100"/>
 
-            <div class="sidebar-brand-text mx-3">
+            <div class="sidebar-brand-text mx-2" style="font-size: 1.4rem;font-weight: 400;text-align: start;text-transform: capitalize;letter-spacing: .075rem;">
                 <span>
                     {% block tabtitle %}
                     Downstream
