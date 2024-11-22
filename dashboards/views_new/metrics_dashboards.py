@@ -610,6 +610,7 @@ def user_addresses_dashboard(request):
 def time_to_acceptance(request):
     context = {}
     one_month_ago = timezone.now() - timedelta(days=30)
+    time_delta = timezone.now() - timedelta(days=17)
 
     
 
@@ -617,7 +618,7 @@ def time_to_acceptance(request):
         accepted_on__isnull=False,
         completed_on__isnull=False,
         submitted_on__isnull=False,
-        end_date__gt=one_month_ago,
+        end_date__gt=time_delta,
         ).values(
         "id",
         "end_date",
@@ -670,7 +671,7 @@ def time_to_acceptance(request):
     # Calculate the count of orders created internally and externally by month for the past year
     orders_by_day = (
         Order.objects.filter(
-            end_date__gt=one_month_ago,
+            end_date__gt=time_delta,
             accepted_on__isnull=False,
             completed_on__isnull=False,
             submitted_on__isnull=False,
