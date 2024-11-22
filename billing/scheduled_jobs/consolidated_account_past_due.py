@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.db.models import Q
 from api.models import UserGroup
 from billing.models import Invoice
-from billing.typings import AccountSummary
+from billing.typings import AccountPastDue
 from common.utils import customerio
 
 
@@ -15,19 +15,19 @@ def get_user_groups_with_open_invoices():
     return user_groups_with_open_invoices
 
 
-def get_account_summary(user_group) -> AccountSummary:
-    """Get account summary for a UserGroup. This includes all invoices that are not paid
-    or void, invoices that are past due, and the total credit limit minus the total balance.
+def get_account_past_due(user_group) -> AccountPastDue:
+    """Get account past due summary for a UserGroup. This includes all invoices that are not paid
+    or void, invoices that are past due.
 
     Args:
         user_group (UserGroup): The UserGroup to get the account summary for.
 
     Returns:
-        AccountSummary:
+        AccountPastDue:
             user_group_name: the UserGroup.name
-            total_invoices_not_paid_or_void = sum of invoice.amount filtered for Invoice.status != “paid” OR “void”
-            trigger.total_invoices_past_due = sum of invoice.amount filtered for Invoice.duedate before TODAY
-            total_credit_limit_minus_total_balance = UserGroup.creditlinelimit minus (sum of invoice.amount filtered for Invoice.status != “paid” OR “void”)
+            total_past_due_30 = sum of invoice.amount that are 1 to 30 days past due
+            total_past_due_31 = sum of invoice.amount that are 31 to 60 days past due
+            total_past_due_61 = sum of invoice.amount that are 61+ days past due
 
         For each Invoice:
             number = invoice.number
@@ -41,32 +41,28 @@ def get_account_summary(user_group) -> AccountSummary:
         ~Q(status=Invoice.Status.PAID) & ~Q(status=Invoice.Status.VOID)
     )
 
-    total_invoices_not_paid_or_void = sum(
-        [invoice.amount_remaining for invoice in invoices]
-    )
-
     now_midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Get all invoices for this UserGroup that are past due.
     invoices_past_due = invoices.filter(due_date__lt=now_midnight)
 
-    total_invoices_past_due = sum(
-        [invoice.amount_remaining for invoice in invoices_past_due]
-    )
+    total_past_due_30 = 0
+    total_past_due_31 = 0
+    total_past_due_61 = 0
+    for invoice in invoices_past_due:
+        days_past_due = (now_midnight - invoice.due_date).days
+        if days_past_due <= 30:
+            total_past_due_30 += invoice.amount_remaining
+        elif days_past_due <= 60:
+            total_past_due_31 += invoice.amount_remaining
+        else:
+            total_past_due_61 += invoice.amount_remaining
 
-    # Calculate the total credit limit minus the total balance.
-    if user_group.credit_line_limit:
-        total_credit_limit_minus_total_balance = (
-            user_group.credit_line_limit - total_invoices_not_paid_or_void
-        )
-    else:
-        total_credit_limit_minus_total_balance = "N/A"
-
-    account_summary: AccountSummary = {
+    account_summary: AccountPastDue = {
         "user_group_name": user_group.name,
-        "total_invoices_not_paid_or_void": total_invoices_not_paid_or_void,
-        "total_invoices_past_due": total_invoices_past_due,
-        "total_credit_limit_minus_total_balance": total_credit_limit_minus_total_balance,
+        "total_past_due_30": total_past_due_30,
+        "total_past_due_31": total_past_due_31,
+        "total_past_due_61": total_past_due_61,
         "invoices": [
             {
                 "number": invoice.number,
@@ -77,16 +73,15 @@ def get_account_summary(user_group) -> AccountSummary:
                 else False,
                 "invoice_amount_due": invoice.amount_remaining,
             }
-            for invoice in invoices
+            for invoice in invoices_past_due
         ],
     }
     return account_summary
 
 
-def send_account_summary_emails():
-    """This is a new transactional email that will be sent to users who have opted in
-    to receive account summary emails. This is sent to the billing email at the company.
-    Trigger Logic: Every Monday when a UserGroup has a related invoice.status == “Open”
+def send_account_past_due_emails():
+    """This is a new transactional email that will be sent to UserGroup billing email.
+    Trigger Logic: Every Thursdau when a UserGroup has a past due invoice.
     """
     # Get all UserGroups that have an open invoice.
     user_groups = get_user_groups_with_open_invoices()
@@ -98,6 +93,6 @@ def send_account_summary_emails():
         else:
             # If the UserGroup does not have a billing email, send to all users in the UserGroup.
             send_to = [user.email for user in user_group.users.all()]
-        account_summary = get_account_summary(user_group)
-        subject = f"{user_group.name}'s Account Summary With Downstream Marketplace"
-        customerio.send_email(send_to, account_summary, subject, 7)
+        account_summary = get_account_past_due(user_group)
+        subject = f"{user_group.name}'s Past Due Notice From Downstream Marketplace"
+        customerio.send_email(send_to, account_summary, subject, 8)

@@ -36,3 +36,11 @@ class AccountSummary(TypedDict):
     total_invoices_past_due: Decimal
     total_credit_limit_minus_total_balance: Decimal
     invoices: List[AccountSummaryInvoice]
+
+
+class AccountPastDue(TypedDict):
+    user_group_name: str
+    total_past_due_30: Decimal
+    total_past_due_31: Decimal
+    total_past_due_61: Decimal
+    invoices: List[AccountSummaryInvoice]
