@@ -183,17 +183,17 @@ class Command(BaseCommand):
         )
 
         # Send consolidated account summary emails. Run every Monday at 6am.
-        # scheduler.add_job(
-        #     send_account_summary_emails,
-        #     trigger=CronTrigger(
-        #         day_of_week="mon",
-        #         hour="6",
-        #         jitter=360,
-        #     ),
-        #     id="send_account_summary_emails",
-        #     max_instances=1,
-        #     replace_existing=True,
-        # )
+        scheduler.add_job(
+            send_account_summary_emails,
+            trigger=CronTrigger(
+                day_of_week="mon",
+                hour="6",
+                jitter=360,
+            ),
+            id="send_account_summary_emails",
+            max_instances=1,
+            replace_existing=True,
+        )
 
         try:
             logger.info("Starting scheduler...")
