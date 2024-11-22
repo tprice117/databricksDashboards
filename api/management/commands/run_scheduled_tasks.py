@@ -27,6 +27,9 @@ from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.scheduled_jobs.consolidated_account_summary import (
     send_account_summary_emails,
 )
+from billing.scheduled_jobs.consolidated_account_past_due import (
+    send_account_past_due_emails,
+)
 from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import (
     send_emails,
@@ -191,6 +194,19 @@ class Command(BaseCommand):
                 jitter=360,
             ),
             id="send_account_summary_emails",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Send consolidated account summary emails. Run every Thursday at 6am.
+        scheduler.add_job(
+            send_account_past_due_emails,
+            trigger=CronTrigger(
+                day_of_week="thu",
+                hour="6",
+                jitter=360,
+            ),
+            id="send_account_past_due_emails",
             max_instances=1,
             replace_existing=True,
         )
