@@ -89,9 +89,12 @@ def send_account_summary_emails():
     # Get all UserGroups that have an open invoice.
     user_groups = get_user_groups_with_open_invoices()
     for user_group in user_groups:
-        # Send the account summary email to all users in the UserGroup as well as Billing.
-        send_to = [user.email for user in user_group.users.all()]
+        # Send the account summary email to Billing.
+        send_to = []
         if hasattr(user_group, "billing"):
             send_to.append(user_group.billing.email)
+        else:
+            # If the UserGroup does not have a billing email, send to all users in the UserGroup.
+            send_to = [user.email for user in user_group.users.all()]
         account_summary = get_account_summary(user_group)
         send_consolidated_account_summary(send_to, account_summary)
