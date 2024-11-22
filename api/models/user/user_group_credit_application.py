@@ -6,6 +6,7 @@ from django.conf import settings
 
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
+from api.models.user.user import User
 from api.models.order.order import Order
 from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
@@ -51,7 +52,8 @@ class UserGroupCreditApplication(BaseModel):
     credit_report = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
 ##TRIGGER CUSTOMERIO EMAILS
-def trigger_customerio_email(transactional_message_id, user_group_name, user_first_name, user_id, user_email,  user_group_credit_line_limit=None, user_group_invoice_frequency=None, user_group_net_terms=None ):
+def trigger_customerio_email(transactional_message_id, user_group_name, user_first_name=None, user_id=None, user_email=None, to_user_email=None, user_group_credit_line_limit=None, user_group_invoice_frequency=None, user_group_net_terms=None, 
+                             legal_industry=None, legal_address=None, created_by_user=None, created_by_email=None, legal_ein=None, legal_dba=None, legal_structure=None):
     url = "https://api.customer.io/v1/send/email"
     headers = {
                 "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
@@ -65,13 +67,20 @@ def trigger_customerio_email(transactional_message_id, user_group_name, user_fir
             "user_group_credit_line_limit": user_group_credit_line_limit,
             "user_group_invoice_frequency": user_group_invoice_frequency,
             "user_group_net_terms": user_group_net_terms,
+            "legal_industry": legal_industry,
+            "legal_address": legal_address,
+            "created_by_user": created_by_user,
+            "user_email": created_by_email,
+            "legal_ein": legal_ein,
+            "legal_dba": legal_dba,
+            "legal_structure" : legal_structure
         },
      
 
         "identifiers": {
-            "id": str(user_id),  
+            "id": str(created_by_user),  
         },
-        "to": user_email
+        "to": to_user_email
     }
     
     #json_data = json.dumps(data, cls=DecimalEncoder)
@@ -117,14 +126,41 @@ def user_group_credit_application_post_save(
     # Check if the instance is newly created and the status is PENDING
     if created and instance.status == ApprovalStatus.PENDING:
         # Retrieve the user group name
-        user_group_name = instance.user_group.name  
+        user_group_name = instance.user_group.name    
+        created_by_user = User.id #user.objects.get(id=instance.created_by_id)
+        created_by_user = User.objects.get(id=instance.created_by_id)
+        created_by_email = created_by_user.email
+  
+         # Ensure the UserGroup model has a legal attribute
+        if hasattr(instance.user_group, 'legal'):
+            legal_industry = instance.user_group.legal.industry or "N/A"
+            legal_address = f"{instance.user_group.legal.street}, {instance.user_group.legal.city}, {instance.user_group.legal.state} {instance.user_group.legal.postal_code}" or "N/A"
+            legal_ein = instance.user_group.legal.tax_id or "N/A"
+            legal_dba = instance.user_group.legal.doing_business_as or "N/A"
+            legal_structure = instance.user_group.legal.structure or "N/A"
+        else: 
+            legal_industry = legal_address = legal_ein = legal_dba = legal_structure = None
+
+          # Trigger the Customer.io email for internal notification
+        trigger_customerio_email(
+            transactional_message_id="14", 
+            user_group_name=user_group_name,
+            legal_industry=legal_industry,
+            legal_address=legal_address,
+            legal_ein=legal_ein,
+            legal_dba=legal_dba,
+            legal_structure=legal_structure,
+            user_email=created_by_email,
+            to_user_email="ar@downstreamsprints.atlassian.net"
+            )
+        
         # Create a list of dictionaries for users
         user_dicts = [
             {
                 'user_group_name': user_group_name,
                 'user_first_name': user.first_name,
                 'user_id': user.id,
-                'user_email': user.email
+                'to_user_email': user.email
             }
             for user in instance.user_group.users.all()
         ]
@@ -134,15 +170,16 @@ def user_group_credit_application_post_save(
             'user_group_name': user_group_name,
             'user_first_name': user_group_name,  # Assuming no first name for billing email
             'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
-            'user_email': instance.user_group.billing.email
+            'to_user_email': instance.user_group.billing.email
         })
+
 
         # Loop through each dictionary in the list
         for user_dict in user_dicts:
             user_group_name = user_dict['user_group_name']
             user_first_name = user_dict['user_first_name']
             user_id = user_dict['user_id']
-            user_email = user_dict['user_email']
+            to_user_email = user_dict['to_user_email']
 
             # Trigger the Customer.io email for each user and the billing email
             trigger_customerio_email(
@@ -150,8 +187,10 @@ def user_group_credit_application_post_save(
                 user_group_name=user_group_name,
                 user_first_name=user_first_name,
                 user_id=user_id,
-                user_email=user_email
+                to_user_email=to_user_email
             )
+
+
 
 @receiver(pre_save, sender=UserGroupCreditApplication)
 def user_group_credit_application_pre_save(
@@ -187,7 +226,7 @@ def user_group_credit_application_pre_save(
                         'user_group_name': user_group_name,
                         'user_first_name': user.first_name,
                         'user_id': user.id,
-                        'user_email': user.email
+                        'to_user_email': user.email
                     }
                     for user in instance.user_group.users.all()
                 ]
@@ -197,7 +236,7 @@ def user_group_credit_application_pre_save(
                     'user_group_name': user_group_name,
                     'user_first_name': user_group_name,  # Assuming no first name for billing email
                     'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
-                    'user_email': instance.user_group.billing.email
+                    'to_user_email': instance.user_group.billing.email
                 })
 
                 # Loop through each dictionary in the list
@@ -205,7 +244,7 @@ def user_group_credit_application_pre_save(
                     user_group_name = user_dict['user_group_name']
                     user_first_name = user_dict['user_first_name']
                     user_id = user_dict['user_id']
-                    user_email = user_dict['user_email']
+                    to_user_email = user_dict['to_user_email']
                 
 
                     # Trigger the Customer.io email for each user
@@ -217,7 +256,7 @@ def user_group_credit_application_pre_save(
                         user_group_net_terms=user_group_net_terms,
                         user_first_name=user_first_name,
                         user_id=user_id,
-                        user_email=user_email
+                        to_user_email=to_user_email
                         
                     )
                 
@@ -245,7 +284,7 @@ def user_group_credit_application_pre_save(
                         'user_group_name': user_group_name,
                         'user_first_name': user.first_name,
                         'user_id': user.id,
-                        'user_email': user.email
+                        'to_user_email': user.email
                     }
                     for user in instance.user_group.users.all()
                 ]
@@ -255,7 +294,7 @@ def user_group_credit_application_pre_save(
                     'user_group_name': user_group_name,
                     'user_first_name': user_group_name,  # Assuming no first name for billing email
                     'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
-                    'user_email': instance.user_group.billing.email
+                    'to_user_email': instance.user_group.billing.email
                 })
 
                 # Loop through each dictionary in the list
@@ -263,7 +302,7 @@ def user_group_credit_application_pre_save(
                     user_group_name = user_dict['user_group_name']
                     user_first_name = user_dict['user_first_name']
                     user_id = user_dict['user_id']
-                    user_email = user_dict['user_email']
+                    to_user_email = user_dict['to_user_email']
 
                         # Trigger the Customer.io email for each user
                     trigger_customerio_email(
@@ -271,7 +310,7 @@ def user_group_credit_application_pre_save(
                         user_group_name=user_group_name,
                         user_first_name=user_first_name,
                         user_id=user_id,
-                        user_email=user_email
+                        to_user_email=to_user_email
                 ) 
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
