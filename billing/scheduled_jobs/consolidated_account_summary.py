@@ -91,7 +91,7 @@ def send_account_summary_emails():
     for user_group in user_groups:
         # Send the account summary email to Billing.
         send_to = []
-        if hasattr(user_group, "billing"):
+        if hasattr(user_group, "billing") and user_group.billing.email:
             send_to.append(user_group.billing.email)
         else:
             # If the UserGroup does not have a billing email, send to all users in the UserGroup.
