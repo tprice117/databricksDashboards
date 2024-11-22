@@ -196,10 +196,7 @@
             return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
         }
 
-        // Color preview listener
-        document.getElementById("primary_color").addEventListener("input", function(event) {
-            // Get colors
-            const color = event.target.value;
+        function updatePageColors(color) {
             const activeColor = shadeHexColor(color, -0.1);
             const darkerColor = shadeHexColor(color, -0.15);
 
@@ -214,7 +211,15 @@
                 btns[i].style.setProperty("--bs-btn-active-bg", activeColor);
                 btns[i].style.setProperty("--bs-btn-active-border-color", activeColor);
             }
-        });
+        }
+
+        // Color preview listener
+        document.getElementById("primary_color").addEventListener("input", function(event) {
+            // Get colors
+            const color = event.target.value;
+            updatePageColors(color);
+            }
+        );
     </script>
 {% endblock %}
 {% block content %}
@@ -321,7 +326,11 @@
                                     <span>(Preferred Size: 16x9, e.g. 1920x1080px)</span>
                                     {% if form.logo.value %}<br/>{% endif %}
                                     {{ form.logo }}</p>
-                                <p>{{ form.primary.label }} {{ form.primary }}</p>
+                                <p>{{ form.primary.label }} {{ form.primary }}
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                    type="button" 
+                                    onclick="document.getElementById('primary_color').value='#018381';updatePageColors('#018381');">Default</button>
+                                </p>
                             {% endfor %}
                             <div class="d-flex flex-row-reverse">
                                 <button class="btn btn-primary btn-sm" type="submit" name="branding_form" style="margin-top: 12px;">Save</button>
