@@ -6,13 +6,14 @@ from billing.typings import AccountPastDue
 from common.utils import customerio
 
 
-def get_user_groups_with_open_invoices():
-    # Get all UserGroups that have an Invoice with status OPEN
-    user_groups_with_open_invoices = UserGroup.objects.filter(
-        user_addresses__invoice__status=Invoice.Status.OPEN
+def get_user_groups_with_past_due_invoices():
+    # Get all UserGroups that have an Invoice with status OPEN and due_date < TODAY.
+    now_midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    user_groups_with_past_due_invoices = UserGroup.objects.filter(
+        Q(user_addresses__invoice__status=Invoice.Status.OPEN)
+        & Q(user_addresses__invoice__due_date__lt=now_midnight),
     ).distinct()
-
-    return user_groups_with_open_invoices
+    return user_groups_with_past_due_invoices
 
 
 def get_account_past_due(user_group) -> AccountPastDue:
@@ -84,7 +85,7 @@ def send_account_past_due_emails():
     Trigger Logic: Every Thursdau when a UserGroup has a past due invoice.
     """
     # Get all UserGroups that have an open invoice.
-    user_groups = get_user_groups_with_open_invoices()
+    user_groups = get_user_groups_with_past_due_invoices()
     for user_group in user_groups:
         # Send the account summary email to Billing.
         send_to = []
