@@ -302,7 +302,6 @@ def get_check_remittance_variable(orders: List[Order]) -> CheckRemittanceHTMLRes
 
 
 class Lob:
-
     def __init__(
         self,
         from_address_id: str = None,
@@ -477,6 +476,7 @@ class Lob:
                         "mwickey@trydownstream.com",
                         "dleyden@trydownstream.com",
                         "ctorgerson@trydownstream.com",
+                        "hrobbins@trydownstream.com",
                         "billing@trydownstream.com",
                     ],
                     subject=subject,

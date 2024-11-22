@@ -1,0 +1,55 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load tz %}
+{% load humanize %}
+{% block title %}
+    Reports
+{% endblock %}
+{% block stylesheet %}
+    <style></style>
+{% endblock %}
+{% block javascript %}
+    <script>
+        const selectFilter = document.getElementById("report-select-filter");
+        // listen for page load event.
+        // NOTE: Do this first so that the date filter value is set before the change listener is added.
+        document.addEventListener("DOMContentLoaded", function () {
+            let queryParams = new URLSearchParams(window.location.search);
+            let searchTab = queryParams.get("tab");
+            if (searchTab) {
+                // update select filter value
+                selectFilter.value = searchTab;
+            }
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-4">Reports</h3>
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <div class="row">
+                    <div class="col">
+                        <select id="report-select-filter" class="form-select form-select-lg mb-3" aria-label="Select Report" name="tab" hx-get="{% url 'customer_reports' %}" hx-target="#report-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+                            <option value="" selected>Select Report</option>
+                            <option value="summary">Account Summary</option>
+                            <option value="past_due">Past Due</option>
+                            {% comment %} <option value="paid">Paid</option> {% endcomment %}
+                        </select>
+                    </div>
+                </div>
+                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-primary" hx-post="{% url 'customer_reports' %}" hx-include="[name='tab']" type="button" hx-indicator="#htmx-indicator-loading-status" hx-swap="none">Send Email</button>
+                <div id="report-results">
+                    {% if tab == 'past_due' %}
+                        {% include 'customer_dashboard/snippets/account_past_due_report.html' %}
+                    {% else %}
+                        {% include 'customer_dashboard/snippets/account_summary_report.html' %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

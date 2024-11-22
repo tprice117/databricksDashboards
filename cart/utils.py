@@ -1,5 +1,6 @@
 from typing import Iterable, Union, TypedDict
 import logging
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from api.models.order.order import Order
@@ -131,7 +132,6 @@ class CheckoutUtils:
 
 
 class QuoteUtils:
-
     @staticmethod
     def get_rental_breakdown(
         seller_product_seller_location,
@@ -409,10 +409,15 @@ class QuoteUtils:
 
         for order in orders:
             seller_total += float(order.seller_price())
+            product_img_url = (
+                f"{settings.DASHBOARD_BASE_URL}/static/customer_dashboard/img/logo.png"
+            )
+            if order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon:
+                product_img_url = order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url
             item = {
                 "product": {
                     "name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
-                    "image": order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url,
+                    "image": product_img_url,
                 },
                 "start_date": order.start_date.strftime("%m/%d/%Y"),
                 "tonnage_quantity": order.order_group.tonnage_quantity,
@@ -446,9 +451,7 @@ class QuoteUtils:
                     )
                 else:
                     item["schedule_window"] = "Anytime (7am-4pm)"
-            addons = (
-                order.order_group.seller_product_seller_location.seller_product.product.product_add_on_choices.all()
-            )
+            addons = order.order_group.seller_product_seller_location.seller_product.product.product_add_on_choices.all()
             for addon in addons:
                 item["addons"].append(
                     {
@@ -504,9 +507,12 @@ class QuoteUtils:
                 )
                 # Get percentage that one_time total is of total minus fuel fees
                 total_minus_fuel = item["pre_tax_subtotal"] - fuel_fees_subtotal
-                one_time_total_percentage = round(
-                    item["one_time"]["total"] / total_minus_fuel, 6
-                )
+                if total_minus_fuel == 0:
+                    one_time_total_percentage = 0
+                else:
+                    one_time_total_percentage = round(
+                        item["one_time"]["total"] / total_minus_fuel, 6
+                    )
                 item["one_time"]["fuel_fees"] = (
                     fuel_fees_subtotal * one_time_total_percentage
                 )
@@ -560,24 +566,16 @@ class QuoteUtils:
                 total += item["one_time"]["total"]
             else:
                 total += item["total"]
-            if (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental
-            ):
+            if order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental:
                 two_step.append(item)
-            elif (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
-            ):
+            elif order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step:
                 one_step.append(item)
-            elif (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
-            ):
+            elif order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step:
                 # Get rental breakdown for multi-step rentals
                 add_rpp_fee = False
                 if order.order_group.user.user_group is None:
                     add_rpp_fee = True
-                elif (
-                    not order.order_group.user.user_group.owned_and_rented_equiptment_coi
-                ):
+                elif not order.order_group.user.user_group.owned_and_rented_equiptment_coi:
                     add_rpp_fee = True
                 item["rental_breakdown"] = QuoteUtils.get_rental_breakdown(
                     order.order_group.seller_product_seller_location,

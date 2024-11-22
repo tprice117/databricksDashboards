@@ -7,6 +7,9 @@ from django.core.management.base import BaseCommand
 from django_apscheduler.jobstores import DjangoJobStore
 
 from api.scheduled_jobs.create_stripe_invoices import create_stripe_invoices
+from api.scheduled_jobs.orders.create_auto_renewal_orders import (
+    create_auto_renewal_orders,
+)
 from api.scheduled_jobs.update_order_line_item_paid_status import (
     update_order_line_item_paid_status,
 )
@@ -21,6 +24,12 @@ from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method impor
     ensure_invoice_settings_default_payment_method,
 )
 from billing.scheduled_jobs.sync_invoices import sync_invoices
+from billing.scheduled_jobs.consolidated_account_summary import (
+    send_account_summary_emails,
+)
+from billing.scheduled_jobs.consolidated_account_past_due import (
+    send_account_past_due_emails,
+)
 from billing.utils.billing import BillingUtils
 from notifications.scheduled_jobs.send_emails import (
     send_emails,
@@ -159,6 +168,45 @@ class Command(BaseCommand):
                 jitter=640,
             ),
             id="ensure_invoice_settings_default_payment_method",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Create auto-renewal Orders for OrderGroups that need them.
+        # Run every day at 3am.
+        scheduler.add_job(
+            create_auto_renewal_orders,
+            trigger=CronTrigger(
+                hour="3",
+                jitter=640,
+            ),
+            id="create_auto_renewal_orders",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Send consolidated account summary emails. Run every Monday at 6am.
+        scheduler.add_job(
+            send_account_summary_emails,
+            trigger=CronTrigger(
+                day_of_week="mon",
+                hour="6",
+                jitter=360,
+            ),
+            id="send_account_summary_emails",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Send consolidated account summary emails. Run every Thursday at 6am.
+        scheduler.add_job(
+            send_account_past_due_emails,
+            trigger=CronTrigger(
+                day_of_week="thu",
+                hour="6",
+                jitter=360,
+            ),
+            id="send_account_past_due_emails",
             max_instances=1,
             replace_existing=True,
         )

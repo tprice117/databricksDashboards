@@ -213,6 +213,7 @@ class PaymentMethod(BaseModel):
                         "mwickey@trydownstream.com",
                         "dleyden@trydownstream.com",
                         "ctorgerson@trydownstream.com",
+                        "hrobbins@trydownstream.com",
                         "billing@trydownstream.com",
                     ],
                     subject=subject,

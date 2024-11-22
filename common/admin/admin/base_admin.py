@@ -1,10 +1,14 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
+from import_export.tmp_storages import MediaStorage
 
 
-class BaseModelAdmin(admin.ModelAdmin):
+class BaseModelAdmin(ImportExportModelAdmin):
     """
     The base model admin class
     """
+
+    tmp_storage_class = MediaStorage
 
     audit_fields = [
         "created_on",

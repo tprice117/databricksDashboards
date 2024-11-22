@@ -90,6 +90,7 @@ def add_internal_email_to_queue(
             "thayes@trydownstream.com",
             "zirwin@trydownstream.com",
             "jbaird@trydownstream.com",
+            "mwickey@trydownstream.com",
         ]
         + additional_to_emails,
         subject=subject,

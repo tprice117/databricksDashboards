@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     # END:  Django Humanize (for template number formatting).
     "invoice_payables",
+    "import_export",
 ]
 
 MIDDLEWARE = [

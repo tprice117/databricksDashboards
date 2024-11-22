@@ -4,17 +4,27 @@ import logging
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.inlines import SellerProductSellerLocationMaterialWasteTypeInline
 from api.forms import CsvImportForm
 from api.models import SellerProductSellerLocationMaterial
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
+from common.admin.admin.base_admin import BaseModelAdmin
 
 logger = logging.getLogger(__name__)
 
 
+class SellerProductSellerLocationMaterialResource(resources.ModelResource):
+    class Meta:
+        model = SellerProductSellerLocationMaterial
+        skip_unchanged = True
+
+
 @admin.register(SellerProductSellerLocationMaterial)
-class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
+class SellerProductSellerLocationMaterialAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerProductSellerLocationMaterialResource]
     inlines = [
         SellerProductSellerLocationMaterialWasteTypeInline,
     ]
@@ -25,7 +35,7 @@ class SellerProductSellerLocationMaterialAdmin(admin.ModelAdmin):
         "updated_by",
     )
 
-    change_list_template = (
+    import_export_change_list_template = (
         "admin/entities/seller_product_seller_location_material_changelist.html"
     )
 

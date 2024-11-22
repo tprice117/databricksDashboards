@@ -3,7 +3,7 @@ import datetime
 from django import forms
 from django.core.exceptions import ValidationError
 
-from api.models import UserAddress, UserAddressType, UserGroup, UserGroupLegal
+from api.models import  Branding, UserAddress, UserAddressType, UserGroup, UserGroupLegal
 from api.models.order.order_group import OrderGroup
 from common.models.choices.user_type import UserType
 
@@ -531,25 +531,39 @@ class OrderGroupSwapForm(forms.Form):
     # )
 
     # NOTE: Below is an example of how to validate against a dynamic swap_date field.
-    # def __init__(self, *args, **kwargs):
-    #     super(OrderGroupSwapForm, self).__init__(*args, **kwargs)
-    #     # Set min attribute for swap_date input
-    #     self.fields["swap_date"].widget.attrs["min"] = self.initial.get(
-    #         "order_group_start_date"
-    #     )
+    def __init__(self, *args, **kwargs):
+        auth_user = kwargs.pop("auth_user", None)
+        super(OrderGroupSwapForm, self).__init__(*args, **kwargs)
+        # Do not allow same day swaps for customers
+        # Set min attribute for swap_date input
+        today = datetime.date.today()
+        if hasattr(self, "cleaned_data"):
+            start_date = self.cleaned_data.get("order_group_start_date")
+        else:
+            start_date = self.initial.get("order_group_start_date")
+        # Check for null start_date because we only care about the initial form, not the POST form.
+        min_date = today if start_date and start_date < today else start_date
+        if min_date is None:
+            min_date = today
+        if auth_user and auth_user.is_staff:
+            self.fields["swap_date"].widget.attrs["min"] = min_date
+        else:
+            self.fields["swap_date"].widget.attrs["min"] = (
+                min_date + datetime.timedelta(days=1)
+            )
 
-    # def clean_swap_date(self):
-    #     # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
-    #     swap_date = self.cleaned_data["swap_date"]
-    #     order_group_start_date = self.cleaned_data["order_group_start_date"]
-    #     if swap_date < order_group_start_date:
-    #         raise ValidationError(
-    #             "Start date must be after the order group start date: %(allowed_start_date)s",
-    #             params={"allowed_start_date": order_group_start_date},
-    #         )
+    def clean_swap_date(self):
+        # https://docs.djangoproject.com/en/5.0/ref/forms/validation/
+        swap_date = self.cleaned_data["swap_date"]
+        order_group_start_date = self.cleaned_data["order_group_start_date"]
+        if swap_date < order_group_start_date:
+            raise ValidationError(
+                "Start date must be after the order group start date: %(allowed_start_date)s",
+                params={"allowed_start_date": order_group_start_date},
+            )
 
-    #     # Always return a value to use as the new cleaned data, even if this method didn't change it.
-    #     return swap_date
+        # Always return a value to use as the new cleaned data, even if this method didn't change it.
+        return swap_date
 
 
 class CreditApplicationForm(forms.Form):
@@ -623,3 +637,23 @@ class CreditApplicationForm(forms.Form):
         else:
             self.fields["increase_credit"].widget = forms.HiddenInput()
             self.fields["increase_credit"].required = False
+
+class BrandingForm(forms.ModelForm):
+    class Meta:
+        model = Branding
+        fields = ["logo", "primary"]
+        widgets = {
+            "logo": forms.ClearableFileInput(attrs={"type": "file", "class": "form-control"}),
+            "primary": forms.TextInput(attrs={"type": "color", "id": "primary_color"}),
+            #"secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
+        }
+
+class BaseBrandingFormSet(forms.BaseInlineFormSet):
+    """Using this formset to hide the delete field in the formset"""
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+        if 'DELETE' in form.fields:
+            form.fields['DELETE'].widget = forms.HiddenInput()
+
+# Using Formset to take advantage of inlineformset_factory, allowing to set UserGroup as instance
+BrandingFormSet = forms.inlineformset_factory(UserGroup, Branding, form=BrandingForm, formset=BaseBrandingFormSet, extra=1)
