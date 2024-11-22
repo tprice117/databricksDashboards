@@ -3631,9 +3631,6 @@ def company_detail(request, user_group_id=None):
         auth_user=request.user,
     )
     context["branding_formset"] = BrandingFormSet(instance=user_group)
-    
-    if context.get("user"):
-            context["types"] = context["user"].get_allowed_user_types()
 
     if context.get("user"):
         context["types"] = context["user"].get_allowed_user_types()
