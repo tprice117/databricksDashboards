@@ -163,3 +163,4 @@ cython_debug/
 #.idea/
 .env
 .DS_Store
+.vscode/launch.json

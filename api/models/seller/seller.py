@@ -18,7 +18,7 @@ class Seller(BaseModel):
     )
 
     name = models.CharField(max_length=255)
-    phone = models.CharField(max_length=40)
+    phone = models.CharField(max_length=40, blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     # START: Communicaton fields.
     order_email = models.CharField(max_length=255, blank=True, null=True)
