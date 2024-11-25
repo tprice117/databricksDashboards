@@ -12,6 +12,9 @@ from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from common.models.choices.approval_status import ApprovalStatus
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @track_data("status")
@@ -54,14 +57,25 @@ class UserGroupCreditApplication(BaseModel):
     def clean(self):
         self.clean_fields()
 
+        # Check if there is an existing pending application for this user group.
+        # If there is, raise a validation error to prevent multiple pending
+        # applications.
+        if self.status == ApprovalStatus.PENDING:
+            existing_application = UserGroupCreditApplication.objects.filter(
+                user_group=self.user_group, status=ApprovalStatus.PENDING
+            ).exists()
+            if existing_application:
+                raise ValidationError(
+                    "A pending credit application already exists for this user group."
+                )
+        return self
+
 
 # TRIGGER CUSTOMERIO EMAILS
 def trigger_customerio_email(
     transactional_message_id,
     user_group_name,
     user_first_name=None,
-    user_id=None,
-    user_email=None,
     to_user_email=None,
     user_group_credit_line_limit=None,
     user_group_invoice_frequency=None,
@@ -108,18 +122,6 @@ def trigger_customerio_email(
         print("Email sent successfully.")
     else:
         print(f"Failed to send email: {response.status_code} - {response.text}")
-        # Check if there is an existing pending application for this user group.
-        # If there is, raise a validation error to prevent multiple pending
-        # applications.
-        if self.status == ApprovalStatus.PENDING:
-            existing_application = UserGroupCreditApplication.objects.filter(
-                user_group=self.user_group, status=ApprovalStatus.PENDING
-            ).exists()
-            if existing_application:
-                raise ValidationError(
-                    "A pending credit application already exists for this user group."
-                )
-        return self
 
 
 # Signal to handle post_save event for new instances with PENDING status
@@ -127,78 +129,69 @@ def trigger_customerio_email(
 def user_group_credit_application_post_save(
     sender, instance: UserGroupCreditApplication, created, **kwargs
 ):
-    # Check if the instance is newly created and the status is PENDING
-    if created and instance.status == ApprovalStatus.PENDING:
-        # Retrieve the user group name
-        user_group_name = instance.user_group.name
-        created_by_user = User.id  # user.objects.get(id=instance.created_by_id)
-        created_by_user = User.objects.get(id=instance.created_by_id)
-        created_by_email = created_by_user.email
+    try:
+        # Check if the instance is newly created and the status is PENDING
+        if created and instance.status == ApprovalStatus.PENDING:
+            # Retrieve the user group name
+            user_group_name = instance.user_group.name
+            if instance.created_by:
+                created_by_email = instance.created_by.email
+            else:
+                created_by_email = f"N/A [id: {instance.id}]"
 
-        # Ensure the UserGroup model has a legal attribute
-        if hasattr(instance.user_group, "legal"):
-            legal_industry = instance.user_group.legal.industry or "N/A"
-            legal_address = (
-                f"{instance.user_group.legal.street}, {instance.user_group.legal.city}, {instance.user_group.legal.state} {instance.user_group.legal.postal_code}"
-                or "N/A"
+            # Ensure the UserGroup model has a legal attribute
+            if hasattr(instance.user_group, "legal"):
+                legal_industry = instance.user_group.legal.industry or "N/A"
+                legal_address = (
+                    f"{instance.user_group.legal.street}, {instance.user_group.legal.city}, {instance.user_group.legal.state} {instance.user_group.legal.postal_code}"
+                    or "N/A"
+                )
+                legal_ein = instance.user_group.legal.tax_id or "N/A"
+                legal_dba = instance.user_group.legal.doing_business_as or "N/A"
+                legal_structure = instance.user_group.legal.structure or "N/A"
+            else:
+                legal_industry = legal_address = legal_ein = legal_dba = (
+                    legal_structure
+                ) = None
+
+            # Trigger the Customer.io email for internal notification
+            trigger_customerio_email(
+                transactional_message_id="14",
+                user_group_name=user_group_name,
+                legal_industry=legal_industry,
+                legal_address=legal_address,
+                legal_ein=legal_ein,
+                legal_dba=legal_dba,
+                legal_structure=legal_structure,
+                user_email=created_by_email,
+                to_user_email="ar@downstreamsprints.atlassian.net",
             )
-            legal_ein = instance.user_group.legal.tax_id or "N/A"
-            legal_dba = instance.user_group.legal.doing_business_as or "N/A"
-            legal_structure = instance.user_group.legal.structure or "N/A"
-        else:
-            legal_industry = legal_address = legal_ein = legal_dba = legal_structure = (
-                None
-            )
 
-        # Trigger the Customer.io email for internal notification
-        trigger_customerio_email(
-            transactional_message_id="14",
-            user_group_name=user_group_name,
-            legal_industry=legal_industry,
-            legal_address=legal_address,
-            legal_ein=legal_ein,
-            legal_dba=legal_dba,
-            legal_structure=legal_structure,
-            user_email=created_by_email,
-            to_user_email="ar@downstreamsprints.atlassian.net",
-        )
+            send_to = []
+            if (
+                hasattr(instance.user_group, "billing")
+                and instance.user_group.billing.email
+            ):
+                send_to.append(instance.user_group.billing.email)
+            else:
+                # If the UserGroup does not have a billing email, send to all users in the UserGroup.
+                send_to = [user.email for user in instance.user_group.users.all()]
 
-        # Create a list of dictionaries for users
-        user_dicts = [
-            {
-                "user_group_name": user_group_name,
-                "user_first_name": user.first_name,
-                "user_id": user.id,
-                "to_user_email": user.email,
-            }
-            for user in instance.user_group.users.all()
-        ]
-
-        # Add the billing email to the list
-        user_dicts.append(
-            {
-                "user_group_name": user_group_name,
-                "user_first_name": user_group_name,  # Assuming no first name for billing email
-                "user_id": instance.user_group.billing.id,  # Assuming no user ID for billing email
-                "to_user_email": instance.user_group.billing.email,
-            }
-        )
-
-        # Loop through each dictionary in the list
-        for user_dict in user_dicts:
-            user_group_name = user_dict["user_group_name"]
-            user_first_name = user_dict["user_first_name"]
-            user_id = user_dict["user_id"]
-            to_user_email = user_dict["to_user_email"]
+            user_group_name = instance.user_group.name
+            user_first_name = ""  # user_dict["user_first_name"]
+            to_user_email = ""  # user_dict["to_user_email"]
 
             # Trigger the Customer.io email for each user and the billing email
             trigger_customerio_email(
                 transactional_message_id="9",
-                user_group_name=user_group_name,
+                user_group_name=instance.user_group.name,
                 user_first_name=user_first_name,
-                user_id=user_id,
                 to_user_email=to_user_email,
             )
+    except Exception as e:
+        logger.error(
+            f"user_group_credit_application_post_save: Failed to send email: {e}"
+        )
 
 
 @receiver(pre_save, sender=UserGroupCreditApplication)
@@ -226,7 +219,7 @@ def user_group_credit_application_pre_save(
                 instance.user_group.credit_line_limit = instance.requested_credit_limit
                 instance.user_group.save()
                 # INSERT APPROVAL CREDIT EMAIL HERE
-                user_group_name = (instance.user_group.name,)
+                user_group_name = instance.user_group.name
                 user_group_credit_line_limit = (
                     str(instance.user_group.credit_line_limit),
                 )
@@ -256,7 +249,6 @@ def user_group_credit_application_pre_save(
                 for user_dict in user_dicts:
                     user_group_name = user_dict["user_group_name"]
                     user_first_name = user_dict["user_first_name"]
-                    user_id = user_dict["user_id"]
                     to_user_email = user_dict["to_user_email"]
 
                     # Trigger the Customer.io email for each user
@@ -267,7 +259,6 @@ def user_group_credit_application_pre_save(
                         user_group_invoice_frequency=user_group_invoice_frequency,
                         user_group_net_terms=user_group_net_terms,
                         user_first_name=user_first_name,
-                        user_id=user_id,
                         to_user_email=to_user_email,
                     )
 
@@ -313,7 +304,6 @@ def user_group_credit_application_pre_save(
                 for user_dict in user_dicts:
                     user_group_name = user_dict["user_group_name"]
                     user_first_name = user_dict["user_first_name"]
-                    user_id = user_dict["user_id"]
                     to_user_email = user_dict["to_user_email"]
 
                     # Trigger the Customer.io email for each user
@@ -321,7 +311,6 @@ def user_group_credit_application_pre_save(
                         transactional_message_id="11",
                         user_group_name=user_group_name,
                         user_first_name=user_first_name,
-                        user_id=user_id,
                         to_user_email=to_user_email,
                     )
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
