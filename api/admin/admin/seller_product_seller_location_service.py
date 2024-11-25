@@ -4,16 +4,26 @@ import logging
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.inlines import SellerProductSellerLocationServiceRecurringFrequencyInline
 from api.forms import CsvImportForm
 from api.models import SellerProductSellerLocation, SellerProductSellerLocationService
+from common.admin.admin.base_admin import BaseModelAdmin
 
 logger = logging.getLogger(__name__)
 
 
+class SellerProductSellerLocationServiceResource(resources.ModelResource):
+    class Meta:
+        model = SellerProductSellerLocationService
+        skip_unchanged = True
+
+
 @admin.register(SellerProductSellerLocationService)
-class SellerProductSellerLocationServiceAdmin(admin.ModelAdmin):
+class SellerProductSellerLocationServiceAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerProductSellerLocationServiceResource]
     inlines = [
         SellerProductSellerLocationServiceRecurringFrequencyInline,
     ]
@@ -24,7 +34,7 @@ class SellerProductSellerLocationServiceAdmin(admin.ModelAdmin):
         "updated_by",
     )
 
-    change_list_template = (
+    import_export_change_list_template = (
         "admin/entities/seller_product_seller_location_service_changelist.html"
     )
 

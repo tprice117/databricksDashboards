@@ -2,12 +2,12 @@ import ast
 import datetime
 import json
 import logging
+import time
 import uuid
 from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
-import time
 
 import requests
 import stripe
@@ -24,44 +24,26 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework import status
-from rest_framework.decorators import (
-    api_view,
-    authentication_classes,
-    permission_classes,
-)
-from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
-from api.utils import auth0
 from api.models import (
     AddOn,
     MainProduct,
-    MainProductAddOn,
     MainProductCategory,
-    MainProductCategoryInfo,
-    MainProductInfo,
-    MainProductServiceRecurringFrequency,
+    MainProductCategoryGroup,
     MainProductWasteType,
     Order,
     OrderGroup,
-    OrderGroupMaterial,
-    OrderLineItemType,
     Product,
     ProductAddOnChoice,
-    SellerLocation,
-    SellerProduct,
     SellerProductSellerLocation,
-    ServiceRecurringFrequency,
     Subscription,
     TimeSlot,
     User,
     UserAddress,
-    UserAddressType,
     UserGroup,
     UserGroupCreditApplication,
     UserGroupLegal,
-    MainProductCategoryGroup,
 )
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -71,16 +53,14 @@ from api.models.user.user_address import CompanyUtils as UserAddressUtils
 from api.models.user.user_group import CompanyUtils as UserGroupUtils
 from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
+from api.utils import auth0
 from billing.models import Invoice
-from cart.models import CheckoutOrder
 from cart.utils import CheckoutUtils, QuoteUtils
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
+from common.utils.shade_hex import shade_hex_color
 from communications.intercom.utils.utils import get_json_safe_value
 from matching_engine.matching_engine import MatchingEngine
-from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
-    prep_seller_product_seller_locations_for_response,
-)
 from payment_methods.models import PaymentMethod
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
@@ -89,6 +69,7 @@ from pricing_engine.pricing_engine import PricingEngine
 
 from .forms import (
     AccessDetailsForm,
+    BrandingFormSet,
     CreditApplicationForm,
     OrderGroupForm,
     OrderGroupSwapForm,
@@ -651,8 +632,27 @@ def get_user_context(request: HttpRequest, add_user_group=True):
     context["user"] = get_user(request)
     context["is_impersonating"] = is_impersonating(request)
     if request.user.is_authenticated and add_user_group:
-        context["user_group"] = get_user_group(request)
+        user_group = get_user_group(request)
+        context["user_group"] = user_group
+        context["theme"] = get_theme(user_group)
     return context
+
+
+def get_theme(user_group: UserGroup):
+    """Returns the theme colors for the given user group, or the default theme"""
+    if user_group and hasattr(user_group, "branding"):
+        return {
+            "primary": user_group.branding.primary,
+            "primary_hover": shade_hex_color(user_group.branding.primary, -0.15),
+            "primary_active": shade_hex_color(user_group.branding.primary, -0.1),
+            "secondary": user_group.branding.secondary,
+        }
+    return {
+        "primary": "#018381",
+        "primary_hover": "#016F6E",
+        "primary_active": "#016967",
+        "secondary": "#044162",
+    }
 
 
 @login_required(login_url="/admin/login/")
@@ -3018,7 +3018,9 @@ def user_detail(request, user_id):
     # if request.headers.get("HX-Request"):
     user = User.objects.get(id=user_id)
     context["user"] = user
-    context["user_group"] = get_user_group(request)
+    user_group = get_user_group(request)
+    context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
     if user.user_group_id:
         context["user_addresses"] = UserAddress.objects.filter(user_id=user.id)[0:3]
         order_groups = OrderGroup.objects.filter(user_id=user.id)
@@ -3369,7 +3371,8 @@ def invoices(request):
             for invoice in invoices:
                 amount_paid = invoice.amount_paid
                 amount_remaining = invoice.amount_remaining
-                if amount_paid == 0 and invoice.status == Invoice.Status.PAID:
+                # Manually setting Stripe invoice to paid does not update the amount_paid, so assume it is paid.
+                if invoice.status == Invoice.Status.PAID:
                     amount_paid = invoice.total
                     amount_remaining = 0
                 context["total_paid"] += amount_paid
@@ -3597,6 +3600,7 @@ def company_detail(request, user_group_id=None):
         user_group = user_group.prefetch_related("users", "user_addresses")
         user_group = user_group.first()
     context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
     context["user"] = user_group.users.filter(type=UserType.ADMIN).first()
     user_group_id = None
     if context["user_group"]:
@@ -3607,7 +3611,57 @@ def company_detail(request, user_group_id=None):
     # Order payment methods by newest first.
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
+    # Fill forms with initial data
+    context["form"] = UserGroupForm(
+        initial={
+            "name": user_group.name,
+            "apollo_id": user_group.apollo_id,
+            "pay_later": user_group.pay_later,
+            "autopay": user_group.autopay,
+            "net_terms": user_group.net_terms,
+            "invoice_frequency": user_group.invoice_frequency,
+            "invoice_day_of_month": user_group.invoice_day_of_month,
+            "invoice_at_project_completion": user_group.invoice_at_project_completion,
+            "share_code": user_group.share_code,
+            "credit_line_limit": user_group.credit_line_limit,
+            "compliance_status": user_group.compliance_status,
+            "tax_exempt_status": user_group.tax_exempt_status,
+        },
+        user=context["user"],
+        auth_user=request.user,
+    )
+    context["branding_formset"] = BrandingFormSet(instance=user_group)
+
+    if context.get("user"):
+        context["types"] = context["user"].get_allowed_user_types()
+
     if request.method == "POST":
+        # Update branding settings.
+        if "branding_form" in request.POST:
+            branding_formset = BrandingFormSet(
+                request.POST, request.FILES, instance=user_group
+            )
+            context["branding_formset"] = branding_formset
+
+            if branding_formset.is_valid():
+                # Check if any changes to form were made
+                if branding_formset.has_changed():
+                    branding_formset.save()
+                    # Update theme to render new branding
+                    context.update(
+                        {
+                            "branding_formset": BrandingFormSet(instance=user_group),
+                            "user_group": user_group,
+                            "theme": get_theme(user_group),
+                        }
+                    )
+                    messages.success(request, "Successfully saved!")
+                else:
+                    messages.info(request, "No changes detected.")
+
+            return render(request, "customer_dashboard/company_detail.html", context)
+
+        # Update UserGroup
         form = UserGroupForm(
             request.POST, request.FILES, user=context["user"], auth_user=request.user
         )
@@ -3723,26 +3777,7 @@ def company_detail(request, user_group_id=None):
             for field in form.errors:
                 form[field].field.widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
-    else:
-        context["form"] = UserGroupForm(
-            initial={
-                "name": user_group.name,
-                "apollo_id": user_group.apollo_id,
-                "pay_later": user_group.pay_later,
-                "autopay": user_group.autopay,
-                "net_terms": user_group.net_terms,
-                "invoice_frequency": user_group.invoice_frequency,
-                "invoice_day_of_month": user_group.invoice_day_of_month,
-                "invoice_at_project_completion": user_group.invoice_at_project_completion,
-                "share_code": user_group.share_code,
-                "credit_line_limit": user_group.credit_line_limit,
-                "compliance_status": user_group.compliance_status,
-                "tax_exempt_status": user_group.tax_exempt_status,
-            },
-            user=context["user"],
-            auth_user=request.user,
-        )
-        context["types"] = context["user"].get_allowed_user_types()
+
     return render(request, "customer_dashboard/company_detail.html", context)
 
 
@@ -3901,7 +3936,9 @@ def new_company(request):
 @catch_errors()
 def company_new_user(request, user_group_id):
     context = get_user_context(request, add_user_group=False)
-    context["user_group"] = UserGroup.objects.get(id=user_group_id)
+    user_group = UserGroup.objects.get(id=user_group_id)
+    context["user_group"] = user_group
+    context["theme"] = get_theme(user_group)
 
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
@@ -3969,3 +4006,46 @@ def company_new_user(request, user_group_id):
         context["types"] = context["user"].get_allowed_user_types()
 
     return render(request, "customer_dashboard/snippets/company_new_user.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def reports(request):
+    from billing.scheduled_jobs.consolidated_account_summary import get_account_summary
+    from billing.scheduled_jobs.consolidated_account_past_due import (
+        get_account_past_due,
+    )
+    from common.utils import customerio
+
+    context = get_user_context(request)
+    if not request.user.is_staff or not context["user_group"]:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    tab = request.GET.get("tab", None)
+    if tab is None:
+        tab = request.POST.get("tab", None)
+    context["tab"] = tab
+    template = "customer_dashboard/snippets/account_summary_report.html"
+    if tab == "past_due":
+        template = "customer_dashboard/snippets/account_past_due_report.html"
+        context["report_results"] = get_account_past_due(context["user_group"])
+    else:
+        context["report_results"] = get_account_summary(context["user_group"])
+    if request.headers.get("HX-Request"):
+        if request.method == "POST":
+            customerid_id = 7
+            if tab == "past_due":
+                customerid_id = 8
+                subject = f"{context['user_group'].name}'s Past Due Notice From Downstream Marketplace"
+            else:
+                subject = f"{context['user_group'].name}'s Account Summary With Downstream Marketplace"
+            customerio.send_email(
+                ["mwickey@trydownstream.com"],
+                context["report_results"],
+                subject,
+                customerid_id,
+            )
+            return HttpResponse("", status=200)
+        else:
+            return render(request, template, context)
+    return render(request, "customer_dashboard/reports.html", context)

@@ -507,9 +507,12 @@ class QuoteUtils:
                 )
                 # Get percentage that one_time total is of total minus fuel fees
                 total_minus_fuel = item["pre_tax_subtotal"] - fuel_fees_subtotal
-                one_time_total_percentage = round(
-                    item["one_time"]["total"] / total_minus_fuel, 6
-                )
+                if total_minus_fuel == 0:
+                    one_time_total_percentage = 0
+                else:
+                    one_time_total_percentage = round(
+                        item["one_time"]["total"] / total_minus_fuel, 6
+                    )
                 item["one_time"]["fuel_fees"] = (
                     fuel_fees_subtotal * one_time_total_percentage
                 )

@@ -63,7 +63,7 @@
             <table>
                 <thead>
                     <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">seller_location_name</th>
+                        <th style="padding-right: 200px;">user_group</th>
                         <th style="padding-right: 100px;">First_Transaction_Date</th>
                         <th style="padding-right: 100px;">Most_Recent_Order_Date</th>
                     </tr>
@@ -72,7 +72,7 @@
                 <tbody>
                     {% for accounts in new_accounts%}
                     <tr>
-                        <td>{{accounts.seller_location_name}}</td>
+                        <td>{{accounts.user_group_name}}</td>
                         <td>{{accounts.order_group_start_date}}</td>
                         <td>{{accounts.order_most_recent_order_date}}</td>
                     </tr>

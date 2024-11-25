@@ -20,7 +20,6 @@ from api.models import (
     Payout,
     SellerInvoicePayableLineItem,
     SellerLocation,
-    UserAddress,
 )
 from api.utils.lob import CheckErrorResponse, Lob
 
@@ -32,7 +31,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class OrderAdmin(admin.ModelAdmin):
     model = Order
     readonly_fields = ("auto_order_type", "customer_price", "seller_price")
-    search_fields = ("id",)
+    search_fields = ("id", "code")
     list_display = (
         "order_group",
         "start_date",

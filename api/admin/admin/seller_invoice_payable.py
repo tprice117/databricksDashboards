@@ -1,5 +1,7 @@
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
+from import_export.admin import ExportActionMixin
+from import_export import resources
 
 from api.admin.filters.seller_invoice_payable.admin_tasks import (
     SellerInvoicePayableAdminTasksFilter,
@@ -11,13 +13,21 @@ from api.models import Product, SellerInvoicePayable
 from common.admin.admin.base_admin import BaseModelAdmin
 
 
+class SellerInvoicePayableResource(resources.ModelResource):
+    class Meta:
+        model = SellerInvoicePayable
+        skip_unchanged = True
+
+
 class SellerLocationFilter(AutocompleteFilter):
     title = "Seller Location"
     field_name = "seller_location"
 
 
 @admin.register(SellerInvoicePayable)
-class SellerInvoicePayableAdmin(BaseModelAdmin):
+class SellerInvoicePayableAdmin(BaseModelAdmin, ExportActionMixin):
+    resource_classes = [SellerInvoicePayableResource]
+
     def get_product_names(self, obj):
         # Use the same query logic
         return ", ".join(

@@ -1,7 +1,8 @@
 
 import logging
 from django.contrib.auth.decorators import login_required
-from django.forms import DateField, FloatField
+from django.forms import FloatField
+from django.db.models import DateField
 from django.shortcuts import render
 from django.db.models import (
     F,
@@ -35,7 +36,7 @@ from api.models.order.order_group import *
 from api.models.order.order_line_item import *
 from api.models.user.user_group import *
 import json
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, TruncDay
 from django.conf import settings
 from django.db.models import DurationField
 
@@ -608,11 +609,16 @@ def user_addresses_dashboard(request):
 
 def time_to_acceptance(request):
     context = {}
+    one_month_ago = timezone.now() - timedelta(days=30)
+
+    
+
     orders_with_time_to_acceptance = Order.objects.filter(
         accepted_on__isnull=False,
         completed_on__isnull=False,
         submitted_on__isnull=False,
-    ).values(
+        end_date__gt=one_month_ago,
+        ).values(
         "id",
         "end_date",
         "accepted_on",
@@ -621,18 +627,110 @@ def time_to_acceptance(request):
         "completed_by",
         "submitted_on",
         "submitted_by",
-    ).annotate(
+        ).annotate(
+        new_end_date=ExpressionWrapper(
+            F('end_date') + timedelta(hours=15),
+            output_field=DateField()
+        ),
         time_to_accepted=ExpressionWrapper(
             F('accepted_on') - F('submitted_on'),
             output_field=DurationField()
-        )
-    ).annotate(
+        ),
+        time_to_completed=ExpressionWrapper(
+            F('completed_on') - F('new_end_date'),
+            output_field=DurationField()
+        ),
+        
+        ).annotate(
         time_to_accepted_hours=ExpressionWrapper(
             Cast(Extract(F('time_to_accepted'), 'epoch'), output_field=FloatField()) / 3600,
             output_field=FloatField()
+        ),
+        time_to_completed_hours=ExpressionWrapper(
+            Cast(Extract(F('time_to_completed'), 'epoch'), output_field=FloatField()) / 3600,
+            output_field=FloatField()
         )
+        )
+
+    # Calculate the average time to accepted in hours
+    avg_time_to_accepted_hours = orders_with_time_to_acceptance.aggregate(
+        avg_time_to_accepted=Avg("time_to_accepted_hours")
+    )["avg_time_to_accepted"] or 0.0
+
+    # Calculate the average time to completed in hours
+    avg_time_to_completed_hours = orders_with_time_to_acceptance.aggregate(
+        avg_time_to_completed=Avg("time_to_completed_hours")
+    )["avg_time_to_completed"] or 0.0
+
+    context["avg_time_to_accepted_hours"] = avg_time_to_accepted_hours
+    context["avg_time_to_completed_hours"] = avg_time_to_completed_hours
+
+    orders_count = orders_with_time_to_acceptance.count()
+
+    # Calculate the count of orders created internally and externally by month for the past year
+    orders_by_day = (
+        Order.objects.filter(
+            end_date__gt=one_month_ago,
+            accepted_on__isnull=False,
+            completed_on__isnull=False,
+            submitted_on__isnull=False,
+        )
+        .annotate(day=TruncDay("end_date"))
+        .values("day")
+        .annotate(
+            internal_count=Count("id", filter=Q(accepted_by__user_group_id="bd49eaab-4b46-46c0-a9bf-bace2896b795")),
+            external_count=Count("id", filter=~Q(accepted_by__user_group_id="bd49eaab-4b46-46c0-a9bf-bace2896b795")),
+        )
+        .order_by("day")
     )
 
+    # Prepare data for chart.js
+    orders_chart_labels = [entry["day"].strftime("%d-%b-%Y") for entry in orders_by_day]  
+    internal_orders_chart_data = [entry["internal_count"] for entry in orders_by_day]
+    external_orders_chart_data = [entry["external_count"] for entry in orders_by_day]
+    # Calculate the average time to accepted for each day
+    avg_time_to_accepted_by_day = (
+        orders_with_time_to_acceptance
+        .values("end_date")
+        .annotate(avg_time_to_accepted=Avg("time_to_accepted_hours"))
+        .order_by("end_date")
+    )
+
+    # Prepare data for chart.js
+    avg_time_to_accepted_chart_data = [
+        entry["avg_time_to_accepted"] for entry in avg_time_to_accepted_by_day
+    ]
+    # Calculate the average time to completed for each day
+    avg_time_to_completed_by_day = (
+        orders_with_time_to_acceptance
+        .values("end_date")
+        .annotate(avg_time_to_completed=Avg("time_to_completed_hours"))
+        .order_by("end_date")
+    )
+
+    # Prepare data for chart.js
+    avg_time_to_completed_chart_data = [
+        entry["avg_time_to_completed"] for entry in avg_time_to_completed_by_day
+    ]
+
+    # Calculate the count of completed_by_ids by day for the past month
+    completed_by_count_by_day = (
+        orders_with_time_to_acceptance
+        .values("end_date")
+        .annotate(count=Count("completed_by"))
+        .order_by("end_date")
+    )
+
+    # Prepare data for chart.js
+    completed_by_chart_labels = [
+        entry["end_date"].strftime("%d-%b-%Y") for entry in completed_by_count_by_day
+    ]
+    completed_by_chart_data = [entry["count"] for entry in completed_by_count_by_day]
+
+    context["completed_by_chart_labels"] = json.dumps(completed_by_chart_labels)
+    context["completed_by_chart_data"] = json.dumps(completed_by_chart_data)
+
+    ##TABLE DEFINTIONS##
     # Fetch user details for accepted_by, submitted_by, and completed_by
     user_ids = set(
         order['accepted_by'] for order in orders_with_time_to_acceptance
@@ -651,8 +749,15 @@ def time_to_acceptance(request):
         order['submitted_by_username'] = user_dict.get(order['submitted_by'], 'Unknown')
         order['completed_by_username'] = user_dict.get(order['completed_by'], 'Unknown')
 
-    orders_count = orders_with_time_to_acceptance.count()
-    context["orders_count"] = orders_count
 
+
+    #hashmap data
+    context["avg_time_to_completed_chart_data"] = json.dumps(avg_time_to_completed_chart_data)
+    context["avg_time_to_accepted_chart_data"] = json.dumps(avg_time_to_accepted_chart_data)
+    context["orders_chart_labels"] = json.dumps(orders_chart_labels)
+    context["internal_orders_chart_data"] = json.dumps(internal_orders_chart_data)
+    context["external_orders_chart_data"] = json.dumps(external_orders_chart_data)
+    context["orders_count"] = orders_count
     context["orders"] = list(orders_with_time_to_acceptance)
+
     return render(request, "dashboards/time_to_acceptance.html", context)

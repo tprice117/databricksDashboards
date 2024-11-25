@@ -136,8 +136,8 @@ def user_sales_product_mix(request, user_id):
     # Group orders by product name.
     product_sales = (
         orders_for_user.values(
-            main_product_name=F(
-                "order_group__seller_product_seller_location__seller_product__product__main_product__name"
+            main_product_category=F(
+                "order_group__seller_product_seller_location__seller_product__product__main_product__main_product_category__name"
             )
         )
         .annotate(order_count=Count("id"))
@@ -145,7 +145,7 @@ def user_sales_product_mix(request, user_id):
     )
 
     # Prepare data for the pie chart.
-    product_names = [product["main_product_name"] for product in product_sales]
+    product_names = [product["main_product_category"] for product in product_sales]
     order_counts = [product["order_count"] for product in product_sales]
 
     # Include Chart.js script and data in the context.
@@ -183,8 +183,8 @@ def user_sales_top_accounts(request, user_id):
     # Group orders by seller location name.
     top_accounts = (
         orders_for_user.values(
-            seller_location_name=F(
-                "order_group__seller_product_seller_location__seller_location__name"
+            user_group_name=F(
+                "order_group__user_address__user_group__name"
             )
         )
         .annotate(order_count=Count("id"))
@@ -211,8 +211,8 @@ def user_sales_new_accounts(request, user_id):
             order_group__start_date__gte=first_of_month - timezone.timedelta(days=30)
         )
         .values(
-            seller_location_name=F(
-                "order_group__seller_product_seller_location__seller_location__name"
+            user_group_name=F(
+                "order_group__user_address__user_group__name"
             ),
             order_group_start_date=F("order_group__start_date"),
             order_most_recent_order_date=F("end_date"),
