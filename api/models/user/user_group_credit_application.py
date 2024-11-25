@@ -12,10 +12,6 @@ from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from common.models.choices.approval_status import ApprovalStatus
 import requests
-import json
-from decimal import Decimal
-import uuid
-
 
 
 @track_data("status")
@@ -51,16 +47,40 @@ class UserGroupCreditApplication(BaseModel):
     accepts_credit_authorization = models.BooleanField(default=True)
     credit_report = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
-##TRIGGER CUSTOMERIO EMAILS
-def trigger_customerio_email(transactional_message_id, user_group_name, user_first_name=None, user_id=None, user_email=None, to_user_email=None, user_group_credit_line_limit=None, user_group_invoice_frequency=None, user_group_net_terms=None, 
-                             legal_industry=None, legal_address=None, created_by_user=None, created_by_email=None, legal_ein=None, legal_dba=None, legal_structure=None):
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def clean(self):
+        self.clean_fields()
+
+
+# TRIGGER CUSTOMERIO EMAILS
+def trigger_customerio_email(
+    transactional_message_id,
+    user_group_name,
+    user_first_name=None,
+    user_id=None,
+    user_email=None,
+    to_user_email=None,
+    user_group_credit_line_limit=None,
+    user_group_invoice_frequency=None,
+    user_group_net_terms=None,
+    legal_industry=None,
+    legal_address=None,
+    created_by_user=None,
+    created_by_email=None,
+    legal_ein=None,
+    legal_dba=None,
+    legal_structure=None,
+):
     url = "https://api.customer.io/v1/send/email"
     headers = {
-                "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
-                "Content-Type": "application/json",
-            }
+        "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
+        "Content-Type": "application/json",
+    }
     data = {
-        "transactional_message_id": transactional_message_id,  
+        "transactional_message_id": transactional_message_id,
         "message_data": {
             "user_group_name": user_group_name,
             "user_first_name": user_first_name,
@@ -73,33 +93,21 @@ def trigger_customerio_email(transactional_message_id, user_group_name, user_fir
             "user_email": created_by_email,
             "legal_ein": legal_ein,
             "legal_dba": legal_dba,
-            "legal_structure" : legal_structure
+            "legal_structure": legal_structure,
         },
-     
-
         "identifiers": {
-            "id": str(created_by_user),  
+            "id": str(created_by_user),
         },
-        "to": to_user_email
+        "to": to_user_email,
     }
-    
-    #json_data = json.dumps(data, cls=DecimalEncoder)
+
+    # json_data = json.dumps(data, cls=DecimalEncoder)
     response = requests.post(url, json=data, headers=headers)
-    
+
     if response.status_code == 200:
-       print("Email sent successfully.")
+        print("Email sent successfully.")
     else:
         print(f"Failed to send email: {response.status_code} - {response.text}")
-
-
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
-    def clean(self):
-        self.clean_fields()
-
         # Check if there is an existing pending application for this user group.
         # If there is, raise a validation error to prevent multiple pending
         # applications.
@@ -112,38 +120,39 @@ def trigger_customerio_email(transactional_message_id, user_group_name, user_fir
                     "A pending credit application already exists for this user group."
                 )
         return self
-    
-   
+
+
 # Signal to handle post_save event for new instances with PENDING status
 @receiver(post_save, sender=UserGroupCreditApplication)
 def user_group_credit_application_post_save(
-    sender, 
-    instance: UserGroupCreditApplication, 
-    created, 
-    **kwargs
-    ):
-    
+    sender, instance: UserGroupCreditApplication, created, **kwargs
+):
     # Check if the instance is newly created and the status is PENDING
     if created and instance.status == ApprovalStatus.PENDING:
         # Retrieve the user group name
-        user_group_name = instance.user_group.name    
-        created_by_user = User.id #user.objects.get(id=instance.created_by_id)
+        user_group_name = instance.user_group.name
+        created_by_user = User.id  # user.objects.get(id=instance.created_by_id)
         created_by_user = User.objects.get(id=instance.created_by_id)
         created_by_email = created_by_user.email
-  
-         # Ensure the UserGroup model has a legal attribute
-        if hasattr(instance.user_group, 'legal'):
+
+        # Ensure the UserGroup model has a legal attribute
+        if hasattr(instance.user_group, "legal"):
             legal_industry = instance.user_group.legal.industry or "N/A"
-            legal_address = f"{instance.user_group.legal.street}, {instance.user_group.legal.city}, {instance.user_group.legal.state} {instance.user_group.legal.postal_code}" or "N/A"
+            legal_address = (
+                f"{instance.user_group.legal.street}, {instance.user_group.legal.city}, {instance.user_group.legal.state} {instance.user_group.legal.postal_code}"
+                or "N/A"
+            )
             legal_ein = instance.user_group.legal.tax_id or "N/A"
             legal_dba = instance.user_group.legal.doing_business_as or "N/A"
             legal_structure = instance.user_group.legal.structure or "N/A"
-        else: 
-            legal_industry = legal_address = legal_ein = legal_dba = legal_structure = None
+        else:
+            legal_industry = legal_address = legal_ein = legal_dba = legal_structure = (
+                None
+            )
 
-          # Trigger the Customer.io email for internal notification
+        # Trigger the Customer.io email for internal notification
         trigger_customerio_email(
-            transactional_message_id="14", 
+            transactional_message_id="14",
             user_group_name=user_group_name,
             legal_industry=legal_industry,
             legal_address=legal_address,
@@ -151,45 +160,45 @@ def user_group_credit_application_post_save(
             legal_dba=legal_dba,
             legal_structure=legal_structure,
             user_email=created_by_email,
-            to_user_email="ar@downstreamsprints.atlassian.net"
-            )
-        
+            to_user_email="ar@downstreamsprints.atlassian.net",
+        )
+
         # Create a list of dictionaries for users
         user_dicts = [
             {
-                'user_group_name': user_group_name,
-                'user_first_name': user.first_name,
-                'user_id': user.id,
-                'to_user_email': user.email
+                "user_group_name": user_group_name,
+                "user_first_name": user.first_name,
+                "user_id": user.id,
+                "to_user_email": user.email,
             }
             for user in instance.user_group.users.all()
         ]
 
         # Add the billing email to the list
-        user_dicts.append({
-            'user_group_name': user_group_name,
-            'user_first_name': user_group_name,  # Assuming no first name for billing email
-            'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
-            'to_user_email': instance.user_group.billing.email
-        })
-
+        user_dicts.append(
+            {
+                "user_group_name": user_group_name,
+                "user_first_name": user_group_name,  # Assuming no first name for billing email
+                "user_id": instance.user_group.billing.id,  # Assuming no user ID for billing email
+                "to_user_email": instance.user_group.billing.email,
+            }
+        )
 
         # Loop through each dictionary in the list
         for user_dict in user_dicts:
-            user_group_name = user_dict['user_group_name']
-            user_first_name = user_dict['user_first_name']
-            user_id = user_dict['user_id']
-            to_user_email = user_dict['to_user_email']
+            user_group_name = user_dict["user_group_name"]
+            user_first_name = user_dict["user_first_name"]
+            user_id = user_dict["user_id"]
+            to_user_email = user_dict["to_user_email"]
 
             # Trigger the Customer.io email for each user and the billing email
             trigger_customerio_email(
-                transactional_message_id="9", 
+                transactional_message_id="9",
                 user_group_name=user_group_name,
                 user_first_name=user_first_name,
                 user_id=user_id,
-                to_user_email=to_user_email
+                to_user_email=to_user_email,
             )
-
 
 
 @receiver(pre_save, sender=UserGroupCreditApplication)
@@ -216,51 +225,52 @@ def user_group_credit_application_pre_save(
             if instance.status == ApprovalStatus.APPROVED:
                 instance.user_group.credit_line_limit = instance.requested_credit_limit
                 instance.user_group.save()
-                ##INSERT APPROVAL CREDIT EMAIL HERE 
-                user_group_name = instance.user_group.name,
-                user_group_credit_line_limit = str(instance.user_group.credit_line_limit), 
-                user_group_invoice_frequency=instance.user_group.invoice_frequency, 
-                user_group_net_terms=instance.user_group.net_terms,
+                # INSERT APPROVAL CREDIT EMAIL HERE
+                user_group_name = (instance.user_group.name,)
+                user_group_credit_line_limit = (
+                    str(instance.user_group.credit_line_limit),
+                )
+                user_group_invoice_frequency = (instance.user_group.invoice_frequency,)
+                user_group_net_terms = instance.user_group.net_terms
                 user_dicts = [
                     {
-                        'user_group_name': user_group_name,
-                        'user_first_name': user.first_name,
-                        'user_id': user.id,
-                        'to_user_email': user.email
+                        "user_group_name": user_group_name,
+                        "user_first_name": user.first_name,
+                        "user_id": user.id,
+                        "to_user_email": user.email,
                     }
                     for user in instance.user_group.users.all()
                 ]
 
                 # Add the billing email to the list
-                user_dicts.append({
-                    'user_group_name': user_group_name,
-                    'user_first_name': user_group_name,  # Assuming no first name for billing email
-                    'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
-                    'to_user_email': instance.user_group.billing.email
-                })
+                user_dicts.append(
+                    {
+                        "user_group_name": user_group_name,
+                        "user_first_name": user_group_name,  # Assuming no first name for billing email
+                        "user_id": instance.user_group.billing.id,  # Assuming no user ID for billing email
+                        "to_user_email": instance.user_group.billing.email,
+                    }
+                )
 
                 # Loop through each dictionary in the list
                 for user_dict in user_dicts:
-                    user_group_name = user_dict['user_group_name']
-                    user_first_name = user_dict['user_first_name']
-                    user_id = user_dict['user_id']
-                    to_user_email = user_dict['to_user_email']
-                
+                    user_group_name = user_dict["user_group_name"]
+                    user_first_name = user_dict["user_first_name"]
+                    user_id = user_dict["user_id"]
+                    to_user_email = user_dict["to_user_email"]
 
                     # Trigger the Customer.io email for each user
                     trigger_customerio_email(
-                        transactional_message_id="10", 
+                        transactional_message_id="10",
                         user_group_name=user_group_name,
                         user_group_credit_line_limit=user_group_credit_line_limit,
                         user_group_invoice_frequency=user_group_invoice_frequency,
                         user_group_net_terms=user_group_net_terms,
                         user_first_name=user_first_name,
                         user_id=user_id,
-                        to_user_email=to_user_email
-                        
+                        to_user_email=to_user_email,
                     )
-                
-                
+
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
                     order_group__user_address__user_group=instance.user_group,
@@ -278,40 +288,42 @@ def user_group_credit_application_pre_save(
                     instance.user_group.credit_line_limit = 0
                     instance.user_group.save()
                     # INSERT CREDIT DECLINED EMAIL HERE
-                    user_group_name = instance.user_group.name,
+                    user_group_name = (instance.user_group.name,)
                     user_dicts = [
-                    {
-                        'user_group_name': user_group_name,
-                        'user_first_name': user.first_name,
-                        'user_id': user.id,
-                        'to_user_email': user.email
-                    }
-                    for user in instance.user_group.users.all()
-                ]
+                        {
+                            "user_group_name": user_group_name,
+                            "user_first_name": user.first_name,
+                            "user_id": user.id,
+                            "to_user_email": user.email,
+                        }
+                        for user in instance.user_group.users.all()
+                    ]
 
                 # Add the billing email to the list
-                user_dicts.append({
-                    'user_group_name': user_group_name,
-                    'user_first_name': user_group_name,  # Assuming no first name for billing email
-                    'user_id': instance.user_group.billing.id,  # Assuming no user ID for billing email
-                    'to_user_email': instance.user_group.billing.email
-                })
+                user_dicts.append(
+                    {
+                        "user_group_name": user_group_name,
+                        "user_first_name": user_group_name,  # Assuming no first name for billing email
+                        "user_id": instance.user_group.billing.id,  # Assuming no user ID for billing email
+                        "to_user_email": instance.user_group.billing.email,
+                    }
+                )
 
                 # Loop through each dictionary in the list
                 for user_dict in user_dicts:
-                    user_group_name = user_dict['user_group_name']
-                    user_first_name = user_dict['user_first_name']
-                    user_id = user_dict['user_id']
-                    to_user_email = user_dict['to_user_email']
+                    user_group_name = user_dict["user_group_name"]
+                    user_first_name = user_dict["user_first_name"]
+                    user_id = user_dict["user_id"]
+                    to_user_email = user_dict["to_user_email"]
 
-                        # Trigger the Customer.io email for each user
+                    # Trigger the Customer.io email for each user
                     trigger_customerio_email(
-                        transactional_message_id="11", 
+                        transactional_message_id="11",
                         user_group_name=user_group_name,
                         user_first_name=user_first_name,
                         user_id=user_id,
-                        to_user_email=to_user_email
-                ) 
+                        to_user_email=to_user_email,
+                    )
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
                     order_group__user_address__user_group=instance.user_group,
@@ -319,6 +331,3 @@ def user_group_credit_application_pre_save(
                 )
                 for order in orders:
                     order.update_status_on_credit_application_declined()
-
-#print()
-#to_emails = ",".join(email_lst)
