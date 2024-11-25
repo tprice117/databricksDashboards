@@ -76,7 +76,7 @@
     </div>
 </div>
 
-{% if total_open %}
+{% if total_open is not None %}
     <span id="open-count-badge" hx-swap-oob="true">${{ total_open|stringformat:'.2f'|intcomma }}</span>
     <span id="past-due-count-badge" hx-swap-oob="true">${{ past_due|stringformat:'.2f'|intcomma }}</span>
     <span id="paid-count-badge" hx-swap-oob="true">${{ total_paid|stringformat:'.2f'|intcomma }}</span>

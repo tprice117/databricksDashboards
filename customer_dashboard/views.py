@@ -3362,7 +3362,12 @@ def invoices(request):
                     & Q(amount_remaining__gt=0)
                 )
             else:
-                invoices = invoices.filter(status=tab)
+                if tab == "paid":
+                    invoices = invoices.filter(
+                        Q(status=Invoice.Status.PAID) | Q(status=Invoice.Status.VOID)
+                    )
+                else:
+                    invoices = invoices.filter(status=tab)
         else:
             # Get all invoices. Calculate the total paid, past due, and total open invoices.
             context["total_paid"] = 0
@@ -3372,7 +3377,10 @@ def invoices(request):
                 amount_paid = invoice.amount_paid
                 amount_remaining = invoice.amount_remaining
                 # Manually setting Stripe invoice to paid does not update the amount_paid, so assume it is paid.
-                if invoice.status == Invoice.Status.PAID:
+                if (
+                    invoice.status == Invoice.Status.PAID
+                    or invoice.status == Invoice.Status.VOID
+                ):
                     amount_paid = invoice.total
                     amount_remaining = 0
                 context["total_paid"] += amount_paid
