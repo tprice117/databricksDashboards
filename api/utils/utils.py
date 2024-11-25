@@ -1,13 +1,10 @@
-from uuid import uuid4
 from django.conf import settings
-import requests
 import api.models
 import math
 from cryptography.fernet import Fernet
 import base64
 import hashlib
-import json
-from decimal import Decimal
+
 
 def get_fernet():
     # Create a key from the SECRET_KEY
@@ -128,4 +125,3 @@ def get_price_for_seller(
             },
         ],
     }
-
