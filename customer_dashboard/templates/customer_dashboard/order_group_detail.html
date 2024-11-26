@@ -244,6 +244,8 @@
                                             <td>{{ order.order_type }}</td>
                                             <td>{{ order.status }}</td>
                                             <td>
+                                                <!-- Show buttons as disabled after 10 minutes -->
+                                                {% if not order.time_since_review or order.time_since_review.total_seconds < 600 %}
                                                 <form method="post" hx-post="{% url 'customer_order_review_swap'%}" hx-target="#rating-{{forloop.counter}}">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="order_id" value="{{ order.id }}">
@@ -268,6 +270,26 @@
                                                         {% endif %}
                                                     </div>
                                                 </form>
+                                                {% else %}
+                                                    {% if order.review.rating == 1 %}
+                                                        <button class="btn btn-success disabled" type="submit" name="rating" value="1">
+                                                            <i class="fas fa-thumbs-up fa-sm text-white"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-light disabled" type="submit" name="rating" value="1">
+                                                            <i class="fas fa-thumbs-up fa-sm"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        {% if order.review.rating == 0 %}
+                                                        <button class="btn btn-danger disabled" type="submit" name="rating" value="0">
+                                                            <i class="fas fa-thumbs-down fa-sm text-white"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-light disabled" type="submit" name="rating" value="0">
+                                                            <i class="fas fa-thumbs-down fa-sm"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 <a class="btn btn-light" role="button" href="{% url 'customer_order_detail' order_id=order.id %}"><i class="far fa-eye"></i></a>
