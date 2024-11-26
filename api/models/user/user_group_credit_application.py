@@ -135,7 +135,7 @@ def user_group_credit_application_post_save(
                 send_to.append(
                     (instance.user_group.billing.email, instance.created_by.first_name)
                 )
-                if instance.created_by.email not in send_to:
+                if instance.created_by.email != instance.user_group.billing.email:
                     send_to.append(
                         (instance.created_by.email, instance.created_by.first_name)
                     )
@@ -208,7 +208,10 @@ def user_group_credit_application_pre_save(
                                 instance.created_by.first_name,
                             )
                         )
-                        if instance.created_by.email not in send_to:
+                        if (
+                            instance.created_by.email
+                            != instance.user_group.billing.email
+                        ):
                             send_to.append(
                                 (
                                     instance.created_by.email,
@@ -268,7 +271,10 @@ def user_group_credit_application_pre_save(
                                 instance.created_by.first_name,
                             )
                         )
-                        if instance.created_by.email not in send_to:
+                        if (
+                            instance.created_by.email
+                            != instance.user_group.billing.email
+                        ):
                             send_to.append(
                                 (
                                     instance.created_by.email,
