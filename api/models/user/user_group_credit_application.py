@@ -11,7 +11,6 @@ from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from common.models.choices.approval_status import ApprovalStatus
 from common.utils import customerio
-import requests
 import logging
 
 logger = logging.getLogger(__name__)
@@ -71,59 +70,6 @@ class UserGroupCreditApplication(BaseModel):
         return self
 
 
-# TRIGGER CUSTOMERIO EMAILS
-def trigger_customerio_email(
-    transactional_message_id,
-    user_group_name,
-    user_first_name=None,
-    to_user_email=None,
-    user_group_credit_line_limit=None,
-    user_group_invoice_frequency=None,
-    user_group_net_terms=None,
-    legal_industry=None,
-    legal_address=None,
-    created_by_user=None,
-    created_by_email=None,
-    legal_ein=None,
-    legal_dba=None,
-    legal_structure=None,
-):
-    url = "https://api.customer.io/v1/send/email"
-    headers = {
-        "Authorization": f"Bearer {settings.CUSTOMER_IO_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    data = {
-        "transactional_message_id": transactional_message_id,
-        "message_data": {
-            "user_group_name": user_group_name,
-            "user_first_name": user_first_name,
-            "user_group_credit_line_limit": user_group_credit_line_limit,
-            "user_group_invoice_frequency": user_group_invoice_frequency,
-            "user_group_net_terms": user_group_net_terms,
-            "legal_industry": legal_industry,
-            "legal_address": legal_address,
-            "created_by_user": created_by_user,
-            "user_email": created_by_email,
-            "legal_ein": legal_ein,
-            "legal_dba": legal_dba,
-            "legal_structure": legal_structure,
-        },
-        "identifiers": {
-            "id": str(created_by_user),
-        },
-        "to": to_user_email,
-    }
-
-    # json_data = json.dumps(data, cls=DecimalEncoder)
-    response = requests.post(url, json=data, headers=headers)
-
-    if response.status_code == 200:
-        print("Email sent successfully.")
-    else:
-        print(f"Failed to send email: {response.status_code} - {response.text}")
-
-
 # Signal to handle post_save event for new instances with PENDING status
 @receiver(post_save, sender=UserGroupCreditApplication)
 def user_group_credit_application_post_save(
@@ -172,7 +118,9 @@ def user_group_credit_application_post_save(
                 "ar@downstreamsprints.atlassian.net",
                 "billing@trydownstream",
             ]
-            customerio.send_email(send_to_admins, message_data, subject, 14)
+            # Send email to internal team. Only on our PROD environment.
+            if settings.ENVIRONMENT == "TEST":
+                customerio.send_email(send_to_admins, message_data, subject, 14)
 
             message_data2 = {
                 "user_group_name": instance.user_group.name,
@@ -184,18 +132,28 @@ def user_group_credit_application_post_save(
                 hasattr(instance.user_group, "billing")
                 and instance.user_group.billing.email
             ):
-                send_to.append(instance.user_group.billing.email)
-                send_to.append(instance.created_by.email)
+                send_to.append(
+                    (instance.user_group.billing.email, instance.created_by.first_name)
+                )
+                if instance.created_by.email not in send_to:
+                    send_to.append(
+                        (instance.created_by.email, instance.created_by.first_name)
+                    )
             else:
                 # If the UserGroup does not have a billing email, send to all users in the UserGroup.
-                send_to = [user.email for user in instance.user_group.users.all()]
+                send_to = [
+                    (user.email, user.first_name)
+                    for user in instance.user_group.users.all()
+                ]
 
             # Trigger the Customer.io email for each user and the billing email
             subject = f"We have received {message_data2['user_group_name']}'s credit application for Downstream Marketplace!"
-            customerio.send_email(send_to, message_data2, subject, 9)
+            for user_email, user_first_name in send_to:
+                message_data2["user_first_name"] = user_first_name
+                customerio.send_email([user_email], message_data2, subject, 9)
     except Exception as e:
         logger.error(
-            f"user_group_credit_application_post_save: Failed to send email: {e}"
+            f"user_group_credit_application_post_save: Failed to send email: [{instance.id}]-[{e}]"
         )
 
 
@@ -223,50 +181,6 @@ def user_group_credit_application_pre_save(
             if instance.status == ApprovalStatus.APPROVED:
                 instance.user_group.credit_line_limit = instance.requested_credit_limit
                 instance.user_group.save()
-                # INSERT APPROVAL CREDIT EMAIL HERE
-                user_group_name = instance.user_group.name
-                user_group_credit_line_limit = (
-                    str(instance.user_group.credit_line_limit),
-                )
-                user_group_invoice_frequency = (instance.user_group.invoice_frequency,)
-                user_group_net_terms = instance.user_group.net_terms
-                user_dicts = [
-                    {
-                        "user_group_name": user_group_name,
-                        "user_first_name": user.first_name,
-                        "user_id": user.id,
-                        "to_user_email": user.email,
-                    }
-                    for user in instance.user_group.users.all()
-                ]
-
-                # Add the billing email to the list
-                user_dicts.append(
-                    {
-                        "user_group_name": user_group_name,
-                        "user_first_name": user_group_name,  # Assuming no first name for billing email
-                        "user_id": instance.user_group.billing.id,  # Assuming no user ID for billing email
-                        "to_user_email": instance.user_group.billing.email,
-                    }
-                )
-
-                # Loop through each dictionary in the list
-                for user_dict in user_dicts:
-                    user_group_name = user_dict["user_group_name"]
-                    user_first_name = user_dict["user_first_name"]
-                    to_user_email = user_dict["to_user_email"]
-
-                    # Trigger the Customer.io email for each user
-                    trigger_customerio_email(
-                        transactional_message_id="10",
-                        user_group_name=user_group_name,
-                        user_group_credit_line_limit=user_group_credit_line_limit,
-                        user_group_invoice_frequency=user_group_invoice_frequency,
-                        user_group_net_terms=user_group_net_terms,
-                        user_first_name=user_first_name,
-                        to_user_email=to_user_email,
-                    )
-
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
                     order_group__user_address__user_group=instance.user_group,
@@ -274,6 +188,51 @@ def user_group_credit_application_pre_save(
                 )
                 for order in orders:
                     order.update_status_on_credit_application_approved()
+
+                # SEND APPROVAL CREDIT EMAIL
+                try:
+                    message_data = {
+                        "user_group_name": instance.user_group.name,
+                        "user_group_credit_line_limit": instance.user_group.credit_line_limit,
+                        "user_group_invoice_frequency": instance.user_group.invoice_frequency,
+                        "user_group_net_terms": instance.user_group.net_terms,
+                    }
+                    send_to = []
+                    if (
+                        hasattr(instance.user_group, "billing")
+                        and instance.user_group.billing.email
+                    ):
+                        send_to.append(
+                            (
+                                instance.user_group.billing.email,
+                                instance.created_by.first_name,
+                            )
+                        )
+                        if instance.created_by.email not in send_to:
+                            send_to.append(
+                                (
+                                    instance.created_by.email,
+                                    instance.created_by.first_name,
+                                )
+                            )
+                    else:
+                        # If the UserGroup does not have a billing email, send to all users in the UserGroup.
+                        send_to = [
+                            (user.email, user.first_name)
+                            for user in instance.user_group.users.all()
+                        ]
+
+                    # Trigger the Customer.io email
+                    subject = f"🎉🎉🎉 {message_data['user_group_name']} has been approved for credit with Downstream Marketplace!"
+                    for user_email, user_first_name in send_to:
+                        message_data["user_first_name"] = user_first_name
+                        customerio.send_email([user_email], message_data, subject, 10)
+
+                except Exception as e:
+                    logger.error(
+                        f"user_group_credit_application_pre_save: Failed to send email: [{instance.id}]-[{e}]"
+                    )
+
             if instance.status == ApprovalStatus.DECLINED:
                 # Only update UserGoup credit limit if there are no previously approved credit applications.
                 credit_application = instance.user_group.credit_applications.filter(
@@ -283,41 +242,7 @@ def user_group_credit_application_pre_save(
                     # If the application is declined, set the credit limit to 0.
                     instance.user_group.credit_line_limit = 0
                     instance.user_group.save()
-                    # INSERT CREDIT DECLINED EMAIL HERE
-                    user_group_name = (instance.user_group.name,)
-                    user_dicts = [
-                        {
-                            "user_group_name": user_group_name,
-                            "user_first_name": user.first_name,
-                            "user_id": user.id,
-                            "to_user_email": user.email,
-                        }
-                        for user in instance.user_group.users.all()
-                    ]
 
-                # Add the billing email to the list
-                user_dicts.append(
-                    {
-                        "user_group_name": user_group_name,
-                        "user_first_name": user_group_name,  # Assuming no first name for billing email
-                        "user_id": instance.user_group.billing.id,  # Assuming no user ID for billing email
-                        "to_user_email": instance.user_group.billing.email,
-                    }
-                )
-
-                # Loop through each dictionary in the list
-                for user_dict in user_dicts:
-                    user_group_name = user_dict["user_group_name"]
-                    user_first_name = user_dict["user_first_name"]
-                    to_user_email = user_dict["to_user_email"]
-
-                    # Trigger the Customer.io email for each user
-                    trigger_customerio_email(
-                        transactional_message_id="11",
-                        user_group_name=user_group_name,
-                        user_first_name=user_first_name,
-                        to_user_email=to_user_email,
-                    )
                 # Get any orders with CREDIT_APPLICATION_APPROVAL_PENDING status and update to next status.
                 orders = Order.objects.filter(
                     order_group__user_address__user_group=instance.user_group,
@@ -325,3 +250,45 @@ def user_group_credit_application_pre_save(
                 )
                 for order in orders:
                     order.update_status_on_credit_application_declined()
+
+                # SEMD CREDIT DECLINED EMAIL
+                try:
+                    message_data = {
+                        "user_group_name": instance.user_group.name,
+                        "user_group_credit_line_limit": instance.user_group.credit_line_limit,
+                    }
+                    send_to = []
+                    if (
+                        hasattr(instance.user_group, "billing")
+                        and instance.user_group.billing.email
+                    ):
+                        send_to.append(
+                            (
+                                instance.user_group.billing.email,
+                                instance.created_by.first_name,
+                            )
+                        )
+                        if instance.created_by.email not in send_to:
+                            send_to.append(
+                                (
+                                    instance.created_by.email,
+                                    instance.created_by.first_name,
+                                )
+                            )
+                    else:
+                        # If the UserGroup does not have a billing email, send to all users in the UserGroup.
+                        send_to = [
+                            (user.email, user.first_name)
+                            for user in instance.user_group.users.all()
+                        ]
+
+                    # Trigger the Customer.io email
+                    subject = f"{message_data['user_group_name']}'s credit application decision for Downstream Marketplace"
+                    for user_email, user_first_name in send_to:
+                        message_data["user_first_name"] = user_first_name
+                        customerio.send_email([user_email], message_data, subject, 11)
+
+                except Exception as e:
+                    logger.error(
+                        f"user_group_credit_application_pre_save: Failed to send email: [{instance.id}]-[{e}]"
+                    )
