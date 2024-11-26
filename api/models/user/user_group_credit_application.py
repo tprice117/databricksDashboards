@@ -194,8 +194,8 @@ def user_group_credit_application_pre_save(
                     message_data = {
                         "user_group_name": instance.user_group.name,
                         "user_group_credit_line_limit": instance.user_group.credit_line_limit,
-                        "user_group_invoice_frequency": instance.user_group.invoice_frequency,
-                        "user_group_net_terms": instance.user_group.net_terms,
+                        "user_group_invoice_frequency": instance.user_group.get_invoice_frequency_display(),
+                        "user_group_net_terms": instance.user_group.get_net_terms_display(),
                     }
                     send_to = []
                     if (
