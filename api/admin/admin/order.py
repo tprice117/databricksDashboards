@@ -11,6 +11,7 @@ from api.admin.filters.order.admin_tasks import OrderAdminTasksFilter
 from api.admin.inlines import (
     OrderDisposalTicketInline,
     OrderLineItemInline,
+    OrderReviewInline,
     PayoutInline,
     SellerInvoicePayableLineItemInline,
 )
@@ -58,6 +59,7 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderLineItemInline,
         OrderDisposalTicketInline,
+        OrderReviewInline,
         PayoutInline,
         SellerInvoicePayableLineItemInline,
     ]

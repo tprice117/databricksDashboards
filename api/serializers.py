@@ -68,7 +68,6 @@ from .models import (
     UserGroupBilling,
     UserGroupCreditApplication,
     UserGroupLegal,
-    UserSellerReview,
     UserUserAddress,
     WasteType,
 )
@@ -371,28 +370,6 @@ class UserUserAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserUserAddress
         fields = "__all__"
-
-
-class UserSellerReviewSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    user = UserSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source="user", write_only=True
-    )
-    seller = SellerSerializer(read_only=True)
-    seller_id = serializers.PrimaryKeyRelatedField(
-        queryset=Seller.objects.all(), source="seller", write_only=True
-    )
-
-    class Meta:
-        model = UserSellerReview
-        fields = "__all__"
-
-
-class UserSellerReviewAggregateSerializer(serializers.Serializer):
-    seller_name = serializers.CharField()
-    rating_avg = serializers.FloatField()
-    review_count = serializers.IntegerField()
 
 
 class AddOnChoiceSerializer(serializers.ModelSerializer):
