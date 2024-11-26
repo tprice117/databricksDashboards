@@ -52,6 +52,11 @@ class UserForm(forms.Form):
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    apollo_id = forms.CharField(
+        max_length=128,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=True,
+    )
     phone = forms.CharField(
         max_length=40,
         widget=forms.TextInput(attrs={"class": "form-control"}),
@@ -249,11 +254,6 @@ class UserGroupForm(forms.Form):
     name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
-    apollo_id = forms.CharField(
-        max_length=128,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=True,
     )
 
     def __init__(self, *args, **kwargs):

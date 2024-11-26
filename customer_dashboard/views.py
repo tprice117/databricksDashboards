@@ -3110,6 +3110,7 @@ def user_detail(request, user_id):
                 "photo": user.photo,
                 "email": user.email,
                 "type": user.type,
+                "apollo_id": user.apollo_id,
             }
         )
         context["form"] = form
@@ -3848,7 +3849,7 @@ def new_company(request):
                 # Create New UserGroup
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
-                    apollo_id=form.cleaned_data.get("apollo_id"),
+                    # apollo_id=form.cleaned_data.get("apollo_id"),
                 )
                 if context["user_form"].is_valid():
                     # Create New User
@@ -3879,6 +3880,9 @@ def new_company(request):
                             ),
                             email=email,
                             type=context["user_form"].cleaned_data.get("type"),
+                            apollo_id=context["user_form"].cleaned_data.get(
+                                "apollo_id"
+                            ),
                             user_group=user_group,
                         )
                         user.save()
