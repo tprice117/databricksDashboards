@@ -6,11 +6,11 @@ from django.conf import settings
 
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
-from api.models.user.user import User
 from api.models.order.order import Order
 from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from common.models.choices.approval_status import ApprovalStatus
+from common.utils import customerio
 import requests
 import logging
 
@@ -133,39 +133,51 @@ def user_group_credit_application_post_save(
         # Check if the instance is newly created and the status is PENDING
         if created and instance.status == ApprovalStatus.PENDING:
             # Retrieve the user group name
-            user_group_name = instance.user_group.name
+            message_data = {
+                "user_group_name": instance.user_group.name,
+                "requested_credit_limit": instance.requested_credit_limit,
+                "estimated_monthly_revenue": instance.estimated_monthly_revenue,
+                "estimated_monthly_spend": instance.estimated_monthly_spend,
+                "legal_industry": None,
+                "legal_address": None,
+                "legal_ein": None,
+                "legal_dba": None,
+                "legal_structure": None,
+            }
             if instance.created_by:
-                created_by_email = instance.created_by.email
+                message_data["user_email"] = instance.created_by.email
             else:
-                created_by_email = f"N/A [id: {instance.id}]"
+                message_data["user_email"] = f"N/A [application id: {instance.id}]"
 
             # Ensure the UserGroup model has a legal attribute
             if hasattr(instance.user_group, "legal"):
-                legal_industry = instance.user_group.legal.industry or "N/A"
-                legal_address = (
+                message_data["legal_industry"] = (
+                    instance.user_group.legal.industry or "N/A"
+                )
+                message_data["legal_address"] = (
                     f"{instance.user_group.legal.street}, {instance.user_group.legal.city}, {instance.user_group.legal.state} {instance.user_group.legal.postal_code}"
                     or "N/A"
                 )
-                legal_ein = instance.user_group.legal.tax_id or "N/A"
-                legal_dba = instance.user_group.legal.doing_business_as or "N/A"
-                legal_structure = instance.user_group.legal.structure or "N/A"
-            else:
-                legal_industry = legal_address = legal_ein = legal_dba = (
-                    legal_structure
-                ) = None
+                message_data["legal_ein"] = instance.user_group.legal.tax_id or "N/A"
+                message_data["legal_dba"] = (
+                    instance.user_group.legal.doing_business_as or "N/A"
+                )
+                message_data["legal_structure"] = (
+                    instance.user_group.legal.structure or "N/A"
+                )
 
             # Trigger the Customer.io email for internal notification
-            trigger_customerio_email(
-                transactional_message_id="14",
-                user_group_name=user_group_name,
-                legal_industry=legal_industry,
-                legal_address=legal_address,
-                legal_ein=legal_ein,
-                legal_dba=legal_dba,
-                legal_structure=legal_structure,
-                user_email=created_by_email,
-                to_user_email="ar@downstreamsprints.atlassian.net",
-            )
+            subject = f"We have received {message_data['user_group_name']}'s credit application!"
+            send_to_admins = [
+                "ar@downstreamsprints.atlassian.net",
+                "billing@trydownstream",
+            ]
+            customerio.send_email(send_to_admins, message_data, subject, 14)
+
+            message_data2 = {
+                "user_group_name": instance.user_group.name,
+                "user_first_name": instance.created_by.first_name or "Hi",
+            }
 
             send_to = []
             if (
@@ -173,21 +185,14 @@ def user_group_credit_application_post_save(
                 and instance.user_group.billing.email
             ):
                 send_to.append(instance.user_group.billing.email)
+                send_to.append(instance.created_by.email)
             else:
                 # If the UserGroup does not have a billing email, send to all users in the UserGroup.
                 send_to = [user.email for user in instance.user_group.users.all()]
 
-            user_group_name = instance.user_group.name
-            user_first_name = ""  # user_dict["user_first_name"]
-            to_user_email = ""  # user_dict["to_user_email"]
-
             # Trigger the Customer.io email for each user and the billing email
-            trigger_customerio_email(
-                transactional_message_id="9",
-                user_group_name=instance.user_group.name,
-                user_first_name=user_first_name,
-                to_user_email=to_user_email,
-            )
+            subject = f"We have received {message_data2['user_group_name']}'s credit application for Downstream Marketplace!"
+            customerio.send_email(send_to, message_data2, subject, 9)
     except Exception as e:
         logger.error(
             f"user_group_credit_application_post_save: Failed to send email: {e}"
