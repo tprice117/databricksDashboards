@@ -3624,16 +3624,6 @@ def company_detail(request, user_group_id=None):
         initial={
             "name": user_group.name,
             "apollo_id": user_group.apollo_id,
-            "pay_later": user_group.pay_later,
-            "autopay": user_group.autopay,
-            "net_terms": user_group.net_terms,
-            "invoice_frequency": user_group.invoice_frequency,
-            "invoice_day_of_month": user_group.invoice_day_of_month,
-            "invoice_at_project_completion": user_group.invoice_at_project_completion,
-            "share_code": user_group.share_code,
-            "credit_line_limit": user_group.credit_line_limit,
-            "compliance_status": user_group.compliance_status,
-            "tax_exempt_status": user_group.tax_exempt_status,
         },
         user=context["user"],
         auth_user=request.user,
@@ -3761,16 +3751,6 @@ def company_detail(request, user_group_id=None):
                 initial={
                     "name": user_group.name,
                     "apollo_id": user_group.apollo_id,
-                    "pay_later": user_group.pay_later,
-                    "autopay": user_group.autopay,
-                    "net_terms": user_group.net_terms,
-                    "invoice_frequency": user_group.invoice_frequency,
-                    "invoice_day_of_month": user_group.invoice_day_of_month,
-                    "invoice_at_project_completion": user_group.invoice_at_project_completion,
-                    "share_code": user_group.share_code,
-                    "credit_line_limit": user_group.credit_line_limit,
-                    "compliance_status": user_group.compliance_status,
-                    "tax_exempt_status": user_group.tax_exempt_status,
                 },
                 user=context["user"],
                 auth_user=request.user,
@@ -3869,17 +3849,6 @@ def new_company(request):
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
                     apollo_id=form.cleaned_data.get("apollo_id"),
-                    pay_later=form.cleaned_data.get("pay_later"),
-                    autopay=form.cleaned_data.get("autopay"),
-                    net_terms=form.cleaned_data.get("net_terms"),
-                    invoice_frequency=form.cleaned_data.get("invoice_frequency"),
-                    invoice_day_of_month=form.cleaned_data.get("invoice_day_of_month"),
-                    invoice_at_project_completion=form.cleaned_data.get(
-                        "invoice_at_project_completion"
-                    ),
-                    credit_line_limit=form.cleaned_data.get("credit_line_limit"),
-                    compliance_status=form.cleaned_data.get("compliance_status"),
-                    tax_exempt_status=form.cleaned_data.get("tax_exempt_status"),
                 )
                 if context["user_form"].is_valid():
                     # Create New User

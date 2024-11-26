@@ -3,7 +3,7 @@ import datetime
 from django import forms
 from django.core.exceptions import ValidationError
 
-from api.models import  Branding, UserAddress, UserAddressType, UserGroup, UserGroupLegal
+from api.models import Branding, UserAddress, UserAddressType, UserGroup, UserGroupLegal
 from api.models.order.order_group import OrderGroup
 from common.models.choices.user_type import UserType
 
@@ -254,59 +254,6 @@ class UserGroupForm(forms.Form):
         max_length=128,
         widget=forms.TextInput(attrs={"class": "form-control"}),
         required=True,
-    )
-    pay_later = forms.BooleanField(
-        initial=False,
-        widget=forms.HiddenInput(),
-        required=False,
-    )
-    autopay = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
-    net_terms = forms.ChoiceField(
-        choices=UserGroup.NetTerms.choices,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        required=False,
-    )
-    invoice_frequency = forms.ChoiceField(
-        choices=UserGroup.InvoiceFrequency.choices,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        required=False,
-    )
-    invoice_day_of_month = forms.IntegerField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
-        required=False,
-    )
-    invoice_at_project_completion = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
-    share_code = forms.CharField(
-        max_length=6,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=False,
-        disabled=True,
-    )
-    credit_line_limit = forms.DecimalField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
-        required=False,
-    )
-    compliance_status = forms.ChoiceField(
-        choices=UserGroup.COMPLIANCE_STATUS_CHOICES,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        initial="NOT_REQUIRED",
-    )
-    tax_exempt_status = forms.ChoiceField(
-        choices=UserGroup.TaxExemptStatus.choices,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        initial=UserGroup.TaxExemptStatus.NONE,
     )
 
     def __init__(self, *args, **kwargs):
@@ -638,22 +585,30 @@ class CreditApplicationForm(forms.Form):
             self.fields["increase_credit"].widget = forms.HiddenInput()
             self.fields["increase_credit"].required = False
 
+
 class BrandingForm(forms.ModelForm):
     class Meta:
         model = Branding
         fields = ["logo", "primary"]
         widgets = {
-            "logo": forms.ClearableFileInput(attrs={"type": "file", "class": "form-control"}),
+            "logo": forms.ClearableFileInput(
+                attrs={"type": "file", "class": "form-control"}
+            ),
             "primary": forms.TextInput(attrs={"type": "color", "id": "primary_color"}),
-            #"secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
+            # "secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
         }
+
 
 class BaseBrandingFormSet(forms.BaseInlineFormSet):
     """Using this formset to hide the delete field in the formset"""
+
     def add_fields(self, form, index):
         super().add_fields(form, index)
-        if 'DELETE' in form.fields:
-            form.fields['DELETE'].widget = forms.HiddenInput()
+        if "DELETE" in form.fields:
+            form.fields["DELETE"].widget = forms.HiddenInput()
+
 
 # Using Formset to take advantage of inlineformset_factory, allowing to set UserGroup as instance
-BrandingFormSet = forms.inlineformset_factory(UserGroup, Branding, form=BrandingForm, formset=BaseBrandingFormSet, extra=1)
+BrandingFormSet = forms.inlineformset_factory(
+    UserGroup, Branding, form=BrandingForm, formset=BaseBrandingFormSet, extra=1
+)
