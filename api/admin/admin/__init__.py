@@ -10,6 +10,7 @@ from .order import OrderAdmin
 from .order_group import OrderGroupAdmin
 from .order_group_material import OrderGroupMaterialAdmin
 from .order_line_item_type import OrderLineItemTypeAdmin
+from .order_review import OrderReviewAdmin
 from .payout import PayoutAdmin
 from .product import ProductAdmin
 from .product_addon_choice import ProductAddOnChoiceAdmin
