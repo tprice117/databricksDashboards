@@ -342,18 +342,6 @@ class UserGroupNewForm(forms.Form):
         user = kwargs.pop("user", None)
         auth_user = kwargs.pop("auth_user", None)
         super(UserGroupNewForm, self).__init__(*args, **kwargs)
-        if auth_user and not auth_user.is_staff:
-            self.fields["net_terms"].disabled = True
-            self.fields["share_code"].disabled = True
-            self.fields["share_code"].widget = forms.HiddenInput()
-            self.fields["credit_line_limit"].disabled = True
-            self.fields["compliance_status"].disabled = True
-            self.fields["tax_exempt_status"].disabled = True
-            self.fields["apollo_id"].required = False
-            self.fields["apollo_id"].widget = forms.HiddenInput()
-            self.fields["autopay"].widget = forms.HiddenInput()
-            self.fields["invoice_frequency"].disabled = True
-            self.fields["invoice_day_of_month"].disabled = True
 
 
 # Create an Order form
