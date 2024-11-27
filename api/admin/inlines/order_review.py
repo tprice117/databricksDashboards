@@ -1,9 +1,10 @@
 from django.contrib import admin
 
 from api.models import OrderReview
+from common.admin import BaseModelStackedInline
 
 
-class OrderReviewInline(admin.StackedInline):
+class OrderReviewInline(BaseModelStackedInline):
     model = OrderReview
     fields = (
         "rating",

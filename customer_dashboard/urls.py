@@ -48,6 +48,16 @@ urlpatterns = [
         name="customer_order_detail",
     ),
     path(
+        "customer/order/review/",
+        views.order_review_form,
+        name="customer_order_review_form",
+    ),
+    path(
+        "customer/order/review/swap/",
+        views.order_review_swap,
+        name="customer_order_review_swap",
+    ),
+    path(
         "customer/company/last_order/",
         views.company_last_order,
         name="customer_company_last_order",

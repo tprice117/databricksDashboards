@@ -3,8 +3,17 @@ import datetime
 from django import forms
 from django.core.exceptions import ValidationError
 
-from api.models import  Branding, UserAddress, UserAddressType, UserGroup, UserGroupLegal
-from api.models.order.order_group import OrderGroup
+from api.models import (
+    Branding,
+    UserAddress,
+    UserAddressType,
+    UserGroup,
+    UserGroupLegal,
+    Order,
+    OrderGroup,
+    OrderReview,
+)
+from common.forms import HiddenDeleteFormSet
 from common.models.choices.user_type import UserType
 
 
@@ -566,6 +575,30 @@ class OrderGroupSwapForm(forms.Form):
         return swap_date
 
 
+class OrderReviewForm(forms.ModelForm):
+    class Meta:
+        model = OrderReview
+        fields = [
+            "professionalism",
+            "communication",
+            "pricing",
+            "timeliness",
+            "comment",
+        ]
+        widgets = {
+            "professionalism": forms.RadioSelect(),
+            "communication": forms.RadioSelect(),
+            "pricing": forms.RadioSelect(),
+            "timeliness": forms.RadioSelect(),
+            "comment": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+
+
+OrderReviewFormSet = forms.inlineformset_factory(
+    Order, OrderReview, form=OrderReviewForm, formset=HiddenDeleteFormSet, extra=1
+)
+
+
 class CreditApplicationForm(forms.Form):
     structure = forms.ChoiceField(
         choices=UserGroupLegal.BusinessStructure.choices,
@@ -638,22 +671,21 @@ class CreditApplicationForm(forms.Form):
             self.fields["increase_credit"].widget = forms.HiddenInput()
             self.fields["increase_credit"].required = False
 
+
 class BrandingForm(forms.ModelForm):
     class Meta:
         model = Branding
         fields = ["logo", "primary"]
         widgets = {
-            "logo": forms.ClearableFileInput(attrs={"type": "file", "class": "form-control"}),
+            "logo": forms.ClearableFileInput(
+                attrs={"type": "file", "class": "form-control"}
+            ),
             "primary": forms.TextInput(attrs={"type": "color", "id": "primary_color"}),
-            #"secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
+            # "secondary": forms.TextInput(attrs={"type": "color", "id": "secondary_color"}),
         }
 
-class BaseBrandingFormSet(forms.BaseInlineFormSet):
-    """Using this formset to hide the delete field in the formset"""
-    def add_fields(self, form, index):
-        super().add_fields(form, index)
-        if 'DELETE' in form.fields:
-            form.fields['DELETE'].widget = forms.HiddenInput()
 
 # Using Formset to take advantage of inlineformset_factory, allowing to set UserGroup as instance
-BrandingFormSet = forms.inlineformset_factory(UserGroup, Branding, form=BrandingForm, formset=BaseBrandingFormSet, extra=1)
+BrandingFormSet = forms.inlineformset_factory(
+    UserGroup, Branding, form=BrandingForm, formset=HiddenDeleteFormSet, extra=1
+)

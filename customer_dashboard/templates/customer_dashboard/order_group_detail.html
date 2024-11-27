@@ -5,7 +5,49 @@
     Booking Details
 {% endblock %}
 {% block stylesheet %}
-    <style></style>
+    <style>
+        /* 
+        CSS for 5-star rating scale 
+        Assumes font-awesome is available and that the list goes from Best to Worst
+        */
+        .star-rating {
+            direction: rtl;
+            display: inline-flex;
+        }
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+        .star-rating label {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+        }
+        .star-rating input[type="radio"]:checked ~ label {
+            color: #f5c518;
+        }
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #f5c518;
+        }
+</style>
+{% endblock %}
+{% block javascript %}
+    <script>
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.target.id.startsWith("rating")) {
+                // This should only occur after the rating request is successful
+                const { xhr, successful, requestConfig } = evt.detail;
+                if (!successful) {
+                console.error(evt);
+                return;
+                }
+                // Get the order ID from the request params
+                const orderId = requestConfig.parameters.order_id;
+                // Show the feedback modal
+                $(`#${orderId}-modal`).modal('show');
+            }
+        });
+    </script>
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
@@ -64,7 +106,7 @@
     <div class="container">
         <div class="row" style="padding-bottom: 24px;">
             <div class="col-md-6">
-                <div class="card">
+                <div class="card" style="margin-bottom: 16px;">
                     <div class="card-body">
                         <h4 class="card-title">Schedule Details</h4>
                         <form>
@@ -85,6 +127,39 @@
                                 </div>
                             </div>
                         </form>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Pricing Details</h4>
+                        <div class="row">
+                            <div class="col">
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Initial Delivery Fee (charged at delivery)</strong>
+                                </p>
+                                <p>
+                                    {% if order_group.delivery_fee %}
+                                        ${{ order_group.delivery_fee|floatformat:2|intcomma }}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </p>
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Removal Fee (charged on removal)</strong>
+                                </p>
+                                <p>
+                                    {% if order_group.removal_fee %}
+                                        ${{ order_group.removal_fee|floatformat:2|intcomma }}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </p>
+                                <p style="margin-bottom: 0px;">
+                                    <strong>Included Tonnage Quantity</strong>
+                                </p>
+                                <p>{{ order_group.tonnage_quantity }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -152,7 +227,7 @@
     </div>
     <div class="container">
         <div class="row" style="padding-bottom: 24px;">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Service History&nbsp;</h4>
@@ -169,47 +244,60 @@
                                             <td>{{ order.order_type }}</td>
                                             <td>{{ order.status }}</td>
                                             <td>
+                                                <!-- Show buttons as disabled after 10 minutes -->
+                                                {% if not order.time_since_review or order.time_since_review.total_seconds < 600 %}
+                                                <form method="post" hx-post="{% url 'customer_order_review_swap'%}" hx-target="#rating-{{forloop.counter}}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                                                    <div id="rating-{{forloop.counter}}">
+                                                        {% if order.review.rating == 1 %}
+                                                        <button class="btn btn-success" type="submit" name="rating" value="1">
+                                                            <i class="fas fa-thumbs-up fa-sm text-white"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-light" type="submit" name="rating" value="1">
+                                                            <i class="fas fa-thumbs-up fa-sm"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        {% if order.review.rating == 0 %}
+                                                        <button class="btn btn-danger" type="submit" name="rating" value="0">
+                                                            <i class="fas fa-thumbs-down fa-sm text-white"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-light" type="submit" name="rating" value="0">
+                                                            <i class="fas fa-thumbs-down fa-sm"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                    </div>
+                                                </form>
+                                                {% else %}
+                                                    {% if order.review.rating == 1 %}
+                                                        <button class="btn btn-success disabled" type="submit" name="rating" value="1">
+                                                            <i class="fas fa-thumbs-up fa-sm text-white"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-light disabled" type="submit" name="rating" value="1">
+                                                            <i class="fas fa-thumbs-up fa-sm"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        {% if order.review.rating == 0 %}
+                                                        <button class="btn btn-danger disabled" type="submit" name="rating" value="0">
+                                                            <i class="fas fa-thumbs-down fa-sm text-white"></i>
+                                                        </button>
+                                                        {% else %}
+                                                        <button class="btn btn-light disabled" type="submit" name="rating" value="0">
+                                                            <i class="fas fa-thumbs-down fa-sm"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                {% endif %}
+                                            </td>
+                                            <td>
                                                 <a class="btn btn-light" role="button" href="{% url 'customer_order_detail' order_id=order.id %}"><i class="far fa-eye"></i></a>
                                             </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Pricing Details</h4>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <strong>Initial Delivery Fee (charged at delivery)</strong>
-                                </p>
-                                <p>
-                                    {% if order_group.delivery_fee %}
-                                        ${{ order_group.delivery_fee|floatformat:2|intcomma }}
-                                    {% else %}
-                                        $0.00
-                                    {% endif %}
-                                </p>
-                                <p style="margin-bottom: 0px;">
-                                    <strong>Removal Fee (charged on removal)</strong>
-                                </p>
-                                <p>
-                                    {% if order_group.removal_fee %}
-                                        ${{ order_group.removal_fee|floatformat:2|intcomma }}
-                                    {% else %}
-                                        $0.00
-                                    {% endif %}
-                                </p>
-                                <p style="margin-bottom: 0px;">
-                                    <strong>Included Tonnage Quantity</strong>
-                                </p>
-                                <p>{{ order_group.tonnage_quantity }}</p>
-                            </div>
                         </div>
                     </div>
                 </div>
