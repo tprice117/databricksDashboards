@@ -9,3 +9,14 @@ class OrderReviewAdmin(BaseModelAdmin):
     search_fields = [
         "order__id",
     ]
+    raw_id_fields = [
+        "order",
+    ]
+    list_display = [
+        "id",
+        "rating",
+        "professionalism",
+        "communication",
+        "timeliness",
+        "pricing",
+    ]
