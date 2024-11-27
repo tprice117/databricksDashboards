@@ -4162,3 +4162,65 @@ def reports(request):
         else:
             return render(request, template, context)
     return render(request, "customer_dashboard/reports.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def reviews(request):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    context = get_user_context(request)
+    pagination_limit = 25
+    page_number = 1
+
+    if request.GET.get("p"):
+        page_number = request.GET.get("p")
+
+    if request.headers.get("HX-Request"):
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
+        query_params = request.GET.copy()
+
+        # Build Query
+        # context["help_text"] = "All Reviews"
+        reviews = OrderReview.objects.all().order_by("-created_on")
+
+        # Pagination
+        paginator = Paginator(reviews, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+
+        return render(
+            request, "customer_dashboard/snippets/reviews_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    if query_params.get("tab"):
+        context["reviews_table_link"] = request.get_full_path()
+    else:
+        # Else load pending tab as default
+        context["reviews_table_link"] = (
+            f"{reverse('customer_reviews')}?{query_params.urlencode()}"
+        )
+
+    return render(request, "customer_dashboard/reviews.html", context)

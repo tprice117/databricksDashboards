@@ -1,0 +1,69 @@
+{% load static %}
+{% load tz %}
+{% load humanize %}
+{% if help_text %}
+    <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
+{% endif %}
+<table class="table my-0 overflow-auto" id="user-results">
+    <thead>
+        <tr>
+            <th>Created</th>
+            <th>Experience</th>
+            <th>Professionalism</th>
+            <th>Communication</th>
+            <th>Pricing</th>
+            <th>Timeliness</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in page_obj %}
+            <tr>
+                <td>{{ obj.created_on|timezone:'America/Chicago' }} (CT)</td>
+                <td>{% if obj.rating %}<i class="fas fa-thumbs-up text-success"></i>{% else %}<i class="fas fa-thumbs-down text-danger"></i>{% endif %}</td>
+                <td>{% if obj.professionalism %}{{ obj.get_professionalism_display }}{% endif %}</td>
+                <td>{% if obj.communication %}{{ obj.get_communication_display }}{% endif %}</td>
+                <td>{% if obj.pricing %}{{ obj.get_pricing_display }}{% endif %}</td>
+                <td>{% if obj.timeliness %}{{ obj.get_timeliness_display }}{% endif %}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6">No reviews found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th>Created</th>
+            <th>Experience</th>
+            <th>Professionalism</th>
+            <th>Communication</th>
+            <th>Pricing</th>
+            <th>Timeliness</th>
+        </tr>
+    </tfoot>
+</table>
+<div class="row" id="reviews-pagination" hx-swap-oob="true">
+    <div class="col-md-6 align-self-center">
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </p>
+    </div>
+    <div class="col-md-6">
+        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#reviews-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
+                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#reviews-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
+                {% endif %}
+                <li class="page-item active">
+                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#reviews-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
+                </li>
+                {% if page_obj.has_next %}
+                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#reviews-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
+                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#reviews-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
