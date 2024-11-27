@@ -69,7 +69,7 @@
                 <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
                     <form class="row g-3" action="{% url 'customer_order_groups' %}" method="get" hx-get="{% url 'customer_order_groups' %}" hx-disabled-elt="button" hx-target="#order-groups-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
                         <div class="col-12">
-                            <label for="location-search-filter">Search (address or supplier)</label>
+                            <label for="location-search-filter">Search (address, supplier, PO ID)</label>
                             <input id="location-search-filter" class="form-control" type="search" name="q" />
                         </div>
                         <div class="col-12">
