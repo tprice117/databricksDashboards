@@ -19,11 +19,12 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
-from django.db.models import F, Max, Q
+from django.db.models import F, Max, Q, ExpressionWrapper, DurationField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -34,6 +35,7 @@ from api.models import (
     MainProductWasteType,
     Order,
     OrderGroup,
+    OrderReview,
     Product,
     ProductAddOnChoice,
     SellerProductSellerLocation,
@@ -73,6 +75,7 @@ from .forms import (
     CreditApplicationForm,
     OrderGroupForm,
     OrderGroupSwapForm,
+    OrderReviewFormSet,
     PlacementDetailsForm,
     UserAddressForm,
     UserForm,
@@ -2176,6 +2179,97 @@ def order_group_swap(request, order_group_id, is_removal=False):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
+@require_POST
+def order_review_swap(request):
+    """
+    Handle the swapping of an order review rating.
+
+    This view handles POST requests to update the rating of an order review.
+    It ensures that the request contains the necessary data and that the review
+    can only be updated within 10 minutes of its creation.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing POST data. Should include `order_id` and `rating`.
+
+    Returns:
+        HttpResponse: A response object with the rendered form template or an error message.
+    """
+    # The request to this url must be POST
+    order_id = request.POST.get("order_id")
+    rating = request.POST.get("rating")
+
+    if not order_id or not rating:
+        return HttpResponse(content={"error": "Missing required post data"}, status=400)
+
+    rating = bool(int(rating))
+    order = Order.objects.select_related("review").get(id=order_id)
+
+    if not hasattr(order, "review"):
+        review = OrderReview(order=order, rating=rating)
+        review.save()
+    elif (timezone.now() - order.review.created_on).total_seconds() > 60 * 10:
+        # Prevent review from updating if it has been more than 10 minutes.
+        return HttpResponse(
+            content={"error": "Review cannot be updated after 10 minutes."}, status=400
+        )
+    elif order.review.rating != rating:
+        order.review.rating = rating
+        order.review.save()
+
+    formset = OrderReviewFormSet(instance=order, initial={"rating": rating})
+    context = {"formset": formset, "order": order}
+
+    return render(
+        request, "customer_dashboard/snippets/order_review_form.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+@require_POST
+def order_review_form(request):
+    """
+    Handle the submission of the order review form.
+
+    This view handles POST requests to submit the order review form. It ensures
+    that the review can only be updated within 10 minutes of its creation and
+    saves the form data if it is valid and has changed.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing POST data.
+
+    Returns:
+        HttpResponseRedirect: A redirect response to the order group detail page.
+    """
+    # The request to this url must be POST
+    rating = request.POST.get("rating")
+    order_id = request.POST.get("order_id")
+    order = Order.objects.get(id=order_id)
+    formset = OrderReviewFormSet(
+        request.POST, instance=order, initial={"rating": rating}
+    )
+
+    if (timezone.now() - order.review.created_on).total_seconds() > 60 * 10:
+        # Prevent review from updating if it has been more than 10 minutes.
+        messages.error("Review cannot be updated after 10 minutes.")
+    elif formset.is_valid():
+        # Check if any changes to form were made
+        if formset.has_changed():
+            formset.save()
+            messages.success(request, "Successfully saved!")
+        else:
+            messages.info(request, "No changes detected.")
+
+    return HttpResponseRedirect(
+        reverse(
+            "customer_order_group_detail",
+            kwargs={"order_group_id": order.order_group_id},
+        )
+    )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
     pagination_limit = 25
@@ -2318,7 +2412,18 @@ def order_group_detail(request, order_group_id):
     context["order_group"] = order_group
     user_address = order_group.user_address
     context["user_address"] = user_address
-    context["orders"] = order_group.orders.all().order_by("-end_date")
+
+    # Get the time since the order was reviewed to prevent old reviews from being changed
+    current_time = timezone.now()
+    context["orders"] = (
+        order_group.orders.all()
+        .annotate(
+            time_since_review=ExpressionWrapper(
+                current_time - F("review__created_on"), output_field=DurationField()
+            ),
+        )
+        .order_by("-end_date")
+    )
 
     if request.method == "POST":
         try:

@@ -31,6 +31,7 @@ from .order.order_group_service import OrderGroupService
 from .order.order_group_service_times_per_week import OrderGroupServiceTimesPerWeek
 from .order.order_line_item import OrderLineItem
 from .order.order_line_item_type import OrderLineItemType
+from .order.order_review import OrderReview
 from .order.subscription import Subscription
 from .payout import Payout
 from .seller.seller import Seller
@@ -78,6 +79,5 @@ from .user.user_group_credit_application import UserGroupCreditApplication
 from .user.user_group_legal import UserGroupLegal
 from .user.user_group_user import UserGroupUser
 from .user.user_seller_location import UserSellerLocation
-from .user.user_seller_review import UserSellerReview
 from .user.user_user_address import UserUserAddress
 from .waste_type import WasteType

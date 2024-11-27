@@ -90,7 +90,6 @@ from .models import (
     UserGroupBilling,
     UserGroupCreditApplication,
     UserGroupLegal,
-    UserSellerReview,
     UserUserAddress,
     WasteType,
 )
@@ -139,8 +138,6 @@ from .serializers import (
     UserGroupCreditApplicationSerializer,
     UserGroupLegalSerializer,
     UserGroupSerializer,
-    UserSellerReviewAggregateSerializer,
-    UserSellerReviewSerializer,
     UserSerializer,
     UserUserAddressSerializer,
     WasteTypeSerializer,
@@ -318,32 +315,6 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
             return self.queryset.filter(user__in=users)
         else:
             return self.queryset.filter(user=self.request.user)
-
-
-class UserSellerReviewViewSet(viewsets.ModelViewSet):  # Added 2/25/2023
-    queryset = UserSellerReview.objects.all()
-    serializer_class = UserSellerReviewSerializer
-    filterset_fields = ["id", "user", "seller"]
-
-
-class UserSellerReviewAggregateViewSet(viewsets.ModelViewSet):
-    serializer_class = UserSellerReviewAggregateSerializer
-
-    def get_queryset(self):
-        queryset = (
-            UserSellerReview.objects.values("seller")
-            .annotate(
-                rating_avg=Avg("rating"),
-                review_count=Count("seller_id"),
-            )
-            .order_by("seller_id")
-        )
-        return queryset
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
 
 
 class AddOnChoiceViewSet(viewsets.ReadOnlyModelViewSet):
