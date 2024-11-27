@@ -77,6 +77,7 @@ from .forms import (
     UserAddressForm,
     UserForm,
     UserGroupForm,
+    UserGroupNewForm,
     UserInviteForm,
 )
 
@@ -3827,7 +3828,7 @@ def new_company(request):
     context["help_msg"] = "Enter new or existing user email."
     if request.method == "POST":
         try:
-            form = UserGroupForm(
+            form = UserGroupNewForm(
                 request.POST,
                 request.FILES,
                 user=context["user"],
@@ -3908,7 +3909,7 @@ def new_company(request):
             )
             logger.error(f"new_company: [{e}]", exc_info=e)
     else:
-        context["form"] = UserGroupForm(user=context["user"], auth_user=request.user)
+        context["form"] = UserGroupNewForm(user=context["user"], auth_user=request.user)
 
     return render(request, "customer_dashboard/company_new.html", context)
 
