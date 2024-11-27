@@ -2316,6 +2316,8 @@ def my_order_groups(request):
                 | Q(user_address__city__icontains=search_q)
                 | Q(user_address__state__icontains=search_q)
                 | Q(user_address__postal_code__icontains=search_q)
+                | Q(user_address__project_id__icontains=search_q)
+                | Q(project_id__icontains=search_q)
             )
 
         if date:
