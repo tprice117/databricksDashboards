@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.utils import timezone
 
-from billing.typings import InvoiceResponse
+from billing.typings import InvoiceResponse, InvoiceGroupedResponse
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 
@@ -50,7 +50,6 @@ class Invoice(BaseModel):
 
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def _get_invoice_items(self) -> InvoiceResponse:
-        print("Getting invoice items")
         stripe_invoice_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
             invoice_id=self.invoice_id,
         )
@@ -59,19 +58,28 @@ class Invoice(BaseModel):
             "items": [],
             "groups": [],
         }
+
         for item in stripe_invoice_items:
             amount = Decimal(item["amount"] / 100).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )
+            tax = Decimal(item["tax_amounts"][0]["amount"] / 100).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+            amount_excluding_tax = amount
             if item.get("amount_excluding_tax", None) is not None:
                 amount_excluding_tax = Decimal(
                     item["amount_excluding_tax"] / 100
                 ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            group_id = None
+            if item.get("rendering", None) is not None:
+                group_id = item["rendering"].get("summary_item", None)
             response["items"].append(
                 {
-                    "group_id": item["rendering"]["summary_item"],
+                    "group_id": group_id,
                     "id": item["id"],
-                    "amount": amount,
+                    "amount": amount + tax,
+                    "tax": tax,
                     "amount_excluding_tax": amount_excluding_tax,
                     "description": item["description"],
                     "order_line_item_id": item["metadata"].get("order_line_item_id"),
@@ -91,6 +99,32 @@ class Invoice(BaseModel):
     @property
     def invoice_items(self) -> InvoiceResponse:
         return self._get_invoice_items()
+
+    @property
+    def invoice_items_grouped(self) -> InvoiceGroupedResponse:
+        invoice_items = self._get_invoice_items()
+        for group in invoice_items["groups"]:
+            group["total"] = 0
+            group["items"] = []
+            # Remove everything after last | in description.
+            group["description"] = group["description"].rsplit("|", 1)[0]
+            for item in invoice_items["items"]:
+                if item["group_id"] == group["id"]:
+                    group["items"].append(item)
+                    group["total"] += item["amount"]
+        ungrouped = {
+            "id": "ungrouped",
+            "description": "Ungrouped",
+            "total": 0,
+            "items": [],
+        }
+        for item in invoice_items["items"]:
+            if item["group_id"] is None:
+                ungrouped["items"].append(item)
+                ungrouped["total"] += item["amount"]
+        if ungrouped["items"]:
+            invoice_items["groups"].append(ungrouped)
+        return invoice_items
 
     def pay_invoice(
         self,

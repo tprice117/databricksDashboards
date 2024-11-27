@@ -8,6 +8,7 @@ class InvoiceItem(TypedDict):
     id: str
     amount: Decimal
     amount_excluding_tax: Optional[Decimal]
+    tax: Decimal
     description: str
     order_line_item_id: Optional[str]
 
@@ -20,6 +21,16 @@ class InvoiceGroup(TypedDict):
 class InvoiceResponse(TypedDict):
     items: List[InvoiceItem]
     groups: List[InvoiceGroup]
+
+
+class InvoiceGroupedGroup(TypedDict):
+    id: str
+    description: str
+    items: List[InvoiceItem]
+
+
+class InvoiceGroupedResponse(TypedDict):
+    groups: List[InvoiceGroupedGroup]
 
 
 class AccountSummaryInvoice(TypedDict):
