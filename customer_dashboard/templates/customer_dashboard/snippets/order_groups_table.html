@@ -30,6 +30,11 @@
                 </td>
                 <td>
                     {{ order_group.user_address.formatted_address }}
+                    {% if order_group.project_id %}
+                        | {{ order_group.project_id }}
+                    {% elif order_group.user_address.project_id %}
+                        | {{ order_group.user_address.project_id }}
+                    {% endif %}
                     {% comment %} <a class="btn btn-link" href="{% url 'customer_location_detail' location_id=order_group.user_address.id %}">{{ order_group.user_address.formatted_address }}</a> {% endcomment %}
                 </td>
                 <td>
