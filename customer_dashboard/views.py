@@ -32,7 +32,7 @@ from django.db.models import (
     When,
     IntegerField,
 )
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Round, Coalesce
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -4222,11 +4222,25 @@ def reviews(request):
                             output_field=IntegerField(),
                         )
                     ),
-                    professionalism=Avg("ordergroup__orders__review__professionalism"),
-                    communication=Avg("ordergroup__orders__review__communication"),
-                    pricing=Avg("ordergroup__orders__review__pricing"),
-                    timeliness=Avg("ordergroup__orders__review__timeliness"),
+                    # Round averages to 1 decimal place
+                    professionalism=Round(
+                        Avg("ordergroup__orders__review__professionalism"),
+                        1,
+                    ),
+                    communication=Round(
+                        Avg("ordergroup__orders__review__communication"),
+                        1,
+                    ),
+                    pricing=Round(
+                        Avg("ordergroup__orders__review__pricing"),
+                        1,
+                    ),
+                    timeliness=Round(
+                        Avg("ordergroup__orders__review__timeliness"),
+                        1,
+                    ),
                 )
+                # Don't include rows with no reviews
                 .filter(Q(rating__gt=0))
                 .order_by("-rating")
             )
@@ -4245,19 +4259,33 @@ def reviews(request):
                             output_field=IntegerField(),
                         )
                     ),
-                    professionalism=Avg(
-                        "seller_locations__seller_product_seller_locations__order_groups__orders__review__professionalism"
+                    # Round averages to 1 decimal place
+                    professionalism=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__professionalism"
+                        ),
+                        1,
                     ),
-                    communication=Avg(
-                        "seller_locations__seller_product_seller_locations__order_groups__orders__review__communication"
+                    communication=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__communication"
+                        ),
+                        1,
                     ),
-                    pricing=Avg(
-                        "seller_locations__seller_product_seller_locations__order_groups__orders__review__pricing"
+                    pricing=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__pricing"
+                        ),
+                        1,
                     ),
-                    timeliness=Avg(
-                        "seller_locations__seller_product_seller_locations__order_groups__orders__review__timeliness"
+                    timeliness=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__timeliness"
+                        ),
+                        1,
                     ),
                 )
+                # Don't include rows with no reviews
                 .filter(Q(rating__gt=0))
                 .order_by("-rating")
             )
@@ -4272,7 +4300,62 @@ def reviews(request):
                         F("order__order_group__user__last_name"),
                     ),
                     seller=F(
+                        "order__order_group__seller_product_seller_location__seller_product__seller__name"
+                    ),
+                    product=F(
                         "order__order_group__seller_product_seller_location__seller_product__product__main_product__name"
+                    ),
+                    sum=(
+                        # Treat null values as 0
+                        Coalesce(F("professionalism"), Value(0))
+                        + Coalesce(F("communication"), Value(0))
+                        + Coalesce(F("pricing"), Value(0))
+                        + Coalesce(F("timeliness"), Value(0))
+                    ),
+                    # This query gets the average rating based on four fields
+                    avg=(
+                        Case(
+                            # If at least one field is not null, then calculate the average
+                            When(
+                                sum__gt=0,
+                                # Get average rounded to 2 decimal places
+                                then=Round(
+                                    (F("sum"))
+                                    / (
+                                        # Get count of non-null fields for division
+                                        Case(
+                                            When(
+                                                Q(professionalism__isnull=True),
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                        + Case(
+                                            When(
+                                                Q(communication__isnull=True),
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                        + Case(
+                                            When(
+                                                Q(pricing__isnull=True),
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                        + Case(
+                                            When(
+                                                Q(timeliness__isnull=True),
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                    ),
+                                    2,
+                                ),
+                            ),
+                        )
                     ),
                 )
                 .order_by("-created_on")

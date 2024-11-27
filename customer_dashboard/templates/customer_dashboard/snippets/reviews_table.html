@@ -22,12 +22,15 @@
             <th>Avg Timeliness</th>
             {% else %}
             <th>By</th>
-            <th>For</th>
+            <th>Seller</th>
+            <th>Product</th>
             <th>Experience</th>
             <th>Professionalism</th>
             <th>Communication</th>
             <th>Pricing</th>
             <th>Timeliness</th>
+            <th>Average</th>
+            <th>Comment</th>
             {% endif %}
             
         </tr>
@@ -60,11 +63,14 @@
                 {% else %}
                 <td>{{obj.user}}</td>
                 <td>{{obj.seller}}</td>
+                <td>{{obj.product}}</td>
                 <td>{% if obj.rating %}<i class="fas fa-thumbs-up text-success"></i>{% else %}<i class="fas fa-thumbs-down text-danger"></i>{% endif %}</td>
                 <td>{% if obj.professionalism %}{{ obj.get_professionalism_display }}{% endif %}</td>
                 <td>{% if obj.communication %}{{ obj.get_communication_display }}{% endif %}</td>
                 <td>{% if obj.pricing %}{{ obj.get_pricing_display }}{% endif %}</td>
                 <td>{% if obj.timeliness %}{{ obj.get_timeliness_display }}{% endif %}</td>
+                <td>{% if obj.avg %}{{ obj.avg }}{% endif %}</td>
+                <td>{% if obj.comment %}{{ obj.comment }}{% endif %}</td>
                 {% endif %}
             </tr>
         {% empty %}
@@ -90,12 +96,15 @@
             <th>Avg Timeliness</th>
             {% else %}
             <th>By</th>
-            <th>For</th>
+            <th>Seller</th>
+            <th>Product</th>
             <th>Experience</th>
             <th>Professionalism</th>
             <th>Communication</th>
             <th>Pricing</th>
             <th>Timeliness</th>
+            <th>Average</th>
+            <th>Comment</th>
             {% endif %}
         </tr>
     </tfoot>

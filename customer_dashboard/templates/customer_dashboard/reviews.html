@@ -31,7 +31,7 @@
             <div class="row">
                 <div class="col">
                     <select id="table-filter-options" class="form-select form-select-lg mb-3" aria-label="Filter Data By" name="tab" hx-get="{% url 'customer_reviews' %}" hx-target="#review-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-                        <option value="" selected>No Filter</option>
+                        <option value="" selected>All</option>
                         <option value="sellers">Sellers</option>
                         <option value="users">Users</option>
                     </select>
@@ -53,12 +53,15 @@
                             <tr>
                                 <th>Created</th>
                                 <th>By</th>
-                                <th>For</th>
+                                <th>Seller</th>
+                                <th>Product</th>
                                 <th>Experience</th>
                                 <th>Professionalism</th>
                                 <th>Communication</th>
                                 <th>Pricing</th>
                                 <th>Timeliness</th>
+                                <th>Average</th>
+                                <th>Comment</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -66,12 +69,15 @@
                             <tr>
                                 <th>Created</th>
                                 <th>By</th>
-                                <th>For</th>
+                                <th>Seller</th>
+                                <th>Product</th>
                                 <th>Experience</th>
                                 <th>Professionalism</th>
                                 <th>Communication</th>
                                 <th>Pricing</th>
                                 <th>Timeliness</th>
+                                <th>Average</th>
+                                <th>Comment</th>
                             </tr>
                         </tfoot>
                     </table>
