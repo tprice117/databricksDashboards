@@ -8,7 +8,20 @@
     <style></style>
 {% endblock %}
 {% block javascript %}
-    <script></script>
+    <script>
+        // On page load, get selected tab from query params and set to filter value
+        const filter = document.getElementById("table-filter-options");
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if query params has tab
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get("tab");
+            if (tab) {
+                // update filter value
+                filter.value = tab;
+            }
+        });
+    </script>
 {% endblock %}
 {% block content %}
     <div class="container-fluid">

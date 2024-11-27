@@ -4,26 +4,64 @@
 {% if help_text %}
     <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
 {% endif %}
-<table class="table my-0 overflow-auto" id="user-results">
+<table class="table my-0 overflow-auto" id="review-results">
     <thead>
         <tr>
+            {% if tab == "users" %}
+            <th>User</th>
+            {% elif tab == "sellers" %}
+            <th>Seller</th>
+            {% else %}
             <th>Created</th>
+            {% endif %}
+            {% if tab == "users" or tab == "sellers" %}
+            <th>Total Thumbs Up</th>
+            <th>Avg Professionalism</th>
+            <th>Avg Communication</th>
+            <th>Avg Pricing</th>
+            <th>Avg Timeliness</th>
+            {% else %}
             <th>Experience</th>
             <th>Professionalism</th>
             <th>Communication</th>
             <th>Pricing</th>
             <th>Timeliness</th>
+            {% endif %}
+            
         </tr>
     </thead>
     <tbody>
         {% for obj in page_obj %}
             <tr>
+                {% if tab == "users" %}
+                <td>
+                    <div class="d-flex flex-row">
+                    {% if obj.photo_url %}
+                    <img class="border rounded-circle img-profile" style="height: 2rem; width: 2rem;" src="{{ obj.photo_url }}" />
+                {% else %}
+                    <span class="border rounded-circle img-profile" style="height: 2rem; width: 2rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+                {% endif %}
+                <div class="align-self-center ms-2">{{ obj.first_name }} {{ obj.last_name }}</div>
+                    </div>
+                </td>
+                {% elif tab == "sellers" %}
+                <td>{{ obj.name }}</td>
+                {% else %}
                 <td>{{ obj.created_on|timezone:'America/Chicago' }} (CT)</td>
+                {% endif %}
+                {% if tab == "users" or tab == "sellers" %}
+                <td>{{ obj.rating }}</td>
+                <td>{% if obj.professionalism %}{{ obj.professionalism }}{% endif %}</td>
+                <td>{% if obj.communication %}{{ obj.communication }}{% endif %}</td>
+                <td>{% if obj.pricing %}{{ obj.pricing }}{% endif %}</td>
+                <td>{% if obj.timeliness %}{{ obj.timeliness }}{% endif %}</td>
+                {% else %}
                 <td>{% if obj.rating %}<i class="fas fa-thumbs-up text-success"></i>{% else %}<i class="fas fa-thumbs-down text-danger"></i>{% endif %}</td>
                 <td>{% if obj.professionalism %}{{ obj.get_professionalism_display }}{% endif %}</td>
                 <td>{% if obj.communication %}{{ obj.get_communication_display }}{% endif %}</td>
                 <td>{% if obj.pricing %}{{ obj.get_pricing_display }}{% endif %}</td>
                 <td>{% if obj.timeliness %}{{ obj.get_timeliness_display }}{% endif %}</td>
+                {% endif %}
             </tr>
         {% empty %}
             <tr>
@@ -33,12 +71,26 @@
     </tbody>
     <tfoot>
         <tr>
+            {% if tab == "users" %}
+            <th>User</th>
+            {% elif tab == "sellers" %}
+            <th>Seller</th>
+            {% else %}
             <th>Created</th>
+            {% endif %}
+            {% if tab == "users" or tab == "sellers" %}
+            <th>Total Thumbs Up</th>
+            <th>Avg Professionalism</th>
+            <th>Avg Communication</th>
+            <th>Avg Pricing</th>
+            <th>Avg Timeliness</th>
+            {% else %}
             <th>Experience</th>
             <th>Professionalism</th>
             <th>Communication</th>
             <th>Pricing</th>
             <th>Timeliness</th>
+            {% endif %}
         </tr>
     </tfoot>
 </table>
