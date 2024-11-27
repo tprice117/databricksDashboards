@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.db import models
 from django.db.models.signals import pre_save
 
+from multiselectfield import MultiSelectField
+
 from api.utils.google_maps import geocode_address
 from common.models import BaseModel
 
@@ -16,6 +18,16 @@ class SellerLocation(BaseModel):
         ext = filename.split(".")[-1]
         filename = "%s.%s" % (uuid.uuid4(), ext)
         return filename
+
+    open_day_choices = (
+        ("MONDAY", "MONDAY"),
+        ("TUESDAY", "TUESDAY"),
+        ("WEDNESDAY", "WEDNESDAY"),
+        ("THURSDAY", "THURSDAY"),
+        ("FRIDAY", "FRIDAY"),
+        ("SATURDAY", "SATURDAY"),
+        ("SUNDAY", "SUNDAY"),
+    )
 
     seller = models.ForeignKey(
         "api.Seller",
@@ -30,6 +42,19 @@ class SellerLocation(BaseModel):
     country = models.CharField(max_length=80)
     latitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
     longitude = models.DecimalField(max_digits=18, decimal_places=15, blank=True)
+    open_days = MultiSelectField(
+        max_length=255, choices=open_day_choices, max_choices=7, blank=True, null=True
+    )
+    open_time = models.TimeField(blank=True, null=True)
+    close_time = models.TimeField(blank=True, null=True)
+    lead_time_hrs = models.DecimalField(
+        max_digits=18, decimal_places=0, blank=True, null=True
+    )
+    announcement = models.TextField(blank=True, null=True)
+    live_menu_is_active = models.BooleanField(default=False)
+    location_logo_image = models.ImageField(
+        upload_to=get_file_path, blank=True, null=True
+    )
     stripe_connect_account_id = models.CharField(max_length=255, blank=True, null=True)
     sends_invoices = models.BooleanField(default=False)
     # START: Pay-by-check fields.
