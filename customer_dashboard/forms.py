@@ -337,6 +337,12 @@ class UserGroupNewForm(forms.Form):
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    company_apollo_id = forms.CharField(
+        max_length=128,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        label="Apollo id",
+        required=True,
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)

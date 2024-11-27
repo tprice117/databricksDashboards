@@ -3850,7 +3850,7 @@ def new_company(request):
                 # Create New UserGroup
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
-                    # apollo_id=form.cleaned_data.get("apollo_id"),
+                    apollo_id=form.cleaned_data.get("company_apollo_id"),
                 )
                 if context["user_form"].is_valid():
                     # Create New User
