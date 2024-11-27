@@ -21,6 +21,8 @@
             <th>Avg Pricing</th>
             <th>Avg Timeliness</th>
             {% else %}
+            <th>By</th>
+            <th>For</th>
             <th>Experience</th>
             <th>Professionalism</th>
             <th>Communication</th>
@@ -56,6 +58,8 @@
                 <td>{% if obj.pricing %}{{ obj.pricing }}{% endif %}</td>
                 <td>{% if obj.timeliness %}{{ obj.timeliness }}{% endif %}</td>
                 {% else %}
+                <td>{{obj.user}}</td>
+                <td>{{obj.seller}}</td>
                 <td>{% if obj.rating %}<i class="fas fa-thumbs-up text-success"></i>{% else %}<i class="fas fa-thumbs-down text-danger"></i>{% endif %}</td>
                 <td>{% if obj.professionalism %}{{ obj.get_professionalism_display }}{% endif %}</td>
                 <td>{% if obj.communication %}{{ obj.get_communication_display }}{% endif %}</td>
@@ -85,6 +89,8 @@
             <th>Avg Pricing</th>
             <th>Avg Timeliness</th>
             {% else %}
+            <th>By</th>
+            <th>For</th>
             <th>Experience</th>
             <th>Professionalism</th>
             <th>Communication</th>

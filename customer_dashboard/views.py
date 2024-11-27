@@ -28,9 +28,11 @@ from django.db.models import (
     Sum,
     Avg,
     Case,
+    Value,
     When,
     IntegerField,
 )
+from django.db.models.functions import Concat
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -4261,7 +4263,20 @@ def reviews(request):
             )
         else:
             # Default to all reviews
-            reviews = OrderReview.objects.all().order_by("-created_on")
+            reviews = (
+                OrderReview.objects.all()
+                .annotate(
+                    user=Concat(
+                        F("order__order_group__user__first_name"),
+                        Value(" "),
+                        F("order__order_group__user__last_name"),
+                    ),
+                    seller=F(
+                        "order__order_group__seller_product_seller_location__seller_product__product__main_product__name"
+                    ),
+                )
+                .order_by("-created_on")
+            )
 
         # Pagination
         paginator = Paginator(reviews, pagination_limit)
