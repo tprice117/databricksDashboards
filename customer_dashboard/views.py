@@ -4325,28 +4325,28 @@ def reviews(request):
                                         # Get count of non-null fields for division
                                         Case(
                                             When(
-                                                Q(professionalism__isnull=True),
+                                                professionalism__isnull=True,
                                                 then=0.0,
                                             ),
                                             default=1.0,
                                         )
                                         + Case(
                                             When(
-                                                Q(communication__isnull=True),
+                                                communication__isnull=True,
                                                 then=0.0,
                                             ),
                                             default=1.0,
                                         )
                                         + Case(
                                             When(
-                                                Q(pricing__isnull=True),
+                                                pricing__isnull=True,
                                                 then=0.0,
                                             ),
                                             default=1.0,
                                         )
                                         + Case(
                                             When(
-                                                Q(timeliness__isnull=True),
+                                                timeliness__isnull=True,
                                                 then=0.0,
                                             ),
                                             default=1.0,
