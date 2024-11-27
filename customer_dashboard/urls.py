@@ -213,4 +213,5 @@ urlpatterns = [
         views.reports,
         name="customer_reports",
     ),
+    path("customer/reviews/", views.reviews, name="customer_reviews"),
 ]
