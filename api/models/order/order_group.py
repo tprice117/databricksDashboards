@@ -1,5 +1,6 @@
 import logging
 import uuid
+import datetime
 
 from django.core.files.base import ContentFile
 from django.db import models
@@ -305,6 +306,26 @@ class OrderGroup(BaseModel):
         else:
             last_order = orders.first()
             return last_order.order_type
+
+    @property
+    def nearest_order(self):
+        # Get the nearest order to the current date.
+        orders = self.orders.order_by("-start_date")
+        if orders.count() == 0:
+            return None
+        else:
+            today = datetime.date.today()
+            order = orders.first()
+            if order.start_date < today:
+                return order
+            else:
+                # Get order that is closest to today.
+                nearest_order = None
+                for order in orders:
+                    nearest_order = order
+                    if order.start_date < today:
+                        break
+                return nearest_order
 
     def create_swap(self, swap_date, schedule_window: str = None) -> Order:
         """Create a swap for the OrderGroup.
