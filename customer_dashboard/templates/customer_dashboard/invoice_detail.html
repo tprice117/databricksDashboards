@@ -241,53 +241,55 @@
             {% endif %}
         </div>
     </div>
-    <div class="container">
-        <div class="row" style="padding-bottom: 24px;">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Details&nbsp;</h4>
-                        <p>
-                            Transactions in this invoice <span class="fst-italic">(NOTE: This is a work in progress, so these might not always add up to the total listed above. For a complete breakdown, please download the invoice PDF.)</span>
-                        </p>
-                        <div class="accordion" role="tablist" id="invoice-item-results">
-                            {% for item in invoice.invoice_items_grouped.groups %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" role="tab">
-                                        <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#invoice-item-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="invoice-item-results .item-{{ forloop.counter }}">
-                                            <div class="fw-bold">{{ item.description }}</div>
-                                            <div class="ms-auto align-items-end">
-                                                <span class="fw-bold">${{ item.total|stringformat:'.2f'|intcomma }}</span>
-                                            </div>
-                                        </button>
-                                    </h2>
-                                    <!-- <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show{% else %}collapsed{% endif %}" role="tabpanel" data-bs-parent="#invoice-item-results"> -->
-                                    <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}
-                                            show
-                                        {% else %}
-                                            collapsed
-                                        {% endif %}"
-                                        role="tabpanel"
-                                        data-bs-parent="#invoice-item-results">
-                                        <div class="p-2" style="background: var(--bs-card-cap-bg);">
-                                            {% comment %} <span>Date</span>
-                                            <span class="text-muted">{{ item.created_on|timezone:'America/Chicago' }} (CT)</span> {% endcomment %}
-                                            {% for item in item.items %}
-                                                <div class="d-flex justify-content-between">
-                                                    <span class="text-muted">{{ item.description }} | tax: ${{ item.tax|stringformat:'.2f'|intcomma }}</span>
+    {% if request.user.is_staff %}
+        <div class="container">
+            <div class="row" style="padding-bottom: 24px;">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Details&nbsp;</h4>
+                            <p>
+                                Transactions in this invoice <span class="fst-italic">(NOTE: This is a work in progress, so these might not always add up to the total listed above. For a complete breakdown, please download the invoice PDF.)</span>
+                            </p>
+                            <div class="accordion" role="tablist" id="invoice-item-results">
+                                {% for item in invoice.invoice_items_grouped.groups %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" role="tab">
+                                            <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#invoice-item-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="invoice-item-results .item-{{ forloop.counter }}">
+                                                <div class="fw-bold">{{ item.description }}</div>
+                                                <div class="ms-auto align-items-end">
+                                                    <span class="fw-bold">${{ item.total|stringformat:'.2f'|intcomma }}</span>
                                                 </div>
-                                                <hr />
-                                            {% endfor %}
+                                            </button>
+                                        </h2>
+                                        <!-- <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show{% else %}collapsed{% endif %}" role="tabpanel" data-bs-parent="#invoice-item-results"> -->
+                                        <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}
+                                                show
+                                            {% else %}
+                                                collapsed
+                                            {% endif %}"
+                                            role="tabpanel"
+                                            data-bs-parent="#invoice-item-results">
+                                            <div class="p-2" style="background: var(--bs-card-cap-bg);">
+                                                {% comment %} <span>Date</span>
+                                                <span class="text-muted">{{ item.created_on|timezone:'America/Chicago' }} (CT)</span> {% endcomment %}
+                                                {% for item in item.items %}
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-muted">{{ item.description }} | tax: ${{ item.tax|stringformat:'.2f'|intcomma }}</span>
+                                                    </div>
+                                                    <hr />
+                                                {% endfor %}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            {% endfor %}
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    {% endif %}
 {% endblock %}
 {% block modals %}
     <div id="add-card-modal" class="modal fade" role="dialog" tabindex="-1" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
