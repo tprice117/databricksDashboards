@@ -3608,22 +3608,28 @@ def companies(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
-        my_accounts = request.GET.get("my_accounts")
+        account_filter = request.GET.get("account_filter")
         account_owner_id = None
-        if my_accounts:
+        if account_filter == "my_accounts":
             account_owner_id = request.user.id
+        missing_owner = account_filter == "missing_owner"
+
         # TODO: If impersonating a company, then only show that company.
         context["tab"] = tab
         query_params = request.GET.copy()
 
         if tab == "new":
             user_groups = UserGroupUtils.get_new(
-                search_q=search_q, owner_id=account_owner_id
+                search_q=search_q,
+                owner_id=account_owner_id,
+                missing_owner=missing_owner,
             )
             context["help_text"] = "New Companies created in the last 30 days."
         elif tab == "active":
             user_groups = UserGroupUtils.get_active(
-                search_q=search_q, owner_id=account_owner_id
+                search_q=search_q,
+                owner_id=account_owner_id,
+                missing_owner=missing_owner,
             )
             context["help_text"] = "Active Companies with orders in the last 30 days."
             pagination_limit = 100
@@ -3636,6 +3642,7 @@ def companies(request):
                 old_date=churn_date,
                 new_date=cutoff_date,
                 owner_id=account_owner_id,
+                missing_owner=missing_owner,
             )
             pagination_limit = len(user_groups) or 1
             if tab == "fully_churned":
@@ -3654,6 +3661,8 @@ def companies(request):
             user_groups = UserGroup.objects.filter(seller__isnull=True)
             if account_owner_id:
                 user_groups = user_groups.filter(account_owner_id=account_owner_id)
+            elif missing_owner:
+                user_groups = user_groups.filter(account_owner_id__isnull=True)
             if search_q:
                 user_groups = user_groups.filter(name__icontains=search_q)
             user_groups = user_groups.order_by("name")

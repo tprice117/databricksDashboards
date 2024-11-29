@@ -51,6 +51,10 @@
                 });
             }
         });
+        // Script to uncheck other checkboxes when one is checked (like radio)
+        $('input[type="checkbox"]').on('change', function() {
+            $('input[name="' + this.name + '"]').not(this).prop('checked', false);
+        });
     </script>
 {% endblock %}
 {% block content %}
@@ -78,13 +82,16 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-12">
+                            <div class="col-12 form-group">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="myAccountsCheck" name="my_accounts" />
+                                    <input class="form-check-input" type="checkbox" id="myAccountsCheck" name="account_filter" value="my_accounts"/>
                                     <label class="form-check-label" for="myAccountsCheck">My Accounts (Filters only on accounts that you manage.)</label>
                                 </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="missingOwnerCheck" name="account_filter" value="missing_owner"/>
+                                    <label class="form-check-label" for="missingOwnerCheck">Missing Account Owner (Filters only on accounts that do not have an owner set.)</label>
+                                </div>
                             </div>
-
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
                             </div>
