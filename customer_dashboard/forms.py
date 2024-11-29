@@ -330,6 +330,7 @@ class UserGroupForm(forms.ModelForm):
             self.fields["share_code"].disabled = True
             self.fields["share_code"].widget = forms.HiddenInput()
             self.fields["account_owner"].disabled = True
+            self.fields["account_owner"].widget = forms.HiddenInput()
             self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
             self.fields["tax_exempt_status"].disabled = True
