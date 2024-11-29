@@ -3374,6 +3374,7 @@ def new_user(request):
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
                 email = form.cleaned_data.get("email").casefold()
+                phone = form.cleaned_data.get("phone")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
                 if User.objects.filter(email__iexact=email).exists():
@@ -3385,6 +3386,7 @@ def new_user(request):
                             first_name=first_name,
                             last_name=last_name,
                             email=email,
+                            phone=phone,
                             type=user_type,
                             redirect_url="/customer/",
                         )
@@ -3395,6 +3397,7 @@ def new_user(request):
                             first_name=first_name,
                             last_name=last_name,
                             email=email,
+                            phone=phone,
                             type=user_type,
                             redirect_url="/customer/",
                         )
