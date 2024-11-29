@@ -93,18 +93,26 @@ class UserInviteForm(forms.Form):
     first_name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=True,
     )
     last_name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
     )
     email = forms.CharField(
         widget=forms.TextInput(attrs={"class": "form-control"}),
         required=True,
     )
+    phone = forms.CharField(
+        max_length=40,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
+    )
     type = forms.ChoiceField(
         choices=UserType.choices,
         widget=forms.Select(attrs={"class": "form-select"}),
+        required=True,
     )
 
     def __init__(self, *args, **kwargs):
