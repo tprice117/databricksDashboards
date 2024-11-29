@@ -269,6 +269,7 @@
                                     </div>
                                 {% endif %}
                             {% endfor %}
+                            <small class="text-danger">{{ form.non_field_errors }}</small>
                             <div class="d-flex flex-row-reverse">
                                 <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Save</button>
                             </div>
@@ -380,7 +381,10 @@
                                 <div class="card-body">
                                     <h4 class="card-title">Internal Data&nbsp;</h4>
                                     <p>Share Code: {{ user_group.share_code }}</p>
-                                    <p>Account Owner: {{ user_group.account_owner.email }}</p>
+                                    <p>Account Owner: 
+                                        {% if user_group.account_owner.full_name %}{{ user_group.account_owner.full_name }}
+                                        {% else %}{{ user_group.account_owner.email }}
+                                        {% endif %}</p>
                                     <p>Apollo ID: {{ user_group.apollo_id }}</p>
                                     <p>Stage: {{ user_group.stage }}</p>
                                 </div>
