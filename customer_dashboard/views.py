@@ -3753,10 +3753,7 @@ def company_detail(request, user_group_id=None):
 
     # Fill forms with initial data
     context["form"] = UserGroupForm(
-        initial={
-            "name": user_group.name,
-            "apollo_id": user_group.apollo_id,
-        },
+        instance=user_group,
         user=context["user"],
         auth_user=request.user,
     )
@@ -3793,97 +3790,24 @@ def company_detail(request, user_group_id=None):
 
         # Update UserGroup
         form = UserGroupForm(
-            request.POST, request.FILES, user=context["user"], auth_user=request.user
+            request.POST,
+            request.FILES,
+            instance=user_group,
+            user=context["user"],
+            auth_user=request.user,
         )
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("name") != user_group.name:
-                user_group.name = form.cleaned_data.get("name")
-                save_db = True
-            if (
-                form.cleaned_data.get("apollo_id")
-                and form.cleaned_data.get("apollo_id") != user_group.apollo_id
-            ):
-                user_group.apollo_id = form.cleaned_data.get("apollo_id")
-                save_db = True
-            if form.cleaned_data.get("pay_later") != user_group.pay_later:
-                user_group.pay_later = form.cleaned_data.get("pay_later")
-                save_db = True
-            if form.cleaned_data.get("autopay") != user_group.autopay:
-                user_group.autopay = form.cleaned_data.get("autopay")
-                save_db = True
-            if (
-                form.cleaned_data.get("net_terms")
-                and form.cleaned_data.get("net_terms") != user_group.net_terms
-            ):
-                user_group.net_terms = form.cleaned_data.get("net_terms")
-                save_db = True
-            if (
-                form.cleaned_data.get("invoice_frequency")
-                and form.cleaned_data.get("invoice_frequency")
-                != user_group.invoice_frequency
-            ):
-                user_group.invoice_frequency = form.cleaned_data.get(
-                    "invoice_frequency"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("invoice_day_of_month")
-                and form.cleaned_data.get("invoice_day_of_month")
-                != user_group.invoice_day_of_month
-            ):
-                user_group.invoice_day_of_month = form.cleaned_data.get(
-                    "invoice_day_of_month"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("invoice_at_project_completion")
-                != user_group.invoice_at_project_completion
-            ):
-                user_group.invoice_at_project_completion = form.cleaned_data.get(
-                    "invoice_at_project_completion"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("credit_line_limit")
-                and form.cleaned_data.get("credit_line_limit")
-                != user_group.credit_line_limit
-            ):
-                user_group.credit_line_limit = form.cleaned_data.get(
-                    "credit_line_limit"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("compliance_status")
-                and form.cleaned_data.get("compliance_status")
-                != user_group.compliance_status
-            ):
-                user_group.compliance_status = form.cleaned_data.get(
-                    "compliance_status"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("tax_exempt_status")
-                != user_group.tax_exempt_status
-            ):
-                user_group.tax_exempt_status = form.cleaned_data.get(
-                    "tax_exempt_status"
-                )
-                save_db = True
-
-            if save_db:
+            if form.has_changed():
+                form.save()
                 context["user_group"] = user_group
-                user_group.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
+
             # Reload the form with the updated data since disabled fields do not POST.
             form = UserGroupForm(
-                initial={
-                    "name": user_group.name,
-                    "apollo_id": user_group.apollo_id,
-                },
+                instance=user_group,
                 user=context["user"],
                 auth_user=request.user,
             )
@@ -3895,8 +3819,12 @@ def company_detail(request, user_group_id=None):
         else:
             # This will let bootstrap know to highlight the fields with errors.
             for field in form.errors:
+                if field == "__all__":
+                    continue
                 form[field].field.widget.attrs["class"] += " is-invalid"
-            # messages.error(request, "Error saving, please contact us if this continues.")
+            messages.error(
+                request, "There was an error in the submission, check form below."
+            )
 
     return render(request, "customer_dashboard/company_detail.html", context)
 

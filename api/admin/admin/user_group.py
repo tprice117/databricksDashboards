@@ -8,9 +8,6 @@ from django.conf import settings
 from import_export.admin import ExportActionMixin
 from import_export import resources
 
-from admin_approvals.admin.inlines.user_group_admin_approval_order import (
-    UserGroupAdminApprovalOrderInline,
-)
 from admin_approvals.admin.inlines.user_group_admin_approval_user_invite import (
     UserGroupAdminApprovalUserInviteInline,
 )
@@ -26,7 +23,7 @@ from admin_policies.admin.inlines.user_group_policy_purchase_approval import (
 from api.admin.filters import UserGroupTypeFilter
 from api.admin.filters.user_group.admin_tasks import UserGroupAdminTasksFilter
 from api.admin.inlines import (
-     BrandingInline,
+    BrandingInline,
     UserGroupBillingInline,
     UserGroupCreditApplicationInline,
     UserGroupLegalInline,

@@ -1,6 +1,7 @@
 import datetime
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from api.models import (
@@ -9,6 +10,7 @@ from api.models import (
     UserAddressType,
     UserGroup,
     UserGroupLegal,
+    User,
     Order,
     OrderGroup,
     OrderReview,
@@ -259,78 +261,76 @@ class UserAddressForm(forms.Form):
             self.fields["is_archived"].widget = forms.HiddenInput()
 
 
-class UserGroupForm(forms.Form):
-    name = forms.CharField(
-        max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
-    apollo_id = forms.CharField(
-        max_length=128,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=True,
-    )
-    pay_later = forms.BooleanField(
-        initial=False,
-        widget=forms.HiddenInput(),
-        required=False,
-    )
-    autopay = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
-    net_terms = forms.ChoiceField(
-        choices=UserGroup.NetTerms.choices,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        required=False,
-    )
-    invoice_frequency = forms.ChoiceField(
-        choices=UserGroup.InvoiceFrequency.choices,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        required=False,
-    )
-    invoice_day_of_month = forms.IntegerField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
-        required=False,
-    )
-    invoice_at_project_completion = forms.BooleanField(
-        initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-check-input", "role": "switch"}
-        ),
-        required=False,
-    )
-    share_code = forms.CharField(
-        max_length=6,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=False,
-        disabled=True,
-    )
-    credit_line_limit = forms.DecimalField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
-        required=False,
-    )
-    compliance_status = forms.ChoiceField(
-        choices=UserGroup.COMPLIANCE_STATUS_CHOICES,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        initial="NOT_REQUIRED",
-    )
-    tax_exempt_status = forms.ChoiceField(
-        choices=UserGroup.TaxExemptStatus.choices,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        initial=UserGroup.TaxExemptStatus.NONE,
-    )
+class UserGroupForm(forms.ModelForm):
+    class Meta:
+        model = UserGroup
+        fields = [
+            "name",
+            "account_owner",
+            "apollo_id",
+            "pay_later",
+            "autopay",
+            "net_terms",
+            "invoice_frequency",
+            "invoice_day_of_month",
+            "invoice_at_project_completion",
+            "share_code",
+            "credit_line_limit",
+            "compliance_status",
+            "tax_exempt_status",
+        ]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "account_owner": forms.Select(attrs={"class": "form-select"}),
+            "apollo_id": forms.TextInput(attrs={"class": "form-control"}),
+            "pay_later": forms.HiddenInput(),
+            "autopay": forms.CheckboxInput(
+                attrs={"class": "form-check-input", "role": "switch"}
+            ),
+            "net_terms": forms.Select(attrs={"class": "form-select"}),
+            "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
+            "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
+            "invoice_at_project_completion": forms.CheckboxInput(
+                attrs={"class": "form-check-input", "role": "switch"}
+            ),
+            "share_code": forms.TextInput(
+                attrs={"class": "form-control", "disabled": True}
+            ),
+            "credit_line_limit": forms.NumberInput(attrs={"class": "form-control"}),
+            "compliance_status": forms.Select(attrs={"class": "form-select"}),
+            "tax_exempt_status": forms.Select(attrs={"class": "form-select"}),
+        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
         auth_user = kwargs.pop("auth_user", None)
         super(UserGroupForm, self).__init__(*args, **kwargs)
+
+        # Update the possible account owners if in prod
+        if settings.ENVIRONMENT == "TEST":
+            # Customer Team #1 (CORE)
+            self.fields["account_owner"].queryset = User.objects.filter(
+                user_group="bd49eaab-4b46-46c0-a9bf-bace2896b795"
+            )
+        else:
+            # DEV: Customer Team #1 (CORE), Random Company
+            self.fields["account_owner"].queryset = User.objects.filter(
+                user_group__in=[
+                    "3e717df9-f811-4ddd-8d2f-a5f19b807321",
+                    "38309b8e-0205-45dc-b12c-3bfa365825e2",
+                ]
+            )
+
+        # Make Apollo ID required
+        self.fields["apollo_id"].required = True
+
+        # Update field visibility based on user type
         if auth_user and not auth_user.is_staff:
             self.fields["net_terms"].disabled = True
             self.fields["share_code"].disabled = True
             self.fields["share_code"].widget = forms.HiddenInput()
+            self.fields["account_owner"].disabled = True
+            self.fields["account_owner"].widget = forms.HiddenInput()
             self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
             self.fields["tax_exempt_status"].disabled = True
