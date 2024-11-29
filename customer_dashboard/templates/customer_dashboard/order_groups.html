@@ -57,6 +57,33 @@
         activeFilter.addEventListener("change", function () {
             // selectActiveFilter(this);
         });
+        // Add onchange event listener to all column-checkbox
+        document.querySelectorAll(".column-checkbox").forEach(function (el) {
+            el.addEventListener("change", function () {
+                // Get the column value
+                const column = el.value;
+                // Get if checkbox is checked
+                const isChecked = el.checked;
+                // Get the table element
+                const tableEl = document.getElementById("order-groups-results");
+                if (!tableEl) {
+                    return;
+                }
+                // Get the table column
+                const elList = tableEl.getElementsByClassName(column);
+                // Update the visibility of the column
+                for (let i = 0; i < elList.length; i++) {
+                    if (isChecked) {
+                        // Remove the d-none class
+                        elList[i].classList.remove("d-none");
+                    } else {
+                        // Add the d-none class
+                        elList[i].classList.add("d-none");
+                    }
+                    // tds[0].style.display = isChecked ? "table-cell" : "none";
+                }
+            });
+        });
     </script>
 {% endblock %}
 {% block content %}
@@ -99,6 +126,71 @@
 
         <div class="card shadow">
             <div class="card-header py-3">
+                <div class="dropdown">
+                    <button class="btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Modify Columns</button>
+                    <ul class="dropdown-menu p-4">
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="product" id="column-product" checked />
+                                <label class="form-check-label" for="column-product">Product</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="location" id="column-location" checked />
+                                <label class="form-check-label" for="column-location">Location</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="location_name" id="column-location_name" />
+                                <label class="form-check-label" for="column-location_name">Location Name</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="booking_project_id" id="column-booking_project_id" />
+                                <label class="form-check-label" for="column-booking_project_id">Booking Project</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="supplier" id="column-supplier" checked />
+                                <label class="form-check-label" for="column-supplier">Supplier</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="order_type" id="column-order_type" />
+                                <label class="form-check-label" for="column-order_type">Order Type</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="status" id="column-status" />
+                                <label class="form-check-label" for="column-status">Status</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="account_manager" id="column-account_manager" />
+                                <label class="form-check-label" for="column-account_manager">Account Manager</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="start_date" id="column-start_date" checked />
+                                <label class="form-check-label" for="column-start_date">Start Date</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="nearest_order" id="column-nearest_order" />
+                                <label class="form-check-label" for="column-nearest_order">Nearest Order</label>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
                 <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
             <div class="card-body">
