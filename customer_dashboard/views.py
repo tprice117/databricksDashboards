@@ -19,7 +19,20 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.db import IntegrityError
-from django.db.models import F, Max, Q, ExpressionWrapper, DurationField
+from django.db.models import (
+    F,
+    Max,
+    Q,
+    ExpressionWrapper,
+    DurationField,
+    Sum,
+    Avg,
+    Case,
+    Value,
+    When,
+    IntegerField,
+)
+from django.db.models.functions import Concat, Round, Coalesce
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -38,6 +51,7 @@ from api.models import (
     OrderReview,
     Product,
     ProductAddOnChoice,
+    Seller,
     SellerProductSellerLocation,
     Subscription,
     TimeSlot,
@@ -3360,6 +3374,7 @@ def new_user(request):
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
                 email = form.cleaned_data.get("email").casefold()
+                phone = form.cleaned_data.get("phone")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
                 if User.objects.filter(email__iexact=email).exists():
@@ -3371,6 +3386,7 @@ def new_user(request):
                             first_name=first_name,
                             last_name=last_name,
                             email=email,
+                            phone=phone,
                             type=user_type,
                             redirect_url="/customer/",
                         )
@@ -3381,6 +3397,7 @@ def new_user(request):
                             first_name=first_name,
                             last_name=last_name,
                             email=email,
+                            phone=phone,
                             type=user_type,
                             redirect_url="/customer/",
                         )
@@ -3594,22 +3611,28 @@ def companies(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
-        my_accounts = request.GET.get("my_accounts")
+        account_filter = request.GET.get("account_filter")
         account_owner_id = None
-        if my_accounts:
+        if account_filter == "my_accounts":
             account_owner_id = request.user.id
+        missing_owner = account_filter == "missing_owner"
+
         # TODO: If impersonating a company, then only show that company.
         context["tab"] = tab
         query_params = request.GET.copy()
 
         if tab == "new":
             user_groups = UserGroupUtils.get_new(
-                search_q=search_q, owner_id=account_owner_id
+                search_q=search_q,
+                owner_id=account_owner_id,
+                missing_owner=missing_owner,
             )
             context["help_text"] = "New Companies created in the last 30 days."
         elif tab == "active":
             user_groups = UserGroupUtils.get_active(
-                search_q=search_q, owner_id=account_owner_id
+                search_q=search_q,
+                owner_id=account_owner_id,
+                missing_owner=missing_owner,
             )
             context["help_text"] = "Active Companies with orders in the last 30 days."
             pagination_limit = 100
@@ -3622,6 +3645,7 @@ def companies(request):
                 old_date=churn_date,
                 new_date=cutoff_date,
                 owner_id=account_owner_id,
+                missing_owner=missing_owner,
             )
             pagination_limit = len(user_groups) or 1
             if tab == "fully_churned":
@@ -3640,6 +3664,8 @@ def companies(request):
             user_groups = UserGroup.objects.filter(seller__isnull=True)
             if account_owner_id:
                 user_groups = user_groups.filter(account_owner_id=account_owner_id)
+            elif missing_owner:
+                user_groups = user_groups.filter(account_owner_id__isnull=True)
             if search_q:
                 user_groups = user_groups.filter(name__icontains=search_q)
             user_groups = user_groups.order_by("name")
@@ -3730,10 +3756,7 @@ def company_detail(request, user_group_id=None):
 
     # Fill forms with initial data
     context["form"] = UserGroupForm(
-        initial={
-            "name": user_group.name,
-            "apollo_id": user_group.apollo_id,
-        },
+        instance=user_group,
         user=context["user"],
         auth_user=request.user,
     )
@@ -3770,97 +3793,24 @@ def company_detail(request, user_group_id=None):
 
         # Update UserGroup
         form = UserGroupForm(
-            request.POST, request.FILES, user=context["user"], auth_user=request.user
+            request.POST,
+            request.FILES,
+            instance=user_group,
+            user=context["user"],
+            auth_user=request.user,
         )
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("name") != user_group.name:
-                user_group.name = form.cleaned_data.get("name")
-                save_db = True
-            if (
-                form.cleaned_data.get("apollo_id")
-                and form.cleaned_data.get("apollo_id") != user_group.apollo_id
-            ):
-                user_group.apollo_id = form.cleaned_data.get("apollo_id")
-                save_db = True
-            if form.cleaned_data.get("pay_later") != user_group.pay_later:
-                user_group.pay_later = form.cleaned_data.get("pay_later")
-                save_db = True
-            if form.cleaned_data.get("autopay") != user_group.autopay:
-                user_group.autopay = form.cleaned_data.get("autopay")
-                save_db = True
-            if (
-                form.cleaned_data.get("net_terms")
-                and form.cleaned_data.get("net_terms") != user_group.net_terms
-            ):
-                user_group.net_terms = form.cleaned_data.get("net_terms")
-                save_db = True
-            if (
-                form.cleaned_data.get("invoice_frequency")
-                and form.cleaned_data.get("invoice_frequency")
-                != user_group.invoice_frequency
-            ):
-                user_group.invoice_frequency = form.cleaned_data.get(
-                    "invoice_frequency"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("invoice_day_of_month")
-                and form.cleaned_data.get("invoice_day_of_month")
-                != user_group.invoice_day_of_month
-            ):
-                user_group.invoice_day_of_month = form.cleaned_data.get(
-                    "invoice_day_of_month"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("invoice_at_project_completion")
-                != user_group.invoice_at_project_completion
-            ):
-                user_group.invoice_at_project_completion = form.cleaned_data.get(
-                    "invoice_at_project_completion"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("credit_line_limit")
-                and form.cleaned_data.get("credit_line_limit")
-                != user_group.credit_line_limit
-            ):
-                user_group.credit_line_limit = form.cleaned_data.get(
-                    "credit_line_limit"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("compliance_status")
-                and form.cleaned_data.get("compliance_status")
-                != user_group.compliance_status
-            ):
-                user_group.compliance_status = form.cleaned_data.get(
-                    "compliance_status"
-                )
-                save_db = True
-            if (
-                form.cleaned_data.get("tax_exempt_status")
-                != user_group.tax_exempt_status
-            ):
-                user_group.tax_exempt_status = form.cleaned_data.get(
-                    "tax_exempt_status"
-                )
-                save_db = True
-
-            if save_db:
+            if form.has_changed():
+                form.save()
                 context["user_group"] = user_group
-                user_group.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
+
             # Reload the form with the updated data since disabled fields do not POST.
             form = UserGroupForm(
-                initial={
-                    "name": user_group.name,
-                    "apollo_id": user_group.apollo_id,
-                },
+                instance=user_group,
                 user=context["user"],
                 auth_user=request.user,
             )
@@ -3872,8 +3822,12 @@ def company_detail(request, user_group_id=None):
         else:
             # This will let bootstrap know to highlight the fields with errors.
             for field in form.errors:
+                if field == "__all__":
+                    continue
                 form[field].field.widget.attrs["class"] += " is-invalid"
-            # messages.error(request, "Error saving, please contact us if this continues.")
+            messages.error(
+                request, "There was an error in the submission, check form below."
+            )
 
     return render(request, "customer_dashboard/company_detail.html", context)
 
@@ -4138,3 +4092,226 @@ def reports(request):
         else:
             return render(request, template, context)
     return render(request, "customer_dashboard/reports.html", context)
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def reviews(request):
+    """
+    Handles the reviews view for the customer dashboard.
+
+    This view is responsible for displaying reviews or aggregating
+    review data based on the selected tab (users or sellers).
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The HTTP response object with the rendered template.
+    """
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    context = get_user_context(request)
+    pagination_limit = 25
+    page_number = 1
+
+    if request.GET.get("p"):
+        page_number = request.GET.get("p")
+
+    if request.headers.get("HX-Request"):
+        # This is an HTMX request, so respond with html snippet
+        tab = request.GET.get("tab", None)
+        context["tab"] = tab
+        query_params = request.GET.copy()
+
+        # Build Query
+        if tab == "users":
+            context["help_text"] = "Reviews made by Users"
+            reviews = (
+                User.objects.values("id", "first_name", "last_name", "photo_url")
+                .annotate(
+                    rating=Sum(
+                        Case(
+                            When(ordergroup__orders__review__rating=True, then=1),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    # Round averages to 1 decimal place
+                    professionalism=Round(
+                        Avg("ordergroup__orders__review__professionalism"),
+                        1,
+                    ),
+                    communication=Round(
+                        Avg("ordergroup__orders__review__communication"),
+                        1,
+                    ),
+                    pricing=Round(
+                        Avg("ordergroup__orders__review__pricing"),
+                        1,
+                    ),
+                    timeliness=Round(
+                        Avg("ordergroup__orders__review__timeliness"),
+                        1,
+                    ),
+                )
+                # Don't include rows with no reviews
+                .filter(Q(rating__gt=0))
+                .order_by("-rating")
+            )
+        elif tab == "sellers":
+            context["help_text"] = "Reviews of Sellers"
+            reviews = (
+                Seller.objects.values("id", "name")
+                .annotate(
+                    rating=Sum(
+                        Case(
+                            When(
+                                seller_locations__seller_product_seller_locations__order_groups__orders__review__rating=True,
+                                then=1,
+                            ),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    # Round averages to 1 decimal place
+                    professionalism=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__professionalism"
+                        ),
+                        1,
+                    ),
+                    communication=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__communication"
+                        ),
+                        1,
+                    ),
+                    pricing=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__pricing"
+                        ),
+                        1,
+                    ),
+                    timeliness=Round(
+                        Avg(
+                            "seller_locations__seller_product_seller_locations__order_groups__orders__review__timeliness"
+                        ),
+                        1,
+                    ),
+                )
+                # Don't include rows with no reviews
+                .filter(Q(rating__gt=0))
+                .order_by("-rating")
+            )
+        else:
+            # Default to all reviews
+            reviews = (
+                OrderReview.objects.all()
+                .annotate(
+                    user=Concat(
+                        F("order__order_group__user__first_name"),
+                        Value(" "),
+                        F("order__order_group__user__last_name"),
+                    ),
+                    seller=F(
+                        "order__order_group__seller_product_seller_location__seller_product__seller__name"
+                    ),
+                    product=F(
+                        "order__order_group__seller_product_seller_location__seller_product__product__main_product__name"
+                    ),
+                    sum=(
+                        # Treat null values as 0
+                        Coalesce(F("professionalism"), Value(0))
+                        + Coalesce(F("communication"), Value(0))
+                        + Coalesce(F("pricing"), Value(0))
+                        + Coalesce(F("timeliness"), Value(0))
+                    ),
+                    # This query gets the average rating based on four fields
+                    avg=(
+                        Case(
+                            # If at least one field is not null, then calculate the average
+                            When(
+                                sum__gt=0,
+                                # Get average rounded to 2 decimal places
+                                then=Round(
+                                    (F("sum"))
+                                    / (
+                                        # Get count of non-null fields for division
+                                        Case(
+                                            When(
+                                                professionalism__isnull=True,
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                        + Case(
+                                            When(
+                                                communication__isnull=True,
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                        + Case(
+                                            When(
+                                                pricing__isnull=True,
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                        + Case(
+                                            When(
+                                                timeliness__isnull=True,
+                                                then=0.0,
+                                            ),
+                                            default=1.0,
+                                        )
+                                    ),
+                                    2,
+                                ),
+                            ),
+                        )
+                    ),
+                )
+                .order_by("-created_on")
+            )
+
+        # Pagination
+        paginator = Paginator(reviews, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        if page_number is None:
+            page_number = 1
+        else:
+            page_number = int(page_number)
+        query_params["p"] = 1
+        context["page_start_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/customer/reviews/?{query_params.urlencode()}"
+
+        return render(
+            request, "customer_dashboard/snippets/reviews_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    if query_params.get("tab"):
+        context["reviews_table_link"] = request.get_full_path()
+    else:
+        # Else load pending tab as default
+        context["reviews_table_link"] = (
+            f"{reverse('customer_reviews')}?{query_params.urlencode()}"
+        )
+
+    return render(request, "customer_dashboard/reviews.html", context)

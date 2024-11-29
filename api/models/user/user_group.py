@@ -238,18 +238,24 @@ class CompanyUtils:
         return round(percentage_change)
 
     @staticmethod
-    def get_new(search_q: str = None, owner_id=None):
+    def get_new(search_q: str = None, owner_id=None, missing_owner=False):
         """Get all companies created in the last 30 days.
 
         :param search_q: Search query to filter UserGroups by name
         :param owner_id: Account Owner ID to filter UserGroups by
+        :param missing_owner (bool): Whether to only show UserGroups without an account owner
 
         return: Django UserGroup queryset
         """
+        assert not (
+            owner_id and missing_owner
+        ), "Cannot filter by both owner_id and missing_owner"
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         user_groups = UserGroup.objects.filter(seller__isnull=True)
         if owner_id:
             user_groups = user_groups.filter(account_owner_id=owner_id)
+        elif missing_owner:
+            user_groups = user_groups.filter(account_owner_id__isnull=True)
         if search_q:
             # https://docs.djangoproject.com/en/4.2/topics/db/search/
             user_groups = user_groups.filter(name__icontains=search_q)
@@ -259,15 +265,21 @@ class CompanyUtils:
         return user_groups
 
     @staticmethod
-    def get_active(search_q: str = None, owner_id=None) -> List[UserGroup]:
+    def get_active(
+        search_q: str = None, owner_id=None, missing_owner=False
+    ) -> List[UserGroup]:
         """Get all active companies.
         This returns all companies that have at least one active order in the last 30 days.
 
         :param search_q: Search query to filter UserGroups by name
         :param owner_id: Account Owner ID to filter UserGroups by
+        :param missing_owner (bool): Whether to only show UserGroups without an account owner
 
         return: List of UserGroup objects
         """
+        assert not (
+            owner_id and missing_owner
+        ), "Cannot filter by both owner_id and missing_owner"
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         # Active Companies is user group on an order within date range (or within last 30 days if no range)
         orders = Order.objects.filter(end_date__gte=cutoff_date)
@@ -287,6 +299,8 @@ class CompanyUtils:
                 order.order_group.user.user_group.account_owner_id
             ) != str(owner_id):
                 continue
+            if missing_owner and order.order_group.user.user_group.account_owner_id:
+                continue
             setattr(order.order_group.user.user_group, "last_order", order.end_date)
             user_groups.append(order.order_group.user.user_group)
         # sort based on user_group.created_on
@@ -300,6 +314,7 @@ class CompanyUtils:
         old_date: datetime.date = None,
         new_date: datetime.date = None,
         owner_id=None,
+        missing_owner=False,
     ) -> List[UserGroup]:
         """Get all churning companies.
         -
@@ -315,11 +330,14 @@ class CompanyUtils:
         :param old_date: Start date to filter orders by
         :param new_date: End date to filter orders by
         :param owner_id: Account Owner ID to filter UserGroups by
+        :param missing_owner (bool): Whether to only show UserGroups without an account owner
 
         return: List of UserGroup objects
         """
         # import time
-
+        assert not (
+            owner_id and missing_owner
+        ), "Cannot filter by both owner_id and missing_owner"
         if old_date is None:
             old_date = datetime.date.today() - datetime.timedelta(days=60)
         if new_date is None:
@@ -373,6 +391,8 @@ class CompanyUtils:
         user_groups = []
         for ugid, data in user_groups_d.items():
             if owner_id and str(data["user_group"].account_owner_id) != str(owner_id):
+                continue
+            if missing_owner and data["user_group"].account_owner_id:
                 continue
             if data["total_old"] > data["total_new"]:
                 setattr(data["user_group"], "last_order", data["last_order"])
