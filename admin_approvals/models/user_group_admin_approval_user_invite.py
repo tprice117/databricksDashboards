@@ -38,6 +38,7 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
         null=True,
     )
     email = models.EmailField()
+    phone = models.CharField(max_length=40, blank=True, null=True)
     type = models.CharField(
         max_length=255,
         choices=UserType.choices,
@@ -129,6 +130,7 @@ def pre_save_user_group_admin_approval_order(
             # save that user to the UserGroupApprovalUserInvite.User field.
             instance.user = User.objects.create(
                 email=instance.email,
+                phone=instance.phone,
                 username=instance.email,
                 user_group=instance.user_group,
                 type=instance.type,
