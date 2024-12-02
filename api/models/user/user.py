@@ -46,6 +46,23 @@ class User(AbstractUser):
         CHURNED = "CHURNED", "Churned User"
         DEAD = "DEAD", "Dead Opportunity"
 
+    class Source(models.TextChoices):
+        SALES = "SALES", "Downstream Sales Rep"
+        GOOGLE = "GOOGLE", "Google Search"
+        SOCIAL_MEDIA = (
+            "SOCIAL_MEDIA",
+            "Social Media (e.g., Facebook, Instagram, LinkedIn)",
+        )
+        SUPPLIER = "SUPPLIER", "Referral from a Supplier"
+        WORD_OF_MOUTH = "WORD_OF_MOUTH", "Word of Mouth"
+        ONLINE_AD = "ONLINE_AD", "Online Ad (e.g., Google Ads, Facebook Ads)"
+        EVENT = "EVENT", "Trade Show or Industry Event"
+        EMAIL = "EMAIL", "Email Campaign"
+        WEBSITE = "WEBSITE", "Industry Directory or Website"
+        COWORKER = "COWORKER", "Referral from Co-Worker"
+        OTHER = "OTHER", "Other"
+        UNKNOWN = "", "Unknown"
+
     def get_file_path(instance, filename):
         ext = filename.split(".")[-1]
         filename = "%s.%s" % (uuid.uuid4(), ext)
@@ -77,6 +94,11 @@ class User(AbstractUser):
     photo_url = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
+    source = models.CharField(
+        max_length=50,
+        choices=Source.choices,
+        default=Source.UNKNOWN,
+    )
     device_token = models.CharField(max_length=255, blank=True, null=True)
     is_admin = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
