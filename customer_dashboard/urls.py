@@ -209,6 +209,11 @@ urlpatterns = [
         name="customer_new_payment",
     ),
     path(
+        "customer/bookings/page/settings/",
+        views.bookings_page_settings,
+        name="customer_bookings_page_settings",
+    ),
+    path(
         "customer/reports/",
         views.reports,
         name="customer_reports",

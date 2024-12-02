@@ -10,6 +10,61 @@
 {% block javascript %}
     <script>
         let activeFilter = document.getElementById("order-group-active-filter");
+        function updateColumnsVisibility() {
+            // Update the visibility of the columns based on the user's settings
+            document.querySelectorAll(".column-checkbox").forEach(function (el) {
+                // Get the column value
+                const column = el.value;
+                // Get the table element
+                const tableEl = document.getElementById("order-groups-results");
+                if (!tableEl) {
+                    return;
+                }
+                let sessionValue = undefined;
+                if (column === "product") {
+                    sessionValue = '{{ request.session.bookings_page_settings_product|default_if_none:"True" }}';
+                    sessionValue = sessionValue === "" ? "True" : sessionValue;
+                } else if (column === "location") {
+                    sessionValue = '{{ request.session.bookings_page_settings_location|default_if_none:"True" }}';
+                    sessionValue = sessionValue === "" ? "True" : sessionValue;
+                } else if (column === "location_name") {
+                    sessionValue = "{{ request.session.bookings_page_settings_location_name }}";
+                } else if (column === "booking_project_id") {
+                    sessionValue = "{{ request.session.bookings_page_settings_booking_project_id }}";
+                } else if (column === "supplier") {
+                    sessionValue = '{{ request.session.bookings_page_settings_supplier|default_if_none:"True" }}';
+                    sessionValue = sessionValue === "" ? "True" : sessionValue;
+                } else if (column === "order_type") {
+                    sessionValue = "{{ request.session.bookings_page_settings_order_type }}";
+                } else if (column === "status") {
+                    sessionValue = "{{ request.session.bookings_page_settings_status }}";
+                } else if (column === "account_manager") {
+                    sessionValue = "{{ request.session.bookings_page_settings_account_manager }}";
+                } else if (column === "start_date") {
+                    sessionValue = '{{ request.session.bookings_page_settings_start_date|default_if_none:"True" }}';
+                    sessionValue = sessionValue === "" ? "True" : sessionValue;
+                } else if (column === "nearest_order") {
+                    sessionValue = "{{ request.session.bookings_page_settings_nearest_order }}";
+                }
+                if (sessionValue === undefined) {
+                    return;
+                }
+                // Update current column checkbox checked attribute
+                el.checked = sessionValue === "True";
+                // Get the table column
+                const elList = tableEl.getElementsByClassName(column);
+                // Update the visibility of the column
+                for (let i = 0; i < elList.length; i++) {
+                    if (sessionValue === "True") {
+                        // Remove the d-none class
+                        elList[i].classList.remove("d-none");
+                    } else {
+                        // Add the d-none class
+                        elList[i].classList.add("d-none");
+                    }
+                }
+            });
+        }
         // listen for page load event.
         // NOTE: Do this first so that the date filter value is set before the change listener is added.
         document.addEventListener("DOMContentLoaded", function () {
@@ -31,6 +86,12 @@
                 // update date filter value
                 searchFilter.value = searchq;
             }
+            updateColumnsVisibility();
+        });
+        // listen for htmx afterSettle event.
+        document.body.addEventListener("htmx:afterSettle", function (event) {
+            console.log("htmx:afterSettle", event);
+            updateColumnsVisibility();
         });
         function selectActiveFilter(el) {
             // Get current query params.
@@ -57,6 +118,25 @@
         activeFilter.addEventListener("change", function () {
             // selectActiveFilter(this);
         });
+        
+        async function updateColumnSettings(column, isChecked) {
+            const data = new URLSearchParams();
+            data.append("column", column);
+            data.append("is_checked", isChecked);
+            const response = await fetch("{% url 'customer_bookings_page_settings' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: data.toString(),
+            });
+            if (response.ok) {
+                console.log("Booking Page Settings updated successfully");
+            } else {
+                console.error("Failed update Booking Page Settings", response, response.statusText);
+            }
+        }
         // Add onchange event listener to all column-checkbox
         document.querySelectorAll(".column-checkbox").forEach(function (el) {
             el.addEventListener("change", function () {
@@ -82,6 +162,7 @@
                     }
                     // tds[0].style.display = isChecked ? "table-cell" : "none";
                 }
+                updateColumnSettings(column, isChecked);
             });
         });
     </script>
@@ -198,23 +279,24 @@
                     <table class="table my-0" id="order-groups-results" hx-get="{{ active_orders_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
                         <thead>
                             <tr>
-                                <th>Product</th>
-                                <th>Location</th>
-                                <th>Supplier</th>
-                                <th>Start Date</th>
+                                <th class="product">Product</th>
+                                <th class="location">Location</th>
+                                <th class="d-none location_name">Location Name</th>
+                                <th class="d-none booking_project_id">Booking Project</th>
+                                <th class="supplier">Supplier</th>
+                                <th class="d-none order_type">Order Type</th>
+                                <th class="d-none status">Status</th>
+                                <th class="d-none account_manager">Account Manager</th>
+                                <th class="start_date">Start Date</th>
+                                <th class="d-none nearest_order">Nearest Order</th>
+                                {% if is_active %}
+                                    <th>Swap</th>
+                                    <th>Removal</th>
+                                {% endif %}
                                 <th>View</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
-                        <tfoot>
-                            <tr>
-                                <th>Product</th>
-                                <th>Location</th>
-                                <th>Supplier</th>
-                                <th>Start Date</th>
-                                <th>View</th>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
                 <div class="row invisible" id="order-groups-pagination"></div>
