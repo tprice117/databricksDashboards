@@ -94,6 +94,30 @@ class Invoice(BaseModel):
             )
         # setattr(self, "items", response["items"])
         # setattr(self, "groups", response["groups"])
+
+        # Define the order of descriptions
+        item_order = [
+            "Service",
+            "Rental",
+            "Materials",
+            "Fuel & Environmental Fee",
+            "Delivery Fee",
+            "Removal Fee",
+        ]
+
+        # Create a custom sorting function
+        def get_sort_key(item):
+            # Extract the main part of the description before the first "|"
+            main_description = item["description"].split(" | ")[0].strip()
+            # Return the index of the main description in the item_order list
+            return (
+                item_order.index(main_description)
+                if main_description in item_order
+                else len(item_order)
+            )
+
+        # Sort the items using the custom sorting function
+        response["items"] = sorted(response["items"], key=get_sort_key)
         return response
 
     @property

@@ -2284,6 +2284,25 @@ def order_review_form(request):
 
 
 @login_required(login_url="/admin/login/")
+def bookings_page_settings(request):
+    # context = get_user_context(request)
+    http_status = 204
+    status_text = ""
+    if request.method == "POST":
+        column = request.POST.get("column")
+        is_checked = request.POST.get("is_checked")
+        if is_checked == "true":
+            is_checked = True
+        else:
+            is_checked = False
+        session_key = f"bookings_page_settings_{column}"
+        request.session[session_key] = is_checked
+        request.session.save()
+        http_status = 200
+    return HttpResponse(status=http_status, content=status_text)
+
+
+@login_required(login_url="/admin/login/")
 @catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
