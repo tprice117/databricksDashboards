@@ -54,39 +54,37 @@ def get_all_address_types(_social_site=None):
     return type_list
 
 
-class UserForm(forms.Form):
-    first_name = forms.CharField(
-        max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
-    last_name = forms.CharField(
-        max_length=255,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
-    apollo_id = forms.CharField(
-        max_length=128,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=True,
-    )
-    phone = forms.CharField(
-        max_length=40,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=False,
-    )
-    email = forms.CharField(
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        disabled=True,
-        required=False,
-    )
-    type = forms.ChoiceField(
-        choices=UserType.choices,
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
-    photo = forms.ImageField(
-        label="Profile Picture",
-        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
-        required=False,
-    )
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "apollo_id",
+            "phone",
+            "email",
+            "source",
+            "type",
+            "photo",
+        ]
+        widgets = {
+            "first_name": forms.TextInput(attrs={"class": "form-control"}),
+            "last_name": forms.TextInput(attrs={"class": "form-control"}),
+            "apollo_id": forms.TextInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "email": forms.TextInput(attrs={"class": "form-control", "disabled": True}),
+            "source": forms.Select(attrs={"class": "form-select"}),
+            "type": forms.Select(attrs={"class": "form-select"}),
+            "photo": forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.get("instance", None)
+        super(UserForm, self).__init__(*args, **kwargs)
+        self.fields["photo"].label = "Profile Picture"
+        if user and user.is_staff:
+            self.fields["source"].required = False
+            self.fields["source"].widget = forms.HiddenInput()
 
 
 class UserInviteForm(forms.Form):
