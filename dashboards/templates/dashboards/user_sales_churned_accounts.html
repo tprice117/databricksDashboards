@@ -60,6 +60,7 @@
     <main>
         <section>
             <h3>New Accounts of Past Month</h3>
+            {% comment %} {{churned_accounts}} {% endcomment %}
             <table>
                 <thead>
                     <tr style="border-bottom: 1px solid #ddd;">
@@ -70,7 +71,7 @@
                 <tbody>
                     {% for accounts in churned_accounts%}
                     <tr>
-                        <td>{{accounts.name}}</td>                 
+                        <td>{{accounts.name}}</td>     
                     </tr>
                     {%endfor%}                    
                 </tbody>

@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.db.models import Count, Case, When, BooleanField
 
+from api.models import *
 from api.models.order.order import *
 from api.models.order.order_group import *
 from api.models.order.order_line_item import *
@@ -95,6 +96,9 @@ def sales_leaderboard(request):
 
     # Sort Users by GMV (descending).
     users = sorted(users, key=lambda user: user.gmv, reverse=True)
+
+
+
 
     return render(
         request,
