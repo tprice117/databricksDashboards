@@ -3740,7 +3740,7 @@ def company_detail(request, user_group_id=None):
 
             return render(request, "customer_dashboard/company_detail.html", context)
 
-        # Update UserGroup
+        # Update form
         form = UserGroupForm(
             request.POST,
             request.FILES,
@@ -3757,7 +3757,7 @@ def company_detail(request, user_group_id=None):
             else:
                 messages.info(request, "No changes detected.")
 
-            # Reload the form with the updated data since disabled fields do not POST.
+            # Reload the form with the updated data
             form = UserGroupForm(
                 instance=user_group,
                 user=context["user"],
@@ -3792,7 +3792,7 @@ def user_email_check(request):
         context["phone"] = request.POST.get("phone")
         context["first_name"] = request.POST.get("first_name")
         context["last_name"] = request.POST.get("last_name")
-        context["last_name"] = request.POST.get("last_name")
+        context["apollo_id"] = request.POST.get("apollo_id")
         context["type"] = request.POST.get("type")
         if context["type"]:
             context["types"] = context["user"].get_allowed_user_types()
@@ -3814,6 +3814,7 @@ def user_email_check(request):
                     context["phone"] = user.phone
                     context["first_name"] = user.first_name
                     context["last_name"] = user.last_name
+                    context["apollo_id"] = user.apollo_id
                     context["type"] = user.type
         except ValidationError as e:
             context["error"] = f"{e}"
@@ -3849,51 +3850,59 @@ def new_company(request):
                 context["type"] = request.POST.get("type")
             else:
                 POST_COPY["type"] = UserType.ADMIN
-            context["user_form"] = UserForm(POST_COPY, request.FILES)
-            context["user_form"].fields["email"].disabled = False
+            user_form = UserForm(POST_COPY, request.FILES)
+            user_form.fields["email"].disabled = False
+            user_form.fields["source"].required = False
+            context["user_form"] = user_form
             context["email"] = request.POST.get("email")
             context["phone"] = request.POST.get("phone")
             context["first_name"] = request.POST.get("first_name")
             context["last_name"] = request.POST.get("last_name")
+            context["apollo_id"] = request.POST.get("apollo_id")
             context["form"] = form
+
             if form.is_valid():
                 # Create New UserGroup
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
                     apollo_id=form.cleaned_data.get("company_apollo_id"),
                 )
-                if context["user_form"].is_valid():
-                    # Create New User
-                    email = context["user_form"].cleaned_data.get("email").casefold()
-                    if User.objects.filter(email__iexact=email).exists():
-                        user = User.objects.get(email__iexact=email)
-                        if user.user_group:
-                            messages.error(
-                                request,
-                                f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
-                            )
-                        else:
-                            context["user_group"] = user_group
-                            user_group.save()  # Only save if User will be saved.
-                            user.user_group = user_group
-                            user.save()
-                            messages.success(request, "Successfully saved!")
-                            return HttpResponseRedirect(reverse("customer_companies"))
+                email = request.POST.get("email").casefold()
+
+                if email and User.objects.filter(email__iexact=email).exists():
+                    # Update Existing User
+                    user = User.objects.get(email__iexact=email)
+                    if user.user_group:
+                        messages.error(
+                            request,
+                            f"User with email [{email}] already exists in UserGroup [{user.user_group.name}].",
+                        )
                     else:
                         context["user_group"] = user_group
                         user_group.save()  # Only save if User will be saved.
+                        user.user_group = user_group
+                        user.save()
+                        messages.success(request, "Successfully saved!")
+                        return HttpResponseRedirect(
+                            reverse(
+                                "customer_company_detail",
+                                kwargs={
+                                    "user_group_id": user_group.id,
+                                },
+                            )
+                        )
+                else:
+                    # Create New User
+                    if user_form.is_valid():
+                        context["user_group"] = user_group
+                        user_group.save()  # Only save if User will be saved.
                         user = User(
-                            first_name=context["user_form"].cleaned_data.get(
-                                "first_name"
-                            ),
-                            last_name=context["user_form"].cleaned_data.get(
-                                "last_name"
-                            ),
+                            first_name=user_form.cleaned_data.get("first_name"),
+                            last_name=user_form.cleaned_data.get("last_name"),
                             email=email,
-                            type=context["user_form"].cleaned_data.get("type"),
-                            apollo_id=context["user_form"].cleaned_data.get(
-                                "apollo_id"
-                            ),
+                            phone=user_form.cleaned_data.get("phone"),
+                            type=user_form.cleaned_data.get("type"),
+                            apollo_id=user_form.cleaned_data.get("apollo_id"),
                             user_group=user_group,
                         )
                         user.save()
@@ -3905,6 +3914,11 @@ def new_company(request):
                                     "user_group_id": user_group.id,
                                 },
                             )
+                        )
+                    else:
+                        messages.error(
+                            request,
+                            "Error saving, please contact us if this continues.",
                         )
             else:
                 # This will let bootstrap know to highlight the fields with errors.
