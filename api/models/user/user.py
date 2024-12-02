@@ -47,6 +47,24 @@ class User(AbstractUser):
         DEAD = "DEAD", "Dead Opportunity"
 
     class Source(models.TextChoices):
+        """
+        Enumeration for different sources of user acquisition.
+
+        Attributes:
+            SALES (str): Downstream Sales Rep.
+            GOOGLE (str): Google Search.
+            SOCIAL_MEDIA (str): Social Media (e.g., Facebook, Instagram, LinkedIn).
+            SUPPLIER (str): Referral from a Supplier.
+            WORD_OF_MOUTH (str): Word of Mouth.
+            ONLINE_AD (str): Online Ad (e.g., Google Ads, Facebook Ads).
+            EVENT (str): Trade Show or Industry Event.
+            EMAIL (str): Email Campaign.
+            WEBSITE (str): Industry Directory or Website.
+            COWORKER (str): Referral from Co-Worker.
+            OTHER (str): Other.
+            UNKNOWN (str): Unknown.
+        """
+
         SALES = "SALES", "Downstream Sales Rep"
         GOOGLE = "GOOGLE", "Google Search"
         SOCIAL_MEDIA = (
@@ -98,6 +116,7 @@ class User(AbstractUser):
         max_length=50,
         choices=Source.choices,
         default=Source.UNKNOWN,
+        verbose_name="How did you hear about us?",
     )
     device_token = models.CharField(max_length=255, blank=True, null=True)
     is_admin = models.BooleanField(default=False)

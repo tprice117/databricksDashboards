@@ -145,7 +145,7 @@ class UserGroupAdmin(BaseModelAdmin, ExportActionMixin):
             # Do nothing if first row is not "name".
             reader = csv.DictReader(decoded_file)
             for row in reader:
-                if not "name" in row.keys():
+                if "name" not in row.keys():
                     self.message_user(
                         request,
                         "Your csv file must have a header row with 'name' as the first column.",
