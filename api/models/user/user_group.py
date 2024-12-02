@@ -126,9 +126,11 @@ class UserGroup(BaseModel):
 
     def clean(self):
         super().clean()
-        if self.invoice_frequency and self.invoice_day_of_month:
+        if (
+            self.invoice_frequency != self.InvoiceFrequency.MONTHLY
+        ) and self.invoice_day_of_month:
             raise ValidationError(
-                "You cannot set both 'Invoice Frequency' and 'Invoice Day of Month'",
+                "You cannot set 'Invoice Day of Month' if 'Invoice Frequency' is not Monthly.",
             )
 
     def post_create(sender, instance, created, **kwargs):
