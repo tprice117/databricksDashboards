@@ -90,7 +90,6 @@ def pre_save_user_group_admin_approval_order(
     # the created_by field not being set during this signal.
     if issubclass(sender, BaseModel):
         base_model_pre_save(sender, instance, **kwargs)
-    print("Created By: ", instance.created_by)
 
     # If old_status is not PENDING, throw an error.
     if not instance._state.adding and not old_status == ApprovalStatus.PENDING:
@@ -100,13 +99,11 @@ def pre_save_user_group_admin_approval_order(
     else:
         # The UserGroupAdminApprovalUserInvite.Status is PENDING. It's
         # either being created or updated.
+        source = User.Source.COWORKER
 
         if instance._state.adding and instance.created_by:
             is_admin = instance.created_by.type == UserType.ADMIN
-            print("Created By Type: ", instance.created_by.type)
-            print("Is Admin: ", is_admin)
             is_staff = instance.created_by.is_staff
-            print("Is Staff: ", is_staff)
             has_policy = (
                 hasattr(instance.user_group, "policy_invitation_approvals")
                 and instance.user_group.policy_invitation_approvals.filter(
@@ -114,7 +111,6 @@ def pre_save_user_group_admin_approval_order(
                 ).first()
                 is not None
             )
-            print("Has Policy: ", has_policy)
 
             if is_admin or is_staff or not has_policy:
                 # If the UserGroupAdminApprovalUserInvite is being created by an ADMIN
@@ -122,6 +118,7 @@ def pre_save_user_group_admin_approval_order(
                 # UserGroupAdminApprovalUserInvite. Also, if there is no UserGroup User
                 # Invite policy for the CreatedBy user type, automatically approve the
                 # UserGroupAdminApprovalUserInvite.
+                source = User.Source.SALES
                 instance.status = ApprovalStatus.APPROVED
 
         if instance.status == ApprovalStatus.APPROVED:
@@ -133,6 +130,7 @@ def pre_save_user_group_admin_approval_order(
                 phone=instance.phone,
                 username=instance.email,
                 user_group=instance.user_group,
+                source=source,
                 type=instance.type,
                 first_name=instance.first_name,
                 last_name=instance.last_name,
