@@ -2050,45 +2050,17 @@ def profile(request):
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
         POST_COPY["email"] = user.email
-        form = UserForm(POST_COPY, request.FILES)
+        form = UserForm(POST_COPY, request.FILES, instance=user)
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("first_name") != user.first_name:
-                user.first_name = form.cleaned_data.get("first_name")
-                save_db = True
-            if form.cleaned_data.get("last_name") != user.last_name:
-                user.last_name = form.cleaned_data.get("last_name")
-                save_db = True
-            if form.cleaned_data.get("phone") != user.phone:
-                user.phone = form.cleaned_data.get("phone")
-                save_db = True
-            if form.cleaned_data.get("type") != user.type:
-                user.type = form.cleaned_data.get("type")
-                save_db = True
-            if request.FILES.get("photo"):
-                user.photo = request.FILES["photo"]
-                save_db = True
-            elif request.POST.get("photo-clear") == "on":
-                user.photo = None
-                save_db = True
-            if save_db:
+            if form.has_changed():
+                form.save()
                 context["user"] = user
-                user.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
-            form = UserForm(
-                initial={
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "phone": user.phone,
-                    "photo": user.photo,
-                    "email": user.email,
-                    "type": user.type,
-                }
-            )
+            form = UserForm(instance=user)
             context["form"] = form
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
@@ -2100,16 +2072,7 @@ def profile(request):
                 form[field].field.widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
-        form = UserForm(
-            initial={
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "phone": user.phone,
-                "photo": user.photo,
-                "email": user.email,
-                "type": user.type,
-            }
-        )
+        form = UserForm(instance=user)
         context["form"] = form
     return render(request, "customer_dashboard/profile.html", context)
 
@@ -3193,44 +3156,18 @@ def user_detail(request, user_id):
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
         POST_COPY["email"] = user.email
-        form = UserForm(POST_COPY, request.FILES)
+        form = UserForm(POST_COPY, request.FILES, instance=user)
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("first_name") != user.first_name:
-                user.first_name = form.cleaned_data.get("first_name")
-                save_db = True
-            if form.cleaned_data.get("last_name") != user.last_name:
-                user.last_name = form.cleaned_data.get("last_name")
-                save_db = True
-            if form.cleaned_data.get("phone") != user.phone:
-                user.phone = form.cleaned_data.get("phone")
-                save_db = True
-            if form.cleaned_data.get("type") != user.type:
-                user.type = form.cleaned_data.get("type")
-                save_db = True
-            if request.FILES.get("photo"):
-                user.photo = request.FILES["photo"]
-                save_db = True
-            elif request.POST.get("photo-clear") == "on":
-                user.photo = None
-                save_db = True
-            if save_db:
+            if form.has_changed():
+                form.save()
                 context["user"] = user
-                user.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
             form = UserForm(
-                initial={
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "phone": user.phone,
-                    "photo": user.photo,
-                    "email": user.email,
-                    "type": user.type,
-                }
+                instance=user,
             )
             context["form"] = form
             # return HttpResponse("", status=200)
@@ -3244,15 +3181,7 @@ def user_detail(request, user_id):
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
         form = UserForm(
-            initial={
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "phone": user.phone,
-                "photo": user.photo,
-                "email": user.email,
-                "type": user.type,
-                "apollo_id": user.apollo_id,
-            }
+            instance=user,
         )
         context["form"] = form
 
@@ -3417,11 +3346,12 @@ def new_user(request):
                             last_name=last_name,
                             email=email,
                             phone=phone,
+                            source=User.Source.SALES,
                             type=user_type,
                             redirect_url="/customer/",
                         )
                         save_model = user
-                        messages.success(request, "Directly created user.")
+                        logger.debug("Directly created user.")
                     else:
                         raise ValueError(
                             f"User:[{context['user'].id}]-UserGroup:[{user_group_id}]-invite attempt:[{email}]"
@@ -4018,6 +3948,7 @@ def company_new_user(request, user_group_id):
                 context["first_name"] = form.cleaned_data.get("first_name")
                 context["last_name"] = form.cleaned_data.get("last_name")
                 context["email"] = form.cleaned_data.get("email")
+                context["phone"] = form.cleaned_data.get("phone")
                 context["type"] = form.cleaned_data.get("type")
                 context["types"] = context["user"].get_allowed_user_types()
                 # Check if email is already in use.
@@ -4037,6 +3968,7 @@ def company_new_user(request, user_group_id):
                         first_name=context["first_name"],
                         last_name=context["last_name"],
                         email=context["email"],
+                        phone=context["phone"],
                         type=context["type"],
                     )
                     save_model = user_invite
@@ -4047,7 +3979,7 @@ def company_new_user(request, user_group_id):
                 context["form_msg"] = "Successfully saved!"
                 context["first_name"] = context["last_name"] = context[
                     "email"
-                ] = context["type"] = ""
+                ] = context["type"] = context["phone"] = ""
         except UserAlreadyExistsError:
             context["form_error"] = "User with that email already exists."
         except InvalidFormError as e:
