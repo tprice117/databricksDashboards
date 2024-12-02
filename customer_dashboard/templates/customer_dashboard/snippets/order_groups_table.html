@@ -2,10 +2,16 @@
 <table class="table my-0" id="order-groups-results">
     <thead>
         <tr>
-            <th>Product</th>
-            <th>Location</th>
-            <th>Supplier</th>
-            <th>Start Date</th>
+            <th class="product">Product</th>
+            <th class="location">Location</th>
+            <th class="d-none location_name">Location Name</th>
+            <th class="d-none booking_project_id">Booking Project</th>
+            <th class="supplier">Supplier</th>
+            <th class="d-none order_type">Order Type</th>
+            <th class="d-none status">Status</th>
+            <th class="d-none account_manager">Account Manager</th>
+            <th class="start_date">Start Date</th>
+            <th class="d-none nearest_order">Nearest Order</th>
             {% if is_active %}
                 <th>Swap</th>
                 <th>Removal</th>
@@ -16,7 +22,7 @@
     <tbody id="order-groups-results">
         {% for order_group in page_obj %}
             <tr>
-                <td>
+                <td class="product">
                     <img class="rounded-circle me-2"
                         width="30"
                         height="30"
@@ -28,7 +34,7 @@
                             {% static 'customer_dashboard/img/logo.png' %}
                         {% endif %}" />&nbsp;{{ order_group.seller_product_seller_location.seller_product.product.main_product.name }}
                 </td>
-                <td>
+                <td class="location">
                     {{ order_group.user_address.formatted_address }}
                     {% if order_group.project_id %}
                         | {{ order_group.project_id }}
@@ -37,7 +43,9 @@
                     {% endif %}
                     {% comment %} <a class="btn btn-link" href="{% url 'customer_location_detail' location_id=order_group.user_address.id %}">{{ order_group.user_address.formatted_address }}</a> {% endcomment %}
                 </td>
-                <td>
+                <td class="d-none location_name">{{ order_group.user_address.name }}</td>
+                <td class="d-none booking_project_id">{{ order_group.project_id }}</td>
+                <td class="supplier">
                     <img class="rounded-circle me-2"
                         width="30"
                         height="30"
@@ -47,7 +55,11 @@
                             {% static 'customer_dashboard/img/blank.png' %}
                         {% endif %}" />&nbsp;{{ order_group.seller_product_seller_location.seller_location.name }}
                 </td>
-                <td>{{ order_group.start_date }}</td>
+                <td class="d-none order_type">{{ order_group.order_type }}</td>
+                <td class="d-none status">{{ order_group.status }}</td>
+                <td class="d-none account_manager">{{ order_group.user_address.user_group.account_owner.full_name }}</td>
+                <td class="start_date">{{ order_group.start_date }}</td>
+                <td class="d-none nearest_order">{{ order_group.nearest_order.start_date }}</td>
                 {% if is_active %}
                     {% if order_group.order_type != 'ONE_TIME' %}
                         {% if order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name == 'Roll Off Dumpsters' %}
@@ -73,10 +85,16 @@
     </tbody>
     <tfoot>
         <tr>
-            <th>Product</th>
-            <th>Location</th>
-            <th>Supplier</th>
-            <th>Start Date</th>
+            <th class="product">Product</th>
+            <th class="location">Location</th>
+            <th class="d-none location_name">Location Name</th>
+            <th class="d-none booking_project_id">Booking Project</th>
+            <th class="supplier">Supplier</th>
+            <th class="d-none order_type">Order Type</th>
+            <th class="d-none status">Status</th>
+            <th class="d-none account_manager">Account Manager</th>
+            <th class="start_date">Start Date</th>
+            <th class="d-none nearest_order">Nearest Order</th>
             {% if is_active %}
                 <th>Swap</th>
                 <th>Removal</th>
