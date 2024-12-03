@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
+from django.db.models import DurationField
 
 from api.models import User
 
@@ -280,7 +281,19 @@ def user_sales_churned_accounts(request, user_id):
     user_groups_for_user = UserGroup.objects.filter(account_owner=user)
 
     # Find user groups that have not placed any orders in the last 30 days.
-    churned_accounts = user_groups_for_user
+    churned_accounts = user_groups_for_user.annotate(
+        last_order_date=Max('user_addresses__order_groups__orders__end_date')
+    ).filter(
+        last_order_date__lt=timezone.now().date() - timedelta(days=30)
+    ).annotate(
+        days_since_last_order=ExpressionWrapper(
+            timezone.now().date() - F('last_order_date'), output_field=DurationField()
+        )
+    ).values('id', 'name', 'last_order_date', 'days_since_last_order')
+
+    # Remove hours, minutes, and seconds from days_since_last_order
+    for account in churned_accounts:
+        account['days_since_last_order'] = account['days_since_last_order'].days
 
     context["churned_accounts"] = churned_accounts
     context["user"] = user
