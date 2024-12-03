@@ -29,7 +29,7 @@ Sales Leaderboard
                         </tr>
                     </thead>
                     <tbody>
-                        {% for user in users %}
+                        {% for user in users|dictsortreversed:"score" %}
                         <tr>
                             <td>
                                 <img class="rounded-circle me-2" width="30" height="30" src="
@@ -46,6 +46,7 @@ Sales Leaderboard
                             <td>{{user.order_count|intcomma}}</td>
                             <td>{{user.new_companies}}</td>
                             <td>{{user.new_users}}</td>
+                            <td>{{user.score|floatformat:2}}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -68,11 +69,10 @@ Sales Leaderboard
                                     <th>Sales Rep</th>
                                     <th>UserCount</th>
                                     <th>Points</th>
-                                    <th>Score</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for user in users|dictsortreversed:"new_buyers" %}
+                                {% for user in users|dictsortreversed:"new_buyers_score" %}
                                 <tr>
                                     <td>
                                         <img class="rounded-circle me-2" width="30" height="30" src="
@@ -84,6 +84,7 @@ Sales Leaderboard
                                         <a href="{% url 'user_sales_detail' user.id %}">{{user.first_name}} {{user.last_name}}</a>
                                     </td>
                                     <td>{{user.new_buyers}}</td>
+                                    <td>{{user.new_buyers_score|floatformat:2}}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -98,11 +99,10 @@ Sales Leaderboard
                                     <th>Sales Rep</th>
                                     <th>Current GMV</th>
                                     <th>Points</th>
-                                    <th>Score</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for user in users|dictsortreversed:"gmv" %}
+                                {% for user in users|dictsortreversed:"gmv_score" %}
                                 <tr>
                                     <td>
                                         <img class="rounded-circle me-2" width="30" height="30" src="
@@ -114,6 +114,7 @@ Sales Leaderboard
                                         <a href="{% url 'user_sales_detail' user.id %}">{{user.first_name}} {{user.last_name}}</a>
                                     </td>
                                     <td>${{user.gmv|floatformat:2|intcomma}}</td>
+                                    <td>{{user.gmv_score|floatformat:2}}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -128,11 +129,10 @@ Sales Leaderboard
                                     <th>Sales Rep</th>
                                     <th>Order Count</th>
                                     <th>Points</th>
-                                    <th>Score</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for user in users|dictsortreversed:"external_orders_count" %}
+                                {% for user in users|dictsortreversed:"platform_adoption_score" %}
                                 <tr>
                                     <td>
                                         <img class="rounded-circle me-2" width="30" height="30" src="
@@ -144,6 +144,7 @@ Sales Leaderboard
                                         <a href="{% url 'user_sales_detail' user.id %}">{{user.first_name}} {{user.last_name}}</a>
                                     </td>
                                     <td>{{user.external_orders_count}}</td>
+                                    <td>{{user.platform_adoption_score|floatformat:2}}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -158,11 +159,10 @@ Sales Leaderboard
                                     <th>Sales Rep</th>
                                     <th>Avg Discount Rate</th>
                                     <th>Points</th>
-                                    <th>Score</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for user in users|dictsortreversed:"external_orders_count" %}
+                                {% for user in users|dictsortreversed:"discount_rate_score" %}
                                 <tr>
                                     <td>
                                         <img class="rounded-circle me-2" width="30" height="30" src="
@@ -174,6 +174,7 @@ Sales Leaderboard
                                         <a href="{% url 'user_sales_detail' user.id %}">{{user.first_name}} {{user.last_name}}</a>
                                     </td>
                                     <td>{{user.avg_discount|floatformat:2|intcomma}}%</td>
+                                    <td>{{user.discount_rate_score|floatformat:2}}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
