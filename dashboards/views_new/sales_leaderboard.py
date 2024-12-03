@@ -30,10 +30,45 @@ first_of_month = timezone.now().replace(
     microsecond=0,
 )
 
+sales_competition_start_date = timezone.datetime(2024, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+
 orders_this_month = Order.objects.filter(
     end_date__gte=first_of_month,
     status=Order.Status.COMPLETE,
 )
+
+# Calculate maximum values for normalization
+max_new_buyers = UserGroup.objects.filter(
+    user_addresses__order_groups__orders__start_date__gte=first_of_month
+).distinct().count()
+
+max_gmv = orders_this_month.aggregate(max_gmv=Sum(
+    F('order_line_items__rate') * F('order_line_items__quantity') * (1 + F('order_line_items__platform_fee_percent') / 100)
+))['max_gmv'] or 1
+
+max_external_orders = orders_this_month.filter(created_by__is_staff=False).count()
+
+max_discount_rate = 100  # Maximum possible discount rate
+
+def calculate_score(user, max_new_buyers, max_gmv, max_external_orders, max_discount_rate):
+    new_buyers_score = Decimal(user.new_buyers / max_new_buyers) * Decimal('0.4') if max_new_buyers > 0 else Decimal('0.0')
+    gmv_score = Decimal(user.gmv / max_gmv) * Decimal('0.25') if max_gmv > 0 else Decimal('0.0')
+    platform_adoption_score = (Decimal(user.external_orders_count) / Decimal(max_external_orders)) * Decimal('0.25') if max_external_orders > 0 else Decimal('0.0')
+    discount_rate_score = ((Decimal('100') - Decimal(user.avg_discount)) / Decimal(max_discount_rate)) * Decimal('0.1') if max_discount_rate > 0 else Decimal('0.0')
+    
+    if user.avg_discount == 0:
+        discount_rate_score = Decimal('0.00')
+    
+    total_score = new_buyers_score + gmv_score + platform_adoption_score + discount_rate_score
+    
+    # Multiply each score by 100 for easier to read scores
+    return {
+        'total_score': total_score * 100,
+        'new_buyers_score': new_buyers_score * 100,
+        'gmv_score': gmv_score * 100,
+        'platform_adoption_score': platform_adoption_score * 100,
+        'discount_rate_score': discount_rate_score * 100
+    }
 
 
 @login_required(login_url="/admin/login/")
@@ -94,12 +129,15 @@ def sales_leaderboard(request):
         user.internal_orders_count = internal_orders_count
         user.external_orders_count = external_orders_count
 
+        scores = calculate_score(user, max_new_buyers, max_gmv, max_external_orders, max_discount_rate)
+        user.score = scores['total_score']
+        user.new_buyers_score = scores['new_buyers_score']
+        user.gmv_score = scores['gmv_score']
+        user.platform_adoption_score = scores['platform_adoption_score']
+        user.discount_rate_score = scores['discount_rate_score']
+
     # Sort Users by GMV (descending).
     users = sorted(users, key=lambda user: user.gmv, reverse=True)
-
-
-
-
     return render(
         request,
         "dashboards/sales_leaderboard.html",
