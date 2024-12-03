@@ -11,6 +11,7 @@ router.register(
     r"disposal-location-waste-types", views.DisposalLocationWasteTypeViewSet, "api"
 )
 router.register(r"disposal-locations", views.DisposalLocationViewSet, "api")
+router.register(r"industries", views.IndustryViewSet, "api")
 router.register(r"sellers", views.SellerViewSet, "api")
 router.register(r"seller-locations", views.SellerLocationViewSet, "api")
 router.register(r"users", views.UserViewSet, "api")
