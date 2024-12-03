@@ -374,10 +374,12 @@ def user_sales_new_buyers(request, user_id):
     
     user_groups = UserGroup.objects.filter(
         account_owner=user,
-        user_addresses__order_groups__orders__end_date__gte=timezone.now() - timedelta(days=30)
+        user_addresses__order_groups__orders__end_date__gte=first_of_month
     ).distinct().values('id', 'name', 'user_addresses__order_groups__start_date')
 
-
+    user_groups = user_groups.annotate(
+        transaction_date=Max('user_addresses__order_groups__orders__end_date')
+    )
     context["user_groups"] = user_groups
     context["user"] = user
 
