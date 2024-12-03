@@ -32,6 +32,7 @@
         background-color: #333;
         color: white;
         z-index: 1;
+        padding-right: 100px;
     }
 </style>
 <!DOCTYPE html>
@@ -55,7 +56,7 @@
     </nav>
     <header>
         <h1>{{user.first_name}} {{user.last_name}}</h1>
-        <h2>New Buyers of Past 30 Days</h2>
+        <h2>New Buyers of Past Month</h2>
     </header>
     <main>
         <section>
@@ -65,15 +66,18 @@
                         <th>User Group ID</th>
                         <th>User Group Name</th>
                         <th>First Company Transaction Date</th>
+                        <th>Recent Transaction Date</th>
+                        <th>Order Originator</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for group in user_groups %}
+                    {% for group in user_groups|dictsort:"transaction_date" %}
                     <tr>
                         <td>{{ group.id }}</td>
                         <td>{{ group.name }}</td>
                         <td>{{ group.user_addresses__order_groups__start_date }}</td>
-                        <td>{{ group.user_addresses__order_groups__orders__end_date__gte }}</td>
+                        <td>{{ group.transaction_date }}</td>
+                        <td>{{ group.order_user_name }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
