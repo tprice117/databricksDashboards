@@ -66,18 +66,15 @@
                     <tr style="border-bottom: 1px solid #ddd;">
                         <th style="padding-right: 200px;">Accounts</th>
                         <th style="padding-right: 200px;">Days Since Last Order</th>
-
                     </tr>
- 
                 </thead>
                 <tbody>
-                    {% for accounts in churned_accounts%}
+                    {% for accounts in churned_accounts|dictsort:"days_since_last_order" %}
                     <tr>
                         <td>{{accounts.name}}</td>
                         <td>{{accounts.days_since_last_order}}</td>
-
                     </tr>
-                    {%endfor%}                    
+                    {% endfor %}
                 </tbody>
             </table>
         </section>
