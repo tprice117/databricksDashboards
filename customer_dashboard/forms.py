@@ -72,7 +72,7 @@ class UserForm(forms.ModelForm):
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
             "apollo_id": forms.TextInput(attrs={"class": "form-control"}),
             "phone": forms.TextInput(attrs={"class": "form-control"}),
-            "email": forms.TextInput(attrs={"class": "form-control", "disabled": True}),
+            "email": forms.TextInput(attrs={"class": "form-control"}),
             "source": forms.Select(attrs={"class": "form-select"}),
             "type": forms.Select(attrs={"class": "form-select"}),
             "photo": forms.ClearableFileInput(attrs={"class": "form-control-file"}),
@@ -82,6 +82,8 @@ class UserForm(forms.ModelForm):
         user = kwargs.get("instance", None)
         super(UserForm, self).__init__(*args, **kwargs)
         self.fields["photo"].label = "Profile Picture"
+        self.fields["email"].disabled = True
+        
         if user and user.is_staff:
             self.fields["source"].required = False
             self.fields["source"].widget = forms.HiddenInput()
@@ -299,9 +301,7 @@ class UserGroupForm(forms.ModelForm):
             "invoice_at_project_completion": forms.CheckboxInput(
                 attrs={"class": "form-check-input", "role": "switch"}
             ),
-            "share_code": forms.TextInput(
-                attrs={"class": "form-control", "disabled": True}
-            ),
+            "share_code": forms.TextInput(attrs={"class": "form-control"}),
             "credit_line_limit": forms.NumberInput(attrs={"class": "form-control"}),
             "compliance_status": forms.Select(attrs={"class": "form-select"}),
             "tax_exempt_status": forms.Select(attrs={"class": "form-select"}),
@@ -329,11 +329,11 @@ class UserGroupForm(forms.ModelForm):
 
         # Make Apollo ID required
         self.fields["apollo_id"].required = True
+        self.fields["share_code"].disabled = True
 
         # Update field visibility based on user type
         if auth_user and not auth_user.is_staff:
             self.fields["net_terms"].disabled = True
-            self.fields["share_code"].disabled = True
             self.fields["share_code"].widget = forms.HiddenInput()
             self.fields["account_owner"].disabled = True
             self.fields["account_owner"].widget = forms.HiddenInput()
