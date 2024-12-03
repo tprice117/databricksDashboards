@@ -1,10 +1,10 @@
-"""Module of helper functions for sending internal emails.
-"""
+"""Module of helper functions for sending internal emails."""
 
 import mailchimp_transactional as MailchimpTransactional
 from typing import Union
 import requests
 from django.conf import settings
+from django.urls import reverse
 from django.template.loader import render_to_string
 from notifications.utils.add_email_to_queue import add_email_to_queue
 from api.models import Order
@@ -16,40 +16,63 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
 def send_email_on_new_signup(
-    email: str, created_by_downstream_team: bool = False
+    user, created_by_downstream_team: bool = False
 ) -> Union[requests.Response, None]:
-    """Send an email to the internal team when a new user signs up.
+    """Send a Teams message to the internal team when a new user signs up.
+    Only sends if not created by the Downstream team.
 
     Args:
-        email: The email of the user who signed up.
+        User: The User who signed up.
         created_by_downstream_team: Whether the user was created by the Downstream team.
 
     Returns:
         The response from the Mailchimp API, or None if an error occurred.
     """
     try:
-        # Send email to internal team.
-        response = mailchimp.messages.send(
-            {
-                "message": {
-                    "headers": {
-                        "reply-to": email,
-                    },
-                    "from_name": "Downstream",
-                    "from_email": "noreply@trydownstream.com",
-                    "to": [{"email": "sales@trydownstream.com"}],
-                    "subject": "New User App Signup",
-                    "track_opens": True,
-                    "track_clicks": True,
-                    "text": "Woohoo! A new user signed up for the app. The email on their account is: ["
-                    + email
-                    + "]. This was created by: "
-                    + ("[DOWNSTREAM TEAM]" if created_by_downstream_team else "[]")
-                    + ".",
-                }
+        if not created_by_downstream_team:
+            # Send Teams Message to internal team.
+            msg_body = f"Woohoo! A new user signed up for the app. The email on their account is: [{user.email}]."
+            view_link = f"{settings.DASHBOARD_BASE_URL}{reverse('customer_user_detail', kwargs={'user_id': user.id})}"
+            json_data = {
+                "type": "message",
+                "attachments": [
+                    {
+                        "contentType": "application/vnd.microsoft.card.adaptive",
+                        "content": {
+                            "type": "AdaptiveCard",
+                            "version": "1.4",
+                            "body": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": msg_body,
+                                    "wrap": True,
+                                },
+                                {
+                                    "type": "FactSet",
+                                    "facts": [
+                                        {"title": "Board:", "value": "Self Signup"},
+                                        {
+                                            "title": "Assigned to:",
+                                            "value": "Sales Team",
+                                        },
+                                    ],
+                                },
+                            ],
+                            "actions": [
+                                {
+                                    "type": "Action.OpenUrl",
+                                    "title": "View",
+                                    "url": view_link,
+                                }
+                            ],
+                        },
+                    }
+                ],
             }
-        )
-        return response
+            # New Signups Channel on Teams
+            team_link = "https://prod-48.westus.logic.azure.com:443/workflows/1b23a18cc97b4d99a35b2f09b7547cd2/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gZ1nsGYvvrnDf3pzP5gNCI8gJ_937TAk6WVOzo6bSu0"
+            response = requests.post(team_link, json=json_data)
+            return response
     except Exception as e:
         logger.error(f"send_email_on_new_signup: [{e}]", exc_info=e)
         return None
