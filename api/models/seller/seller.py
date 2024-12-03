@@ -103,6 +103,7 @@ class Seller(BaseModel):
     announcement = models.TextField(blank=True, null=True)
     live_menu_is_active = models.BooleanField(default=False)
     location_logo_url = models.URLField(blank=True, null=True)
+    logo = models.ImageField(blank=True, null=True)
     downstream_insurance_requirements_met = models.BooleanField(default=False)
     badge = models.CharField(
         max_length=255,
