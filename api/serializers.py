@@ -214,9 +214,7 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
         if settings.ENVIRONMENT == "TEST":
             # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
             if validated_data.get("user_id", None) is not None:
-                send_email_on_new_signup(
-                    new_user.email, created_by_downstream_team=False
-                )
+                send_email_on_new_signup(new_user, created_by_downstream_team=False)
         else:
             logger.info(
                 f"UserSerializer.create: [New User Signup]-[{validated_data}]",
