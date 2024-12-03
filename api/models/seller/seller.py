@@ -1,12 +1,18 @@
 from django.db import models
 from django.conf import settings
 from multiselectfield import MultiSelectField
+import uuid
 
 from common.models import BaseModel
 from api.utils.utils import encrypt_string
 
 
 class Seller(BaseModel):
+    def get_file_path(instance, filename):
+        ext = filename.split(".")[-1]
+        filename = "%s.%s" % (uuid.uuid4(), ext)
+        return filename
+
     open_day_choices = (
         ("MONDAY", "MONDAY"),
         ("TUESDAY", "TUESDAY"),
@@ -103,7 +109,7 @@ class Seller(BaseModel):
     announcement = models.TextField(blank=True, null=True)
     live_menu_is_active = models.BooleanField(default=False)
     location_logo_url = models.URLField(blank=True, null=True)
-    logo = models.ImageField(blank=True, null=True)
+    logo = models.ImageField(upload_to=get_file_path, blank=True, null=True)
     downstream_insurance_requirements_met = models.BooleanField(default=False)
     badge = models.CharField(
         max_length=255,
