@@ -53,6 +53,7 @@ from .models import (
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
+    Industry,
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
@@ -102,6 +103,7 @@ from .serializers import (
     DayOfWeekSerializer,
     DisposalLocationSerializer,
     DisposalLocationWasteTypeSerializer,
+    IndustrySerializer,
     MainProductAddOnSerializer,
     MainProductCategoryInfoSerializer,
     MainProductCategorySerializer,
@@ -340,6 +342,12 @@ class DisposalLocationViewSet(viewsets.ReadOnlyModelViewSet):
 class DisposalLocationWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DisposalLocationWasteType.objects.all()
     serializer_class = DisposalLocationWasteTypeSerializer
+    filterset_fields = ["id"]
+
+
+class IndustryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Industry.objects.all()
+    serializer_class = IndustrySerializer
     filterset_fields = ["id"]
 
 

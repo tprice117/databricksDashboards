@@ -279,6 +279,7 @@ class UserGroupForm(forms.ModelForm):
             "pay_later",
             "autopay",
             "net_terms",
+            "industry",
             "invoice_frequency",
             "invoice_day_of_month",
             "invoice_at_project_completion",
@@ -296,6 +297,7 @@ class UserGroupForm(forms.ModelForm):
                 attrs={"class": "form-check-input", "role": "switch"}
             ),
             "net_terms": forms.Select(attrs={"class": "form-select"}),
+            "industry": forms.Select(attrs={"class": "form-select"}),
             "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
             "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
             "invoice_at_project_completion": forms.CheckboxInput(

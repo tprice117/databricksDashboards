@@ -25,6 +25,7 @@ from .models import (
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
+    Industry,
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
@@ -414,6 +415,14 @@ class DisposalLocationWasteTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DisposalLocationWasteType
+        fields = "__all__"
+
+
+class IndustrySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = Industry
         fields = "__all__"
 
 
