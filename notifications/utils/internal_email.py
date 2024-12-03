@@ -16,7 +16,7 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
 def send_email_on_new_signup(
-    user, created_by_downstream_team: bool = False
+    user, created_by_downstream_team: bool = False, message: str = None
 ) -> Union[requests.Response, None]:
     """Send a Teams message to the internal team when a new user signs up.
     Only sends if not created by the Downstream team.
@@ -32,6 +32,8 @@ def send_email_on_new_signup(
         if not created_by_downstream_team:
             # Send Teams Message to internal team.
             msg_body = f"Woohoo! A new user signed up for the app. The email on their account is: [{user.email}]."
+            if message:
+                msg_body += f"{message}"
             view_link = f"{settings.DASHBOARD_BASE_URL}{reverse('customer_user_detail', kwargs={'user_id': user.id})}"
             json_data = {
                 "type": "message",
