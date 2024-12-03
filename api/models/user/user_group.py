@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
+from api.models.industry import Industry
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
@@ -56,6 +57,13 @@ class UserGroup(BaseModel):
 
     seller = models.OneToOneField(Seller, models.DO_NOTHING, blank=True, null=True)
     name = models.CharField(max_length=255)
+    industry = models.ForeignKey(
+        Industry,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="user_groups",
+    )
     pay_later = models.BooleanField(default=False)
     # SECTION: Invoicing and Payment
     autopay = models.BooleanField(default=False)
