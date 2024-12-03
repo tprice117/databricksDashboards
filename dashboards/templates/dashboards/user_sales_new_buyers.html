@@ -67,16 +67,17 @@
                         <th>User Group Name</th>
                         <th>First Company Transaction Date</th>
                         <th>Recent Transaction Date</th>
-
+                        <th>Order Originator</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for group in user_groups %}
+                    {% for group in user_groups|dictsort:"transaction_date" %}
                     <tr>
                         <td>{{ group.id }}</td>
                         <td>{{ group.name }}</td>
                         <td>{{ group.user_addresses__order_groups__start_date }}</td>
                         <td>{{ group.transaction_date }}</td>
+                        <td>{{ group.order_user_name }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

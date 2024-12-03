@@ -371,14 +371,14 @@ def user_sales_new_buyers(request, user_id):
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
     
-    
     user_groups = UserGroup.objects.filter(
         account_owner=user,
         user_addresses__order_groups__orders__end_date__gte=first_of_month
     ).distinct().values('id', 'name', 'user_addresses__order_groups__start_date')
 
     user_groups = user_groups.annotate(
-        transaction_date=Max('user_addresses__order_groups__orders__end_date')
+        transaction_date=Max('user_addresses__order_groups__orders__end_date'),
+        order_user_name=F('user_addresses__order_groups__orders__created_by__username')
     )
     context["user_groups"] = user_groups
     context["user"] = user
