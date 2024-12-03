@@ -41,18 +41,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Sales Detail</title>
 </head>
+
 <body>
-    <nav>
-        <ul id="nav2" style="display: flex; gap: 100px;">
+    <nav style="display: flex; justify-content: center;">
+        <ul id="nav2" style="display: flex; gap: 20px;">
             <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_detail' %}active{% endif %}">
-                <a href="{% url 'user_sales_detail' user.id %}" class="btn btn-primary" style="border-radius: 0;">Overview</a>
+                <a href="{% url 'user_sales_detail' user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">Overview</a>
             </li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_product_mix' %}active{% endif %}"><a href="{% url 'user_sales_product_mix' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0;">Product Mix</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_top_accounts' %}active{% endif %}"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0;">Top Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_accounts' %}active{% endif %}"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0;">New Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_buyers' %}active{% endif %}"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0;">New Buyers</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_churned_accounts' %}active{% endif %}"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0;">Churned Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_28_day_list' %}active{% endif %}"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0;">28 Day List</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_product_mix' %}active{% endif %}"><a href="{% url 'user_sales_product_mix' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">Product Mix</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_top_accounts' %}active{% endif %}"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">Top Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_accounts' %}active{% endif %}"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">New Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_buyers' %}active{% endif %}"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">New Buyers</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_churned_accounts' %}active{% endif %}"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">Churned Accounts</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_28_day_list' %}active{% endif %}"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">28 Day List</a></li>
+            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_metric_dashboard' %}active{% endif %}"><a href="{% url 'user_sales_metric_dashboard' user_id=user.id %}" class="btn btn-primary" style="border-radius: 0; padding: 5px 10px;">Metrics Dashboard</a></li>
         </ul>
     </nav>
     <header>

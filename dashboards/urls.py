@@ -69,6 +69,11 @@ urlpatterns = [
         name="user_sales_new_buyers",
     ),
     path(
+        "user-sales-detail/<uuid:user_id>/user-sales-metric-dashboard/",
+        user_sales_metric_dashboard,
+        name="user_sales_metric_dashboard",
+    ),
+    path(
         "all-orders-dashboard/",
         views.all_orders_dashboard,
         name="all_orders_dashboard",

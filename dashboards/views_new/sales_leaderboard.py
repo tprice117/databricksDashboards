@@ -407,3 +407,15 @@ def user_sales_new_buyers(request, user_id):
     context["user"] = user
 
     return render(request, "dashboards/user_sales_new_buyers.html", context)
+
+def user_sales_metric_dashboard(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
+    context = {}
+    try:
+        user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
+    except User.DoesNotExist:
+        return render(request, "404.html", status=404)
+
+    context["user"] = user
+    return render(request, "dashboards/user_sales_metric_dashboard.html", context)

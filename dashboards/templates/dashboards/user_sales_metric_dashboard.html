@@ -57,34 +57,17 @@
         </ul>
     </nav>
     <header>
-        <h1>{{user.first_name}} {{user.last_name}}</h1>
+        <h1>Sales Dashboard: {{user.first_name}}, {{user.last_name}}</h1>
 
     </header>
     <main>
-        <section>
-            <h3>Top Accounts of Past Month</h3>
-            <table>
-                <thead>
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">User_groups</th>
-                        <th style="padding-right: 100px;">Count</th>
-                    </tr>
- 
-                </thead>
-                <tbody>
-                    {% for accounts in top_accounts|dictsortreversed:"order_count" %}
-                    <tr>
-                        <td>{{accounts.user_group_name}}</td>
-                        <td>{{accounts.order_count}}</td>
-                    </tr>
-                    {%endfor%}                    
-                </tbody>
-            </table>
-        </section>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
         <a href="{% url 'sales_leaderboard' %}" class="btn btn-primary">Back to Leaderboard</a>
     </div>
+    <footer>
+        <p>&copy; 2024 | Downstream | Sales Data by Rep</p>
+    </footer>
 </body>
 </html>
 
