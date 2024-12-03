@@ -83,7 +83,7 @@ class UserForm(forms.ModelForm):
         super(UserForm, self).__init__(*args, **kwargs)
         self.fields["photo"].label = "Profile Picture"
         self.fields["email"].disabled = True
-
+        
         if user and user.is_staff:
             self.fields["source"].required = False
             self.fields["source"].widget = forms.HiddenInput()

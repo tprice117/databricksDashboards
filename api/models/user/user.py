@@ -216,7 +216,7 @@ class User(AbstractUser):
             # Send email to internal team. Only on our PROD environment.
             if settings.ENVIRONMENT == "TEST":
                 send_email_on_new_signup(
-                    self.email, created_by_downstream_team=created_by_downstream_team
+                    self, created_by_downstream_team=created_by_downstream_team
                 )
 
         # Create new Intercom account if no intercom_id exists
