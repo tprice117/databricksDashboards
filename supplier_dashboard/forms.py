@@ -1,6 +1,7 @@
 from django import forms
 
 from chat.models import Message
+from api.models import SellerLocation
 from common.models.choices.user_type import UserType
 
 
@@ -80,8 +81,8 @@ class SellerForm(forms.Form):
         widget=forms.TextInput(attrs={"class": "form-control"}),
         required=False,
     )
-    company_logo = forms.CharField(
-        widget=forms.TextInput(attrs={"class": "form-control"}), required=False
+    company_logo = forms.ImageField(
+        widget=forms.ClearableFileInput(attrs={"class": "form-control"}), required=False
     )
 
 
@@ -105,59 +106,11 @@ class SellerAboutUsForm(forms.Form):
     )
 
 
-class SellerLocationComplianceForm(forms.Form):
-    gl_coi = forms.FileField(
-        label="General Liability Proof of Insurance",
-        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
-        required=False,
-    )
-    gl_coi_expiration_date = forms.DateField(
-        label="Expires on",
-        widget=forms.DateInput(
-            attrs={"class": "form-control", "type": "date", "disabled": True}
-        ),
-        required=False,
-    )
-
-    auto_coi = forms.FileField(
-        label="Auto Proof of Insurance",
-        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
-        required=False,
-    )
-    auto_coi_expiration_date = forms.DateField(
-        label="Expires on",
-        widget=forms.DateInput(
-            attrs={
-                "class": "form-control",
-                "type": "date",
-                "disabled": True,
-            }
-        ),
-        required=False,
-    )
-
-    workers_comp_coi = forms.FileField(
-        label="Workers Comp Proof of Insurance",
-        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
-        required=False,
-    )
-    workers_comp_coi_expiration_date = forms.DateField(
-        label="Expires on",
-        widget=forms.DateInput(
-            attrs={
-                "class": "form-control",
-                "type": "date",
-                "disabled": True,
-            }
-        ),
-        required=False,
-    )
-
-    w9 = forms.FileField(
-        label="Form W9",
-        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
-        required=False,
-    )
+# new form using forms.ModelForm
+class SellerLocationComplianceForm(forms.ModelForm):
+    class Meta:
+        model = SellerLocation
+        fields = []
 
 
 class SellerLocationComplianceAdminForm(forms.Form):
@@ -197,6 +150,43 @@ class SellerLocationComplianceAdminForm(forms.Form):
     w9 = forms.FileField(
         label="Form W9",
         widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+
+    location_logo_image = forms.ImageField(
+        widget=forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        required=False,
+    )
+
+    open_days = forms.MultipleChoiceField(
+        choices=SellerLocation.open_day_choices,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
+
+    open_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={"class": "form-control", "type": "time"}),
+        required=False,
+    )
+
+    close_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={"class": "form-control", "type": "time"}),
+        required=False,
+    )
+
+    lead_time_hrs = forms.IntegerField(
+        label="Lead Time (Hours)",
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        required=False,
+    )
+
+    announcement = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": "4"}),
+        required=False,
+    )
+
+    live_menu_is_active = forms.BooleanField(
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
         required=False,
     )
 

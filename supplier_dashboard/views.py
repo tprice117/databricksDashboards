@@ -526,9 +526,7 @@ def index(request):
                     order.seller_price()
                 )
 
-            category = (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
-            )
+            category = order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
             if category not in earnings_by_category:
                 earnings_by_category[category] = {"amount": 0, "percent": 0}
             earnings_by_category[category]["amount"] += float(order.seller_price())
@@ -738,12 +736,22 @@ def company(request):
                     if form.cleaned_data.get("website") != seller.website:
                         seller.website = form.cleaned_data.get("website")
                         save_model = seller
-                    if (
-                        form.cleaned_data.get("company_logo")
-                        != seller.location_logo_url
-                    ):
-                        seller.location_logo_url = form.cleaned_data.get("company_logo")
+                    if request.FILES.get("company_logo"):
+                        seller.logo = request.FILES["company_logo"]
                         save_model = seller
+                    elif request.POST.get("company_logo-clear") == "on":
+                        seller.logo = None
+                        save_model = seller
+                    # repopulate the form with the updated data
+                    form = SellerForm(
+                        initial={
+                            "company_name": seller.name,
+                            "company_phone": seller.phone,
+                            "website": seller.website,
+                            "company_logo": seller.logo,
+                        }
+                    )
+                    context["form"] = form
                 else:
                     raise InvalidFormError(form, "Invalid SellerForm")
             elif "communication_submit" in request.POST:
@@ -753,7 +761,7 @@ def company(request):
                         "company_name": seller.name,
                         "company_phone": seller.phone,
                         "website": seller.website,
-                        "company_logo": seller.location_logo_url,
+                        "company_logo": seller.logo,
                     }
                 )
                 context["form"] = form
@@ -793,7 +801,7 @@ def company(request):
                         "company_name": seller.name,
                         "company_phone": seller.phone,
                         "website": seller.website,
-                        "company_logo": seller.location_logo_url,
+                        "company_logo": seller.logo,
                     }
                 )
                 context["form"] = form
@@ -847,7 +855,7 @@ def company(request):
                 "company_name": seller.name,
                 "company_phone": seller.phone,
                 "website": seller.website,
-                "company_logo": seller.location_logo_url,
+                "company_logo": seller.logo,
             }
         )
         context["form"] = form
@@ -1239,9 +1247,7 @@ def bookings(request):
 
         download_link = f"/supplier/bookings/download/?{query_params.urlencode()}"
         context["download_link"] = download_link
-        context[
-            "oob_html"
-        ] = f"""
+        context["oob_html"] = f"""
         <span id="pending-count-badge" hx-swap-oob="true">{pending_count}</span>
         <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
         <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
@@ -1506,9 +1512,7 @@ def update_order_status(request, order_id, accept=True, complete=False):
                         cancelled_count += 1
                 # TODO: Add toast that shows the order with a link to see it.
                 # https://getbootstrap.com/docs/5.3/components/toasts/
-                context[
-                    "oob_html"
-                ] = f"""
+                context["oob_html"] = f"""
                 <span id="pending-count-badge" hx-swap-oob="true">{pending_count}</span>
                 <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
                 <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
@@ -2669,7 +2673,6 @@ def location_detail(request, location_id):
 
 @login_required(login_url="/admin/login/")
 def seller_location_user_add(request, seller_location_id, user_id):
-
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
 
@@ -2703,7 +2706,6 @@ def seller_location_user_add(request, seller_location_id, user_id):
 
 @login_required(login_url="/admin/login/")
 def seller_location_user_remove(request, seller_location_id, user_id):
-
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
 
