@@ -315,7 +315,8 @@ def user_sales_28_day_list(request, user_id):
     today = now().date()
 
     orders = Order.objects.filter(
-        order_group__user_address__user_group__account_owner_id=user_id
+        order_group__user_address__user_group__account_owner_id=user_id,
+        order_group__end_date__isnull=True
     ).annotate(
         order_id=F("id"),
         annotated_order_group_id=F("order_group__id"),
@@ -351,12 +352,17 @@ def user_sales_28_day_list(request, user_id):
             function="CONCAT",
             output_field=CharField(),
         ),
+    ).filter(
+        is_most_recent_order=True,
+        take_action = True
     ).values(
         "order_id", "annotated_order_group_id", "order_end_date", "user_address_name", "account_owner_first_name",
         "account_owner_last_name", "user_first_name", "user_last_name", "user_email", "order_status",
         "sellerlocation_name", "mainproduct_name", "is_most_recent_order", "autorenewal_date", "take_action", 
         "order_group_url_annotate"
     )
+    total_order_count = orders.count()
+    context["total_order_count"] = total_order_count
 
     context["orders"] = orders
 
