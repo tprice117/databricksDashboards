@@ -526,9 +526,7 @@ def index(request):
                     order.seller_price()
                 )
 
-            category = (
-                order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
-            )
+            category = order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name
             if category not in earnings_by_category:
                 earnings_by_category[category] = {"amount": 0, "percent": 0}
             earnings_by_category[category]["amount"] += float(order.seller_price())
@@ -1239,9 +1237,7 @@ def bookings(request):
 
         download_link = f"/supplier/bookings/download/?{query_params.urlencode()}"
         context["download_link"] = download_link
-        context[
-            "oob_html"
-        ] = f"""
+        context["oob_html"] = f"""
         <span id="pending-count-badge" hx-swap-oob="true">{pending_count}</span>
         <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
         <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
@@ -1506,9 +1502,7 @@ def update_order_status(request, order_id, accept=True, complete=False):
                         cancelled_count += 1
                 # TODO: Add toast that shows the order with a link to see it.
                 # https://getbootstrap.com/docs/5.3/components/toasts/
-                context[
-                    "oob_html"
-                ] = f"""
+                context["oob_html"] = f"""
                 <span id="pending-count-badge" hx-swap-oob="true">{pending_count}</span>
                 <span id="scheduled-count-badge" hx-swap-oob="true">{scheduled_count}</span>
                 <span id="complete-count-badge" hx-swap-oob="true">{complete_count}</span>
@@ -1933,7 +1927,20 @@ def payout_invoice(request, payout_id):
                 check.expected_delivery_date
             )  # datetime.date
             context["send_date"] = check.send_date  # datetime.datetime
+            context["check_number"] = check.check_number
+            context["status"] = check.status
             context["tracking_number"] = check.tracking_number
+            context["tracking_events"] = []
+            for event in check.tracking_events:
+                context["tracking_events"].append(
+                    {
+                        "location": event["location"],
+                        "name": event["name"],
+                        "date_created": datetime.datetime.strptime(
+                            event["date_created"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                        ),
+                    }
+                )
     # order_line_item = payout.order.order_line_items.all().first()
     # context["is_pdf"] = False
     # if order_line_item:
@@ -2669,7 +2676,6 @@ def location_detail(request, location_id):
 
 @login_required(login_url="/admin/login/")
 def seller_location_user_add(request, seller_location_id, user_id):
-
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
 
@@ -2703,7 +2709,6 @@ def seller_location_user_add(request, seller_location_id, user_id):
 
 @login_required(login_url="/admin/login/")
 def seller_location_user_remove(request, seller_location_id, user_id):
-
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
 
