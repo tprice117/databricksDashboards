@@ -25,7 +25,7 @@
                         <p>{{ payout.description }}</p>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
                         <h4 class="card-title">
                             {% if payout.checkbook_payout_id %}
@@ -55,6 +55,7 @@
                         </a>
                     </div>
                 </div>
+                <div id="tracking-events" class="card" hx-swap-oob="true"></div>
             </div>
             <div class="col-md-6" hx-get="{% url 'supplier_payout_invoice' payout_id=payout.id %}" hx-trigger="load" hx-indicator="#htmx-indicator-status">
                 <span class="htmx-indicator" id="htmx-indicator-status">Loading Invoice <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
