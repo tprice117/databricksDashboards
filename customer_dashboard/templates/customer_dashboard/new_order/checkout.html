@@ -112,6 +112,8 @@
                         expiration_year: cardExpirationDateElement.year(),
                         cvc: cardVerificationCodeElement,
                     }
+                    deduplicate_token: true,
+                    fingerprint_expression: "{{ data | last4 }}"
                 });
                 // Create Payment Method with token.id
                 // request.get_full_path
