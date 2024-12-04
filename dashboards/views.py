@@ -29,7 +29,7 @@ from django.db.models.functions import (
     TruncDay,
     Abs,
 )
-from django.forms import DateField
+from django.db.models import DateField
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone

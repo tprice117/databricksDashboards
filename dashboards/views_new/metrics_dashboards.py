@@ -17,7 +17,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Cast, Extract, TruncDay, TruncMonth
-from django.forms import DateField
+from django.db.models import DateField
 from django.shortcuts import render
 from django.utils import timezone
 
