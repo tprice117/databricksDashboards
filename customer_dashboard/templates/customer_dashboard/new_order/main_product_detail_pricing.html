@@ -75,12 +75,13 @@
             // Get the valueSelector (the value to sort the elements by)
             let valueSelector;
             switch(attr) {
-                case "price":
-                    valueSelector = '[class*="total-price"]';
+                case "rating":
+                    valueSelector = '.rating';
                     break;
                 case "name":
                     valueSelector = ".supplier-name";
                     break;
+                case "price":
                 default:
                     valueSelector = '[class*="total-price"]';
             }
@@ -118,6 +119,7 @@
                         <select id="sort-attribute" class="form-control mr-2" name="sort-attribute">
                             <option value="price">Total Price</option>
                             <option value="name">Location Name</option>
+                            <option value="rating">Rating</option>
                         </select>
                         <select id="sort-order" class="form-control mr-2" name="sort-order">
                             <option value="asc">Ascending</option>
