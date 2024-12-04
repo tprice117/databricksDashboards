@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 {% if hosted_invoice_url %}
     <a class="btn btn-outline-primary" href="{{ hosted_invoice_url }}" target="_blank">View Invoice <i class="fas fa-link"></i></a>
     {% if invoice_pdf %}
@@ -17,6 +18,29 @@
             {% endfor %}
         </div>
     {% endif %} {% endcomment %}
+    <div id="tracking-events" class="card" hx-swap-oob="true">
+        <div class="card-body">
+            <h4 class="card-title">Tracking</h4>
+            <p>Check Number: {{ check_number }}</p>
+            {% if request.user.is_staff %}
+                <p>Status: {{ status }}</p>
+            {% endif %}
+            <p>Send Date: {{ send_date|timezone:'America/Chicago' }} (CT)</p>
+            <p>Expected Delivery Date: {{ expected_delivery_date }}</p>
+            <p>Tracking number: {{ tracking_number }}</p>
+            <h4 class="text-muted">Tracking events for this invoice</h4>
+            <hr />
+            {% for tracking_event in tracking_events %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <p>
+                            {{ tracking_event.name }}: <i>{{ tracking_event.location }} (zip)</i> - {{ tracking_event.date_created|timezone:'America/Chicago' }} (CT)
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 {% else %}
     <img class="img-fluid" alt="adobe, pdf, application" width="100" height="80" src="{% static 'supplier_dashboard/img/temp_pay_logo.png' %}" />
 {% endif %}
