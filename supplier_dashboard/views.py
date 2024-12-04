@@ -724,46 +724,21 @@ def company(request):
                 )
                 context["seller_about_us_form"] = seller_about_us_form
                 # Load the form that was submitted.
-                form = SellerForm(request.POST)
+                form = SellerForm(request.POST, request.FILES, instance=seller)
                 context["form"] = form
                 if form.is_valid():
-                    if form.cleaned_data.get("company_name") != seller.name:
-                        seller.name = form.cleaned_data.get("company_name")
-                        save_model = seller
-                    if form.cleaned_data.get("company_phone") != seller.phone:
-                        seller.phone = form.cleaned_data.get("company_phone")
-                        save_model = seller
-                    if form.cleaned_data.get("website") != seller.website:
-                        seller.website = form.cleaned_data.get("website")
-                        save_model = seller
-                    if request.FILES.get("company_logo"):
-                        seller.logo = request.FILES["company_logo"]
-                        save_model = seller
-                    elif request.POST.get("company_logo-clear") == "on":
-                        seller.logo = None
-                        save_model = seller
-                    # repopulate the form with the updated data
-                    form = SellerForm(
-                        initial={
-                            "company_name": seller.name,
-                            "company_phone": seller.phone,
-                            "website": seller.website,
-                            "company_logo": seller.logo,
-                        }
-                    )
+                    if form.has_changed():
+                        form.save()
+                        messages.success(request, "Successfully saved!")
+                    else:
+                        messages.info(request, "No changes detected.")
+                    form = SellerForm(instance=seller)
                     context["form"] = form
                 else:
                     raise InvalidFormError(form, "Invalid SellerForm")
             elif "communication_submit" in request.POST:
                 # Load other forms so template has complete data.
-                form = SellerForm(
-                    initial={
-                        "company_name": seller.name,
-                        "company_phone": seller.phone,
-                        "website": seller.website,
-                        "company_logo": seller.logo,
-                    }
-                )
+                form = SellerForm(instance=seller)
                 context["form"] = form
                 seller_about_us_form = SellerAboutUsForm(
                     initial={"about_us": seller.about_us}
@@ -796,14 +771,7 @@ def company(request):
                     )
             elif "about_us_submit" in request.POST:
                 # Load other forms so template has complete data.
-                form = SellerForm(
-                    initial={
-                        "company_name": seller.name,
-                        "company_phone": seller.phone,
-                        "website": seller.website,
-                        "company_logo": seller.logo,
-                    }
-                )
+                form = SellerForm(instance=seller)
                 context["form"] = form
                 seller_communication_form = SellerCommunicationForm(
                     initial={
@@ -829,11 +797,13 @@ def company(request):
                     raise InvalidFormError(
                         seller_about_us_form, "Invalid SellerAboutUsForm"
                     )
-            if save_model:
-                save_model.save()
-                messages.success(request, "Successfully saved!")
-            else:
-                messages.info(request, "No changes detected.")
+            # this form already saved
+            if "company_submit" not in request.POST:
+                if save_model:
+                    save_model.save()
+                    messages.success(request, "Successfully saved!")
+                else:
+                    messages.info(request, "No changes detected.")
             # This is an HTMX request, so respond with html snippet
             if request.headers.get("HX-Request"):
                 return render(
@@ -850,14 +820,7 @@ def company(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
-        form = SellerForm(
-            initial={
-                "company_name": seller.name,
-                "company_phone": seller.phone,
-                "website": seller.website,
-                "company_logo": seller.logo,
-            }
-        )
+        form = SellerForm(instance=seller)
         context["form"] = form
         seller_communication_form = SellerCommunicationForm(
             initial={
@@ -2367,90 +2330,24 @@ def location_detail(request, location_id):
                     }
                 )
                 # Load the form that was submitted.
-                form = compliance_form_class(request.POST, request.FILES)
+                form = compliance_form_class(
+                    request.POST, request.FILES, instance=seller_location
+                )
                 context["compliance_form"] = form
                 if form.is_valid():
-                    if request.FILES.get("gl_coi"):
-                        seller_location.gl_coi = request.FILES["gl_coi"]
-                        save_model = seller_location
-                    elif request.POST.get("gl_coi-clear") == "on":
-                        seller_location.gl_coi = None
-                        save_model = seller_location
-                    if request.FILES.get("auto_coi"):
-                        seller_location.auto_coi = request.FILES["auto_coi"]
-                        save_model = seller_location
-                    elif request.POST.get("auto_coi-clear") == "on":
-                        seller_location.auto_coi = None
-                        save_model = seller_location
-                    if request.FILES.get("workers_comp_coi"):
-                        seller_location.workers_comp_coi = request.FILES[
-                            "workers_comp_coi"
-                        ]
-                        save_model = seller_location
-                    elif request.POST.get("workers_comp_coi-clear") == "on":
-                        seller_location.workers_comp_coi = None
-                        save_model = seller_location
-                    if request.FILES.get("w9"):
-                        seller_location.w9 = request.FILES["w9"]
-                        save_model = seller_location
-                    elif request.POST.get("w9-clear") == "on":
-                        seller_location.w9 = None
-                        save_model = seller_location
-                    # Allow editing if user is staff.
-                    if request.user.is_staff:
-                        if (
-                            form.cleaned_data.get("gl_coi_expiration_date")
-                            != seller_location.gl_coi_expiration_date
-                        ):
-                            seller_location.gl_coi_expiration_date = (
-                                form.cleaned_data.get("gl_coi_expiration_date")
-                            )
-                            save_model = seller_location
-                        if (
-                            form.cleaned_data.get("auto_coi_expiration_date")
-                            != seller_location.auto_coi_expiration_date
-                        ):
-                            seller_location.auto_coi_expiration_date = (
-                                form.cleaned_data.get("auto_coi_expiration_date")
-                            )
-                            save_model = seller_location
-                        if (
-                            form.cleaned_data.get("workers_comp_coi_expiration_date")
-                            != seller_location.workers_comp_coi_expiration_date
-                        ):
-                            seller_location.workers_comp_coi_expiration_date = (
-                                form.cleaned_data.get(
-                                    "workers_comp_coi_expiration_date"
-                                )
-                            )
-                            save_model = seller_location
-                    # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
-                    compliance_form = compliance_form_class(
-                        initial={
-                            "gl_coi": seller_location.gl_coi,
-                            "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
-                            "auto_coi": seller_location.auto_coi,
-                            "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
-                            "workers_comp_coi": seller_location.workers_comp_coi,
-                            "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
-                            "w9": seller_location.w9,
-                        }
-                    )
+                    if form.has_changed():
+                        form.save()
+                        messages.success(request, "Successfully saved!1")
+                    else:
+                        messages.info(request, "No changes detected.1")
+                    compliance_form = compliance_form_class(instance=seller_location)
                     context["compliance_form"] = compliance_form
                 else:
                     raise InvalidFormError(form, "Invalid SellerLocationComplianceForm")
             elif "payout_submit" in request.POST:
                 # Load other forms so template has complete data.
                 context["compliance_form"] = compliance_form_class(
-                    initial={
-                        "gl_coi": seller_location.gl_coi,
-                        "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
-                        "auto_coi": seller_location.auto_coi,
-                        "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
-                        "workers_comp_coi": seller_location.workers_comp_coi,
-                        "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
-                        "w9": seller_location.w9,
-                    }
+                    instance=seller_location
                 )
                 context["seller_communication_form"] = SellerCommunicationForm(
                     initial={
@@ -2529,15 +2426,7 @@ def location_detail(request, location_id):
             elif "communication_submit" in request.POST:
                 # Load other forms so template has complete data.
                 context["compliance_form"] = compliance_form_class(
-                    initial={
-                        "gl_coi": seller_location.gl_coi,
-                        "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
-                        "auto_coi": seller_location.auto_coi,
-                        "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
-                        "workers_comp_coi": seller_location.workers_comp_coi,
-                        "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
-                        "w9": seller_location.w9,
-                    }
+                    instance=seller_location
                 )
                 seller_payout_initial = {
                     "payee_name": seller_location.payee_name,
@@ -2579,11 +2468,13 @@ def location_detail(request, location_id):
                         "Invalid SellerLocationCommunicationForm",
                     )
 
-            if save_model:
-                save_model.save()
-                messages.success(request, "Successfully saved!")
-            else:
-                messages.info(request, "No changes detected.")
+            # this form already saved
+            if "compliance_submit" not in request.POST:
+                if save_model:
+                    save_model.save()
+                    messages.success(request, "Successfully saved!2")
+                else:
+                    messages.info(request, "No changes detected.2")
             # if request.headers.get("HX-Request"): Could handle htmx here.
             return render(request, "supplier_dashboard/location_detail.html", context)
         except InvalidFormError as e:
@@ -2593,17 +2484,7 @@ def location_detail(request, location_id):
             # messages.error(request, "Error saving, please contact us if this continues.")
             # messages.error(request, e.msg)
     else:
-        context["compliance_form"] = compliance_form_class(
-            initial={
-                "gl_coi": seller_location.gl_coi,
-                "gl_coi_expiration_date": seller_location.gl_coi_expiration_date,
-                "auto_coi": seller_location.auto_coi,
-                "auto_coi_expiration_date": seller_location.auto_coi_expiration_date,
-                "workers_comp_coi": seller_location.workers_comp_coi,
-                "workers_comp_coi_expiration_date": seller_location.workers_comp_coi_expiration_date,
-                "w9": seller_location.w9,
-            }
-        )
+        context["compliance_form"] = compliance_form_class(instance=seller_location)
         seller_payout_initial = {
             "payee_name": seller_location.payee_name,
         }
