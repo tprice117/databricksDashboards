@@ -3045,26 +3045,36 @@ def users(request):
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
+
+        account_filter = request.GET.get("account_filter", None)
+        account_owner_id = None
+        if request.user.is_staff and account_filter == "my_accounts":
+            account_owner_id = request.user.id
+
         context["tab"] = tab
         query_params = request.GET.copy()
 
         if request.user.is_staff and tab == "new":
-            users = UserUtils.get_new(search_q=search_q)
+            users = UserUtils.get_new(search_q=search_q, owner_id=account_owner_id)
             context["help_text"] = "New users created in the last 30 days."
         elif request.user.is_staff and tab == "loggedin":
-            users = UserUtils.get_loggedin(search_q=search_q)
+            users = UserUtils.get_loggedin(search_q=search_q, owner_id=account_owner_id)
             context["help_text"] = (
                 "Get all users who have logged in, in the last 30 days."
             )
         elif request.user.is_staff and tab == "active":
-            users = UserUtils.get_active(search_q=search_q)
+            users = UserUtils.get_active(search_q=search_q, owner_id=account_owner_id)
             context["help_text"] = "Active users with orders in the last 30 days."
             pagination_limit = 100  # Create large limit due to long request time
         elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
             churn_date = datetime.date.today() - datetime.timedelta(days=60)
             users = UserUtils.get_churning(
-                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+                search_q=search_q,
+                tab=tab,
+                old_date=churn_date,
+                new_date=cutoff_date,
+                owner_id=account_owner_id,
             )
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
@@ -3085,6 +3095,8 @@ def users(request):
             )
             if date:
                 users = users.filter(date_joined__date=date)
+            if account_owner_id:
+                users = users.filter(user_group__account_owner__id=account_owner_id)
             users = users.order_by("-date_joined")
 
         paginator = Paginator(users, pagination_limit)
