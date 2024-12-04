@@ -60,15 +60,21 @@ def sales_dashboard(request):
     return render(request, "dashboards/sales_dashboard.html", context)
 
 
-def get_sales_dashboard_context():
+def get_sales_dashboard_context(user_id=None):
     context = {}
     date_range_start_date = dt(2024, 1, 1)
     date_range_end_date = dt(2024, 12, 31)
     delta_month = timezone.now() - timedelta(days=30)
 
+    order_filter = Q()
+    if user_id:
+        order_filter &= Q(order_group__user_address__user_group__account_owner_id=user_id)
+        print(order_filter)
+        print(user_id)
+
     ##GMV##
     # customer Amount Completed
-    customer_amounts = Order.objects.annotate(
+    customer_amounts = Order.objects.filter(order_filter).annotate(
         customer_amount_completed=Sum(
             Case(
                 When(
@@ -108,7 +114,7 @@ def get_sales_dashboard_context():
 
     ##Net Revenue##
     # Supplier Amount Complete
-    supplier_amounts = Order.objects.annotate(
+    supplier_amounts = Order.objects.filter(order_filter).annotate(
         supplier_amount_complete=Sum(
             Case(
                 When(
@@ -159,7 +165,7 @@ def get_sales_dashboard_context():
     context["net_revenue"] = net_revenue
     ##AOV##
     # Average Order Value
-    average_order_value = Order.objects.annotate(
+    average_order_value = Order.objects.filter(order_filter).annotate(
         order_value=Sum(
             F("order_line_items__rate")
             * F("order_line_items__quantity")
@@ -184,31 +190,33 @@ def get_sales_dashboard_context():
 
     ##Total Users##
     # Total Users
-    total_users = OrderGroup.objects.values("user_id").distinct().count()
+    total_users = Order.objects.filter(order_filter).values("order_group__user_address__user_group__account_owner_id").distinct().count()
     context["total_users"] = total_users
 
     ##Total Companies##
-    total_companies = UserGroup.objects.values("name").distinct().count()
+    total_companies = Order.objects.filter(order_filter).values("order_group__user_address__user_group__name").distinct().count()
     context["total_companies"] = total_companies
 
     ##Total Sellers##
     total_sellers = (
-        OrderGroup.objects.values("seller_product_seller_location__id")
+        Order.objects.filter(order_filter)
+        .values("order_group__seller_product_seller_location__id")
         .distinct()
         .count()
     )
     context["total_sellers"] = total_sellers
 
     ##Total Listings##
-    total_listings = OrderGroup.objects.values(
-        "seller_product_seller_location__id"
-    ).count()
+    total_listings = Order.objects.filter(order_filter).values(
+        "order_group__seller_product_seller_location__id"
+    ).distinct().count()
     context["total_listings"] = total_listings
 
     ##Graphs##
     # GMV by Month Graph
     gmv_by_month = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[date_range_start_date, date_range_end_date],
         )
@@ -263,6 +271,7 @@ def get_sales_dashboard_context():
     # Net Revenue by Month Graph
     net_revenue_by_month = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[date_range_start_date, date_range_end_date],
         )
@@ -357,6 +366,7 @@ def get_sales_dashboard_context():
     ##Daily GMV Rate for the Past Month##
     daily_gmv_rate = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[delta_month, timezone.now().replace(tzinfo=None)],
         )
@@ -393,6 +403,7 @@ def get_sales_dashboard_context():
     ##Take Rate by Month Graph##
     take_rate_by_month = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[
                 date_range_start_date,
@@ -463,6 +474,7 @@ def get_sales_dashboard_context():
     ##Daily Net Revenue Rate for the Past Month##
     daily_net_revenue_rate = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[delta_month, timezone.now().replace(tzinfo=None)],
         )
