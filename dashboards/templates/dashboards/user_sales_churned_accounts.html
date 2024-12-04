@@ -42,17 +42,7 @@
     <title>New Accounts</title>
 </head>
 <body>
-    <nav>
-        <ul id="nav2" style="display: flex; gap: 100px;">
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_detail' %}active{% endif %}"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_product_mix' %}active{% endif %}"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_top_accounts' %}active{% endif %}"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_accounts' %}active{% endif %}"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_buyers' %}active{% endif %}"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_churned_accounts' %}active{% endif %}"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_28_day_list' %}active{% endif %}"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
-        </ul>
-    </nav>
+    {% include 'dashboards/user_sales_nav.html' %}
     <header>
         <h1>{{user.first_name}} {{user.last_name}}</h1>
 
@@ -80,7 +70,7 @@
         </section>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
-        <a href="{% url 'user_sales_detail' user.id %}" class="btn btn-primary">Back to Overview</a>
+        <a href="{% url 'sales_leaderboard' %}" class="btn btn-primary">Back to Leaderboard</a>
     </div>
 </body>
 </html>

@@ -21,6 +21,8 @@ from django.db.models.functions import Substr, StrIndex
 from django.db.models import OuterRef, Subquery, ExpressionWrapper, DateField, Func, Value, CharField
 from django.utils.timezone import now
 from datetime import timedelta
+from django.http import HttpResponseForbidden
+from dashboards.views import get_sales_dashboard_context
 
 # Define first_of_month and orders_this_month outside the views
 first_of_month = timezone.now().replace(
@@ -149,6 +151,9 @@ def sales_leaderboard(request):
 
 
 def user_sales_detail(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
+
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
@@ -167,6 +172,9 @@ def user_sales_detail(request, user_id):
 
 
 def user_sales_product_mix(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
+
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
@@ -215,6 +223,8 @@ def user_sales_product_mix(request, user_id):
 
 
 def user_sales_top_accounts(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
@@ -240,6 +250,8 @@ def user_sales_top_accounts(request, user_id):
 
 
 def user_sales_new_accounts(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
@@ -269,6 +281,8 @@ def user_sales_new_accounts(request, user_id):
 
 
 def user_sales_churned_accounts(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
@@ -301,6 +315,8 @@ def user_sales_churned_accounts(request, user_id):
 
 
 def user_sales_28_day_list(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
@@ -371,6 +387,8 @@ def user_sales_28_day_list(request, user_id):
 
 
 def user_sales_new_buyers(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
     context = {}
     try:
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
@@ -390,3 +408,16 @@ def user_sales_new_buyers(request, user_id):
     context["user"] = user
 
     return render(request, "dashboards/user_sales_new_buyers.html", context)
+
+def user_sales_metric_dashboard(request, user_id):
+    if request.user.id != user_id and request.user.type != 'ADMIN':
+        return HttpResponseForbidden("You are not allowed to access this page.")
+    context = {}
+    try:
+        user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
+    except User.DoesNotExist:
+        return render(request, "404.html", status=404)
+
+    context["user"] = user
+    context.update(get_sales_dashboard_context(user_id=user_id))
+    return render(request, "dashboards/user_sales_metric_dashboard.html", context)

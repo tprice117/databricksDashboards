@@ -39,41 +39,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Accounts</title>
+    <title>User Sales Detail</title>
 </head>
 <body>
     {% include 'dashboards/user_sales_nav.html' %}
     <header>
-        <h1>{{user.first_name}} {{user.last_name}}</h1>
-
+        <h1>Sales Dashboard: {{user.first_name}}, {{user.last_name}}</h1>
+        {{ customer_amounts }}
+        <pre>{{ customer_amounts|safe }}</pre>
     </header>
     <main>
-        <section>
-            <h3>New Accounts of Past Month</h3>
-            <table>
-                <thead>
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <th style="padding-right: 200px;">user_group</th>
-                        <th style="padding-right: 100px;">First_Transaction_Date</th>
-                        <th style="padding-right: 100px;">Most_Recent_Order_Date</th>
-                    </tr>
- 
-                </thead>
-                <tbody>
-                    {% for accounts in new_accounts%}
-                    <tr>
-                        <td>{{accounts.user_group_name}}</td>
-                        <td>{{accounts.order_group_start_date}}</td>
-                        <td>{{accounts.order_most_recent_order_date}}</td>
-                    </tr>
-                    {%endfor%}                    
-                </tbody>
-            </table>
-        </section>
     </main>
     <div style="display: flex; justify-content: center; margin-top: 50px;">
         <a href="{% url 'sales_leaderboard' %}" class="btn btn-primary">Back to Leaderboard</a>
     </div>
+    <footer>
+        <p>&copy; 2024 | Downstream | Sales Data by Rep</p>
+    </footer>
 </body>
 </html>
 
