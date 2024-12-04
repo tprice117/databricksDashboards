@@ -152,6 +152,13 @@ class SellerLocationComplianceForm(forms.ModelForm):
                 attrs={"class": "form-check-input"}
             ),
         }
+        labels = {
+            "gl_coi": "General Liability Proof of Insurance",
+            "auto_coi": "Auto Proof of Insurance",
+            "workers_comp_coi": "Workers Comp Proof of Insurance",
+            "location_logo_image": "Logo",
+            "lead_time_hrs": "Lead Time (in hours)",
+        }
 
 
 class SellerLocationComplianceAdminForm(forms.ModelForm):
