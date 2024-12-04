@@ -3323,12 +3323,29 @@ def new_user(request):
                 last_name = form.cleaned_data.get("last_name")
                 email = form.cleaned_data.get("email").casefold()
                 phone = form.cleaned_data.get("phone")
+                apollo_id = None
+                if form.cleaned_data.get("apollo_id"):
+                    apollo_id = form.cleaned_data.get("apollo_id")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
                 if User.objects.filter(email__iexact=email).exists():
                     raise UserAlreadyExistsError()
                 else:
-                    if user_group_id:
+                    if request.user.is_staff:
+                        # directly create the user
+                        user = User(
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            phone=phone,
+                            source=User.Source.SALES,
+                            apollo_id=apollo_id,
+                            type=user_type,
+                            redirect_url="/customer/",
+                        )
+                        save_model = user
+                        logger.debug("Directly created user.")
+                    elif user_group_id:
                         user_invite = UserGroupAdminApprovalUserInvite(
                             user_group_id=user_group_id,
                             first_name=first_name,
@@ -3339,19 +3356,6 @@ def new_user(request):
                             redirect_url="/customer/",
                         )
                         save_model = user_invite
-                    elif request.user.is_staff:
-                        # directly create the user
-                        user = User(
-                            first_name=first_name,
-                            last_name=last_name,
-                            email=email,
-                            phone=phone,
-                            source=User.Source.SALES,
-                            type=user_type,
-                            redirect_url="/customer/",
-                        )
-                        save_model = user
-                        logger.debug("Directly created user.")
                     else:
                         raise ValueError(
                             f"User:[{context['user'].id}]-UserGroup:[{user_group_id}]-invite attempt:[{email}]"
