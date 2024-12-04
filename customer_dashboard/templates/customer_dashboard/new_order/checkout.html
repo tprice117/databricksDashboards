@@ -104,16 +104,22 @@
             try {
                 disableAddCardSaveButton();
 
+                {% verbatim %}
+                let fingerprint_expression = "{{ data.number }}";
+                let search_indexes = ["{{ data.number }}", "{{ data.number | last4 }}"];
+                {% endverbatim %}
+        
                 token = await bt.tokens.create({
-                    type: 'card',
+                    type: "card",
                     data: {
                         number: cardNumberElement,
                         expiration_month: cardExpirationDateElement.month(),
                         expiration_year: cardExpirationDateElement.year(),
                         cvc: cardVerificationCodeElement,
-                    }
+                    },
+                    search_indexes: search_indexes,
                     deduplicate_token: true,
-                    fingerprint_expression: "{{ data | last4 }}"
+                    fingerprint_expression: fingerprint_expression
                 });
                 // Create Payment Method with token.id
                 // request.get_full_path
@@ -139,13 +145,15 @@
                 } else {
                     console.error("Failed to create payment method", response);
                     // Show popup with error message
-                    Swal.fire({
-                        title: 'Error!',
-                        text: `Failed to create payment method: ${response.statusText}-[token: ${token.id}]`,
-                        icon: 'error',
-                        confirmButtonText: 'Ok'
-                    }).then((result) => {
-                        enableAddCardSaveButton();
+                    response.text().then((text) => {
+                        Swal.fire({
+                            title: "Error!",
+                            text: `Failed to create payment method: ${text}`,
+                            icon: "error",
+                            confirmButtonText: "Ok",
+                        }).then((result) => {
+                            enableAddCardSaveButton();
+                        });
                     });
                 }
             } catch (error) {

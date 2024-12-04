@@ -1687,18 +1687,25 @@ def add_payment_method(request):
         token = request.POST.get("token")
         if token:
             if context["user"] and context["user_group"]:
-                payment_method = PaymentMethod(
-                    user=context["user"], user_group=context["user_group"], token=token
-                )
-                payment_method.save()
-                if user_address_id:
-                    context[
-                        "user_address"
-                    ].default_payment_method_id = payment_method.id
-                    context["user_address"].save()
-                messages.success(request, "Payment method added.")
-                http_status = 201
-
+                # Check if the payment method already exists by token.
+                payment_method = PaymentMethod.objects.filter(token=token).first()
+                if payment_method:
+                    status_text = "Payment method already exists."
+                    http_status = 400
+                else:
+                    payment_method = PaymentMethod(
+                        user=context["user"],
+                        user_group=context["user_group"],
+                        token=token,
+                    )
+                    payment_method.save()
+                    if user_address_id:
+                        context[
+                            "user_address"
+                        ].default_payment_method_id = payment_method.id
+                        context["user_address"].save()
+                    messages.success(request, "Payment method added.")
+                    http_status = 201
             else:
                 if not context["user"]:
                     status_text = "Unable to save card. User not found."
