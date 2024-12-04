@@ -1,52 +1,42 @@
 import logging
+from datetime import datetime as dt, timedelta
+from decimal import Decimal
+import json
+import csv
+
 from django.contrib.auth.decorators import login_required
-from collections import defaultdict
-from django.db.models import DateField
-from django.shortcuts import render
 from django.db.models import (
     F,
     Sum,
     Avg,
     ExpressionWrapper,
     DecimalField,
-    FloatField,
     Case,
     When,
     Value,
     CharField,
-    Count,
-    Func,
     Q,
     Subquery,
     OuterRef,
     Max,
     BooleanField,
 )
-from django.http import JsonResponse
+from django.db.models import Func
+
 from django.db.models.functions import (
-    ExtractYear,
     Coalesce,
-    Round,
     TruncMonth,
     TruncDay,
     Abs,
 )
-from django.core.paginator import Paginator
+from django.forms import DateField
+from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import now
-from decimal import Decimal
-from datetime import datetime as dt, timedelta
-from api.models import *
-from api.models.seller.seller import *
-from api.models.order.order import *
-from api.models.order.order_group import *
-from api.models.order.order_line_item import *
-from api.models.user.user_group import *
-import requests
-import json
-import csv
-from django.http import HttpResponse
-from django.db.models.functions import TruncMonth
+
+from api.models import Order, Payout
+from api_proxy import settings
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +180,7 @@ def get_sales_dashboard_context(user_id=None):
 
     ##Total Users##
     # Total Users
-    total_users = Order.objects.filter(order_filter).values("order_group__user_address__user_group__account_owner_id").distinct().count()
+    total_users = Order.objects.filter(order_filter).values("order_group__user_address__user_group__users__user_id").distinct().count()
     context["total_users"] = total_users
 
     ##Total Companies##
