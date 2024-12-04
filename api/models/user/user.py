@@ -427,7 +427,7 @@ class CompanyUtils:
         return round(percentage_change)
 
     @staticmethod
-    def get_new(search_q: str = None):
+    def get_new(search_q: str = None, owner_id: str = None):
         """Get all users created in the last 30 days."""
         cutoff_time = timezone.now() - datetime.timedelta(days=30)
         users_q = User.objects.filter(date_joined__gte=cutoff_time)
@@ -438,11 +438,13 @@ class CompanyUtils:
                 | Q(last_name__icontains=search_q)
                 | Q(email__icontains=search_q)
             )
+        if owner_id:
+            users_q = users_q.filter(user_group__account_owner_id=owner_id)
         users_q = users_q.order_by("-date_joined")
         return users_q
 
     @staticmethod
-    def get_loggedin(search_q: str = None):
+    def get_loggedin(search_q: str = None, owner_id: str = None):
         """Get all users who have logged in, in the last 30 days."""
         cutoff_time = timezone.now() - datetime.timedelta(days=30)
         users_q = User.objects.filter(last_login__gte=cutoff_time)
@@ -453,25 +455,31 @@ class CompanyUtils:
                 | Q(last_name__icontains=search_q)
                 | Q(email__icontains=search_q)
             )
+        if owner_id:
+            users_q = users_q.filter(user_group__account_owner_id=owner_id)
         users_q = users_q.order_by("-date_joined")
         return users_q
 
     @staticmethod
-    def get_active(search_q: str = None) -> List[UserGroup]:
+    def get_active(search_q: str = None, owner_id: str = None) -> List[UserGroup]:
         """Get all active buyers.
         This returns all users who have an order in the last 30 days.
         """
         cutoff_time = timezone.now() - datetime.timedelta(days=30)
         # Active Companies is user group on an order within date range (or within last 30 days if no range)
         orders = Order.objects.filter(end_date__gte=cutoff_time)
+        orders.select_related("order_group__user")
         if search_q:
             orders = orders.filter(
                 Q(order_group__user__first_name__icontains=search_q)
                 | Q(order_group__user__last_name__icontains=search_q)
                 | Q(order_group__user__email__icontains=search_q)
             )
+        if owner_id:
+            orders = orders.filter(
+                order_group__user__user_group__account_owner_id=owner_id
+            )
 
-        orders.select_related("order_group__user")
         orders = orders.distinct("order_group__user")
         orders = orders.order_by("order_group__user", "-end_date")
         users = []
@@ -488,6 +496,7 @@ class CompanyUtils:
         tab: str = None,
         old_date: datetime.date = None,
         new_date: datetime.date = None,
+        owner_id: str = None,
     ) -> List[User]:
         """Get all churning buyers.
         -
@@ -509,13 +518,17 @@ class CompanyUtils:
 
         start_time = time.time()
         orders = Order.objects.filter(end_date__gte=old_date)
+        orders.select_related("order_group__user")
         if search_q:
             orders = orders.filter(
                 Q(order_group__user__first_name__icontains=search_q)
                 | Q(order_group__user__last_name__icontains=search_q)
                 | Q(order_group__user__email__icontains=search_q)
             )
-        orders.select_related("order_group__user")
+        if owner_id:
+            orders = orders.filter(
+                order_group__user__user_group__account_owner_id=owner_id
+            )
         orders = orders.prefetch_related("order_line_items")
         print(orders.count())
         step_time = time.time()
