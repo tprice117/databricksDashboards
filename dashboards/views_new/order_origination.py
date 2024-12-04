@@ -1,14 +1,12 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
-
-logger = logging.getLogger(__name__)
-
-from django.db.models import Count
 from django.db.models.functions import TruncMonth, TruncYear
 from django.shortcuts import render
 
 from api.models.order.order import Order
+
+logger = logging.getLogger(__name__)
 
 
 @login_required(login_url="/admin/login/")
