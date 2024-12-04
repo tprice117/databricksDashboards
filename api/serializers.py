@@ -214,52 +214,9 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
 
         # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
         if validated_data.get("user_id", None) is not None:
-            message = None
-            if not new_user.user_group:
-                # Check user email to see if it is part of another team.
-                # first filter out common email domains, like google, yahoo, etc.
-                # TODO: Add yopmail to the list after testing.
-                common_domains = [
-                    "gmail.com",  # Google
-                    "yahoo.com",  # Yahoo
-                    "hotmail.com",  # Hotmail
-                    "outlook.com",  # Outlook
-                    "aol.com",  # AOL
-                    "icloud.com",  # iCloud
-                    "protonmail.com",  # ProtonMail
-                    "zoho.com",  # Zoho
-                    "yandex.com",  # Yandex
-                    "mail.com",  # Mail.com
-                    "gmx.com",  # GMX
-                    "tutanota.com",  # Tutanota
-                    "fastmail.com",  # Fastmail
-                    "hushmail.com",  # H
-                    "runbox.com",  # Runbox
-                    "countermail.com",  # CounterMail
-                    "posteo.de",  # Posteo
-                    "mailbox.org",  # Mailbox.org
-                    "disroot.org",  # Disroot
-                    "riseup.net",  # Riseup
-                    "autistici.org",  # Autistici
-                    "elude.in",  # Elude
-                    "secmail.pro",  # SecMail
-                    "mailinator.com",  # Mailinator
-                ]
-                email_domain = validated_data.get("email").split("@")[1]
-                if email_domain not in common_domains:
-                    users = User.objects.filter(email__contains=email_domain)
-                    # If there are users with the same email domain, assign the new user to the same team.
-                    # If there are more than 50 users, then assume it is a common domain and do not assign.
-                    if users.count() > 0 and users.count() < 50:
-                        other_team_user = users.first()
-                        message = f"They were assigned to the same team as {other_team_user.email} on {other_team_user.user_group_id}"
-                        new_user.user_group_id = other_team_user.user_group_id
-                        new_user.save()
             # Send internal email to notify team. TODO: Remove or True after testing.
             if settings.ENVIRONMENT == "TEST" or True:
-                send_email_on_new_signup(
-                    new_user, created_by_downstream_team=False, message=message
-                )
+                send_email_on_new_signup(new_user, created_by_downstream_team=False)
         else:
             logger.info(
                 f"UserSerializer.create: [New User Signup]-[{validated_data}]",
