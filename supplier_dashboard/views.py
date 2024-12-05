@@ -2350,9 +2350,9 @@ def location_detail(request, location_id):
                 if form.is_valid():
                     if form.has_changed():
                         form.save()
-                        messages.success(request, "Successfully saved!1")
+                        messages.success(request, "Successfully saved!")
                     else:
-                        messages.info(request, "No changes detected.1")
+                        messages.info(request, "No changes detected.")
                     compliance_form = compliance_form_class(instance=seller_location)
                     context["compliance_form"] = compliance_form
                 else:
@@ -2485,9 +2485,9 @@ def location_detail(request, location_id):
             if "compliance_submit" not in request.POST:
                 if save_model:
                     save_model.save()
-                    messages.success(request, "Successfully saved!2")
+                    messages.success(request, "Successfully saved!")
                 else:
-                    messages.info(request, "No changes detected.2")
+                    messages.info(request, "No changes detected.")
             # if request.headers.get("HX-Request"): Could handle htmx here.
             return render(request, "supplier_dashboard/location_detail.html", context)
         except InvalidFormError as e:
