@@ -1,6 +1,8 @@
 from decimal import Decimal
 from functools import lru_cache
 
+from django.db.models import Sum, Case, When
+
 from api.models.main_product.main_product_waste_type import MainProductWasteType
 from api.models.main_product.product import Product
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
@@ -44,6 +46,16 @@ class MatchingEngine:
         # Get all SellerProductSellerLocation objects that match the product.
         seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
             seller_product__product=product,
+        ).annotate(
+            rating=Sum(
+                Case(
+                    When(
+                        order_groups__orders__review__rating=True,
+                        then=1,
+                    ),
+                    default=0,
+                )
+            )
         )
         # Select related fields to reduce the number of queries.
         seller_product_seller_locations = (
