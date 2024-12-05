@@ -388,7 +388,11 @@ def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGr
 
 
 def get_location_objects(
-    request: HttpRequest, user: User, user_group: UserGroup, search_q: str = None
+    request: HttpRequest,
+    user: User,
+    user_group: UserGroup,
+    search_q: str = None,
+    owner_id: str = None,
 ):
     """Returns the locations for the current UserGroup.
 
@@ -403,14 +407,16 @@ def get_location_objects(
         user (User): User object.
         user_group (UserGroup): UserGroup object. NOTE: May be None.
         search_q (str): [Optional] Search query string.
+        owner_id (str): [Optional] ID of owner of usergroup. (Only if user is staff)
 
     Returns:
-        QuerySet[Location]: The locations queryset.
+        QuerySet[Location] | list[Location]: The locations queryset.
     """
     if not request.user.is_staff and user.type != UserType.ADMIN:
         user_user_locations = UserUserAddress.objects.filter(
             user_id=user.id
         ).select_related("user_address")
+
         if search_q:
             user_user_locations = user_user_locations.filter(
                 Q(user_address__name__icontains=search_q)
@@ -444,6 +450,8 @@ def get_location_objects(
                 | Q(state__icontains=search_q)
                 | Q(postal_code__icontains=search_q)
             )
+        if owner_id:
+            locations = locations.filter(user_group__account_owner_id=owner_id)
     return locations
 
 
@@ -2554,18 +2562,31 @@ def locations(request):
         context["tab"] = tab
         query_params = request.GET.copy()
 
+        account_filter = request.GET.get("account_filter", None)
+        account_owner_id = None
+        if request.user.is_staff and account_filter == "my_accounts":
+            account_owner_id = request.user.id
+
         if request.user.is_staff and tab == "new":
-            user_addresses = UserAddressUtils.get_new(search_q=search_q)
+            user_addresses = UserAddressUtils.get_new(
+                search_q=search_q, owner_id=account_owner_id
+            )
             context["help_text"] = "New locations created in the last 30 days."
         elif request.user.is_staff and tab == "active":
-            user_addresses = UserAddressUtils.get_active(search_q=search_q)
+            user_addresses = UserAddressUtils.get_active(
+                search_q=search_q, owner_id=account_owner_id
+            )
             context["help_text"] = "Active locations with orders in the last 30 days."
             pagination_limit = 100  # Create large limit due to long request time
         elif request.user.is_staff and (tab == "churned" or tab == "fully_churned"):
             cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
             churn_date = datetime.date.today() - datetime.timedelta(days=60)
             user_addresses = UserAddressUtils.get_churning(
-                search_q=search_q, tab=tab, old_date=churn_date, new_date=cutoff_date
+                search_q=search_q,
+                tab=tab,
+                old_date=churn_date,
+                new_date=cutoff_date,
+                owner_id=account_owner_id,
             )
             pagination_limit = 200  # Create large limit due to long request time.
             if tab == "fully_churned":
@@ -2582,7 +2603,11 @@ def locations(request):
                     new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
         else:
             user_addresses = get_location_objects(
-                request, context["user"], context["user_group"], search_q=search_q
+                request,
+                context["user"],
+                context["user_group"],
+                search_q=search_q,
+                owner_id=account_owner_id,
             )
 
         paginator = Paginator(user_addresses, pagination_limit)
@@ -3096,7 +3121,7 @@ def users(request):
             if date:
                 users = users.filter(date_joined__date=date)
             if account_owner_id:
-                users = users.filter(user_group__account_owner__id=account_owner_id)
+                users = users.filter(user_group__account_owner_id=account_owner_id)
             users = users.order_by("-date_joined")
 
         paginator = Paginator(users, pagination_limit)

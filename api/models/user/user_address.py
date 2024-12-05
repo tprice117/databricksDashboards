@@ -194,7 +194,7 @@ class CompanyUtils:
         return round(percentage_change)
 
     @staticmethod
-    def get_new(search_q: str = None):
+    def get_new(search_q: str = None, owner_id: str = None):
         """Get all user addresses created in the last 30 days."""
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         address_q = UserAddress.objects.filter(created_on__gte=cutoff_date)
@@ -207,11 +207,13 @@ class CompanyUtils:
                 | Q(state__icontains=search_q)
                 | Q(postal_code__icontains=search_q)
             )
+        if owner_id:
+            address_q = address_q.filter(user_group__account_owner_id=owner_id)
         address_q = address_q.order_by("-created_on")
         return address_q
 
     @staticmethod
-    def get_active(search_q: str = None) -> List[UserGroup]:
+    def get_active(search_q: str = None, owner_id: str = None) -> List[UserGroup]:
         """Get all active companies.
         This returns all companies that have at least one active order in the last 30 days.
         """
@@ -225,6 +227,10 @@ class CompanyUtils:
                 | Q(order_group__user_address__city__icontains=search_q)
                 | Q(order_group__user_address__state__icontains=search_q)
                 | Q(order_group__user_address__postal_code__icontains=search_q)
+            )
+        if owner_id:
+            orders = orders.filter(
+                order_group__user_address__user_group__account_owner_id=owner_id
             )
 
         orders.select_related("order_group__user_address")
@@ -244,6 +250,7 @@ class CompanyUtils:
     def get_churning(
         search_q: str = None,
         tab: str = None,
+        owner_id: str = None,
         old_date: datetime.date = None,
         new_date: datetime.date = None,
     ) -> List[UserGroup]:
@@ -258,14 +265,14 @@ class CompanyUtils:
 
         return: List of UserGroup objects
         """
-        import time
+        # import time
 
         if old_date is None:
             old_date = datetime.date.today() - datetime.timedelta(days=60)
         if new_date is None:
             new_date = datetime.date.today() - datetime.timedelta(days=30)
 
-        start_time = time.time()
+        # start_time = time.time()
         # Churning = sum of all order.customer total for orders within the date range for a given User Group
         # is less than the sum of the previous date range (or within last 30 days if no range)
         # ie. If I select (1) Today to last Wednesday, it will look from (2) last Wednesday to 2 Wednesdays ago
@@ -282,11 +289,15 @@ class CompanyUtils:
                 | Q(order_group__user_address__state__icontains=search_q)
                 | Q(order_group__user_address__postal_code__icontains=search_q)
             )
+        if owner_id:
+            orders = orders.filter(
+                order_group__user_address__user_group__account_owner_id=owner_id
+            )
         orders.select_related("order_group__user_address")
         orders = orders.prefetch_related("order_line_items")
-        print(orders.count())
-        step_time = time.time()
-        print(f"Query count: {step_time - start_time}")
+        # print(orders.count())
+        # step_time = time.time()
+        # print(f"Query count: {step_time - start_time}")
         user_addresses_d = {}
         for order in orders:
             ugid = order.order_group.user_address_id
@@ -311,8 +322,8 @@ class CompanyUtils:
                 user_addresses_d[ugid]["last_order"] = order.end_date
             # if len(user_addresses_d) == 10:
             #     break
-        step_time = time.time()
-        print(f"Loop orders: {step_time - start_time}")
+        # step_time = time.time()
+        # print(f"Loop orders: {step_time - start_time}")
 
         user_addresses = []
         for ugid, data in user_addresses_d.items():
@@ -342,10 +353,10 @@ class CompanyUtils:
                         user_addresses.append(data["user_address"])
                 else:
                     user_addresses.append(data["user_address"])
-        step_time = time.time()
-        print(f"Filter churning: {step_time - start_time}")
+        # step_time = time.time()
+        # print(f"Filter churning: {step_time - start_time}")
         # Sort by change
         user_addresses = sorted(user_addresses, key=lambda x: x.change)
-        step_time = time.time()
-        print(f"Sort: {step_time - start_time}")
+        # step_time = time.time()
+        # print(f"Sort: {step_time - start_time}")
         return user_addresses
