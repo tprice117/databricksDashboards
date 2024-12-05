@@ -92,7 +92,9 @@ class UserForm(forms.ModelForm):
                 # Staff members don't need to fill out "How did you find us?"
                 self.fields["source"].required = False
                 self.fields["source"].widget = forms.HiddenInput()
-            if user_instance == UserType.ADMIN or (auth_user and auth_user.is_staff):
+            if user_instance == UserType.ADMIN or (
+                auth_user and (auth_user.is_staff or auth_user.is_admin)
+            ):
                 # Admins or impersonating staff can change to any type
                 self.fields["type"].choices = UserType.choices
             elif user_instance.type == UserType.BILLING:
