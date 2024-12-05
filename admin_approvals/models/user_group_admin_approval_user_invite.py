@@ -99,6 +99,8 @@ def pre_save_user_group_admin_approval_order(
     else:
         # The UserGroupAdminApprovalUserInvite.Status is PENDING. It's
         # either being created or updated.
+
+        # Default source to "Referral from Coworker".
         source = User.Source.COWORKER
 
         if instance._state.adding and instance.created_by:
@@ -112,13 +114,17 @@ def pre_save_user_group_admin_approval_order(
                 is not None
             )
 
+            if is_staff:
+                # If the UserGroupAdminApprovalUserInvite is being created by a Staff
+                # (internal Downstream) user, set the source to "Downstream Sales Rep".
+                source = User.Source.SALES
+
             if is_admin or is_staff or not has_policy:
                 # If the UserGroupAdminApprovalUserInvite is being created by an ADMIN
                 # or a Staff (internal Downstream) user automatically approve the
                 # UserGroupAdminApprovalUserInvite. Also, if there is no UserGroup User
                 # Invite policy for the CreatedBy user type, automatically approve the
                 # UserGroupAdminApprovalUserInvite.
-                source = User.Source.SALES
                 instance.status = ApprovalStatus.APPROVED
 
         if instance.status == ApprovalStatus.APPROVED:
