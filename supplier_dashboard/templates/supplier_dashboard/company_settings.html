@@ -12,8 +12,8 @@
                 <div class="card mb-3">
                     <div class="card-body text-center shadow">
                         <img class="rounded-circle mb-3 mt-4"
-                            src="{% if seller.location_logo_url %}
-                                {{ seller.location_logo_url }}
+                            src="{% if seller.logo %}
+                                {{ seller.logo.url }}
                             {% else %}
                                 {% static 'supplier_dashboard/img/dogs/image2.jpeg' %}
                             {% endif %}"
@@ -74,7 +74,7 @@
                                 <p class="text-primary m-0 fw-bold">Company Information</p>
                             </div>
                             <div class="card-body">
-                                <form action="{% url 'supplier_company' %}" method="post">
+                                <form action="{% url 'supplier_company' %}" method="post" enctype="multipart/form-data">
                                     {% csrf_token %}
                                     <!-- Include the hidden fields -->
                                     {% for hidden in form.hidden_fields %}
