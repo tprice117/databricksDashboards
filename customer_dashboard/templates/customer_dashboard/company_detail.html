@@ -41,6 +41,11 @@
             let token = null;
             try {
                 disableAddCardSaveButton();
+
+                {% verbatim %}
+                let fingerprint_expression = "{{ data.number }}";
+                let search_indexes = ["{{ data.number }}", "{{ data.number | last4 }}"];
+                {% endverbatim %}
         
                 token = await bt.tokens.create({
                     type: "card",
@@ -50,6 +55,9 @@
                         expiration_year: cardExpirationDateElement.year(),
                         cvc: cardVerificationCodeElement,
                     },
+                    search_indexes: search_indexes,
+                    deduplicate_token: true,
+                    fingerprint_expression: fingerprint_expression
                 });
                 // Create Payment Method with token.id
                 // request.get_full_path
@@ -75,13 +83,15 @@
                 } else {
                     console.error("Failed to create payment method", response);
                     // Show popup with error message
-                    Swal.fire({
-                        title: "Error!",
-                        text: `Failed to create payment method: ${response.statusText}-[token: ${token.id}]`,
-                        icon: "error",
-                        confirmButtonText: "Ok",
-                    }).then((result) => {
-                        enableAddCardSaveButton();
+                    response.text().then((text) => {
+                        Swal.fire({
+                            title: "Error!",
+                            text: `Failed to create payment method: ${text}`,
+                            icon: "error",
+                            confirmButtonText: "Ok",
+                        }).then((result) => {
+                            enableAddCardSaveButton();
+                        });
                     });
                 }
             } catch (error) {
@@ -309,9 +319,9 @@
                     </div>
                 </div>
                 <div class="card">
-                        <div class="card-body">
-                            <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post" enctype="multipart/form-data">
-                                {% csrf_token %}
+                    <div class="card-body">
+                        <form action="{% url 'customer_company_detail' user_group_id=user_group.id %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
                             <h4 class="card-title">Branding&nbsp;</h4>
                             <p>Make sure to press "Save" to keep changes.</p>
                             <hr />
@@ -323,22 +333,25 @@
                                     {{ hidden }}
                                 {% endfor %}
                                 <!-- Include the visible fields -->
-                                <p>{{ form.logo.label }}
+                                <p>
+                                    {{ form.logo.label }}
                                     <span>(Preferred Size: 16x9, e.g. 1920x1080px)</span>
-                                    {% if form.logo.value %}<br/>{% endif %}
-                                    {{ form.logo }}</p>
-                                <p>{{ form.primary.label }} {{ form.primary }}
-                                    <button class="btn btn-sm btn-outline-primary" 
-                                    type="button" 
-                                    onclick="document.getElementById('primary_color').value='#018381';updatePageColors('#018381');">Default</button>
+                                    {% if form.logo.value %}
+                                        <br />
+                                    {% endif %}
+                                    {{ form.logo }}
+                                </p>
+                                <p>
+                                    {{ form.primary.label }} {{ form.primary }}
+                                    <button class="btn btn-sm btn-outline-primary" type="button" onclick="document.getElementById('primary_color').value='#018381';updatePageColors('#018381');">Default</button>
                                 </p>
                             {% endfor %}
                             <div class="d-flex flex-row-reverse">
                                 <button class="btn btn-primary btn-sm" type="submit" name="branding_form" style="margin-top: 12px;">Save</button>
                             </div>
-                            </form>
-                        </div>
+                        </form>
                     </div>
+                </div>
             </div>
             <div class="col-md-6 mb-2">
                 <div class="row">
@@ -381,10 +394,13 @@
                                 <div class="card-body">
                                     <h4 class="card-title">Internal Data&nbsp;</h4>
                                     <p>Share Code: {{ user_group.share_code }}</p>
-                                    <p>Account Owner: 
-                                        {% if user_group.account_owner.full_name %}{{ user_group.account_owner.full_name }}
-                                        {% else %}{{ user_group.account_owner.email }}
-                                        {% endif %}</p>
+                                    <p>
+                                        Account Owner:{% if user_group.account_owner.full_name %}
+                                            {{ user_group.account_owner.full_name }}
+                                        {% else %}
+                                            {{ user_group.account_owner.email }}
+                                        {% endif %}
+                                    </p>
                                     <p>Apollo ID: {{ user_group.apollo_id }}</p>
                                     <p>Stage: {{ user_group.stage }}</p>
                                 </div>
