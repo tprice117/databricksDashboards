@@ -75,27 +75,34 @@ class UserForm(forms.ModelForm):
             "email": forms.TextInput(attrs={"class": "form-control"}),
             "source": forms.Select(attrs={"class": "form-select"}),
             "type": forms.Select(attrs={"class": "form-select"}),
-            "photo": forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+            "photo": forms.ClearableFileInput(
+                attrs={"type": "file", "class": "form-control"}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.get("instance", None)
+        user_instance = kwargs.get("instance", None)
+        auth_user = kwargs.pop("auth_user", None)
         super(UserForm, self).__init__(*args, **kwargs)
         self.fields["photo"].label = "Profile Picture"
         self.fields["email"].disabled = True
 
-        if user:
-            if user.is_staff:
+        if user_instance:
+            if user_instance.is_staff:
+                # Staff members don't need to fill out "How did you find us?"
                 self.fields["source"].required = False
                 self.fields["source"].widget = forms.HiddenInput()
-            if user.type == UserType.BILLING:
+            if user_instance == UserType.ADMIN or (auth_user and auth_user.is_staff):
+                # Admins or impersonating staff can change to any type
+                self.fields["type"].choices = UserType.choices
+            elif user_instance.type == UserType.BILLING:
                 self.fields["type"].choices = [
-                    (UserType.BILLING, UserType.BILLING),
-                    (UserType.MEMBER, UserType.MEMBER),
+                    (UserType.BILLING, UserType.BILLING.label),
+                    (UserType.MEMBER, UserType.MEMBER.label),
                 ]
-            elif user.type == UserType.MEMBER:
+            elif user_instance.type == UserType.MEMBER:
                 self.fields["type"].choices = [
-                    (UserType.MEMBER, UserType.MEMBER),
+                    (UserType.MEMBER, UserType.MEMBER.label),
                 ]
 
 
