@@ -27,7 +27,11 @@ class CheckoutOrder(BaseModel):
     # Foreign key to cart in Order model with related_name="orders".
     # Either a payment method or pay later.
     payment_method = models.ForeignKey(
-        PaymentMethod, models.CASCADE, related_name="cart_orders", blank=True, null=True
+        PaymentMethod,
+        models.SET_NULL,
+        related_name="cart_orders",
+        blank=True,
+        null=True,
     )
     pay_later = models.BooleanField(default=False)
     is_stale = models.BooleanField(default=False)
