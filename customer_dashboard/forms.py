@@ -119,6 +119,12 @@ class UserInviteForm(forms.Form):
         auth_user = kwargs.pop("auth_user", None)
         user = kwargs.pop("user", None)
         super(UserInviteForm, self).__init__(*args, **kwargs)
+        if auth_user and auth_user.is_staff:
+            self.fields["apollo_id"] = forms.CharField(
+                max_length=128,
+                widget=forms.TextInput(attrs={"class": "form-control"}),
+                required=True,
+            )
         if auth_user and user and not auth_user.is_staff:
             # if auth_user.type is lower than user.type, then disable the type field.
             if auth_user.type == UserType.BILLING:
@@ -279,6 +285,7 @@ class UserGroupForm(forms.ModelForm):
             "pay_later",
             "autopay",
             "net_terms",
+            "industry",
             "invoice_frequency",
             "invoice_day_of_month",
             "invoice_at_project_completion",
@@ -296,6 +303,7 @@ class UserGroupForm(forms.ModelForm):
                 attrs={"class": "form-check-input", "role": "switch"}
             ),
             "net_terms": forms.Select(attrs={"class": "form-select"}),
+            "industry": forms.Select(attrs={"class": "form-select"}),
             "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
             "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
             "invoice_at_project_completion": forms.CheckboxInput(

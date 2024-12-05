@@ -32,6 +32,7 @@
         background-color: #333;
         color: white;
         z-index: 1;
+        padding-right: 100px;
     }
 </style>
 <!DOCTYPE html>
@@ -42,20 +43,10 @@
     <title>User Sales Detail</title>
 </head>
 <body>
-    <nav>
-        <ul id="nav2" style="display: flex; gap: 100px;">
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_detail' %}active{% endif %}"><a href="{% url 'user_sales_detail' user.id %}">Overview</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_product_mix' %}active{% endif %}"><a href="{% url 'user_sales_product_mix' user_id=user.id %}">Product Mix</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_top_accounts' %}active{% endif %}"><a href="{% url 'user_sales_top_accounts' user_id=user.id %}">Top Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_accounts' %}active{% endif %}"><a href="{% url 'user_sales_new_accounts' user_id=user.id %}">New Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_new_buyers' %}active{% endif %}"><a href="{% url 'user_sales_new_buyers' user_id=user.id %}">New Buyers</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_churned_accounts' %}active{% endif %}"><a href="{% url 'user_sales_churned_accounts' user_id=user.id %}">Churned Accounts</a></li>
-            <li id="nav2" class="{% if request.resolver_match.url_name == 'user_sales_28_day_list' %}active{% endif %}"><a href="{% url 'user_sales_28_day_list' user_id=user.id %}">28 Day List</a></li>
-        </ul>
-    </nav>
+    {% include 'dashboards/user_sales_nav.html' %}
     <header>
         <h1>{{user.first_name}} {{user.last_name}}</h1>
-        <h2>New Buyers of Past 30 Days</h2>
+        <h2>New Buyers of Past Month</h2>
     </header>
     <main>
         <section>
@@ -65,15 +56,18 @@
                         <th>User Group ID</th>
                         <th>User Group Name</th>
                         <th>First Company Transaction Date</th>
+                        <th>Recent Transaction Date</th>
+                        <th>Order Originator</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for group in user_groups %}
+                    {% for group in user_groups|dictsort:"transaction_date" %}
                     <tr>
                         <td>{{ group.id }}</td>
                         <td>{{ group.name }}</td>
                         <td>{{ group.user_addresses__order_groups__start_date }}</td>
-                        <td>{{ group.user_addresses__order_groups__orders__end_date__gte }}</td>
+                        <td>{{ group.transaction_date }}</td>
+                        <td>{{ group.order_user_name }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

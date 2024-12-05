@@ -1,52 +1,42 @@
 import logging
+from datetime import datetime as dt, timedelta
+from decimal import Decimal
+import json
+import csv
+
 from django.contrib.auth.decorators import login_required
-from collections import defaultdict
-from django.db.models import DateField
-from django.shortcuts import render
 from django.db.models import (
     F,
     Sum,
     Avg,
     ExpressionWrapper,
     DecimalField,
-    FloatField,
     Case,
     When,
     Value,
     CharField,
-    Count,
-    Func,
     Q,
     Subquery,
     OuterRef,
     Max,
     BooleanField,
 )
-from django.http import JsonResponse
+from django.db.models import Func
+
 from django.db.models.functions import (
-    ExtractYear,
     Coalesce,
-    Round,
     TruncMonth,
     TruncDay,
     Abs,
 )
-from django.core.paginator import Paginator
+from django.db.models import DateField
+from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import now
-from decimal import Decimal
-from datetime import datetime as dt, timedelta
-from api.models import *
-from api.models.seller.seller import *
-from api.models.order.order import *
-from api.models.order.order_group import *
-from api.models.order.order_line_item import *
-from api.models.user.user_group import *
-import requests
-import json
-import csv
-from django.http import HttpResponse
-from django.db.models.functions import TruncMonth
+
+from api.models import Order, Payout
+from api_proxy import settings
 
 logger = logging.getLogger(__name__)
 
@@ -60,44 +50,57 @@ def sales_dashboard(request):
     return render(request, "dashboards/sales_dashboard.html", context)
 
 
-def get_sales_dashboard_context():
+def get_sales_dashboard_context(user_id=None):
     context = {}
     date_range_start_date = dt(2024, 1, 1)
     date_range_end_date = dt(2024, 12, 31)
     delta_month = timezone.now() - timedelta(days=30)
 
+    order_filter = Q()
+    if user_id:
+        order_filter &= Q(
+            order_group__user_address__user_group__account_owner_id=user_id
+        )
+        print(order_filter)
+        print(user_id)
+
     ##GMV##
     # customer Amount Completed
-    customer_amounts = Order.objects.annotate(
-        customer_amount_completed=Sum(
-            Case(
-                When(
-                    Q(status="COMPLETE")
-                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                    & ~Q(order_line_items__rate=0),
-                    then=ExpressionWrapper(
-                        F("order_line_items__rate")
-                        * F("order_line_items__quantity")
-                        * (1 + F("order_line_items__platform_fee_percent") * 0.01),
-                        output_field=DecimalField(),
+    customer_amounts = (
+        Order.objects.filter(order_filter)
+        .annotate(
+            customer_amount_completed=Sum(
+                Case(
+                    When(
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
+                        then=ExpressionWrapper(
+                            F("order_line_items__rate")
+                            * F("order_line_items__quantity")
+                            * (1 + F("order_line_items__platform_fee_percent") * 0.01),
+                            output_field=DecimalField(),
+                        ),
                     ),
-                ),
-                default=Value(0),
-                output_field=DecimalField(),
-            )
-        ),
-        customer_amount=Sum(
-            ExpressionWrapper(
-                F("order_line_items__rate")
-                * F("order_line_items__quantity")
-                * (1 + F("order_line_items__platform_fee_percent") * 0.01),
-                output_field=DecimalField(),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
             ),
-            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-            & ~Q(order_line_items__rate=0),
-        ),
-    ).aggregate(
-        total_completed=Sum("customer_amount_completed"), total=Sum("customer_amount")
+            customer_amount=Sum(
+                ExpressionWrapper(
+                    F("order_line_items__rate")
+                    * F("order_line_items__quantity")
+                    * (1 + F("order_line_items__platform_fee_percent") * 0.01),
+                    output_field=DecimalField(),
+                ),
+                filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                & ~Q(order_line_items__rate=0),
+            ),
+        )
+        .aggregate(
+            total_completed=Sum("customer_amount_completed"),
+            total=Sum("customer_amount"),
+        )
     )
 
     customer_amount_completed = customer_amounts["total_completed"] or Decimal("0.00")
@@ -108,40 +111,46 @@ def get_sales_dashboard_context():
 
     ##Net Revenue##
     # Supplier Amount Complete
-    supplier_amounts = Order.objects.annotate(
-        supplier_amount_complete=Sum(
-            Case(
-                When(
-                    Q(status="COMPLETE")
-                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                    & ~Q(order_line_items__rate=0),
-                    then=F("order_line_items__rate") * F("order_line_items__quantity"),
-                ),
-                default=Value(0),
+    supplier_amounts = (
+        Order.objects.filter(order_filter)
+        .annotate(
+            supplier_amount_complete=Sum(
+                Case(
+                    When(
+                        Q(status="COMPLETE")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
+                        then=F("order_line_items__rate")
+                        * F("order_line_items__quantity"),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            ),
+            supplier_amount=Sum(
+                F("order_line_items__rate") * F("order_line_items__quantity"),
                 output_field=DecimalField(),
-            )
-        ),
-        supplier_amount=Sum(
-            F("order_line_items__rate") * F("order_line_items__quantity"),
-            output_field=DecimalField(),
-            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-            & ~Q(order_line_items__rate=0),
-        ),
-    ).aggregate(
-        total_complete=Sum("supplier_amount_complete"),
-        total=Sum("supplier_amount"),
-        total_scheduled=Sum(
-            Case(
-                When(
-                    Q(status="SCHEDULED")
-                    & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                    & ~Q(order_line_items__rate=0),
-                    then=F("order_line_items__rate") * F("order_line_items__quantity"),
-                ),
-                default=Value(0),
-                output_field=DecimalField(),
-            )
-        ),
+                filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                & ~Q(order_line_items__rate=0),
+            ),
+        )
+        .aggregate(
+            total_complete=Sum("supplier_amount_complete"),
+            total=Sum("supplier_amount"),
+            total_scheduled=Sum(
+                Case(
+                    When(
+                        Q(status="SCHEDULED")
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
+                        & ~Q(order_line_items__rate=0),
+                        then=F("order_line_items__rate")
+                        * F("order_line_items__quantity"),
+                    ),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            ),
+        )
     )
 
     supplier_amount_complete = supplier_amounts["total_complete"] or Decimal("0.00")
@@ -159,7 +168,7 @@ def get_sales_dashboard_context():
     context["net_revenue"] = net_revenue
     ##AOV##
     # Average Order Value
-    average_order_value = Order.objects.annotate(
+    average_order_value = Order.objects.filter(order_filter).annotate(
         order_value=Sum(
             F("order_line_items__rate")
             * F("order_line_items__quantity")
@@ -184,31 +193,46 @@ def get_sales_dashboard_context():
 
     ##Total Users##
     # Total Users
-    total_users = OrderGroup.objects.values("user_id").distinct().count()
+    total_users = (
+        Order.objects.filter(order_filter)
+        .values("order_group__user_address__user_group__users__user_id")
+        .distinct()
+        .count()
+    )
     context["total_users"] = total_users
 
     ##Total Companies##
-    total_companies = UserGroup.objects.values("name").distinct().count()
+    total_companies = (
+        Order.objects.filter(order_filter)
+        .values("order_group__user_address__user_group__name")
+        .distinct()
+        .count()
+    )
     context["total_companies"] = total_companies
 
     ##Total Sellers##
     total_sellers = (
-        OrderGroup.objects.values("seller_product_seller_location__id")
+        Order.objects.filter(order_filter)
+        .values("order_group__seller_product_seller_location__id")
         .distinct()
         .count()
     )
     context["total_sellers"] = total_sellers
 
     ##Total Listings##
-    total_listings = OrderGroup.objects.values(
-        "seller_product_seller_location__id"
-    ).count()
+    total_listings = (
+        Order.objects.filter(order_filter)
+        .values("order_group__seller_product_seller_location__id")
+        .distinct()
+        .count()
+    )
     context["total_listings"] = total_listings
 
     ##Graphs##
     # GMV by Month Graph
     gmv_by_month = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[date_range_start_date, date_range_end_date],
         )
@@ -263,6 +287,7 @@ def get_sales_dashboard_context():
     # Net Revenue by Month Graph
     net_revenue_by_month = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[date_range_start_date, date_range_end_date],
         )
@@ -357,6 +382,7 @@ def get_sales_dashboard_context():
     ##Daily GMV Rate for the Past Month##
     daily_gmv_rate = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[delta_month, timezone.now().replace(tzinfo=None)],
         )
@@ -393,6 +419,7 @@ def get_sales_dashboard_context():
     ##Take Rate by Month Graph##
     take_rate_by_month = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[
                 date_range_start_date,
@@ -463,6 +490,7 @@ def get_sales_dashboard_context():
     ##Daily Net Revenue Rate for the Past Month##
     daily_net_revenue_rate = (
         Order.objects.filter(
+            order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
             end_date__range=[delta_month, timezone.now().replace(tzinfo=None)],
         )
@@ -684,84 +712,102 @@ def payout_reconciliation(request):
     order_count = Order.objects.count()
     print(f"Order Count: {order_count}")
 
-    orderRelations = Order.objects.annotate(
-        main_product_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
-        seller_location_name=F("order_group__seller_product_seller_location__seller_location__name"),
-        payee_name=F("order_group__seller_product_seller_location__seller_location__payee_name"),
-        project_location=F("order_group__seller_product_seller_location__seller_location__payee_name"),
-        user_address_name=F("order_group__user_address__name"),
-        end_date_anno=TruncMonth("end_date"),
-        seller_amount=Sum(
-            F("order_line_items__rate")
-            * F("order_line_items__quantity"),
-            output_field=DecimalField(),
-        ),
-        invoice_amount=Coalesce(
-            Subquery(
-                Order.objects.filter(id=OuterRef('id'))
-                .annotate(total_invoice_amount=Sum('seller_invoice_payable_line_items__amount'))
-                .values('total_invoice_amount')[:1],
+    orderRelations = (
+        Order.objects.annotate(
+            main_product_name=F(
+                "order_group__seller_product_seller_location__seller_product__product__main_product__name"
             ),
-            Value(Decimal("0.00")),
-            output_field=DecimalField()
-        ),
-        variance=ExpressionWrapper(
-            Abs(F("invoice_amount") - F("seller_amount")),
-            output_field=DecimalField()
-        ),
-        payout_amount=Coalesce(
-            Subquery(
-            Payout.objects.filter(order_id=OuterRef('id'))
-            .values('order_id')
-            .annotate(total_payout_amount=Sum('amount'))
-            .values('total_payout_amount')[:1],
+            seller_location_name=F(
+                "order_group__seller_product_seller_location__seller_location__name"
             ),
-            Value(Decimal("0.00")),
-            output_field=DecimalField()
-        ),
-        reconcil_status=Case(
-            When(seller_amount=F("invoice_amount"), then=Value(True)),
-            default=Value(False),
-            output_field=BooleanField(),
-        ),
-        order_status=Case(
-            When(payout_amount__isnull=True, then=Value("False")),
-            When(Q(invoice_amount__isnull=True) & Q(payout_amount=F("seller_amount")), then=Value("True")),
-            When(payout_amount__gte=F("invoice_amount"), then=Value("True")),
-            default=Value("False"),
-            output_field=CharField(),
-        ),
-        payment_status=Case(
-            When(order_status="True", then=Value("Paid")),
-            default=Value("Unpaid"),
-            output_field=CharField(),
-        ),
-        reconciliation_status=Case(
-            When(reconcil_status=True, then=Value("Reconciled")),
-            default=Value("Not Reconciled"),
-            output_field=CharField(),
-        ),
-        combined_status=Func(
-            F('payment_status'),
-            Value(', '),
-            F('reconciliation_status'),
-            function='CONCAT',
-            output_field=CharField(),
+            payee_name=F(
+                "order_group__seller_product_seller_location__seller_location__payee_name"
+            ),
+            project_location=F(
+                "order_group__seller_product_seller_location__seller_location__payee_name"
+            ),
+            user_address_name=F("order_group__user_address__name"),
+            end_date_anno=TruncMonth("end_date"),
+            seller_amount=Sum(
+                F("order_line_items__rate") * F("order_line_items__quantity"),
+                output_field=DecimalField(),
+            ),
+            invoice_amount=Coalesce(
+                Subquery(
+                    Order.objects.filter(id=OuterRef("id"))
+                    .annotate(
+                        total_invoice_amount=Sum(
+                            "seller_invoice_payable_line_items__amount"
+                        )
+                    )
+                    .values("total_invoice_amount")[:1],
+                ),
+                Value(Decimal("0.00")),
+                output_field=DecimalField(),
+            ),
+            variance=ExpressionWrapper(
+                Abs(F("invoice_amount") - F("seller_amount")),
+                output_field=DecimalField(),
+            ),
+            payout_amount=Coalesce(
+                Subquery(
+                    Payout.objects.filter(order_id=OuterRef("id"))
+                    .values("order_id")
+                    .annotate(total_payout_amount=Sum("amount"))
+                    .values("total_payout_amount")[:1],
+                ),
+                Value(Decimal("0.00")),
+                output_field=DecimalField(),
+            ),
+            reconcil_status=Case(
+                When(seller_amount=F("invoice_amount"), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+            order_status=Case(
+                When(payout_amount__isnull=True, then=Value("False")),
+                When(
+                    Q(invoice_amount__isnull=True)
+                    & Q(payout_amount=F("seller_amount")),
+                    then=Value("True"),
+                ),
+                When(payout_amount__gte=F("invoice_amount"), then=Value("True")),
+                default=Value("False"),
+                output_field=CharField(),
+            ),
+            payment_status=Case(
+                When(order_status="True", then=Value("Paid")),
+                default=Value("Unpaid"),
+                output_field=CharField(),
+            ),
+            reconciliation_status=Case(
+                When(reconcil_status=True, then=Value("Reconciled")),
+                default=Value("Not Reconciled"),
+                output_field=CharField(),
+            ),
+            combined_status=Func(
+                F("payment_status"),
+                Value(", "),
+                F("reconciliation_status"),
+                function="CONCAT",
+                output_field=CharField(),
+            ),
         )
-    ).values(
-        "id",
-        "main_product_name",
-        "seller_location_name",
-        "payee_name",
-        "user_address_name",
-        "end_date_anno",
-        "seller_amount",
-        "invoice_amount",
-        "variance",
-        "payout_amount",
-        "combined_status",
-    ).order_by("end_date_anno")
-
+        .values(
+            "id",
+            "main_product_name",
+            "seller_location_name",
+            "payee_name",
+            "user_address_name",
+            "end_date_anno",
+            "seller_amount",
+            "invoice_amount",
+            "variance",
+            "payout_amount",
+            "combined_status",
+        )
+        .order_by("end_date_anno")
+    )
 
     context["orderRelations"] = orderRelations
     return render(request, "dashboards/payout_reconciliation.html", context)
@@ -809,33 +855,43 @@ def all_orders_dashboard(request):
         context,
     )
 
+
 def auto_renewal_list_dashboard(request):
     context = {}
-    #MAx end date subquery
-    max_end_date_subquery = Order.objects.filter(
-        order_group=OuterRef('order_group')
-    ).values('order_group').annotate(
-        max_end_date=Max('end_date')
-    ).values('max_end_date')
+    # MAx end date subquery
+    max_end_date_subquery = (
+        Order.objects.filter(order_group=OuterRef("order_group"))
+        .values("order_group")
+        .annotate(max_end_date=Max("end_date"))
+        .values("max_end_date")
+    )
     today = now().date()
     orders = Order.objects.annotate(
         order_id=F("id"),
         annotated_order_group_id=F("order_group__id"),
         order_end_date=F("end_date"),
         user_address_name=F("order_group__user_address__name"),
-        account_owner_first_name=F("order_group__user_address__user_group__account_owner__first_name"),
-        account_owner_last_name=F("order_group__user_address__user_group__account_owner__last_name"),
+        account_owner_first_name=F(
+            "order_group__user_address__user_group__account_owner__first_name"
+        ),
+        account_owner_last_name=F(
+            "order_group__user_address__user_group__account_owner__last_name"
+        ),
         user_first_name=F("order_group__user__first_name"),
         user_last_name=F("order_group__user__last_name"),
         user_email=F("order_group__user__email"),
         order_status=F("status"),
-        sellerlocation_name=F("order_group__seller_product_seller_location__seller_location__name"),
-        mainproduct_name=F("order_group__seller_product_seller_location__seller_product__product__main_product__name"),
+        sellerlocation_name=F(
+            "order_group__seller_product_seller_location__seller_location__name"
+        ),
+        mainproduct_name=F(
+            "order_group__seller_product_seller_location__seller_product__product__main_product__name"
+        ),
         is_most_recent_order=Case(
             When(order_end_date=Subquery(max_end_date_subquery), then=True),
             default=False,
-            output_field=BooleanField()
-                ),
+            output_field=BooleanField(),
+        ),
         autorenewal_date=ExpressionWrapper(
             F("order_end_date") + timedelta(days=28),
             output_field=DateField(),
@@ -843,29 +899,37 @@ def auto_renewal_list_dashboard(request):
         take_action=Case(
             When(autorenewal_date__lte=today + timedelta(days=10), then=True),
             default=False,
-            output_field=BooleanField()
+            output_field=BooleanField(),
         ),
         order_group_url_annotate=Func(
-                Value(settings.DASHBOARD_BASE_URL + "/"),
-                Value("admin/api/ordergroup/"),
-                F("order_group__id"),
-                Value("/change/"),
-                function="CONCAT",
-                output_field=CharField(),
-            ),
+            Value(settings.DASHBOARD_BASE_URL + "/"),
+            Value("admin/api/ordergroup/"),
+            F("order_group__id"),
+            Value("/change/"),
+            function="CONCAT",
+            output_field=CharField(),
+        ),
     ).values(
-        "order_id", "annotated_order_group_id", "order_end_date", "user_address_name", "account_owner_first_name",
-        "account_owner_last_name", "user_first_name", "user_last_name", "user_email", "order_status",
-        "sellerlocation_name", "mainproduct_name", "is_most_recent_order", "autorenewal_date", "take_action", 
-        "order_group_url_annotate"
+        "order_id",
+        "annotated_order_group_id",
+        "order_end_date",
+        "user_address_name",
+        "account_owner_first_name",
+        "account_owner_last_name",
+        "user_first_name",
+        "user_last_name",
+        "user_email",
+        "order_status",
+        "sellerlocation_name",
+        "mainproduct_name",
+        "is_most_recent_order",
+        "autorenewal_date",
+        "take_action",
+        "order_group_url_annotate",
     )
 
     context["orders"] = orders
-    return render(
-        request,
-        "dashboards/auto_renewal_list_dashboard.html",
-        context
-    )
+    return render(request, "dashboards/auto_renewal_list_dashboard.html", context)
 
 
 @login_required(login_url="/admin/login/")

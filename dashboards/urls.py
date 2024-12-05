@@ -1,9 +1,25 @@
 from django.urls import path
 
 from . import views
+from .views_new.metrics_dashboards import (
+    seller_location_dashboard,
+    time_to_acceptance,
+    user_addresses_dashboard,
+    user_groups_dashboard,
+    users_dashboard,
+)
 from .views_new.order_origination import order_origination
-from .views_new.sales_leaderboard import *
-from .views_new.metrics_dashboards import *
+from .views_new.sales_leaderboard import (
+    sales_leaderboard,
+    user_sales_28_day_list,
+    user_sales_churned_accounts,
+    user_sales_detail,
+    user_sales_metric_dashboard,
+    user_sales_new_accounts,
+    user_sales_new_buyers,
+    user_sales_product_mix,
+    user_sales_top_accounts,
+)
 
 urlpatterns = [
     path("index/", views.index, name="index"),
@@ -67,6 +83,11 @@ urlpatterns = [
         "user-sales-detail/<uuid:user_id>/user-sales-new-buyers/",
         user_sales_new_buyers,
         name="user_sales_new_buyers",
+    ),
+    path(
+        "user-sales-detail/<uuid:user_id>/user-sales-metric-dashboard/",
+        user_sales_metric_dashboard,
+        name="user_sales_metric_dashboard",
     ),
     path(
         "all-orders-dashboard/",

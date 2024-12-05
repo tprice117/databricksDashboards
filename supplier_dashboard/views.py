@@ -1900,7 +1900,20 @@ def payout_invoice(request, payout_id):
                 check.expected_delivery_date
             )  # datetime.date
             context["send_date"] = check.send_date  # datetime.datetime
+            context["check_number"] = check.check_number
+            context["status"] = check.status
             context["tracking_number"] = check.tracking_number
+            context["tracking_events"] = []
+            for event in check.tracking_events:
+                context["tracking_events"].append(
+                    {
+                        "location": event["location"],
+                        "name": event["name"],
+                        "date_created": datetime.datetime.strptime(
+                            event["date_created"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                        ),
+                    }
+                )
     # order_line_item = payout.order.order_line_items.all().first()
     # context["is_pdf"] = False
     # if order_line_item:

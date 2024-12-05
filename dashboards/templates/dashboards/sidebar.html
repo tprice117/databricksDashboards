@@ -12,7 +12,6 @@
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'all_orders_dashboard' %}active{% endif %}" href="{% url 'all_orders_dashboard' %}"><i class="fas fa-list"></i><span>All Orders Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'sales_leaderboard' %}active{% endif %}" href="{% url 'sales_leaderboard' %}"><i class="fas fa-money-bill"></i><span>Sales Leaderboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'sales_dashboard' %}active{% endif %}" href="{% url 'sales_dashboard' %}"><i class="fas fa-money-bill"></i><span>Sales Dashboard</span></a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'payout_reconciliation' %}active{% endif %}" href="{% url 'payout_reconciliation' %}"><i class="fas fa-money-bill"></i><span>Reconciliation Dashboard (NYI)</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'order_origination' %}active{% endif %}" href="{% url 'order_origination' %}"><i class="fas fa-user"></i><span>Order Origination</span></a></li>          
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'seller_location_dashboard' %}active{% endif %}" href="{% url 'seller_location_dashboard' %}"><i class="fas fa-map-marker-alt"></i><span>Seller Location Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'users_dashboard' %}active{% endif %}" href="{% url 'users_dashboard' %}"><i class="fas fa-users"></i><span>Users Dashboard</span></a></li>
@@ -20,6 +19,8 @@
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'user_addresses_dashboard' %}active{% endif %}" href="{% url 'user_addresses_dashboard' %}"><i class="fas fa-address-book"></i><span>User Addresses Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'auto_renewal_list_dashboard' %}active{% endif %}" href="{% url 'auto_renewal_list_dashboard' %}"><i class="fas fa-sync-alt"></i><span>Auto Renewal List Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'time_to_acceptance' %}active{% endif %}" href="{% url 'time_to_acceptance' %}"><i class="fas fa-clock"></i><span>Time to Acceptance/Completion Dashboard</span></a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'payout_reconciliation' %}active{% endif %}" href="{% url 'payout_reconciliation' %}"><i class="fas fa-money-bill"></i><span>Reconciliation Dashboard (WIP)</span></a></li>
+
       </ul>
       <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
   </div>
