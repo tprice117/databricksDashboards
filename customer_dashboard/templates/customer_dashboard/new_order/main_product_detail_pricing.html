@@ -9,13 +9,19 @@
 {% endblock %}
 {% block javascript %}
     <script>
+        // Disable the form inputs while htmx request is being sent
         document.body.addEventListener("htmx:beforeSend", function (event) {
-            document.getElementById("discount").disabled = true;
             document.getElementById("sort-btn").disabled = true;
+            if ("{{request.user.is_staff}}" == "True") {
+                document.getElementById("discount").disabled = true;
+            }
         });
+        // Enable the form inputs again after the swap
         document.body.addEventListener("htmx:afterSwap", function (event) {
-            document.getElementById("discount").disabled = false;
             document.getElementById("sort-btn").disabled = false;
+            if ("{{request.user.is_staff}}" == "True") {
+                document.getElementById("discount").disabled = false;
+            }
         });
 
         // listen for the range slider discount change event
