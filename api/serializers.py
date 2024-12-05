@@ -22,6 +22,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
 from .models import (
     AddOn,
     AddOnChoice,
+    Branding,
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
@@ -138,6 +139,14 @@ class UserAddressSerializer(serializers.ModelSerializer):
         validators = []
 
 
+class BrandingSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = Branding
+        fields = "__all__"
+
+
 class UserGroupBillingSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     latitude = serializers.DecimalField(
@@ -252,6 +261,10 @@ class UserGroupSerializer(WritableNestedModelSerializer):
     seller = SellerSerializer(read_only=True)
     seller_id = serializers.PrimaryKeyRelatedField(
         queryset=Seller.objects.all(), source="seller", write_only=True, allow_null=True
+    )
+    branding = BrandingSerializer(
+        required=False,
+        allow_null=True,
     )
     legal = UserGroupLegalSerializer(
         allow_null=True,
