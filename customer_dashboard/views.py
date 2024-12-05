@@ -2058,7 +2058,7 @@ def profile(request):
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
         POST_COPY["email"] = user.email
-        form = UserForm(POST_COPY, request.FILES, instance=user)
+        form = UserForm(POST_COPY, request.FILES, instance=user, auth_user=request.user)
         context["form"] = form
         if form.is_valid():
             if form.has_changed():
@@ -2068,7 +2068,7 @@ def profile(request):
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
-            form = UserForm(instance=user)
+            form = UserForm(instance=user, auth_user=request.user)
             context["form"] = form
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
@@ -2080,7 +2080,7 @@ def profile(request):
                 form[field].field.widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
-        form = UserForm(instance=user)
+        form = UserForm(instance=user, auth_user=request.user)
         context["form"] = form
     return render(request, "customer_dashboard/profile.html", context)
 
@@ -3176,7 +3176,7 @@ def user_detail(request, user_id):
         # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
         POST_COPY = request.POST.copy()
         POST_COPY["email"] = user.email
-        form = UserForm(POST_COPY, request.FILES, instance=user)
+        form = UserForm(POST_COPY, request.FILES, instance=user, auth_user=request.user)
         context["form"] = form
         if form.is_valid():
             if form.has_changed():
@@ -3186,9 +3186,7 @@ def user_detail(request, user_id):
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
-            form = UserForm(
-                instance=user,
-            )
+            form = UserForm(instance=user, auth_user=request.user)
             context["form"] = form
             # return HttpResponse("", status=200)
             # This is an HTMX request, so respond with html snippet
@@ -3200,9 +3198,7 @@ def user_detail(request, user_id):
                 form[field].field.widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
-        form = UserForm(
-            instance=user,
-        )
+        form = UserForm(instance=user, auth_user=request.user)
         context["form"] = form
 
     return render(request, "customer_dashboard/user_detail.html", context)
