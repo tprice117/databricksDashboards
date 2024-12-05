@@ -87,25 +87,13 @@ class UserForm(forms.ModelForm):
         self.fields["photo"].label = "Profile Picture"
         self.fields["email"].disabled = True
 
-        if user_instance:
-            if user_instance.is_staff:
-                # Staff members don't need to fill out "How did you find us?"
-                self.fields["source"].required = False
-                self.fields["source"].widget = forms.HiddenInput()
-            if user_instance == UserType.ADMIN or (
-                auth_user and (auth_user.is_staff or auth_user.is_admin)
-            ):
-                # Admins or impersonating staff can change to any type
-                self.fields["type"].choices = UserType.choices
-            elif user_instance.type == UserType.BILLING:
-                self.fields["type"].choices = [
-                    (UserType.BILLING, UserType.BILLING.label),
-                    (UserType.MEMBER, UserType.MEMBER.label),
-                ]
-            elif user_instance.type == UserType.MEMBER:
-                self.fields["type"].choices = [
-                    (UserType.MEMBER, UserType.MEMBER.label),
-                ]
+        if user_instance and user_instance.is_staff:
+            # Staff members don't need to fill out "How did you find us?"
+            self.fields["source"].required = False
+            self.fields["source"].widget = forms.HiddenInput()
+        if not (auth_user and (auth_user.is_staff or auth_user.is_admin)):
+            # Only admins or impersonating staff can change user type
+            self.fields["type"].disabled = True
 
 
 # there is another UserInviteForm in supplier_dashboard
