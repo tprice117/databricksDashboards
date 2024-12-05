@@ -89,6 +89,7 @@ class UserForm(forms.ModelForm):
             self.fields["source"].widget = forms.HiddenInput()
 
 
+# there is another UserInviteForm in supplier_dashboard
 class UserInviteForm(forms.Form):
     first_name = forms.CharField(
         max_length=255,
