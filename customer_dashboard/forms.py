@@ -91,7 +91,7 @@ class UserForm(forms.ModelForm):
             # Staff members don't need to fill out "How did you find us?"
             self.fields["source"].required = False
             self.fields["source"].widget = forms.HiddenInput()
-        if not (auth_user and (auth_user.is_staff or auth_user.is_admin)):
+        if not (auth_user and (auth_user.is_staff or auth_user.type == UserType.ADMIN)):
             # Only admins or impersonating staff can change user type
             self.fields["type"].disabled = True
 
