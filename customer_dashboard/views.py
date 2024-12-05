@@ -966,8 +966,7 @@ def new_order_3(request, product_id):
 @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order_4(request):
-    # import time
-    # start_time = time.time()
+    # Get context data
     context = get_user_context(request)
     context["product_id"] = request.GET.get("product_id")
     context["user_address"] = request.GET.get("user_address")
@@ -988,23 +987,10 @@ def new_order_4(request):
     context["removal_date"] = request.GET.get("removal_date", "")
     context["quantity"] = int(request.GET.get("quantity"))
     context["project_id"] = request.GET.get("project_id")
-    # step_time = time.time()
-    # print(f"Extract parameters: {step_time - start_time}")
-    # if product_waste_types:
-    waste_type = None
-    waste_type_id = None
-    # TODO: We are only using the first waste type for now.
-    if context["product_waste_types"]:
-        main_product_waste_type = MainProductWasteType.objects.filter(
-            id=context["product_waste_types"][0]
-        ).first()
-        waste_type = main_product_waste_type.waste_type
-        waste_type_id = waste_type.id
-    if waste_type_id:
-        context["waste_type"] = waste_type_id
 
+    # Get Product and AddOns
     products = Product.objects.filter(main_product_id=context["product_id"])
-    # Find the products that have the waste types and add ons.
+
     if context["product_add_on_choices"]:
         prod_addon_choice_set = set(context["product_add_on_choices"])
         for product in products:
@@ -1027,28 +1013,7 @@ def new_order_4(request):
         messages.error(request, "Product not found.")
         return HttpResponseRedirect(reverse("customer_new_order"))
 
-    # step_time = time.time()
-    # print(f"Find Product: {step_time - start_time}")
-    # We know the product the user wants, so now find the seller locations that offer the product.
-    user_address_obj = UserAddress.objects.filter(id=context["user_address"]).first()
-    seller_product_seller_locations = (
-        MatchingEngine.get_possible_seller_product_seller_locations(
-            context["product"],
-            user_address_obj,
-            waste_type,
-        )
-    )
-    # print("Seller Product Seller Locations")
-    # print(seller_product_seller_locations)
-    # step_time = time.time()
-    # print(f"Find Seller Locations: {step_time - start_time}")
-
-    # if request.method == "POST":
-    # start_date = datetime.datetime.strptime(context["delivery_date"], "%Y-%m-%d")
-    # end_date = None
-    # if context["removal_date"]:
-    #     end_date = datetime.datetime.strptime(context["removal_date"], "%Y-%m-%d")
-    context["seller_product_seller_locations"] = []
+    # Discount
     context["max_discount_100"] = round(
         float(context["product"].main_product.max_discount) * 100, 1
     )
@@ -1056,59 +1021,95 @@ def new_order_4(request):
     context["market_discount"] = (
         context["product"].main_product.max_discount * Decimal(0.8)
     ) * 100
+
     if not request.user.is_staff:
         discount = context["market_discount"]
-
     context["discount"] = discount
 
-    for seller_product_seller_location in seller_product_seller_locations:
-        seller_d = {}
-        try:
-            # Include because SellerProductSellerLocationSerializer does not include waste types info needed for price_details_modal.
-            seller_d["seller_product_seller_location"] = seller_product_seller_location
+    if request.headers.get("HX-Request"):
+        # Waste type
+        waste_type = None
+        waste_type_id = None
+        # TODO: We are only using the first waste type for now.
+        if context["product_waste_types"]:
+            main_product_waste_type = MainProductWasteType.objects.filter(
+                id=context["product_waste_types"][0]
+            ).first()
+            waste_type = main_product_waste_type.waste_type
+            waste_type_id = waste_type.id
+        if waste_type_id:
+            context["waste_type"] = waste_type_id
 
-            pricing = PricingEngine.get_price(
-                user_address=UserAddress.objects.get(
-                    id=context["user_address"],
-                ),
-                seller_product_seller_location=seller_product_seller_location,
-                start_date=datetime.datetime.strptime(
-                    context["delivery_date"], "%Y-%m-%d"
-                ).date(),
-                end_date=datetime.datetime.strptime(
-                    context["delivery_date"], "%Y-%m-%d"
-                ).date(),
-                waste_type=(
-                    WasteType.objects.get(id=waste_type_id) if waste_type_id else None
-                ),
-                times_per_week=(
-                    context["times_per_week"] if context["times_per_week"] else None
-                ),
-                shift_count=(
-                    context["shift_count"] if context["shift_count"] else None
-                ),
-                discount=discount,
+        # SellerProductSellerLocations
+        user_address_obj = UserAddress.objects.filter(
+            id=context["user_address"]
+        ).first()
+        seller_product_seller_locations = (
+            MatchingEngine.get_possible_seller_product_seller_locations(
+                context["product"],
+                user_address_obj,
+                waste_type,
             )
+        )
+        context["seller_product_seller_locations"] = []
 
-            price_data = PricingEngineResponseSerializer(pricing).data
-            # Breakdown of the price data because the neccessary calculations are not capable within the Django template.
-            seller_d["price_breakdown"] = QuoteUtils.get_price_breakdown(
-                price_data,
-                seller_product_seller_location,
-                context["product"].main_product,
-                user_group=context["user_group"],
-            )
+        for seller_product_seller_location in seller_product_seller_locations:
+            seller_d = {}
+            try:
+                # Include because SellerProductSellerLocationSerializer does not include waste types info needed for price_details_modal.
+                seller_d["seller_product_seller_location"] = (
+                    seller_product_seller_location
+                )
 
-            context["seller_product_seller_locations"].append(seller_d)
-        except Exception as e:
-            logger.error(
-                f"new_order_4:Error getting pricing [SellerProductSellerLocation: {seller_product_seller_location.id}]-[{e}]-[{request.build_absolute_uri()}]",
-                exc_info=e,
-            )
+                pricing = PricingEngine.get_price(
+                    user_address=UserAddress.objects.get(
+                        id=context["user_address"],
+                    ),
+                    seller_product_seller_location=seller_product_seller_location,
+                    start_date=datetime.datetime.strptime(
+                        context["delivery_date"], "%Y-%m-%d"
+                    ).date(),
+                    end_date=datetime.datetime.strptime(
+                        context["delivery_date"], "%Y-%m-%d"
+                    ).date(),
+                    waste_type=(
+                        WasteType.objects.get(id=waste_type_id)
+                        if waste_type_id
+                        else None
+                    ),
+                    times_per_week=(
+                        context["times_per_week"] if context["times_per_week"] else None
+                    ),
+                    shift_count=(
+                        context["shift_count"] if context["shift_count"] else None
+                    ),
+                    discount=discount,
+                )
 
-    # step_time = time.time()
-    # print(f"Get Prices: {step_time - start_time}")
-    # context["seller_locations"] = seller_product_location.first().seller_location
+                price_data = PricingEngineResponseSerializer(pricing).data
+                # Breakdown of the price data because the neccessary calculations are not capable within the Django template.
+                seller_d["price_breakdown"] = QuoteUtils.get_price_breakdown(
+                    price_data,
+                    seller_product_seller_location,
+                    context["product"].main_product,
+                    user_group=context["user_group"],
+                )
+
+                context["seller_product_seller_locations"].append(seller_d)
+            except Exception as e:
+                logger.error(
+                    f"new_order_4:Error getting pricing [SellerProductSellerLocation: {seller_product_seller_location.id}]-[{e}]-[{request.build_absolute_uri()}]",
+                    exc_info=e,
+                )
+
+        return render(
+            request,
+            "customer_dashboard/new_order/main_product_detail_pricing_list.html",
+            context,
+        )
+
+    context["data_link"] = request.get_full_path()
+
     return render(
         request,
         "customer_dashboard/new_order/main_product_detail_pricing.html",

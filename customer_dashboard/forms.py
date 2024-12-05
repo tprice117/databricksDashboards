@@ -84,9 +84,19 @@ class UserForm(forms.ModelForm):
         self.fields["photo"].label = "Profile Picture"
         self.fields["email"].disabled = True
 
-        if user and user.is_staff:
-            self.fields["source"].required = False
-            self.fields["source"].widget = forms.HiddenInput()
+        if user:
+            if user.is_staff:
+                self.fields["source"].required = False
+                self.fields["source"].widget = forms.HiddenInput()
+            if user.type == UserType.BILLING:
+                self.fields["type"].choices = [
+                    (UserType.BILLING, UserType.BILLING),
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
+            elif user.type == UserType.MEMBER:
+                self.fields["type"].choices = [
+                    (UserType.MEMBER, UserType.MEMBER),
+                ]
 
 
 class UserInviteForm(forms.Form):
