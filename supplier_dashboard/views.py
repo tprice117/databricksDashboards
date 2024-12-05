@@ -47,7 +47,6 @@ from common.utils import DistanceUtils
 from communications.intercom.contact import Contact as IntercomContact
 from communications.intercom.conversation import Conversation as IntercomConversation
 from communications.intercom.utils.utils import get_json_safe_value
-from customer_dashboard.forms import UserInviteForm
 from notifications.utils import internal_email
 
 from .forms import (
@@ -59,6 +58,7 @@ from .forms import (
     SellerLocationComplianceForm,
     SellerPayoutForm,
     UserForm,
+    UserInviteForm,
 )
 
 logger = logging.getLogger(__name__)
