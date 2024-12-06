@@ -22,7 +22,7 @@ from chat.models.conversation import Conversation
 from chat.models.conversation_user_last_viewed import ConversationUserLastViewed
 from common.models.choices.user_type import UserType
 from communications.intercom.intercom import Intercom
-from notifications.utils.internal_email import send_email_on_new_signup
+from notifications.utils.internal_email import send_new_signup_notification
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +215,7 @@ class User(AbstractUser):
 
             # Send email to internal team. Only on our PROD environment.
             if settings.ENVIRONMENT == "TEST":
-                send_email_on_new_signup(
+                send_new_signup_notification(
                     self, created_by_downstream_team=created_by_downstream_team
                 )
 

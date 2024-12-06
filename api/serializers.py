@@ -14,7 +14,7 @@ from admin_policies.api.v1.serializers import (
     UserGroupPolicyPurchaseApprovalSerializer,
 )
 from api.models.main_product.main_product_tag import MainProductTag
-from notifications.utils.internal_email import send_email_on_new_signup
+from notifications.utils.internal_email import send_new_signup_notification
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
@@ -225,7 +225,7 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
         if validated_data.get("user_id", None) is not None:
             # Send internal email to notify team. TODO: Remove or True after testing.
             if settings.ENVIRONMENT == "TEST" or True:
-                send_email_on_new_signup(new_user, created_by_downstream_team=False)
+                send_new_signup_notification(new_user, created_by_downstream_team=False)
         else:
             logger.info(
                 f"UserSerializer.create: [New User Signup]-[{validated_data}]",
