@@ -33,6 +33,21 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
 
+class InvoiceExpandedViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Invoice.objects.all()
+    serializer_class = InvoiceExpandedSerializer
+
+    def get_queryset(self):
+        if self.request.user.user_group:
+            return Invoice.objects.filter(
+                user_address__user_group=self.request.user.user_group,
+            )
+        else:
+            return Invoice.objects.filter(
+                user_address__user=self.request.user,
+            )
+
+
 class OrderInvoiceView(APIView):
     """
     This class-based view returns an Invoice with line items for a Transaction.
