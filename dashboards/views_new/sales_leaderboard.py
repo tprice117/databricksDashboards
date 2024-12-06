@@ -500,5 +500,5 @@ def user_sales_metric_dashboard(request, user_id):
         return render(request, "404.html", status=404)
 
     context["user"] = user
-    context.update(get_sales_dashboard_context(user_id=user_id))
+    context.update(get_sales_dashboard_context(account_owner_id=user_id))
     return render(request, "dashboards/user_sales_metric_dashboard.html", context)
