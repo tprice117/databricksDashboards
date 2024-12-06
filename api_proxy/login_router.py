@@ -78,7 +78,9 @@ def login_redirect_view(request: HttpRequest):
             return redirect(request.user.redirect_url)
         else:
             return post_login_router(request)
-    return redirect(f"{settings.BASE_URL}/login")
+    # Always redirect to SalesStream until flutter webapp is ready.
+    return redirect(reverse("customer_home"))
+    # return redirect(f"{settings.BASE_URL}/login")
 
 
 def register_account_view(request: HttpRequest):
