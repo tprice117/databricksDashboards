@@ -15,6 +15,7 @@ from admin_policies.api.v1.serializers import (
 )
 from api.models.main_product.main_product_tag import MainProductTag
 from notifications.utils.internal_email import send_new_signup_notification
+from notifications.utils.internal_email import send_similar_account_warning
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
@@ -223,8 +224,8 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
 
         # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
         if validated_data.get("user_id", None) is not None:
-            # Send internal email to notify team. TODO: Remove or True after testing.
-            if settings.ENVIRONMENT == "TEST" or True:
+            # Send internal email to notify team.
+            if settings.ENVIRONMENT == "TEST":
                 send_new_signup_notification(new_user, created_by_downstream_team=False)
         else:
             logger.info(
@@ -334,12 +335,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
                     if user_groups.exists():
                         user_group = user_groups.first()
                         user = User.objects.get(id=validated_data.get("user_id"))
-                        message = f"New Company [{name}], possible clash with {user_group.name} [at least a 10 character crossover]."
-                        send_email_on_new_signup(
-                            user,
-                            created_by_downstream_team=False,
-                            message=message,
-                        )
+                        send_similar_account_warning(user, self, name, user_group.name)
                 except Exception as e:
                     logger.error(
                         f"UserGroupSerializer.create: [New UserGroup Signup]-[{validated_data}]",
