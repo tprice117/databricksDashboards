@@ -1699,7 +1699,7 @@ def add_payment_method(request):
                 # Check if the payment method already exists by token.
                 payment_method = PaymentMethod.objects.filter(token=token).first()
                 if payment_method:
-                    status_text = "Payment method already exists."
+                    status_text = "This card number is already associated with a saved payment method. To proceed, please use a different card or delete the existing card if only modifying the expiration date or CVV."
                     http_status = 400
                 else:
                     payment_method = PaymentMethod(
