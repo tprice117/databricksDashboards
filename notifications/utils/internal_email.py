@@ -75,7 +75,7 @@ def send_credit_application_notification(
             # Send Teams Message to internal team.
             msg_title = "New Credit Application Submission"
             msg_body = (
-                f"We have a new credit application from{application.user_group.name}!"
+                f"We have a new credit application from {application.user_group.name}!"
             )
             if message:
                 msg_body += f"{message}"
