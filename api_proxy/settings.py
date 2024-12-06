@@ -400,7 +400,7 @@ if ENVIRONMENT == "TEST":
     LOB_PUB_API_KEY = env("LOB_PUB_API_KEY")
     LOB_CHECK_TEMPLATE_ID = "tmpl_e67263addbfe12c"
 else:
-    BASE_URL = "https://downstream-customer-dev.web.app"
+    BASE_URL = "https://devapp.trydownstream.com"
     API_URL = "https://api-dev.trydownstream.com"
     DASHBOARD_BASE_URL = "https://portal-dev.trydownstream.com"
     STRIPE_PUBLISHABLE_KEY = env("STRIPE_DEV_PUBLISHABLE_KEY")
@@ -449,6 +449,17 @@ OIDC_OP_JWKS_ENDPOINT = env("OIDC_OP_JWKS_ENDPOINT")
 OIDC_OP_LOGOUT_ENDPOINT = env("OIDC_OP_LOGOUT_ENDPOINT")
 OIDC_OP_LOGOUT_METHOD = env("OIDC_OP_LOGOUT_METHOD")
 OIDC_STORE_ID_TOKEN = True
+
+if DEBUG and ENVIRONMENT != "TEST":
+    # WARNING: If this if statement is hit, then it assumes local DEV environment.
+    OIDC_RP_CLIENT_ID = env("OIDC_DEV_RP_CLIENT_ID")
+    OIDC_RP_CLIENT_SECRET = env("OIDC_DEV_RP_CLIENT_SECRET")
+    OIDC_OP_AUTHORIZATION_ENDPOINT = env("OIDC_DEV_OP_AUTHORIZATION_ENDPOINT")
+    OIDC_OP_TOKEN_ENDPOINT = env("OIDC_DEV_OP_TOKEN_ENDPOINT")
+    OIDC_OP_USER_ENDPOINT = env("OIDC_DEV_OP_USER_ENDPOINT")
+    OIDC_OP_JWKS_ENDPOINT = env("OIDC_DEV_OP_JWKS_ENDPOINT")
+    OIDC_OP_LOGOUT_ENDPOINT = env("OIDC_DEV_OP_LOGOUT_ENDPOINT")
+
 ALLOW_LOGOUT_GET_METHOD = True
 # We don't want automatic user creation
 OIDC_CREATE_USER = True
