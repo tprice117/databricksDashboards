@@ -3,6 +3,7 @@ from datetime import datetime as dt, timedelta
 from decimal import Decimal
 import json
 import csv
+from collections import defaultdict
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import (
@@ -50,19 +51,19 @@ def sales_dashboard(request):
     return render(request, "dashboards/sales_dashboard.html", context)
 
 
-def get_sales_dashboard_context(user_id=None):
+def get_sales_dashboard_context(account_owner_id=None):
     context = {}
     date_range_start_date = dt(2024, 1, 1)
     date_range_end_date = dt(2024, 12, 31)
     delta_month = timezone.now() - timedelta(days=30)
 
-    order_filter = Q()
-    if user_id:
-        order_filter &= Q(
-            order_group__user_address__user_group__account_owner_id=user_id
-        )
-        print(order_filter)
-        print(user_id)
+    if account_owner_id:
+        order_filter = Q(order_group__user_address__user_group__account_owner_id=account_owner_id)
+    else:
+        order_filter = Q()
+
+    print(order_filter)
+    print(account_owner_id)
 
     ##GMV##
     # customer Amount Completed
@@ -810,6 +811,44 @@ def payout_reconciliation(request):
     )
 
     context["orderRelations"] = orderRelations
+
+    # Define the order of statuses
+    status_order = [
+        "Paid, Reconciled",
+        "Paid, Not Reconciled",
+        "Unpaid, Reconciled",
+        "Unpaid, Not Reconciled"
+    ]
+
+    # Group invoice_amount by month and combined_status
+    monthly_invoice_amounts = defaultdict(lambda: defaultdict(float))
+    for order in orderRelations:
+        month = order["end_date_anno"].strftime("%Y-%m")
+        status = order["combined_status"]
+        monthly_invoice_amounts[month][status] += float(order["invoice_amount"] or 0.0)
+
+    # Prepare data for chart.js
+    chart_labels = sorted(monthly_invoice_amounts.keys())
+    chart_data = {"labels": chart_labels, "datasets": []}
+    status_colors = {
+        "Paid, Reconciled": "rgba(25, 255, 25, 0.2)",
+        "Paid, Not Reconciled": "rgba(144, 238, 144, 0.2)",
+        "Unpaid, Reconciled": "rgba(255, 206, 86, 0.2)",
+        "Unpaid, Not Reconciled": "rgba(255, 99, 132, 0.2)",
+    }
+
+    for status, color in status_colors.items():
+        dataset = {
+            "label": status,
+            "data": [monthly_invoice_amounts[month].get(status, 0) for month in chart_labels],
+            "backgroundColor": color,
+            "borderColor": color.replace("0.2", "1"),
+            "borderWidth": 1,
+        }
+        chart_data["datasets"].append(dataset)
+
+    context["chart_data"] = json.dumps(chart_data)
+
     return render(request, "dashboards/payout_reconciliation.html", context)
 
 
