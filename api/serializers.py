@@ -307,6 +307,10 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         many=True,
         read_only=True,
     )
+    user_id = serializers.CharField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = UserGroup
@@ -318,6 +322,40 @@ class UserGroupSerializer(WritableNestedModelSerializer):
             validated_data["net_terms"] = UserGroup.NetTerms.IMMEDIATELY
         if validated_data.get("invoice_at_project_completion") is None:
             validated_data["invoice_at_project_completion"] = False
+        # Check if the calling domain is auth-dev.trydownstream.com or auth.trydownstream.com
+        # If it is, then the user is being created from the Auth0 signup process.
+        # In this case, we need to send an email to the internal team to notify them of the new signup.
+        # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
+        if validated_data.get("user_id", None):
+            user = User.objects.get(id=validated_data.get("user_id"))
+            # Send internal email to notify team. TODO: Remove or True after testing.
+            if settings.ENVIRONMENT == "TEST" or True:
+                name = validated_data.get("name", "")
+                # check if there are other user_groups with a similar name
+                user_groups = UserGroup.objects.filter(name__icontains=name[:10])
+                if user_groups.exists():
+                    user_group = user_groups.first()
+                    message = f"New Company [{name}], possible clash with {user_group.name} [at least a 10 character crossover]."
+                    send_email_on_new_signup(
+                        user,
+                        created_by_downstream_team=False,
+                        message=message,
+                    )
+
+        allowed_hosts = [
+            "auth-dev.trydownstream.com",
+            "downstream-dev.us.auth0.com",
+            "auth.trydownstream.com",
+        ]
+        if (
+            "request" in self.context
+            and "META" in self.context["request"]
+            and "HTTP_ORIGIN" in self.context["request"]["META"]
+            and (self.context["request"]["META"]["HTTP_ORIGIN"] in allowed_hosts)
+        ):
+            logger.warning(
+                f"[auth0] UserGroupSerializer.create: [New User Group Signup]-[{validated_data}]"
+            )
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
