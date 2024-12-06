@@ -3375,6 +3375,7 @@ def new_user(request):
                     if request.user.is_staff:
                         # directly create the user
                         user = User(
+                            user_group_id=user_group_id,
                             first_name=first_name,
                             last_name=last_name,
                             email=email,
