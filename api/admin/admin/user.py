@@ -15,7 +15,7 @@ from api.models import Order, User, UserGroup
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     model = User
-    search_fields = ["email", "first_name", "last_name"]
+    search_fields = ["id", "email", "first_name", "last_name"]
     list_display = (
         "email",
         "first_name",
