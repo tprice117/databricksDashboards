@@ -17,6 +17,59 @@ logger = logging.getLogger(__name__)
 mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
 
 
+def send_similar_account_warning(
+    user, user_group, name: str, clash_name: str
+) -> Union[requests.Response, None]:
+    """
+    Send a Teams message to the internal team when a new user creates an
+    account/company with a name similar to an existing account.
+
+    Args:
+        User: The User who signed up.
+        UserGroup: The UserGroup (Account/Company) that was created.
+        name: The name of the new UserGroup.
+        clash_name: The name of the existing UserGroup with a similar name.
+
+    Returns:
+        The response from the Teams Webhook, or None if an error occurred.
+    """
+    try:
+        # Send Teams Message to internal team.
+        msg_title = "Similar Account Warning"
+        msg_body = f"New user [{user.email}] created new Account [{name}] that has a possible clash with an existing Account [{clash_name}] [at least a 10 character crossover]."
+        view_link = f"{settings.DASHBOARD_BASE_URL}{reverse('customer_user_detail', kwargs={'user_id': user.id})}"
+        custom_elements = [
+            {
+                "type": "TextBlock",
+                "text": "Similar Account Warning",
+                "size": "large",
+            },
+            {
+                "type": "FactSet",
+                "facts": [
+                    {
+                        "title": "Next Steps:",
+                        "value": "Please confirm this account is not a duplicate account.",
+                    }
+                ],
+            },
+        ]
+        # New Signups Channel on Teams
+        team_link = "https://prod-71.westus.logic.azure.com:443/workflows/06829f6ae8584acdaa685855030ae39d/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=6rlKnmw4Xq7RtZQpmVL_ea4dmYFamaVqbKruCrCymC0"
+        return send_teams_message(
+            team_link=team_link,
+            msg_title=msg_title,
+            msg_body=msg_body,
+            board="Self Signup",
+            assigned_to="Sales Team",
+            custom_elements=custom_elements,
+            view_link=view_link,
+        )
+    except Exception as e:
+        logger.error(f"send_new_signup_notification: [{e}]", exc_info=e)
+        return None
+
+
 def send_new_signup_notification(
     user, created_by_downstream_team: bool = False, message: str = None
 ) -> Union[requests.Response, None]:

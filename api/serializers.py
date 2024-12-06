@@ -15,6 +15,7 @@ from admin_policies.api.v1.serializers import (
 )
 from api.models.main_product.main_product_tag import MainProductTag
 from notifications.utils.internal_email import send_new_signup_notification
+from notifications.utils.internal_email import send_similar_account_warning
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
@@ -223,8 +224,8 @@ class UserSerializerWithoutUserGroup(serializers.ModelSerializer):
 
         # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
         if validated_data.get("user_id", None) is not None:
-            # Send internal email to notify team. TODO: Remove or True after testing.
-            if settings.ENVIRONMENT == "TEST" or True:
+            # Send internal email to notify team.
+            if settings.ENVIRONMENT == "TEST":
                 send_new_signup_notification(new_user, created_by_downstream_team=False)
         else:
             logger.info(
@@ -322,40 +323,25 @@ class UserGroupSerializer(WritableNestedModelSerializer):
             validated_data["net_terms"] = UserGroup.NetTerms.IMMEDIATELY
         if validated_data.get("invoice_at_project_completion") is None:
             validated_data["invoice_at_project_completion"] = False
-        # Check if the calling domain is auth-dev.trydownstream.com or auth.trydownstream.com
-        # If it is, then the user is being created from the Auth0 signup process.
-        # In this case, we need to send an email to the internal team to notify them of the new signup.
-        # Only send this if the creation is from Auth0. Auth0 will send in the token in user_id.
+
+        # Only send this if the creation is from Auth0. Auth0 will send in the user_id.
         if validated_data.get("user_id", None):
-            user = User.objects.get(id=validated_data.get("user_id"))
             # Send internal email to notify team. TODO: Remove or True after testing.
             if settings.ENVIRONMENT == "TEST" or True:
-                name = validated_data.get("name", "")
-                # check if there are other user_groups with a similar name
-                user_groups = UserGroup.objects.filter(name__icontains=name[:10])
-                if user_groups.exists():
-                    user_group = user_groups.first()
-                    message = f"New Company [{name}], possible clash with {user_group.name} [at least a 10 character crossover]."
-                    send_email_on_new_signup(
-                        user,
-                        created_by_downstream_team=False,
-                        message=message,
+                try:
+                    name = validated_data.get("name", "")
+                    # check if there are other user_groups with a similar name
+                    user_groups = UserGroup.objects.filter(name__icontains=name[:10])
+                    if user_groups.exists():
+                        user_group = user_groups.first()
+                        user = User.objects.get(id=validated_data.get("user_id"))
+                        send_similar_account_warning(user, self, name, user_group.name)
+                except Exception as e:
+                    logger.error(
+                        f"UserGroupSerializer.create: [New UserGroup Signup]-[{validated_data}]",
+                        exc_info=e,
                     )
 
-        allowed_hosts = [
-            "auth-dev.trydownstream.com",
-            "downstream-dev.us.auth0.com",
-            "auth.trydownstream.com",
-        ]
-        if (
-            "request" in self.context
-            and "META" in self.context["request"]
-            and "HTTP_ORIGIN" in self.context["request"]["META"]
-            and (self.context["request"]["META"]["HTTP_ORIGIN"] in allowed_hosts)
-        ):
-            logger.warning(
-                f"[auth0] UserGroupSerializer.create: [New User Group Signup]-[{validated_data}]"
-            )
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
