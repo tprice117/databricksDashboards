@@ -67,28 +67,6 @@ class UserForm(forms.Form):
                 ]
 
 
-# SellerForm but using model form
-class SellerForm(forms.ModelForm):
-    class Meta:
-        model = Seller
-        fields = [
-            "name",
-            "phone",
-            "website",
-            "logo",
-        ]
-        widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
-            "website": forms.TextInput(attrs={"class": "form-control"}),
-            "logo": forms.ClearableFileInput(attrs={"class": "form-control-file"}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["name"].required = True
-        self.fields["phone"].required = True
-
 class UserInviteForm(forms.Form):
     first_name = forms.CharField(
         max_length=255,
@@ -143,6 +121,27 @@ class UserInviteForm(forms.Form):
                 ]
 
 
+# SellerForm but using model form
+class SellerForm(forms.ModelForm):
+    class Meta:
+        model = Seller
+        fields = [
+            "name",
+            "phone",
+            "website",
+            "logo",
+        ]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "website": forms.TextInput(attrs={"class": "form-control"}),
+            "logo": forms.ClearableFileInput(attrs={"class": "form-control-file"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["name"].required = True
+        self.fields["phone"].required = True
 
 class SellerCommunicationForm(forms.Form):
     dispatch_email = forms.EmailField(
