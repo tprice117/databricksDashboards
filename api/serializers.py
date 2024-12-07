@@ -327,8 +327,8 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         # Only send this if the creation is from Auth0. Auth0 will send in the user_id.
         user_id = validated_data.pop("user_id", None)
         if user_id:
-            # Send internal email to notify team. TODO: Remove or True after testing.
-            if settings.ENVIRONMENT == "TEST" or True:
+            # Send internal email to notify team.
+            if settings.ENVIRONMENT == "TEST":
                 try:
                     name = validated_data.get("name", "")
                     # check if there are other user_groups with a similar name
