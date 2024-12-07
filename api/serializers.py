@@ -325,7 +325,8 @@ class UserGroupSerializer(WritableNestedModelSerializer):
             validated_data["invoice_at_project_completion"] = False
 
         # Only send this if the creation is from Auth0. Auth0 will send in the user_id.
-        if validated_data.get("user_id", None):
+        user_id = validated_data.pop("user_id", None)
+        if user_id:
             # Send internal email to notify team. TODO: Remove or True after testing.
             if settings.ENVIRONMENT == "TEST" or True:
                 try:
@@ -334,7 +335,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
                     user_groups = UserGroup.objects.filter(name__icontains=name[:10])
                     if user_groups.exists():
                         user_group = user_groups.first()
-                        user = User.objects.get(id=validated_data.get("user_id"))
+                        user = User.objects.get(id=user_id)
                         send_similar_account_warning(user, self, name, user_group.name)
                 except Exception as e:
                     logger.error(
@@ -350,6 +351,9 @@ class UserGroupSerializer(WritableNestedModelSerializer):
             validated_data["net_terms"] = UserGroup.NetTerms.IMMEDIATELY
         if validated_data.get("invoice_at_project_completion") is None:
             validated_data["invoice_at_project_completion"] = False
+        # user_id is only sent from Auth0. It is not a field in the model.
+        # It should never be used here, but ensure that it is popped so it doesn't error.
+        user_id = validated_data.pop("user_id", None)
         return super().update(instance, validated_data)
 
     @extend_schema_field(OpenApiTypes.DECIMAL)
