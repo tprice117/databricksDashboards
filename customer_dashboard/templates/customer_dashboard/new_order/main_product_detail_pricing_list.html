@@ -4,7 +4,7 @@
     {% if forloop.first %}
         <hr />
     {% endif %}
-    <div class=" supplier-item">
+    <div class="supplier-item">
         <div id="item-{{ forloop.counter }}" class="row mb-4">
             <div class="col-auto">
                 <img class="img-thumbnail img-fluid"
@@ -14,7 +14,7 @@
                     src="{% if item.seller_product_seller_location.seller_location.seller.location_logo_url %}
                         {{ item.seller_product_seller_location.seller_location.seller.location_logo_url }}
                     {% else %}
-                        {% static 'customer_dashboard/img/logo.png' %}
+                        {% static 'customer_dashboard/img/blank.png' %}
                     {% endif %}" />
                 <h3 class="mt-1 supplier-name">{{ item.seller_product_seller_location.seller_location.name }}</h3>
                 <p>
@@ -93,7 +93,7 @@
                             </p>
                             <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
                                 Due on Delivery (plus taxes): <strong><span class="price-item total-price" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
-                        </p>
+                            </p>
                         </div>
                     </div>
                     {% if not request.user.is_staff %}
