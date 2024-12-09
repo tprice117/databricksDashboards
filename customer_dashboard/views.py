@@ -1110,6 +1110,14 @@ def new_order_4(request):
                     exc_info=e,
                 )
 
+        try:
+            # Sort the seller_product_seller_locations by total price (low to high).
+            context["seller_product_seller_locations"].sort(
+                key=lambda x: x["price_breakdown"]["total"],
+            )
+        except Exception as e:
+            logger.error(f"Error sorting seller_product_seller_locations: {e}")
+
         return render(
             request,
             "customer_dashboard/new_order/main_product_detail_pricing_list.html",
