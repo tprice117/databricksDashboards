@@ -449,7 +449,7 @@ class Order(BaseModel):
         # Only run the following checks if the Order is not complete or cancelled.
         if (
             self.status != Order.Status.COMPLETE
-            or self.status != Order.Status.CANCELLED
+            and self.status != Order.Status.CANCELLED
         ):
             # Ensure end_date is on or after start_date.
             if self.start_date > self.end_date:
