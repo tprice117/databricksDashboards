@@ -326,9 +326,9 @@ class Order(BaseModel):
         description = f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type}'
         description2 = description
         if self.order_group.project_id:
-            description2 = f"{description2} | {self.order_group.project_id}"
+            description2 = f"{description2} ({self.order_group.project_id})"
         elif self.order_group.user_address.project_id:
-            description2 = f"{description2} | {self.order_group.project_id}"
+            description2 = f"{description2} ({self.order_group.project_id})"
         description = f"{description} | {str(self.id)[:5]}"
         description2 = f"{description2} | {str(self.id)[:5]}"
         return description, description2
