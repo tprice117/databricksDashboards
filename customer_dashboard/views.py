@@ -1135,15 +1135,12 @@ def new_order_5(request):
         seller_product_seller_location_id = request.POST.get(
             "seller_product_seller_location_id"
         )
-        discount = request.POST.get("discount")
         product_id = request.POST.get("product_id")
         user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
         if product_waste_types:
             product_waste_types = ast.literal_eval(product_waste_types)
         waste_type_id = request.POST.get("waste_type")
-        placement_details = request.POST.get("placement_details")
-        # product_add_on_choices = request.POST.get("product_add_on_choices")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
         times_per_week = (
             int(request.POST.get("times_per_week"))
@@ -1164,20 +1161,35 @@ def new_order_5(request):
         )
         project_id = request.POST.get("project_id")
 
-        # removal_date = request.POST.get("removal_date")
-        main_product = MainProduct.objects.filter(id=product_id)
-        main_product = main_product.select_related("main_product_category")
-        # main_product = main_product.prefetch_related("products")
-        main_product = main_product.first()
-
-        # Set the discount. If no discount is set, then default to 0.
-        discount = float(discount) if discount else 0
-
+        main_product = MainProduct.objects.select_related("main_product_category").get(
+            id=product_id
+        )
         context["main_product"] = main_product
+
+        # Discount
+        discount: Decimal = 0.0
+        max_discount_100 = round(main_product.max_discount * 100, 1)
+        market_discount = main_product.max_discount * Decimal(0.8) * 100
+
+        if not request.user.is_staff:
+            # User is not staff, meaning discount is set to market discount.
+            discount = market_discount
+        else:
+            # User is staff.
+            discount = Decimal(request.POST.get("discount", "0"))
+
+            if discount > max_discount_100:
+                # Discount is larger than max discount.
+                messages.error(
+                    request,
+                    "The selected discount exceeds the maximum allowed limit. Max discount applied.",
+                )
+                discount = max_discount_100
+
         seller_product_location = SellerProductSellerLocation.objects.get(
             id=seller_product_seller_location_id
         )
-        user_address = UserAddress.objects.filter(id=user_address_id).first()
+        user_address = UserAddress.objects.get(id=user_address_id)
         if main_product.has_material and hasattr(seller_product_location, "material"):
             material_waste_type = (
                 SellerProductSellerLocationMaterialWasteType.objects.filter(
@@ -1194,7 +1206,7 @@ def new_order_5(request):
                 return HttpResponseRedirect(reverse("customer_new_order"))
 
         # Get the default take rate and calculate the take rate based on the discount.
-        default_take_rate_percent = float(main_product.default_take_rate) / 100
+        default_take_rate_percent: Decimal = main_product.default_take_rate / 100
         default_price_multiplier = 1 + default_take_rate_percent
         discount_percent = discount / 100
         price_with_discount = default_price_multiplier * (1 - discount_percent)
@@ -1207,7 +1219,7 @@ def new_order_5(request):
                 user_address=user_address,
                 seller_product_seller_location_id=seller_product_seller_location_id,
                 start_date=delivery_date,
-                take_rate=Decimal(take_rate * 100),
+                take_rate=take_rate * 100,
             )
             if times_per_week:
                 order_group.times_per_week = times_per_week
