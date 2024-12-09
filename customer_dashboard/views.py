@@ -1168,15 +1168,14 @@ def new_order_5(request):
 
         # Discount
         discount: Decimal = 0.0
-        max_discount_100 = round(main_product.max_discount * 100, 1)
-        market_discount = main_product.max_discount * Decimal(0.8) * 100
 
         if not request.user.is_staff:
             # User is not staff, meaning discount is set to market discount.
-            discount = market_discount
+            discount = main_product.max_discount * Decimal(0.8) * 100
         else:
             # User is staff.
             discount = Decimal(request.POST.get("discount", "0"))
+            max_discount_100 = round(main_product.max_discount * 100, 1)
 
             if discount > max_discount_100:
                 # Discount is larger than max discount.
