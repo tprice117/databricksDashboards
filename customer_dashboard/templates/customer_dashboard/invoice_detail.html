@@ -240,7 +240,11 @@
                                         {% endfor %}
                                         {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
                                         <div class="col-12 mt-4 mb-4">
-                                            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Pay Now</button>
+                                            {% if payment_methods %}
+                                                <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Pay Now</button>
+                                            {% else %}
+                                                <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" disabled="true">Add Card To Pay Now</button>
+                                            {% endif %}
                                         </div>
                                     </form>
                                 </div>
@@ -275,15 +279,11 @@
                                         <!-- <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show{% else %}collapsed{% endif %}" role="tabpanel" data-bs-parent="#invoice-item-results"> -->
                                         <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}
                                                 
-                                                
                                                 show
-
 
                                             {% else %}
                                                 
-                                                
                                                 collapsed
-
 
                                             {% endif %}"
                                             role="tabpanel"
