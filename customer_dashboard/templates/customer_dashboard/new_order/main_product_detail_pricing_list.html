@@ -33,7 +33,8 @@
                 {% endif %}
                 <div class="d-flex flex-row align-items-center" style="{% if item.seller_product_seller_location.rating <= 0 %}opacity:0;{% endif %}">
                     <i class="fas fa-thumbs-up text-success mb-0 me-2"></i>
-                    <span class="rating">{{ item.seller_product_seller_location.rating }}</span>
+                    <span>{{ item.seller_product_seller_location.rating }}</span>
+                    <input type="hidden" class="rating" value="{{ item.seller_product_seller_location.rating }}" />
                 </div>
             </div>
             {% if item.price_breakdown.rental_breakdown is None %}
@@ -103,7 +104,8 @@
                                 Freight (One time): <strong><span class="price-item" data-price="{{ item.price_breakdown.one_time.total }}">${{ item.price_breakdown.one_time.total|floatformat:2|intcomma }}</span></strong>
                             </p>
                             <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
-                                Due on Delivery (plus taxes): <strong><span class="price-item total-price" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
+                                Due on Delivery (plus taxes): <strong><span class="price-item" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
+                                <input type="hidden" class="total-price" value="{{ item.price_breakdown.total }}" />
                             </p>
                         </div>
                     </div>
@@ -275,7 +277,8 @@
                                     Freight (One time): <strong><span class="price-item" data-price="{{ item.price_breakdown.one_time.total }}">${{ item.price_breakdown.one_time.total|floatformat:2|intcomma }}</span></strong>
                                 </p>
                                 <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;">
-                                    Due on Delivery (plus taxes): <strong><span class="price-item total-price" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
+                                    Due on Delivery (plus taxes): <strong><span class="price-item" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
+                                    <input type="hidden" class="total-price" value="{{ item.price_breakdown.total }}" />
                                 </p>
                             </div>
                             {% if not request.user.is_staff %}
