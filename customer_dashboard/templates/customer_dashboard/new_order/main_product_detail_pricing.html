@@ -91,8 +91,8 @@
                 case "name":
                     valueSelector = ".supplier-name";
                     break;
-                case "latest_order":
-                    valueSelector = ".latest-order";
+                case "last_checkout":
+                    valueSelector = ".last-checkout";
                     break;
                 case "price":
                 default:
@@ -102,7 +102,7 @@
             // Sort the array based on the value of the inner element
             itemsArray.sort((a, b) => {
                 let aValue, bValue;
-                if (attr == "latest_order") {
+                if (attr == "last_checkout") {
                     aValue = new Date(a.querySelector(valueSelector).value);
                     bValue = new Date(b.querySelector(valueSelector).value);
                 } else {
@@ -139,7 +139,7 @@
                             <option value="price">Total Price</option>
                             <option value="name">Location Name</option>
                             <option value="rating">Rating</option>
-                            {% if request.user.is_staff %}<option value="latest_order">Latest Order</option>{% endif %}
+                            {% if request.user.is_staff %}<option value="last_checkout">Last Checkout</option>{% endif %}
                         </select>
                         <select id="sort-order" class="form-control mr-2" name="sort-order">
                             <option value="asc">Ascending</option>

@@ -21,10 +21,11 @@
                     <a class="card-link" href="https://www.google.com/maps/place/{{ item.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.seller_product_seller_location.seller_location.formatted_address }}</a>
                 </p>
                 {% if request.user.is_staff %}
-                <input type="hidden" class="latest-order" value="{{ item.seller_product_seller_location.latest_order_end_date }}" />
+                <input type="hidden" class="last-checkout" value="{{ item.seller_product_seller_location.last_checkout|date:"Y-m-d" }}" />
                 <p>
-                    {% if item.seller_product_seller_location.latest_order_end_date %}
-                    <strong>Last Order:</strong>  {{ item.seller_product_seller_location.latest_order_end_date|timesince }} ago
+                    {% if item.seller_product_seller_location.last_checkout %}
+                    <strong>Last Checkout:</strong>  
+                    {{ item.seller_product_seller_location.last_checkout|timesince }} ago
                     {% else %}
                     No Transaction History
                     {% endif %}

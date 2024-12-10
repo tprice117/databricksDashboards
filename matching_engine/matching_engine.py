@@ -49,7 +49,7 @@ class MatchingEngine:
                 seller_product__product=product,
             )
             .with_ratings()
-            .with_latest_order_end_date()
+            .with_last_checkout()
         )
         # Select related fields to reduce the number of queries.
         seller_product_seller_locations = (
