@@ -236,9 +236,20 @@ def get_user_group(request: HttpRequest) -> Union[UserGroup, None]:
     else:
         # Normal user
         if request.session.get("customer_user_group_id"):
-            user_group = UserGroup.objects.get(
-                id=request.session["customer_user_group_id"]
-            )
+            try:
+                user_group = UserGroup.objects.get(
+                    id=request.session["customer_user_group_id"]
+                )
+            except UserGroup.DoesNotExist:
+                logger.error(
+                    f"get_user_group: UserGroup with id {request.session['customer_user_group_id']} not found for User {request.user.id}."
+                )
+                # Cache user_group id for faster lookups
+                user_group = request.user.user_group
+                if user_group:
+                    request.session["customer_user_group_id"] = get_json_safe_value(
+                        user_group.id
+                    )
         else:
             # Cache user_group id for faster lookups
             user_group = request.user.user_group
