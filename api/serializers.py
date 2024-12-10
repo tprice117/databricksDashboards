@@ -267,9 +267,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         required=False,
         allow_null=True,
     )
-    legal = UserGroupLegalSerializer(
-        allow_null=True,
-    )
+    legal = UserGroupLegalSerializer(read_only=True)
     credit_applications = UserGroupCreditApplicationSerializer(
         many=True,
         read_only=True,
