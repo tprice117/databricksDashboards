@@ -49,6 +49,41 @@ def get_pricing_engine_response_serializer(pricing):
     return PRICING_ENGINE_RESPONSE_SERIALIZER
 
 
+class SellerProductSellerLocationQuerySet(models.QuerySet):
+    def with_latest_order_end_date(self):
+        today = timezone.now().date()
+        return self.annotate(
+            latest_order_end_date=models.Max(
+                "order_groups__orders__end_date",
+                filter=models.Q(order_groups__orders__end_date__lte=today),
+            ),
+        )
+
+    def with_ratings(self):
+        return self.annotate(
+            rating=models.Sum(
+                models.Case(
+                    models.When(
+                        order_groups__orders__review__rating=True,
+                        then=1,
+                    ),
+                    default=0,
+                )
+            )
+        )
+
+
+class SellerProductSellerLocationManager(models.Manager):
+    def get_queryset(self):
+        return SellerProductSellerLocationQuerySet(self.model, using=self._db)
+
+    def with_latest_order_end_date(self):
+        return self.get_queryset().with_latest_order_end_date()
+
+    def with_ratings(self):
+        return self.get_queryset().with_ratings()
+
+
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(
         SellerProduct, models.CASCADE, related_name="seller_product_seller_locations"
@@ -82,6 +117,8 @@ class SellerProductSellerLocation(BaseModel):
         null=True,
         help_text="Percentage (ex: 35 means 35%)",
     )
+
+    objects = SellerProductSellerLocationManager()
 
     class Meta:
         unique_together = (

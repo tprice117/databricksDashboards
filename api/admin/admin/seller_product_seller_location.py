@@ -29,6 +29,7 @@ class SellerProductSellerLocationResource(resources.ModelResource):
 class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
     resource_classes = [SellerProductSellerLocationResource]
     search_fields = [
+        "id",
         "seller_location__name",
         "seller_location__seller__name",
         "seller_product__product__main_product__name",
