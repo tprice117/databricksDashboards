@@ -3947,6 +3947,7 @@ def new_company(request):
                             last_name=user_form.cleaned_data.get("last_name"),
                             email=email,
                             phone=user_form.cleaned_data.get("phone"),
+                            source=User.Source.SALES,
                             type=user_form.cleaned_data.get("type"),
                             apollo_id=user_form.cleaned_data.get("apollo_id"),
                             user_group=user_group,
