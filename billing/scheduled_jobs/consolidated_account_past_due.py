@@ -82,7 +82,7 @@ def get_account_past_due(user_group) -> AccountPastDue:
 
 def send_account_past_due_emails():
     """This is a new transactional email that will be sent to UserGroup billing email.
-    Trigger Logic: Every Thursdau when a UserGroup has a past due invoice.
+    Trigger Logic: Every Thursday when a UserGroup has a past due invoice.
     """
     # Get all UserGroups that have an open invoice.
     user_groups = get_user_groups_with_past_due_invoices()

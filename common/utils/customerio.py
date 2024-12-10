@@ -18,7 +18,6 @@ def send_email(
     https://customer.io/docs/api/app/#operation/sendEmail
     https://customer.io/docs/journeys/liquid-tag-list/?version=latest
     """
-    no_error = True
     json_data = None
     try:
         data = {
@@ -45,10 +44,11 @@ def send_email(
             logger.error(
                 f"[{response.status_code}]-[{template_id}]: Error sending {to_emails} [{resp_json['meta']['error']}]"
             )
+            return False
+        return True
     except Exception as e:
-        no_error = False
         logger.error(
             f"customerid.send_email:[{template_id}] Error sending {to_emails}-[{subject}]-[{json_data}]-[{str(e)}]"
         )
 
-        return no_error
+        return False
