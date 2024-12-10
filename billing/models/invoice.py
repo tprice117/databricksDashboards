@@ -51,7 +51,7 @@ class Invoice(BaseModel):
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def _get_invoice_items(self) -> InvoiceResponse:
         stripe_invoice_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
-            invoice_id=self.invoice_id,
+            self.invoice_id
         )
         groups = StripeUtils.SummaryItems.get_all_for_invoice(self.invoice_id)
         response: InvoiceResponse = {
