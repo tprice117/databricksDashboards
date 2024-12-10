@@ -50,12 +50,10 @@ def get_pricing_engine_response_serializer(pricing):
 
 
 class SellerProductSellerLocationQuerySet(models.QuerySet):
-    def with_latest_order_end_date(self):
-        today = timezone.now().date()
+    def with_last_checkout(self):
         return self.annotate(
-            latest_order_end_date=models.Max(
-                "order_groups__orders__end_date",
-                filter=models.Q(order_groups__orders__end_date__lte=today),
+            last_checkout=models.Max(
+                "order_groups__orders__submitted_on",
             ),
         )
 
@@ -77,8 +75,8 @@ class SellerProductSellerLocationManager(models.Manager):
     def get_queryset(self):
         return SellerProductSellerLocationQuerySet(self.model, using=self._db)
 
-    def with_latest_order_end_date(self):
-        return self.get_queryset().with_latest_order_end_date()
+    def with_last_checkout(self):
+        return self.get_queryset().with_last_checkout()
 
     def with_ratings(self):
         return self.get_queryset().with_ratings()
