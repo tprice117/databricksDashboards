@@ -96,7 +96,7 @@
                     break;
                 case "price":
                 default:
-                    valueSelector = '[class*="total-price"]';
+                    valueSelector = '.total-price';
             }
         
             // Sort the array based on the value of the inner element
@@ -105,9 +105,12 @@
                 if (attr == "last_checkout") {
                     aValue = new Date(a.querySelector(valueSelector).value);
                     bValue = new Date(b.querySelector(valueSelector).value);
-                } else {
+                } else if (attr == "name") {
                     aValue = a.querySelector(valueSelector).innerText.trim().toLowerCase();
                     bValue = b.querySelector(valueSelector).innerText.trim().toLowerCase();
+                } else {
+                    aValue = parseFloat(a.querySelector(valueSelector).value);
+                    bValue = parseFloat(b.querySelector(valueSelector).value);
                 }
                 if (aValue < bValue) return reverse ? 1 : -1;
                 if (aValue > bValue) return reverse ? -1 : 1;
