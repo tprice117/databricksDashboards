@@ -49,10 +49,8 @@ class BillingUtils:
             order_line_item: OrderLineItem
             for order_line_item in order_line_items:
                 # Create Stripe Invoice Line Item.
-                stripe_invoice_line_item = stripe.InvoiceItem.create(
-                    customer=order.order_group.user_address.stripe_customer_id,
-                    invoice=invoice.id,
-                    description=order_line_item.order_line_item_type.name
+                description = (
+                    order_line_item.order_line_item_type.name
                     + " | Qty: "
                     + str(order_line_item.quantity)
                     + " @ $"
@@ -67,7 +65,19 @@ class BillingUtils:
                         if order_line_item.quantity > 0
                         else "0.00"
                     )
-                    + "/unit",
+                    + "/unit"
+                )
+                try:
+                    description = order_line_item.stripe_description
+                except Exception as e:
+                    logger.error(
+                        f"BillingUtils.create_invoice_items_for_order: [line_item: {order_line_item.id}]-[{e}]",
+                        exc_info=e,
+                    )
+                stripe_invoice_line_item = stripe.InvoiceItem.create(
+                    customer=order.order_group.user_address.stripe_customer_id,
+                    invoice=invoice.id,
+                    description=description,
                     amount=round(100 * order_line_item.customer_price()),
                     tax_behavior="exclusive",
                     tax_code=order_line_item.order_line_item_type.stripe_tax_code_id,
