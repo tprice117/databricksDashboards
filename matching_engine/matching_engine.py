@@ -44,18 +44,12 @@ class MatchingEngine:
         waste_type: WasteType = None,
     ) -> list[SellerProductSellerLocation]:
         # Get all SellerProductSellerLocation objects that match the product.
-        seller_product_seller_locations = SellerProductSellerLocation.objects.filter(
-            seller_product__product=product,
-        ).annotate(
-            rating=Sum(
-                Case(
-                    When(
-                        order_groups__orders__review__rating=True,
-                        then=1,
-                    ),
-                    default=0,
-                )
+        seller_product_seller_locations = (
+            SellerProductSellerLocation.objects.filter(
+                seller_product__product=product,
             )
+            .with_ratings()
+            .with_last_checkout()
         )
         # Select related fields to reduce the number of queries.
         seller_product_seller_locations = (

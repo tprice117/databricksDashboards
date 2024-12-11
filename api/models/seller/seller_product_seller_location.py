@@ -49,6 +49,39 @@ def get_pricing_engine_response_serializer(pricing):
     return PRICING_ENGINE_RESPONSE_SERIALIZER
 
 
+class SellerProductSellerLocationQuerySet(models.QuerySet):
+    def with_last_checkout(self):
+        return self.annotate(
+            last_checkout=models.Max(
+                "order_groups__orders__submitted_on",
+            ),
+        )
+
+    def with_ratings(self):
+        return self.annotate(
+            rating=models.Sum(
+                models.Case(
+                    models.When(
+                        order_groups__orders__review__rating=True,
+                        then=1,
+                    ),
+                    default=0,
+                )
+            )
+        )
+
+
+class SellerProductSellerLocationManager(models.Manager):
+    def get_queryset(self):
+        return SellerProductSellerLocationQuerySet(self.model, using=self._db)
+
+    def with_last_checkout(self):
+        return self.get_queryset().with_last_checkout()
+
+    def with_ratings(self):
+        return self.get_queryset().with_ratings()
+
+
 class SellerProductSellerLocation(BaseModel):
     seller_product = models.ForeignKey(
         SellerProduct, models.CASCADE, related_name="seller_product_seller_locations"
@@ -82,6 +115,8 @@ class SellerProductSellerLocation(BaseModel):
         null=True,
         help_text="Percentage (ex: 35 means 35%)",
     )
+
+    objects = SellerProductSellerLocationManager()
 
     class Meta:
         unique_together = (

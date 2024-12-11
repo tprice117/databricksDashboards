@@ -91,15 +91,27 @@
                 case "name":
                     valueSelector = ".supplier-name";
                     break;
+                case "last_checkout":
+                    valueSelector = ".last-checkout";
+                    break;
                 case "price":
                 default:
-                    valueSelector = '[class*="total-price"]';
+                    valueSelector = '.total-price';
             }
         
             // Sort the array based on the value of the inner element
             itemsArray.sort((a, b) => {
-                const aValue = a.querySelector(valueSelector).innerText.trim().toLowerCase();
-                const bValue = b.querySelector(valueSelector).innerText.trim().toLowerCase();
+                let aValue, bValue;
+                if (attr == "last_checkout") {
+                    aValue = new Date(a.querySelector(valueSelector).value);
+                    bValue = new Date(b.querySelector(valueSelector).value);
+                } else if (attr == "name") {
+                    aValue = a.querySelector(valueSelector).innerText.trim().toLowerCase();
+                    bValue = b.querySelector(valueSelector).innerText.trim().toLowerCase();
+                } else {
+                    aValue = parseFloat(a.querySelector(valueSelector).value);
+                    bValue = parseFloat(b.querySelector(valueSelector).value);
+                }
                 if (aValue < bValue) return reverse ? 1 : -1;
                 if (aValue > bValue) return reverse ? -1 : 1;
                 return 0;
@@ -130,6 +142,7 @@
                             <option value="price">Total Price</option>
                             <option value="name">Location Name</option>
                             <option value="rating">Rating</option>
+                            {% if request.user.is_staff %}<option value="last_checkout">Last Checkout</option>{% endif %}
                         </select>
                         <select id="sort-order" class="form-control mr-2" name="sort-order">
                             <option value="asc">Ascending</option>
