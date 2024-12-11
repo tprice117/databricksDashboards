@@ -63,9 +63,11 @@ class Invoice(BaseModel):
             amount = Decimal(item["amount"] / 100).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )
-            tax = Decimal(item["tax_amounts"][0]["amount"] / 100).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            tax = 0
+            if item["tax_amounts"]:
+                tax = Decimal(item["tax_amounts"][0]["amount"] / 100).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
             amount_excluding_tax = amount
             if item.get("amount_excluding_tax", None) is not None:
                 amount_excluding_tax = Decimal(
