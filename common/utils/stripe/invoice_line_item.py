@@ -20,5 +20,6 @@ class InvoiceLineItem:
             invoice_items = stripe.Invoice.list_lines(invoice_id, **params)
             data.extend(invoice_items["data"])
             has_more = invoice_items["has_more"]
-            starting_after = data[-1]["id"]
+            if has_more:
+                starting_after = data[-1]["id"]
         return data
