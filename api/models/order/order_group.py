@@ -87,6 +87,7 @@ class OrderGroup(BaseModel):
     preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
+    estimated_end_date = models.DateField(blank=True, null=True)
     take_rate = models.DecimalField(max_digits=18, decimal_places=2, default=30)
     tonnage_quantity = models.IntegerField(blank=True, null=True)
     times_per_week = models.SmallIntegerField(
