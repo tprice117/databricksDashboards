@@ -43,6 +43,9 @@
         <a class="nav-link{% if request.resolver_match.url_name == 'supplier_bookings' %} active{% endif %}" href="{% url 'supplier_bookings' %}"><i class="icon ion-calendar"></i><span>Bookings</span></a>
       </li>
       <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_listings' %} active{% endif %}" href="{% url 'supplier_listings' %}"><i class="fa fa-clipboard-list"></i><span>Listings</span></a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'supplier_payouts' %} active{% endif %}" href="{% url 'supplier_payouts' %}"><i class="far fa-chart-bar"></i><span>Payouts</span></a>
       </li>
       <li class="nav-item">

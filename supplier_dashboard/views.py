@@ -1517,6 +1517,16 @@ def download_bookings(request):
 
 
 @login_required(login_url="/admin/login/")
+def listings(request):
+    return render(request, "supplier_dashboard/listings.html", {})
+
+
+@login_required(login_url="/admin/login/")
+def listing_detail(request, listing_id):
+    return render(request, "supplier_dashboard/listing_detail.html", {})
+
+
+@login_required(login_url="/admin/login/")
 def update_order_status(request, order_id, accept=True, complete=False):
     context = {}
     context["user"] = get_user(request)
