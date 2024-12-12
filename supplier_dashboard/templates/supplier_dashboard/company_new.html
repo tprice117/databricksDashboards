@@ -1,0 +1,122 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    New Company
+{% endblock %}
+{% block stylesheet %}
+    <style>
+        .form-error input {
+            box-shadow: 0 0 3px #cc0000;
+        }
+        .form-valid input {
+            box-shadow: 0 0 3px #36cc00;
+        }
+    </style>
+{% endblock %}
+{% block javascript %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addLocationButton = document.getElementById('add-location');
+            const formsetDiv = document.getElementById('location-formset');
+            const totalForms = document.getElementById('id_seller_locations-TOTAL_FORMS');
+            const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
+
+            const locationForms = document.querySelectorAll('.location-form');
+            locationForms.forEach(function(form) {
+                const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]');
+                if (deleteInput && deleteInput.value === 'on') {
+                    form.style.display = 'none';
+                }
+            });
+        
+            addLocationButton.addEventListener('click', function() {
+                const currentFormCount = parseInt(totalForms.value);
+                const newFormCount = currentFormCount + 1;
+                const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
+                
+                formsetDiv.insertAdjacentHTML('beforeend', newFormHtml);
+                totalForms.value = newFormCount;
+            });
+
+            formsetDiv.addEventListener('click', function(event) {
+                if (event.target.classList.contains('remove-location')) {
+                    const formToRemove = event.target.closest('.location-form');
+                    formToRemove.style.display = 'none';
+                    formToRemove.querySelector('input[type="hidden"][name$="-DELETE"]').value = 'on';
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h3 class="text-dark mb-2">New Company</h3>
+    </div>
+    <div class="container">
+        <div class="row" style="padding-bottom: 24px;">
+            <div class="col-md-12 mb-2">
+                <div class="card mb-4">
+                    <form action="{% url 'supplier_new_company' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="card-body row mb-3">
+                            <div class="col-md-6">
+                                <h4>Company Details</h4>
+                                {{ form }}
+                            </div>
+                            <hr class="d-md-none mt-3">
+                            <div id="user-formset" class="col-md-6">
+                                <h4>Company Admin</h4>
+                                {{ user_formset.management_form }}
+                                {% for inline in user_formset %}
+                                {{ inline }}
+                                {% endfor %}
+                                {% if user_formset.non_form_errors %}
+                                {% for error in user_formset.non_form_errors %}
+                                <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <h3 class="text-dark mb-1 me-3">Add Location</h3>
+                                <button type="button" class="btn btn-success" id="add-location">
+                                    <i class="fas fa-plus fa-sm text-white"></i>
+                                </button>
+                            </div>
+                            {% if location_formset.non_form_errors %}
+                            {% for error in location_formset.non_form_errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                            {% endif %}
+                            <hr />
+                            {{ location_formset.management_form }}
+                            <!-- Hidden template for new forms -->
+                            <div id="empty-form-template" style="display: none;">
+                                <div class="location-form">
+                                    {{ location_formset.empty_form }}
+                                    <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                                    <hr />
+                                </div>
+                            </div>
+                            <div id="location-formset">
+                                {% for inline in location_formset %}
+                                    <div class="location-form">
+                                        {{ inline }}
+                                        <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                                        <hr />
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex flex-row-reverse align-items-center">
+                                <button class="btn btn-primary" type="submit" name="access_details_button" style="margin-top: 12px;">Save</button>
+                                <p class="text-muted me-3">* Indicates a required field</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

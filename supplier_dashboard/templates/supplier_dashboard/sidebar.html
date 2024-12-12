@@ -60,6 +60,12 @@
                     <span>Company Settings</span>
                 </a>
             </li>
+            {% if request.user.is_staff %}
+            <li class="nav-item">
+                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_companies' %} active{% endif %}"
+                    href="{% url 'supplier_companies' %}"><i class="far fa-building"></i><span>Companies</span></a>
+            </li>
+            {% endif %}
             <li class="nav-item">
                 <a class="nav-link{% if request.resolver_match.url_name == 'supplier_profile' %} active{% endif %}" href="{% url 'supplier_profile' %}"><i class="fas fa-user"></i><span>Profile</span></a>
             </li>
