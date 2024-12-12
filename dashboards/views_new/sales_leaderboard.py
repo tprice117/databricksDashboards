@@ -33,52 +33,69 @@ from dashboards.views import get_sales_dashboard_context
 
 logger = logging.getLogger(__name__)
 
-# Define first_of_month and orders_this_month outside the views
-first_of_month = timezone.now().replace(
-    day=1,
-    hour=0,
-    minute=0,
-    second=0,
-    microsecond=0,
-)
 
-sales_competition_start_date = timezone.datetime(
-    2024, 10, 1, 0, 0, 0, tzinfo=timezone.utc
-)
-
-orders_this_month = Order.objects.filter(
-    end_date__gte=first_of_month,
-    status=Order.Status.COMPLETE,
-)
-
-# Calculate maximum values for normalization
-max_new_buyers = (
-    UserGroup.objects.filter(
-        user_addresses__order_groups__orders__start_date__gte=first_of_month
+def get_first_of_month():
+    return timezone.now().replace(
+        day=1,
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
     )
-    .distinct()
-    .count()
-)
 
-max_gmv = (
-    orders_this_month.aggregate(
-        max_gmv=Sum(
-            F("order_line_items__rate")
-            * F("order_line_items__quantity")
-            * (1 + F("order_line_items__platform_fee_percent") / 100)
+
+def get_sales_competition_start_date():
+    return timezone.datetime(2024, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+
+
+def get_orders_this_month(first_of_month):
+    return Order.objects.filter(
+        end_date__gte=first_of_month,
+        status=Order.Status.COMPLETE,
+    )
+
+
+def get_max_new_buyers(first_of_month):
+    return (
+        UserGroup.objects.filter(
+            user_addresses__order_groups__orders__start_date__gte=first_of_month
         )
-    )["max_gmv"]
-    or 1
-)
+        .distinct()
+        .count()
+    )
 
-max_external_orders = orders_this_month.filter(created_by__is_staff=False).count()
 
-max_discount_rate = 100  # Maximum possible discount rate
+def get_max_gmv(orders_this_month):
+    return (
+        orders_this_month.aggregate(
+            max_gmv=Sum(
+                F("order_line_items__rate")
+                * F("order_line_items__quantity")
+                * (1 + F("order_line_items__platform_fee_percent") / 100)
+            )
+        )["max_gmv"]
+        or 1
+    )
+
+
+def get_max_external_orders(orders_this_month):
+    return orders_this_month.filter(created_by__is_staff=False).count()
+
+
+def get_max_discount_rate():
+    return 100  # Maximum possible discount rate
 
 
 def calculate_score(
     user, max_new_buyers, max_gmv, max_external_orders, max_discount_rate
 ):
+    first_of_month = get_first_of_month()
+    orders_this_month = get_orders_this_month(first_of_month)
+    max_new_buyers = get_max_new_buyers(first_of_month)
+    max_gmv = get_max_gmv(orders_this_month)
+    max_external_orders = get_max_external_orders(orders_this_month)
+    max_discount_rate = get_max_discount_rate()
+
     new_buyers_score = (
         Decimal(user.new_buyers / max_new_buyers) * Decimal("0.4")
         if max_new_buyers > 0
@@ -124,6 +141,16 @@ def sales_leaderboard(request):
         is_staff=True,
         groups__name="Sales",
     )
+
+    # Get orders for this month
+    first_of_month = get_first_of_month()
+    orders_this_month = get_orders_this_month(first_of_month)
+
+    # Calculate max values for scoring
+    max_new_buyers = get_max_new_buyers(first_of_month)
+    max_gmv = get_max_gmv(orders_this_month)
+    max_external_orders = get_max_external_orders(orders_this_month)
+    max_discount_rate = get_max_discount_rate()
 
     # For each User, add their aggregated Order data for this month.
     for user in users:
@@ -213,6 +240,8 @@ def user_sales_detail(request, user_id):
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
 
+    first_of_month = get_first_of_month()
+    orders_this_month = get_orders_this_month(first_of_month)
     orders_for_user = orders_this_month.filter(
         order_group__user_address__user_group__account_owner=user,
     )
@@ -234,6 +263,8 @@ def user_sales_product_mix(request, user_id):
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
 
+    first_of_month = get_first_of_month()
+    orders_this_month = get_orders_this_month(first_of_month)
     orders_for_user = orders_this_month.filter(
         order_group__user_address__user_group__account_owner=user,
     )
@@ -283,6 +314,9 @@ def user_sales_top_accounts(request, user_id):
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
+
+    first_of_month = get_first_of_month()
+    orders_this_month = get_orders_this_month(first_of_month)
     orders_for_user = orders_this_month.filter(
         order_group__user_address__user_group__account_owner=user,
     )
@@ -308,6 +342,9 @@ def user_sales_new_accounts(request, user_id):
         user = User.objects.get(id=user_id, is_staff=True, groups__name="Sales")
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
+
+    first_of_month = get_first_of_month()
+    orders_this_month = get_orders_this_month(first_of_month)
     orders_for_user = orders_this_month.filter(
         order_group__user_address__user_group__account_owner=user,
     )
@@ -338,9 +375,6 @@ def user_sales_churned_accounts(request, user_id):
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
 
-    # orders_for_user = Order.objects.filter(
-    #     order_group__user_address__user_group__account_owner=user,
-    # )
     user_groups_for_user = UserGroup.objects.filter(account_owner=user)
 
     # Find user groups that have not placed any orders in the last 30 days.
@@ -471,6 +505,8 @@ def user_sales_new_buyers(request, user_id):
     except User.DoesNotExist:
         return render(request, "404.html", status=404)
 
+    first_of_month = get_first_of_month()
+    orders_this_month = get_orders_this_month(first_of_month)
     user_groups = (
         UserGroup.objects.filter(
             account_owner=user,
