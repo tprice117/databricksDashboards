@@ -707,6 +707,14 @@ class Order(BaseModel):
 
         instance.add_line_items(created)
         notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
+        if (
+            instance.status == Order.Status.CANCELLED
+            and instance.old_value("status") != Order.Status.CANCELLED
+        ):
+            # if this is the only order in the group, add an end date to the group
+            if instance.order_group.orders.count() == 1:
+                instance.order_group.end_date = instance.order_group.start_date
+                instance.order_group.save()
 
     def admin_policy_checks(self, orders=None):
         """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
