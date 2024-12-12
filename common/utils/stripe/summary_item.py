@@ -76,7 +76,7 @@ class SummaryItems:
                 f"https://api.stripe.com/v1/invoices/{invoice.id}/summary_items",
                 headers=SummaryItems.get_headers(),
                 data={
-                    "description": description,
+                    "description": expanded_description,
                 },
             )
             return new_summary_invoice_summary_item_response.json()
