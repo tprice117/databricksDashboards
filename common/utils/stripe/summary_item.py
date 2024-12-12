@@ -1,8 +1,11 @@
 import requests
 import stripe
 from django.conf import settings
+import logging
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+logger = logging.getLogger(__name__)
 
 
 class SummaryItems:
@@ -72,6 +75,17 @@ class SummaryItems:
         if existing_item:
             return existing_item
         else:
+            try:
+                if description.find("|") == -1:
+                    raise ValueError(f"Invalid description {description}")
+                if expanded_description.find("|") == -1:
+                    raise ValueError(
+                        f"Invalid expanded_description {expanded_description}"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Error in get_or_create_by_description: [{invoice.id}]-[{e}]"
+                )
             new_summary_invoice_summary_item_response = requests.post(
                 f"https://api.stripe.com/v1/invoices/{invoice.id}/summary_items",
                 headers=SummaryItems.get_headers(),
