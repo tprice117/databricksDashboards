@@ -70,11 +70,16 @@ urlpatterns = [
         views.listing_detail,
         name="supplier_listing_detail",
     ),
-    path("supplier/products", views.add_product, name="supplier_products"),
+    path("supplier/products", views.products, name="supplier_products"),
     path(
         "supplier/products/category/<uuid:category_id>/",
-        views.add_product_2,
+        views.products_2,
         name="supplier_products_2",
+    ),
+    path(
+        "supplier/products/locations/<uuid:product_id>/",
+        views.products_3,
+        name="supplier_products_3",
     ),
     path(
         "supplier/messages/unread/",

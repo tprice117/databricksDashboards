@@ -28,7 +28,7 @@ from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
-    MainProductInfo,
+    MainProduct,
     MainProductCategory,
     MainProductCategoryGroup,
     Order,
@@ -39,6 +39,7 @@ from api.models import (
     SellerInvoicePayableLineItem,
     SellerLocation,
     SellerLocationMailingAddress,
+    SellerProductSellerLocation,
     User,
     UserAddress,
 )
@@ -1530,7 +1531,7 @@ def listing_detail(request, listing_id):
 
 
 @login_required(login_url="/admin/login/")
-def add_product(request):
+def products(request):
     context = {}
     context["main_product_category_groups"] = (
         MainProductCategoryGroup.objects.all().order_by("sort")
@@ -1552,35 +1553,49 @@ def add_product(request):
 
         return render(
             request,
-            "supplier_dashboard/main_product_category_table.html",
+            "supplier_dashboard/products/main_product_category_table.html",
             context,
         )
 
-    return render(request, "supplier_dashboard/main_product_categories.html", context)
+    return render(
+        request, "supplier_dashboard/products/main_product_categories.html", context
+    )
 
 
 @login_required(login_url="/admin/login/")
-def add_product_2(request, category_id):
+def products_2(request, category_id):
     context = {}
     main_product_category = MainProductCategory.objects.prefetch_related(
         "main_products"
     ).get(id=category_id)
-    main_products = (
-        main_product_category.main_products.prefetch_related(
-            Prefetch(
-                "mainproductinfo_set",
-                queryset=MainProductInfo.objects.order_by("sort"),
-                to_attr="infos",
-            )
-        )
-        .all()
-        .order_by("sort")
-    )
+    main_products = main_product_category.main_products.all().order_by("sort")
 
     context["main_product_category"] = main_product_category
     context["main_products"] = main_products
 
-    return render(request, "supplier_dashboard/main_products.html", context)
+    return render(request, "supplier_dashboard/products/main_products.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def products_3(request, product_id):
+    context = {}
+    seller = get_seller(request)
+
+    if seller:
+        context["seller"] = seller
+        context["locations"] = SellerLocation.objects.filter(
+            seller_id=seller.id
+        ).values("id", "street", "city")
+
+    main_product = MainProduct.objects.prefetch_related("products").get(id=product_id)
+    products = main_product.products.prefetch_related("product_add_on_choices").all()
+
+    context["main_product"] = main_product
+    context["products"] = products
+
+    return render(
+        request, "supplier_dashboard/products/main_product_detail.html", context
+    )
 
 
 @login_required(login_url="/admin/login/")
