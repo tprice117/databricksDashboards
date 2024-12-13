@@ -1564,6 +1564,7 @@ def cart_send_quote(request):
                     "transactional_message_id": 4,
                     "subject": checkout_order.subject,
                     "message_data": checkout_order.get_quote(),
+                    "reply_to": request.user.email,
                 }
                 data["message_data"]["accept_url"] = (
                     f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
@@ -3778,6 +3779,9 @@ def company_detail(request, user_group_id=None):
     payment_methods = PaymentMethod.objects.filter(user_group_id=user_group_id)
     # Order payment methods by newest first.
     context["payment_methods"] = payment_methods.order_by("-created_on")
+    context["credit_application"] = (
+        context["user_group"].credit_applications.order_by("-created_on").first()
+    )
 
     # Fill forms with initial data
     context["form"] = UserGroupForm(

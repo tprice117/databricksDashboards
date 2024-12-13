@@ -13,6 +13,33 @@ if TYPE_CHECKING:
     from payment_methods.models.payment_method import PaymentMethod
 
 
+def get_sorted_invoice_items(invoice_items):
+    # Define the order of descriptions
+    item_order = [
+        "Service",
+        "Rental",
+        "Materials",
+        "Fuel & Environmental Fee",
+        "Delivery Fee",
+        "Removal Fee",
+    ]
+
+    # Create a custom sorting function
+    def get_sort_key(item):
+        # Extract the main part of the description before the first space
+        main_description = item["description"].split(" ")[0].strip()
+        # Return the index of the main description in the item_order list
+        index = (
+            item_order.index(main_description)
+            if main_description in item_order
+            else len(item_order)
+        )
+        return index
+
+    # Sort the items using the custom sorting function
+    return sorted(invoice_items, key=get_sort_key)
+
+
 class Invoice(BaseModel):
     class Status(models.TextChoices):
         DRAFT = "draft"
@@ -65,9 +92,10 @@ class Invoice(BaseModel):
             )
             tax = 0
             if item["tax_amounts"]:
-                tax = Decimal(item["tax_amounts"][0]["amount"] / 100).quantize(
-                    Decimal("0.01"), rounding=ROUND_HALF_UP
-                )
+                for tax_amount in item["tax_amounts"]:
+                    tax += Decimal(tax_amount["amount"] / 100).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    )
             amount_excluding_tax = amount
             if item.get("amount_excluding_tax", None) is not None:
                 amount_excluding_tax = Decimal(
@@ -97,29 +125,9 @@ class Invoice(BaseModel):
         # setattr(self, "items", response["items"])
         # setattr(self, "groups", response["groups"])
 
-        # Define the order of descriptions
-        item_order = [
-            "Service",
-            "Rental",
-            "Materials",
-            "Fuel & Environmental Fee",
-            "Delivery Fee",
-            "Removal Fee",
-        ]
-
-        # Create a custom sorting function
-        def get_sort_key(item):
-            # Extract the main part of the description before the first "|"
-            main_description = item["description"].split(" | ")[0].strip()
-            # Return the index of the main description in the item_order list
-            return (
-                item_order.index(main_description)
-                if main_description in item_order
-                else len(item_order)
-            )
-
         # Sort the items using the custom sorting function
-        response["items"] = sorted(response["items"], key=get_sort_key)
+        response["items"] = get_sorted_invoice_items(response["items"])
+
         return response
 
     @property
@@ -129,11 +137,12 @@ class Invoice(BaseModel):
     @property
     def invoice_items_grouped(self) -> InvoiceGroupedResponse:
         invoice_items = self._get_invoice_items()
+        # Sort the items using the custom sorting function
+        invoice_items["items"] = get_sorted_invoice_items(invoice_items["items"])
+
         for group in invoice_items["groups"]:
             group["total"] = 0
             group["items"] = []
-            # Remove everything after last | in description.
-            group["description"] = group["description"].rsplit("|", 1)[0]
             for item in invoice_items["items"]:
                 if item["group_id"] == group["id"]:
                     group["items"].append(item)

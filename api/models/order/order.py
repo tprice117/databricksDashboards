@@ -328,7 +328,9 @@ class Order(BaseModel):
         if self.order_group.project_id:
             description2 = f"{description2} ({self.order_group.project_id})"
         elif self.order_group.user_address.project_id:
-            description2 = f"{description2} ({self.order_group.project_id})"
+            description2 = (
+                f"{description2} ({self.order_group.user_address.project_id})"
+            )
         description = f"{description} | {str(self.id)[:5]}"
         description2 = f"{description2} | {str(self.id)[:5]}"
         return description, description2
