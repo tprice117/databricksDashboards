@@ -26,7 +26,7 @@ def get_sorted_invoice_items(invoice_items):
 
     # Create a custom sorting function
     def get_sort_key(item):
-        # Extract the main part of the description before the first "|"
+        # Extract the main part of the description before the first space
         main_description = item["description"].split(" ")[0].strip()
         # Return the index of the main description in the item_order list
         index = (
@@ -35,11 +35,6 @@ def get_sorted_invoice_items(invoice_items):
             else len(item_order)
         )
         return index
-        # return (
-        #     item_order.index(main_description)
-        #     if main_description in item_order
-        #     else len(item_order)
-        # )
 
     # Sort the items using the custom sorting function
     return sorted(invoice_items, key=get_sort_key)
@@ -147,8 +142,6 @@ class Invoice(BaseModel):
         for group in invoice_items["groups"]:
             group["total"] = 0
             group["items"] = []
-            # Remove everything after last | in description.
-            group["description"] = group["description"].rsplit("|", 1)[0]
             for item in invoice_items["items"]:
                 if item["group_id"] == group["id"]:
                     group["items"].append(item)
