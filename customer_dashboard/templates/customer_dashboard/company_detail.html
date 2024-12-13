@@ -359,6 +359,44 @@
                         <div class="card">
                             <div class="card-body">
                                 <h4 class="card-title mb-4">Select Payment Method <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span><button class="btn btn-primary btn-sm float-end" type="button" data-bs-target="#add-card-modal" data-bs-toggle="modal"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Add Card</button></h4>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <div class="row">
+                                                    <div class="col-5">
+                                                        <h4 style="margin-bottom: 0px;"><i class="far fa-clock"></i> Pay Later</h4>
+                                                    </div>
+                                                    <div class="col-7">
+                                                        {% if credit_application and credit_application.status == "PENDING" %}
+                                                            <p class="text-end mb-0">Thank you for your application! Our team will review and reach out once we have a decision in the next 24-48 hours. If you need this booking sooner please use the "Pay Now" button.</p>
+                                                        {% else %}
+                                                            <div class="row align-items-center justify-content-end">
+                                                                <div class="col-auto">
+                                                                    {% if user_group.credit_line_limit and user_group.credit_limit_remaining > 0 %}
+                                                                        <span style="margin-bottom: 0px;"><span class="badge bg-success">${{ user_group.credit_limit_remaining|floatformat:2|intcomma }} Available</span></span>
+                                                                    {% elif user_group.credit_line_limit and user_group.credit_limit_remaining < 0 %}
+                                                                        <span style="margin-bottom: 0px;"><span class="badge bg-danger">${{ user_group.credit_limit_remaining|floatformat:2|intcomma }} Over</span></span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="col-auto">
+                                                                    <a class="btn btn-sm btn-danger" href="{% url 'customer_credit_application' %}?return_to={{ request.get_full_path }}">
+                                                                        <i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;
+                                                                        {% if user_group.credit_line_limit == 0 %}
+                                                                            Denied, re-apply
+                                                                        {% elif user_group.credit_limit_remaining < 0 or user_group.credit_limit_remaining > 0 %}
+                                                                            Request Increase
+                                                                        {% else %}
+                                                                            Apply
+                                                                        {% endif %}
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 {% for payment_method in payment_methods %}
                                     {% include 'customer_dashboard/snippets/payment_method_item.html' %}
                                 {% endfor %}
