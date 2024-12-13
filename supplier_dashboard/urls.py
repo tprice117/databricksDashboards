@@ -39,6 +39,8 @@ urlpatterns = [
     path("supplier/logout/", views.supplier_logout, name="supplier_logout"),
     path("supplier/profile/", views.profile, name="supplier_profile"),
     path("supplier/company/", views.company, name="supplier_company"),
+    path("supplier/company/new/", views.new_company, name="supplier_new_company"),
+    path("supplier/companies/", views.companies, name="supplier_companies"),
     path("supplier/users/", views.users, name="supplier_users"),
     path(
         "supplier/user/<uuid:user_id>/",

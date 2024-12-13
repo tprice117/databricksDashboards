@@ -12,7 +12,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -54,11 +54,14 @@ from .forms import (
     SellerAboutUsForm,
     SellerCommunicationForm,
     SellerForm,
+    NewSellerForm,
+    SellerLocationInlineFormSet,
     SellerLocationComplianceAdminForm,
     SellerLocationComplianceForm,
     SellerPayoutForm,
     UserForm,
     UserInviteForm,
+    UserInlineFormSet,
 )
 
 logger = logging.getLogger(__name__)
@@ -611,48 +614,22 @@ def profile(request):
     context["seller"] = get_seller(request)
 
     if request.method == "POST":
-        # NOTE: Since email is disabled, it is never POSTed,
-        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
-        POST_COPY = request.POST.copy()
-        POST_COPY["email"] = context["user"].email
-        form = UserForm(POST_COPY, request.FILES, auth_user=context["user"])
+        form = UserForm(
+            request.POST,
+            request.FILES,
+            instance=context["user"],
+            auth_user=context["user"],
+        )
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("first_name") != context["user"].first_name:
-                context["user"].first_name = form.cleaned_data.get("first_name")
-                save_db = True
-            if form.cleaned_data.get("last_name") != context["user"].last_name:
-                context["user"].last_name = form.cleaned_data.get("last_name")
-                save_db = True
-            if form.cleaned_data.get("phone") != context["user"].phone:
-                context["user"].phone = form.cleaned_data.get("phone")
-                save_db = True
-            if form.cleaned_data.get("type") != context["user"].type:
-                context["user"].type = form.cleaned_data.get("type")
-                save_db = True
-            if request.FILES.get("photo"):
-                context["user"].photo = request.FILES["photo"]
-                save_db = True
-            elif request.POST.get("photo-clear") == "on":
-                context["user"].photo = None
-                save_db = True
-            if save_db:
-                context["user"] = context["user"]
-                context["user"].save()
+            if form.has_changed():
+                form.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
             form = UserForm(
-                initial={
-                    "first_name": context["user"].first_name,
-                    "last_name": context["user"].last_name,
-                    "phone": context["user"].phone,
-                    "photo": context["user"].photo,
-                    "email": context["user"].email,
-                    "type": context["user"].type,
-                },
+                instance=context["user"],
                 auth_user=context["user"],
             )
             context["form"] = form
@@ -667,14 +644,7 @@ def profile(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
         form = UserForm(
-            initial={
-                "first_name": context["user"].first_name,
-                "last_name": context["user"].last_name,
-                "phone": context["user"].phone,
-                "photo": context["user"].photo,
-                "email": context["user"].email,
-                "type": context["user"].type,
-            },
+            instance=context["user"],
             auth_user=context["user"],
         )
         context["form"] = form
@@ -835,6 +805,164 @@ def company(request):
 
 
 @login_required(login_url="/admin/login/")
+def new_company(request):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
+    context = {}
+
+    if request.method == "POST":
+        form = NewSellerForm(request.POST, request.FILES)
+        location_formset = SellerLocationInlineFormSet(request.POST, request.FILES)
+        user_formset = UserInlineFormSet(request.POST)
+        if form.is_valid() and location_formset.is_valid() and user_formset.is_valid():
+            # Do additional validation
+            is_valid = True
+            if not any(form.cleaned_data for form in user_formset.forms):
+                user_formset.non_form_errors = ["New User is required."]
+                is_valid = False
+            if not any(
+                form.cleaned_data
+                for form in location_formset.forms
+                if not form.cleaned_data.get("DELETE", False)
+            ):
+                location_formset.non_form_errors = [
+                    "At least one location is required."
+                ]
+                is_valid = False
+
+            if is_valid:
+                try:
+                    # Try saving all the data
+                    with transaction.atomic():
+                        # Save the seller information
+                        seller = form.save()
+
+                        # Save the seller locations
+                        location_formset.instance = seller
+                        location_formset.save()
+
+                        # Save the new user
+                        user_formset.instance = seller.usergroup
+                        for user_form in user_formset:
+                            # Should only be one user
+                            email = user_form.cleaned_data.get("email")
+                            if User.objects.filter(email__iexact=email).exists():
+                                # Directly assign user to user group
+                                user = User.objects.get(email__iexact=email)
+                                user.user_group = seller.usergroup
+                                user.save()
+                            else:
+                                # Invite a new user to the platform
+                                user_invite = UserGroupAdminApprovalUserInvite(
+                                    user_group=seller.usergroup,
+                                    email=email,
+                                    phone=user_form.cleaned_data.get("phone"),
+                                    first_name=user_form.cleaned_data.get("first_name"),
+                                    last_name=user_form.cleaned_data.get("last_name"),
+                                    type=UserType.ADMIN,  # user will be admin by default
+                                    redirect_url="/supplier/",
+                                )
+                                user_invite.save()
+                        messages.success(request, "Successfully saved!")
+                        return HttpResponseRedirect(reverse("supplier_companies"))
+                except IntegrityError as e:
+                    messages.error(
+                        request, "Error saving, please contact us if this continues."
+                    )
+                    logger.error(
+                        f"Error saving new company [{e}]-data[{request.data}]",
+                        exc_info=True,
+                    )
+            else:
+                messages.error(
+                    request, "An error occurred. Please check the form below."
+                )
+        else:
+            messages.error(request, "An error occurred. Please check the form below.")
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            for location_form in location_formset.forms:
+                if not location_form.cleaned_data.get("DELETE", False):
+                    for field in location_form.errors:
+                        if field != "__all__":
+                            location_form[field].field.widget.attrs["class"] += (
+                                " is-invalid"
+                            )
+            for user_form in user_formset.forms:
+                for field in user_form.errors:
+                    if field != "__all__":
+                        user_form[field].field.widget.attrs["class"] += " is-invalid"
+    else:
+        form = NewSellerForm()
+        location_formset = SellerLocationInlineFormSet()
+        user_formset = UserInlineFormSet()
+
+    context.update(
+        {
+            "form": form,
+            "location_formset": location_formset,
+            "user_formset": user_formset,
+        }
+    )
+    return render(request, "supplier_dashboard/company_new.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def companies(request):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
+    pagination_limit = 25
+    page_number = int(request.GET.get("p") or 1)
+
+    context = {}
+    context["help_text"] = "All Suppliers"
+
+    search_q = request.GET.get("q", None)
+
+    if request.headers.get("HX-Request"):
+        query_params = request.GET.copy()
+
+        sellers = Seller.objects.all()
+        if search_q:
+            sellers = sellers.filter(Q(name__icontains=search_q))
+        sellers = sellers.order_by("name")
+
+        paginator = Paginator(sellers, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/supplier/companies/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/supplier/companies/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/supplier/companies/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/supplier/companies/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/supplier/companies/?{query_params.urlencode()}"
+        return render(
+            request, "supplier_dashboard/snippets/companies_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    context["companies_table_link"] = (
+        f"{reverse('supplier_companies')}?{query_params.urlencode()}"
+    )
+    return render(request, "supplier_dashboard/companies.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def users(request):
     context = {}
     context["user"] = get_user(request)
@@ -955,47 +1083,23 @@ def user_detail(request, user_id):
                 break
 
     if request.method == "POST":
-        # NOTE: Since email is disabled, it is never POSTed,
-        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
-        POST_COPY = request.POST.copy()
-        POST_COPY["email"] = user.email
-        form = UserForm(POST_COPY, request.FILES, auth_user=auth_user, user=user)
+        form = UserForm(
+            request.POST,
+            request.FILES,
+            instance=user,
+            auth_user=auth_user,
+            user=user,
+        )
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("first_name") != user.first_name:
-                user.first_name = form.cleaned_data.get("first_name")
-                save_db = True
-            if form.cleaned_data.get("last_name") != user.last_name:
-                user.last_name = form.cleaned_data.get("last_name")
-                save_db = True
-            if form.cleaned_data.get("phone") != user.phone:
-                user.phone = form.cleaned_data.get("phone")
-                save_db = True
-            if form.cleaned_data.get("type") != user.type:
-                user.type = form.cleaned_data.get("type")
-                save_db = True
-            if request.FILES.get("photo"):
-                user.photo = request.FILES["photo"]
-                save_db = True
-            elif request.POST.get("photo-clear") == "on":
-                user.photo = None
-                save_db = True
-            if save_db:
-                user.save()
+            if form.has_changed():
+                form.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
             form = UserForm(
-                initial={
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "phone": user.phone,
-                    "photo": user.photo,
-                    "email": user.email,
-                    "type": user.type,
-                },
+                instance=user,
                 auth_user=auth_user,
                 user=user,
             )
@@ -1011,14 +1115,7 @@ def user_detail(request, user_id):
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
         form = UserForm(
-            initial={
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "phone": user.phone,
-                "photo": user.photo,
-                "email": user.email,
-                "type": user.type,
-            },
+            instance=user,
             auth_user=auth_user,
             user=user,
         )

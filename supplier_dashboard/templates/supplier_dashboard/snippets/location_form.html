@@ -1,0 +1,137 @@
+{% for hidden in form.hidden_fields %}
+    {{ hidden }}
+{% endfor %}
+<div class="row">
+{% comment %} Location details {% endcomment %}
+<div class="col-md me-3">
+<h4>Location Details</h4>
+{% comment %} Address {% endcomment %}
+<div class="form-group mb-3">
+    <label for="{{ form.street.id_for_label }}" class="form-label">{{ form.street.label }}{{ form.street.label_suffix }}
+        {% if form.street.field.required %}* {% endif %}
+    </label>
+    {{ form.street }}
+</div>
+<div class="form-row d-flex mb-3">
+    <div class="form-group col-md-6 pe-3">
+        <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}{{ form.city.label_suffix }}
+            {% if form.city.field.required %}* {% endif %}
+        </label>
+    {{ form.city }}
+    </div>
+    <div class="form-group col-md-3 pe-3">
+        <label for="{{ form.state.id_for_label }}" class="form-label">{{ form.state.label }}{{ form.state.label_suffix }}
+            {% if form.state.field.required %}* {% endif %}
+        </label>
+    {{ form.state }}
+    </div>
+    <div class="form-group col-md-3">
+        <label for="{{ form.postal_code.id_for_label }}" class="form-label">{{ form.postal_code.label }}{{ form.postal_code.label_suffix }}
+            {% if form.postal_code.field.required %}* {% endif %}
+        </label>
+    {{ form.postal_code }}
+    </div>
+</div>
+{% comment %} Open Hours {% endcomment %}
+<div class="form-group mb-3">
+    <label for="{{ form.open_days.id_for_label }}" class="form-label">{{ form.open_days.label }}{{ form.open_days.label_suffix }}
+        {% if form.open_days.field.required %}* {% endif %}
+    </label>
+    <div id="{{ form.open_days.name }}">
+    {% for checkbox in form.open_days %}
+        <div class="form-check form-check-inline">
+            {{ checkbox }}
+        </div>
+    {% endfor %}
+    </div>
+</div>
+<div class="form-row d-flex mb-3">
+    <div class="form-group col me-3">
+        <label for="{{ form.open_time.id_for_label }}" class="form-label">{{ form.open_time.label }}{{ form.open_time.label_suffix }}
+            {% if form.open_time.field.required %}* {% endif %}
+        </label>
+    {{ form.open_time }}
+    </div>
+    <div class="form-group col">
+        <label for="{{ form.close_time.id_for_label }}" class="form-label">{{ form.close_time.label }}{{ form.close_time.label_suffix }}
+            {% if form.close_time.field.required %}* {% endif %}
+        </label>
+    {{ form.close_time }}
+    </div>
+</div>
+{% comment %} Location Logo {% endcomment %}
+<div class="mb-3">
+    <label for="{{ form.location_logo_image.id_for_label }}" class="form-label">{{ form.location_logo_image.label }}{{ form.location_logo_image.label_suffix }}
+        {% if form.location_logo_image.field.required %}* {% endif %}
+    </label>
+    {{ form.location_logo_image }}
+    {% if form.location_logo_image.help_text %}
+        <small id="{{ form.location_logo_image.html_name }}Help" class="form-text text-muted">{{ form.location_logo_image.help_text|safe }}</small>
+    {% endif %}
+    {% if form.location_logo_image.errors %}
+        <small class="text-danger">{{ form.location_logo_image.errors }}</small>
+    {% endif %}
+</div>
+</div>
+<div class="col-md">
+<hr class="d-md-none mt-3">
+{% comment %} Payout Details {% endcomment %}
+<h4>Payout Details</h4>
+{% comment %} Order Email and Phone {% endcomment %}
+<div class="form-row d-flex mb-3">
+    <div class="col me-3 form-group">
+            <label for="{{ form.order_email.id_for_label }}" class="form-label">{{ form.order_email.label }}{{ form.order_email.label_suffix }}
+                {% if form.order_email.field.required %}* {% endif %}
+            </label>
+        {{ form.order_email }}
+    </div>
+    <div class="col form-group">
+            <label for="{{ form.order_phone.id_for_label }}" class="form-label">{{ form.order_phone.label }}{{ form.order_phone.label_suffix }}
+                {% if form.order_phone.field.required %}* {% endif %}
+            </label>
+            {{ form.order_phone }}
+    </div>
+</div>
+{% comment %} Payee Name {% endcomment %}
+<div class="mb-3">
+    <label for="{{ form.payee_name.id_for_label }}" class="form-label">{{ form.payee_name.label }}{{ form.payee_name.label_suffix }}
+        {% if form.payee_name.field.required %}* {% endif %}
+    </label>
+    {{ form.payee_name }}
+    {% if form.payee_name.help_text %}
+        <small id="{{ form.payee_name.html_name }}Help" class="form-text text-muted">{{ form.payee_name.help_text|safe }}</small>
+    {% endif %}
+    {% if form.payee_name.errors %}
+        <small class="text-danger">{{ form.payee_name.errors }}</small>
+    {% endif %}
+</div>
+{% comment %} Mailing Address {% endcomment %}
+<div class="form-group mb-3">
+    <label for="{{ form.mailing_street.id_for_label }}" class="form-label">{{ form.mailing_street.label }}{{ form.mailing_street.label_suffix }}
+        {% if form.mailing_street.field.required %}* {% endif %}
+    </label>
+    {{ form.mailing_street }}
+</div>
+<div class="form-row d-flex mb-3">
+    <div class="form-group col-md-6 pe-3">
+        <label for="{{ form.mailing_city.id_for_label }}" class="form-label">{{ form.mailing_city.label }}{{ form.mailing_city.label_suffix }}
+            {% if form.mailing_city.field.required %}* {% endif %}
+        </label>
+    {{ form.mailing_city }}
+    </div>
+    <div class="form-group col-md-3 pe-3">
+        <label for="{{ form.mailing_state.id_for_label }}" class="form-label">{{ form.mailing_state.label }}{{ form.mailing_state.label_suffix }}
+            {% if form.mailing_state.field.required %}* {% endif %}
+        </label>
+    {{ form.mailing_state }}
+    </div>
+    <div class="form-group col-md-3">
+        <label for="{{ form.mailing_postal_code.id_for_label }}" class="form-label">{{ form.mailing_postal_code.label }}{{ form.mailing_postal_code.label_suffix }}
+            {% if form.mailing_postal_code.field.required %}* {% endif %}
+        </label>
+    {{ form.mailing_postal_code }}
+    </div>
+</div>
+</div>
+</div>
+<small class="text-danger">{{ form.non_field_errors }}</small>
