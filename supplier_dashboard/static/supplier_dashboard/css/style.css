@@ -1,0 +1,63 @@
+.btn {
+    transition:all .2s ease-in-out
+}
+
+.btn:hover {
+    transform:translateY(-1px)
+}
+.btn-check:focus + .btn:hover, .btn:focus:hover, .btn.focus:hover, .btn:active:hover, .btn.active:hover {
+    transform:translateY(0)
+}
+
+.form-control::placeholder, .form-control:focus::placeholder {
+    transition:all .2s ease
+}
+
+html:not([dir=rtl]) .form-control:not([readonly]):focus::placeholder {
+    transform:translateX(5px)
+}
+
+[dir=rtl] .form-control:not([readonly]):focus::placeholder {
+    transform:translateX(-5px)
+}
+
+.image-container {
+    width: 100%;
+    height: 250px; /* Set a fixed height for the image container */
+    overflow: hidden;
+  }
+  
+.image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensure the image covers the container while maintaining aspect ratio */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+  
+.image-container img.loaded {
+    opacity: 1;
+}
+/* 
+CSS for 5-star rating scale 
+Assumes font-awesome is available and that the list goes from Best to Worst
+*/
+.star-rating {
+    direction: rtl;
+    display: inline-flex;
+}
+.star-rating input[type="radio"] {
+    display: none;
+}
+.star-rating label {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+}
+.star-rating input[type="radio"]:checked ~ label {
+    color: #f5c518;
+}
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: #f5c518;
+}
