@@ -81,7 +81,7 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Total</strong>
                         </p>
-                        <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">${{ order.customer_price|floatformat:2|intcomma }}</p>
+                        <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">${{ order.customer_price_with_tax|floatformat:2|intcomma }}</p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
@@ -90,9 +90,7 @@
                                 <tbody>
                                     {% for order_line_item in order.order_line_items.all %}
                                         <tr>
-                                            <td>{{ order_line_item.order_line_item_type.name }}</td>
-                                            <td>${{ order_line_item.customer_price|floatformat:2|intcomma }} {{ order_line_item.order_line_item_type.units }}</td>
-                                            <td>{{ order_line_item.description }}</td>
+                                            <td>{{ order_line_item.stripe_description }} | tax: ${{ order_line_item.tax|stringformat:'.2f'|intcomma }}</td>
                                             <td>
                                                 {% if order_line_item.paid %}
                                                     Paid
