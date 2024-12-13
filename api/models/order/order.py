@@ -716,9 +716,10 @@ class Order(BaseModel):
             # if all the orders are canceled, add an end date to the group
             for order in instance.order_group.orders.all():
                 if order.status != Order.Status.CANCELLED:
-                    return
-            order.order_group.end_date = order.order_group.start_date
-            order.order_group.save()
+                    break
+            else:
+                instance.order_group.end_date = instance.order_group.start_date
+                instance.order_group.save()
 
     def admin_policy_checks(self, orders=None):
         """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
