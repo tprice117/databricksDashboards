@@ -264,6 +264,13 @@ class OrderLineItem(BaseModel):
         customer_price = seller_price * (1 + (self.platform_fee_percent / 100))
         return round(customer_price, 2)
 
+    def customer_price_with_tax(self):
+        seller_price = self.seller_payout_price()
+        customer_price = seller_price * (1 + (self.platform_fee_percent / 100))
+        if self.tax:
+            customer_price += self.tax
+        return round(customer_price, 2)
+
 
 @receiver(pre_save, sender=OrderLineItem)
 def order_line_item_pre_save(sender, instance, **kwargs):

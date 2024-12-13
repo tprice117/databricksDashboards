@@ -292,6 +292,15 @@ class Order(BaseModel):
             ]
         )
 
+    @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
+    def customer_price_with_tax(self):
+        return sum(
+            [
+                order_line_item.customer_price_with_tax()
+                for order_line_item in self.order_line_items.all()
+            ]
+        )
+
     def full_price(self):
         default_take_rate = self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
         return self.seller_price() * (1 + (default_take_rate / 100))
