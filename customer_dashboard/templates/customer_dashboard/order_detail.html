@@ -141,7 +141,11 @@
                                 <h4 class="card-title">Related Invoices</h4>
                                 {% for invoice in invoices %}
                                     <div class="row">
-                                        <a class="btn-link" href="{% url 'customer_invoice_detail' invoice_id=invoice.id %}">Invoice {{ invoice.number }} - {{ invoice.status }}</a>
+                                        <a class="btn-link" href="{% url 'customer_invoice_detail' invoice_id=invoice.id %}">
+                                            Invoice{% if invoice.number %}
+                                                &nbsp;{{ invoice.number }}
+                                            {% endif %}&nbsp;- {{ invoice.status }}
+                                        </a>
                                     </div>
                                 {% endfor %}
                             </div>
