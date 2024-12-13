@@ -28,9 +28,9 @@ class UserForm(forms.ModelForm):
         widgets = {
             "first_name": forms.TextInput(attrs={"class": "form-control"}),
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "type": "tel"}),
             "type": forms.Select(attrs={"class": "form-select"}),
-            "email": forms.TextInput(attrs={"class": "form-control", type: "email"}),
+            "email": forms.TextInput(attrs={"class": "form-control", "type": "email"}),
             "photo": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
         labels = {

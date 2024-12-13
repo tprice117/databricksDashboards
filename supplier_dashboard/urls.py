@@ -70,6 +70,12 @@ urlpatterns = [
         views.listing_detail,
         name="supplier_listing_detail",
     ),
+    path("supplier/products", views.add_product, name="supplier_products"),
+    path(
+        "supplier/products/category/<uuid:category_id>/",
+        views.add_product_2,
+        name="supplier_products_2",
+    ),
     path(
         "supplier/messages/unread/",
         views.get_intercom_unread_conversations,

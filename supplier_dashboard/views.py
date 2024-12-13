@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, F, Prefetch
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -28,6 +28,9 @@ from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
+    MainProductInfo,
+    MainProductCategory,
+    MainProductCategoryGroup,
     Order,
     OrderGroup,
     Payout,
@@ -1524,6 +1527,60 @@ def listings(request):
 @login_required(login_url="/admin/login/")
 def listing_detail(request, listing_id):
     return render(request, "supplier_dashboard/listing_detail.html", {})
+
+
+@login_required(login_url="/admin/login/")
+def add_product(request):
+    context = {}
+    context["main_product_category_groups"] = (
+        MainProductCategoryGroup.objects.all().order_by("sort")
+    )
+    if request.headers.get("HX-Request"):
+        search_q = request.GET.get("q", None)
+        group_id = request.GET.get("group_id", None)
+        main_product_categories = MainProductCategory.objects.all()
+
+        if search_q:
+            main_product_categories = main_product_categories.filter(
+                name__icontains=search_q
+            )
+
+        if group_id:
+            main_product_categories = main_product_categories.filter(group_id=group_id)
+
+        context["main_product_categories"] = main_product_categories.order_by("name")
+
+        return render(
+            request,
+            "supplier_dashboard/main_product_category_table.html",
+            context,
+        )
+
+    return render(request, "supplier_dashboard/main_product_categories.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def add_product_2(request, category_id):
+    context = {}
+    main_product_category = MainProductCategory.objects.prefetch_related(
+        "main_products"
+    ).get(id=category_id)
+    main_products = (
+        main_product_category.main_products.prefetch_related(
+            Prefetch(
+                "mainproductinfo_set",
+                queryset=MainProductInfo.objects.order_by("sort"),
+                to_attr="infos",
+            )
+        )
+        .all()
+        .order_by("sort")
+    )
+
+    context["main_product_category"] = main_product_category
+    context["main_products"] = main_products
+
+    return render(request, "supplier_dashboard/main_products.html", context)
 
 
 @login_required(login_url="/admin/login/")

@@ -1,0 +1,78 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+  Create New Booking
+{% endblock %}
+{% block javascript %}
+  <script>
+    // On dom load update search field
+    document.addEventListener('DOMContentLoaded', function () {
+      const searchFilter = document.getElementById('category-search-filter')
+      const urlParams = new URLSearchParams(window.location.search)
+      const search = urlParams.get('q')
+      if (search) {
+        searchFilter.value = search
+      }
+      const group_id = urlParams.get('group_id')
+      if (group_id) {
+        document.getElementById('table-filter-options').value = group_id
+      }
+    
+      htmx.trigger(searchFilter, 'confirmed')
+    })
+    let debounceTimeout
+    
+    function onInputChanged(el) {
+      // Only trigger the search if the value is not empty and has more than 1 character and the user has stopped typing.
+      // Clear the previous timeout
+      clearTimeout(debounceTimeout)
+    
+      // Set a new timeout
+      debounceTimeout = setTimeout(function () {
+        if (!el.value || el.value.length > 1) {
+          htmx.trigger(el, 'confirmed')
+        }
+      }, 500)
+    }
+  </script>
+{% endblock %}
+{% block stylesheet %}
+  <style></style>
+{% endblock %}
+{% block content %}
+  <div class="container-fluid">
+    <div class="card shadow mb-4 rounded-3">
+      <div class="card-body p-3">
+        <div class="row">
+          <div class="col">
+            <h5 class="text-primary p-3 m-0" id="table-title">
+              Add Products
+              <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+            </h5>
+          </div>
+        </div>
+        <form class="row mt-2 row-cols-1 row-cols-md-2" hx-trigger="confirmed" hx-get="{% url 'supplier_products' %}" hx-target="#category-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+          <div class="col-md-8">
+            <div class="input-group">
+              <span class="input-group-text" id="inputGroup-sizing-lg"><i class="fa fa-search"></i></span>
+              <input id="category-search-filter" class="form-control" type="search" placeholder="Search" name="q" oninput="onInputChanged(this)" />
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select id="table-filter-options" class="form-select" aria-label="Filter Data By" name="group_id" onchange="htmx.trigger(this, 'confirmed');">
+              <option value="" selected>Filter By Category (all)</option>
+              {% for group in main_product_category_groups %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4" id="category-results">
+      <div class="col"></div>
+      <div class="col"></div>
+    </div>
+  </div>
+{% endblock %}
