@@ -13,6 +13,38 @@ if TYPE_CHECKING:
     from payment_methods.models.payment_method import PaymentMethod
 
 
+def get_sorted_invoice_items(invoice_items):
+    # Define the order of descriptions
+    item_order = [
+        "Service",
+        "Rental",
+        "Materials",
+        "Fuel & Environmental Fee",
+        "Delivery Fee",
+        "Removal Fee",
+    ]
+
+    # Create a custom sorting function
+    def get_sort_key(item):
+        # Extract the main part of the description before the first "|"
+        main_description = item["description"].split(" ")[0].strip()
+        # Return the index of the main description in the item_order list
+        index = (
+            item_order.index(main_description)
+            if main_description in item_order
+            else len(item_order)
+        )
+        return index
+        # return (
+        #     item_order.index(main_description)
+        #     if main_description in item_order
+        #     else len(item_order)
+        # )
+
+    # Sort the items using the custom sorting function
+    return sorted(invoice_items, key=get_sort_key)
+
+
 class Invoice(BaseModel):
     class Status(models.TextChoices):
         DRAFT = "draft"
@@ -97,29 +129,9 @@ class Invoice(BaseModel):
         # setattr(self, "items", response["items"])
         # setattr(self, "groups", response["groups"])
 
-        # Define the order of descriptions
-        item_order = [
-            "Service",
-            "Rental",
-            "Materials",
-            "Fuel & Environmental Fee",
-            "Delivery Fee",
-            "Removal Fee",
-        ]
-
-        # Create a custom sorting function
-        def get_sort_key(item):
-            # Extract the main part of the description before the first "|"
-            main_description = item["description"].split(" | ")[0].strip()
-            # Return the index of the main description in the item_order list
-            return (
-                item_order.index(main_description)
-                if main_description in item_order
-                else len(item_order)
-            )
-
         # Sort the items using the custom sorting function
-        response["items"] = sorted(response["items"], key=get_sort_key)
+        response["items"] = get_sorted_invoice_items(response["items"])
+
         return response
 
     @property
@@ -129,6 +141,9 @@ class Invoice(BaseModel):
     @property
     def invoice_items_grouped(self) -> InvoiceGroupedResponse:
         invoice_items = self._get_invoice_items()
+        # Sort the items using the custom sorting function
+        invoice_items["items"] = get_sorted_invoice_items(invoice_items["items"])
+
         for group in invoice_items["groups"]:
             group["total"] = 0
             group["items"] = []
