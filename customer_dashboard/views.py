@@ -1564,6 +1564,7 @@ def cart_send_quote(request):
                     "transactional_message_id": 4,
                     "subject": checkout_order.subject,
                     "message_data": checkout_order.get_quote(),
+                    "reply_to": request.user.email,
                 }
                 data["message_data"]["accept_url"] = (
                     f"{settings.DASHBOARD_BASE_URL}/customer/cart/"

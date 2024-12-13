@@ -134,6 +134,7 @@
             {% endif %}
             Swal.fire({
                 title: "Send Quote",
+                footer: 'The reply to email address will be set to the email address of the user who sent the quote [{{request.user.email}}].',
                 input: "textarea",
                 inputLabel: "Comma separated list of email addresses to send the quote to.",
                 inputValue,
