@@ -133,7 +133,22 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <div class="row" style="padding-bottom: 24px;">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">Related Invoices</h4>
+                                {% for invoice in invoices %}
+                                    <div class="row">
+                                        <a class="btn-link" href="{% url 'customer_invoice_detail' invoice_id=invoice.id %}">Invoice {{ invoice.number }} - {{ invoice.status }}</a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
