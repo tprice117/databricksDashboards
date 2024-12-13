@@ -294,6 +294,9 @@
                                                 {% for item in item.items %}
                                                     <div class="d-flex justify-content-between">
                                                         <span class="text-muted">{{ item.description }} | tax: ${{ item.tax|stringformat:'.2f'|intcomma }}</span>
+                                                        {% if item.order_line_item_id %}
+                                                            <a class="btn-link" href="{% url 'customer_order_detail' order_id=item.order_line_item_id %}?line_item=true">order</a>
+                                                        {% endif %}
                                                     </div>
                                                     <hr />
                                                 {% endfor %}

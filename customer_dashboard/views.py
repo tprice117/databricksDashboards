@@ -47,6 +47,7 @@ from api.models import (
     MainProductCategoryGroup,
     MainProductWasteType,
     Order,
+    OrderLineItem,
     OrderGroup,
     OrderReview,
     Product,
@@ -2540,15 +2541,30 @@ def order_group_detail(request, order_group_id):
 @catch_errors()
 def order_detail(request, order_id):
     context = get_user_context(request)
-    order = Order.objects.filter(id=order_id)
-    order = order.select_related(
-        "order_group__seller_product_seller_location__seller_product__seller",
-        "order_group__user_address",
-        "order_group__user",
-        "order_group__seller_product_seller_location__seller_product__product__main_product",
-    )
-    order = order.prefetch_related("payouts", "order_line_items")
-    context["order"] = order.first()
+    is_line_item = request.GET.get("line_item", None)
+    if is_line_item:
+        order_line_item = OrderLineItem.objects.filter(id=order_id)
+        order_line_item = order_line_item.select_related(
+            "order__order_group__seller_product_seller_location__seller_product__seller",
+            "order__order_group__user_address",
+            "order__order_group__user",
+            "order__order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        order_line_item = order_line_item.prefetch_related(
+            "order__payouts", "order__order_line_items"
+        )
+        context["order"] = order_line_item.first().order
+    else:
+        order = Order.objects.filter(id=order_id)
+        order = order.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        order = order.prefetch_related("payouts", "order_line_items")
+        context["order"] = order.first()
+    context["invoices"] = context["order"].get_invoices()
 
     return render(request, "customer_dashboard/order_detail.html", context)
 
