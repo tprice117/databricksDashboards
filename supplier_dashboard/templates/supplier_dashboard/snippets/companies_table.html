@@ -1,0 +1,67 @@
+{% load static %}
+{% load tz %}
+{% load humanize %}
+{% if help_text %}
+    <p class="text-primary m-0 fw-bold" id="table-title" hx-swap-oob="true">{{ help_text }}</p>
+{% endif %}
+
+<table class="table table-hover my-0" id="company-results">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Locations</th>
+            <th>Phone</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if page_obj %}
+            {% for seller in page_obj %}
+                <tr>
+                    <td>{{ seller.name }}</td>
+                    <td>{{ seller.seller_locations.count }}</td>
+                    <td>{{ seller.phone }}</td>
+                    <td>{{ seller.status }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No companies found</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th>Name</th>
+            <th>Locations</th>
+            <th>Phone</th>
+            <th>Status</th>
+        </tr>
+    </tfoot>
+</table>
+<div class="row" id="companies-pagination" hx-swap-oob="true">
+    <div class="col-md-6 align-self-center">
+        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </p>
+    </div>
+    <div class="col-md-6">
+        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="page-link pagi-link" href="{{ page_start_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">&laquo; first</a>
+                    <a class="page-link pagi-link" href="{{ page_prev_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">«</a>
+                {% endif %}
+                <li class="page-item active">
+                    <a class="page-link pagi-link" href="{{ page_current_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">{{ page_obj.number }}</a>
+                </li>
+                {% if page_obj.has_next %}
+                    <a class="page-link pagi-link" href="{{ page_next_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">»</a>
+                    <a class="page-link pagi-link" href="{{ page_end_link }}" hx-boost="true" hx-push-url="true" hx-target="#company-results" hx-swap="outerHTML" hx-trigger="click" hx-indicator="#htmx-indicator-loading-status">last &raquo;</a>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
