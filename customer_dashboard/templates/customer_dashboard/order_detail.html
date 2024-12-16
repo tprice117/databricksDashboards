@@ -88,7 +88,7 @@
                                     <tr></tr>
                                 </thead>
                                 <tbody>
-                                    {% for order_line_item in order.order_line_items.all %}
+                                    {% for order_line_item in order.order_line_items.ordered_by_type %}
                                         <tr>
                                             <td>{{ order_line_item.stripe_description }} | tax: ${{ order_line_item.tax|stringformat:'.2f'|intcomma }}</td>
                                             <td>
