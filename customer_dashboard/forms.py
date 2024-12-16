@@ -127,12 +127,6 @@ class UserInviteForm(forms.Form):
         auth_user = kwargs.pop("auth_user", None)
         user = kwargs.pop("user", None)
         super(UserInviteForm, self).__init__(*args, **kwargs)
-        if auth_user and auth_user.is_staff:
-            self.fields["apollo_id"] = forms.CharField(
-                max_length=128,
-                widget=forms.TextInput(attrs={"class": "form-control"}),
-                required=True,
-            )
         if auth_user and user and not auth_user.is_staff:
             # if auth_user.type is lower than user.type, then disable the type field.
             if auth_user.type == UserType.BILLING:
@@ -384,12 +378,6 @@ class UserGroupNewForm(forms.Form):
     name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
-    company_apollo_id = forms.CharField(
-        max_length=128,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        label="Apollo id",
-        required=True,
     )
 
     def __init__(self, *args, **kwargs):
