@@ -424,7 +424,10 @@ class Order(BaseModel):
         inv_resp = []
         stripe_invoice_ids = []
         for order_line_item in self.order_line_items.all():
-            if order_line_item.stripe_invoice_line_item_id:
+            if (
+                order_line_item.stripe_invoice_line_item_id
+                and order_line_item.stripe_invoice_line_item_id != "BYPASS"
+            ):
                 try:
                     invoice_line_item = StripeUtils.InvoiceItem.get(
                         order_line_item.stripe_invoice_line_item_id
