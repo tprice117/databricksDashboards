@@ -35,7 +35,7 @@ class UserGroupBilling(BaseModel):
         user_group = instance.user_group
         addresses = user_group.user_addresses.all()
         for address in addresses:
-            address.update_stripe()
+            address.update_stripe(save_on_update=True)
 
 
 pre_save.connect(UserGroupBilling.pre_save, sender=UserGroupBilling)
