@@ -56,12 +56,19 @@
                                                     <div class="col">
                                                         <h3>{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
                                                         {% if order.order_group.end_date %}
-                                                            <p class="mb-1">{{ order.order_group.start_date }} to {{ order.order_group.end_date }}</p>
+                                                            <p class="mb-1">{{ order.order_group.start_date }} to {{ order.order_group.end_date }}&nbsp;
+                                                                <i class="fas fa-edit" style="color: #007bff;"></i>
+                                                            </p>
+                                                            <i class="fas fa-edit"></i>
                                                         {% else %}
                                                             {% if order.order_group.service_recurring_frequency %}
-                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }} and recurring {{ order.order_group.service_recurring_frequency.name|lower }}</p>
+                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }} and recurring {{ order.order_group.service_recurring_frequency.name|lower }}&nbsp;
+                                                                    <i class="fas fa-edit" style="color: #007bff;"></i>
+                                                                </p>
                                                             {% else %}
-                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }}</p>
+                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }}&nbsp;
+                                                                    <i class="fas fa-edit" style="color: #007bff;" id="edit-start-date-icon" data-toggle="modal" data-target="#edit-start-date-modal"></i>
+                                                                </p>
                                                             {% endif %}
                                                         {% endif %}
                                                         <p class="mb-1">Service date: {{ order.end_date }}</p>
