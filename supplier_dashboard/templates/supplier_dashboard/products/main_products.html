@@ -40,7 +40,7 @@
           <div class="card shadow mb-4" style="border-radius: 37px 37px 0 0;">
             <div class="image-container">
               <img class="card-img-top img-fluid"
-                style="border-radius: 37px 37px 0 0;"
+                style="border-radius: 37px 37px 0 0;{% if main_product.image_del %}object-fit: cover;{% endif %}"
                 src="{% if main_product.image_del %}
                   {{ main_product.image_del }}
                 {% elif main_product_category.icon %}
@@ -53,7 +53,6 @@
               <div class="row">
                 <div class="col" style="padding-right: 24px;padding-left: 24px;padding-top: 12px;">
                   <h5>{{ main_product.name }}</h5>
-                  <p style="margin-bottom: 0px;">{{ main_product.description }}</p>
                 </div>
               </div>
             </div>

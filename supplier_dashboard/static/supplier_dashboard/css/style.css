@@ -30,7 +30,7 @@ html:not([dir=rtl]) .form-control:not([readonly]):focus::placeholder {
 .image-container img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensure the image covers the container while maintaining aspect ratio */
+    object-fit: contain; /* Ensure the image covers the container while maintaining aspect ratio */
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
 }
