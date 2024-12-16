@@ -42,6 +42,34 @@ EXPECTED_MULTI_STEP_TYPES = [
     "REMOVAL",
 ]
 
+# Define the item order: RPP, PERMIT, DAMAGE
+ITEM_ORDER = [
+    "SERVICE",
+    "RENTAL",
+    "RELOCATION",
+    "MATERIAL",
+    "FUEL_AND_ENV",
+    "DELIVERY",
+    "REMOVAL",
+]
+
+
+class OrderLineItemManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def ordered_by_type(self):
+        # Create a case statement to order by the specified item order
+        order_case = models.Case(
+            *[
+                models.When(order_line_item_type__code=item, then=pos)
+                for pos, item in enumerate(ITEM_ORDER)
+            ]
+        )
+        return (
+            self.get_queryset().annotate(order_case=order_case).order_by("order_case")
+        )
+
 
 @track_data("rate", "quantity", "tax", "platform_fee_percent")
 class OrderLineItem(BaseModel):
@@ -70,6 +98,8 @@ class OrderLineItem(BaseModel):
     )
     paid = models.BooleanField(default=False)
     backbill = models.BooleanField(default=False)
+
+    objects = OrderLineItemManager()  # Use the custom manager
 
     def __str__(self):
         return str(self.order) + " - " + self.order_line_item_type.name
