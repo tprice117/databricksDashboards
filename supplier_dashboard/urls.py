@@ -77,9 +77,14 @@ urlpatterns = [
         name="supplier_products_2",
     ),
     path(
-        "supplier/products/locations/<uuid:product_id>/",
+        "supplier/products/locations/<uuid:main_product_id>/",
         views.products_3,
         name="supplier_products_3",
+    ),
+    path(
+        "supplier/products/locations/<uuid:main_product_id>/form",
+        views.products_3_table,
+        name="supplier_products_3_table",
     ),
     path(
         "supplier/messages/unread/",

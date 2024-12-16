@@ -11,13 +11,12 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q, F, Prefetch
+from django.db.models import Q
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -39,7 +38,6 @@ from api.models import (
     SellerInvoicePayableLineItem,
     SellerLocation,
     SellerLocationMailingAddress,
-    SellerProductSellerLocation,
     User,
     UserAddress,
 )
@@ -55,6 +53,7 @@ from notifications.utils import internal_email
 
 from .forms import (
     ChatMessageForm,
+    ProductFormSet,
     SellerAboutUsForm,
     SellerCommunicationForm,
     SellerForm,
@@ -1536,7 +1535,10 @@ def products(request):
     context["main_product_category_groups"] = (
         MainProductCategoryGroup.objects.all().order_by("sort")
     )
-    if request.headers.get("HX-Request"):
+    if (
+        "HX-Request" in request.headers
+        and "HX-History-Restore-Request" not in request.headers
+    ):
         search_q = request.GET.get("q", None)
         group_id = request.GET.get("group_id", None)
         main_product_categories = MainProductCategory.objects.all()
@@ -1577,24 +1579,105 @@ def products_2(request, category_id):
 
 
 @login_required(login_url="/admin/login/")
-def products_3(request, product_id):
+def products_3(request, main_product_id):
     context = {}
-    seller = get_seller(request)
+    main_product = MainProduct.objects.get(id=main_product_id)
+    context["main_product"] = main_product
 
+    return render(
+        request, "supplier_dashboard/products/main_product_detail.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def products_3_table(request, main_product_id):
+    # Don't allow non-htmx GET requests to this view
+    if request.method == "GET" and not request.headers.get("HX-Request"):
+        return HttpResponseRedirect(
+            reverse("supplier_products_3", args=[main_product_id])
+        )
+
+    context = {}
+
+    # Get seller and locations from request context
+    seller = get_seller(request)
     if seller:
         context["seller"] = seller
         context["locations"] = SellerLocation.objects.filter(
             seller_id=seller.id
         ).values("id", "street", "city")
 
-    main_product = MainProduct.objects.prefetch_related("products").get(id=product_id)
-    products = main_product.products.prefetch_related("product_add_on_choices").all()
-
+    # Get product and prefetch related data
+    main_product = MainProduct.objects.prefetch_related(
+        "products__product_add_on_choices",
+        "products__seller_products__seller_product_seller_locations",
+    ).get(id=main_product_id)
     context["main_product"] = main_product
-    context["products"] = products
+
+    products = main_product.products.all()
+
+    # Get data to initialize each form in formset
+    products_list = []
+    for product in products:
+        # Get names of add-ons
+        add_ons = product.product_add_on_choices.select_related("add_on_choice")
+        product_add_ons = [add_on.add_on_choice.name for add_on in add_ons]
+
+        # Get existing listings for this product
+        listings = []
+        if seller:
+            seller_product = product.seller_products.filter(seller_id=seller.id).first()
+            if seller_product:
+                listings = [
+                    str(spsl.seller_location.id)
+                    for spsl in seller_product.seller_product_seller_locations.all().select_related(
+                        "seller_location"
+                    )
+                ]
+        products_list.append(
+            {
+                "product_id": product.id,
+                "product_code": product.product_code or "N/A",
+                "add_ons": ", ".join(product_add_ons) or "N/A",
+                "locations": listings,
+            }
+        )
+
+    if request.method == "POST":
+        formset = ProductFormSet(request.POST, initial=products_list, seller=seller)
+
+        if formset.is_valid():
+            if formset.has_changed():
+                # Make sure all forms save properly before committing to database
+                with transaction.atomic():
+                    if formset.save():
+                        messages.success(request, "New listings created successfully.")
+                        # Go back to beginning product list page
+                        return HttpResponseRedirect(
+                            reverse("supplier_products"),
+                        )
+                    else:
+                        messages.info(request, "No new listings created.")
+            else:
+                messages.info(request, "No changes detected.")
+        else:
+            for form in formset:
+                for field in form.errors:
+                    if field == "__all__":
+                        continue
+                    form[field].field.widget.attrs["class"] += " is-invalid"
+            messages.error(request, "Error saving, please check the form.")
+
+    else:
+        formset = ProductFormSet(initial=products_list, seller=seller)
+
+    context["products"] = products_list
+    context["formset"] = formset
 
     return render(
-        request, "supplier_dashboard/products/main_product_detail.html", context
+        request,
+        "supplier_dashboard/products/main_product_detail_table.html",
+        context,
     )
 
 
