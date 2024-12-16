@@ -3412,9 +3412,6 @@ def new_user(request):
                 last_name = form.cleaned_data.get("last_name")
                 email = form.cleaned_data.get("email").casefold()
                 phone = form.cleaned_data.get("phone")
-                apollo_id = None
-                if form.cleaned_data.get("apollo_id"):
-                    apollo_id = form.cleaned_data.get("apollo_id")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
                 if User.objects.filter(email__iexact=email).exists():
@@ -3429,7 +3426,6 @@ def new_user(request):
                             email=email,
                             phone=phone,
                             source=User.Source.SALES,
-                            apollo_id=apollo_id,
                             type=user_type,
                             redirect_url="/customer/",
                         )
@@ -3982,14 +3978,12 @@ def new_company(request):
             context["phone"] = request.POST.get("phone")
             context["first_name"] = request.POST.get("first_name")
             context["last_name"] = request.POST.get("last_name")
-            context["apollo_id"] = request.POST.get("apollo_id")
             context["form"] = form
 
             if form.is_valid():
                 # Create New UserGroup
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
-                    apollo_id=form.cleaned_data.get("company_apollo_id"),
                 )
                 email = request.POST.get("email").casefold()
 
@@ -4027,7 +4021,6 @@ def new_company(request):
                             phone=user_form.cleaned_data.get("phone"),
                             source=User.Source.SALES,
                             type=user_form.cleaned_data.get("type"),
-                            apollo_id=user_form.cleaned_data.get("apollo_id"),
                             user_group=user_group,
                         )
                         user.save()
