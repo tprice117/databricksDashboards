@@ -95,6 +95,7 @@ from .forms import (
     UserAddressForm,
     UserForm,
     UserGroupForm,
+    paymentDetailsForm,
     UserGroupNewForm,
     UserInviteForm,
 )
@@ -3805,6 +3806,12 @@ def company_detail(request, user_group_id=None):
         user=context["user"],
         auth_user=request.user,
     )
+    context["paymentDetailsForm"] = paymentDetailsForm(
+        instance=user_group,
+        user=context["user"],
+        auth_user=request.user,
+    )
+
     context["branding_formset"] = BrandingFormSet(instance=user_group)
 
     if context.get("user"):
@@ -3830,6 +3837,27 @@ def company_detail(request, user_group_id=None):
                             "theme": get_theme(user_group),
                         }
                     )
+                    messages.success(request, "Successfully saved!")
+                else:
+                    messages.info(request, "No changes detected.")
+
+            return render(request, "customer_dashboard/company_detail.html", context)
+
+        # Update payment details.
+        if "payment_details_button" in request.POST:
+            payment_details_form = paymentDetailsForm(
+                request.POST,
+                request.FILES,
+                instance=user_group,
+                user=context["user"],
+                auth_user=request.user,
+            )
+            context["paymentDetailsForm"] = payment_details_form
+
+            if payment_details_form.is_valid():
+                # Check if any changes to form were made
+                if payment_details_form.has_changed():
+                    payment_details_form.save()
                     messages.success(request, "Successfully saved!")
                 else:
                     messages.info(request, "No changes detected.")
