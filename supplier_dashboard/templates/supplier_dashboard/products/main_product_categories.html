@@ -35,6 +35,21 @@
         }
       }, 500)
     }
+    
+    document.addEventListener('htmx:afterSwap', function () {
+      const images = document.querySelectorAll('.image-container img')
+    
+      images.forEach((img) => {
+        img.addEventListener('load', function () {
+          img.classList.add('loaded')
+        })
+    
+        // For cached images
+        if (img.complete) {
+          img.classList.add('loaded')
+        }
+      })
+    })
   </script>
 {% endblock %}
 {% block stylesheet %}
