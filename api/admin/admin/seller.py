@@ -66,12 +66,7 @@ class SellerAdmin(BaseModelAdmin, ExportActionMixin):
         ),
     )
 
-    def get_readonly_fields(self, request, obj=None):
-        readonly_fields = super().get_readonly_fields(request, obj)
-        if "id" not in readonly_fields:
-            # add id to the top of the list
-            readonly_fields.insert(0, "id")
-        return readonly_fields
+    readonly_fields = BaseModelAdmin.readonly_fields + ["id"]
 
     search_fields = [
         "name",
