@@ -6,6 +6,7 @@ from django.urls import path
 from import_export.admin import ExportActionMixin
 from import_export import resources
 
+from api.admin.filters import StatusFilter
 from api.admin.inlines import (
     SellerProductSellerLocationMaterialInline,
     SellerProductSellerLocationRentalInline,
@@ -44,6 +45,7 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
     list_filter = (
         "seller_product__product__main_product__main_product_category",
         "seller_location__seller",
+        StatusFilter,
     )
     fieldsets = [
         (
