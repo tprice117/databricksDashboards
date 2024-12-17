@@ -1551,9 +1551,7 @@ def products(request):
         if group_id:
             main_product_categories = main_product_categories.filter(group_id=group_id)
 
-        context["main_product_categories"] = main_product_categories.order_by(
-            "sort", "name"
-        )
+        context["main_product_categories"] = main_product_categories.order_by("name")
 
         return render(
             request,
