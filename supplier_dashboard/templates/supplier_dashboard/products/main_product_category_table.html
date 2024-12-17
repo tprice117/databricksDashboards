@@ -1,23 +1,5 @@
 {% load static %}
 {% load humanize %}
-{% block javascript %}
-  <script>
-    document.addEventListener('htmx:afterSwap', function () {
-      const images = document.querySelectorAll('.image-container img')
-    
-      images.forEach((img) => {
-        img.addEventListener('load', function () {
-          img.classList.add('loaded')
-        })
-    
-        // For cached images
-        if (img.complete) {
-          img.classList.add('loaded')
-        }
-      })
-    })
-  </script>
-{% endblock %}
 <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4" id="category-results">
   {% for main_product_category in main_product_categories %}
     <div class="col-lg-4 d-flex align-items-stretch">
