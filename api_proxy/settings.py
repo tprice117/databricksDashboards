@@ -97,6 +97,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "common.middleware.save_author.SaveAuthorMiddleware",
+    "common.middleware.htmx_response.HtmxMessageMiddleware",
     "api.middleware.user_last_active.UpdateLastActiveMiddleware",
 ]
 

@@ -4,6 +4,8 @@ from chat.models import Message
 from api.models import (
     SellerLocation,
     SellerLocationMailingAddress,
+    SellerProduct,
+    SellerProductSellerLocation,
     Seller,
     UserGroup,
     User,
@@ -28,9 +30,9 @@ class UserForm(forms.ModelForm):
         widgets = {
             "first_name": forms.TextInput(attrs={"class": "form-control"}),
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "type": "tel"}),
             "type": forms.Select(attrs={"class": "form-select"}),
-            "email": forms.TextInput(attrs={"class": "form-control", type: "email"}),
+            "email": forms.TextInput(attrs={"class": "form-control", "type": "email"}),
             "photo": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
         labels = {
@@ -371,6 +373,137 @@ SellerLocationInlineFormSet = forms.inlineformset_factory(
     formset=HiddenDeleteFormSet,
     can_delete=True,
     extra=1,
+)
+
+
+class ProductLocationForm(forms.Form):
+    """Form for adding locations to a product. (For creating SellerProductSellerLocation records)"""
+
+    product_id = forms.CharField(max_length=255, widget=forms.HiddenInput())
+    product_code = forms.CharField(
+        max_length=255,
+        widget=forms.HiddenInput(),
+        required=False,
+    )
+    add_ons = forms.CharField(
+        max_length=255,
+        widget=forms.HiddenInput(),
+        required=False,
+    )
+    locations = forms.MultipleChoiceField(
+        choices=[],
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": "form-control",
+                "name": "choices-multiple-remove-button",
+                "data-placeholder": "Select locations",
+            }
+        ),
+        required=False,
+    )
+
+    def clean_locations(self):
+        """Raises an error if the user tries to remove locations."""
+        locations = self.cleaned_data["locations"]
+        if not set(self.initial.get("locations", [])).issubset(set(locations)):
+            raise forms.ValidationError("Cannot remove locations.")
+        return locations
+
+    def save(self, seller):
+        """
+        Saves the seller's product locations.
+
+        This method processes the cleaned data from the form, specifically the product_id and locations.
+        It creates a SellerProduct if it does not already exist for the given seller and product_id.
+        It then determines which new locations need to be added for the seller's product and returns
+        a list of SellerProductSellerLocation instances for those new locations.
+
+        Args:
+            seller (Seller): The seller instance for whom the product locations are being saved.
+
+        Returns:
+            list: A list of SellerProductSellerLocation instances representing the new locations
+                  that need to be added for the seller's product. If no new locations are added,
+                  an empty list is returned.
+        """
+        product_id = self.cleaned_data["product_id"]
+        locations = self.cleaned_data["locations"]
+
+        if not locations or set(locations) == set(self.initial.get("locations", [])):
+            return []
+
+        # Create SellerProduct if it doesn't exist
+        seller_product, created = SellerProduct.objects.get_or_create(
+            seller=seller,
+            product_id=product_id,
+        )
+
+        # Get all existing location_ids for the given product_id
+        existing_location_ids = set(
+            str(location_id)
+            for location_id in SellerProductSellerLocation.objects.filter(
+                seller_product_id=seller_product.id
+            ).values_list("seller_location_id", flat=True)
+        )
+        # Determine which location_ids need to be created
+        new_location_ids = set(locations) - existing_location_ids
+
+        # Add new records to the list
+        seller_product_seller_locations = []
+        for location_id in new_location_ids:
+            seller_location = SellerLocation.objects.get(id=location_id)
+            seller_product_seller_locations.append(
+                SellerProductSellerLocation(
+                    seller_product=seller_product,
+                    seller_location=seller_location,
+                )
+            )
+
+        return seller_product_seller_locations
+
+
+class BaseProductLocationFormSet(forms.BaseFormSet):
+    """Formset to create multiple SellerProductSellerLocation records at once."""
+
+    def __init__(self, *args, **kwargs):
+        self.seller = kwargs.pop("seller", None)
+        super().__init__(*args, **kwargs)
+        self._set_location_choices()
+
+    def _set_location_choices(self):
+        """Sets the formatted location choices for each form in the formset."""
+        self.choices = []
+        if self.seller:
+            locations = SellerLocation.objects.filter(seller=self.seller)
+            self.choices = [
+                (location.id, f"{location.street}, {location.city}")
+                for location in locations
+            ]
+        for form in self.forms:
+            form.fields["locations"].choices = self.choices
+
+    def save(self):
+        all_seller_product_seller_locations = []
+        for form in self.forms:
+            if form.cleaned_data:
+                seller_product_seller_locations = form.save(self.seller)
+                all_seller_product_seller_locations.extend(
+                    seller_product_seller_locations
+                )
+
+        if all_seller_product_seller_locations:
+            SellerProductSellerLocation.objects.bulk_create(
+                all_seller_product_seller_locations
+            )
+            return True
+        return False
+
+
+ProductFormSet = forms.formset_factory(
+    form=ProductLocationForm,
+    formset=BaseProductLocationFormSet,
+    extra=0,
+    can_delete=False,
 )
 
 
