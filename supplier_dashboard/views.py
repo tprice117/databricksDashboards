@@ -17,7 +17,6 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -28,6 +27,9 @@ from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
+    MainProduct,
+    MainProductCategory,
+    MainProductCategoryGroup,
     Order,
     OrderGroup,
     Payout,
@@ -51,6 +53,7 @@ from notifications.utils import internal_email
 
 from .forms import (
     ChatMessageForm,
+    ProductFormSet,
     SellerAboutUsForm,
     SellerCommunicationForm,
     SellerForm,
@@ -1514,6 +1517,168 @@ def download_bookings(request):
             row.append(f"{order.take_rate}%")
         writer.writerow(row)
     return response
+
+
+@login_required(login_url="/admin/login/")
+def listings(request):
+    return render(request, "supplier_dashboard/listings.html", {})
+
+
+@login_required(login_url="/admin/login/")
+def listing_detail(request, listing_id):
+    return render(request, "supplier_dashboard/listing_detail.html", {})
+
+
+@login_required(login_url="/admin/login/")
+def products(request):
+    context = {}
+    context["main_product_category_groups"] = (
+        MainProductCategoryGroup.objects.all().order_by("sort")
+    )
+    if (
+        "HX-Request" in request.headers
+        and "HX-History-Restore-Request" not in request.headers
+    ):
+        search_q = request.GET.get("q", None)
+        group_id = request.GET.get("group_id", None)
+        main_product_categories = MainProductCategory.objects.all()
+
+        if search_q:
+            main_product_categories = main_product_categories.filter(
+                name__icontains=search_q
+            )
+
+        if group_id:
+            main_product_categories = main_product_categories.filter(group_id=group_id)
+
+        context["main_product_categories"] = main_product_categories.order_by("name")
+
+        return render(
+            request,
+            "supplier_dashboard/products/main_product_category_table.html",
+            context,
+        )
+
+    return render(
+        request, "supplier_dashboard/products/main_product_categories.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def products_2(request, category_id):
+    context = {}
+    main_product_category = MainProductCategory.objects.prefetch_related(
+        "main_products"
+    ).get(id=category_id)
+    main_products = main_product_category.main_products.all().order_by("sort")
+
+    context["main_product_category"] = main_product_category
+    context["main_products"] = main_products
+
+    return render(request, "supplier_dashboard/products/main_products.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def products_3(request, main_product_id):
+    context = {}
+    main_product = MainProduct.objects.get(id=main_product_id)
+    context["main_product"] = main_product
+
+    return render(
+        request, "supplier_dashboard/products/main_product_detail.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def products_3_table(request, main_product_id):
+    # Don't allow non-htmx GET requests to this view
+    if request.method == "GET" and not request.headers.get("HX-Request"):
+        return HttpResponseRedirect(
+            reverse("supplier_products_3", args=[main_product_id])
+        )
+
+    context = {}
+
+    # Get seller and locations from request context
+    seller = get_seller(request)
+    if seller:
+        context["seller"] = seller
+        context["locations"] = SellerLocation.objects.filter(
+            seller_id=seller.id
+        ).values("id", "street", "city")
+
+    # Get product and prefetch related data
+    main_product = MainProduct.objects.prefetch_related(
+        "products__product_add_on_choices",
+        "products__seller_products__seller_product_seller_locations",
+    ).get(id=main_product_id)
+    context["main_product"] = main_product
+
+    products = main_product.products.all()
+
+    # Get data to initialize each form in formset
+    products_list = []
+    for product in products:
+        # Get names of add-ons
+        add_ons = product.product_add_on_choices.select_related("add_on_choice")
+        product_add_ons = [add_on.add_on_choice.name for add_on in add_ons]
+
+        # Get existing listings for this product
+        listings = []
+        if seller:
+            seller_product = product.seller_products.filter(seller_id=seller.id).first()
+            if seller_product:
+                listings = [
+                    str(spsl.seller_location.id)
+                    for spsl in seller_product.seller_product_seller_locations.all().select_related(
+                        "seller_location"
+                    )
+                ]
+        products_list.append(
+            {
+                "product_id": product.id,
+                "product_code": product.product_code or "N/A",
+                "add_ons": ", ".join(product_add_ons) or "N/A",
+                "locations": listings,
+            }
+        )
+
+    if request.method == "POST":
+        formset = ProductFormSet(request.POST, initial=products_list, seller=seller)
+
+        if formset.is_valid():
+            if formset.has_changed():
+                # Make sure all forms save properly before committing to database
+                with transaction.atomic():
+                    if formset.save():
+                        messages.success(request, "New listings created successfully.")
+                        # Go back to beginning product list page
+                        return HttpResponseRedirect(
+                            reverse("supplier_products"),
+                        )
+                    else:
+                        messages.info(request, "No new listings created.")
+            else:
+                messages.info(request, "No changes detected.")
+        else:
+            for form in formset:
+                for field in form.errors:
+                    if field == "__all__":
+                        continue
+                    form[field].field.widget.attrs["class"] += " is-invalid"
+            messages.error(request, "Error saving, please check the form.")
+
+    else:
+        formset = ProductFormSet(initial=products_list, seller=seller)
+
+    context["products"] = products_list
+    context["formset"] = formset
+
+    return render(
+        request,
+        "supplier_dashboard/products/main_product_detail_table.html",
+        context,
+    )
 
 
 @login_required(login_url="/admin/login/")
