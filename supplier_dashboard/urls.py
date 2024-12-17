@@ -64,7 +64,7 @@ urlpatterns = [
         views.booking_detail,
         name="supplier_booking_detail",
     ),
-    # path("supplier/listings/", views.listings, name="supplier_listings"),
+    path("supplier/listings/", views.listings, name="supplier_listings"),
     # path(
     #     "supplier/listing/<uuid:listing_id>/",
     #     views.listing_detail,

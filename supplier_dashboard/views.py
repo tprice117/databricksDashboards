@@ -38,6 +38,7 @@ from api.models import (
     SellerInvoicePayableLineItem,
     SellerLocation,
     SellerLocationMailingAddress,
+    SellerProductSellerLocation,
     User,
     UserAddress,
 )
@@ -477,13 +478,13 @@ def supplier_impersonation_start(request):
             # user = User.objects.get(id=user_id)
             request.session["user_id"] = get_json_safe_value(user.id)
             request.session["seller_id"] = get_json_safe_value(seller_id)
-            return HttpResponseRedirect("/supplier/")
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
         except User.DoesNotExist:
             messages.error(
                 request,
                 "No admin user found for seller. Seller must have at least one admin user.",
             )
-            return HttpResponseRedirect("/supplier/")
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
         except Exception:
             return HttpResponse("Not Found", status=404)
     else:
@@ -498,7 +499,7 @@ def supplier_impersonation_stop(request):
         del request.session["seller_id"]
     if request.session.get("seller"):
         del request.session["seller"]
-    return HttpResponseRedirect("/supplier/")
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
 
 
 @login_required(login_url="/admin/login/")
@@ -1521,7 +1522,47 @@ def download_bookings(request):
 
 @login_required(login_url="/admin/login/")
 def listings(request):
-    return render(request, "supplier_dashboard/listings.html", {})
+    context = {}
+
+    seller = get_seller(request)
+    if not seller:
+        if (
+            hasattr(request.user, "user_group")
+            and hasattr(request.user.user_group, "seller")
+            and request.user.user_group.seller
+        ):
+            seller = request.user.user_group.seller
+            messages.warning(
+                request,
+                f"No seller selected! Using current staff user's seller [{seller.name}].",
+            )
+        else:
+            # Get first available seller.
+            seller = Seller.objects.all().first()
+            messages.warning(
+                request,
+                f"No seller selected! Using first seller found: [{seller.name}].",
+            )
+
+    listings = SellerProductSellerLocation.objects.filter(
+        seller_location__seller_id=seller.id
+    ).select_related("seller_product__product__main_product", "seller_location")
+
+    active = listings.get_active()
+    needs_attention = listings.get_needs_attention()
+    inactive = listings.get_inactive()
+
+    context.update(
+        {
+            "seller": seller,
+            "listings": listings,
+            "active": active,
+            "needs_attention": needs_attention,
+            "inactive": inactive,
+        }
+    )
+
+    return render(request, "supplier_dashboard/listings.html", context)
 
 
 @login_required(login_url="/admin/login/")
