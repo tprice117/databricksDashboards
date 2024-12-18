@@ -130,15 +130,24 @@ class OrderLineItem(BaseModel):
 
         if self.order_line_item_type.code == "FUEL_AND_ENV":
             # e.g. Fuel & Fees (15.00%) = $25.51
+            order_line_items = self.order.order_line_items.exclude(
+                stripe_invoice_line_item_id="BYPASS"
+            ).exclude(order_line_item_type__code="FUEL_AND_ENV")
+            subtotal = 0
+            for order_line_item in order_line_items:
+                subtotal += order_line_item.seller_payout_price()
+
             if self.order.order_group.seller_product_seller_location.fuel_environmental_markup:
                 unit_str = f"{self.order.order_group.seller_product_seller_location.fuel_environmental_markup}%"
             else:
                 unit_str = "0%"
 
             if total > 0 and unit_str == "0%":
-                description = f"Fuel & Fees = ${total:,.2f}"
+                description = f"Fuel & Fees | ${total:,.2f} = ${total:,.2f}"
             else:
-                description = f"Fuel & Fees ({unit_str}) = ${total:,.2f}"
+                description = (
+                    f"Fuel & Fees | ${subtotal:,.2f} @ {unit_str} = ${total:,.2f}"
+                )
             return description
         if has_rental_one_step:
             if self.order_line_item_type.code in EXPECTED_ONE_STEP_TYPES:
