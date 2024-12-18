@@ -3400,6 +3400,7 @@ def new_user(request):
             # POST_COPY["email"] = user.email
             form = UserInviteForm(POST_COPY, request.FILES, auth_user=context["user"])
             context["form"] = form
+            show_default_message = True
             # Default to the current user's UserGroup.
             user_group_id = context["user"].user_group_id
             if not context["user_group"] and request.user.is_staff:
@@ -3414,8 +3415,16 @@ def new_user(request):
                 phone = form.cleaned_data.get("phone")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
-                if User.objects.filter(email__iexact=email).exists():
-                    raise UserAlreadyExistsError()
+                other_user = User.objects.filter(email__iexact=email).first()
+                if other_user:
+                    if other_user.user_group:
+                        raise UserAlreadyExistsError()
+                    else:
+                        # Add the user to the UserGroup.
+                        user_group = UserGroup.objects.get(id=user_group_id)
+                        user_group.invite_user(other_user)
+                        messages.success(request, f"Successfully invited {email}!")
+                        show_default_message = False
                 else:
                     if request.user.is_staff:
                         # directly create the user
@@ -3451,7 +3460,7 @@ def new_user(request):
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
-            else:
+            elif show_default_message:
                 messages.info(request, "No changes detected.")
             return HttpResponseRedirect(reverse("customer_users"))
         except UserAlreadyExistsError:
