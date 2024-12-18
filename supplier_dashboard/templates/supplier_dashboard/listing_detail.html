@@ -5,466 +5,160 @@
   Listing Details
 {% endblock %}
 {% block javascript %}
-  <script></script>
+  {% if main_product.has_material %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const addWasteTypeButton = document.getElementById('add-waste-type')
+        const formsetDiv = document.getElementById('waste_types-formset')
+        const totalForms = document.getElementById('id_waste_types-TOTAL_FORMS')
+        const emptyFormTemplate = document.getElementById('waste_types-empty').innerHTML
+      
+        const wasteTypeForms = document.querySelectorAll('.waste_types-form')
+        wasteTypeForms.forEach(function (form) {
+          const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]')
+          if (deleteInput && deleteInput.value === 'on') {
+            form.style.display = 'none'
+          }
+        })
+      
+        addWasteTypeButton.addEventListener('click', function () {
+          const currentFormCount = parseInt(totalForms.value)
+          const newFormCount = currentFormCount + 1
+          const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount)
+      
+          formsetDiv.insertAdjacentHTML('beforeend', newFormHtml)
+          totalForms.value = newFormCount
+          const emptyText = document.querySelectorAll('.empty-text')
+          emptyText.forEach(function (text) {
+            text.style.display = 'none'
+          })
+        })
+      })
+    </script>
+  {% endif %}
 {% endblock %}
 {% block content %}
   <div class="container-fluid">
-    <h1 class="text-primary mb-1"><strong>SellerProductSellerLocation.SellerProduct.Product.MainProduct.Name</strong></h1>
-    <h4 class="text-dark mb-1" style="padding-bottom: 0px;margin-bottom: -8px;">SellerLocation.Name</h4>
-  </div>
-  <div class="container-fluid">
-    <h3 class="text-dark mb-1" style="margin-top: 22px;">Scheduling</h3>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-5" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-info py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">Scheduling</p>
-          </div>
-        </div>
+    <h1 class="text-primary mb-1"><strong>{{ main_product.name }}</strong></h1>
+    <h4 class="text-dark mb-3" style="padding-bottom: 0px;margin-bottom: -8px;">{{ listing.seller_location.formatted_address }}</h4>
+
+    {% if is_incomplete %}
+      <div class="alert alert-warning" role="alert">
+        <strong>Warning!</strong> This listing is incomplete. Please review and complete all required fields.
       </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Service Radius</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td class="text-black" style="color: rgb(255,255,255);">40 miles</td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;"></tr>
-              </tbody>
-            </table>
+    {% endif %}
+
+    <!-- Scheduling Form -->
+    <div class="card shadow mb-3">
+      <div class="card-header p-3" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#schedulingCardBody" aria-controls="schedulingCardBody" type="button">
+        <p class="text-primary m-0">Scheduling</p>
+      </div>
+      <div id="schedulingCardBody" class="card-body collapse show">
+        <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
+          {% csrf_token %}
+          {{ scheduling_form }}
+          <div class="d-flex flex-row-reverse align-items-center">
+            <button class="btn btn-primary" type="submit" name="scheduling_form" style="margin-top: 12px;">Save</button>
           </div>
-        </div>
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Lead Time</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td class="text-black" style="color: rgb(255,255,255);">24 hours</td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;"></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        </form>
       </div>
     </div>
-  </div>
-  <h3 class="text-dark mb-1">Pricing</h3>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-9" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-primary py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">1. Service Cost - On-demand (everything with service other than Business dumpsters and Portable Toilets)&nbsp;</p>
-          </div>
+
+    <!-- Pricing Form -->
+    <h4 class="text-dark mb-3">Pricing</h4>
+    <!-- Service Costs -->
+    {% if service_formset %}
+      <div class="card shadow mb-3">
+        <!-- prettier-ignore -->
+        <div class="card-header bg-primary p-3 d-flex justify-content-between align-items-center"
+          aria-expanded="{% if service_is_incomplete %}true{% else %}false{% endif %}"
+          data-bs-toggle="collapse"
+          data-bs-target="#serviceCardBody"
+          aria-controls="serviceCardBody"
+          type="button">
+          <h6 class="text-white m-0">Service Costs</h6>
+          {% if service_is_incomplete %}
+            <small class="text-white mb-0" style="margin-right: 30px;">Needs Attention <i class="fa fa-exclamation-triangle"></i></small>
+          {% endif %}
+        </div>
+        <div id="serviceCardBody" class="card-body collapse {% if service_is_incomplete %}show{% endif %}">
+          <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
+            {% csrf_token %}
+            {{ service_formset.as_table }}
+            <div class="d-flex flex-row-reverse align-items-center">
+              <button class="btn btn-primary" type="submit" name="service_form" style="margin-top: 12px;">Save</button>
+            </div>
+          </form>
         </div>
       </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Default Pricing Method</th>
-                  <th class="text-center">Price Per Service</th>
-                  <th class="text-center">Price Per Mile</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td class="text-black" style="color: rgb(255,255,255);">
-                    <div class="dropdown">
-                      <button class="btn btn-primary dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button">Flat Rate</button>
-                      <div class="dropdown-menu">
-                        <a class="dropdown-item" href="#">Flat Rate</a><a class="dropdown-item" href="#">Per Mile</a>
-                        <h6 class="dropdown-header">Header</h6>
-                      </div>
-                    </div>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$224.00</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$4.48</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat primary semicircle" role="button" href="#" style="color: #00bdff;"></a><a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;"></tr>
-              </tbody>
-            </table>
-          </div>
+    {% endif %}
+    <!-- Rental Costs -->
+    {% if rental_formset %}
+      <div class="card shadow mb-3">
+        <!-- prettier-ignore -->
+        <div class="card-header bg-secondary p-3 d-flex justify-content-between align-items-center"
+          aria-expanded="{% if rental_is_incomplete %}true{% else %}false{% endif %}"
+          data-bs-toggle="collapse"
+          data-bs-target="#rentalCardBody"
+          aria-controls="rentalCardBody"
+          type="button">
+          <h6 class="text-white m-0">Rental Costs</h6>
+          {% if rental_is_incomplete %}
+            <small class="text-white mb-0" style="margin-right: 30px;">Needs Attention <i class="fa fa-exclamation-triangle"></i></small>
+          {% endif %}
+        </div>
+        <div id="rentalCardBody" class="card-body collapse {% if rental_is_incomplete %}show{% endif %}">
+          <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
+            {% csrf_token %}
+            {{ rental_formset.as_table }}
+            <div class="d-flex flex-row-reverse align-items-center">
+              <button class="btn btn-secondary" type="submit" name="rental_form" style="margin-top: 12px;">Save</button>
+            </div>
+          </form>
         </div>
       </div>
-    </div>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-8" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-primary py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">2. Service Cost - Subscription service with scheduled frequency (Business Dumpsters &amp; Portable Toilets) (automatically for subscribe for 28 days and flat priced, charged once per month)</p>
-          </div>
+    {% endif %}
+    <!-- Material Costs -->
+    {% if material_formset %}
+      <div class="card shadow mb-3">
+        <!-- prettier-ignore -->
+        <div class="card-header bg-danger p-3 d-flex justify-content-between align-items-center"
+          aria-expanded="{% if material_is_incomplete %}true{% else %}false{% endif %}"
+          data-bs-toggle="collapse"
+          data-bs-target="#materialCardBody"
+          aria-controls="materialCardBody"
+          type="button">
+          <h6 class="text-white m-0">Material Costs</h6>
+          {% if material_is_incomplete %}
+            <small class="text-white mb-0" style="margin-right: 30px;">Needs Attention <i class="fa fa-exclamation-triangle"></i></small>
+          {% endif %}
+        </div>
+        <div id="materialCardBody" class="card-body collapse {% if material_is_incomplete %}show{% endif %}">
+          <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
+            {% csrf_token %}
+            {{ material_formset.as_table }}
+            <div class="d-flex flex-row-reverse align-items-center" style="margin-top: 12px;">
+              <button class="btn btn-danger text-white" type="submit" name="material_form">Save</button>
+              <button id="add-waste-type" class="btn btn-success text-white me-3" type="button"><i class="fas fa-plus me-3"></i>Add Waste Type</button>
+            </div>
+          </form>
         </div>
       </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">1 service per week</th>
-                  <th class="text-center">2&nbsp;services per week</th>
-                  <th class="text-center">3&nbsp;services per week</th>
-                  <th class="text-center">4&nbsp;services per week</th>
-                  <th class="text-center">5 services per week</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$45.14 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$76.24 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$98.78 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$123.98 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$154.47 per month</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;"></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    {% endif %}
+    <!-- Other Costs -->
+    <div class="card shadow mb-3">
+      <div class="card-header p-3" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#mainCardBody" aria-controls="mainCardBody" type="button">
+        <h6 class="text-primary m-0">Fuel and Fees</h6>
       </div>
-    </div>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-2" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-secondary py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">1. Rental Cost - On Demand service with rental (Roll Off Dumpster) (when on a subscription is charged per service, so MW service every week would be 2*4.33*price per service (for service,rental,material) = monthly rate)&nbsp;</p>
+      <div id="mainCardBody" class="card-body collapse show">
+        <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
+          {% csrf_token %}
+          {{ pricing_form }}
+          <div class="d-flex flex-row-reverse align-items-center">
+            <button class="btn btn-primary" type="submit" name="pricing_form" style="margin-top: 12px;">Save</button>
           </div>
-        </div>
+        </form>
       </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Included Days</th>
-                  <th class="text-center">Max Days Allowed</th>
-                  <th class="text-center">Price Per Day (included)</th>
-                  <th class="text-center">Price Per Day (additional)</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">14 Days</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">28 Days</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$4.23</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$10.00</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;"></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-6" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-secondary py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">2. Rental Cost - Subscription service with scheduled frequency (Business Dumpsters &amp; Portable Toilets)</p>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">1 service per week</th>
-                  <th class="text-center">2&nbsp;services per week</th>
-                  <th class="text-center">3&nbsp;services per week</th>
-                  <th class="text-center">4&nbsp;services per week</th>
-                  <th class="text-center">5 services per week</th>
-                  <th class="text-center">6 services per week</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$74.30 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$102.78 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$114.79 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$187.54 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$187.65 per month</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$202.75 per month</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;"></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-7" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-secondary py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">3. Rental Cost - Flat rate pricing per interval (Equipment)&nbsp;</p>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Hourly Rate (&lt; 12 hrs)</th>
-                  <th class="text-center">Daily Rate (13hrs-6 days)</th>
-                  <th class="text-center">Weekly Rate (7 days-27 days)</th>
-                  <th class="text-center">Monthly Rate (28+ days)</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$45.00</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$200.00</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$1,250.00</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$4,536.00</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;"></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-1" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-danger py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">1. Material Cost</p>
-          </div>
-          <div class="col-12 col-sm-7 col-md-6 text-end" style="margin: 0px;padding: 5px 15px;">
-            <button class="btn btn-dark btn-sm reset" type="button" style="margin: 2px;">Add Material Type</button>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Waste Type</th>
-                  <th class="text-center">Price Per Ton</th>
-                  <th class="text-center">Tonnage Included</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td class="text-black" style="color: rgb(255,255,255);">Landfill Debris</td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$60.00</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">4</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a><a class="btn btnMaterial btn-flat accent btnNoBorders checkboxHover" role="button" style="margin-left: 5px;" data-bs-toggle="modal" data-bs-target="#delete-modal" href="#"><i class="fas fa-trash btnNoBorders" style="color: #DC3545;"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;">
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">Construction Debris</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$23.19</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">4</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a><a class="btn btnMaterial btn-flat accent btnNoBorders checkboxHover" role="button" style="margin-left: 5px;" data-bs-toggle="modal" data-bs-target="#delete-modal" href="#"><i class="fas fa-trash btnNoBorders" style="color: #DC3545;"></i></a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-3" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-success py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">Freight</p>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-12 col-xxl-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Fee Type</th>
-                  <th class="text-center">Price</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td class="text-black" style="color: rgb(255,255,255);">Delivery</td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$60.00</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-                <tr style="background: #212430;">
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">Removal</span>
-                  </td>
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">$23.19</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="container-fluid" style="margin-bottom: 50px;">
-    <div class="card" id="TableSorterCard-4" style="border-style: none;border-radius: 6.5px;">
-      <div class="card-header bg-success py-3" style="border-width: 0px;background: rgb(23,25,33);">
-        <div class="row table-topper align-items-center">
-          <div class="col-12 col-sm-5 col-md-6 text-start" style="margin: 0px;padding: 5px 15px;">
-            <p class="m-0 fw-bold" style="color: rgb(255,255,255);">Fuel and Fees - Added as a flat rate percentage to the total price and freight</p>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-12 col-xxl-12">
-          <div class="table-responsive" style="border-top-style: none;background: #171921;">
-            <table class="table table-striped table tablesorter" id="ipi-table">
-              <thead class="thead-dark" style="background: rgb(33,37,48);border-width: 0px;border-color: rgb(0,0,0);border-bottom-color: #21252F;">
-                <tr style="border-style: none;border-color: rgba(255,255,255,0);background: #21252f;">
-                  <th class="text-center">Percentage</th>
-                  <th class="text-center filter-false sorter-false">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="text-center" style="border-top-width: 0px;">
-                <tr style="background: #262a38;">
-                  <td style="color: rgb(255,255,255);">
-                    <span style="color: rgb(0, 0, 0);">4.23%</span>
-                  </td>
-                  <td class="text-center align-middle" style="max-height: 60px;height: 60px;">
-                    <a class="btn btnMaterial btn-flat success semicircle" role="button" href="#" style="color: rgb(0,197,179);"><i class="fas fa-pen"></i></a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <div class="card-header"></div>
     </div>
   </div>
 {% endblock %}

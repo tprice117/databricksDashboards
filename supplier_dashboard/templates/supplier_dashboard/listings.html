@@ -8,10 +8,9 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var table = document.querySelectorAll("table[id$='DataTable']")
-      console.log(table)
       table.forEach((item) => {
         new DataTable(item, {
-          pageLength: 3,
+          pageLength: 5,
           lengthChange: false,
           layout: {
             topStart: {
@@ -28,24 +27,6 @@
               }
             }
           }
-        })
-      })
-    
-      var collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]')
-      collapseElements.forEach(function (collapseElement) {
-        collapseElement.addEventListener('click', function () {
-          var target = document.querySelector(collapseElement.getAttribute('data-bs-target'))
-          var icon = collapseElement.querySelector('i')
-    
-          target.addEventListener('shown.bs.collapse', function () {
-            icon.classList.remove('fa-chevron-down')
-            icon.classList.add('fa-chevron-up')
-          })
-    
-          target.addEventListener('hidden.bs.collapse', function () {
-            icon.classList.remove('fa-chevron-up')
-            icon.classList.add('fa-chevron-down')
-          })
         })
       })
     
@@ -156,11 +137,8 @@
         <div class="col-lg-12">
           <div class="card shadow mb-4">
             <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#activeCardBody" aria-controls="activeCardBody" type="button">
               <h6 class="text-success m-0">Active</h6>
-              <div class="dropdown no-arrow">
-                <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#activeCardBody" aria-controls="activeCardBody" type="button"><i class="fas fa-chevron-up text-gray-400"></i></button>
-              </div>
             </div>
             <div id="activeCardBody" class="card-body collapse show">
               {% if active %}
@@ -177,8 +155,8 @@
                     {% for item in active %}
                       <tr>
                         <td>
-                          <img class="card-img-top d-block"
-                            style="width:100px;height:100px;{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
+                          <img class="card-img-top d-block img-container-sm"
+                            style="{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
                             alt="{{ item.seller_product.product.main_product.name }}"
                             src="{% if item.seller_product.product.main_product.image_del %}
                               {{ item.seller_product.product.main_product.image_del }}
@@ -189,10 +167,12 @@
                             {% endif %}" />
                         </td>
                         <td>{{ item.seller_product.product.main_product.name }}</td>
-                        <td>{{ item.seller_location.street }}, {{ item.seller_location.city }}</td>
+                        <td>{{ item.seller_location.short_address }}</td>
                         <td>
-                          {% comment %} <button class="btn btn-primary" type="button">Edit</button>
-                          <button class="btn btn-danger" type="button">Deactivate</button> {% endcomment %}
+                          <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
+                          {% comment %}
+                          <button class="btn btn-danger" type="button">Deactivate</button>
+                          {% endcomment %}
                         </td>
                       </tr>
                     {% empty %}
@@ -210,12 +190,8 @@
         </div>
         <div class="col-lg-12">
           <div class="card shadow mb-4">
-            <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#needsAttentionCardBody" aria-controls="needsAttentionCardBody" type="button">
               <h6 class="text-warning m-0">Need Attention</h6>
-              <div class="dropdown no-arrow">
-                <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#needsAttentionCardBody" aria-controls="needsAttentionCardBody" type="button"><i class="fas fa-chevron-up text-gray-400"></i></button>
-              </div>
             </div>
             <div id="needsAttentionCardBody" class="card-body collapse show">
               {% if needs_attention %}
@@ -232,8 +208,8 @@
                     {% for item in needs_attention %}
                       <tr>
                         <td>
-                          <img class="card-img-top d-block"
-                            style="width:100px;height:100px;{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
+                          <img class="card-img-top d-block img-container-sm"
+                            style="{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
                             alt="{{ item.seller_product.product.main_product.name }}"
                             src="{% if item.seller_product.product.main_product.image_del %}
                               {{ item.seller_product.product.main_product.image_del }}
@@ -244,10 +220,12 @@
                             {% endif %}" />
                         </td>
                         <td>{{ item.seller_product.product.main_product.name }}</td>
-                        <td>{{ item.seller_location.street }}, {{ item.seller_location.city }}</td>
+                        <td>{{ item.seller_location.short_address }}</td>
                         <td>
-                          {% comment %} <button class="btn btn-primary" type="button">Edit</button>
-                          <button class="btn btn-danger" type="button">Delete</button> {% endcomment %}
+                          <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
+                          {% comment %}
+                          <button class="btn btn-danger" type="button">Delete</button>
+                          {% endcomment %}
                         </td>
                       </tr>
                     {% empty %}
@@ -266,11 +244,8 @@
         <div class="col-lg-12">
           <div class="card shadow mb-4">
             <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#inactiveCardBody" aria-controls="inactiveCardBody" type="button">
               <h6 class="text-danger m-0">Inactive</h6>
-              <div class="dropdown no-arrow">
-                <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#inactiveCardBody" aria-controls="inactiveCardBody" type="button"><i class="fas fa-chevron-up text-gray-400"></i></button>
-              </div>
             </div>
             <div id="inactiveCardBody" class="card-body collapse show">
               {% if inactive %}
@@ -287,8 +262,8 @@
                     {% for item in inactive %}
                       <tr>
                         <td>
-                          <img class="card-img-top d-block"
-                            style="width:100px;height:100px;{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
+                          <img class="card-img-top d-block img-container-sm"
+                            style="{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
                             alt="{{ item.seller_product.product.main_product.name }}"
                             src="{% if item.seller_product.product.main_product.image_del %}
                               {{ item.seller_product.product.main_product.image_del }}
@@ -299,10 +274,12 @@
                             {% endif %}" />
                         </td>
                         <td>{{ item.seller_product.product.main_product.name }}</td>
-                        <td>{{ item.seller_location.street }}, {{ item.seller_location.city }}</td>
+                        <td>{{ item.seller_location.short_address }}</td>
                         <td>
-                          {% comment %} <button class="btn btn-primary me-3" type="button">Edit</button>
-                          <button class="btn btn-danger" type="button">Delete</button> {% endcomment %}
+                          <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
+                          {% comment %}
+                          <button class="btn btn-danger" type="button">Delete</button>
+                          {% endcomment %}
                         </td>
                       </tr>
                     {% empty %}

@@ -2,16 +2,27 @@ from django import forms
 
 from chat.models import Message
 from api.models import (
+    MainProductWasteType,
     SellerLocation,
     SellerLocationMailingAddress,
     SellerProduct,
     SellerProductSellerLocation,
+    SellerProductSellerLocationService,
+    SellerProductSellerLocationServiceTimesPerWeek,
+    SellerProductSellerLocationRental,
+    SellerProductSellerLocationRentalOneStep,
+    SellerProductSellerLocationRentalMultiStep,
+    SellerProductSellerLocationMaterial,
+    SellerProductSellerLocationMaterialWasteType,
     Seller,
     UserGroup,
     User,
 )
-from common.forms import HiddenDeleteFormSet
 from common.models.choices.user_type import UserType
+
+
+class TabularInlineFormSet(forms.BaseInlineFormSet):
+    template_name_table = "supplier_dashboard/snippets/formset.html"
 
 
 class UserForm(forms.ModelForm):
@@ -237,16 +248,6 @@ class SellerUserForm(UserForm):
         return user
 
 
-UserInlineFormSet = forms.inlineformset_factory(
-    UserGroup,
-    User,
-    form=SellerUserForm,
-    formset=HiddenDeleteFormSet,
-    can_delete=True,
-    extra=1,
-)
-
-
 class SellerLocationForm(forms.ModelForm):
     template_name = "supplier_dashboard/snippets/location_form.html"
 
@@ -366,16 +367,6 @@ class SellerLocationForm(forms.ModelForm):
         return seller_location
 
 
-SellerLocationInlineFormSet = forms.inlineformset_factory(
-    Seller,
-    SellerLocation,
-    form=SellerLocationForm,
-    formset=HiddenDeleteFormSet,
-    can_delete=True,
-    extra=1,
-)
-
-
 class ProductLocationForm(forms.Form):
     """Form for adding locations to a product. (For creating SellerProductSellerLocation records)"""
 
@@ -476,8 +467,7 @@ class BaseProductLocationFormSet(forms.BaseFormSet):
         if self.seller:
             locations = SellerLocation.objects.filter(seller=self.seller)
             self.choices = [
-                (location.id, f"{location.street}, {location.city}")
-                for location in locations
+                (location.id, location.short_address) for location in locations
             ]
         for form in self.forms:
             form.fields["locations"].choices = self.choices
@@ -497,14 +487,6 @@ class BaseProductLocationFormSet(forms.BaseFormSet):
             )
             return True
         return False
-
-
-ProductFormSet = forms.formset_factory(
-    form=ProductLocationForm,
-    formset=BaseProductLocationFormSet,
-    extra=0,
-    can_delete=False,
-)
 
 
 class SellerCommunicationForm(forms.Form):
@@ -666,6 +648,303 @@ class SellerPayoutForm(forms.Form):
         max_length=20,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+
+
+# Listing Details Forms
+
+
+class SellerProductSellerLocationSchedulingForm(forms.ModelForm):
+    template_name = "supplier_dashboard/snippets/form.html"
+
+    lead_time = forms.DecimalField(
+        max_digits=18,
+        decimal_places=0,
+        required=False,
+        label="Lead Time (hours)",
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "placeholder": "0 hrs", "min": 0.0}
+        ),
+    )
+
+    class Meta:
+        model = SellerProductSellerLocation
+        fields = [
+            "service_radius",
+        ]
+        widgets = {
+            "service_radius": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "0 mi", "min": 0.0}
+            ),
+        }
+        labels = {
+            "service_radius": "Service Radius (miles)",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["lead_time"].initial = self.instance.seller_location.lead_time_hrs
+
+    def save(self, commit=True):
+        spsl = super().save(commit=False)
+        if commit:
+            spsl.seller_location.lead_time_hrs = self.cleaned_data["lead_time"]
+            spsl.seller_location.save()
+            spsl.save()
+        return spsl
+
+
+class SellerProductSellerLocationPricingForm(forms.ModelForm):
+    template_name = "supplier_dashboard/snippets/form.html"
+
+    class Meta:
+        model = SellerProductSellerLocation
+        fields = [
+            "delivery_fee",
+            "removal_fee",
+            "fuel_environmental_markup",
+        ]
+        widgets = {
+            "delivery_fee": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+            ),
+            "removal_fee": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+            ),
+            "fuel_environmental_markup": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "0.00%", "min": 0.0}
+            ),
+        }
+        labels = {
+            "delivery_fee": "Delivery Fee ($)",
+            "removal_fee": "Removal Fee ($)",
+            "fuel_environmental_markup": "Fuel/Environmental Markup (%)",
+        }
+        help_texts = {
+            "fuel_environmental_markup": "Added as a flat rate percentage to the total price and freight.",
+        }
+
+
+class SellerProductSellerLocationServiceForm(forms.ModelForm):
+    class Meta:
+        model = SellerProductSellerLocationService
+        fields = ["flat_rate_price", "price_per_mile"]
+        widgets = {
+            "flat_rate_price": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+            ),
+            "price_per_mile": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+            ),
+        }
+        labels = {
+            "flat_rate_price": "Price Per Service",
+            "price_per_mile": "Price Per Mile",
+        }
+
+
+class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
+    class Meta:
+        model = SellerProductSellerLocationServiceTimesPerWeek
+        fields = [
+            "one_time_per_week",
+            "two_times_per_week",
+            "three_times_per_week",
+            "four_times_per_week",
+            "five_times_per_week",
+        ]
+        widgets = {
+            "one_time_per_week": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00 per month",
+                    "min": 0.0,
+                }
+            ),
+            "two_times_per_week": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00 per month",
+                    "min": 0.0,
+                }
+            ),
+            "three_times_per_week": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00 per month",
+                    "min": 0.0,
+                }
+            ),
+            "four_times_per_week": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00 per month",
+                    "min": 0.0,
+                }
+            ),
+            "five_times_per_week": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00 per month",
+                    "min": 0.0,
+                }
+            ),
+        }
+        labels = {
+            "one_time_per_week": "1 Service/Week",
+            "two_times_per_week": "2 Services/Week",
+            "three_times_per_week": "3 Services/Week",
+            "four_times_per_week": "4 Services/Week",
+            "five_times_per_week": "5 Services/Week",
+        }
+        help_texts = {
+            "one_time_per_week": "Monthly Rate",
+            "two_times_per_week": "Monthly Rate",
+            "three_times_per_week": "Monthly Rate",
+            "four_times_per_week": "Monthly Rate",
+            "five_times_per_week": "Monthly Rate",
+        }
+
+
+class SellerProductSellerLocationRentalForm(forms.ModelForm):
+    class Meta:
+        model = SellerProductSellerLocationRental
+        fields = ["included_days", "price_per_day_included", "price_per_day_additional"]
+        widgets = {
+            "included_days": forms.NumberInput(attrs={"class": "form-control"}),
+            "price_per_day_included": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+            ),
+            "price_per_day_additional": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+            ),
+        }
+
+
+class SellerProductSellerLocationRentalOneStepForm(forms.ModelForm):
+    class Meta:
+        model = SellerProductSellerLocationRentalOneStep
+        fields = ["rate"]
+        widgets = {
+            "rate": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+            ),
+        }
+        help_texts = {
+            "rate": "This rate is for up to 28 days. If a rental extends for greater than 28 days, a second charge of the rate will be added.",
+        }
+
+
+class SellerProductSellerLocationRentalMultiStepForm(forms.ModelForm):
+    class Meta:
+        model = SellerProductSellerLocationRentalMultiStep
+        fields = ["hour", "day", "week", "two_weeks", "month"]
+        widgets = {
+            "hour": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00/hr", "min": 0.0}
+            ),
+            "day": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00/day", "min": 0.0}
+            ),
+            "week": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "$0.00/week", "min": 0.0}
+            ),
+            "two_weeks": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00/two weeks",
+                    "min": 0.0,
+                }
+            ),
+            "month": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00/month",
+                    "min": 0.0,
+                }
+            ),
+        }
+        labels = {
+            "hour": "Hourly Rate",
+            "day": "Daily Rate",
+            "week": "Weekly Rate",
+            "two_weeks": "Bi-Weekly Rate",
+            "month": "Monthly Rate",
+        }
+        help_texts = {
+            "hour": "(< 12 hrs)",
+            "day": "(13hrs-6 days)",
+            "week": "(7 days-13 days)",
+            "two_weeks": "(14 days-27 days)",
+            "month": "(28+ days)",
+        }
+
+
+class BaseSellerProductSellerLocationMaterialFormSet(forms.BaseInlineFormSet):
+    template_name_table = "supplier_dashboard/snippets/formset_multiple.html"
+
+    @property
+    def empty_form(self):
+        """
+        Returns an empty form for the formset. This needs to be redefined
+        to set the choices attribute of the waste_types field properly.
+        """
+        form = self.form(
+            auto_id=self.auto_id,
+            prefix=self.add_prefix("__prefix__"),
+            empty_permitted=True,
+            use_required_attribute=False,
+            **self.get_form_kwargs(None),
+        )
+        form.fields["main_product_waste_type"].choices = self.waste_type_choices
+        self.add_fields(form, None)
+        return form
+
+    def __init__(self, *args, **kwargs):
+        self.spsl = kwargs.pop("spsl")
+        if not self.spsl:
+            raise ValueError("SellerProductSellerLocation (spsl) argument is required")
+        if not self.spsl.seller_product.product.main_product.has_material:
+            raise ValueError("Main product does not have material")
+
+        instance, created = SellerProductSellerLocationMaterial.objects.get_or_create(
+            seller_product_seller_location=self.spsl
+        )
+        kwargs["instance"] = instance
+        super().__init__(*args, **kwargs)
+        self._set_waste_type_choices()
+
+    def _set_waste_type_choices(self):
+        """Sets the formatted waste type choices for each form in the formset."""
+        main_product_waste_types = (
+            MainProductWasteType.objects.filter(
+                main_product=self.spsl.seller_product.product.main_product
+            )
+            .select_related("waste_type")
+            .all()
+        )
+        self.waste_type_choices = [
+            (main_product_waste_type.id, main_product_waste_type.waste_type.name)
+            for main_product_waste_type in main_product_waste_types
+        ]
+        for form in self.forms:
+            form.fields["main_product_waste_type"].choices = self.waste_type_choices
+
+
+class SellerProductSellerLocationMaterialWasteTypeForm(forms.ModelForm):
+    class Meta:
+        model = SellerProductSellerLocationMaterialWasteType
+        fields = ["main_product_waste_type", "price_per_ton", "tonnage_included"]
+        widgets = {
+            "main_product_waste_type": forms.Select(
+                attrs={"class": "form-control", "min": 0.0}
+            ),
+            "price_per_ton": forms.NumberInput(
+                attrs={"class": "form-control", "min": 0.0}
+            ),
+            "tonnage_included": forms.NumberInput(
+                attrs={"class": "form-control", "min": 0.0}
+            ),
+        }
 
 
 class ChatMessageForm(forms.ModelForm):

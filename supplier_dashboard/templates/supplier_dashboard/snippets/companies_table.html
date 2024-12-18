@@ -25,12 +25,12 @@
             <div class="px-3 mx-3">
               {% if seller.status %}
                 {% if seller.status == 'Active' %}
-                  <span class="badge bg-success fw-medium w-100">{{ seller.status }}</span>
+                  <span class="badge text-success fw-medium w-100" style="background-color: rgba(var(--bs-success-rgb), 0.2);">{{ seller.status }}</span>
                 {% else %}
-                  <span class="badge bg-warning fw-medium w-100">{{ seller.status }}</span>
+                  <span class="badge text-warning fw-medium w-100" style="background-color: rgba(var(--bs-warning-rgb), 0.2);">{{ seller.status }}</span>
                 {% endif %}
               {% else %}
-                <span class="badge bg-primary fw-medium w-100">No Status</span>
+                <span class="badge text-primary fw-medium w-100" style="background-color: rgba(var(--bs-primary-rgb), 0.2);">No Status</span>
               {% endif %}
             </div>
           </td>

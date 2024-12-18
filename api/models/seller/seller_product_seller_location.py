@@ -91,6 +91,12 @@ class SellerProductSellerLocationQuerySet(models.QuerySet):
             | Q(rental_multi_step__month__isnull=False)
         )
 
+        service_complete = (
+            Q(seller_product__product__main_product__has_service=False)
+            | Q(service__price_per_mile__gt=0)
+            | Q(service__flat_rate_price__gt=0)
+        )
+
         service_times_per_week_complete = (
             Q(seller_product__product__main_product__has_service_times_per_week=False)
             | Q(service_times_per_week__one_time_per_week__isnull=False)
@@ -109,6 +115,7 @@ class SellerProductSellerLocationQuerySet(models.QuerySet):
             rental_one_step_complete
             & rental_two_step_complete
             & rental_multi_step_complete
+            & service_complete
             & service_times_per_week_complete
             & material_is_complete
         )
@@ -166,6 +173,7 @@ class SellerProductSellerLocation(BaseModel):
     max_price = models.DecimalField(
         max_digits=18, decimal_places=2, blank=True, null=True
     )
+    # Service radius in miles
     service_radius = models.DecimalField(
         max_digits=18, decimal_places=0, blank=True, null=True
     )
@@ -250,6 +258,12 @@ class SellerProductSellerLocation(BaseModel):
         )
 
         # Service.
+        service_complete = (
+            hasattr(self, "service") and self.service.is_complete
+            if self.seller_product.product.main_product.has_service
+            else True
+        )
+
         service_times_per_week_complete = (
             hasattr(self, "service_times_per_week")
             and self.service_times_per_week.is_complete
@@ -268,6 +282,7 @@ class SellerProductSellerLocation(BaseModel):
             rental_one_step_complete
             and rental_two_step_complete
             and rental_multi_step_complete
+            and service_complete
             and service_times_per_week_complete
             and material_is_complete
         )

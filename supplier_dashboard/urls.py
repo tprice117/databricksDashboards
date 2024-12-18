@@ -65,11 +65,11 @@ urlpatterns = [
         name="supplier_booking_detail",
     ),
     path("supplier/listings/", views.listings, name="supplier_listings"),
-    # path(
-    #     "supplier/listing/<uuid:listing_id>/",
-    #     views.listing_detail,
-    #     name="supplier_listing_detail",
-    # ),
+    path(
+        "supplier/listing/<uuid:listing_id>/",
+        views.listing_detail,
+        name="supplier_listing_detail",
+    ),
     path("supplier/products", views.products, name="supplier_products"),
     path(
         "supplier/products/category/<uuid:category_id>/",

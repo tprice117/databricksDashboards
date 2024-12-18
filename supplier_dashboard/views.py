@@ -12,6 +12,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.forms import inlineformset_factory, formset_factory
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -39,6 +40,13 @@ from api.models import (
     SellerLocation,
     SellerLocationMailingAddress,
     SellerProductSellerLocation,
+    SellerProductSellerLocationService,
+    SellerProductSellerLocationServiceTimesPerWeek,
+    SellerProductSellerLocationRental,
+    SellerProductSellerLocationRentalOneStep,
+    SellerProductSellerLocationRentalMultiStep,
+    SellerProductSellerLocationMaterial,
+    SellerProductSellerLocationMaterialWasteType,
     User,
     UserAddress,
 )
@@ -46,6 +54,7 @@ from api.models.user.user_group import UserGroup
 from api.models.user.user_seller_location import UserSellerLocation
 from api.utils.utils import decrypt_string
 from common.models.choices.user_type import UserType
+from common.forms import HiddenDeleteFormSet
 from common.utils import DistanceUtils
 from communications.intercom.contact import Contact as IntercomContact
 from communications.intercom.conversation import Conversation as IntercomConversation
@@ -54,18 +63,29 @@ from notifications.utils import internal_email
 
 from .forms import (
     ChatMessageForm,
-    ProductFormSet,
+    BaseProductLocationFormSet,
+    ProductLocationForm,
     SellerAboutUsForm,
     SellerCommunicationForm,
     SellerForm,
     NewSellerForm,
-    SellerLocationInlineFormSet,
+    SellerLocationForm,
     SellerLocationComplianceAdminForm,
     SellerLocationComplianceForm,
     SellerPayoutForm,
+    SellerProductSellerLocationSchedulingForm,
+    SellerProductSellerLocationPricingForm,
+    SellerProductSellerLocationServiceForm,
+    SellerProductSellerLocationServiceTimesPerWeekForm,
+    SellerProductSellerLocationRentalForm,
+    SellerProductSellerLocationRentalOneStepForm,
+    SellerProductSellerLocationRentalMultiStepForm,
+    SellerProductSellerLocationMaterialWasteTypeForm,
+    SellerUserForm,
+    BaseSellerProductSellerLocationMaterialFormSet,
+    TabularInlineFormSet,
     UserForm,
     UserInviteForm,
-    UserInlineFormSet,
 )
 
 logger = logging.getLogger(__name__)
@@ -814,6 +834,24 @@ def new_company(request):
         return HttpResponseRedirect(reverse("supplier_home"))
 
     context = {}
+
+    UserInlineFormSet = inlineformset_factory(
+        UserGroup,
+        User,
+        form=SellerUserForm,
+        formset=HiddenDeleteFormSet,
+        can_delete=True,
+        extra=1,
+    )
+
+    SellerLocationInlineFormSet = inlineformset_factory(
+        Seller,
+        SellerLocation,
+        form=SellerLocationForm,
+        formset=HiddenDeleteFormSet,
+        can_delete=True,
+        extra=1,
+    )
 
     if request.method == "POST":
         form = NewSellerForm(request.POST, request.FILES)
@@ -1567,7 +1605,250 @@ def listings(request):
 
 @login_required(login_url="/admin/login/")
 def listing_detail(request, listing_id):
-    return render(request, "supplier_dashboard/listing_detail.html", {})
+    context = {}
+    seller = get_seller(request)
+
+    spsl = (
+        SellerProductSellerLocation.objects.filter(id=listing_id)
+        .select_related("seller_product__product__main_product", "seller_location")
+        .first()
+    )
+
+    if not spsl or seller != spsl.seller_location.seller:
+        messages.error(request, "Listing not found.")
+        return HttpResponseRedirect(reverse("supplier_listings"))
+
+    main_product = spsl.seller_product.product.main_product
+
+    scheduling_form = SellerProductSellerLocationSchedulingForm(instance=spsl)
+    pricing_form = SellerProductSellerLocationPricingForm(instance=spsl)
+
+    # Services
+    service_formset = None
+    service_is_complete = True
+    if main_product.has_service:
+        SellerProductSellerLocationServiceFormSet = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationService,
+            form=SellerProductSellerLocationServiceForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+        service_formset = SellerProductSellerLocationServiceFormSet(instance=spsl)
+        service_is_complete = (
+            spsl.service.is_complete if hasattr(spsl, "service") else False
+        )
+    elif main_product.has_service_times_per_week:
+        SellerProductSellerLocationServiceTimesPerWeekFormSet = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationServiceTimesPerWeek,
+            form=SellerProductSellerLocationServiceTimesPerWeekForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+        service_formset = SellerProductSellerLocationServiceTimesPerWeekFormSet(
+            instance=spsl
+        )
+        service_is_complete = (
+            spsl.service_times_per_week.is_complete
+            if hasattr(spsl, "service_times_per_week")
+            else False
+        )
+
+    # Rentals
+    rental_formset = None
+    rental_is_complete = True
+    if main_product.has_rental:
+        SellerProductSellerLocationRentalFormSet = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationRental,
+            form=SellerProductSellerLocationRentalForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+        rental_formset = SellerProductSellerLocationRentalFormSet(instance=spsl)
+        rental_is_complete = (
+            spsl.rental.is_complete if hasattr(spsl, "rental") else False
+        )
+    elif main_product.has_rental_one_step:
+        SellerProductSellerLocationRentalOneStepFormSet = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationRentalOneStep,
+            form=SellerProductSellerLocationRentalOneStepForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+        rental_formset = SellerProductSellerLocationRentalOneStepFormSet(instance=spsl)
+        rental_is_complete = (
+            spsl.rental_one_step.is_complete
+            if hasattr(spsl, "rental_one_step")
+            else False
+        )
+    elif main_product.has_rental_multi_step:
+        SellerProductSellerLocationRentalMultiStepFormSet = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationRentalMultiStep,
+            form=SellerProductSellerLocationRentalMultiStepForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+        rental_formset = SellerProductSellerLocationRentalMultiStepFormSet(
+            instance=spsl
+        )
+        rental_is_complete = (
+            spsl.rental_multi_step.is_complete
+            if hasattr(spsl, "rental_multi_step")
+            else False
+        )
+
+    # Materials
+    material_formset = None
+    material_is_complete = True
+    if main_product.has_material:
+        SellerProductSellerLocationMaterialFormSet = inlineformset_factory(
+            SellerProductSellerLocationMaterial,
+            SellerProductSellerLocationMaterialWasteType,
+            form=SellerProductSellerLocationMaterialWasteTypeForm,
+            formset=BaseSellerProductSellerLocationMaterialFormSet,
+            extra=0,
+            can_delete=True,
+        )
+        material_formset = SellerProductSellerLocationMaterialFormSet(spsl=spsl)
+        material_is_complete = (
+            spsl.material.is_complete if hasattr(spsl, "material") else False
+        )
+
+    # Form Submission
+    if request.method == "POST":
+        if "scheduling_form" in request.POST:
+            scheduling_form = SellerProductSellerLocationSchedulingForm(
+                request.POST, instance=spsl
+            )
+            if scheduling_form.is_valid():
+                if scheduling_form.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    scheduling_form.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for field in scheduling_form.errors:
+                    scheduling_form[field].field.widget.attrs["class"] += " is-invalid"
+
+        elif "pricing_form" in request.POST:
+            pricing_form = SellerProductSellerLocationPricingForm(
+                request.POST, instance=spsl
+            )
+            if pricing_form.is_valid():
+                if pricing_form.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    pricing_form.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for field in pricing_form.errors:
+                    pricing_form[field].field.widget.attrs["class"] += " is-invalid"
+
+        elif "service_form" in request.POST:
+            if main_product.has_service:
+                service_formset = SellerProductSellerLocationServiceFormSet(
+                    request.POST, instance=spsl
+                )
+            elif main_product.has_service_times_per_week:
+                service_formset = SellerProductSellerLocationServiceTimesPerWeekFormSet(
+                    request.POST, instance=spsl
+                )
+            else:
+                messages.error(request, "There was an error with the page.")
+
+            if service_formset.is_valid():
+                if service_formset.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    service_formset.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for form in service_formset:
+                    print(form.errors)
+                    for field in form.errors:
+                        if field not in ["__all__", "seller_product_seller_location"]:
+                            form[field].field.widget.attrs["class"] += " is-invalid"
+        elif "rental_form" in request.POST:
+            if main_product.has_rental:
+                rental_formset = SellerProductSellerLocationRentalFormSet(
+                    request.POST, instance=spsl
+                )
+            elif main_product.has_rental_one_step:
+                rental_formset = SellerProductSellerLocationRentalOneStepFormSet(
+                    request.POST, instance=spsl
+                )
+            elif main_product.has_rental_multi_step:
+                rental_formset = SellerProductSellerLocationRentalMultiStepFormSet(
+                    request.POST, instance=spsl
+                )
+            else:
+                messages.error(request, "There was an error with the page.")
+
+            if rental_formset.is_valid():
+                if rental_formset.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    rental_formset.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for form in rental_formset:
+                    for field in form.errors:
+                        print(form.errors)
+                        if field not in ["__all__", "seller_product_seller_location"]:
+                            form[field].field.widget.attrs["class"] += " is-invalid"
+        elif "material_form" in request.POST:
+            material_formset = SellerProductSellerLocationMaterialFormSet(
+                request.POST, spsl=spsl
+            )
+            if material_formset.is_valid():
+                if material_formset.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    material_formset.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for form in material_formset:
+                    for field in form.errors:
+                        if field not in [
+                            "__all__",
+                            "seller_product_seller_location",
+                            "DELETE",
+                        ]:
+                            form[field].field.widget.attrs["class"] += " is-invalid"
+            material_formset = SellerProductSellerLocationMaterialFormSet(spsl=spsl)
+
+    context.update(
+        {
+            "seller": seller,
+            "listing": spsl,
+            "is_incomplete": not spsl.is_complete,
+            "main_product": main_product,
+            "scheduling_form": scheduling_form,
+            "pricing_form": pricing_form,
+            "service_formset": service_formset,
+            "service_is_incomplete": not service_is_complete,
+            "rental_formset": rental_formset,
+            "rental_is_incomplete": not rental_is_complete,
+            "material_formset": material_formset,
+            "material_is_incomplete": not material_is_complete,
+        }
+    )
+
+    return render(request, "supplier_dashboard/listing_detail.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -1639,6 +1920,13 @@ def products_3_table(request, main_product_id):
         )
 
     context = {}
+
+    ProductFormSet = formset_factory(
+        form=ProductLocationForm,
+        formset=BaseProductLocationFormSet,
+        extra=0,
+        can_delete=False,
+    )
 
     # Get seller and locations from request context
     seller = get_seller(request)
