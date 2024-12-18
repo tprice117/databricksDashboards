@@ -207,15 +207,21 @@ class PaymentMethod(BaseModel):
                 html_content = render_to_string(
                     "emails/internal/bad-payment-method.min.html", payload
                 )
+                additional_to_emails = [
+                    "mwickey@trydownstream.com",
+                    "dleyden@trydownstream.com",
+                    "ctorgerson@trydownstream.com",
+                    "hrobbins@trydownstream.com",
+                    "billing@trydownstream.com",
+                ]
+                if user_address.user_group and user_address.user_group.account_owner:
+                    # Send to the account owner.
+                    additional_to_emails.append(
+                        user_address.user_group.account_owner.email
+                    )
                 add_internal_email_to_queue(
                     from_email="system@trydownstream.com",
-                    additional_to_emails=[
-                        "mwickey@trydownstream.com",
-                        "dleyden@trydownstream.com",
-                        "ctorgerson@trydownstream.com",
-                        "hrobbins@trydownstream.com",
-                        "billing@trydownstream.com",
-                    ],
+                    additional_to_emails=additional_to_emails,
                     subject=subject,
                     html_content=html_content,
                 )
