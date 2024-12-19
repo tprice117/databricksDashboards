@@ -24,6 +24,11 @@ class UserGroupBilling(BaseModel):
     def formatted_address(self):
         return f"{self.street} {self.city}, {self.state} {self.postal_code}"
 
+    def update_stripe(self):
+        addresses = self.user_group.user_addresses.all()
+        for address in addresses:
+            address.update_stripe(save_on_update=True)
+
     def pre_save(sender, instance, *args, **kwargs):
         latitude, longitude = geocode_address(
             f"{instance.street} {instance.city} {instance.state} {instance.postal_code}"
@@ -32,16 +37,9 @@ class UserGroupBilling(BaseModel):
         instance.longitude = longitude or 0
 
     def post_save(sender, instance, *args, **kwargs):
-        # Get first address from user_group
-        user_group = instance.user_group
-        addresses = user_group.user_addresses.all()
-        for address in addresses:
-            # Update other locations asynchronously.
-            # Note: This is done asynchronously because it is not critical and shouldn't cause page to hang.
-            p = threading.Thread(
-                target=address.update_stripe, kwargs={"save_on_update": True}
-            )
-            p.start()
+        # Note: This is done asynchronously because it is not critical and shouldn't cause page to hang.
+        p = threading.Thread(target=instance.update_stripe)
+        p.start()
 
 
 pre_save.connect(UserGroupBilling.pre_save, sender=UserGroupBilling)
