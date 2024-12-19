@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, F, Count
 from django.forms import inlineformset_factory, formset_factory
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -503,12 +503,18 @@ def supplier_impersonation_start(request):
             return HttpResponse("Not Implemented", status=406)
         try:
             seller = Seller.objects.get(id=seller_id)
+            if not hasattr(seller, "usergroup"):
+                raise UserGroup.DoesNotExist
             user = seller.usergroup.users.filter(type=UserType.ADMIN).first()
             if not user:
                 raise User.DoesNotExist
-            # user = User.objects.get(id=user_id)
             request.session["user_id"] = get_json_safe_value(user.id)
             request.session["seller_id"] = get_json_safe_value(seller_id)
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
+        except UserGroup.DoesNotExist:
+            messages.error(
+                request, "No usergroup found for seller. Seller must have a usergroup."
+            )
             return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
         except User.DoesNotExist:
             messages.error(
@@ -976,11 +982,18 @@ def companies(request):
 
     if request.headers.get("HX-Request"):
         query_params = request.GET.copy()
+        context["seller"] = get_seller(request)
 
         sellers = Seller.objects.all()
         if search_q:
             sellers = sellers.filter(Q(name__icontains=search_q))
-        sellers = sellers.order_by("name")
+        sellers = (
+            sellers.select_related("usergroup")
+            .annotate(
+                users_count=Count("usergroup__users"),
+            )
+            .order_by("name")
+        )
 
         paginator = Paginator(sellers, pagination_limit)
         page_obj = paginator.get_page(page_number)

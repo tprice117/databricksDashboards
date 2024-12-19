@@ -71,7 +71,11 @@
               <tr>
                 <th>Name</th>
                 <th>Locations</th>
+                <th>Users</th>
                 <th>Phone</th>
+                {% if request.user.is_staff %}
+                  <th>Action</th>
+                {% endif %}
                 <th>Status</th>
               </tr>
             </thead>
@@ -80,7 +84,11 @@
               <tr>
                 <th>Name</th>
                 <th>Locations</th>
+                <th>Users</th>
                 <th>Phone</th>
+                {% if request.user.is_staff %}
+                  <th>Action</th>
+                {% endif %}
                 <th>Status</th>
               </tr>
             </tfoot>
