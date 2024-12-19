@@ -127,12 +127,6 @@ class UserInviteForm(forms.Form):
         auth_user = kwargs.pop("auth_user", None)
         user = kwargs.pop("user", None)
         super(UserInviteForm, self).__init__(*args, **kwargs)
-        if auth_user and auth_user.is_staff:
-            self.fields["apollo_id"] = forms.CharField(
-                max_length=128,
-                widget=forms.TextInput(attrs={"class": "form-control"}),
-                required=True,
-            )
         if auth_user and user and not auth_user.is_staff:
             # if auth_user.type is lower than user.type, then disable the type field.
             if auth_user.type == UserType.BILLING:
@@ -292,13 +286,8 @@ class UserGroupForm(forms.ModelForm):
             "apollo_id",
             "pay_later",
             "autopay",
-            "net_terms",
             "industry",
-            "invoice_frequency",
-            "invoice_day_of_month",
-            "invoice_at_project_completion",
             "share_code",
-            "credit_line_limit",
             "compliance_status",
             "tax_exempt_status",
         ]
@@ -310,15 +299,8 @@ class UserGroupForm(forms.ModelForm):
             "autopay": forms.CheckboxInput(
                 attrs={"class": "form-check-input", "role": "switch"}
             ),
-            "net_terms": forms.Select(attrs={"class": "form-select"}),
             "industry": forms.Select(attrs={"class": "form-select"}),
-            "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
-            "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
-            "invoice_at_project_completion": forms.CheckboxInput(
-                attrs={"class": "form-check-input", "role": "switch"}
-            ),
             "share_code": forms.TextInput(attrs={"class": "form-control"}),
-            "credit_line_limit": forms.NumberInput(attrs={"class": "form-control"}),
             "compliance_status": forms.Select(attrs={"class": "form-select"}),
             "tax_exempt_status": forms.Select(attrs={"class": "form-select"}),
         }
@@ -349,30 +331,53 @@ class UserGroupForm(forms.ModelForm):
 
         # Update field visibility based on user type
         if auth_user and not auth_user.is_staff:
-            self.fields["net_terms"].disabled = True
             self.fields["share_code"].widget = forms.HiddenInput()
             self.fields["account_owner"].disabled = True
             self.fields["account_owner"].widget = forms.HiddenInput()
-            self.fields["credit_line_limit"].disabled = True
             self.fields["compliance_status"].disabled = True
+            self.fields["compliance_status"].widget = forms.HiddenInput()
             self.fields["tax_exempt_status"].disabled = True
             self.fields["apollo_id"].required = False
             self.fields["apollo_id"].widget = forms.HiddenInput()
             self.fields["autopay"].widget = forms.HiddenInput()
+
+
+class paymentDetailsForm(forms.ModelForm):
+    class Meta:
+        model = UserGroup
+        fields = [
+            "credit_line_limit",
+            "net_terms",
+            "invoice_frequency",
+            "invoice_at_project_completion",
+            "invoice_day_of_month",
+        ]
+        widgets = {
+            "net_terms": forms.Select(attrs={"class": "form-select"}),
+            "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
+            "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
+            "invoice_at_project_completion": forms.CheckboxInput(
+                attrs={"class": "form-check-input", "role": "switch"}
+            ),
+            "credit_line_limit": forms.NumberInput(attrs={"class": "form-control"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        auth_user = kwargs.pop("auth_user", None)
+        super(paymentDetailsForm, self).__init__(*args, **kwargs)
+        # Update field visibility based on user type
+        if auth_user and not auth_user.is_staff:
+            self.fields["net_terms"].disabled = True
             self.fields["invoice_frequency"].disabled = True
             self.fields["invoice_day_of_month"].disabled = True
+            self.fields["credit_line_limit"].disabled = True
 
 
 class UserGroupNewForm(forms.Form):
     name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
-    company_apollo_id = forms.CharField(
-        max_length=128,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        label="Apollo id",
-        required=True,
     )
 
     def __init__(self, *args, **kwargs):

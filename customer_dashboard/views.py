@@ -95,6 +95,7 @@ from .forms import (
     UserAddressForm,
     UserForm,
     UserGroupForm,
+    paymentDetailsForm,
     UserGroupNewForm,
     UserInviteForm,
 )
@@ -3399,6 +3400,7 @@ def new_user(request):
             # POST_COPY["email"] = user.email
             form = UserInviteForm(POST_COPY, request.FILES, auth_user=context["user"])
             context["form"] = form
+            show_default_message = True
             # Default to the current user's UserGroup.
             user_group_id = context["user"].user_group_id
             if not context["user_group"] and request.user.is_staff:
@@ -3411,13 +3413,18 @@ def new_user(request):
                 last_name = form.cleaned_data.get("last_name")
                 email = form.cleaned_data.get("email").casefold()
                 phone = form.cleaned_data.get("phone")
-                apollo_id = None
-                if form.cleaned_data.get("apollo_id"):
-                    apollo_id = form.cleaned_data.get("apollo_id")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
-                if User.objects.filter(email__iexact=email).exists():
-                    raise UserAlreadyExistsError()
+                other_user = User.objects.filter(email__iexact=email).first()
+                if other_user:
+                    if other_user.user_group:
+                        raise UserAlreadyExistsError()
+                    else:
+                        # Add the user to the UserGroup.
+                        user_group = UserGroup.objects.get(id=user_group_id)
+                        user_group.invite_user(other_user)
+                        messages.success(request, f"Successfully invited {email}!")
+                        show_default_message = False
                 else:
                     if request.user.is_staff:
                         # directly create the user
@@ -3428,7 +3435,6 @@ def new_user(request):
                             email=email,
                             phone=phone,
                             source=User.Source.SALES,
-                            apollo_id=apollo_id,
                             type=user_type,
                             redirect_url="/customer/",
                         )
@@ -3454,7 +3460,7 @@ def new_user(request):
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
-            else:
+            elif show_default_message:
                 messages.info(request, "No changes detected.")
             return HttpResponseRedirect(reverse("customer_users"))
         except UserAlreadyExistsError:
@@ -3805,6 +3811,12 @@ def company_detail(request, user_group_id=None):
         user=context["user"],
         auth_user=request.user,
     )
+    context["paymentDetailsForm"] = paymentDetailsForm(
+        instance=user_group,
+        user=context["user"],
+        auth_user=request.user,
+    )
+
     context["branding_formset"] = BrandingFormSet(instance=user_group)
 
     if context.get("user"):
@@ -3830,6 +3842,27 @@ def company_detail(request, user_group_id=None):
                             "theme": get_theme(user_group),
                         }
                     )
+                    messages.success(request, "Successfully saved!")
+                else:
+                    messages.info(request, "No changes detected.")
+
+            return render(request, "customer_dashboard/company_detail.html", context)
+
+        # Update payment details.
+        if "payment_details_button" in request.POST:
+            payment_details_form = paymentDetailsForm(
+                request.POST,
+                request.FILES,
+                instance=user_group,
+                user=context["user"],
+                auth_user=request.user,
+            )
+            context["paymentDetailsForm"] = payment_details_form
+
+            if payment_details_form.is_valid():
+                # Check if any changes to form were made
+                if payment_details_form.has_changed():
+                    payment_details_form.save()
                     messages.success(request, "Successfully saved!")
                 else:
                     messages.info(request, "No changes detected.")
@@ -3954,14 +3987,12 @@ def new_company(request):
             context["phone"] = request.POST.get("phone")
             context["first_name"] = request.POST.get("first_name")
             context["last_name"] = request.POST.get("last_name")
-            context["apollo_id"] = request.POST.get("apollo_id")
             context["form"] = form
 
             if form.is_valid():
                 # Create New UserGroup
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
-                    apollo_id=form.cleaned_data.get("company_apollo_id"),
                 )
                 email = request.POST.get("email").casefold()
 
@@ -3999,7 +4030,6 @@ def new_company(request):
                             phone=user_form.cleaned_data.get("phone"),
                             source=User.Source.SALES,
                             type=user_form.cleaned_data.get("type"),
-                            apollo_id=user_form.cleaned_data.get("apollo_id"),
                             user_group=user_group,
                         )
                         user.save()
