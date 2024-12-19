@@ -120,6 +120,8 @@ class OrderLineItem(BaseModel):
         )
         if unit_str == "Dollars":
             unit_str = ""
+        if unit_str is None:
+            unit_str = ""
 
         # Handle expected line item types for each rental type.
         # All other line item types will be handled by the default case, which is same as the below.
@@ -127,19 +129,58 @@ class OrderLineItem(BaseModel):
         customer_price = self.customer_price()
         rate = customer_price / self.quantity if self.quantity > 0 else 0
         total = customer_price
+        # Check if self.quantity is a whole number.
+        if self.quantity % 1 == 0:
+            quantity = int(self.quantity)
+        else:
+            quantity = self.quantity
 
         if self.order_line_item_type.code == "FUEL_AND_ENV":
             # e.g. Fuel & Fees (15.00%) = $25.51
-            if self.order.order_group.seller_product_seller_location.fuel_environmental_markup:
-                unit_str = f"{self.order.order_group.seller_product_seller_location.fuel_environmental_markup}%"
+            order_line_items = self.order.order_line_items.exclude(
+                stripe_invoice_line_item_id="BYPASS"
+            ).exclude(order_line_item_type__code="FUEL_AND_ENV")
+            subtotal = 0
+            markup = 0
+            for order_line_item in order_line_items:
+                subtotal += order_line_item.customer_price()
+
+            if subtotal:
+                # calculate the fuel and environmental fee percentage
+                markup = customer_price / subtotal
+
+            if markup:
+                unit_str = f"{markup * 100:.3f}%"
+            # if self.order.order_group.seller_product_seller_location.fuel_environmental_markup:
+            #     unit_str = f"{self.order.order_group.seller_product_seller_location.fuel_environmental_markup}%"
             else:
                 unit_str = "0%"
 
             if total > 0 and unit_str == "0%":
-                description = f"Fuel & Fees = ${total:,.2f}"
+                description = f"Fuel & Fees | ${total:,.2f} = ${total:,.2f}"
             else:
-                description = f"Fuel & Fees ({unit_str}) = ${total:,.2f}"
+                description = (
+                    f"Fuel & Fees | ${subtotal:,.2f} @ {unit_str} = ${total:,.2f}"
+                )
             return description
+
+        if (
+            self.order_line_item_type.code == "DELIVERY"
+            or self.order_line_item_type.code == "REMOVAL"
+        ):
+            # e.g. Delivery | # 1 @ $135 = $135
+            description = (
+                f"{self.order_line_item_type.name} | # {quantity} @ ${rate:,.2f}"
+            )
+            if self.description:
+                updated_description = self.description.replace(
+                    self.order_line_item_type.name, ""
+                )
+                if updated_description:
+                    description += f" ({updated_description})"
+            description += f" = ${total:,.2f}"
+            return description
+
         if has_rental_one_step:
             if self.order_line_item_type.code in EXPECTED_ONE_STEP_TYPES:
                 # e.g. Service $135.00/month (One Time Per Week) = $135
@@ -150,7 +191,7 @@ class OrderLineItem(BaseModel):
                 ):
                     unit_str = "month"
                 subdescription = ""
-                if self.description and unit_str != "Dollars":
+                if self.description:
                     subdescription = f" ({self.description})"
                 if (
                     self.order_line_item_type.code == "SERVICE"
@@ -158,16 +199,28 @@ class OrderLineItem(BaseModel):
                     and self.order.order_group.times_per_week
                     and self.order.order_group.service_times_per_week
                 ):
-                    subdescription = (
-                        f" ({self.order.order_group.times_per_week} service per week)"
-                    )
+                    if self.description:
+                        # Check if description contains the word time and week case insensitive
+                        # TODO: Change this back to the original code once the system can handle once every two weeks
+                        if (
+                            "time" in self.description.lower()
+                            and "week" in self.description.lower()
+                        ):
+                            subdescription = f" ({self.description})"
+                        else:
+                            subdescription = f" ({self.order.order_group.times_per_week} service per week)"
+                    # subdescription = (
+                    #     f" ({self.order.order_group.times_per_week} service per week)"
+                    # )
 
                 slash_description = ""
                 if unit_str:
                     slash_description = f"/{unit_str}{subdescription}"
+                else:
+                    slash_description = f" @ {quantity}"
                 description = (
                     self.order_line_item_type.name
-                    + f" ${rate:,.2f}"
+                    + f" | ${rate:,.2f}"
                     + slash_description
                     + f" = ${total:,.2f}"
                 )
@@ -180,18 +233,13 @@ class OrderLineItem(BaseModel):
                 if (
                     self.order_line_item_type.code == "RENTAL"
                     or self.order_line_item_type.code == "SERVICE"
-                ):
+                ) and self.description:
                     unit_str = self.description
 
                 slash_description = ""
-                if self.order_line_item_type.code == "RENTAL" and unit_str:
-                    # Check if self.quantity is a whole number.
-                    if self.quantity % 1 == 0:
-                        quantity = int(self.quantity)
-                    else:
-                        quantity = self.quantity
-                    unit_str = unit_str.lower()
-                    unit_str_single = unit_str
+                unit_str = unit_str.lower()
+                unit_str_single = unit_str
+                if self.order_line_item_type.code == "RENTAL":
                     # if not day, week, month, year, etc, then just show the unit
                     if unit_str in TIME_UNITS:
                         if unit_str.endswith("s"):
@@ -202,9 +250,14 @@ class OrderLineItem(BaseModel):
                     slash_description = (
                         f"/{unit_str_single}{subdescription} @ {quantity} {unit_str}"
                     )
+                else:
+                    if unit_str:
+                        slash_description = f" @ {quantity} {unit_str}"
+                    else:
+                        slash_description = f" @ {quantity}"
                 description = (
                     self.order_line_item_type.name
-                    + f" ${rate:,.2f}"
+                    + f" | ${rate:,.2f}"
                     + slash_description
                     + f" = ${total:,.2f}"
                 )
@@ -221,15 +274,10 @@ class OrderLineItem(BaseModel):
                 elif (
                     self.order_line_item_type.code == "RENTAL"
                     or self.order_line_item_type.code == "MATERIAL"
-                ) and unit_str:
-                    # Check if self.quantity is a whole number.
-                    if self.quantity % 1 == 0:
-                        quantity = int(self.quantity)
-                    else:
-                        quantity = self.quantity
+                ):
                     unit_str = unit_str.lower()
                     unit_str_single = unit_str
-                    if unit_str.endswith("s"):
+                    if unit_str and unit_str.endswith("s"):
                         unit_str_single = unit_str[:-1]
                     if quantity <= 1:
                         unit_str = unit_str_single
@@ -237,17 +285,20 @@ class OrderLineItem(BaseModel):
                     slash_description = (
                         f"/{unit_str_single} @ {quantity} {unit_str}{subdescription}"
                     )
+                else:
+                    if unit_str:
+                        slash_description = f" @ {quantity} {unit_str}"
+                    else:
+                        slash_description = f" @ {quantity}"
                 description = (
                     self.order_line_item_type.name
-                    + f" ${rate:,.2f}"
+                    + f" | ${rate:,.2f}"
                     + slash_description
                     + f" = ${total:,.2f}"
                 )
                 return description
 
-        description = (
-            f"{self.order_line_item_type.name} | # {self.quantity} @ ${rate:,.2f}"
-        )
+        description = f"{self.order_line_item_type.name} | # {quantity} @ ${rate:,.2f}"
         if self.description:
             description += f" ({self.description})"
         description += f" = ${total:,.2f}"
