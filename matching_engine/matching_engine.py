@@ -43,11 +43,12 @@ class MatchingEngine:
         longitude: Decimal,
         waste_type: WasteType = None,
     ) -> list[SellerProductSellerLocation]:
-        # Get all SellerProductSellerLocation objects that match the product.
+        # Get all active SellerProductSellerLocation objects that match the product.
         seller_product_seller_locations = (
             SellerProductSellerLocation.objects.filter(
                 seller_product__product=product,
             )
+            .get_active()
             .with_ratings()
             .with_last_checkout()
         )
@@ -68,7 +69,7 @@ class MatchingEngine:
                 longitude=longitude,
             )
 
-            if seller_product_seller_location.is_complete and within_service_radius:
+            if within_service_radius and seller_product_seller_location.is_complete:
                 # Does the SellerProductSellerLocation match the WasteType of the Product?
                 matches_waste_type = (
                     MatchingEngine._seller_product_seller_location_matches_waste_type(

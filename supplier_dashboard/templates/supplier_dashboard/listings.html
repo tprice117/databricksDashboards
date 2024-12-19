@@ -5,428 +5,415 @@
   Listings
 {% endblock %}
 {% block javascript %}
-  <script></script>
+  <script>
+    function confirmActivePopup(event) {
+      const form = event.target.closest('form')
+      const activeInput = form.querySelector('input[name="active"]')
+      const isActive = activeInput.value === 'true'
+      const actionText = isActive ? 'activate' : 'deactivate'
+      const actionConfirmText = isActive ? 'Yes, activate it!' : 'Yes, deactivate it!'
+    
+      Swal.fire({
+        title: 'Confirm',
+        text: `Are you sure you want to ${actionText} this listing?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: actionConfirmText,
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.submit()
+        } else {
+          // Do nothing
+        }
+      })
+    }
+    
+    document.addEventListener('DOMContentLoaded', function () {
+      var table = document.querySelectorAll("table[id$='DataTable']")
+      table.forEach((item) => {
+        new DataTable(item, {
+          pageLength: 5,
+          lengthChange: false,
+          layout: {
+            topStart: {
+              search: {
+                text: '_INPUT_',
+                placeholder: 'Search',
+                processing: true
+              }
+            },
+            topEnd: {},
+            bottomEnd: {
+              paging: {
+                buttons: 3
+              }
+            }
+          }
+        })
+      })
+    
+      const images = document.querySelectorAll('.image-container img')
+    
+      images.forEach((img) => {
+        img.addEventListener('load', function () {
+          img.classList.add('loaded')
+        })
+    
+        // For cached images
+        if (img.complete) {
+          img.classList.add('loaded')
+        }
+      })
+    })
+  </script>
 {% endblock %}
 {% block content %}
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12">
-        <h3 class="text-dark mb-0">Listings</h3>
-      </div>
-    </div>
-  </div>
   <div class="container-fluid">
-    <div class="d-sm-flex justify-content-between align-items-center mb-4"></div>
-    <div class="row">
-      <div class="col-md-6 col-xl-3 mb-4">
-        <div class="card shadow border-start-success py-2">
-          <div class="card-body">
-            <div class="row align-items-center no-gutters">
-              <div class="col me-2">
-                <div class="text-uppercase text-success fw-bold text-xs mb-1">
-                  <span><strong><span style="color: rgb(1, 131, 129);">Active</span></strong></span>
+    {% if listings %}
+      <div class="row justify-content-center">
+        <div class="col-md-6 col-xl-3 mb-4">
+          <div class="card shadow border-start-success py-2">
+            <div class="card-body">
+              <div class="row align-items-center no-gutters">
+                <div class="col me-2">
+                  <div class="text-uppercase text-success fw-bold text-xs mb-1">
+                    <span><strong>Active</strong></span>
+                  </div>
+                  <div class="text-dark fw-bold h5 mb-0">
+                    <span>{{ active.count }}</span>
+                  </div>
                 </div>
-                <div class="text-dark fw-bold h5 mb-0">
-                  <span>4</span>
+                <div class="col-auto">
+                  <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
                 </div>
-              </div>
-              <div class="col-auto">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 0 512 512" width="1em" height="1em" fill="currentColor" class="fa-2x text-gray-300">
-                  <!-- ! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
-                  <path d="M128 0c13.3 0 24 10.7 24 24V64H296V24c0-13.3 10.7-24 24-24s24 10.7 24 24V64h40c35.3 0 64 28.7 64 64v16 48V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V192 144 128C0 92.7 28.7 64 64 64h40V24c0-13.3 10.7-24 24-24zM400 192H48V448c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V192zM329 297L217 409c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47 95-95c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"></path>
-                </svg>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-6 col-xl-3 mb-4">
-        <div class="card shadow border-start-warning py-2">
-          <div class="card-body">
-            <div class="row align-items-center no-gutters">
-              <div class="col me-2">
-                <div class="text-uppercase text-warning fw-bold text-xs mb-1">
-                  <span><span style="color: rgb(237, 171, 74);">Need Attention</span></span>
+        <div class="col-md-6 col-xl-3 mb-4">
+          <div class="card shadow border-start-warning py-2">
+            <div class="card-body">
+              <div class="row align-items-center no-gutters">
+                <div class="col me-2">
+                  <div class="text-uppercase text-warning fw-bold text-xs mb-1">
+                    <span><span style="color: rgb(237, 171, 74);">Need Attention</span></span>
+                  </div>
+                  <div class="text-dark fw-bold h5 mb-0">
+                    <span>{{ needs_attention.count }}</span>
+                  </div>
                 </div>
-                <div class="text-dark fw-bold h5 mb-0">
-                  <span>12</span>
+                <div class="col-auto">
+                  <i class="fas fa-exclamation fa-2x text-gray-300"></i>
                 </div>
-              </div>
-              <div class="col-auto">
-                <i class="fas fa-exclamation fa-2x text-gray-300"></i>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="col">
-        <div class="card shadow border-start-warning py-2">
-          <div class="card-body">
-            <div class="row align-items-center no-gutters">
-              <div class="col me-2">
-                <div class="text-uppercase text-warning fw-bold text-xs mb-1">
-                  <span><span style="color: rgb(255, 15, 0);">Inactive</span></span>
+        <div class="col-md-6 col-xl-3 mb-4">
+          <div class="card shadow border-start-warning py-2">
+            <div class="card-body">
+              <div class="row align-items-center no-gutters">
+                <div class="col me-2">
+                  <div class="text-uppercase text-warning fw-bold text-xs mb-1">
+                    <span><span style="color: rgb(255, 15, 0);">Inactive</span></span>
+                  </div>
+                  <div class="text-dark fw-bold h5 mb-0">
+                    <span>{{ inactive.count }}</span>
+                  </div>
                 </div>
-                <div class="text-dark fw-bold h5 mb-0">
-                  <span>12</span>
+                <div class="col-auto">
+                  <i class="fas fa-broom fa-2x text-gray-300"></i>
                 </div>
-              </div>
-              <div class="col-auto">
-                <i class="fas fa-exclamation fa-2x text-gray-300"></i>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-6 col-xl-3 mb-4">
-        <div class="card shadow border-start-info py-2">
-          <div class="card-body">
-            <div class="row align-items-center no-gutters">
-              <div class="col me-2">
-                <div class="text-uppercase text-info fw-bold text-xs mb-1">
-                  <span><strong><span style="color: rgb(152, 45, 148);">Not Yet Offered</span></strong></span>
-                </div>
-                <div class="row g-0 align-items-center">
-                  <div class="col-auto">
-                    <div class="text-dark fw-bold h5 mb-0 me-3">
-                      <span>197</span>
+        {% comment %} <div class="col-md-6 col-xl-3 mb-4">
+          <div class="card shadow border-start-info py-2">
+            <div class="card-body">
+              <div class="row align-items-center no-gutters">
+                <div class="col me-2">
+                  <div class="text-uppercase text-info fw-bold text-xs mb-1">
+                    <span><strong><span style="color: rgb(152, 45, 148);">Not Yet Offered</span></strong></span>
+                  </div>
+                  <div class="row g-0 align-items-center">
+                    <div class="col-auto">
+                      <div class="text-dark fw-bold h5 mb-0 me-3">
+                        <span>197</span>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div class="col-auto">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="fa-2x text-gray-300">
+                    <!-- ! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
+                    <path d="M464 256A208 208 0 1 1 48 256a208 208 0 1 1 416 0zM0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z"></path>
+                  </svg>
+                </div>
               </div>
-              <div class="col-auto">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="fa-2x text-gray-300">
-                  <!-- ! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
-                  <path d="M464 256A208 208 0 1 1 48 256a208 208 0 1 1 416 0zM0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z"></path>
-                </svg>
-              </div>
+            </div>
+          </div>
+        </div> {% endcomment %}
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="card-header p-3 d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#activeCardBody" aria-controls="activeCardBody" type="button">
+              <h6 class="text-success m-0">Active</h6>
+            </div>
+            <div id="activeCardBody" class="card-body collapse show">
+              {% if active %}
+                <table id="activeDataTable" class="display w-100">
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Name</th>
+                      <th>Location</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in active %}
+                      <tr>
+                        <td>
+                          <img class="card-img-top d-block img-container-sm"
+                            style="{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
+                            alt="{{ item.seller_product.product.main_product.name }}"
+                            src="{% if item.seller_product.product.main_product.image_del %}
+                              {{ item.seller_product.product.main_product.image_del }}
+                            {% elif item.seller_product.product.main_product.main_product_category.icon %}
+                              {{ item.seller_product.product.main_product.main_product_category.icon.url }}
+                            {% else %}
+                              {% static 'customer_dashboard/img/logo.png' %}
+                            {% endif %}" />
+                        </td>
+                        <td>{{ item.seller_product.product.main_product.name }}</td>
+                        <td>{{ item.seller_location.short_address }}</td>
+                        <td>
+                          <form action="{% url 'supplier_listings' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="listing_id" value="{{ item.id }}" />
+                            <input type="hidden" name="active" value="false" />
+                            <button class="btn btn-outline-danger" name="active_form" onclick="confirmActivePopup(event)" type="button">Deactivate</button>
+                          </form>
+                          <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="4">No Listings</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p>No active listings.</p>
+              {% endif %}
             </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-lg-12">
-        <div class="card shadow mb-4">
-          <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="text-primary fw-bold m-0"><strong><span style="color: rgb(1, 131, 129);">Active&nbsp;</span><span style="color: rgb(255, 15, 0);">(SellerProductSellerLocation.Active=True)</span></strong></h6><a class="btn btn-success btn-icon-split" role="button" href="Booking%20Details%20Page.html"></a>
-            <div class="dropdown no-arrow">
-              <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-chevron-down text-gray-400"></i></button>
-              <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
-                <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
-                <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
-              </div>
+        <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="card-header p-3 d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#needsAttentionCardBody" aria-controls="needsAttentionCardBody" type="button">
+              <h6 class="text-warning m-0">Need Attention</h6>
+            </div>
+            <div id="needsAttentionCardBody" class="card-body collapse show">
+              {% if needs_attention %}
+                <table id="needsAttentionDataTable" class="display w-100">
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Name</th>
+                      <th>Location</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in needs_attention %}
+                      <tr>
+                        <td>
+                          <img class="card-img-top d-block img-container-sm"
+                            style="{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
+                            alt="{{ item.seller_product.product.main_product.name }}"
+                            src="{% if item.seller_product.product.main_product.image_del %}
+                              {{ item.seller_product.product.main_product.image_del }}
+                            {% elif item.seller_product.product.main_product.main_product_category.icon %}
+                              {{ item.seller_product.product.main_product.main_product_category.icon.url }}
+                            {% else %}
+                              {% static 'customer_dashboard/img/logo.png' %}
+                            {% endif %}" />
+                        </td>
+                        <td>{{ item.seller_product.product.main_product.name }}</td>
+                        <td>{{ item.seller_location.short_address }}</td>
+                        <td>
+                          <form action="{% url 'supplier_listings' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="listing_id" value="{{ item.id }}" />
+                            <input type="hidden" name="active" value="false" />
+                            <button class="btn btn-outline-danger" name="active_form" onclick="confirmActivePopup(event)" type="button">Deactivate</button>
+                          </form>
+                          <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="4">No Listings</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p>No listings needing attention.</p>
+              {% endif %}
             </div>
           </div>
-          <div class="card-body">
-            <div class="col-md-6">
-              <div class="text-md-end dataTables_filter" id="dataTable_filter-1">
-                <input type="search" class="form-control form-control-sm" aria-controls="dataTable" placeholder="Search" /><label class="form-label"></label>
+        </div>
+        <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="card-header p-3 d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#inactiveCardBody" aria-controls="inactiveCardBody" type="button">
+              <h6 class="text-danger m-0">Inactive</h6>
+            </div>
+            <div id="inactiveCardBody" class="card-body collapse show">
+              {% if inactive %}
+                <table id="inactiveDataTable" class="display w-100">
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Name</th>
+                      <th>Location</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in inactive %}
+                      <tr>
+                        <td>
+                          <img class="card-img-top d-block img-container-sm"
+                            style="{% if item.seller_product.product.main_product.image_del %}object-fit: cover;{% endif %}"
+                            alt="{{ item.seller_product.product.main_product.name }}"
+                            src="{% if item.seller_product.product.main_product.image_del %}
+                              {{ item.seller_product.product.main_product.image_del }}
+                            {% elif item.seller_product.product.main_product.main_product_category.icon %}
+                              {{ item.seller_product.product.main_product.main_product_category.icon.url }}
+                            {% else %}
+                              {% static 'customer_dashboard/img/logo.png' %}
+                            {% endif %}" />
+                        </td>
+                        <td>{{ item.seller_product.product.main_product.name }}</td>
+                        <td>{{ item.seller_location.short_address }}</td>
+                        <td>
+                          <form action="{% url 'supplier_listings' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="listing_id" value="{{ item.id }}" />
+                            <input type="hidden" name="active" value="true" />
+                            <button class="btn btn-outline-success" name="active_form" onclick="confirmActivePopup(event)" type="button">Activate</button>
+                          </form>
+                          <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="4">No Listings</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p>No inactive listings.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% comment %} <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="text-primary fw-bold m-0"><span style="color: rgb(152, 45, 148);">Not Yet Offered</span><span style="color: rgb(255, 15, 0);">(SellerProductSellerLocation does not exist) - Starts without SPSL --&gt; Turn on switch here to generate SPSL (moves to needs attention) --&gt; Moves to "needs attention" --&gt; moves to "active" once pricing is set --&gt; If toggled off after active, it goes to "inactive" --&gt; if toggled back on from inactive, it goes to "active" or "needs attention" again&nbsp; &nbsp;ie. Once it's toggled from No</span><span style="color: rgb(255, 15, 0);">t&nbsp;Offered</span><span style="color: rgb(255, 15, 0);">&nbsp;you shouldn't ever see it in the not offered list again</span></h6>
+              <div class="dropdown no-arrow">
+                <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-chevron-down text-gray-400"></i></button>
+                <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
+                  <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
+                  <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
+                </div>
               </div>
             </div>
-            <div class="card-group">
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-1.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text"></p>
-                  <p class="card-text"></p>
-                  <p class="card-text"></p>
-                  <p class="card-text">
-                    <strong>Location:</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><a class="btn btn-primary" role="button" href="Listing%20Details%20Page.html">Edit</a>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-2.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><a class="btn btn-primary" role="button" href="Listing%20Details%20Page.html">Edit</a>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-3.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">20 Cubic Yard Dumpster</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><a class="btn btn-primary" role="button" href="Listing%20Details%20Page.html">Edit</a>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6 align-self-center">
-                <p id="dataTable_info-1" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
-              </div>
+            <div class="card-body">
               <div class="col-md-6">
-                <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
-                  <ul class="pagination">
-                    <li class="page-item disabled">
-                      <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
-                    </li>
-                    <li class="page-item active" style="--bs-primary: #044364;--bs-primary-rgb: 4,67,100;">
-                      <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
-                    </li>
-                  </ul>
-                </nav>
+                <div class="text-md-end dataTables_filter" id="dataTable_filter-2">
+                  <input type="search" class="form-control form-control-sm" aria-controls="dataTable" placeholder="Search" /><label class="form-label"></label>
+                </div>
               </div>
+              <div class="card-group">
+                <div class="card">
+                  <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-1.jpg" />
+                  <div class="card-body">
+                    <h4 class="card-title">SellerProduct</h4><label class="switch">
+                      <input type="checkbox" />
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="card">
+                  <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-2.jpg" />
+                  <div class="card-body">
+                    <h4 class="card-title">SellerProduct</h4><label class="switch">
+                      <input type="checkbox" />
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="card">
+                  <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-3.jpg" />
+                  <div class="card-body">
+                    <h4 class="card-title">SellerProduct</h4><label class="switch">
+                      <input type="checkbox" />
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 align-self-center">
+                  <p id="dataTable_info-2" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
+                </div>
+                <div class="col-md-6">
+                  <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+                    <ul class="pagination">
+                      <li class="page-item disabled">
+                        <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
+                      </li>
+                      <li class="page-item active" style="--bs-primary: #044364;--bs-primary-rgb: 4,67,100;">
+                        <a class="page-link" href="#">1</a>
+                      </li>
+                      <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                      </li>
+                      <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                      </li>
+                      <li class="page-item">
+                        <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> {% endcomment %}
+      </div>
+    {% else %}
+      <div class="container-sm pt-4 pb-4">
+        <div class="alert alert-info text-center" role="alert">
+          <div class="row">
+            <div class="card-body">
+              <h5 class="p-3">No listings found for {{ seller.name }}.</h5>
+              <a class="btn btn-primary" href="{% url 'supplier_products' %}">Add Listing</a>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-lg-12">
-        <div class="card shadow mb-4">
-          <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="text-primary fw-bold m-0"><strong><span style="color: rgb(237, 171, 74);">Needs Attention</span><span style="color: rgb(255, 15, 0);">&nbsp;(SellerProductSellerLocation exists, SPSL.Active=True, but pricing details are missing for an existing SPSLService,Rental, or Material)&nbsp;</span></strong></h6>
-            <div class="dropdown no-arrow">
-              <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-chevron-down text-gray-400"></i></button>
-              <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
-                <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
-                <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="col-md-6">
-              <div class="text-md-end dataTables_filter" id="dataTable_filter">
-                <input type="search" class="form-control form-control-sm" aria-controls="dataTable" placeholder="Search" /><label class="form-label"></label>
-              </div>
-            </div>
-            <div class="card-group">
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-1.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><button class="btn btn-primary" type="button">Edit</button>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-2.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><button class="btn btn-primary" type="button">Edit</button>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-3.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><button class="btn btn-primary" type="button">Edit</button>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6 align-self-center">
-                <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
-              </div>
-              <div class="col-md-6">
-                <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
-                  <ul class="pagination">
-                    <li class="page-item disabled">
-                      <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
-                    </li>
-                    <li class="page-item active" style="--bs-primary: #044364;--bs-primary-rgb: 4,67,100;">
-                      <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-12">
-        <div class="card shadow mb-4">
-          <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="text-primary fw-bold m-0"><strong><span style="color: rgb(255, 15, 0);">Inactive (SellerProductSellerLocation exists but SPSL.Active=False)</span></strong></h6>
-            <div class="dropdown no-arrow">
-              <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-chevron-down text-gray-400"></i></button>
-              <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
-                <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
-                <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="col-md-6">
-              <div class="text-md-end dataTables_filter" id="dataTable_filter-3">
-                <input type="search" class="form-control form-control-sm" aria-controls="dataTable" placeholder="Search" /><label class="form-label"></label>
-              </div>
-            </div>
-            <div class="card-group">
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-1.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><label class="switch">
-                    <input type="checkbox" />
-                    <span class="slider round"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-2.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><label class="switch">
-                    <input type="checkbox" />
-                    <span class="slider round"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-3.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4>
-                  <p class="card-text">
-                    <strong>Location:&nbsp;</strong>SellerProductSellerLocation.SellerLocation.Name
-                  </p><label class="switch">
-                    <input type="checkbox" />
-                    <span class="slider round"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6 align-self-center">
-                <p id="dataTable_info-3" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
-              </div>
-              <div class="col-md-6">
-                <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
-                  <ul class="pagination">
-                    <li class="page-item disabled">
-                      <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
-                    </li>
-                    <li class="page-item active" style="--bs-primary: #044364;--bs-primary-rgb: 4,67,100;">
-                      <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-12">
-        <div class="card shadow mb-4">
-          <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="text-primary fw-bold m-0"><span style="color: rgb(152, 45, 148);">Not Yet Offered</span><span style="color: rgb(255, 15, 0);">(SellerProductSellerLocation does not exist) - Starts without SPSL --&gt; Turn on switch here to generate SPSL (moves to needs attention) --&gt; Moves to "needs attention" --&gt; moves to "active" once pricing is set --&gt; If toggled off after active, it goes to "inactive" --&gt; if toggled back on from inactive, it goes to "active" or "needs attention" again&nbsp; &nbsp;ie. Once it's toggled from No</span><span style="color: rgb(255, 15, 0);">t&nbsp;Offered</span><span style="color: rgb(255, 15, 0);">&nbsp;you shouldn't ever see it in the not offered list again</span></h6>
-            <div class="dropdown no-arrow">
-              <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-chevron-down text-gray-400"></i></button>
-              <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
-                <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
-                <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="col-md-6">
-              <div class="text-md-end dataTables_filter" id="dataTable_filter-2">
-                <input type="search" class="form-control form-control-sm" aria-controls="dataTable" placeholder="Search" /><label class="form-label"></label>
-              </div>
-            </div>
-            <div class="card-group">
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-1.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4><label class="switch">
-                    <input type="checkbox" />
-                    <span class="slider round"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-2.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4><label class="switch">
-                    <input type="checkbox" />
-                    <span class="slider round"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="card">
-                <img class="card-img-top w-100 d-block" alt="trash against wall" src="assets/img/photo-1553058296-61093581de13-3.jpg" />
-                <div class="card-body">
-                  <h4 class="card-title">SellerProduct</h4><label class="switch">
-                    <input type="checkbox" />
-                    <span class="slider round"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6 align-self-center">
-                <p id="dataTable_info-2" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
-              </div>
-              <div class="col-md-6">
-                <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
-                  <ul class="pagination">
-                    <li class="page-item disabled">
-                      <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
-                    </li>
-                    <li class="page-item active" style="--bs-primary: #044364;--bs-primary-rgb: 4,67,100;">
-                      <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                      <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row"></div>
+    {% endif %}
   </div>
 {% endblock %}
