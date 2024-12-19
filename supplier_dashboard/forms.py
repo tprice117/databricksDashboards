@@ -651,6 +651,18 @@ class SellerPayoutForm(forms.Form):
 
 
 # Listing Details Forms
+class SellerProductSellerLocationActiveForm(forms.ModelForm):
+    class Meta:
+        model = SellerProductSellerLocation
+        fields = [
+            "active",
+        ]
+        widgets = {
+            "active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+        labels = {
+            "active": "Activate Listing",
+        }
 
 
 class SellerProductSellerLocationSchedulingForm(forms.ModelForm):
@@ -673,7 +685,12 @@ class SellerProductSellerLocationSchedulingForm(forms.ModelForm):
         ]
         widgets = {
             "service_radius": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "0 mi", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "0 mi",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
         }
         labels = {
@@ -705,13 +722,28 @@ class SellerProductSellerLocationPricingForm(forms.ModelForm):
         ]
         widgets = {
             "delivery_fee": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
             "removal_fee": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
             "fuel_environmental_markup": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "0.00%", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "0.00%",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
         }
         labels = {
@@ -730,10 +762,20 @@ class SellerProductSellerLocationServiceForm(forms.ModelForm):
         fields = ["flat_rate_price", "price_per_mile"]
         widgets = {
             "flat_rate_price": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
             "price_per_mile": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
         }
         labels = {
@@ -758,6 +800,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
                     "class": "form-control",
                     "placeholder": "$0.00 per month",
                     "min": 0.0,
+                    "step": 0.01,
                 }
             ),
             "two_times_per_week": forms.NumberInput(
@@ -765,6 +808,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
                     "class": "form-control",
                     "placeholder": "$0.00 per month",
                     "min": 0.0,
+                    "step": 0.01,
                 }
             ),
             "three_times_per_week": forms.NumberInput(
@@ -772,6 +816,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
                     "class": "form-control",
                     "placeholder": "$0.00 per month",
                     "min": 0.0,
+                    "step": 0.01,
                 }
             ),
             "four_times_per_week": forms.NumberInput(
@@ -779,6 +824,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
                     "class": "form-control",
                     "placeholder": "$0.00 per month",
                     "min": 0.0,
+                    "step": 0.01,
                 }
             ),
             "five_times_per_week": forms.NumberInput(
@@ -786,6 +832,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
                     "class": "form-control",
                     "placeholder": "$0.00 per month",
                     "min": 0.0,
+                    "step": 0.01,
                 }
             ),
         }
@@ -812,12 +859,26 @@ class SellerProductSellerLocationRentalForm(forms.ModelForm):
         widgets = {
             "included_days": forms.NumberInput(attrs={"class": "form-control"}),
             "price_per_day_included": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
             "price_per_day_additional": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["included_days"].required = True
 
 
 class SellerProductSellerLocationRentalOneStepForm(forms.ModelForm):
@@ -826,7 +887,12 @@ class SellerProductSellerLocationRentalOneStepForm(forms.ModelForm):
         fields = ["rate"]
         widgets = {
             "rate": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
         }
         help_texts = {
@@ -840,19 +906,35 @@ class SellerProductSellerLocationRentalMultiStepForm(forms.ModelForm):
         fields = ["hour", "day", "week", "two_weeks", "month"]
         widgets = {
             "hour": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00/hr", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00/hr",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
             "day": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00/day", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00/day",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
             "week": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "$0.00/week", "min": 0.0}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00/week",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
             ),
             "two_weeks": forms.NumberInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "$0.00/two weeks",
                     "min": 0.0,
+                    "step": 0.01,
                 }
             ),
             "month": forms.NumberInput(
@@ -860,6 +942,7 @@ class SellerProductSellerLocationRentalMultiStepForm(forms.ModelForm):
                     "class": "form-control",
                     "placeholder": "$0.00/month",
                     "min": 0.0,
+                    "step": 0.01,
                 }
             ),
         }
@@ -936,10 +1019,10 @@ class SellerProductSellerLocationMaterialWasteTypeForm(forms.ModelForm):
         fields = ["main_product_waste_type", "price_per_ton", "tonnage_included"]
         widgets = {
             "main_product_waste_type": forms.Select(
-                attrs={"class": "form-control", "min": 0.0}
+                attrs={"class": "form-control", "placeholder": "Select a waste type"}
             ),
             "price_per_ton": forms.NumberInput(
-                attrs={"class": "form-control", "min": 0.0}
+                attrs={"class": "form-control", "min": 0.0, "step": 0.01}
             ),
             "tonnage_included": forms.NumberInput(
                 attrs={"class": "form-control", "min": 0.0}

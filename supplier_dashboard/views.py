@@ -73,6 +73,7 @@ from .forms import (
     SellerLocationComplianceAdminForm,
     SellerLocationComplianceForm,
     SellerPayoutForm,
+    SellerProductSellerLocationActiveForm,
     SellerProductSellerLocationSchedulingForm,
     SellerProductSellerLocationPricingForm,
     SellerProductSellerLocationServiceForm,
@@ -118,6 +119,16 @@ def to_dict(instance):
             get_json_safe_value(i.id) for i in f.value_from_object(instance)
         ]
     return data
+
+
+def check_completion(seller_product_seller_location, attribute):
+    if not attribute:
+        return True
+    return (
+        getattr(seller_product_seller_location, attribute).is_complete
+        if hasattr(seller_product_seller_location, attribute)
+        else False
+    )
 
 
 def get_dashboard_chart_data(data_by_month: List[int]):
@@ -1582,6 +1593,19 @@ def listings(request):
                 f"No seller selected! Using first seller found: [{seller.name}].",
             )
 
+    # Handle listing activation/deactivation
+    if request.method == "POST":
+        id = request.POST.get("listing_id")
+        active = request.POST.get("active")
+        if id and active:
+            spsl = SellerProductSellerLocation.objects.filter(id=id).first()
+            if spsl:
+                spsl.active = True if active == "true" else False
+                spsl.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.error(request, "Listing not found.")
+
     listings = SellerProductSellerLocation.objects.filter(
         seller_location__seller_id=seller.id
     ).select_related("seller_product__product__main_product", "seller_location")
@@ -1620,14 +1644,12 @@ def listing_detail(request, listing_id):
 
     main_product = spsl.seller_product.product.main_product
 
-    scheduling_form = SellerProductSellerLocationSchedulingForm(instance=spsl)
-    pricing_form = SellerProductSellerLocationPricingForm(instance=spsl)
-
+    # Instantiate formsets
     # Services
     service_formset = None
-    service_is_complete = True
+    service_formset_factory = None
     if main_product.has_service:
-        SellerProductSellerLocationServiceFormSet = inlineformset_factory(
+        service_formset_factory = inlineformset_factory(
             SellerProductSellerLocation,
             SellerProductSellerLocationService,
             form=SellerProductSellerLocationServiceForm,
@@ -1635,12 +1657,8 @@ def listing_detail(request, listing_id):
             extra=1,
             can_delete=False,
         )
-        service_formset = SellerProductSellerLocationServiceFormSet(instance=spsl)
-        service_is_complete = (
-            spsl.service.is_complete if hasattr(spsl, "service") else False
-        )
     elif main_product.has_service_times_per_week:
-        SellerProductSellerLocationServiceTimesPerWeekFormSet = inlineformset_factory(
+        service_formset_factory = inlineformset_factory(
             SellerProductSellerLocation,
             SellerProductSellerLocationServiceTimesPerWeek,
             form=SellerProductSellerLocationServiceTimesPerWeekForm,
@@ -1648,20 +1666,11 @@ def listing_detail(request, listing_id):
             extra=1,
             can_delete=False,
         )
-        service_formset = SellerProductSellerLocationServiceTimesPerWeekFormSet(
-            instance=spsl
-        )
-        service_is_complete = (
-            spsl.service_times_per_week.is_complete
-            if hasattr(spsl, "service_times_per_week")
-            else False
-        )
-
     # Rentals
     rental_formset = None
-    rental_is_complete = True
+    rental_formset_factory = None
     if main_product.has_rental:
-        SellerProductSellerLocationRentalFormSet = inlineformset_factory(
+        rental_formset_factory = inlineformset_factory(
             SellerProductSellerLocation,
             SellerProductSellerLocationRental,
             form=SellerProductSellerLocationRentalForm,
@@ -1669,12 +1678,8 @@ def listing_detail(request, listing_id):
             extra=1,
             can_delete=False,
         )
-        rental_formset = SellerProductSellerLocationRentalFormSet(instance=spsl)
-        rental_is_complete = (
-            spsl.rental.is_complete if hasattr(spsl, "rental") else False
-        )
     elif main_product.has_rental_one_step:
-        SellerProductSellerLocationRentalOneStepFormSet = inlineformset_factory(
+        rental_formset_factory = inlineformset_factory(
             SellerProductSellerLocation,
             SellerProductSellerLocationRentalOneStep,
             form=SellerProductSellerLocationRentalOneStepForm,
@@ -1682,14 +1687,8 @@ def listing_detail(request, listing_id):
             extra=1,
             can_delete=False,
         )
-        rental_formset = SellerProductSellerLocationRentalOneStepFormSet(instance=spsl)
-        rental_is_complete = (
-            spsl.rental_one_step.is_complete
-            if hasattr(spsl, "rental_one_step")
-            else False
-        )
     elif main_product.has_rental_multi_step:
-        SellerProductSellerLocationRentalMultiStepFormSet = inlineformset_factory(
+        rental_formset_factory = inlineformset_factory(
             SellerProductSellerLocation,
             SellerProductSellerLocationRentalMultiStep,
             form=SellerProductSellerLocationRentalMultiStepForm,
@@ -1697,20 +1696,11 @@ def listing_detail(request, listing_id):
             extra=1,
             can_delete=False,
         )
-        rental_formset = SellerProductSellerLocationRentalMultiStepFormSet(
-            instance=spsl
-        )
-        rental_is_complete = (
-            spsl.rental_multi_step.is_complete
-            if hasattr(spsl, "rental_multi_step")
-            else False
-        )
-
     # Materials
     material_formset = None
-    material_is_complete = True
+    material_formset_factory = None
     if main_product.has_material:
-        SellerProductSellerLocationMaterialFormSet = inlineformset_factory(
+        material_formset_factory = inlineformset_factory(
             SellerProductSellerLocationMaterial,
             SellerProductSellerLocationMaterialWasteType,
             form=SellerProductSellerLocationMaterialWasteTypeForm,
@@ -1718,14 +1708,35 @@ def listing_detail(request, listing_id):
             extra=0,
             can_delete=True,
         )
-        material_formset = SellerProductSellerLocationMaterialFormSet(spsl=spsl)
-        material_is_complete = (
-            spsl.material.is_complete if hasattr(spsl, "material") else False
-        )
+
+    # Initialize forms
+    active_form = SellerProductSellerLocationActiveForm(instance=spsl)
+    scheduling_form = SellerProductSellerLocationSchedulingForm(instance=spsl)
+    pricing_form = SellerProductSellerLocationPricingForm(instance=spsl)
+    if service_formset_factory:
+        service_formset = service_formset_factory(instance=spsl)
+    if rental_formset_factory:
+        rental_formset = rental_formset_factory(instance=spsl)
+    if material_formset_factory:
+        material_formset = material_formset_factory(spsl=spsl)
 
     # Form Submission
     if request.method == "POST":
-        if "scheduling_form" in request.POST:
+        if "active_form" in request.POST:
+            active_form = SellerProductSellerLocationActiveForm(
+                request.POST, instance=spsl
+            )
+            if active_form.is_valid():
+                if active_form.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    active_form.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for field in active_form.errors:
+                    active_form[field].field.widget.attrs["class"] += " is-invalid"
+        elif "scheduling_form" in request.POST:
             scheduling_form = SellerProductSellerLocationSchedulingForm(
                 request.POST, instance=spsl
             )
@@ -1756,21 +1767,13 @@ def listing_detail(request, listing_id):
                     pricing_form[field].field.widget.attrs["class"] += " is-invalid"
 
         elif "service_form" in request.POST:
-            if main_product.has_service:
-                service_formset = SellerProductSellerLocationServiceFormSet(
-                    request.POST, instance=spsl
-                )
-            elif main_product.has_service_times_per_week:
-                service_formset = SellerProductSellerLocationServiceTimesPerWeekFormSet(
-                    request.POST, instance=spsl
-                )
-            else:
-                messages.error(request, "There was an error with the page.")
+            service_formset = service_formset_factory(request.POST, instance=spsl)
 
             if service_formset.is_valid():
                 if service_formset.has_changed():
                     messages.success(request, "Successfully saved!")
                     service_formset.save()
+                    service_formset = service_formset_factory(instance=spsl)
                 else:
                     messages.info(request, "No changes detected.")
             else:
@@ -1781,25 +1784,13 @@ def listing_detail(request, listing_id):
                         if field not in ["__all__", "seller_product_seller_location"]:
                             form[field].field.widget.attrs["class"] += " is-invalid"
         elif "rental_form" in request.POST:
-            if main_product.has_rental:
-                rental_formset = SellerProductSellerLocationRentalFormSet(
-                    request.POST, instance=spsl
-                )
-            elif main_product.has_rental_one_step:
-                rental_formset = SellerProductSellerLocationRentalOneStepFormSet(
-                    request.POST, instance=spsl
-                )
-            elif main_product.has_rental_multi_step:
-                rental_formset = SellerProductSellerLocationRentalMultiStepFormSet(
-                    request.POST, instance=spsl
-                )
-            else:
-                messages.error(request, "There was an error with the page.")
+            rental_formset = rental_formset_factory(request.POST, instance=spsl)
 
             if rental_formset.is_valid():
                 if rental_formset.has_changed():
                     messages.success(request, "Successfully saved!")
                     rental_formset.save()
+                    rental_formset = rental_formset_factory(instance=spsl)
                 else:
                     messages.info(request, "No changes detected.")
             else:
@@ -1810,13 +1801,12 @@ def listing_detail(request, listing_id):
                         if field not in ["__all__", "seller_product_seller_location"]:
                             form[field].field.widget.attrs["class"] += " is-invalid"
         elif "material_form" in request.POST:
-            material_formset = SellerProductSellerLocationMaterialFormSet(
-                request.POST, spsl=spsl
-            )
+            material_formset = material_formset_factory(request.POST, spsl=spsl)
             if material_formset.is_valid():
                 if material_formset.has_changed():
                     messages.success(request, "Successfully saved!")
                     material_formset.save()
+                    material_formset = material_formset_factory(spsl=spsl)
                 else:
                     messages.info(request, "No changes detected.")
             else:
@@ -1829,14 +1819,40 @@ def listing_detail(request, listing_id):
                             "DELETE",
                         ]:
                             form[field].field.widget.attrs["class"] += " is-invalid"
-            material_formset = SellerProductSellerLocationMaterialFormSet(spsl=spsl)
 
+    # Check each condition if it has been completed. If the main product has a pricing section,
+    # but that section does not exist, or that section is incomplete,
+    # then we will consider the listing incomplete.
+    service_is_complete = check_completion(
+        spsl,
+        "service"
+        if main_product.has_service
+        else "service_times_per_week"
+        if main_product.has_service_times_per_week
+        else None,
+    )
+    rental_is_complete = check_completion(
+        spsl,
+        "rental"
+        if main_product.has_rental
+        else "rental_one_step"
+        if main_product.has_rental_one_step
+        else "rental_multi_step"
+        if main_product.has_rental_multi_step
+        else None,
+    )
+    material_is_complete = check_completion(
+        spsl, "material" if main_product.has_material else None
+    )
+
+    # Update context
     context.update(
         {
             "seller": seller,
             "listing": spsl,
             "is_incomplete": not spsl.is_complete,
             "main_product": main_product,
+            "active_form": active_form,
             "scheduling_form": scheduling_form,
             "pricing_form": pricing_form,
             "service_formset": service_formset,

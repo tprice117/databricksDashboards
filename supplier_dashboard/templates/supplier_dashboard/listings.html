@@ -6,6 +6,29 @@
 {% endblock %}
 {% block javascript %}
   <script>
+    function confirmActivePopup(event) {
+      const form = event.target.closest('form')
+      const activeInput = form.querySelector('input[name="active"]')
+      const isActive = activeInput.value === 'true'
+      const actionText = isActive ? 'activate' : 'deactivate'
+      const actionConfirmText = isActive ? 'Yes, activate it!' : 'Yes, deactivate it!'
+    
+      Swal.fire({
+        title: 'Confirm',
+        text: `Are you sure you want to ${actionText} this listing?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: actionConfirmText,
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.submit()
+        } else {
+          // Do nothing
+        }
+      })
+    }
+    
     document.addEventListener('DOMContentLoaded', function () {
       var table = document.querySelectorAll("table[id$='DataTable']")
       table.forEach((item) => {
@@ -136,8 +159,7 @@
       <div class="row">
         <div class="col-lg-12">
           <div class="card shadow mb-4">
-            <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-            <div class="card-header d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#activeCardBody" aria-controls="activeCardBody" type="button">
+            <div class="card-header p-3 d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#activeCardBody" aria-controls="activeCardBody" type="button">
               <h6 class="text-success m-0">Active</h6>
             </div>
             <div id="activeCardBody" class="card-body collapse show">
@@ -169,10 +191,13 @@
                         <td>{{ item.seller_product.product.main_product.name }}</td>
                         <td>{{ item.seller_location.short_address }}</td>
                         <td>
+                          <form action="{% url 'supplier_listings' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="listing_id" value="{{ item.id }}" />
+                            <input type="hidden" name="active" value="false" />
+                            <button class="btn btn-outline-danger" name="active_form" onclick="confirmActivePopup(event)" type="button">Deactivate</button>
+                          </form>
                           <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
-                          {% comment %}
-                          <button class="btn btn-danger" type="button">Deactivate</button>
-                          {% endcomment %}
                         </td>
                       </tr>
                     {% empty %}
@@ -190,7 +215,7 @@
         </div>
         <div class="col-lg-12">
           <div class="card shadow mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#needsAttentionCardBody" aria-controls="needsAttentionCardBody" type="button">
+            <div class="card-header p-3 d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#needsAttentionCardBody" aria-controls="needsAttentionCardBody" type="button">
               <h6 class="text-warning m-0">Need Attention</h6>
             </div>
             <div id="needsAttentionCardBody" class="card-body collapse show">
@@ -222,10 +247,13 @@
                         <td>{{ item.seller_product.product.main_product.name }}</td>
                         <td>{{ item.seller_location.short_address }}</td>
                         <td>
+                          <form action="{% url 'supplier_listings' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="listing_id" value="{{ item.id }}" />
+                            <input type="hidden" name="active" value="false" />
+                            <button class="btn btn-outline-danger" name="active_form" onclick="confirmActivePopup(event)" type="button">Deactivate</button>
+                          </form>
                           <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
-                          {% comment %}
-                          <button class="btn btn-danger" type="button">Delete</button>
-                          {% endcomment %}
                         </td>
                       </tr>
                     {% empty %}
@@ -243,8 +271,7 @@
         </div>
         <div class="col-lg-12">
           <div class="card shadow mb-4">
-            <div class="btn-group btn-group-toggle" data-bs-toggle="buttons"></div>
-            <div class="card-header d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#inactiveCardBody" aria-controls="inactiveCardBody" type="button">
+            <div class="card-header p-3 d-flex justify-content-between align-items-center" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#inactiveCardBody" aria-controls="inactiveCardBody" type="button">
               <h6 class="text-danger m-0">Inactive</h6>
             </div>
             <div id="inactiveCardBody" class="card-body collapse show">
@@ -276,10 +303,13 @@
                         <td>{{ item.seller_product.product.main_product.name }}</td>
                         <td>{{ item.seller_location.short_address }}</td>
                         <td>
+                          <form action="{% url 'supplier_listings' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="listing_id" value="{{ item.id }}" />
+                            <input type="hidden" name="active" value="true" />
+                            <button class="btn btn-outline-success" name="active_form" onclick="confirmActivePopup(event)" type="button">Activate</button>
+                          </form>
                           <a class="btn btn-primary" href="{% url 'supplier_listing_detail' listing_id=item.id %}">Edit</a>
-                          {% comment %}
-                          <button class="btn btn-danger" type="button">Delete</button>
-                          {% endcomment %}
                         </td>
                       </tr>
                     {% empty %}

@@ -292,50 +292,54 @@ class SellerProductSellerLocation(BaseModel):
     _is_complete.boolean = True
     is_complete = property(_is_complete)
 
-    def post_save(sender, instance, created, **kwargs):
-        # Create/delete Service.
-        if (
-            not hasattr(instance, "service")
-            and instance.seller_product.product.main_product.has_service
-        ):
-            SellerProductSellerLocationService.objects.create(
-                seller_product_seller_location=instance
-            )
-        elif (
-            hasattr(instance, "service")
-            and not instance.seller_product.product.main_product.has_service
-        ):
-            instance.service.delete()
+    # The following code is not up to date with the current pricing structure.
+    # Furthermore it is bypassed by bulk_create in the BaseProductLocationFormSet
+    # Therefore it is commented out for now.
 
-        # Create/delete Rental.
-        if (
-            not hasattr(instance, "rental")
-            and instance.seller_product.product.main_product.has_rental
-        ):
-            SellerProductSellerLocationRental.objects.create(
-                seller_product_seller_location=instance
-            )
-        elif (
-            hasattr(instance, "rental")
-            and not instance.seller_product.product.main_product.has_rental
-        ):
-            instance.rental.delete()
+    # def post_save(sender, instance, created, **kwargs):
+    # Create/delete Service.
+    # if (
+    #     not hasattr(instance, "service")
+    #     and instance.seller_product.product.main_product.has_service
+    # ):
+    #     SellerProductSellerLocationService.objects.create(
+    #         seller_product_seller_location=instance
+    #     )
+    # elif (
+    #     hasattr(instance, "service")
+    #     and not instance.seller_product.product.main_product.has_service
+    # ):
+    #     instance.service.delete()
 
-        # Create/delete Material.
-        if (
-            not hasattr(instance, "material")
-            and instance.seller_product.product.main_product.has_material
-        ):
-            SellerProductSellerLocationMaterial.objects.create(
-                seller_product_seller_location=instance
-            )
-        elif (
-            hasattr(instance, "material")
-            and not instance.seller_product.product.main_product.has_material
-        ):
-            instance.material.delete()
+    # # Create/delete Rental.
+    # if (
+    #     not hasattr(instance, "rental")
+    #     and instance.seller_product.product.main_product.has_rental
+    # ):
+    #     SellerProductSellerLocationRental.objects.create(
+    #         seller_product_seller_location=instance
+    #     )
+    # elif (
+    #     hasattr(instance, "rental")
+    #     and not instance.seller_product.product.main_product.has_rental
+    # ):
+    #     instance.rental.delete()
+
+    # # Create/delete Material.
+    # if (
+    #     not hasattr(instance, "material")
+    #     and instance.seller_product.product.main_product.has_material
+    # ):
+    #     SellerProductSellerLocationMaterial.objects.create(
+    #         seller_product_seller_location=instance
+    #     )
+    # elif (
+    #     hasattr(instance, "material")
+    #     and not instance.seller_product.product.main_product.has_material
+    # ):
+    #     instance.material.delete()
 
 
-post_save.connect(
-    SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation
-)
+# post_save.connect(
+#     SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation
+# )
