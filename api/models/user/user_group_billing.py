@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.signals import pre_save, post_save
+import threading
 
 from api.models.user.user_group import UserGroup
 from api.utils.google_maps import geocode_address
@@ -35,7 +36,12 @@ class UserGroupBilling(BaseModel):
         user_group = instance.user_group
         addresses = user_group.user_addresses.all()
         for address in addresses:
-            address.update_stripe(save_on_update=True)
+            # Update other locations asynchronously.
+            # Note: This is done asynchronously because it is not critical and shouldn't cause page to hang.
+            p = threading.Thread(
+                target=address.update_stripe, kwargs={"save_on_update": True}
+            )
+            p.start()
 
 
 pre_save.connect(UserGroupBilling.pre_save, sender=UserGroupBilling)
