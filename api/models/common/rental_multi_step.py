@@ -1,10 +1,92 @@
 from datetime import timedelta
 from typing import List, Optional
+import math
 
 from django.db import models
 
 from common.models import BaseModel
 from pricing_engine.models import PricingLineItem
+
+
+def getBestRentalTimes(
+    rentalPrices: list,
+    duration: int,
+    bestRentalTimes: list,
+    _is_recursive=False,
+    _oldBestRentalTimes: list = None,
+) -> list:
+    """This function calculates the most cost-efficient combination of rental price pieces (hourly, daily, weekly, etc.).
+
+    Args:
+        rentalPrices (list): The list of rental prices for different time periods. Format is [(price, duration), ...]
+        duration (int): The total number of hours for the rental. This assume the same unit of time as listed in rentalPrices.
+        bestRentalTimes (list): Empty list to store the best rental times.
+        _is_recursive (bool, optional): Internal, do not set. Defaults to False.
+        _oldBestRentalTimes (list, optional): Internal, do not set. Defaults to None.
+
+    Returns:
+        List[tuples]: Returns a list of time tuples that was used to calculate the best rental price.
+    """
+    currentBestRentalTimes = None
+    # safety check
+    if len(rentalPrices) == 0:
+        return
+    # already found the best rental times
+    if duration == 0:
+        return bestRentalTimes
+    if not _is_recursive:
+        bestRentalTimes = []
+    # find the cheapest rental time ctl that is longer that duration
+    # all the rental times that are shorter call st
+    ctl = None
+    st = []
+    for price in rentalPrices:
+        if price[1] >= duration:
+            if ctl and price[0] < ctl[0] or not ctl:
+                ctl = price
+        else:
+            st.append(price)
+    #
+    # find the cheapest price per day cpd that is shorter that duration
+    cpd = None
+    for price in st:
+        if cpd and price[0] / price[1] < cpd[0] / cpd[1] or not cpd:
+            cpd = price
+    # find the best rental times that cover enough time so far
+    if ctl:
+        currentBestRentalTimes = bestRentalTimes + [ctl]
+    # find the price of _oldBestRentalTimes
+    if _oldBestRentalTimes:
+        if currentBestRentalTimes:
+            oldBestPrice = sum([price[0] for price in _oldBestRentalTimes])
+            newBestPrice = sum([price[0] for price in currentBestRentalTimes])
+            if oldBestPrice < newBestPrice:
+                currentBestRentalTimes = _oldBestRentalTimes
+        else:
+            currentBestRentalTimes = _oldBestRentalTimes
+    # get number of times cpd can be used and the remainder
+    numTimes = None
+    if cpd:
+        numTimes = math.floor(duration / cpd[1])
+        remainingDays = duration - numTimes * cpd[1]
+    # if ctl is cheaper than cpd, return ctl
+    # else getBestRentalTimes for the remaining time
+    if currentBestRentalTimes and (
+        not cpd
+        or sum([price[0] for price in currentBestRentalTimes])
+        <= cpd[0] * numTimes + sum([price[0] for price in bestRentalTimes])
+    ):
+        bestRentalTimes += [ctl]
+        return currentBestRentalTimes
+    else:
+        bestRentalTimes += [cpd for i in range(numTimes)]
+        return getBestRentalTimes(
+            rentalPrices,
+            remainingDays,
+            bestRentalTimes,
+            _is_recursive=True,
+            _oldBestRentalTimes=currentBestRentalTimes,
+        )
 
 
 class PricingRentalMultiStep(BaseModel):
@@ -187,53 +269,36 @@ class PricingRentalMultiStep(BaseModel):
         if duration < timedelta(0):
             raise Exception("The Duration must be positive.")
 
-        # Get the total number of hours.
-        total_hours = duration.total_seconds() / 3600
+        # Get the total number of hours as integers.
+        total_hours = int(duration.total_seconds() / 3600)
 
         # Create list of PricingLineItems.
-        hours = None
-        days = None
-        weeks = None
-        two_weeks = None
-        months = None
+        hours = 0
+        days = 0
+        weeks = 0
+        two_weeks = 0
+        months = 0
 
-        remaining_hours = total_hours
-        # NOTE: Months are concidered as 28 days (28x24=672).
-
-        if remaining_hours // 672 > 0 and self.month:
-            # Get whole months.
-            months = int(remaining_hours // 672)
-
-            # Get remaining hours and price.
-            remaining_hours = remaining_hours % 672
-
-        if remaining_hours // 336 > 0 and self.two_weeks:
-            # Get whole two-week periods.
-            two_weeks = int(remaining_hours // 336)
-
-            # Get remaining hours and price.
-            remaining_hours = remaining_hours % 336
-
-        if remaining_hours // 168 > 0 and self.week:
-            # Get whole weeks.
-            weeks = int(remaining_hours // 168)
-
-            # Get remaining hours and price.
-            remaining_hours = remaining_hours % 168
-
-        if remaining_hours // 24 > 0 and self.effective_day_rate:
-            # Get whole days.
-            days = int(remaining_hours // 24)
-
-            # Get remaining hours and price.
-            remaining_hours = remaining_hours % 24
-
-        # NOTE: The following code is commented out because we are not using
-        # hourly pricing currently. This is a future enhancement.
-
-        # if remaining_hours > 0:
-        #     hours = math.ceil(remaining_hours)
-
+        # NOTE: Add hourly pricing when that becomes available. This is a future enhancement.
+        rentalPrices = [
+            (self.effective_month_rate, 672),
+            (self.effective_two_week_rate, 336),
+            (self.effective_week_rate, 168),
+            (self.effective_day_rate, 24),
+        ]
+        bestRentalTimes = []
+        rentalTimes = getBestRentalTimes(rentalPrices, total_hours, bestRentalTimes)
+        for rentalTime in rentalTimes:
+            if rentalTime[1] == 672:
+                months += 1
+            elif rentalTime[1] == 336:
+                two_weeks += 1
+            elif rentalTime[1] == 168:
+                weeks += 1
+            elif rentalTime[1] == 24:
+                days += 1
+            elif rentalTime[1] == 1:
+                hours += 1
         return months, two_weeks, weeks, days, hours
 
     def get_price(
