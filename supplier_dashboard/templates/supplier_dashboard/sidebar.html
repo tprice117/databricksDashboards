@@ -42,9 +42,11 @@
       <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'supplier_bookings' %} active{% endif %}" href="{% url 'supplier_bookings' %}"><i class="icon ion-calendar"></i><span>Bookings</span></a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_listings' %} active{% endif %}" href="{% url 'supplier_listings' %}"><i class="fa fa-tag"></i><span>Listings</span></a>
-      </li>
+      {% if request.user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link{% if request.resolver_match.url_name == 'supplier_listings' %} active{% endif %}" href="{% url 'supplier_listings' %}"><i class="fa fa-tag"></i><span>Listings</span></a>
+        </li>
+      {% endif %}
       <li class="nav-item">
         {% url 'supplier_products' as supplier_products %}
         <a class="nav-link{% if supplier_products in request.path %} active{% endif %}" href="{{ supplier_products }}"><i class="fa fa-cart-plus"></i><span>Add Products</span></a>

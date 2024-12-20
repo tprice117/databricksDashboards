@@ -1587,9 +1587,12 @@ def download_bookings(request):
 
 @login_required(login_url="/admin/login/")
 def listings(request):
-    context = {}
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
 
+    context = {}
     seller = get_seller(request)
+
     if not seller:
         if (
             hasattr(request.user, "user_group")
@@ -1645,6 +1648,9 @@ def listings(request):
 
 @login_required(login_url="/admin/login/")
 def listing_detail(request, listing_id):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
     context = {}
     seller = get_seller(request)
 

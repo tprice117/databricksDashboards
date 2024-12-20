@@ -799,7 +799,7 @@ class SellerProductSellerLocationServiceForm(forms.ModelForm):
         instance = kwargs.get("instance")
         if instance:
             self.fields["pricing"].initial = (
-                "flat_rate" if instance.flat_rate_price else "per_mile"
+                "per_mile" if instance.price_per_mile else "flat_rate"
             )
         # Change ordering of fields
         self.fields = {
