@@ -990,7 +990,10 @@ def companies(request):
         sellers = (
             sellers.select_related("usergroup")
             .annotate(
-                users_count=Count("usergroup__users"),
+                users_count=Count("usergroup__users", distinct=True),
+                listings_count=Count(
+                    "seller_locations__seller_product_seller_locations", distinct=True
+                ),
             )
             .order_by("name")
         )
@@ -1792,7 +1795,6 @@ def listing_detail(request, listing_id):
             else:
                 messages.error(request, "Error saving, please check the form.")
                 for form in service_formset:
-                    print(form.errors)
                     for field in form.errors:
                         if field not in ["__all__", "seller_product_seller_location"]:
                             form[field].field.widget.attrs["class"] += " is-invalid"
@@ -1810,7 +1812,6 @@ def listing_detail(request, listing_id):
                 messages.error(request, "Error saving, please check the form.")
                 for form in rental_formset:
                     for field in form.errors:
-                        print(form.errors)
                         if field not in ["__all__", "seller_product_seller_location"]:
                             form[field].field.widget.attrs["class"] += " is-invalid"
         elif "material_form" in request.POST:
