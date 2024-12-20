@@ -4219,11 +4219,20 @@ def reviews(request):
         if tab == "users":
             context["help_text"] = "Reviews made by Users"
             reviews = (
-                User.objects.values("id", "first_name", "last_name", "photo_url")
+                User.objects.values(
+                    "id", "first_name", "last_name", "photo_url", "email"
+                )
                 .annotate(
                     rating=Sum(
                         Case(
                             When(ordergroup__orders__review__rating=True, then=1),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    negative_rating=Sum(
+                        Case(
+                            When(ordergroup__orders__review__rating=False, then=1),
                             default=0,
                             output_field=IntegerField(),
                         )
@@ -4247,7 +4256,7 @@ def reviews(request):
                     ),
                 )
                 # Don't include rows with no reviews
-                .filter(Q(rating__gt=0))
+                .filter(Q(rating__gt=0) | Q(negative_rating__gt=0))
                 .order_by("-rating")
             )
         elif tab == "sellers":
@@ -4259,6 +4268,16 @@ def reviews(request):
                         Case(
                             When(
                                 seller_locations__seller_product_seller_locations__order_groups__orders__review__rating=True,
+                                then=1,
+                            ),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    negative_rating=Sum(
+                        Case(
+                            When(
+                                seller_locations__seller_product_seller_locations__order_groups__orders__review__rating=False,
                                 then=1,
                             ),
                             default=0,
@@ -4292,7 +4311,7 @@ def reviews(request):
                     ),
                 )
                 # Don't include rows with no reviews
-                .filter(Q(rating__gt=0))
+                .filter(Q(rating__gt=0) | Q(negative_rating__gt=0))
                 .order_by("-rating")
             )
         else:
