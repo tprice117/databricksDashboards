@@ -498,9 +498,7 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
             # Global View: Get all invoices.
             invoices = Invoice.objects.all()
         elif user_group:
-            invoices = Invoice.objects.filter(
-                user_address__user__user_group_id=user_group.id
-            )
+            invoices = Invoice.objects.filter(user_address__user_group_id=user_group.id)
         else:
             # Individual user. Get all invoices for the user.
             invoices = Invoice.objects.filter(user_address__user_id=user.id)
