@@ -1,5 +1,8 @@
 from api.models.user.user_address import UserAddress
 from common.utils.stripe.stripe_utils import StripeUtils
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def ensure_invoice_settings_default_payment_method():
@@ -18,6 +21,26 @@ def ensure_invoice_settings_default_payment_method():
         stripe_customer = StripeUtils.Customer.get(
             user_address.stripe_customer_id,
         )
+        is_deleted = getattr(stripe_customer, "deleted", False)
+        if is_deleted:
+            try:
+                # If the Stripe Customer is deleted, then update the UserAddress to
+                # re-create the Stripe Customer.
+                logger.warning(
+                    f"Stripe Customer is deleted, re-create: [{user_address}][{user_address.id}][{user_address.stripe_customer_id}]"
+                )
+                user_address.stripe_customer_id = None
+                user_address.save()
+                # Get Stripe Customer.
+                stripe_customer = StripeUtils.Customer.get(
+                    user_address.stripe_customer_id,
+                )
+            except Exception as e:
+                logger.error(
+                    f"Stripe Customer is deleted, re-create:error: [{user_address}][{user_address.id}][{user_address.stripe_customer_id}]-[{e}]",
+                    exc_info=e,
+                )
+                continue
 
         # Get the DefaultPaymentMethod for the Stripe Customer.
         default_payment_method = (
