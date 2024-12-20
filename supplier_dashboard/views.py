@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, F, Count
 from django.forms import inlineformset_factory, formset_factory
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -503,12 +503,18 @@ def supplier_impersonation_start(request):
             return HttpResponse("Not Implemented", status=406)
         try:
             seller = Seller.objects.get(id=seller_id)
+            if not hasattr(seller, "usergroup"):
+                raise UserGroup.DoesNotExist
             user = seller.usergroup.users.filter(type=UserType.ADMIN).first()
             if not user:
                 raise User.DoesNotExist
-            # user = User.objects.get(id=user_id)
             request.session["user_id"] = get_json_safe_value(user.id)
             request.session["seller_id"] = get_json_safe_value(seller_id)
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
+        except UserGroup.DoesNotExist:
+            messages.error(
+                request, "No usergroup found for seller. Seller must have a usergroup."
+            )
             return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
         except User.DoesNotExist:
             messages.error(
@@ -976,11 +982,21 @@ def companies(request):
 
     if request.headers.get("HX-Request"):
         query_params = request.GET.copy()
+        context["seller"] = get_seller(request)
 
         sellers = Seller.objects.all()
         if search_q:
             sellers = sellers.filter(Q(name__icontains=search_q))
-        sellers = sellers.order_by("name")
+        sellers = (
+            sellers.select_related("usergroup")
+            .annotate(
+                users_count=Count("usergroup__users", distinct=True),
+                listings_count=Count(
+                    "seller_locations__seller_product_seller_locations", distinct=True
+                ),
+            )
+            .order_by("name")
+        )
 
         paginator = Paginator(sellers, pagination_limit)
         page_obj = paginator.get_page(page_number)
@@ -1048,7 +1064,7 @@ def users(request):
                     user_id=user.id
                 ).count()
             }
-            print(user.user_group.name)
+            # print(user.user_group.name)
             user_lst.append(user_dict)
 
         paginator = Paginator(user_lst, pagination_limit)
@@ -1571,9 +1587,12 @@ def download_bookings(request):
 
 @login_required(login_url="/admin/login/")
 def listings(request):
-    context = {}
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
 
+    context = {}
     seller = get_seller(request)
+
     if not seller:
         if (
             hasattr(request.user, "user_group")
@@ -1629,6 +1648,9 @@ def listings(request):
 
 @login_required(login_url="/admin/login/")
 def listing_detail(request, listing_id):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
     context = {}
     seller = get_seller(request)
 
@@ -1779,7 +1801,6 @@ def listing_detail(request, listing_id):
             else:
                 messages.error(request, "Error saving, please check the form.")
                 for form in service_formset:
-                    print(form.errors)
                     for field in form.errors:
                         if field not in ["__all__", "seller_product_seller_location"]:
                             form[field].field.widget.attrs["class"] += " is-invalid"
@@ -1797,7 +1818,6 @@ def listing_detail(request, listing_id):
                 messages.error(request, "Error saving, please check the form.")
                 for form in rental_formset:
                     for field in form.errors:
-                        print(form.errors)
                         if field not in ["__all__", "seller_product_seller_location"]:
                             form[field].field.widget.attrs["class"] += " is-invalid"
         elif "material_form" in request.POST:
@@ -1966,7 +1986,10 @@ def products_3_table(request, main_product_id):
     for product in products:
         # Get names of add-ons
         add_ons = product.product_add_on_choices.select_related("add_on_choice")
-        product_add_ons = [add_on.add_on_choice.name for add_on in add_ons]
+        product_add_ons = [
+            f"{add_on.add_on_choice.add_on.name}: {add_on.add_on_choice.name}"
+            for add_on in add_ons
+        ]
 
         # Get existing listings for this product
         listings = []
@@ -1982,8 +2005,8 @@ def products_3_table(request, main_product_id):
         products_list.append(
             {
                 "product_id": product.id,
-                "product_code": product.product_code or "N/A",
-                "add_ons": ", ".join(product_add_ons) or "N/A",
+                "product_code": product.product_code or "None",
+                "add_ons": product_add_ons or ["N/A"],
                 "locations": listings,
             }
         )

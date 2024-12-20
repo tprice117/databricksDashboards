@@ -676,6 +676,7 @@ class SellerProductSellerLocationSchedulingForm(forms.ModelForm):
         widget=forms.NumberInput(
             attrs={"class": "form-control", "placeholder": "0 hrs", "min": 0.0}
         ),
+        help_text="The lead time for this location. Same across all listings for this address.",
     )
 
     class Meta:
@@ -757,6 +758,16 @@ class SellerProductSellerLocationPricingForm(forms.ModelForm):
 
 
 class SellerProductSellerLocationServiceForm(forms.ModelForm):
+    pricing = forms.ChoiceField(
+        choices=[
+            ("flat_rate", "Flat Rate"),
+            ("per_mile", "Per Mile"),
+        ],
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Pricing Method",
+        required=True,
+    )
+
     class Meta:
         model = SellerProductSellerLocationService
         fields = ["flat_rate_price", "price_per_mile"]
@@ -779,9 +790,55 @@ class SellerProductSellerLocationServiceForm(forms.ModelForm):
             ),
         }
         labels = {
-            "flat_rate_price": "Price Per Service",
+            "flat_rate_price": "Flat Rate",
             "price_per_mile": "Price Per Mile",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = kwargs.get("instance")
+        if instance:
+            self.fields["pricing"].initial = (
+                "per_mile" if instance.price_per_mile else "flat_rate"
+            )
+        # Change ordering of fields
+        self.fields = {
+            "pricing": self.fields["pricing"],
+            "flat_rate_price": self.fields["flat_rate_price"],
+            "price_per_mile": self.fields["price_per_mile"],
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        pricing = cleaned_data.get("pricing")
+        flat_rate_price = cleaned_data.get("flat_rate_price")
+        price_per_mile = cleaned_data.get("price_per_mile")
+        if not (flat_rate_price or price_per_mile):
+            raise forms.ValidationError(
+                "You must enter either a flat rate or a price per mile."
+            )
+        elif pricing == "flat_rate" and not flat_rate_price:
+            raise forms.ValidationError(
+                "You must enter a flat rate price if you select Flat Rate pricing."
+            )
+        elif pricing == "per_mile" and not price_per_mile:
+            raise forms.ValidationError(
+                "You must enter a price per mile if you select Price Per Mile pricing."
+            )
+        return cleaned_data
+
+    def save(self, commit=True):
+        spsl_service = super().save(commit=False)
+        # Clear the other pricing field if one is set
+        pricing = self.cleaned_data["pricing"]
+        if pricing == "flat_rate":
+            spsl_service.price_per_mile = None
+        elif pricing == "per_mile":
+            spsl_service.flat_rate_price = None
+
+        if commit:
+            spsl_service.save()
+        return spsl_service
 
 
 class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
@@ -896,7 +953,7 @@ class SellerProductSellerLocationRentalOneStepForm(forms.ModelForm):
             ),
         }
         help_texts = {
-            "rate": "This rate is for up to 28 days. If a rental extends for greater than 28 days, a second charge of the rate will be added.",
+            "rate": "Rate is per month (28 days).",
         }
 
 
