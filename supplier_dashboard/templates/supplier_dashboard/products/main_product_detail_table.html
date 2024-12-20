@@ -21,7 +21,7 @@
               {{ hidden }}
             {% endfor %}
             <td>
-              <div class="image-container" style="height: 100px; width: 100px;">
+              <div class="image-container img-container-sm">
                 <img class="img-fluid"
                   src="{% if main_product.image_del %}
                     {{ main_product.image_del }}
@@ -31,8 +31,8 @@
               </div>
             </td>
             <td>{{ form.product_code.value }}</td>
-            <td>{{ form.add_ons.value }}</td>
-            <td style="width: 100%;">
+            <td class="text-nowrap">{{ form.add_ons.value|unordered_list }}</td>
+            <td class="w-100">
               {{ form.locations }}
               {% if form.locations.errors %}
                 <small class="text-danger float-end">{{ form.locations.errors|join:', ' }}</small>

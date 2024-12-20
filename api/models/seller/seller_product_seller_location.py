@@ -1,5 +1,5 @@
-from django.contrib import admin
 from django.db import models
+from django.db.models import Q, Case, When, Sum, Max
 from django.db.models.signals import post_save
 from django.utils import timezone
 
@@ -52,16 +52,16 @@ def get_pricing_engine_response_serializer(pricing):
 class SellerProductSellerLocationQuerySet(models.QuerySet):
     def with_last_checkout(self):
         return self.annotate(
-            last_checkout=models.Max(
+            last_checkout=Max(
                 "order_groups__orders__submitted_on",
             ),
         )
 
     def with_ratings(self):
         return self.annotate(
-            rating=models.Sum(
-                models.Case(
-                    models.When(
+            rating=Sum(
+                Case(
+                    When(
                         order_groups__orders__review__rating=True,
                         then=1,
                     ),
@@ -69,6 +69,71 @@ class SellerProductSellerLocationQuerySet(models.QuerySet):
                 )
             )
         )
+
+    def _get_complete_condition(self):
+        rental_one_step_complete = Q(
+            seller_product__product__main_product__has_rental_one_step=False
+        ) | Q(rental_one_step__rate__gt=0)
+
+        rental_two_step_complete = Q(
+            seller_product__product__main_product__has_rental=False
+        ) | Q(
+            rental__price_per_day_included__gt=0,
+            rental__price_per_day_additional__gt=0,
+        )
+
+        rental_multi_step_complete = (
+            Q(seller_product__product__main_product__has_rental_multi_step=False)
+            | Q(rental_multi_step__hour__isnull=False)
+            | Q(rental_multi_step__day__isnull=False)
+            | Q(rental_multi_step__week__isnull=False)
+            | Q(rental_multi_step__two_weeks__isnull=False)
+            | Q(rental_multi_step__month__isnull=False)
+        )
+
+        service_complete = (
+            Q(seller_product__product__main_product__has_service=False)
+            | Q(service__price_per_mile__gt=0)
+            | Q(service__flat_rate_price__gt=0)
+        )
+
+        service_times_per_week_complete = (
+            Q(seller_product__product__main_product__has_service_times_per_week=False)
+            | Q(service_times_per_week__one_time_per_week__isnull=False)
+            | Q(service_times_per_week__two_times_per_week__isnull=False)
+            | Q(service_times_per_week__three_times_per_week__isnull=False)
+            | Q(service_times_per_week__four_times_per_week__isnull=False)
+            | Q(service_times_per_week__five_times_per_week__isnull=False)
+        )
+
+        material_is_complete = Q(
+            seller_product__product__main_product__has_material=False
+        ) | Q(material__waste_types__isnull=False)
+
+        # Combine all conditions
+        complete_condition = (
+            rental_one_step_complete
+            & rental_two_step_complete
+            & rental_multi_step_complete
+            & service_complete
+            & service_times_per_week_complete
+            & material_is_complete
+        )
+
+        return complete_condition
+
+    def get_active(self):
+        complete_condition = self._get_complete_condition()
+        # Get all objects that fulfill the condition
+        return self.filter(complete_condition, active=True).distinct()
+
+    def get_needs_attention(self):
+        complete_condition = self._get_complete_condition()
+        # Get all objects where active=True but complete_condition is false
+        return self.filter(active=True).exclude(complete_condition).distinct()
+
+    def get_inactive(self):
+        return self.filter(active=False).distinct()
 
 
 class SellerProductSellerLocationManager(models.Manager):
@@ -80,6 +145,15 @@ class SellerProductSellerLocationManager(models.Manager):
 
     def with_ratings(self):
         return self.get_queryset().with_ratings()
+
+    def get_active(self):
+        return self.get_queryset().get_active()
+
+    def get_needs_attention(self):
+        return self.get_queryset().get_needs_attention()
+
+    def get_inactive(self):
+        return self.get_queryset().get_inactive()
 
 
 class SellerProductSellerLocation(BaseModel):
@@ -99,6 +173,7 @@ class SellerProductSellerLocation(BaseModel):
     max_price = models.DecimalField(
         max_digits=18, decimal_places=2, blank=True, null=True
     )
+    # Service radius in miles
     service_radius = models.DecimalField(
         max_digits=18, decimal_places=0, blank=True, null=True
     )
@@ -116,6 +191,7 @@ class SellerProductSellerLocation(BaseModel):
         help_text="Percentage (ex: 35 means 35%)",
     )
 
+    # Manager for chaining custom queries.
     objects = SellerProductSellerLocationManager()
 
     class Meta:
@@ -182,6 +258,12 @@ class SellerProductSellerLocation(BaseModel):
         )
 
         # Service.
+        service_complete = (
+            hasattr(self, "service") and self.service.is_complete
+            if self.seller_product.product.main_product.has_service
+            else True
+        )
+
         service_times_per_week_complete = (
             hasattr(self, "service_times_per_week")
             and self.service_times_per_week.is_complete
@@ -200,6 +282,7 @@ class SellerProductSellerLocation(BaseModel):
             rental_one_step_complete
             and rental_two_step_complete
             and rental_multi_step_complete
+            and service_complete
             and service_times_per_week_complete
             and material_is_complete
         )
@@ -209,50 +292,54 @@ class SellerProductSellerLocation(BaseModel):
     _is_complete.boolean = True
     is_complete = property(_is_complete)
 
-    def post_save(sender, instance, created, **kwargs):
-        # Create/delete Service.
-        if (
-            not hasattr(instance, "service")
-            and instance.seller_product.product.main_product.has_service
-        ):
-            SellerProductSellerLocationService.objects.create(
-                seller_product_seller_location=instance
-            )
-        elif (
-            hasattr(instance, "service")
-            and not instance.seller_product.product.main_product.has_service
-        ):
-            instance.service.delete()
+    # The following code is not up to date with the current pricing structure.
+    # Furthermore it is bypassed by bulk_create in the BaseProductLocationFormSet
+    # Therefore it is commented out for now.
 
-        # Create/delete Rental.
-        if (
-            not hasattr(instance, "rental")
-            and instance.seller_product.product.main_product.has_rental
-        ):
-            SellerProductSellerLocationRental.objects.create(
-                seller_product_seller_location=instance
-            )
-        elif (
-            hasattr(instance, "rental")
-            and not instance.seller_product.product.main_product.has_rental
-        ):
-            instance.rental.delete()
+    # def post_save(sender, instance, created, **kwargs):
+    # Create/delete Service.
+    # if (
+    #     not hasattr(instance, "service")
+    #     and instance.seller_product.product.main_product.has_service
+    # ):
+    #     SellerProductSellerLocationService.objects.create(
+    #         seller_product_seller_location=instance
+    #     )
+    # elif (
+    #     hasattr(instance, "service")
+    #     and not instance.seller_product.product.main_product.has_service
+    # ):
+    #     instance.service.delete()
 
-        # Create/delete Material.
-        if (
-            not hasattr(instance, "material")
-            and instance.seller_product.product.main_product.has_material
-        ):
-            SellerProductSellerLocationMaterial.objects.create(
-                seller_product_seller_location=instance
-            )
-        elif (
-            hasattr(instance, "material")
-            and not instance.seller_product.product.main_product.has_material
-        ):
-            instance.material.delete()
+    # # Create/delete Rental.
+    # if (
+    #     not hasattr(instance, "rental")
+    #     and instance.seller_product.product.main_product.has_rental
+    # ):
+    #     SellerProductSellerLocationRental.objects.create(
+    #         seller_product_seller_location=instance
+    #     )
+    # elif (
+    #     hasattr(instance, "rental")
+    #     and not instance.seller_product.product.main_product.has_rental
+    # ):
+    #     instance.rental.delete()
+
+    # # Create/delete Material.
+    # if (
+    #     not hasattr(instance, "material")
+    #     and instance.seller_product.product.main_product.has_material
+    # ):
+    #     SellerProductSellerLocationMaterial.objects.create(
+    #         seller_product_seller_location=instance
+    #     )
+    # elif (
+    #     hasattr(instance, "material")
+    #     and not instance.seller_product.product.main_product.has_material
+    # ):
+    #     instance.material.delete()
 
 
-post_save.connect(
-    SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation
-)
+# post_save.connect(
+#     SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation
+# )

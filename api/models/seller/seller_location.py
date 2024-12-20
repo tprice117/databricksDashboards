@@ -87,6 +87,10 @@ class SellerLocation(BaseModel):
         return f"{self.name} | {self.seller.name}"
 
     @property
+    def short_address(self):
+        return f"{self.street} {self.city}"
+
+    @property
     def formatted_address(self):
         return f"{self.street} {self.city}, {self.state} {self.postal_code}"
 

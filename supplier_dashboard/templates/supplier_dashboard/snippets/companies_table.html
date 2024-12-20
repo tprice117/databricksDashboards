@@ -10,29 +10,45 @@
     <tr>
       <th>Name</th>
       <th>Locations</th>
+      <th>Users</th>
+      <th>Listings</th>
       <th>Phone</th>
+      {% if request.user.is_staff %}
+        <th>Action</th>
+      {% endif %}
       <th>Status</th>
     </tr>
   </thead>
   <tbody>
     {% if page_obj %}
-      {% for seller in page_obj %}
+      {% for company in page_obj %}
         <tr>
-          <td>{{ seller.name }}</td>
-          <td>{{ seller.seller_locations.count }}</td>
-          <td>{{ seller.phone }}</td>
-          <td>
-            <div class="px-3 mx-3">
-              {% if seller.status %}
-                {% if seller.status == 'Active' %}
-                  <span class="badge bg-success fw-medium w-100">{{ seller.status }}</span>
-                {% else %}
-                  <span class="badge bg-warning fw-medium w-100">{{ seller.status }}</span>
-                {% endif %}
+          <td>{{ company.name }}</td>
+          <td>{{ company.seller_locations.count }}</td>
+          <td>{{ company.users_count }}</td>
+          <td>{{ company.listings_count }}</td>
+          <td>{{ company.phone }}</td>
+          {% if request.user.is_staff %}
+            <td>
+              {% if company.id == seller.id %}
+                <p class="text-primary">Impersonating</p>
+              {% elif company.usergroup and company.users_count > 0 %}
+                <a href="{% url 'supplier_impersonation_start' %}?seller_id={{ company.id }}" class="btn btn-sm btn-primary">Impersonate</a>
               {% else %}
-                <span class="badge bg-primary fw-medium w-100">Inactive</span>
+                <p class="text-muted">No action</p>
               {% endif %}
-            </div>
+            </td>
+          {% endif %}
+          <td>
+            {% if company.status %}
+              {% if company.status == 'Active' %}
+                <span class="badge text-success fw-medium" style="background-color: rgba(var(--bs-success-rgb), 0.2);">{{ company.status }}</span>
+              {% else %}
+                <span class="badge text-warning fw-medium" style="background-color: rgba(var(--bs-warning-rgb), 0.2);">{{ company.status }}</span>
+              {% endif %}
+            {% else %}
+              <span class="badge text-primary fw-medium" style="background-color: rgba(var(--bs-primary-rgb), 0.2);">No Status</span>
+            {% endif %}
           </td>
         </tr>
       {% empty %}
@@ -46,7 +62,12 @@
     <tr>
       <th>Name</th>
       <th>Locations</th>
+      <th>Users</th>
+      <th>Listings</th>
       <th>Phone</th>
+      {% if request.user.is_staff %}
+        <th>Action</th>
+      {% endif %}
       <th>Status</th>
     </tr>
   </tfoot>
