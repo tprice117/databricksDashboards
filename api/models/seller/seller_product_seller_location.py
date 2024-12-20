@@ -51,6 +51,7 @@ def get_pricing_engine_response_serializer(pricing):
 
 class SellerProductSellerLocationQuerySet(models.QuerySet):
     def with_last_checkout(self):
+        """Annotate the queryset with the most recent checkout date."""
         return self.annotate(
             last_checkout=Max(
                 "order_groups__orders__submitted_on",
@@ -58,6 +59,7 @@ class SellerProductSellerLocationQuerySet(models.QuerySet):
         )
 
     def with_ratings(self):
+        """Annotate the queryset with the total number of thumbs up ratings."""
         return self.annotate(
             rating=Sum(
                 Case(
