@@ -1979,7 +1979,10 @@ def products_3_table(request, main_product_id):
     for product in products:
         # Get names of add-ons
         add_ons = product.product_add_on_choices.select_related("add_on_choice")
-        product_add_ons = [add_on.add_on_choice.name for add_on in add_ons]
+        product_add_ons = [
+            f"{add_on.add_on_choice.add_on.name}: {add_on.add_on_choice.name}"
+            for add_on in add_ons
+        ]
 
         # Get existing listings for this product
         listings = []
@@ -1995,8 +1998,8 @@ def products_3_table(request, main_product_id):
         products_list.append(
             {
                 "product_id": product.id,
-                "product_code": product.product_code or "N/A",
-                "add_ons": ", ".join(product_add_ons) or "N/A",
+                "product_code": product.product_code or "None",
+                "add_ons": product_add_ons or ["N/A"],
                 "locations": listings,
             }
         )
