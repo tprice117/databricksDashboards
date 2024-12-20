@@ -1064,7 +1064,7 @@ def users(request):
                     user_id=user.id
                 ).count()
             }
-            print(user.user_group.name)
+            # print(user.user_group.name)
             user_lst.append(user_dict)
 
         paginator = Paginator(user_lst, pagination_limit)
