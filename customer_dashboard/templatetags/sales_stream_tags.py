@@ -19,4 +19,6 @@ def add_markup(value, markup):
 @register.filter(is_safe=True)
 def currency(value):
     """Format a number as currency"""
+    if value is None:
+        return "$0.00"
     return "${:,.2f}".format(value)
