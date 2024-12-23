@@ -4,6 +4,9 @@ from django.db.models import Q, Sum, Prefetch
 from api.models import Payout, SellerLocation, User
 from common.models.choices.user_type import UserType
 from common.utils import customerio
+import logging
+
+logger = logging.getLogger(__name__)
 
 TEMPLATE_ID = 13
 
@@ -62,30 +65,37 @@ def send_supplier_remittance_emails():
         return
 
     for payout in grouped_payouts:
-        seller_location = get_seller_location_with_billing_users(
-            payout[
-                "order__order_group__seller_product_seller_location__seller_location"
-            ],
-        )
-
-        emails = [seller_location.order_email]
-
-        if hasattr(seller_location.seller, "usergroup"):
-            emails_query = seller_location.seller.usergroup.users.values_list(
-                "email", flat=True
+        seller_location_id = None
+        try:
+            seller_location = get_seller_location_with_billing_users(
+                payout[
+                    "order__order_group__seller_product_seller_location__seller_location"
+                ],
             )
-            emails.extend([email for email in emails_query])
+            seller_location_id = seller_location.id
 
-        message_data = {
-            "payout_total": f"{payout['total_amount']:.2f}",  # payout_total
-            "seller_location_name": seller_location.name,  # seller_location_name
-            "seller_location_mailing_address": seller_location.mailing_address.formatted_address,  # seller_location_mailing_address
-            "user_group_name": seller_location.seller.name,  # user_group_name
-        }
+            emails = [seller_location.order_email]
 
-        customerio.send_email(
-            send_to=emails,
-            message_data=message_data,
-            subject=f"{message_data['user_group_name']}'s Weekly Payout Remittance from Downstream Marketplace",
-            template_id=TEMPLATE_ID,
-        )
+            if hasattr(seller_location.seller, "usergroup"):
+                emails_query = seller_location.seller.usergroup.users.values_list(
+                    "email", flat=True
+                )
+                emails.extend([email for email in emails_query])
+
+            message_data = {
+                "payout_total": f"{payout['total_amount']:.2f}",  # payout_total
+                "seller_location_name": seller_location.name,  # seller_location_name
+                "seller_location_mailing_address": seller_location.mailing_address.formatted_address,  # seller_location_mailing_address
+                "user_group_name": seller_location.seller.name,  # user_group_name
+            }
+
+            customerio.send_email(
+                send_to=emails,
+                message_data=message_data,
+                subject=f"{message_data['user_group_name']}'s Weekly Payout Remittance from Downstream Marketplace",
+                template_id=TEMPLATE_ID,
+            )
+        except Exception as e:
+            logger.error(
+                f"send_supplier_remittance_emails:error: [payout:{payout}]-[{seller_location_id:{seller_location_id}}]-[{e}]"
+            )
