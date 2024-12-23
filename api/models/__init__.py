@@ -10,6 +10,7 @@ from .main_product.main_product_add_on import MainProductAddOn
 from .main_product.main_product_category import MainProductCategory
 from .main_product.main_product_category_group import MainProductCategoryGroup
 from .main_product.main_product_category_info import MainProductCategoryInfo
+from .main_product.main_product_image import MainProductImage
 from .main_product.main_product_info import MainProductInfo
 from .main_product.main_product_service_recurring_frequency import (
     MainProductServiceRecurringFrequency,
