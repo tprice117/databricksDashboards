@@ -524,13 +524,19 @@ class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product_category = MainProductCategorySerializer(read_only=True)
     main_product_infos = MainProductInfoSerializer(many=True, read_only=True)
+    images = serializers.SerializerMethodField()
     add_ons = AddOnSerializer(many=True, read_only=True)
     tags = MainProductTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = MainProduct
         fields = "__all__"
-        extra_fields = ["main_product_infos"]
+        extra_fields = ["main_product_infos", "images"]
+
+    def get_images(self, obj):
+        """Get images as a list of urls."""
+        images = obj.images.all()
+        return [image.image.url for image in images]
 
     def get_field_names(self, declared_fields, info):
         expanded_fields = super(MainProductSerializer, self).get_field_names(

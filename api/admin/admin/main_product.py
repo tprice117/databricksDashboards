@@ -2,7 +2,12 @@ from django.contrib import admin
 from import_export.admin import ExportActionMixin
 from import_export import resources
 
-from api.admin.inlines import AddOnInline, MainProductInfoInline, ProductInline
+from api.admin.inlines import (
+    AddOnInline,
+    MainProductImageInline,
+    MainProductInfoInline,
+    ProductInline,
+)
 from api.models import MainProduct
 from common.admin.admin.base_admin import BaseModelAdmin
 
@@ -88,6 +93,7 @@ class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
     ]
     inlines = [
         ProductInline,
+        MainProductImageInline,
         MainProductInfoInline,
         AddOnInline,
     ]
