@@ -1044,6 +1044,7 @@ def new_order_4(request):
     if not request.user.is_staff:
         discount = context["market_discount"]
     context["discount"] = discount
+    context["default_markup"] = context["product"].main_product.default_take_rate
 
     if request.headers.get("HX-Request"):
         # Waste type
