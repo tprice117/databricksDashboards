@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin
+from django.utils.html import format_html
 
 from api.models import OrderLineItem
 
@@ -53,3 +54,11 @@ class OrderLineItemInline(admin.TabularInline):
     form = OrderLineItemInlineForm
     show_change_link = True
     extra = 0
+    readonly_fields = (
+        "stripe_description_display",  # Add the custom method here
+    )
+
+    def stripe_description_display(self, instance):
+        return format_html(instance.stripe_description)
+
+    stripe_description_display.short_description = "Stripe Description"

@@ -58,6 +58,9 @@ class OrderLineItemManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()
 
+    def exclude_adjustments(self):
+        return self.get_queryset().exclude(stripe_invoice_line_item_id="BYPASS")
+
     def ordered_by_type(self):
         # Create a case statement to order by the specified item order
         order_case = models.Case(
@@ -67,7 +70,9 @@ class OrderLineItemManager(models.Manager):
             ]
         )
         return (
-            self.get_queryset().annotate(order_case=order_case).order_by("order_case")
+            self.exclude_adjustments()
+            .annotate(order_case=order_case)
+            .order_by("order_case")
         )
 
 
@@ -107,6 +112,27 @@ class OrderLineItem(BaseModel):
     class Meta:
         verbose_name = "Transaction Line Item"
         verbose_name_plural = "Transaction Line Items"
+
+    def get_units(self):
+        if (
+            self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
+            and (
+                self.order_line_item_type.code == "RENTAL"
+                or self.order_line_item_type.code == "SERVICE"
+            )
+        ):
+            return "month"
+        elif (
+            self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+            and self.description
+            and (
+                self.order_line_item_type.code == "RENTAL"
+                or self.order_line_item_type.code == "SERVICE"
+            )
+        ):
+            return self.description
+        else:
+            return self.order_line_item_type.units
 
     @property
     def stripe_description(self):
