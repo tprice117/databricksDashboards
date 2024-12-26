@@ -289,26 +289,20 @@ class UserGroupForm(forms.ModelForm):
         fields = [
             "name",
             "account_owner",
-            "apollo_id",
+            # "apollo_id",
             "pay_later",
-            "autopay",
             "industry",
             "share_code",
-            "compliance_status",
-            "tax_exempt_status",
+            # "compliance_status",
         ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "account_owner": forms.Select(attrs={"class": "form-select"}),
-            "apollo_id": forms.TextInput(attrs={"class": "form-control"}),
+            # "apollo_id": forms.TextInput(attrs={"class": "form-control"}),
             "pay_later": forms.HiddenInput(),
-            "autopay": forms.CheckboxInput(
-                attrs={"class": "form-check-input", "role": "switch"}
-            ),
             "industry": forms.Select(attrs={"class": "form-select"}),
             "share_code": forms.TextInput(attrs={"class": "form-control"}),
-            "compliance_status": forms.Select(attrs={"class": "form-select"}),
-            "tax_exempt_status": forms.Select(attrs={"class": "form-select"}),
+            # "compliance_status": forms.Select(attrs={"class": "form-select"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -332,7 +326,7 @@ class UserGroupForm(forms.ModelForm):
             )
 
         # Make Apollo ID required
-        self.fields["apollo_id"].required = True
+        # self.fields["apollo_id"].required = True
         self.fields["share_code"].disabled = True
 
         # Update field visibility based on user type
@@ -340,12 +334,10 @@ class UserGroupForm(forms.ModelForm):
             self.fields["share_code"].widget = forms.HiddenInput()
             self.fields["account_owner"].disabled = True
             self.fields["account_owner"].widget = forms.HiddenInput()
-            self.fields["compliance_status"].disabled = True
-            self.fields["compliance_status"].widget = forms.HiddenInput()
-            self.fields["tax_exempt_status"].disabled = True
-            self.fields["apollo_id"].required = False
-            self.fields["apollo_id"].widget = forms.HiddenInput()
-            self.fields["autopay"].widget = forms.HiddenInput()
+            # self.fields["compliance_status"].disabled = True
+            # self.fields["compliance_status"].widget = forms.HiddenInput()
+            # self.fields["apollo_id"].required = False
+            # self.fields["apollo_id"].widget = forms.HiddenInput()
 
 
 class paymentDetailsForm(forms.ModelForm):
@@ -355,17 +347,23 @@ class paymentDetailsForm(forms.ModelForm):
             "credit_line_limit",
             "net_terms",
             "invoice_frequency",
+            "autopay",
             "invoice_at_project_completion",
             "invoice_day_of_month",
+            "tax_exempt_status",
         ]
         widgets = {
             "net_terms": forms.Select(attrs={"class": "form-select"}),
             "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
             "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
+            "autopay": forms.CheckboxInput(
+                attrs={"class": "form-check-input", "role": "switch"}
+            ),
             "invoice_at_project_completion": forms.CheckboxInput(
                 attrs={"class": "form-check-input", "role": "switch"}
             ),
             "credit_line_limit": forms.NumberInput(attrs={"class": "form-control"}),
+            "tax_exempt_status": forms.Select(attrs={"class": "form-select"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -376,8 +374,10 @@ class paymentDetailsForm(forms.ModelForm):
         if auth_user and not auth_user.is_staff:
             self.fields["net_terms"].disabled = True
             self.fields["invoice_frequency"].disabled = True
+            self.fields["autopay"].widget = forms.HiddenInput()
             self.fields["invoice_day_of_month"].disabled = True
             self.fields["credit_line_limit"].disabled = True
+            self.fields["tax_exempt_status"].disabled = True
 
 
 class UserGroupNewForm(forms.Form):
