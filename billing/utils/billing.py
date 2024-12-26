@@ -129,6 +129,8 @@ class BillingUtils:
                     )
 
                     print(response)
+            # Update all of the line items to ensure the tax is correct.
+            order.update_line_items_tax()
         except Exception as e:
             print(e)
             logger.error(
