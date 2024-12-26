@@ -169,13 +169,6 @@ class SellerForm(forms.ModelForm):
 class NewSellerForm(forms.ModelForm):
     template_name = "supplier_dashboard/snippets/form.html"
 
-    apollo_id = forms.CharField(
-        max_length=128,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        label="Apollo ID",
-        required=True,
-    )
-
     class Meta:
         model = Seller
         fields = [
@@ -194,14 +187,6 @@ class NewSellerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["phone"].required = True
-        # Change ordering of fields
-        self.fields = {
-            "name": self.fields["name"],
-            "apollo_id": self.fields["apollo_id"],
-            "phone": self.fields["phone"],
-            "website": self.fields["website"],
-            "logo": self.fields["logo"],
-        }
 
     def save(self, commit=True):
         seller = super().save(commit=False)
@@ -210,7 +195,6 @@ class NewSellerForm(forms.ModelForm):
             UserGroup.objects.create(
                 seller=seller,
                 name=self.cleaned_data["name"],
-                apollo_id=self.cleaned_data["apollo_id"],
             )
         return seller
 
