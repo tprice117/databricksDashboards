@@ -1178,7 +1178,7 @@ class Order(BaseModel):
                     description=order_line_item.description,
                     unit_price=customer_rate,
                     quantity=order_line_item.quantity,
-                    units=order_line_item.units,
+                    units=order_line_item.get_units(),
                     tax=order_line_item.tax,
                 )
                 key = order_line_item.order_line_item_type.code
