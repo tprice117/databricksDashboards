@@ -84,6 +84,7 @@ from .forms import (
     SellerProductSellerLocationMaterialWasteTypeForm,
     SellerUserForm,
     BaseSellerProductSellerLocationMaterialFormSet,
+    BaseSellerProductSellerLocationRentalMultiStepFormSet,
     TabularInlineFormSet,
     UserForm,
     UserInviteForm,
@@ -1714,7 +1715,7 @@ def listing_detail(request, listing_id):
             SellerProductSellerLocation,
             SellerProductSellerLocationRentalMultiStep,
             form=SellerProductSellerLocationRentalMultiStepForm,
-            formset=TabularInlineFormSet,
+            formset=BaseSellerProductSellerLocationRentalMultiStepFormSet,
             extra=1,
             can_delete=False,
         )
