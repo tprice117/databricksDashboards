@@ -58,6 +58,8 @@ class Utils:
             and user_group.invoice_frequency == UserGroup.InvoiceFrequency.IMMEDIATELY
         ):
             return True
+        elif user_group.invoice_at_project_completion:
+            return False  # Invoicing is handled by the project completion process.
         else:
             return True
 
