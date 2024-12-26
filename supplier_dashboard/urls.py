@@ -64,6 +64,28 @@ urlpatterns = [
         views.booking_detail,
         name="supplier_booking_detail",
     ),
+    path("supplier/listings/", views.listings, name="supplier_listings"),
+    path(
+        "supplier/listing/<uuid:listing_id>/",
+        views.listing_detail,
+        name="supplier_listing_detail",
+    ),
+    path("supplier/products", views.products, name="supplier_products"),
+    path(
+        "supplier/products/category/<uuid:category_id>/",
+        views.products_2,
+        name="supplier_products_2",
+    ),
+    path(
+        "supplier/products/locations/<uuid:main_product_id>/",
+        views.products_3,
+        name="supplier_products_3",
+    ),
+    path(
+        "supplier/products/locations/<uuid:main_product_id>/form",
+        views.products_3_table,
+        name="supplier_products_3_table",
+    ),
     path(
         "supplier/messages/unread/",
         views.get_intercom_unread_conversations,

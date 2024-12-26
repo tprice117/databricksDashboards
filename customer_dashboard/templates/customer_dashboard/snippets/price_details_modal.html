@@ -1,4 +1,5 @@
 {% load humanize %}
+{% load sales_stream_tags %}
 {% block modals %}
     <div class="modal fade" role="dialog" tabindex="-1" id="modal-price-detail-{{ forloop.counter }}">
         <div class="modal-dialog modal-dialog-scrollable modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
@@ -20,8 +21,10 @@
                                         <tr>
                                             <td>Delivery</td>
                                             <td>
-                                                {% if item.seller_product_seller_location.delivery_fee %}
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.delivery_fee }}">${{ item.seller_product_seller_location.delivery_fee|floatformat:2|intcomma }}</span>
+                                                {% if item.price_breakdown.delivery %}
+                                                    {% for order_line_item in item.price_breakdown.delivery.items %}
+                                                        <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
+                                                    {% endfor %}
                                                 {% else %}
                                                     No charge
                                                 {% endif %}
@@ -30,8 +33,10 @@
                                         <tr>
                                             <td>Removal</td>
                                             <td>
-                                                {% if item.seller_product_seller_location.removal_fee %}
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.removal_fee }}">${{ item.seller_product_seller_location.removal_fee|floatformat:2|intcomma }}</span>
+                                                {% if item.price_breakdown.removal %}
+                                                    {% for order_line_item in item.price_breakdown.removal.items %}
+                                                        <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
+                                                    {% endfor %}
                                                 {% else %}
                                                     No charge
                                                 {% endif %}
@@ -59,7 +64,7 @@
                                         <tbody>
                                             <tr>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_one_step.rate }}">${{ item.seller_product_seller_location.rental_one_step.rate|floatformat:2|intcomma }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_one_step.rate|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_one_step.rate|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -75,7 +80,7 @@
                                     <strong>Rental</strong>
                                 </p>
                                 <p>
-                                    The rental price has two tiers. A base fee of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price }}">${{ item.seller_product_seller_location.rental.base_price|floatformat:2|intcomma }}</span> applies to all rentals. After {{ item.seller_product_seller_location.rental.included_days }}&nbsp;days, a rate of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|floatformat:2|intcomma }}</span> per day applies.
+                                    The rental price has two tiers. A base fee of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup|floatformat:2|intcomma }}</span> applies to all rentals. After {{ item.seller_product_seller_location.rental.included_days }}&nbsp;days, a rate of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup|floatformat:2|intcomma }}</span> per day applies.
                                 </p>
                                 <div class="table-responsive">
                                     <table class="table">
@@ -88,16 +93,16 @@
                                         <tbody>
                                             <tr>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price }}">
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup }}">
                                                         {% if item.seller_product_seller_location.rental.base_price %}
-                                                            ${{ item.seller_product_seller_location.rental.base_price|floatformat:2|intcomma }}
+                                                            ${{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup|floatformat:2|intcomma }}
                                                         {% else %}
                                                             $0
                                                         {% endif %}
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|floatformat:2|intcomma }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -127,19 +132,19 @@
                                         <tbody>
                                             <tr>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.hour }}">${{ item.seller_product_seller_location.rental_multi_step.hour|floatformat:2|intcomma }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.hour|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.hour|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.day }}">${{ item.seller_product_seller_location.rental_multi_step.day|floatformat:2|intcomma }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.day|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.day|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.week }}">${{ item.seller_product_seller_location.rental_multi_step.week|floatformat:2|intcomma }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.week|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.week|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.two_weeks }}">${{ item.seller_product_seller_location.rental_multi_step.two_weeks|floatformat:2|intcomma }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.two_weeks|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.two_weeks|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.month }}">${{ item.seller_product_seller_location.rental_multi_step.month|floatformat:2|intcomma }}</span>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.month|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.month|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -155,14 +160,14 @@
                                     <strong>Service</strong>
                                 </p>
                                 <p>
-                                    A service fee applies to each order. This fee can be calculated either by distance (per mile from the supplier) or as a flat rate. This supplier has opted for a{% if item.seller_product_seller_location.service.service.price_per_mile %}
+                                    A service fee applies to each order. This fee can be calculated either by distance (per mile from the supplier) or as a flat rate. This supplier has opted for a{% if item.seller_product_seller_location.service.price_per_mile %}
                                         per mile
                                     {% else %}
                                         flat rate
-                                    {% endif %}of ${% if item.seller_product_seller_location.service.price_per_mile %}
-                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.price_per_mile }}">{{ item.seller_product_seller_location.service.price_per_mile }}</span>
+                                    {% endif %}of{% if item.seller_product_seller_location.service.price_per_mile %}
+                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.price_per_mile|add_markup:default_markup }}">{{ item.seller_product_seller_location.service.price_per_mile|add_markup:default_markup|currency }}</span>
                                     {% else %}
-                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.flat_rate_price }}">{{ item.seller_product_seller_location.service.flat_rate_price }}</span>
+                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.flat_rate_price|add_markup:default_markup }}">{{ item.seller_product_seller_location.service.flat_rate_price|add_markup:default_markup|currency }}</span>
                                     {% endif %}.&nbsp;
                                 </p>
                                 <div class="table-responsive">
@@ -175,10 +180,10 @@
                                         <tbody>
                                             <tr>
                                                 <td>
-                                                    ${% if item.seller_product_seller_location.service.price_per_mile %}
-                                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.price_per_mile }}">{{ item.seller_product_seller_location.service.price_per_mile|floatformat:2|intcomma }}</span> per mile
+                                                    {% if item.seller_product_seller_location.service.price_per_mile %}
+                                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.price_per_mile|add_markup:default_markup }}">{{ item.seller_product_seller_location.service.price_per_mile|add_markup:default_markup|currency }}</span> per mile
                                                     {% else %}
-                                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.flat_rate_price }}">{{ item.seller_product_seller_location.service.flat_rate_price|floatformat:2|intcomma }}</span> flat rate
+                                                        <span class="price-item" data-price="{{ item.seller_product_seller_location.service.flat_rate_price|add_markup:default_markup }}">{{ item.seller_product_seller_location.service.flat_rate_price|add_markup:default_markup|currency }}</span> flat rate
                                                     {% endif %}
                                                 </td>
                                             </tr>
@@ -195,7 +200,7 @@
                                     <strong>Service</strong>
                                 </p>
                                 <p>
-                                    Pricing is based on the number of services you need per week. You pay a fixed monthly rate for up to four weeks of service. For example, choosing three services per week would cost <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week }}">${{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|floatformat:2|intcomma }}</span> per month, regardless of whether you use the service for one week or four.
+                                    Pricing is based on the number of services you need per week. You pay a fixed monthly rate for up to four weeks of service. For example, choosing three services per week would cost <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup }}">${{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup|floatformat:2|intcomma }}</span> per month, regardless of whether you use the service for one week or four.
                                 </p>
                                 <div class="table-responsive">
                                     <table class="table">
@@ -210,11 +215,21 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>${{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|floatformat:2|intcomma }}</td>
-                                                <td>${{ item.seller_product_seller_location.service_times_per_week.two_times_per_week|floatformat:2|intcomma }}</td>
-                                                <td>${{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|floatformat:2|intcomma }}</td>
-                                                <td>${{ item.seller_product_seller_location.service_times_per_week.four_times_per_week|floatformat:2|intcomma }}</td>
-                                                <td>${{ item.seller_product_seller_location.service_times_per_week.five_times_per_week|floatformat:2|intcomma }}</td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.two_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.two_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.four_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.four_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.five_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.five_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -248,10 +263,10 @@
                                                 <tr>
                                                     <td>{{ material_waste_type.main_product_waste_type.waste_type.name }}</td>
                                                     <td>
-                                                        <span class="price-item" data-price="{{ material_waste_type.base_price }}">${{ material_waste_type.base_price|floatformat:2|intcomma }}</span>
+                                                        <span class="price-item" data-price="{{ material_waste_type.base_price|add_markup:default_markup }}">${{ material_waste_type.base_price|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                     </td>
                                                     <td>
-                                                        <span class="price-item" data-price="{{ material_waste_type.price_per_ton }}">${{ material_waste_type.price_per_ton|floatformat:2|intcomma }}</span>
+                                                        <span class="price-item" data-price="{{ material_waste_type.price_per_ton|add_markup:default_markup }}">${{ material_waste_type.price_per_ton|add_markup:default_markup|floatformat:2|intcomma }}</span>
                                                     </td>
                                                 </tr>
                                             {% endfor %}

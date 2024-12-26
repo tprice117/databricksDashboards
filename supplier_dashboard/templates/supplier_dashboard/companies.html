@@ -2,115 +2,127 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Companies
+  Companies
 {% endblock %}
 {% block javascript %}
-    <script>
-        const searchFilter = document.getElementById("companies-search-filter");
-        // listen for page load event.
-        // NOTE: Do this first so that the date filter value is set before the change listener is added.
-        document.addEventListener("DOMContentLoaded", function () {
-            // Check if query params has service_date
-            const urlParams = new URLSearchParams(window.location.search);
-            const serviceDate = urlParams.get("q");
-            if (serviceDate) {
-                // update date filter value
-                searchFilter.value = serviceDate;
-            }
-            // Check if query params has filter
-            const filter = urlParams.get("tab");
-            if (filter) {
-                // update filter value
-                document.getElementById("filterGroupSelect").value = filter;
-            }
-        });
-        // listen for htmx afterSettle event.
-        document.body.addEventListener("htmx:afterSettle", function (event) {
-            // Get current query params.
-            let queryParams = new URLSearchParams(window.location.search);
-            // Remove q query param before attaching to htmx search input.
-            queryParams.delete("q");
-            // Create url with current query params.
-            const searchCompaniesUrl = "{% url 'supplier_companies' %}?" + queryParams.toString();
-            // update hx-get attribute of search filter input.
-            htmx.find("#companies-search-filter").setAttribute("hx-get", searchCompaniesUrl);
-            // force htmx to process the new hx-get attribute
-            htmx.process("#companies-search-filter");
-        });
-    </script>
+  <script>
+    const searchFilter = document.getElementById('companies-search-filter')
+    // listen for page load event.
+    // NOTE: Do this first so that the date filter value is set before the change listener is added.
+    document.addEventListener('DOMContentLoaded', function () {
+      // Check if query params has service_date
+      const urlParams = new URLSearchParams(window.location.search)
+      const serviceDate = urlParams.get('q')
+      if (serviceDate) {
+        // update date filter value
+        searchFilter.value = serviceDate
+      }
+      // Check if query params has filter
+      const filter = urlParams.get('tab')
+      if (filter) {
+        // update filter value
+        document.getElementById('filterGroupSelect').value = filter
+      }
+    })
+    // listen for htmx afterSettle event.
+    document.body.addEventListener('htmx:afterSettle', function (event) {
+      // Get current query params.
+      let queryParams = new URLSearchParams(window.location.search)
+      // Remove q query param before attaching to htmx search input.
+      queryParams.delete('q')
+      // Create url with current query params.
+      const searchCompaniesUrl = "{% url 'supplier_companies' %}?" + queryParams.toString()
+      // update hx-get attribute of search filter input.
+      htmx.find('#companies-search-filter').setAttribute('hx-get', searchCompaniesUrl)
+      // force htmx to process the new hx-get attribute
+      htmx.process('#companies-search-filter')
+    })
+  </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        <div>
-            <div class="d-sm-flex justify-content-between align-items-center mb-4">
-                <h3 class="text-dark mb-0">Companies</h3>
-                <a class="btn btn-primary btn-sm d-sm-inline-block" role="button" href="{% url 'supplier_new_company' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;New Company</a>
-            </div>
-        </div>
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <div class="row">
-                    <div class="col">
-                        <p class="text-primary m-0 fw-bold" id="table-title">All Suppliers</p>
-                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                    </div>
-                    <div class="col">
-                        <div class="col-md-6" style="margin-left: auto;">
-                            <label for="companies-search-filter">Filter by name</label>
-                            <input id="companies-search-filter" class="form-control" type="search" name="q" hx-push-url="true" hx-get="{% url 'supplier_companies' %}" hx-trigger="input changed delay:500ms, search" hx-target="#company-results" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table table-hover my-0" id="company-results" hx-get="{{ companies_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Locations</th>
-                                <th>Phone</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                        <tfoot>
-                            <tr>
-                                <th>Name</th>
-                                <th>Locations</th>
-                                <th>Phone</th>
-                                <th>Status</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                <div class="row invisible" id="companies-pagination">
-                    <div class="col-md-6 align-self-center">
-                        <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
-                            <ul class="pagination">
-                                <li class="page-item disabled">
-                                    <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
-                                </li>
-                                <li class="page-item active">
-                                    <a class="page-link" href="#">1</a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#">2</a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#">3</a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="container-fluid">
+    <div>
+      <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-dark mb-0">Companies</h3>
+        <a class="btn btn-primary btn-sm d-sm-inline-block" role="button" href="{% url 'supplier_new_company' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;New Company</a>
+      </div>
     </div>
+    <div class="card shadow">
+      <div class="card-header py-3">
+        <div class="row">
+          <div class="col">
+            <h5 class="text-primary m-0" id="table-title">
+              All Suppliers
+              <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+            </h5>
+          </div>
+          <div class="col">
+            <div class="col-md-6" style="margin-left: auto;">
+              <label for="companies-search-filter">Filter by name</label>
+              <input id="companies-search-filter" class="form-control" type="search" name="q" hx-push-url="true" hx-get="{% url 'supplier_companies' %}" hx-trigger="input changed delay:500ms, search" hx-target="#company-results" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
+          <table class="table table-hover my-0" id="company-results" hx-get="{{ companies_table_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Locations</th>
+                <th>Users</th>
+                <th>Listings</th>
+                <th>Phone</th>
+                {% if request.user.is_staff %}
+                  <th>Action</th>
+                {% endif %}
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th>Name</th>
+                <th>Locations</th>
+                <th>Users</th>
+                <th>Listings</th>
+                <th>Phone</th>
+                {% if request.user.is_staff %}
+                  <th>Action</th>
+                {% endif %}
+                <th>Status</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="row invisible" id="companies-pagination">
+          <div class="col-md-6 align-self-center">
+            <p id="dataTable_info" class="dataTables_info" role="status" aria-live="polite">Showing 1 to 10 of 27</p>
+          </div>
+          <div class="col-md-6">
+            <nav class="d-lg-flex justify-content-lg-end dataTables_paginate paging_simple_numbers">
+              <ul class="pagination">
+                <li class="page-item disabled">
+                  <a class="page-link" aria-label="Previous" href="#"><span aria-hidden="true">«</span></a>
+                </li>
+                <li class="page-item active">
+                  <a class="page-link" href="#">1</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="#">2</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="#">3</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" aria-label="Next" href="#"><span aria-hidden="true">»</span></a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

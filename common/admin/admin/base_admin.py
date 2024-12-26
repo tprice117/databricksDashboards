@@ -23,4 +23,10 @@ class BaseModelAdmin(ImportExportModelAdmin):
             "classes": ["collapse"],
         },
     )
-    readonly_fields = audit_fields
+    # Set to separate list to avoid modifying the original list via reference.
+    readonly_fields = [
+        "created_on",
+        "created_by",
+        "updated_on",
+        "updated_by",
+    ]

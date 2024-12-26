@@ -4,6 +4,7 @@ from .branding import BrandingInline
 from .main_product import MainProductInline
 from .main_product_category import MainProductCategoryInline
 from .main_product_category_info import MainProductCategoryInfoInline
+from .main_product_image import MainProductImageInline
 from .main_product_info import MainProductInfoInline
 from .order import OrderInline
 from .order_disposal_ticket import OrderDisposalTicketInline

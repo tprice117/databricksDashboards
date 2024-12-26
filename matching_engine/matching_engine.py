@@ -1,7 +1,7 @@
 from decimal import Decimal
 from functools import lru_cache
 
-from django.db.models import Sum, Case, When
+from django.db.models import Subquery, OuterRef
 
 from api.models.main_product.main_product_waste_type import MainProductWasteType
 from api.models.main_product.product import Product
@@ -43,13 +43,25 @@ class MatchingEngine:
         longitude: Decimal,
         waste_type: WasteType = None,
     ) -> list[SellerProductSellerLocation]:
-        # Get all SellerProductSellerLocation objects that match the product.
+        # Get all active SellerProductSellerLocation objects that match the product.
         seller_product_seller_locations = (
             SellerProductSellerLocation.objects.filter(
                 seller_product__product=product,
             )
-            .with_ratings()
-            .with_last_checkout()
+            .get_active()
+            .annotate(
+                # with_ratings() and with_last_checkout() cannot be chained.
+                last_checkout=Subquery(
+                    SellerProductSellerLocation.objects.filter(pk=OuterRef("pk"))
+                    .with_last_checkout()
+                    .values("last_checkout")[:1]
+                ),
+                rating=Subquery(
+                    SellerProductSellerLocation.objects.filter(pk=OuterRef("pk"))
+                    .with_ratings()
+                    .values("rating")[:1]
+                ),
+            )
         )
         # Select related fields to reduce the number of queries.
         seller_product_seller_locations = (
@@ -68,7 +80,7 @@ class MatchingEngine:
                 longitude=longitude,
             )
 
-            if seller_product_seller_location.is_complete and within_service_radius:
+            if within_service_radius and seller_product_seller_location.is_complete:
                 # Does the SellerProductSellerLocation match the WasteType of the Product?
                 matches_waste_type = (
                     MatchingEngine._seller_product_seller_location_matches_waste_type(

@@ -521,6 +521,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
     filterset_fields = ["main_product"]
 
+    def get_queryset(self):
+        self.queryset = self.queryset.select_related(
+            "main_product__main_product_category"
+        )
+        self.queryset = self.queryset.prefetch_related("product_add_on_choices")
+        return self.queryset
+
 
 class SellerProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SellerProduct.objects.all()
