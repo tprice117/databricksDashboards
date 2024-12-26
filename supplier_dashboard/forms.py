@@ -980,6 +980,7 @@ class SellerProductSellerLocationRentalMultiStepForm(forms.ModelForm):
     two_shift = forms.DecimalField(
         max_digits=18,
         decimal_places=2,
+        required=False,
         widget=forms.NumberInput(
             attrs={
                 "class": "form-control",
@@ -993,6 +994,7 @@ class SellerProductSellerLocationRentalMultiStepForm(forms.ModelForm):
     three_shift = forms.DecimalField(
         max_digits=18,
         decimal_places=2,
+        required=False,
         widget=forms.NumberInput(
             attrs={
                 "class": "form-control",
