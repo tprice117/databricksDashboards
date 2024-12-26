@@ -169,6 +169,11 @@ urlpatterns = [
         name="customer_cart",
     ),
     path(
+        "customer/cart/edit/order/date/<uuid:order_id>/",
+        views.edit_order_start_date,
+        name="edit_order_start_date",
+    ),
+    path(
         "customer/order/new/cart/<uuid:order_group_id>/remove/",
         views.new_order_6,
         name="customer_new_order_6_remove",
