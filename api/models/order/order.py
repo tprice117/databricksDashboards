@@ -1,5 +1,5 @@
 import logging
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from functools import lru_cache
 from typing import List, Optional
 
@@ -1197,6 +1197,55 @@ class Order(BaseModel):
         except Exception as e:
             logger.error(f"Order.get_price: [{self.id}]-[{e}]", exc_info=e)
             return None
+
+    def update_line_items_tax(self):
+        """Update the tax for all line items in this Order (and all associated invoices)."""
+        stripe_invoice_ids = []
+        for order_line_item in self.order_line_items.exclude_adjustments().exclude(
+            stripe_invoice_line_item_id__isnull=True
+        ):
+            try:
+                invoice_line_item = StripeUtils.InvoiceItem.get(
+                    order_line_item.stripe_invoice_line_item_id
+                )
+                stripe_invoice_ids.append(invoice_line_item.invoice)
+            except Exception as e:
+                logger.error(
+                    f"update_line_item_tax:order_line_item.id:{order_line_item.id} stripe_invoice_line_item_id:{order_line_item.stripe_invoice_line_item_id} does not exist. [{e}]",
+                    exc_info=e,
+                )
+
+        stripe_invoice_ids = list(set(stripe_invoice_ids))
+        for stripe_invoice_id in stripe_invoice_ids:
+            try:
+                invoice = StripeUtils.Invoice.get(stripe_invoice_id)
+                for line in invoice.lines.data:
+                    order_line_item = OrderLineItem.objects.get(
+                        stripe_invoice_line_item_id=line["invoice_item"]
+                    )
+                    tax = 0
+                    if line["tax_amounts"]:
+                        for tax_amount in line["tax_amounts"]:
+                            tax += Decimal(tax_amount["amount"] / 100).quantize(
+                                Decimal("0.01"), rounding=ROUND_HALF_UP
+                            )
+                    if (
+                        order_line_item.tax is None
+                        or abs(order_line_item.tax - tax) > 0.01
+                    ):
+                        # print(
+                        #     f"{settings.API_URL}/admin/api/order/{order_line_item.order_id}/change/"
+                        # )
+                        print(
+                            f"{settings.DASHBOARD_BASE_URL}/customer/order/{order_line_item.order_id}/"
+                        )
+                        order_line_item.tax = tax
+                        order_line_item.save()
+            except Exception as e:
+                logger.error(
+                    f"update_line_item_tax:stripe_invoice_id:{stripe_invoice_id} does not exist. [{e}]",
+                    exc_info=e,
+                )
 
     def submit_order(self, override_approval_policy=False):
         """This method is used to submit an Order (set status to PENDING and set submitted_on to now).
