@@ -12,6 +12,7 @@ from api.models import (
     SellerProductSellerLocationRental,
     SellerProductSellerLocationRentalOneStep,
     SellerProductSellerLocationRentalMultiStep,
+    SellerProductSellerLocationRentalMultiStepShift,
     SellerProductSellerLocationMaterial,
     SellerProductSellerLocationMaterialWasteType,
     Seller,
@@ -941,7 +942,54 @@ class SellerProductSellerLocationRentalOneStepForm(forms.ModelForm):
         }
 
 
+class BaseSellerProductSellerLocationRentalMultiStepFormSet(forms.BaseInlineFormSet):
+    """Special formset template for the multi-step rental form, which has additional fields for MultiStepShift."""
+
+    template_name_table = "supplier_dashboard/snippets/rental_multi_step_formset.html"
+
+
 class SellerProductSellerLocationRentalMultiStepForm(forms.ModelForm):
+    one_shift = forms.DecimalField(
+        max_digits=18,
+        decimal_places=1,
+        required=False,
+        disabled=True,
+        initial=1.0,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "placeholder": "x1", "readonly": True}
+        ),
+        label="One Shift",
+        help_text="(0-8 hours of usage/day)",
+    )
+    two_shift = forms.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "x1.5",
+                "min": 1.0,
+            }
+        ),
+        label="Two Shifts",
+        help_text="(9-16 hours of usage/day)",
+    )
+    three_shift = forms.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "x2",
+                "min": 1.0,
+            }
+        ),
+        label="Three Shifts",
+        help_text="(17-24 hours of usage/day)",
+    )
+
     class Meta:
         model = SellerProductSellerLocationRentalMultiStep
         fields = ["hour", "day", "week", "two_weeks", "month"]
@@ -1001,6 +1049,38 @@ class SellerProductSellerLocationRentalMultiStepForm(forms.ModelForm):
             "two_weeks": "(14 days-27 days)",
             "month": "(28+ days)",
         }
+
+    def __init__(self, *args, **kwargs):
+        """Initializes the form with the initial values for the multi-step shift fields."""
+        instance = kwargs.get("instance")
+        super().__init__(*args, **kwargs)
+
+        if instance:
+            # Multi-step shift fields are stored in a separate model with a OneToOneField to the multi-step model
+            multi_step_shift, created = (
+                SellerProductSellerLocationRentalMultiStepShift.objects.get_or_create(
+                    seller_product_seller_location_multi_step=instance
+                )
+            )
+            self.fields["two_shift"].initial = multi_step_shift.two_shift
+            self.fields["three_shift"].initial = multi_step_shift.three_shift
+
+    def save(self, commit=True):
+        """Saves the form and the multi-step shift fields."""
+        spsl_multi_step = super().save(commit=False)
+        two_shift = self.cleaned_data["two_shift"]
+        three_shift = self.cleaned_data["three_shift"]
+        if commit:
+            spsl_multi_step.save()
+            multi_step_shift, created = (
+                SellerProductSellerLocationRentalMultiStepShift.objects.get_or_create(
+                    seller_product_seller_location_multi_step=spsl_multi_step
+                )
+            )
+            multi_step_shift.two_shift = two_shift
+            multi_step_shift.three_shift = three_shift
+            multi_step_shift.save()
+        return spsl_multi_step
 
 
 class BaseSellerProductSellerLocationMaterialFormSet(forms.BaseInlineFormSet):
