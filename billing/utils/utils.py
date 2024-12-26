@@ -120,4 +120,4 @@ class Utils:
         while date_obj.weekday() != 2:
             date_obj += datetime.timedelta(days=1)
 
-        return date_obj.strftime("%Y-%m-%d")
+        return date_obj
