@@ -297,7 +297,7 @@ class Order(BaseModel):
         return sum(
             [
                 order_line_item.customer_price_with_tax()
-                for order_line_item in self.order_line_items.all()
+                for order_line_item in self.order_line_items.exclude_adjustments()
             ]
         )
 
@@ -423,21 +423,17 @@ class Order(BaseModel):
         """Return all the invoices for this Order."""
         inv_resp = []
         stripe_invoice_ids = []
-        for order_line_item in self.order_line_items.all():
-            if (
-                order_line_item.stripe_invoice_line_item_id
-                and order_line_item.stripe_invoice_line_item_id != "BYPASS"
-            ):
-                try:
-                    invoice_line_item = StripeUtils.InvoiceItem.get(
-                        order_line_item.stripe_invoice_line_item_id
-                    )
-                    stripe_invoice_ids.append(invoice_line_item.invoice)
-                except Exception as e:
-                    logger.error(
-                        f"order_line_item.id:{order_line_item.id} stripe_invoice_line_item_id:{order_line_item.stripe_invoice_line_item_id} does not exist. [{e}]",
-                        exc_info=e,
-                    )
+        for order_line_item in self.order_line_items.exclude_adjustments():
+            try:
+                invoice_line_item = StripeUtils.InvoiceItem.get(
+                    order_line_item.stripe_invoice_line_item_id
+                )
+                stripe_invoice_ids.append(invoice_line_item.invoice)
+            except Exception as e:
+                logger.error(
+                    f"order_line_item.id:{order_line_item.id} stripe_invoice_line_item_id:{order_line_item.stripe_invoice_line_item_id} does not exist. [{e}]",
+                    exc_info=e,
+                )
 
         stripe_invoice_ids = list(set(stripe_invoice_ids))
 
@@ -1150,13 +1146,9 @@ class Order(BaseModel):
             all_line_items = []
             delivery_fee = 0
             re_get_taxes = False
-            for order_line_item in self.order_line_items.all():
-                if order_line_item.stripe_invoice_line_item_id != "BYPASS":
-                    if (
-                        order_line_item.tax is None
-                        and order_line_item.customer_price() > 0
-                    ):
-                        re_get_taxes = True
+            for order_line_item in self.order_line_items.exclude_adjustments():
+                if order_line_item.tax is None and order_line_item.customer_price() > 0:
+                    re_get_taxes = True
                 all_line_items.append(order_line_item)
                 if order_line_item.order_line_item_type.code == "DELIVERY":
                     delivery_fee = float(order_line_item.customer_price())
@@ -1186,7 +1178,7 @@ class Order(BaseModel):
                     description=order_line_item.description,
                     unit_price=customer_rate,
                     quantity=order_line_item.quantity,
-                    units=order_line_item.order_line_item_type.units,
+                    units=order_line_item.units,
                     tax=order_line_item.tax,
                 )
                 key = order_line_item.order_line_item_type.code
