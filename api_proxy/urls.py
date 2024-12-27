@@ -7,6 +7,7 @@ from api import views
 from api_proxy import login_router
 
 router = routers.DefaultRouter()
+router.register(r"advertisements", views.AdvertisementViewSet, "api")
 router.register(
     r"disposal-location-waste-types", views.DisposalLocationWasteTypeViewSet, "api"
 )
