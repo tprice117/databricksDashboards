@@ -3,7 +3,8 @@ from django.db import models
 
 from api.models.main_product.main_product_category_group import MainProductCategoryGroup
 from common.models import BaseModel
-from api.models.industry import Industry
+
+from api.models.common.industry import Industry
 from common.utils.get_file_path import get_file_path
 
 

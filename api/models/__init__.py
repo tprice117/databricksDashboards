@@ -1,8 +1,8 @@
-from .user.branding import Branding
+from .common.advertisement import Advertisement
+from .common.industry import Industry
 from .day_of_week import DayOfWeek
 from .disposal_location.disposal_location import DisposalLocation
 from .disposal_location.disposal_location_waste_type import DisposalLocationWasteType
-from .common.industry import Industry
 from .main_product.add_on import AddOn
 from .main_product.add_on_choice import AddOnChoice
 from .main_product.main_product import MainProduct
@@ -72,6 +72,7 @@ from .seller.seller_product_seller_location_service_times_per_week import (
 )
 from .service_recurring_freqency import ServiceRecurringFrequency
 from .time_slot import TimeSlot
+from .user.branding import Branding
 from .user.user import User
 from .user.user_address import UserAddress
 from .user.user_address_type import UserAddressType

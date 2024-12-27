@@ -23,6 +23,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
 from .models import (
     AddOn,
     AddOnChoice,
+    Advertisement,
     Branding,
     DayOfWeek,
     DisposalLocation,
@@ -92,6 +93,30 @@ def get_order_approval_serializer():
         )
 
     return ORDER_APPROVAL_SERIALIZER
+
+
+class AdvertisementSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    object_id = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Advertisement
+        fields = [
+            "id",
+            "text",
+            "image",
+            "background_color",
+            "text_color",
+            "object_type",
+            "object_id",
+            "sort",
+            "is_active",
+            "start_date",
+            "end_date",
+        ]
+
+    def get_object_id(self, obj):
+        return obj.linked_object.id
 
 
 class SellerSerializer(serializers.ModelSerializer):
