@@ -40,8 +40,6 @@ class AdvertisementAdmin(BaseModelAdmin, ExportActionMixin):
     search_fields = [
         "id",
         "text",
-        "main_product_category_id",
-        "main_product_category__name",
     ]
     # Add raw_id_fields for ForeignKey fields with many records to improve performance.
     raw_id_fields = ["main_product_category"]
