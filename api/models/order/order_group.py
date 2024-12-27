@@ -470,7 +470,7 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
         if main_product.has_rental_multi_step and hasattr(
             seller_product_seller_location, "rental_multi_step"
         ):
-            OrderGroupRentalMultiStep.objects.create(
+            order_group_rental_multi_step = OrderGroupRentalMultiStep.objects.create(
                 order_group=instance,
                 hour=seller_product_seller_location.rental_multi_step.hour,
                 day=seller_product_seller_location.rental_multi_step.day,
@@ -485,7 +485,7 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 "rental_multi_step_shift",
             ):
                 OrderGroupRentalMultiStepShift.objects.create(
-                    order_group=instance,
+                    order_group_rental_multi_step=order_group_rental_multi_step,
                     two_shift=seller_product_seller_location.rental_multi_step.rental_multi_step_shift.two_shift,
                     three_shift=seller_product_seller_location.rental_multi_step.rental_multi_step_shift.three_shift,
                 )
