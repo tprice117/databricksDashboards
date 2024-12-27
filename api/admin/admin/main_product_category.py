@@ -26,6 +26,7 @@ class MainProductCategoryAdmin(BaseModelAdmin, ExportActionMixin):
         "description",
         "main_product_category_code",
         "group__name",
+        "industry",
     ]
     fieldsets = [
         (
@@ -34,6 +35,7 @@ class MainProductCategoryAdmin(BaseModelAdmin, ExportActionMixin):
                 "fields": [
                     "group",
                     "name",
+                    "industry",
                     "description",
                     "image",
                     "icon",
