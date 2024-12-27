@@ -174,7 +174,7 @@
         <div id="serviceCardBody" class="card-body collapse {% if service_is_incomplete %}show{% endif %}">
           <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
             {% csrf_token %}
-            {{ service_formset.as_table }}
+            <div class="overflow-auto">{{ service_formset.as_table }}</div>
             <div class="d-flex flex-row-reverse align-items-center">
               <button class="btn btn-primary" type="submit" name="service_form" style="margin-top: 12px;">Save</button>
             </div>
@@ -200,7 +200,7 @@
         <div id="rentalCardBody" class="card-body collapse {% if rental_is_incomplete %}show{% endif %}">
           <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
             {% csrf_token %}
-            {{ rental_formset.as_table }}
+            <div class="overflow-auto">{{ rental_formset.as_table }}</div>
             <div class="d-flex flex-row-reverse align-items-center">
               <button class="btn btn-secondary" type="submit" name="rental_form" style="margin-top: 12px;">Save</button>
             </div>
@@ -226,7 +226,7 @@
         <div id="materialCardBody" class="card-body collapse {% if material_is_incomplete %}show{% endif %}">
           <form action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
             {% csrf_token %}
-            {{ material_formset.as_table }}
+            <div class="overflow-auto">{{ material_formset.as_table }}</div>
             <div class="d-flex flex-row-reverse align-items-center" style="margin-top: 12px;">
               <button class="btn btn-danger text-white" type="submit" name="material_form">Save</button>
               <button id="add-waste-type" class="btn btn-success text-white me-3" type="button"><i class="fas fa-plus me-3"></i>Add Waste Type</button>
