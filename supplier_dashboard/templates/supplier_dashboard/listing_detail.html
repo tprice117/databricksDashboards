@@ -71,7 +71,20 @@
     <div class="card shadow mb-3">
       <div class="card-body p-3">
         <h1 class="text-primary mb-1"><strong>{{ main_product.name }}</strong></h1>
-        <h4 class="text-dark mb-3" style="padding-bottom: 0px;margin-bottom: -8px;">{{ listing.seller_location.formatted_address }}</h4>
+        <h4 class="text-dark mb-2">{{ listing.seller_location.formatted_address }}</h4>
+        <h5 class="text-muted mb-3" style="padding-bottom: 0px;margin-bottom: -8px;">
+          {% if listing.seller_product.product.product_code %}
+            {{ listing.seller_product.product.product_code }}
+            {% if add_ons %}
+              <span>&nbsp;-&nbsp;</span>
+              {% for add_on in add_ons %}
+                <badge>
+                  <span class="badge text-secondary fw-medium" style="background-color: rgba(var(--bs-secondary-rgb), 0.2);">{{ add_on }}</span>
+                </badge>
+              {% endfor %}
+            {% endif %}
+          {% endif %}
+        </h5>
         <!-- Status Form -->
         <form id="active_form" action="{% url 'supplier_listing_detail' listing_id=listing.id %}" method="post">
           {% csrf_token %}
