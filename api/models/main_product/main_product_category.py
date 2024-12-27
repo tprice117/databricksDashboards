@@ -36,10 +36,7 @@ class MainProductCategory(BaseModel):
     sort = models.IntegerField()
     main_product_category_code = models.CharField(max_length=255, blank=True, null=True)
     industry = models.ManyToManyField(
-        Industry,
-        related_name="industry",
-        blank=True,
-        null=True,
+        Industry, related_name="main_product_categories", blank=True
     )
 
     def __str__(self):
