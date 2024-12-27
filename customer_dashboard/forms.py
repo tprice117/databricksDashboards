@@ -650,6 +650,7 @@ class EditOrderDateForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "type": "date",
+                "min": datetime.date.today(),
             }
         ),
     )
