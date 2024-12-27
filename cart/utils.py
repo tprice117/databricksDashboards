@@ -482,7 +482,11 @@ class QuoteUtils:
                     item["delivery"]["total"] - item["delivery"]["tax"]
                 )
                 item["one_time"]["estimated_taxes"] += item["delivery"]["tax"]
-                if item["estimated_tax_rate"] == 0 and item["delivery"]["tax"] > 0:
+                if (
+                    item["estimated_tax_rate"] == 0
+                    and item["delivery"]["tax"] > 0
+                    and item["one_time"]["delivery"] != 0
+                ):
                     # Get estimated tax rate by checking delivery fee tax rate
                     item["estimated_tax_rate"] = round(
                         (item["delivery"]["tax"] / item["one_time"]["delivery"]) * 100,
