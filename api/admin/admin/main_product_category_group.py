@@ -27,6 +27,7 @@ class MainProductCategoryGroupAdmin(BaseModelAdmin, ExportActionMixin):
                 "fields": [
                     "name",
                     "sort",
+                    "icon",
                 ]
             },
         ),
