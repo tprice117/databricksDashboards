@@ -58,6 +58,8 @@ class Utils:
             and user_group.invoice_frequency == UserGroup.InvoiceFrequency.IMMEDIATELY
         ):
             return True
+        elif user_group.invoice_at_project_completion:
+            return False  # Invoicing is handled by the project completion process.
         else:
             return True
 
@@ -120,4 +122,4 @@ class Utils:
         while date_obj.weekday() != 2:
             date_obj += datetime.timedelta(days=1)
 
-        return date_obj.strftime("%Y-%m-%d")
+        return date_obj
