@@ -1,5 +1,6 @@
 from .add_on import AddOnAdmin
 from .add_on_choice import AddOnChoiceAdmin
+from .advertisement import AdvertisementAdmin
 from .industry import IndustryAdmin
 from .main_product import MainProductAdmin
 from .main_product_category import MainProductCategoryAdmin
