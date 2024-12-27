@@ -1666,6 +1666,13 @@ def listing_detail(request, listing_id):
         return HttpResponseRedirect(reverse("supplier_listings"))
 
     main_product = spsl.seller_product.product.main_product
+    add_ons = spsl.seller_product.product.product_add_on_choices.select_related(
+        "add_on_choice"
+    )
+    product_add_ons = [
+        f"{add_on.add_on_choice.add_on.name}: {add_on.add_on_choice.name}"
+        for add_on in add_ons
+    ]
 
     # Instantiate formsets
     # Services
@@ -1873,6 +1880,7 @@ def listing_detail(request, listing_id):
             "listing": spsl,
             "is_incomplete": not spsl.is_complete,
             "main_product": main_product,
+            "add_ons": product_add_ons,
             "active_form": active_form,
             "scheduling_form": scheduling_form,
             "pricing_form": pricing_form,

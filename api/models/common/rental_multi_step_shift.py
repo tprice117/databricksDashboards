@@ -43,18 +43,13 @@ class PricingRentalMultiStepShift(BaseModel):
         if shift_count not in [1, 2, 3]:
             raise Exception("The value of 'shift_count' must be 1, 2, or 3.")
 
+        # If the shift count is 2 or 3, apply the surcharge to each PricingLineItem.
         if shift_count in [2, 3]:
-            # If the shift count is 2 or 3, apply the surcharge to each PricingLineItem.
-            # TODO: Improve this implementation.
             multiplier = self.two_shift if shift_count == 2 else self.three_shift
 
-            new_pricing_line_items = []
             for pricing_line_item in pricing_line_items:
                 # Increase the unit_price by the multipler.
-                pricing_line_item.unit_price = pricing_line_item.unit_price * multiplier
-                new_pricing_line_items.append(
-                    pricing_line_item,
-                )
-        else:
-            # If shift count is 1, then leave the PricingLineItems unchanged.
-            return pricing_line_items
+                pricing_line_item.unit_price *= multiplier
+
+        # If shift count is 1, then leave the PricingLineItems unchanged.
+        return pricing_line_items
