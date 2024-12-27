@@ -96,6 +96,7 @@ from .forms import (
     UserForm,
     UserGroupForm,
     paymentDetailsForm,
+    EditOrderDateForm,
     UserGroupNewForm,
     UserInviteForm,
 )
@@ -1143,6 +1144,166 @@ def new_order_4(request):
         "customer_dashboard/new_order/main_product_detail_pricing.html",
         context,
     )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+def edit_order_start_date(request, order_id):
+    if request.method == "POST":
+        # a snippet of html for editing the start date
+        context = get_user_context(request)
+        order = Order.objects.filter(id=order_id).first()
+        order_group = order.order_group
+        # the form was cancelled
+        if request.POST.get("cancel"):
+            context["order"] = order
+            context["loopcount"] = request.POST.get("loopcount")
+            return render(
+                request,
+                "customer_dashboard/snippets/cart_order_item.html",
+                context,
+            )
+        if not request.POST.get("save"):
+            if order.get_order_type() == Order.Type.DELIVERY:
+                form = EditOrderDateForm(
+                    instance=order,
+                    initial={"date": order.start_date.strftime("%Y-%m-%d")},
+                )
+            else:
+                form = EditOrderDateForm(
+                    instance=order,
+                    initial={"date": order.end_date.strftime("%Y-%m-%d")},
+                )
+        context["order"] = order
+        context["loopcount"] = request.POST.get("loopcount")
+
+        def fullPageReload():
+            # context["reload"] = True
+            # use hx-refresh to reload the page
+            response = render(
+                request,
+                "customer_dashboard/snippets/cart_order_item.html",
+                context,
+            )
+            response["HX-Refresh"] = "true"
+            return response
+
+        if request.POST.get("save"):
+            oldDate = order_group.start_date
+            if order.get_order_type() == Order.Type.DELIVERY:
+                form = EditOrderDateForm(
+                    request.POST,
+                    request.FILES,
+                    instance=order,
+                    initial={"date": order.start_date.strftime("%Y-%m-%d")},
+                )
+            else:
+                form = EditOrderDateForm(
+                    request.POST,
+                    request.FILES,
+                    instance=order,
+                    initial={"date": order.end_date.strftime("%Y-%m-%d")},
+                )
+            # form.data["date"] = request.POST.get("date")
+            # order_group.start_date = datetime.datetime.strptime(
+            #         form.data["date"], "%Y-%m-%d"
+            #     ).date()
+            if form.is_valid():
+                # things change on the form that aren't one of the fields on the form
+                if form.data["date"] != form.initial["date"]:
+                    dateObject = datetime.datetime.strptime(
+                        form.data["date"], "%Y-%m-%d"
+                    ).date()
+
+                    def bumpOrders(is_delivery=False, is_swap=False, is_removal=False):
+                        cart_items = order_group.orders.filter(
+                            submitted_on__isnull=True
+                        )
+                        # only 1 oder should end on the this start date
+                        # eg: delivery orders start and end on the same day
+                        # or eg: swap oders start on the same day as the last order
+                        if len(cart_items.filter(end_date=order.end_date)) > 1:
+                            messages.error(
+                                request,
+                                "Jared did not acount for 2 orders having the same end date. In function bumpOrders().",
+                            )
+                            return fullPageReload()
+                        next_order = (
+                            order_group.orders.filter(
+                                submitted_on__isnull=True, end_date__gt=oldDate
+                            )
+                            .order_by("end_date")
+                            .first()
+                        )
+                        if is_delivery:
+                            order.start_date = dateObject
+                            order.end_date = dateObject
+                        if is_swap:
+                            order.end_date = dateObject
+                        order.order_line_items.all().delete()
+                        order.add_line_items(True)
+                        # next_order.start_date can't be later than the next order start date
+                        if next_order:
+                            next_order.start_date = dateObject
+                            if next_order.start_date > next_order.end_date:
+                                messages.error(
+                                    request,
+                                    f"The start date runs into the end date of the next order ({next_order.end_date}).",
+                                )
+                                return fullPageReload()
+                            next_order.order_line_items.all().delete()
+                            next_order.add_line_items(True)
+                            next_order.save()
+
+                    # recreate all the order line items
+                    if order.get_order_type() == Order.Type.DELIVERY:
+                        # for a DELIVERY edit the start date
+                        # the start date on the order group is the same
+                        # the start date of the next order is the same
+                        oldDate = order.end_date
+                        order_group.start_date = dateObject
+                        bumpOrders(is_delivery=True)
+                    elif order.get_order_type() == Order.Type.SWAP:
+                        oldDate = order.end_date
+                        bumpOrders(is_swap=True)
+                        # for a SWAP edit the end date
+                        # the end date of the next order is the same
+                    elif order.get_order_type() == Order.Type.REMOVAL:
+                        # for a REMOVAL edit the end date
+                        # the end date on the order group is the same
+                        oldDate = order.end_date
+                        order.end_date = dateObject
+                        order_group.end_date = dateObject
+                        order.order_line_items.all().delete()
+                        order.add_line_items(True)
+                    order_group.save()
+                    order.save()
+
+                    messages.success(request, "Successfully saved!")
+                    return fullPageReload()
+                else:
+                    order_group.start_date = oldDate
+                    # form.add_error("date", "Date not changed.")
+                    messages.error(request, "Order start date not changed.")
+                    # context["form"] = form
+            else:
+                messages.error(
+                    request,
+                    "Invalid date. Please check the form for errors.",
+                )
+                order_group.start_date = oldDate
+                context["form"] = form
+        else:
+            context["form"] = form
+
+        # form.save()
+        # redirect to cart
+        # return HttpResponseRedirect(reverse("customer_cart"))
+        return render(
+            request,
+            "customer_dashboard/snippets/cart_order_item.html",
+            context,
+        )
 
 
 @login_required(login_url="/admin/login/")

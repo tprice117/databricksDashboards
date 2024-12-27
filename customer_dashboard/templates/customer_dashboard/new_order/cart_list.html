@@ -39,78 +39,10 @@
                                     <div class="card-body">
                                         <div class="row">
                                             <div class="col">
-                                                <div class="row">
-                                                    <div class="col-auto">
-                                                        <img class="img-thumbnail img-fluid"
-                                                            alt="Product image"
-                                                            width="138"
-                                                            height="95"
-                                                            src="{% if order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
-                                                                {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
-                                                            {% elif order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
-                                                                {{ order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
-                                                            {% else %}
-                                                                {% static 'customer_dashboard/img/logo.png' %}
-                                                            {% endif %}" />
-                                                    </div>
-                                                    <div class="col">
-                                                        <h3>{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
-                                                        {% if order.order_group.end_date %}
-                                                            <p class="mb-1">{{ order.order_group.start_date }} to {{ order.order_group.end_date }}</p>
-                                                        {% else %}
-                                                            {% if order.order_group.service_recurring_frequency %}
-                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }} and recurring {{ order.order_group.service_recurring_frequency.name|lower }}</p>
-                                                            {% else %}
-                                                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }}</p>
-                                                            {% endif %}
-                                                        {% endif %}
-                                                        <p class="mb-1">Service date: {{ order.end_date }}</p>
-                                                        <p class="mb-1">Order type: {{ order.order_type }}</p>
-                                                        {% if order.order_group.project_id %}
-                                                            <p class="mb-1">PO ID: {{ order.order_group.project_id }}</p>
-                                                        {% endif %}
-                                                        {% if request.user.is_staff %}
-                                                            <p class="mb-1">Created by: {% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on|timezone:"America/Chicago" }} (CT)</p>
-                                                        {% endif %}
-                                                        {% comment %} <p>order line items: {{ order.order_line_items.count }} - [{{ order.status }}]</p> {% endcomment %}
-                                                    </div>
-                                                    <div class="col-auto">
-                                                        <p class="text-end">${{ order.customer_price|floatformat:2|intcomma }}</p>
-                                                    </div>
-                                                    <div class="col-auto">
-                                                        <div class="row justify-content-center">
-                                                            <div class="col-auto">
-                                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ order.order_group.id }}" type="button"
-                                                                    data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ order.customer_price }}" data-countid="count-{{ cart_address.address.id }}"
-                                                                    hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
-                                                                    onClick="event.stopPropagation();
-                                                                    Swal.fire(
-                                                                        {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
-                                                                    ).then((result)=>{
-                                                                        if(result.isConfirmed){removeItemFromCart(this);}
-                                                                    })">
-                                                                    Remove
-                                                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        {% if request.user.is_superuser %}
-                                                            <div class="row justify-content-center">
-                                                                <div class="col-auto">
-                                                                    <a class="btn btn-link" role="button" href="/admin/api/order/{{order.id}}/change/">In database</a>
-                                                                </div>
-                                                            </div>
-                                                        {% endif %}
-                                                        {% if request.user.is_staff %}
-                                                            {% if not order.order_group.is_agreement_signed %}
-                                                                {% if order.order_group.agreement %}
-                                                                    <a class="btn btn-sm btn-danger" href="{{ order.order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf"></i>&nbsp; Agreement</a>
-                                                                {% endif %}
-                                                            {% elif order.requires_terms_agreement %}
-                                                                <a class="btn btn-sm btn-success" href="{{ order.order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf"></i>&nbsp; Agreement</a>
-                                                            {% endif %}
-                                                        {% endif %}
-                                                    </div>
+                                                <div class="row cart-body">
+                                                    {% with loopcount=forloop.counter %}
+                                                        {% include "customer_dashboard/snippets/cart_order_item.html" %}
+                                                    {% endwith %}
                                                 </div>
                                             </div>
                                         </div>

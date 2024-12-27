@@ -644,6 +644,44 @@ class OrderReviewForm(forms.ModelForm):
         }
 
 
+class EditOrderDateForm(forms.Form):
+    date = forms.DateField(
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "min": datetime.date.today(),
+            }
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        order = kwargs.pop("instance", None)
+        super(EditOrderDateForm, self).__init__(*args, **kwargs)
+        self.user_address = order.order_group.user_address
+
+    def clean_date(self):
+        allowed_date = datetime.date.today() + datetime.timedelta(days=0)
+        date = self.cleaned_data["date"]
+        if date < allowed_date:
+            raise ValidationError(
+                "Must be after: %(allowed_date)s",
+                params={"allowed_date": allowed_date - datetime.timedelta(days=1)},
+            )
+        elif date.weekday() == 6:  # 6 corresponds to Sunday
+            allow_sunday_delivery = False
+            if self.user_address:
+                allow_sunday_delivery = self.user_address.allow_sunday_delivery
+            if not allow_sunday_delivery:
+                raise ValidationError("Date cannot be on a Sunday.")
+        elif date.weekday() == 5:
+            allow_saturday_delivery = False
+            if self.user_address:
+                allow_saturday_delivery = self.user_address.allow_saturday_delivery
+            if not allow_saturday_delivery:
+                raise ValidationError("Date cannot be on a Saturday.")
+
+
 OrderReviewFormSet = forms.inlineformset_factory(
     Order, OrderReview, form=OrderReviewForm, formset=HiddenDeleteFormSet, extra=1
 )
