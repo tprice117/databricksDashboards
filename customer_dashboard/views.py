@@ -1215,21 +1215,14 @@ def edit_order_start_date(request, order_id):
                         form.data["date"], "%Y-%m-%d"
                     ).date()
 
-                    def bumpOrders():
+                    def bumpOrders(is_delivery=False, is_swap=False, is_removal=False):
                         cart_items = order_group.orders.filter(
                             submitted_on__isnull=True
                         )
                         # only 1 oder should end on the this start date
                         # eg: delivery orders start and end on the same day
                         # or eg: swap oders start on the same day as the last order
-                        if (
-                            len(
-                                cart_items.filter(
-                                    end_date=order.end_date.strftime("%Y-%m-%d")
-                                )
-                            )
-                            > 1
-                        ):
+                        if len(cart_items.filter(end_date=order.end_date)) > 1:
                             messages.error(
                                 request,
                                 "Jared did not acount for 2 orders having the same end date. In function bumpOrders().",
@@ -1237,12 +1230,16 @@ def edit_order_start_date(request, order_id):
                             return fullPageReload()
                         next_order = (
                             order_group.orders.filter(
-                                submitted_on__isnull=True,
-                                end_date__gt=oldDate.strftime("%Y-%m-%d"),
+                                submitted_on__isnull=True, end_date__gt=oldDate
                             )
                             .order_by("end_date")
                             .first()
                         )
+                        if is_delivery:
+                            order.start_date = dateObject
+                            order.end_date = dateObject
+                        if is_swap:
+                            order.end_date = dateObject
                         order.order_line_items.all().delete()
                         order.add_line_items(True)
                         # next_order.start_date can't be later than the next order start date
@@ -1259,24 +1256,21 @@ def edit_order_start_date(request, order_id):
                             next_order.save()
 
                     # recreate all the order line items
-                    # for a DELIVERY edit the start date
-                    # the start date on the order group is the same
-                    # the start date of the next order is the same
                     if order.get_order_type() == Order.Type.DELIVERY:
+                        # for a DELIVERY edit the start date
+                        # the start date on the order group is the same
+                        # the start date of the next order is the same
                         oldDate = order.end_date
                         order_group.start_date = dateObject
-                        bumpOrders()
-                        order.start_date = dateObject
-                        order.end_date = dateObject
-                    # for a SWAP edit the end date
-                    # the end date of the next order is the same
-                    if order.get_order_type() == Order.Type.SWAP:
+                        bumpOrders(is_delivery=True)
+                    elif order.get_order_type() == Order.Type.SWAP:
                         oldDate = order.end_date
-                        bumpOrders()
-                        order.end_date = dateObject
-                    # for a REMOVAL edit the end date
-                    # the end date on the order group is the same
-                    if order.get_order_type() == Order.Type.REMOVAL:
+                        bumpOrders(is_swap=True)
+                        # for a SWAP edit the end date
+                        # the end date of the next order is the same
+                    elif order.get_order_type() == Order.Type.REMOVAL:
+                        # for a REMOVAL edit the end date
+                        # the end date on the order group is the same
                         oldDate = order.end_date
                         order.end_date = dateObject
                         order_group.end_date = dateObject
