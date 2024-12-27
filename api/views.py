@@ -50,6 +50,7 @@ from common.models.choices.user_type import UserType
 from .models import (
     AddOn,
     AddOnChoice,
+    Advertisement,
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
@@ -100,6 +101,7 @@ from .pricing_ml import pricing
 from .serializers import (
     AddOnChoiceSerializer,
     AddOnSerializer,
+    AdvertisementSerializer,
     DayOfWeekSerializer,
     DisposalLocationSerializer,
     DisposalLocationWasteTypeSerializer,
@@ -162,6 +164,12 @@ class SpectacularRedocViewNoAuth(SpectacularRedocView):
 class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
     authentication_classes = []
     permission_classes = []
+
+
+class AdvertisementViewSet(viewsets.ModelViewSet):
+    queryset = Advertisement.objects.all()
+    serializer_class = AdvertisementSerializer
+    filterset_fields = ["id", "is_active"]
 
 
 class SellerViewSet(viewsets.ReadOnlyModelViewSet):

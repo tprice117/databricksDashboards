@@ -12,7 +12,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.conf import settings
 
-from api.models.industry import Industry
+from api.models.common.industry import Industry
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
