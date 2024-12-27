@@ -39,6 +39,7 @@ class MainProductCategory(BaseModel):
         Industry,
         related_name="industry",
         blank=True,
+        null=True,
     )
 
     def __str__(self):
