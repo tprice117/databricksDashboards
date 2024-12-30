@@ -176,9 +176,7 @@ class SellerProductSellerLocation(BaseModel):
         max_digits=18, decimal_places=2, blank=True, null=True
     )
     # Service radius in miles
-    service_radius = models.DecimalField(
-        max_digits=18, decimal_places=0, blank=True, null=True
-    )
+    service_radius = models.DecimalField(max_digits=18, decimal_places=0, default=40)
     delivery_fee = models.DecimalField(
         max_digits=18, decimal_places=2, blank=True, null=True
     )
