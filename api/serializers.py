@@ -98,6 +98,7 @@ def get_order_approval_serializer():
 class AdvertisementSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     object_id = serializers.SerializerMethodField(read_only=True)
+    is_active = serializers.SerializerMethodField(required=False, allow_null=True)
 
     class Meta:
         model = Advertisement
@@ -114,6 +115,16 @@ class AdvertisementSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
         ]
+
+    def get_is_active(self, obj):
+        """Check if the advertisement is active and falls within the start and end dates."""
+        now = datetime.datetime.now((datetime.timezone.utc))
+        return (
+            obj.is_active
+            and not obj.is_deleted
+            and (not obj.start_date or obj.start_date <= now)
+            and (not obj.end_date or obj.end_date >= now)
+        )
 
     def get_object_id(self, obj):
         return obj.linked_object.id
