@@ -14,7 +14,7 @@
                     src="{% if item.seller_product_seller_location.seller_location.seller.location_logo_url %}
                         {{ item.seller_product_seller_location.seller_location.seller.location_logo_url }}
                     {% else %}
-                        {% static 'customer_dashboard/img/blank.png' %}
+                        {% static 'customer_dashboard/img/defualt_logo.png' %}
                     {% endif %}" />
                 <h3 class="mt-1 supplier-name">{{ item.seller_product_seller_location.seller_location.name }}</h3>
                 <p>
