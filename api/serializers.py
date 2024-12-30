@@ -1041,6 +1041,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "placement_details",
             "start_date",
             "end_date",
+            "estimated_end_date",
             "take_rate",
             "tonnage_quantity",
             "times_per_week",
