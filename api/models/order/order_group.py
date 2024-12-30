@@ -81,6 +81,7 @@ class OrderGroup(BaseModel):
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     placement_details = models.TextField(blank=True, null=True)
+    delivered_to_street = models.BooleanField(default=False)
     service_recurring_frequency = models.ForeignKey(
         ServiceRecurringFrequency, models.PROTECT, blank=True, null=True
     )

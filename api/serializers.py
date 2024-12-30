@@ -1050,6 +1050,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "is_deleted",
             "access_details",
             "placement_details",
+            "delivered_to_street",
             "start_date",
             "end_date",
             "estimated_end_date",
