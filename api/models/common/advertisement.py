@@ -61,8 +61,13 @@ class Advertisement(BaseModel):
         return self.text
 
     def clean(self):
-        """Ensure that only one linked object is set."""
+        """Perform validation before saving."""
         super().clean()
+        # Check that start date is before end date
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError("End date must be after start date.")
+
+        # Check that linked object is set
         # 4. Add more checks here as needed
         if (
             self.object_type == AdvertisementObjectType.MAIN_PRODUCT_CATEGORY
