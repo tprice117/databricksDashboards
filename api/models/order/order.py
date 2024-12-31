@@ -424,6 +424,8 @@ class Order(BaseModel):
         inv_resp = []
         stripe_invoice_ids = []
         for order_line_item in self.order_line_items.exclude_adjustments():
+            if not order_line_item.stripe_invoice_line_item_id:
+                continue
             try:
                 invoice_line_item = StripeUtils.InvoiceItem.get(
                     order_line_item.stripe_invoice_line_item_id
