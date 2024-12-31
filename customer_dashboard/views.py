@@ -37,7 +37,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_POST, require_GET, require_http_methods
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -549,6 +549,28 @@ def catch_errors(redirect_url_name=None):
                 else:
                     full_path = f"{request.path}?{query_params.urlencode()}"
                     return HttpResponseRedirect(full_path)
+
+        return _wrapper_view
+
+    return decorator
+
+
+def require_htmx(redirect_url_name=None):
+    """
+    Decorator for views that require an htmx request.
+    If the request is not an htmx request, the decorator will redirect to the given url.
+    If no url is given, it will return a 406 status code.
+    """
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapper_view(request, *args, **kwargs):
+            if not request.headers.get("HX-Request"):
+                if redirect_url_name:
+                    return HttpResponseRedirect(reverse(redirect_url_name))
+                else:
+                    return HttpResponse("Not Allowed", status=406)
+            return view_func(request, *args, **kwargs)
 
         return _wrapper_view
 
@@ -1309,17 +1331,34 @@ def customer_cart_date_edit(request, order_id):
 @login_required(login_url="/admin/login/")
 @catch_errors()
 @require_http_methods(["GET", "POST"])
-def customer_cart_po(request, order_id):
+@require_htmx(redirect_url_name="customer_cart")
+def customer_cart_po(request, order_group_id):
+    """Returns a snippet with the project id for an order group. POST to update the project id."""
     context = {}
-    order = Order.objects.get(id=order_id)
+    order_group = OrderGroup.objects.get(id=order_group_id)
+    user = get_user(request)
+
+    # Authorize the request.
+    if not (
+        user.is_staff
+        or (
+            user.type == UserType.ADMIN
+            and (
+                order_group.user == user
+                or user.user_group == order_group.user.user_group
+            )
+        )
+        or order_group.user_address.user == user
+    ):
+        return HttpResponse("Unauthorized", status=401)
 
     if request.method == "POST":
         project_id = request.POST.get("project_id")
 
-        order.order_group.project_id = project_id
-        order.order_group.save()
+        order_group.project_id = project_id
+        order_group.save()
 
-    context["order"] = order
+    context["order_group"] = order_group
 
     return render(
         request, "customer_dashboard/snippets/cart_order_item_po.html", context
@@ -1328,10 +1367,29 @@ def customer_cart_po(request, order_id):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
-@require_http_methods(["GET"])
-def customer_cart_po_edit(request, order_id):
+@require_GET
+@require_htmx(redirect_url_name="customer_cart")
+def customer_cart_po_edit(request, order_group_id):
+    """Returns a snippet with a form to edit the project id of an order group."""
     context = {}
-    context["order"] = Order.objects.get(id=order_id)
+    order_group = OrderGroup.objects.get(id=order_group_id)
+    user = get_user(request)
+
+    # Authorize the request.
+    if not (
+        user.is_staff
+        or (
+            user.type == UserType.ADMIN
+            and (
+                order_group.user == user
+                or user.user_group == order_group.user.user_group
+            )
+        )
+        or order_group.user_address.user == user
+    ):
+        return HttpResponse("Unauthorized", status=401)
+
+    context["order_group"] = order_group
     return render(
         request, "customer_dashboard/snippets/cart_order_item_po_edit.html", context
     )
