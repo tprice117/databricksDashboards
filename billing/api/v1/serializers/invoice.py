@@ -32,6 +32,12 @@ class InvoiceExpandedSerializer(serializers.ModelSerializer):
     user_address = UserAddressSerializer()
     items = serializers.SerializerMethodField(read_only=True)
     groups = serializers.SerializerMethodField(read_only=True)
+    pre_payment_credit = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
+    post_payment_credit = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
 
     class Meta:
         model = Invoice
