@@ -99,7 +99,7 @@ class UserInviteForm(forms.Form):
     last_name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=True,
+        required=False,
     )
     email = forms.CharField(
         widget=forms.TextInput(attrs={"class": "form-control"}),
@@ -201,6 +201,8 @@ class NewSellerForm(forms.ModelForm):
 
 
 class SellerUserForm(UserForm):
+    """Form for inviting a new user when creating a new Seller."""
+
     class Meta(UserForm.Meta):
         fields = [
             "first_name",
@@ -212,7 +214,7 @@ class SellerUserForm(UserForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["first_name"].required = True
-        self.fields["last_name"].required = True
+        self.fields["last_name"].required = False
 
     def clean(self):
         cleaned_data = super().clean()
@@ -234,6 +236,8 @@ class SellerUserForm(UserForm):
 
 
 class SellerLocationForm(forms.ModelForm):
+    """Form for creating a new SellerLocation with an associated SellerLocationMailingAddress."""
+
     template_name = "supplier_dashboard/snippets/location_form.html"
 
     mailing_street = forms.CharField(
