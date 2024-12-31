@@ -21,6 +21,8 @@ class InvoiceGroup(TypedDict):
 class InvoiceResponse(TypedDict):
     items: List[InvoiceItem]
     groups: List[InvoiceGroup]
+    pre_payment_credit: Decimal
+    post_payment_credit: Decimal
 
 
 class InvoiceGroupedGroup(TypedDict):
@@ -31,6 +33,8 @@ class InvoiceGroupedGroup(TypedDict):
 
 class InvoiceGroupedResponse(TypedDict):
     groups: List[InvoiceGroupedGroup]
+    pre_payment_credit: Decimal
+    post_payment_credit: Decimal
 
 
 class AccountSummaryInvoice(TypedDict):

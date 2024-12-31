@@ -213,6 +213,13 @@
                             {% endif %}
                         </p>
                         <p class="card-text">Total: ${{ invoice.total|stringformat:'.2f'|intcomma }}</p>
+                        {% if invoice.invoice_items_grouped.pre_payment_credit %}
+                            <p class="card-text">Pre-Payment Credit: -${{ invoice.invoice_items_grouped.pre_payment_credit|stringformat:'.2f'|intcomma }}</p>
+                            <p class="card-text">Amount Due: ${{ invoice.amount_due|stringformat:'.2f'|intcomma }}</p>
+                        {% endif %}
+                        {% if invoice.invoice_items_grouped.post_payment_credit %}
+                            <p class="card-text">Credit Still Available: ${{ invoice.invoice_items_grouped.post_payment_credit|stringformat:'.2f'|intcomma }}</p>
+                        {% endif %}
                         <p class="card-text">Status: {{ invoice.status }}</p>
                         <p class="card-text">Invoice #: {{ invoice.number }}</p>
                         <p class="card-text">Location: {{ invoice.user_address.formatted_address }}</p>
@@ -279,11 +286,19 @@
                                         <!-- <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show{% else %}collapsed{% endif %}" role="tabpanel" data-bs-parent="#invoice-item-results"> -->
                                         <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}
                                                 
+                                                
+                                                
                                                 show
+
+
 
                                             {% else %}
                                                 
+                                                
+                                                
                                                 collapsed
+
+
 
                                             {% endif %}"
                                             role="tabpanel"
