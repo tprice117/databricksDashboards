@@ -190,6 +190,7 @@ class SellerProductSellerLocation(BaseModel):
         null=True,
         help_text="Percentage (ex: 35 means 35%)",
     )
+    allows_pick_up = models.BooleanField(default=True)
 
     # Manager for chaining custom queries.
     objects = SellerProductSellerLocationManager()

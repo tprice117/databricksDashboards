@@ -55,6 +55,7 @@ class MainProduct(BaseModel):
     has_service = models.BooleanField(default=False)
     has_service_times_per_week = models.BooleanField(default=False)
     has_material = models.BooleanField(default=False)
+    allows_pick_up = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.main_product_category.name} - {self.name}"
