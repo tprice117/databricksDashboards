@@ -1,16 +1,16 @@
 {% load static %}
-{% url 'customer_cart_po' order_id=order.id as customer_cart_po_url %}
+{% url 'customer_cart_po' order_group_id=order_group.id as customer_cart_po_url %}
 <form hx-target="this" hx-trigger="cancel" class="mb-1 editing" hx-get="{{ customer_cart_po_url }}">
   {% csrf_token %}
   <div class="input-group input-group-sm">
-    PO ID:&nbsp;<input class="form-control" type="text" value="{{ order.order_group.project_id|default:'' }}" name="project_id" maxlength="50" />
+    PO ID:&nbsp;<input class="form-control" type="text" value="{{ order_group.project_id|default:'' }}" name="project_id" maxlength="50" />
     <button class="btn btn-outline-secondary" hx-get="{{ customer_cart_po_url }}">
       Cancel
-      <span class="htmx-indicator" id="htmx-indicator-cancel-po-id-{{ order.id }}"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+      <span class="htmx-indicator" id="htmx-indicator-cancel-po-id-{{ order_group.id }}"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
     </button>
     <button class="btn btn-outline-secondary" hx-post="{{ customer_cart_po_url }}" type="submit">
       Save
-      <span class="htmx-indicator" id="htmx-indicator-save-po-id-{{ order.id }}"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+      <span class="htmx-indicator" id="htmx-indicator-save-po-id-{{ order_group.id }}"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
     </button>
   </div>
 </form>

@@ -171,13 +171,13 @@ urlpatterns = [
     ),
     # GET/POST
     path(
-        "customer/cart/<uuid:order_id>/po/",
+        "customer/cart/<uuid:order_group_id>/po/",
         views.customer_cart_po,
         name="customer_cart_po",
     ),
     # GET
     path(
-        "customer/cart/<uuid:order_id>/po/edit/",
+        "customer/cart/<uuid:order_group_id>/po/edit/",
         views.customer_cart_po_edit,
         name="customer_cart_po_edit",
     ),
