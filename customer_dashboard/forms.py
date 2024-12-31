@@ -170,12 +170,19 @@ class AccessDetailsForm(forms.Form):
 
 class PlacementDetailsForm(forms.Form):
     placement_details = forms.CharField(
+        label="instructions",
         widget=forms.Textarea(
             attrs={
                 "class": "form-control",
                 "rows": 3,
             }
-        )
+        ),
+    )
+    delivered_to_street = forms.BooleanField(
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
+        required=False,
     )
 
 
