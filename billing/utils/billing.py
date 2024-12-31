@@ -411,17 +411,18 @@ class BillingUtils:
                         for order in orders
                         if not order.all_order_line_items_invoiced()
                     ]
+                    # Only create an invoice if there are orders to invoice.
+                    if orders:
+                        invoice = BillingUtils.create_stripe_invoice_for_user_address(
+                            orders,
+                            user_address,
+                        )
 
-                    invoice = BillingUtils.create_stripe_invoice_for_user_address(
-                        orders,
-                        user_address,
-                    )
-
-                    # Finalize the invoice.
-                    BillingUtils.finalize_and_pay_stripe_invoice(
-                        invoice=invoice,
-                        user_group=user_address.user_group,
-                    )
+                        # Finalize the invoice.
+                        BillingUtils.finalize_and_pay_stripe_invoice(
+                            invoice=invoice,
+                            user_group=user_address.user_group,
+                        )
         except Exception as e:
             logger.error(
                 f"BillingUtils.run_project_end_based_invoicing: [{e}]", exc_info=e
