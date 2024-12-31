@@ -31,11 +31,12 @@ class Utils:
         """
         Check if today is the invoice day for the UserGroup.
         """
-        # If the UserGroup has a specific invoice day of the month, use that.
-        if user_group.invoice_day_of_month:
-            # DAY OF MONTH.
-            # If the user group has a specific invoice day of the month, use that.
-            return datetime.date.today().day == user_group.invoice_day_of_month
+        # First check if the user group has an immediate invoice frequency.
+        if (
+            user_group.invoice_frequency
+            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.IMMEDIATELY
+        ):
+            return True
         elif (
             user_group.invoice_frequency
             and user_group.invoice_frequency == UserGroup.InvoiceFrequency.MONTHLY
@@ -53,11 +54,10 @@ class Utils:
             and user_group.invoice_frequency == UserGroup.InvoiceFrequency.WEEKLY
         ):
             return Utils._is_weekly_invoice_day()
-        elif (
-            user_group.invoice_frequency
-            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.IMMEDIATELY
-        ):
-            return True
+        elif user_group.invoice_day_of_month:
+            # DAY OF MONTH.
+            # If the user group has a specific invoice day of the month, use that.
+            return datetime.date.today().day == user_group.invoice_day_of_month
         elif user_group.invoice_at_project_completion:
             return False  # Invoicing is handled by the project completion process.
         else:
