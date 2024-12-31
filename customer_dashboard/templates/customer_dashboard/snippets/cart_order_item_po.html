@@ -1,0 +1,9 @@
+{% load static %}
+<p hx-target="this" class="mb-1">
+  PO ID: {{ order.order_group.project_id|default:'None' }}
+  <button class="btn btn-link edit-po-id ps-2 p-0" id="btn-po-{{ order.id }}" type="button" hx-target="closest p" hx-get="{% url 'customer_cart_po_edit' order_id=order.id %}">
+    <!-- prettier ignore -->
+    <i class="fas fa-edit" style="color: #007bff;" id="edit-po-id-icon-{{ order.id }}"></i>
+    <span class="htmx-indicator" id="htmx-indicator-edit-po-id-{{ order.id }}"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+  </button>
+</p>

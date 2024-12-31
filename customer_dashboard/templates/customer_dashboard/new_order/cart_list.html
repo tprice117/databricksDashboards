@@ -2,79 +2,66 @@
 {% load tz %}
 {% load humanize %}
 <div class="accordion" role="tablist" id="cart-results">
-    {% for cart_address in cart.values %}
-        <div class="accordion-item">
-            <h2 class="accordion-header" role="tab">
-                <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
-                    <div>
-                        <span>{% if cart_address.address.name %}{{ cart_address.address.name }} - {% endif %}{{ cart_address.address.formatted_address }}</span> -
-                        <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-                        <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.transactions|length }}">{{ cart_address.transactions|length }} item{{ cart_address.transactions|length|pluralize }}</span>
-                    </div>
-                    <div class="ms-auto align-items-end">
-                        {% if user.is_staff %}
-                            <span class="ms-2">
-                                [{% if cart_address.address.user_group.name %}
-                                    {{ cart_address.address.user_group.name }}
-                                {% else %}
-                                    USER: {{ cart_address.address.user.full_name }}
-                                {% endif %}]
-                            </span>
-                        {% endif %}
-                    </div>
-                </button>
-            </h2>
-            <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}
-                    show
+  {% for cart_address in cart.values %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" role="tab">
+        <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
+          <div>
+            <span>
+              {% if cart_address.address.name %}
+                {{ cart_address.address.name }} -
+              {% endif %}{{ cart_address.address.formatted_address }}
+            </span> -
+            <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+            <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.transactions|length }}">{{ cart_address.transactions|length }} item{{ cart_address.transactions|length|pluralize }}</span>
+          </div>
+          <div class="ms-auto align-items-end">
+            {% if user.is_staff %}
+              <span class="ms-2">
+                [{% if cart_address.address.user_group.name %}
+                  {{ cart_address.address.user_group.name }}
                 {% else %}
-                    collapsed
-                {% endif %}"
-                role="tabpanel"
-                data-bs-parent="#cart-results">
-                <div class="accordion-body">
-                    {% for order in cart_address.transactions %}
-                        <div class="row cart-item mb-2">
-                            <div class="col">
-                                <div class="card" style="background: var(--bs-card-cap-bg);">
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="row cart-body">
-                                                    {% with loopcount=forloop.counter %}
-                                                        {% include "customer_dashboard/snippets/cart_order_item.html" %}
-                                                    {% endwith %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                        <div class="row justify-content-end mb-2 mt-4">
-                            {% if request.user.is_staff and cart_address.show_quote %}
-                                <div class="col-auto">
-                                    <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
-                                    <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
-                                        {% if cart_address.quote_sent_on %}
-                                            Resend Quote (sent {{ cart_address.quote_sent_on|date:"F j, Y" }})
-                                        {% else %}
-                                            Send Quote
-                                        {% endif %}
-                                    </button>
-                                </div>
-                            {% endif %}
-                            <div class="col-auto">
-                                <a class="btn btn-primary" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
-                            </div>
-                        </div>
-                </div>
+                  USER: {{ cart_address.address.user.full_name }}
+                {% endif %}]
+              </span>
+            {% endif %}
+          </div>
+        </button>
+      </h2>
+      <!-- prettier-ignore -->
+      <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show {% else %}collapsed{% endif %}"
+        role="tabpanel"
+        data-bs-parent="#cart-results">
+        <div class="accordion-body">
+          {% for order in cart_address.transactions %}
+            {% include 'customer_dashboard/new_order/cart_order_item.html' with loopcount=forloop.counter %}
+          {% endfor %}
+          <div class="row justify-content-end mb-2 mt-4">
+            {% if request.user.is_staff and cart_address.show_quote %}
+              <div class="col-auto">
+                <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
+                <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
+                  {% if cart_address.quote_sent_on %}
+                    Resend Quote (sent {{ cart_address.quote_sent_on|date:'F j, Y' }})
+                  {% else %}
+                    Send Quote
+                  {% endif %}
+                </button>
+              </div>
+            {% endif %}
+            <div class="col-auto">
+              <a class="btn btn-primary" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
             </div>
+          </div>
         </div>
-    {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
 </div>
 
 <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}" hx-swap-oob="true">
-    Shopping Cart ({{ cart_count }}){% if help_text %} - {{ help_text }}{% endif %}
+  Shopping Cart ({{ cart_count }}){% if help_text %}
+    - {{ help_text }}
+  {% endif %}
 </h3>
 <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>

@@ -37,7 +37,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -1148,7 +1148,7 @@ def new_order_4(request):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
-def edit_order_start_date(request, order_id):
+def customer_cart_date_edit(request, order_id):
     if request.method == "POST":
         # a snippet of html for editing the start date
         context = get_user_context(request)
@@ -1160,7 +1160,7 @@ def edit_order_start_date(request, order_id):
             context["loopcount"] = request.POST.get("loopcount")
             return render(
                 request,
-                "customer_dashboard/snippets/cart_order_item.html",
+                "customer_dashboard/new_order/cart_order_item.html",
                 context,
             )
         if not request.POST.get("save"):
@@ -1182,7 +1182,7 @@ def edit_order_start_date(request, order_id):
             # use hx-refresh to reload the page
             response = render(
                 request,
-                "customer_dashboard/snippets/cart_order_item.html",
+                "customer_dashboard/new_order/cart_order_item.html",
                 context,
             )
             response["HX-Refresh"] = "true"
@@ -1301,9 +1301,40 @@ def edit_order_start_date(request, order_id):
         # return HttpResponseRedirect(reverse("customer_cart"))
         return render(
             request,
-            "customer_dashboard/snippets/cart_order_item.html",
+            "customer_dashboard/new_order/cart_order_item.html",
             context,
         )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+@require_http_methods(["GET", "POST"])
+def customer_cart_po(request, order_id):
+    context = {}
+    order = Order.objects.get(id=order_id)
+
+    if request.method == "POST":
+        project_id = request.POST.get("project_id")
+
+        order.order_group.project_id = project_id
+        order.order_group.save()
+
+    context["order"] = order
+
+    return render(
+        request, "customer_dashboard/snippets/cart_order_item_po.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+@require_http_methods(["GET"])
+def customer_cart_po_edit(request, order_id):
+    context = {}
+    context["order"] = Order.objects.get(id=order_id)
+    return render(
+        request, "customer_dashboard/snippets/cart_order_item_po_edit.html", context
+    )
 
 
 @login_required(login_url="/admin/login/")
