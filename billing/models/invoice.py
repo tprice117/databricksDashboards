@@ -77,14 +77,29 @@ class Invoice(BaseModel):
 
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def _get_invoice_items(self) -> InvoiceResponse:
-        stripe_invoice_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
-            self.invoice_id
-        )
+        invoice = StripeUtils.Invoice.get(self.invoice_id)
+        if invoice.lines["has_more"]:
+            stripe_invoice_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
+                self.invoice_id
+            )
+        else:
+            stripe_invoice_items = invoice.lines["data"]
         groups = StripeUtils.SummaryItems.get_all_for_invoice(self.invoice_id)
         response: InvoiceResponse = {
             "items": [],
             "groups": [],
+            "pre_payment_credit": 0,
+            "post_payment_credit": 0,
         }
+
+        if invoice["pre_payment_credit_notes_amount"]:
+            response["pre_payment_credit"] = Decimal(
+                invoice["pre_payment_credit_notes_amount"] / 100
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if invoice["post_payment_credit_notes_amount"]:
+            response["post_payment_credit"] = Decimal(
+                invoice["post_payment_credit_notes_amount"] / 100
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         for item in stripe_invoice_items:
             amount = Decimal(item["amount"] / 100).quantize(
