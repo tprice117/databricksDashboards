@@ -311,23 +311,24 @@ class OrderGroup(BaseModel):
 
     @property
     def nearest_order(self):
-        # Get the nearest order to the current date.
-        orders = self.orders.order_by("-start_date")
-        if orders.count() == 0:
-            return None
-        else:
-            today = datetime.date.today()
-            order = orders.first()
-            if order.start_date < today:
-                return order
-            else:
-                # Get order that is closest to today.
-                nearest_order = None
-                for order in orders:
-                    nearest_order = order
-                    if order.start_date < today:
-                        break
-                return nearest_order
+        """Get the nearest order to the current date.
+        If it is a future order, return the first future order.
+        If it is a past order, return the most recent past order."""
+        today = datetime.date.today()
+
+        # Get the nearest future order
+        future_orders = self.orders.filter(end_date__gt=today).order_by("end_date")
+
+        if future_orders.exists():
+            return future_orders.first()
+
+        # If no future orders, get the nearest past order
+        past_orders = self.orders.filter(end_date__lte=today).order_by("-end_date")
+
+        if past_orders.exists():
+            return past_orders.first()
+
+        return None
 
     def create_swap(self, swap_date, schedule_window: str = None) -> Order:
         """Create a swap for the OrderGroup.
