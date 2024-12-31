@@ -672,6 +672,7 @@ class SellerProductSellerLocationSchedulingForm(forms.ModelForm):
         model = SellerProductSellerLocation
         fields = [
             "service_radius",
+            "allows_pick_up",
         ]
         widgets = {
             "service_radius": forms.NumberInput(
@@ -682,9 +683,11 @@ class SellerProductSellerLocationSchedulingForm(forms.ModelForm):
                     "step": 0.01,
                 }
             ),
+            "allows_pick_up": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
         labels = {
             "service_radius": "Service Radius (miles)",
+            "allows_pick_up": "allow users to pick up product",
         }
 
     def __init__(self, *args, **kwargs):
