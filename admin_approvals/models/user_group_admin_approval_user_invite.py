@@ -49,6 +49,8 @@ class UserGroupAdminApprovalUserInvite(BaseModel):
     )
     last_name = models.CharField(
         max_length=255,
+        blank=True,
+        null=True,
     )
     # This is used in the Auth0 login process to redirect the user to a specific page after login.
     # This is helpful in the account creation process to redirect the user to the correct
