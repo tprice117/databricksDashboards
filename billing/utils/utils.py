@@ -33,25 +33,27 @@ class Utils:
         """
         # First check if the user group has an immediate invoice frequency.
         if (
-            user_group.invoice_frequency
-            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.IMMEDIATELY
+            user_group.invoice_frequency is not None
+            and user_group.invoice_frequency
+            == UserGroup.InvoiceFrequency.IMMEDIATELY.value
         ):
             return True
         elif (
-            user_group.invoice_frequency
-            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.MONTHLY
+            user_group.invoice_frequency is not None
+            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.MONTHLY.value
         ):
             # MONTHLY.
             # If the user group has a monthly billing cycle, check if today is the 5th.
             return Utils._is_monthly_monthly_invoice_day()
         elif (
-            user_group.invoice_frequency
-            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.BI_WEEKLY
+            user_group.invoice_frequency is not None
+            and user_group.invoice_frequency
+            == UserGroup.InvoiceFrequency.BI_WEEKLY.value
         ):
             return Utils._is_biweekly_invoice_day()
         elif (
-            user_group.invoice_frequency
-            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.WEEKLY
+            user_group.invoice_frequency is not None
+            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.WEEKLY.value
         ):
             return Utils._is_weekly_invoice_day()
         elif user_group.invoice_day_of_month:
