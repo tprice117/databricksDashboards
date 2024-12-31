@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Literal, Union
+from typing import Literal, Union, Optional
 
 import stripe
 from django.conf import settings
@@ -1021,6 +1021,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     active = serializers.SerializerMethodField(read_only=True)
     attachments = OrderGroupAttachmentSerializer(many=True, required=False)
     code = serializers.SerializerMethodField(read_only=True)
+    nearest_order_date = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderGroup
@@ -1069,6 +1070,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "agreement",
             "agreement_signed_by",
             "agreement_signed_on",
+            "nearest_order_date",
         )
 
     def create(self, validated_data):
@@ -1112,3 +1114,6 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
     def get_code(self, obj):
         return obj.get_code
+
+    def get_nearest_order_date(self, obj) -> Optional[datetime.date]:
+        return obj.nearest_order.end_date if obj.nearest_order else None
