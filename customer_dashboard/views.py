@@ -2727,7 +2727,10 @@ def order_group_detail(request, order_group_id):
             save_model = None
             if "access_details_button" in request.POST:
                 context["placement_form"] = PlacementDetailsForm(
-                    initial={"placement_details": order_group.placement_details}
+                    initial={
+                        "placement_details": order_group.placement_details,
+                        "delivered_to_street": order_group.delivered_to_street,
+                    }
                 )
                 form = AccessDetailsForm(request.POST)
                 context["access_form"] = form
@@ -2744,7 +2747,10 @@ def order_group_detail(request, order_group_id):
                     raise InvalidFormError(form, "Invalid AccessDetailsForm")
             elif "placement_details_button" in request.POST:
                 context["access_form"] = AccessDetailsForm(
-                    initial={"access_details": user_address.access_details}
+                    initial={
+                        "access_details": user_address.access_details,
+                        "delivered_to_street": order_group.delivered_to_street,
+                    }
                 )
                 form = PlacementDetailsForm(request.POST)
                 context["placement_form"] = form
@@ -2755,6 +2761,14 @@ def order_group_detail(request, order_group_id):
                     ):
                         order_group.placement_details = form.cleaned_data.get(
                             "placement_details"
+                        )
+                        save_model = order_group
+                    if (
+                        form.cleaned_data.get("delivered_to_street")
+                        != order_group.delivered_to_street
+                    ):
+                        order_group.delivered_to_street = form.cleaned_data.get(
+                            "delivered_to_street"
                         )
                         save_model = order_group
                 else:
@@ -2781,7 +2795,10 @@ def order_group_detail(request, order_group_id):
             initial={"access_details": user_address.access_details}
         )
         context["placement_form"] = PlacementDetailsForm(
-            initial={"placement_details": order_group.placement_details}
+            initial={
+                "placement_details": order_group.placement_details,
+                "delivered_to_street": order_group.delivered_to_street,
+            }
         )
 
     return render(request, "customer_dashboard/order_group_detail.html", context)

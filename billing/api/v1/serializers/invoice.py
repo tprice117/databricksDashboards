@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import serializers
 
 from api.serializers import UserAddressSerializer
@@ -32,12 +33,8 @@ class InvoiceExpandedSerializer(serializers.ModelSerializer):
     user_address = UserAddressSerializer()
     items = serializers.SerializerMethodField(read_only=True)
     groups = serializers.SerializerMethodField(read_only=True)
-    pre_payment_credit = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True
-    )
-    post_payment_credit = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True
-    )
+    pre_payment_credit = serializers.SerializerMethodField(read_only=True)
+    post_payment_credit = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Invoice
@@ -48,6 +45,12 @@ class InvoiceExpandedSerializer(serializers.ModelSerializer):
 
     def get_groups(self, obj) -> InvoiceGroup:
         return obj.invoice_items["groups"]
+
+    def get_pre_payment_credit(self, obj) -> Decimal:
+        return obj.invoice_items["pre_payment_credit"]
+
+    def get_post_payment_credit(self, obj) -> Decimal:
+        return obj.invoice_items["post_payment_credit"]
 
 
 class PayInvoiceRequestSerializer(serializers.Serializer):
