@@ -69,6 +69,12 @@ class UserGroup(BaseModel):
     )
     pay_later = models.BooleanField(default=False)
     # SECTION: Invoicing and Payment
+    default_payment_method = models.ForeignKey(
+        "payment_methods.PaymentMethod",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     autopay = models.BooleanField(default=False)
     net_terms = models.IntegerField(
         choices=NetTerms.choices,
