@@ -8,8 +8,9 @@
                 <div class="row">
                     <div class="col">
                         <div class="row cart-body">
+                            {% with order=item.order %}
                             <div class="col-auto">
-                                {% with main_product=order.order_group.seller_product_seller_location.seller_product.product.main_product %}
+                                {% with main_product=item.main_product %}
                                 <img class="img-thumbnail img-fluid"
                                     alt="Product image"
                                     width="138"
@@ -24,7 +25,7 @@
                                 {% endwith %}
                             </div>
                             <div class="col" id="details-{{loopcount}}">
-                                <h3>{{ order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h3>
+                                <h3>{{ item.main_product.name }}</h3>
                                 {% if order.order_group.end_date %}
                                 <p class="mb-1">{{ order.order_group.start_date }} to {{ order.order_group.end_date }}&nbsp;</p>
                                 {% else %}
@@ -104,13 +105,13 @@
                                 {% endif %}
                             </div>
                             <div class="col-auto">
-                                <p class="text-end">${{ order.customer_price|floatformat:2|intcomma }}</p>
+                                <p class="text-end">${{ item.customer_price|floatformat:2|intcomma }}</p>
                             </div>
                             <div class="col-auto">
                                 <div class="row justify-content-center">
                                     <div class="col-auto">
                                         <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ order.order_group.id }}" type="button"
-                                        data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ order.customer_price }}" data-countid="count-{{ cart_address.address.id }}"
+                                        data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ item.customer_price }}" data-countid="count-{{ cart_address.address.id }}"
                                         hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
                                         onClick="event.stopPropagation();
                                         Swal.fire(
@@ -151,6 +152,7 @@
                                     });
                                 </script>
                             </div>
+                            {% endwith %}
                         </div>
                     </div>
                 </div>

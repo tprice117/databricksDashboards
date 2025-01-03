@@ -1,10 +1,12 @@
+from collections import defaultdict
+from decimal import Decimal
 from typing import Iterable, Union, TypedDict
 import logging
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from api.models.order.order import Order
-from api.models.user.user_address import UserAddress
+from api.models import Order, UserAddress, UserUserAddress, User
+from common.models.choices.user_type import UserType
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
     prep_seller_product_seller_locations_for_response,
 )
@@ -665,3 +667,124 @@ class QuoteUtils:
         Order.objects.filter(id__in=order_id_lst).update(checkout_order=checkout_order)
 
         return checkout_order
+
+
+class CartUtils:
+    @staticmethod
+    def get_booking_objects(user: User):
+        """Get all the booking objects the user has permission to see."""
+
+        orders = Order.objects.none()
+        if user.is_staff:
+            orders = Order.objects.all()
+        elif user.type == UserType.ADMIN and user.user_group:
+            orders = Order.objects.filter(order_group__user__user_group=user.user_group)
+        else:
+            user_addresses = UserUserAddress.objects.filter(user=user).values_list(
+                "user_address_id", flat=True
+            )
+            orders = Order.objects.filter(
+                order_group__user_address_id__in=user_addresses
+            )
+
+        return orders.filter(
+            submitted_on__isnull=True,
+        ).order_by("-end_date")
+
+    @staticmethod
+    def get_cart_orders(orders) -> dict:
+        """
+        Process a list of orders and return a dictionary with the cart data.
+        See CartSerializer for the expected format.
+
+        Dictionary format:
+
+        {
+            "cart": [
+
+                {
+                    "address": UserAddress,
+                    "items": [
+                        {
+                            "main_product": MainProduct,
+                            "order": Order,
+                            "customer_price": Decimal,
+                        },
+                        ...
+                    ],
+                    "total": Decimal,
+                    "count": int,
+                    "show_quote": bool,
+                },
+                ...
+            ],
+            "subtotal": Decimal,
+            "cart_count": int,
+        }
+        """
+
+        # Prefetch related data to reduce the number of queries
+        orders = orders.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        ).prefetch_related("order_line_items")
+
+        # Initialize the cart structure
+        cart_data = {
+            "cart": [],
+            "subtotal": Decimal("0.00"),
+            "cart_count": 0,
+        }
+
+        # Use defaultdict to simplify the creation of address buckets
+        address_buckets = defaultdict(
+            lambda: {
+                "address": None,
+                "items": [],
+                "total": Decimal("0.00"),
+                "count": 0,
+            }
+        )
+
+        # Process each order
+        for order in orders:
+            customer_price = order.customer_price()
+            uaid = order.order_group.user_address_id
+
+            # Get or create the address bucket
+            address_bucket = address_buckets[uaid]
+            if address_bucket["address"] is None:
+                address_bucket["address"] = order.order_group.user_address
+
+            # Update the address bucket with the order details
+            bucket_data = {
+                "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
+                "order": order,
+                "customer_price": customer_price,
+            }
+
+            address_bucket["items"].append(bucket_data)
+            address_bucket["total"] += customer_price
+            address_bucket["count"] += 1
+
+            if order.order_type in {Order.Type.DELIVERY, Order.Type.ONE_TIME}:
+                address_bucket["show_quote"] = True
+
+            cart_data["subtotal"] += customer_price
+            cart_data["cart_count"] += 1
+
+        # Convert address_buckets to the required format for CartSerializer
+        for uaid, bucket in address_buckets.items():
+            cart_data["cart"].append(
+                {
+                    "address": bucket["address"],
+                    "items": bucket["items"],
+                    "total": bucket["total"],
+                    "count": bucket["count"],
+                    "show_quote": bucket.get("show_quote", False),
+                }
+            )
+
+        return cart_data
