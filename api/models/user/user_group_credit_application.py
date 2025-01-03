@@ -18,7 +18,14 @@ from notifications.utils.internal_email import send_credit_application_notificat
 logger = logging.getLogger(__name__)
 
 
-@track_data("status")
+@track_data(
+    "requested_credit_limit",
+    "status",
+    "estimated_monthly_revenue",
+    "estimated_monthly_spend",
+    "accepts_credit_authorization",
+    "credit_report",
+)
 class UserGroupCreditApplication(BaseModel):
     user_group = models.ForeignKey(
         UserGroup,
@@ -57,18 +64,19 @@ class UserGroupCreditApplication(BaseModel):
 
     def clean(self):
         self.clean_fields()
-
-        # Check if there is an existing pending application for this user group.
-        # If there is, raise a validation error to prevent multiple pending
-        # applications.
-        if self.status == ApprovalStatus.PENDING:
-            existing_application = UserGroupCreditApplication.objects.filter(
-                user_group=self.user_group, status=ApprovalStatus.PENDING
-            ).exists()
-            if existing_application:
-                raise ValidationError(
-                    "A pending credit application already exists for this user group."
-                )
+        # Only run the following validation checks if something has changed.
+        if self.whats_changed():
+            # Check if there is an existing pending application for this user group.
+            # If there is, raise a validation error to prevent multiple pending
+            # applications.
+            if self.status == ApprovalStatus.PENDING:
+                existing_application = UserGroupCreditApplication.objects.filter(
+                    user_group=self.user_group, status=ApprovalStatus.PENDING
+                ).exists()
+                if existing_application:
+                    raise ValidationError(
+                        "A pending credit application already exists for this user group."
+                    )
         return self
 
 
