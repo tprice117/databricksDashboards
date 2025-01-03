@@ -72,7 +72,11 @@ from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
 from api.utils import auth0
 from billing.models import Invoice
-from cart.utils import CheckoutUtils, QuoteUtils
+from cart.utils import (
+    CheckoutUtils,
+    QuoteUtils,
+    CartUtils,
+)
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
 from common.utils.shade_hex import shade_hex_color
@@ -1174,12 +1178,22 @@ def customer_cart_date_edit(request, order_id):
     if request.method == "POST":
         # a snippet of html for editing the start date
         context = get_user_context(request)
-        order = Order.objects.filter(id=order_id).first()
+        order = (
+            Order.objects.filter(id=order_id)
+            .select_related(
+                "order_group__seller_product_seller_location__seller_product__product__main_product"
+            )
+            .first()
+        )
         order_group = order.order_group
+        context["item"] = {
+            "order": order,
+            "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
+        }
+        context["loopcount"] = request.POST.get("loopcount")
+
         # the form was cancelled
         if request.POST.get("cancel"):
-            context["order"] = order
-            context["loopcount"] = request.POST.get("loopcount")
             return render(
                 request,
                 "customer_dashboard/new_order/cart_order_item.html",
@@ -1196,8 +1210,6 @@ def customer_cart_date_edit(request, order_id):
                     instance=order,
                     initial={"date": order.end_date.strftime("%Y-%m-%d")},
                 )
-        context["order"] = order
-        context["loopcount"] = request.POST.get("loopcount")
 
         def fullPageReload():
             # context["reload"] = True
@@ -1610,10 +1622,13 @@ def new_order_5(request):
             end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
 
         # Pull all orders with submitted_on = None and show them in the cart.
-        orders = get_booking_objects(
-            request, context["user"], context["user_group"], exclude_in_cart=False
+        orders = (
+            get_booking_objects(
+                request, context["user"], context["user_group"], exclude_in_cart=False
+            )
+            .filter(submitted_on__isnull=True)
+            .order_by("-end_date")
         )
-        orders = orders.filter(submitted_on__isnull=True)
 
         if my_carts:
             context["help_text"] = "My "
@@ -1701,63 +1716,31 @@ def new_order_5(request):
             else:
                 context["help_text"] += "open orders."
 
-        orders = orders.prefetch_related("order_line_items")
-        orders = orders.select_related(
-            "order_group__seller_product_seller_location__seller_product__seller",
-            "order_group__user_address",
-            "order_group__user",
-            "order_group__seller_product_seller_location__seller_product__product__main_product",
-        )
-        orders = orders.order_by("-end_date")
-
         if not orders:
             # messages.error(request, "Your cart is empty.")
             pass
         else:
             # Get unique order group objects from the orders and place them in address buckets.
-            for order in orders:
-                # TODO: Grab full price here and show the taxes too.
-                customer_price = order.customer_price()
-                # Create a new address bucket if it doesn't exist.
-                uaid = order.order_group.user_address_id
-                if context["cart"].get(uaid, None) is None:
-                    context["cart"][uaid] = {
-                        "address": order.order_group.user_address,
-                        "total": 0,
-                        "transactions": [],
-                        "ids": [],
-                        "count": 0,
-                        "show_quote": False,
-                    }
-                # Transactions are the individual orders (delivery/swap/removal) in the order group.
-                context["cart"][uaid]["transactions"].append(order)
-                context["cart"][uaid]["ids"].append(str(order.id))
-                context["cart"][uaid]["count"] += 1
-                context["cart"][uaid]["total"] += customer_price
-                if (
-                    order.order_type == Order.Type.DELIVERY
-                    or order.order_type == Order.Type.ONE_TIME
-                ):
-                    context["cart"][uaid]["show_quote"] = True
-                    # # Hide the quote button if this event is part of an active quote.
-                    # if order.checkout_order and not order.checkout_order.is_stale:
-                    #     context["cart"][uaid]["show_quote"] = False
-                context["subtotal"] += customer_price
-                context["cart_count"] += 1
-            for addr in context["cart"]:
+            # This code takes the longest to execute.
+            context.update(CartUtils.get_cart_orders(orders))
+
+            # Get the seller price for each order and add it to the context.
+            for bucket in context["cart"]:
+                bucket["ids"] = [str(item["order"].id) for item in bucket["items"]]
                 supplier_total = 0
                 # context["cart"][addr]["show_quote"] = True
                 checkout_order = None
-                for event in context["cart"][addr]["transactions"]:
-                    if event.checkout_order:
-                        checkout_order = event.checkout_order
-                    supplier_total += event.seller_price()
+                for item in bucket["items"]:
+                    order = item["order"]
+                    if order.checkout_order:
+                        checkout_order = order.checkout_order
+                    supplier_total += order.seller_price()
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price
                     and checkout_order.quote_expiration
                 ):
-                    context["cart"][addr]["quote_sent_on"] = checkout_order.updated_on
+                    bucket["quote_sent_on"] = checkout_order.updated_on
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
