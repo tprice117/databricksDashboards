@@ -93,6 +93,12 @@ class UserGroupAdmin(BaseModelAdmin, ExportActionMixin):
                         "38309b8e-0205-45dc-b12c-3bfa365825e2",
                     ]
                 )
+        elif db_field.name == "default_payment_method":
+            from payment_methods.models import PaymentMethod
+
+            kwargs["queryset"] = PaymentMethod.objects.filter(
+                user_group=request.user.user_group
+            )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_urls(self):
