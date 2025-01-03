@@ -58,6 +58,7 @@ from .models import (
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
+    MainProductCategoryGroup,
     MainProductCategoryInfo,
     MainProductInfo,
     MainProductServiceRecurringFrequency,
@@ -109,6 +110,7 @@ from .serializers import (
     MainProductAddOnSerializer,
     MainProductCategoryInfoSerializer,
     MainProductCategorySerializer,
+    MainProductCategoryGroupSerializer,
     MainProductInfoSerializer,
     MainProductSerializer,
     MainProductServiceRecurringFrequencySerializer,
@@ -353,10 +355,20 @@ class DisposalLocationWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["id"]
 
 
+@authentication_classes([])
+@permission_classes([])
 class IndustryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Industry.objects.all()
     serializer_class = IndustrySerializer
-    filterset_fields = ["id"]
+    filterset_fields = ["id", "name"]
+
+
+@authentication_classes([])
+@permission_classes([])
+class MainProductCategoryGroupViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MainProductCategoryGroup.objects.all()
+    serializer_class = MainProductCategoryGroupSerializer
+    filterset_fields = ["id", "name"]
 
 
 class MainProductAddOnViewSet(viewsets.ReadOnlyModelViewSet):
@@ -378,6 +390,12 @@ class MainProductCategoryInfoViewSet(viewsets.ReadOnlyModelViewSet):
 class MainProductCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
+
+    def get_queryset(self):
+        return self.queryset.prefetch_related(
+            "mainproductcategoryinfo_set",
+            "industry",
+        )
 
 
 @authentication_classes([])
