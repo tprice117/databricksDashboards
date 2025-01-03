@@ -1189,6 +1189,7 @@ def customer_cart_date_edit(request, order_id):
         context["item"] = {
             "order": order,
             "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
+            "customer_price": order.customer_price(),
         }
         context["loopcount"] = request.POST.get("loopcount")
 
