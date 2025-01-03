@@ -37,6 +37,12 @@ class PaymentMethod(BaseModel):
     active = models.BooleanField(default=True)
     reason = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        if self.active:
+            return f"{self.id} - active"
+        else:
+            return f"{self.id} - inactive: {self.inactive_reason}"
+
     @property
     def card_number(self):
         """Return all the digits with * except the last 4 digits."""
