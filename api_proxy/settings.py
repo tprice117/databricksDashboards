@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "chat",
     "common",
     "communications",
+    "crm",
     "customer_dashboard",
     "dashboards",
     "external_contracts",
