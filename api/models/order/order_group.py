@@ -82,6 +82,7 @@ class OrderGroup(BaseModel):
     access_details = models.TextField(blank=True, null=True)
     placement_details = models.TextField(blank=True, null=True)
     delivered_to_street = models.BooleanField(default=False)
+    is_delivery = models.BooleanField(default=True)
     service_recurring_frequency = models.ForeignKey(
         ServiceRecurringFrequency, models.PROTECT, blank=True, null=True
     )
