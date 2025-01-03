@@ -1,0 +1,40 @@
+<div class="card shadow small" data-lead-id="{{ lead.id }}" draggable="true">
+  <div class="card-body">
+    <div class="card-title">
+      <h6><a href="">{{ lead.user.full_name|default:lead.user.email }}</a></h6>
+    </div>
+    <div class="card-text">
+      <p class="mb-0">
+        <strong>User Address:</strong> {{ lead.user_address|default:'----' }}
+      </p>
+      <p class="mb-0">
+        <strong>Owner:</strong> {{ lead.owner.full_name|default:lead.owner.email|default:'----' }}
+      </p>
+      <p class="mb-0">
+        <strong>Type:</strong> {{ lead.get_type_display }}
+      </p>
+      {% if lead.lost_reason %}
+        <p class="mb-0">
+          <strong>Lost Reason:</strong> {{ lead.get_lost_reason_display }}
+        </p>
+      {% endif %}
+      <p class="mb-0">
+        <strong>Est Conversion:</strong> {{ lead.est_conversion_date }}
+      </p>
+      <p class="mb-0">
+        <strong>Created:</strong> {{ lead.created_on }}
+      </p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="row justify-content-between">
+      <div class="col float-start">
+        <span class="text-sm"></span>
+      </div>
+      <div class="col d-flex flex-row-reverse">
+        <a href="#" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+        <a href="#" class="btn btn-primary btn-sm me-2"><i class="fas fa-edit"></i></a>
+      </div>
+    </div>
+  </div>
+</div>

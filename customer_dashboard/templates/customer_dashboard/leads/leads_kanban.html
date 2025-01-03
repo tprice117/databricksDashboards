@@ -1,0 +1,20 @@
+<div class="overflow-x-auto" style="height: 90vh;">
+  <div class="d-flex flex-nowrap align-items-stretch h-100">
+    {% for status, leads in board.items %}
+      <div class="col-6 col-md-4 col-xl-3 card shadow m-2">
+        <div class="card-body text-truncate">
+          <h5 class="card-title">{{ status }}</h5>
+        </div>
+        <div class="card-footer h-100 overflow-y-auto">
+          {% for lead in leads %}
+            {% include 'customer_dashboard/leads/leads_kanban_card.html' with lead=lead %}
+          {% endfor %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-center">
+        <h3>{{ _('No Leads') }}</h3>
+      </div>
+    {% endfor %}
+  </div>
+</div>

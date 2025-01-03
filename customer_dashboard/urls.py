@@ -232,4 +232,5 @@ urlpatterns = [
         name="customer_reports",
     ),
     path("customer/reviews/", views.reviews, name="customer_reviews"),
+    path("customer/leads/", views.leads, name="customer_leads"),
 ]

@@ -1,0 +1,17 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+  Leads
+{% endblock %}
+{% block stylesheet %}
+  <style></style>
+{% endblock %}
+{% block javascript %}
+  <script></script>
+{% endblock %}
+{% block content %}
+  <div class="container-fluid">
+    {% include 'customer_dashboard/leads/leads_kanban.html' with board=board %}
+  </div>
+{% endblock %}
