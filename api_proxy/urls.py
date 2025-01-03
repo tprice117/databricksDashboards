@@ -31,6 +31,9 @@ router.register(r"main-product-add-ons", views.MainProductAddOnViewSet, "api")
 router.register(
     r"main-product-category-infos", views.MainProductCategoryInfoViewSet, "api"
 )
+router.register(
+    r"main-product-category-groups", views.MainProductCategoryGroupViewSet, "api"
+)
 router.register(r"main-product-categories", views.MainProductCategoryViewSet, "api")
 router.register(r"main-product-infos", views.MainProductInfoViewSet, "api")
 router.register(r"main-products", views.MainProductViewSet, "api")

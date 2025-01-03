@@ -32,6 +32,7 @@ from .models import (
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
+    MainProductCategoryGroup,
     MainProductCategoryInfo,
     MainProductInfo,
     MainProductServiceRecurringFrequency,
@@ -496,6 +497,9 @@ class DisposalLocationWasteTypeSerializer(serializers.ModelSerializer):
 
 class IndustrySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    main_product_categories = serializers.PrimaryKeyRelatedField(
+        many=True, read_only=True
+    )
 
     class Meta:
         model = Industry
@@ -523,6 +527,7 @@ class MainProductCategorySerializer(serializers.ModelSerializer):
     main_product_category_infos = MainProductCategoryInfoSerializer(
         many=True, read_only=True
     )
+    industry = IndustrySerializer(many=True, read_only=True)
 
     class Meta:
         model = MainProductCategory
@@ -538,6 +543,15 @@ class MainProductCategorySerializer(serializers.ModelSerializer):
             return expanded_fields + self.Meta.extra_fields
         else:
             return expanded_fields
+
+
+class MainProductCategoryGroupSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    main_product_categories = MainProductCategorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = MainProductCategoryGroup
+        fields = "__all__"
 
 
 class MainProductInfoSerializer(serializers.ModelSerializer):
