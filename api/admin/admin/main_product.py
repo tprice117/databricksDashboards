@@ -83,6 +83,7 @@ class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
                     "has_service",
                     "has_service_times_per_week",
                     "has_material",
+                    "allows_pick_up",
                 ]
             },
         ),
