@@ -495,9 +495,39 @@ class DisposalLocationWasteTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = MainProductCategoryInfo
+        fields = "__all__"
+
+
+class MainProductCategorySlimSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    main_product_category_infos = MainProductCategoryInfoSerializer(
+        many=True, read_only=True
+    )
+
+    class Meta:
+        model = MainProductCategory
+        fields = "__all__"
+        extra_fields = ["main_product_category_infos"]
+
+    def get_field_names(self, declared_fields, info):
+        expanded_fields = super(
+            MainProductCategorySlimSerializer, self
+        ).get_field_names(declared_fields, info)
+
+        if getattr(self.Meta, "extra_fields", None):
+            return expanded_fields + self.Meta.extra_fields
+        else:
+            return expanded_fields
+
+
 class IndustrySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
-    main_product_categories = serializers.PrimaryKeyRelatedField(
+    main_product_categories = MainProductCategorySlimSerializer(
         many=True, read_only=True
     )
 
@@ -511,14 +541,6 @@ class MainProductAddOnSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MainProductAddOn
-        fields = "__all__"
-
-
-class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-
-    class Meta:
-        model = MainProductCategoryInfo
         fields = "__all__"
 
 
