@@ -98,7 +98,8 @@ class Invoice:
                     payment_method=payment_method,
                 )
             )
-            return True if invoice.status == "paid" else False
+            is_paid = True if invoice.status == "paid" else False
+            return is_paid, invoice
         except Exception as e:
             logger.error(
                 f"Invoice.attempt_pay_og: [invoice_id:{invoice_id}]-[payment_method:{payment_method}][{e}]",
@@ -106,15 +107,16 @@ class Invoice:
             )
             if raise_error:
                 raise e
-            return False
+            return False, None
 
     @staticmethod
-    def attempt_pay(invoice_id: str):
+    def attempt_pay(invoice_id: str, update_invoice_db: bool = True):
         # Import here to avoid circular import of partially initialized module api.module.
         from api.models import UserAddress
         from payment_methods.models.payment_method import (
             PaymentMethod as DownstreamPaymentMethod,
         )
+        from billing.models import Invoice as DownstreamInvoice
 
         downstream_payment_method = None
         user_address_id = None
@@ -155,10 +157,49 @@ class Invoice:
                     invoice.id, customer.id, user_address_id
                 )
             # Check if the Downstream PaymentMethod is active.
-            if downstream_payment_method.active:
+            if not downstream_payment_method.active:
+                if (
+                    user_address.user_group.default_payment_method
+                    and user_address.user_group.default_payment_method.active
+                ):
+                    downstream_payment_method = (
+                        user_address.user_group.default_payment_method
+                    )
+                else:
+                    # Check if UserGroup has another active PaymentMethod.
+                    downstream_payment_method = DownstreamPaymentMethod.objects.filter(
+                        user_group=user_address.user_group, active=True
+                    ).first()
+                if downstream_payment_method:
+                    downstream_payment_method_id = str(downstream_payment_method.id)
+                    # Get the Stripe PaymentMethod object.
+                    payment_method = (
+                        downstream_payment_method.get_stripe_payment_method(
+                            user_address=user_address,
+                        )
+                    )
+                    downstream_invoice = DownstreamInvoice.objects.get(
+                        invoice_id=invoice_id
+                    )
+                    if payment_method is None:
+                        raise ValueError(
+                            "Payment method not found in Stripe. Please contact us for help [1]."
+                        )
+            if downstream_payment_method and downstream_payment_method.active:
                 # Pay the Stripe Invoice using the default PaymentMethod.
                 invoice = stripe.Invoice.pay(invoice_id, payment_method=payment_method)
-                return True if invoice.status == "paid" else False
+                is_paid = True if invoice.status == "paid" else False
+                if is_paid and update_invoice_db:
+                    # Update the invoice.
+                    downstream_invoice = DownstreamInvoice.objects.get(
+                        invoice_id=invoice_id
+                    )
+                    downstream_invoice.update_invoice(invoice)
+                return is_paid, invoice
+            else:
+                raise ValueError(
+                    "Payment method not found in Stripe. Please contact us for help [2]."
+                )
         except NoPaymentMethodIDInMetadataError as e:
             # Stripe PaymentMethod metadata does not contain the Downstream PaymentMethod ID.
             logger.error(f"Invoice.attempt_pay: try attempt_pay_og [{e}]", exc_info=e)
@@ -232,7 +273,7 @@ class Invoice:
                 exc_info=e,
             )
 
-        return False
+        return False, None
 
     @staticmethod
     def send_invoice(invoice_id: str):
