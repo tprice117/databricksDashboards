@@ -183,7 +183,7 @@ class Invoice:
                     )
                     if payment_method is None:
                         raise ValueError(
-                            "Payment method not found in Stripe. Please contact us for help."
+                            "Payment method not found in Stripe. Please contact us for help [1]."
                         )
             if downstream_payment_method and downstream_payment_method.active:
                 # Pay the Stripe Invoice using the default PaymentMethod.
@@ -196,6 +196,10 @@ class Invoice:
                     )
                     downstream_invoice.update_invoice(invoice)
                 return is_paid, invoice
+            else:
+                raise ValueError(
+                    "Payment method not found in Stripe. Please contact us for help [2]."
+                )
         except NoPaymentMethodIDInMetadataError as e:
             # Stripe PaymentMethod metadata does not contain the Downstream PaymentMethod ID.
             logger.error(f"Invoice.attempt_pay: try attempt_pay_og [{e}]", exc_info=e)
