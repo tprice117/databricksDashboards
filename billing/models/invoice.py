@@ -176,29 +176,12 @@ class Invoice(BaseModel):
             invoice_items["groups"].append(ungrouped)
         return invoice_items
 
-    def pay_invoice(
-        self,
-        payment_method: "PaymentMethod",
-    ):
-        # Get Stripe Payment Method based on Payment Method.
-        stripe_payment_method = payment_method.get_stripe_payment_method(
-            user_address=self.user_address,
-        )
-        if stripe_payment_method is None:
-            raise ValueError(
-                "Payment method not found in Stripe. Please contact us for help."
-            )
+    def update_invoice(self, stripe_invoice=None):
+        if stripe_invoice is None:
+            invoice = StripeUtils.Invoice.get(self.invoice_id)
+        else:
+            invoice = stripe_invoice
 
-        # Pay the invoice.
-        is_paid = StripeUtils.Invoice.attempt_pay_og(
-            self.invoice_id,
-            payment_method=stripe_payment_method.id,
-            raise_error=True,
-        )
-
-        invoice = StripeUtils.Invoice.get(self.invoice_id)
-
-        # Update the invoice.
         self.amount_due = invoice["amount_due"] / 100
         self.amount_paid = invoice["amount_paid"] / 100
         self.amount_remaining = invoice["amount_remaining"] / 100
@@ -217,4 +200,27 @@ class Invoice(BaseModel):
         self.status = invoice["status"]
         self.total = invoice["total"] / 100
         self.save()
+
+    def pay_invoice(
+        self,
+        payment_method: "PaymentMethod",
+    ):
+        # Get Stripe Payment Method based on Payment Method.
+        stripe_payment_method = payment_method.get_stripe_payment_method(
+            user_address=self.user_address,
+        )
+        if stripe_payment_method is None:
+            raise ValueError(
+                "Payment method not found in Stripe. Please contact us for help."
+            )
+
+        # Pay the invoice.
+        is_paid, invoice = StripeUtils.Invoice.attempt_pay_og(
+            self.invoice_id,
+            payment_method=stripe_payment_method.id,
+            raise_error=True,
+        )
+
+        # Update the invoice.
+        self.update_invoice(invoice)
         return is_paid
