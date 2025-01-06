@@ -1,0 +1,5 @@
+from .order_damage_fee import OrderDamageFeeInline
+from .order_maintenance_fee import OrderMaintenanceFeeInline
+from .order_material_fee import OrderMaterialFeeInline
+from .order_permit_fee import OrderPermitFeeInline
+from .order_transfer_fee import OrderTransferFeeInline

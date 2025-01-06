@@ -6,7 +6,7 @@ from .main_product_category import MainProductCategoryInline
 from .main_product_category_info import MainProductCategoryInfoInline
 from .main_product_image import MainProductImageInline
 from .main_product_info import MainProductInfoInline
-from .order import OrderInline
+from .order import *
 from .order_disposal_ticket import OrderDisposalTicketInline
 from .order_group_attachment import OrderGroupAttachmentInline
 from .order_group_material import OrderGroupMaterialInline
