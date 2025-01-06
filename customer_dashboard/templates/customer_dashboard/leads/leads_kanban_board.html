@@ -1,0 +1,20 @@
+<div class="overflow-x-auto" style="height: 85vh;">
+  <div class="d-flex flex-nowrap align-items-stretch h-100">
+    {% for lane in board %}
+      <div class="col-6 col-md-4 col-lg-3 col-xl-2 card shadow m-1">
+        <div class="card-body">
+          <h6 class="card-title text-truncate">{{ lane.name }}</h6>
+        </div>
+        <div id="{{ lane.value }}" class="card-footer h-100 overflow-y-auto p-2 sortable">
+          {% for lead in lane.leads %}
+            {% include 'customer_dashboard/leads/leads_kanban_card.html' with lead=lead %}
+          {% endfor %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-center">
+        <h3>{{ _('No Leads') }}</h3>
+      </div>
+    {% endfor %}
+  </div>
+</div>

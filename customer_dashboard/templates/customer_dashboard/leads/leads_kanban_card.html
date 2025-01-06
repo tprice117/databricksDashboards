@@ -1,40 +1,35 @@
 <div class="card shadow small" data-lead-id="{{ lead.id }}" draggable="true">
   <div class="card-body">
     <div class="card-title">
-      <h6><a href="">{{ lead.user.full_name|default:lead.user.email }}</a></h6>
+      <h6>
+        <badge>
+          {% if lead.type == 'customer' %}
+            <span class="badge fw-medium text-primary" style="background-color: rgba(var(--bs-primary-rgb), 0.2);">{{ lead.get_type_display }}</span>
+          {% else %}
+            <span class="badge fw-medium text-secondary" style="background-color: rgba(var(--bs-secondary-rgb), 0.2);">{{ lead.get_type_display }}</span>
+          {% endif %}
+        </badge>
+        {% if lead.lost_reason %}
+          <badge>
+            <span class="badge fw-medium text-danger" style="background-color: rgba(var(--bs-danger-rgb), 0.2);">{{ lead.get_lost_reason_display }}</span>
+          </badge>
+        {% endif %}
+      </h6>
     </div>
     <div class="card-text">
-      <p class="mb-0">
-        <strong>User Address:</strong> {{ lead.user_address|default:'----' }}
-      </p>
-      <p class="mb-0">
-        <strong>Owner:</strong> {{ lead.owner.full_name|default:lead.owner.email|default:'----' }}
-      </p>
-      <p class="mb-0">
-        <strong>Type:</strong> {{ lead.get_type_display }}
-      </p>
-      {% if lead.lost_reason %}
-        <p class="mb-0">
-          <strong>Lost Reason:</strong> {{ lead.get_lost_reason_display }}
-        </p>
-      {% endif %}
-      <p class="mb-0">
-        <strong>Est Conversion:</strong> {{ lead.est_conversion_date }}
-      </p>
-      <p class="mb-0">
-        <strong>Created:</strong> {{ lead.created_on }}
-      </p>
+      <small class="mb-0"><strong>User:</strong> {{ lead.user.full_name|default:lead.user.email }}</small><br />
+      <small class="mb-0"><strong>User Address:</strong> {{ lead.user_address|default:'----' }}</small><br />
+      <small class="mb-0"><strong>Est Conversion:</strong> {{ lead.est_conversion_date }}</small>
     </div>
   </div>
   <div class="card-footer">
-    <div class="row justify-content-between">
-      <div class="col float-start">
-        <span class="text-sm"></span>
-      </div>
-      <div class="col d-flex flex-row-reverse">
-        <a href="#" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
-        <a href="#" class="btn btn-primary btn-sm me-2"><i class="fas fa-edit"></i></a>
-      </div>
+    <div class="d-flex flex-row-reverse align-items-center">
+      {% if lead.owner and lead.owner.photo %}
+        <img class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem;" src="{{ lead.owner.photo.url }}" />
+      {% else %}
+        <span class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+      {% endif %}
+      <div class="text-sm me-2 text-nowrap">{{ lead.owner.full_name|default:lead.owner.email|default:'' }}</div>
     </div>
   </div>
 </div>

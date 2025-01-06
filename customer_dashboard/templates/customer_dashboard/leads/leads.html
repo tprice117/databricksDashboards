@@ -8,10 +8,45 @@
   <style></style>
 {% endblock %}
 {% block javascript %}
-  <script></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+  <script>
+    htmx.onLoad(function (content) {
+      const sortables = content.querySelectorAll('.sortable')
+      const selectableStatuses = '{{ selectable_statuses|escapejs }}'
+      sortables.forEach((sortable) => {
+        new Sortable(sortable, {
+          group: 'kanban',
+          sort: false,
+          onMove: function (evt) {
+            return selectableStatuses.includes(evt.to.id)
+          },
+          onEnd: function (evt) {
+            if (selectableStatuses.includes(evt.to.id)) {
+              const fromStatus = document.getElementById('fromStatus')
+              const toStatus = document.getElementById('toStatus')
+              const movedCard = document.getElementById('movedCard')
+              fromStatus.value = evt.from.id
+              toStatus.value = evt.to.id
+              movedCard.value = evt.item.dataset.leadId
+              htmx.trigger('#board', 'cardMoved')
+            } else {
+              evt.preventDefault()
+            }
+          }
+        })
+      })
+    })
+  </script>
 {% endblock %}
 {% block content %}
-  <div class="container-fluid">
-    {% include 'customer_dashboard/leads/leads_kanban.html' with board=board %}
-  </div>
+  <form hx-post="{% url 'customer_leads_card_move' %}" hx-trigger="cardMoved" hx-target="#board">
+    <input id="fromStatus" type="hidden" name="status_old" />
+    <input id="toStatus" type="hidden" name="status" />
+    <input id="movedCard" type="hidden" name="lead_id" />
+    <div class="container-fluid">
+      <div class="board" id="board">
+        {% include 'customer_dashboard/leads/leads_kanban_board.html' with board=board %}
+      </div>
+    </div>
+  </form>
 {% endblock %}

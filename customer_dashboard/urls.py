@@ -233,4 +233,9 @@ urlpatterns = [
     ),
     path("customer/reviews/", views.reviews, name="customer_reviews"),
     path("customer/leads/", views.leads, name="customer_leads"),
+    path(
+        "customer/leads/card/move",
+        views.leads_card_move,
+        name="customer_leads_card_move",
+    ),
 ]
