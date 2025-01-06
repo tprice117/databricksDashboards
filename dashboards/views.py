@@ -74,8 +74,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=ExpressionWrapper(
                             F("order_line_items__rate")
                             * F("order_line_items__quantity")
@@ -94,8 +94,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                     * (1 + F("order_line_items__platform_fee_percent") * 0.01),
                     output_field=DecimalField(),
                 ),
-                filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                & ~Q(order_line_items__rate=0),
+                filter=~Q(order_line_items__rate=0)
+                & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
             ),
         )
         .aggregate(
@@ -119,8 +119,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -131,8 +131,8 @@ def get_sales_dashboard_context(account_owner_id=None):
             supplier_amount=Sum(
                 F("order_line_items__rate") * F("order_line_items__quantity"),
                 output_field=DecimalField(),
-                filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                & ~Q(order_line_items__rate=0),
+                filter=~Q(order_line_items__rate=0)
+                & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
             ),
         )
         .aggregate(
@@ -142,8 +142,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="SCHEDULED")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -175,8 +175,8 @@ def get_sales_dashboard_context(account_owner_id=None):
             * F("order_line_items__quantity")
             * (1 + F("order_line_items__platform_fee_percent") * 0.01),
             output_field=DecimalField(),
-            filter=~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-            & ~Q(order_line_items__rate=0),
+            filter=~Q(order_line_items__rate=0)
+            & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
         )
     ).aggregate(average=Avg("order_value"))["average"] or Decimal("0.00")
     context["average_order_value"] = average_order_value
@@ -244,8 +244,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -258,8 +258,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="SCHEDULED")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -299,8 +299,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -313,8 +313,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -326,8 +326,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="SCHEDULED")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -340,8 +340,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="SCHEDULED")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -394,8 +394,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -434,8 +434,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -448,8 +448,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),
@@ -502,8 +502,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity")
                         * (1 + F("order_line_items__platform_fee_percent") * 0.01),
@@ -516,8 +516,8 @@ def get_sales_dashboard_context(account_owner_id=None):
                 Case(
                     When(
                         Q(status="COMPLETE")
-                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS")
-                        & ~Q(order_line_items__rate=0),
+                        & ~Q(order_line_items__rate=0)
+                        & ~Q(order_line_items__stripe_invoice_line_item_id="BYPASS"),
                         then=F("order_line_items__rate")
                         * F("order_line_items__quantity"),
                     ),

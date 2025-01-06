@@ -39,6 +39,8 @@ urlpatterns = [
     path("supplier/logout/", views.supplier_logout, name="supplier_logout"),
     path("supplier/profile/", views.profile, name="supplier_profile"),
     path("supplier/company/", views.company, name="supplier_company"),
+    path("supplier/company/new/", views.new_company, name="supplier_new_company"),
+    path("supplier/companies/", views.companies, name="supplier_companies"),
     path("supplier/users/", views.users, name="supplier_users"),
     path(
         "supplier/user/<uuid:user_id>/",
@@ -61,6 +63,28 @@ urlpatterns = [
         "supplier/booking/<uuid:order_id>/",
         views.booking_detail,
         name="supplier_booking_detail",
+    ),
+    path("supplier/listings/", views.listings, name="supplier_listings"),
+    path(
+        "supplier/listing/<uuid:listing_id>/",
+        views.listing_detail,
+        name="supplier_listing_detail",
+    ),
+    path("supplier/products", views.products, name="supplier_products"),
+    path(
+        "supplier/products/category/<uuid:category_id>/",
+        views.products_2,
+        name="supplier_products_2",
+    ),
+    path(
+        "supplier/products/locations/<uuid:main_product_id>/",
+        views.products_3,
+        name="supplier_products_3",
+    ),
+    path(
+        "supplier/products/locations/<uuid:main_product_id>/form",
+        views.products_3_table,
+        name="supplier_products_3_table",
     ),
     path(
         "supplier/messages/unread/",

@@ -50,6 +50,7 @@ from common.models.choices.user_type import UserType
 from .models import (
     AddOn,
     AddOnChoice,
+    Advertisement,
     DayOfWeek,
     DisposalLocation,
     DisposalLocationWasteType,
@@ -57,6 +58,7 @@ from .models import (
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
+    MainProductCategoryGroup,
     MainProductCategoryInfo,
     MainProductInfo,
     MainProductServiceRecurringFrequency,
@@ -100,6 +102,7 @@ from .pricing_ml import pricing
 from .serializers import (
     AddOnChoiceSerializer,
     AddOnSerializer,
+    AdvertisementSerializer,
     DayOfWeekSerializer,
     DisposalLocationSerializer,
     DisposalLocationWasteTypeSerializer,
@@ -107,6 +110,7 @@ from .serializers import (
     MainProductAddOnSerializer,
     MainProductCategoryInfoSerializer,
     MainProductCategorySerializer,
+    MainProductCategoryGroupSerializer,
     MainProductInfoSerializer,
     MainProductSerializer,
     MainProductServiceRecurringFrequencySerializer,
@@ -162,6 +166,12 @@ class SpectacularRedocViewNoAuth(SpectacularRedocView):
 class SpectacularSwaggerViewNoAuth(SpectacularSwaggerView):
     authentication_classes = []
     permission_classes = []
+
+
+class AdvertisementViewSet(viewsets.ModelViewSet):
+    queryset = Advertisement.objects.all()
+    serializer_class = AdvertisementSerializer
+    filterset_fields = ["id", "is_active"]
 
 
 class SellerViewSet(viewsets.ReadOnlyModelViewSet):
@@ -345,10 +355,20 @@ class DisposalLocationWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["id"]
 
 
+@authentication_classes([])
+@permission_classes([])
 class IndustryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Industry.objects.all()
     serializer_class = IndustrySerializer
-    filterset_fields = ["id"]
+    filterset_fields = ["id", "name"]
+
+
+@authentication_classes([])
+@permission_classes([])
+class MainProductCategoryGroupViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MainProductCategoryGroup.objects.all()
+    serializer_class = MainProductCategoryGroupSerializer
+    filterset_fields = ["id", "name"]
 
 
 class MainProductAddOnViewSet(viewsets.ReadOnlyModelViewSet):
@@ -370,6 +390,12 @@ class MainProductCategoryInfoViewSet(viewsets.ReadOnlyModelViewSet):
 class MainProductCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductCategory.objects.all()
     serializer_class = MainProductCategorySerializer
+
+    def get_queryset(self):
+        return self.queryset.prefetch_related(
+            "mainproductcategoryinfo_set",
+            "industry",
+        )
 
 
 @authentication_classes([])
@@ -520,6 +546,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filterset_fields = ["main_product"]
+
+    def get_queryset(self):
+        self.queryset = self.queryset.select_related(
+            "main_product__main_product_category"
+        )
+        self.queryset = self.queryset.prefetch_related("product_add_on_choices")
+        return self.queryset
 
 
 class SellerProductViewSet(viewsets.ReadOnlyModelViewSet):

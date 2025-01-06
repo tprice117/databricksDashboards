@@ -52,14 +52,14 @@
                         src="{% if order_group.seller_product_seller_location.seller_location.seller.location_logo_url %}
                             {{ order_group.seller_product_seller_location.seller_location.seller.location_logo_url }}
                         {% else %}
-                            {% static 'customer_dashboard/img/blank.png' %}
+                            {% static 'customer_dashboard/img/defualt_logo.png' %}
                         {% endif %}" />&nbsp;{{ order_group.seller_product_seller_location.seller_location.name }}
                 </td>
                 <td class="d-none order_type">{{ order_group.order_type }}</td>
                 <td class="d-none status">{{ order_group.status }}</td>
                 <td class="d-none account_manager">{{ order_group.user_address.user_group.account_owner.full_name }}</td>
                 <td class="start_date">{{ order_group.start_date }}</td>
-                <td class="d-none nearest_order">{{ order_group.nearest_order.start_date }}</td>
+                <td class="d-none nearest_order">{{ order_group.nearest_order.end_date }}</td>
                 {% if is_active %}
                     {% if order_group.order_type != 'ONE_TIME' %}
                         {% if order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.name == 'Roll Off Dumpsters' %}

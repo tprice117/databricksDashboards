@@ -9,8 +9,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.conf import settings
 
-from api.models.industry import Industry
+from api.models.common.industry import Industry
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
 from api.models.seller.seller import Seller
@@ -18,6 +20,7 @@ from common.models import BaseModel
 from common.utils.get_file_path import get_file_path
 from communications.intercom.intercom import Intercom
 from communications.intercom.typings import CustomAttributesType
+from notifications.utils.add_email_to_queue import add_email_to_queue
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +69,12 @@ class UserGroup(BaseModel):
     )
     pay_later = models.BooleanField(default=False)
     # SECTION: Invoicing and Payment
+    default_payment_method = models.ForeignKey(
+        "payment_methods.PaymentMethod",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     autopay = models.BooleanField(default=False)
     net_terms = models.IntegerField(
         choices=NetTerms.choices,
@@ -102,6 +111,7 @@ class UserGroup(BaseModel):
     owned_and_rented_equiptment_coi = models.FileField(
         upload_to=get_file_path, blank=True, null=True
     )
+    RPP_COI_Exp_Date = models.DateField(blank=True, null=True)
 
     intercom_id = models.CharField(
         max_length=255,
@@ -200,6 +210,21 @@ class UserGroup(BaseModel):
         for order_line_item in order_line_items:
             credit_used += order_line_item.customer_price()
         return credit_used
+
+    def invite_user(self, user):
+        """Invite a user to the UserGroup."""
+        user.user_group = self
+        user.save(update_fields=["user_group"])
+        subject = f"Downstream | Account: {self.name} added you to their account"
+        payload = {"company_name": self.name, "home_link": settings.DASHBOARD_BASE_URL}
+        html_content = render_to_string("emails/account_user_invite.html", payload)
+        add_email_to_queue(
+            from_email="dispatch@trydownstream.com",
+            to_emails=[user.email],
+            subject=subject,
+            html_content=html_content,
+            reply_to="dispatch@trydownstream.com",
+        )
 
     @property
     def credit_limit_remaining(self):

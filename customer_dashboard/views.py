@@ -37,7 +37,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET, require_http_methods
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -47,6 +47,7 @@ from api.models import (
     MainProductCategoryGroup,
     MainProductWasteType,
     Order,
+    OrderLineItem,
     OrderGroup,
     OrderReview,
     Product,
@@ -71,7 +72,11 @@ from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
 from api.utils import auth0
 from billing.models import Invoice
-from cart.utils import CheckoutUtils, QuoteUtils
+from cart.utils import (
+    CheckoutUtils,
+    QuoteUtils,
+    CartUtils,
+)
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
 from common.utils.shade_hex import shade_hex_color
@@ -94,6 +99,8 @@ from .forms import (
     UserAddressForm,
     UserForm,
     UserGroupForm,
+    paymentDetailsForm,
+    EditOrderDateForm,
     UserGroupNewForm,
     UserInviteForm,
 )
@@ -236,9 +243,20 @@ def get_user_group(request: HttpRequest) -> Union[UserGroup, None]:
     else:
         # Normal user
         if request.session.get("customer_user_group_id"):
-            user_group = UserGroup.objects.get(
-                id=request.session["customer_user_group_id"]
-            )
+            try:
+                user_group = UserGroup.objects.get(
+                    id=request.session["customer_user_group_id"]
+                )
+            except UserGroup.DoesNotExist:
+                logger.error(
+                    f"get_user_group: UserGroup with id {request.session['customer_user_group_id']} not found for User {request.user.id}."
+                )
+                # Cache user_group id for faster lookups
+                user_group = request.user.user_group
+                if user_group:
+                    request.session["customer_user_group_id"] = get_json_safe_value(
+                        user_group.id
+                    )
         else:
             # Cache user_group id for faster lookups
             user_group = request.user.user_group
@@ -485,9 +503,7 @@ def get_invoice_objects(request: HttpRequest, user: User, user_group: UserGroup)
             # Global View: Get all invoices.
             invoices = Invoice.objects.all()
         elif user_group:
-            invoices = Invoice.objects.filter(
-                user_address__user__user_group_id=user_group.id
-            )
+            invoices = Invoice.objects.filter(user_address__user_group_id=user_group.id)
         else:
             # Individual user. Get all invoices for the user.
             invoices = Invoice.objects.filter(user_address__user_id=user.id)
@@ -537,6 +553,28 @@ def catch_errors(redirect_url_name=None):
                 else:
                     full_path = f"{request.path}?{query_params.urlencode()}"
                     return HttpResponseRedirect(full_path)
+
+        return _wrapper_view
+
+    return decorator
+
+
+def require_htmx(redirect_url_name=None):
+    """
+    Decorator for views that require an htmx request.
+    If the request is not an htmx request, the decorator will redirect to the given url.
+    If no url is given, it will return a 406 status code.
+    """
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapper_view(request, *args, **kwargs):
+            if not request.headers.get("HX-Request"):
+                if redirect_url_name:
+                    return HttpResponseRedirect(reverse(redirect_url_name))
+                else:
+                    return HttpResponse("Not Allowed", status=406)
+            return view_func(request, *args, **kwargs)
 
         return _wrapper_view
 
@@ -1033,6 +1071,7 @@ def new_order_4(request):
     if not request.user.is_staff:
         discount = context["market_discount"]
     context["discount"] = discount
+    context["default_markup"] = context["product"].main_product.default_take_rate
 
     if request.headers.get("HX-Request"):
         # Waste type
@@ -1110,6 +1149,14 @@ def new_order_4(request):
                     exc_info=e,
                 )
 
+        try:
+            # Sort the seller_product_seller_locations by total price (low to high).
+            context["seller_product_seller_locations"].sort(
+                key=lambda x: x["price_breakdown"]["total"],
+            )
+        except Exception as e:
+            logger.error(f"Error sorting seller_product_seller_locations: {e}")
+
         return render(
             request,
             "customer_dashboard/new_order/main_product_detail_pricing_list.html",
@@ -1127,6 +1174,242 @@ def new_order_4(request):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
+def customer_cart_date_edit(request, order_id):
+    if request.method == "POST":
+        # a snippet of html for editing the start date
+        context = get_user_context(request)
+        order = (
+            Order.objects.filter(id=order_id)
+            .select_related(
+                "order_group__seller_product_seller_location__seller_product__product__main_product"
+            )
+            .first()
+        )
+        order_group = order.order_group
+        context["item"] = {
+            "order": order,
+            "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
+            "customer_price": order.customer_price(),
+        }
+        context["loopcount"] = request.POST.get("loopcount")
+
+        # the form was cancelled
+        if request.POST.get("cancel"):
+            return render(
+                request,
+                "customer_dashboard/new_order/cart_order_item.html",
+                context,
+            )
+        if not request.POST.get("save"):
+            if order.get_order_type() == Order.Type.DELIVERY:
+                form = EditOrderDateForm(
+                    instance=order,
+                    initial={"date": order.start_date.strftime("%Y-%m-%d")},
+                )
+            else:
+                form = EditOrderDateForm(
+                    instance=order,
+                    initial={"date": order.end_date.strftime("%Y-%m-%d")},
+                )
+
+        def fullPageReload():
+            # context["reload"] = True
+            # use hx-refresh to reload the page
+            response = render(
+                request,
+                "customer_dashboard/new_order/cart_order_item.html",
+                context,
+            )
+            response["HX-Refresh"] = "true"
+            return response
+
+        if request.POST.get("save"):
+            oldDate = order_group.start_date
+            if order.get_order_type() == Order.Type.DELIVERY:
+                form = EditOrderDateForm(
+                    request.POST,
+                    request.FILES,
+                    instance=order,
+                    initial={"date": order.start_date.strftime("%Y-%m-%d")},
+                )
+            else:
+                form = EditOrderDateForm(
+                    request.POST,
+                    request.FILES,
+                    instance=order,
+                    initial={"date": order.end_date.strftime("%Y-%m-%d")},
+                )
+            # form.data["date"] = request.POST.get("date")
+            # order_group.start_date = datetime.datetime.strptime(
+            #         form.data["date"], "%Y-%m-%d"
+            #     ).date()
+            if form.is_valid():
+                # things change on the form that aren't one of the fields on the form
+                if form.data["date"] != form.initial["date"]:
+                    dateObject = datetime.datetime.strptime(
+                        form.data["date"], "%Y-%m-%d"
+                    ).date()
+
+                    def bumpOrders(is_delivery=False, is_swap=False, is_removal=False):
+                        cart_items = order_group.orders.filter(
+                            submitted_on__isnull=True
+                        )
+                        # only 1 oder should end on the this start date
+                        # eg: delivery orders start and end on the same day
+                        # or eg: swap oders start on the same day as the last order
+                        if len(cart_items.filter(end_date=order.end_date)) > 1:
+                            messages.error(
+                                request,
+                                "Jared did not acount for 2 orders having the same end date. In function bumpOrders().",
+                            )
+                            return fullPageReload()
+                        next_order = (
+                            order_group.orders.filter(
+                                submitted_on__isnull=True, end_date__gt=oldDate
+                            )
+                            .order_by("end_date")
+                            .first()
+                        )
+                        if is_delivery:
+                            order.start_date = dateObject
+                            order.end_date = dateObject
+                        if is_swap:
+                            order.end_date = dateObject
+                        order.order_line_items.all().delete()
+                        order.add_line_items(True)
+                        # next_order.start_date can't be later than the next order start date
+                        if next_order:
+                            next_order.start_date = dateObject
+                            if next_order.start_date > next_order.end_date:
+                                messages.error(
+                                    request,
+                                    f"The start date runs into the end date of the next order ({next_order.end_date}).",
+                                )
+                                return fullPageReload()
+                            next_order.order_line_items.all().delete()
+                            next_order.add_line_items(True)
+                            next_order.save()
+
+                    # recreate all the order line items
+                    if order.get_order_type() == Order.Type.DELIVERY:
+                        # for a DELIVERY edit the start date
+                        # the start date on the order group is the same
+                        # the start date of the next order is the same
+                        oldDate = order.end_date
+                        order_group.start_date = dateObject
+                        bumpOrders(is_delivery=True)
+                    elif order.get_order_type() == Order.Type.SWAP:
+                        oldDate = order.end_date
+                        bumpOrders(is_swap=True)
+                        # for a SWAP edit the end date
+                        # the end date of the next order is the same
+                    elif order.get_order_type() == Order.Type.REMOVAL:
+                        # for a REMOVAL edit the end date
+                        # the end date on the order group is the same
+                        oldDate = order.end_date
+                        order.end_date = dateObject
+                        order_group.end_date = dateObject
+                        order.order_line_items.all().delete()
+                        order.add_line_items(True)
+                    order_group.save()
+                    order.save()
+
+                    messages.success(request, "Successfully saved!")
+                    return fullPageReload()
+                else:
+                    order_group.start_date = oldDate
+                    # form.add_error("date", "Date not changed.")
+                    messages.error(request, "Order start date not changed.")
+                    # context["form"] = form
+            else:
+                messages.error(
+                    request,
+                    "Invalid date. Please check the form for errors.",
+                )
+                order_group.start_date = oldDate
+                context["form"] = form
+        else:
+            context["form"] = form
+
+        # form.save()
+        # redirect to cart
+        # return HttpResponseRedirect(reverse("customer_cart"))
+        return render(
+            request,
+            "customer_dashboard/new_order/cart_order_item.html",
+            context,
+        )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+@require_http_methods(["GET", "POST"])
+@require_htmx(redirect_url_name="customer_cart")
+def customer_cart_po(request, order_group_id):
+    """Returns a snippet with the project id for an order group. POST to update the project id."""
+    context = {}
+    order_group = OrderGroup.objects.get(id=order_group_id)
+    user = get_user(request)
+
+    # Authorize the request.
+    if not (
+        user.is_staff
+        or (
+            user.type == UserType.ADMIN
+            and (
+                order_group.user == user
+                or user.user_group == order_group.user.user_group
+            )
+        )
+        or order_group.user_address.user == user
+    ):
+        return HttpResponse("Unauthorized", status=401)
+
+    if request.method == "POST":
+        project_id = request.POST.get("project_id")
+
+        order_group.project_id = project_id
+        order_group.save()
+
+    context["order_group"] = order_group
+
+    return render(
+        request, "customer_dashboard/snippets/cart_order_item_po.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
+@require_GET
+@require_htmx(redirect_url_name="customer_cart")
+def customer_cart_po_edit(request, order_group_id):
+    """Returns a snippet with a form to edit the project id of an order group."""
+    context = {}
+    order_group = OrderGroup.objects.get(id=order_group_id)
+    user = get_user(request)
+
+    # Authorize the request.
+    if not (
+        user.is_staff
+        or (
+            user.type == UserType.ADMIN
+            and (
+                order_group.user == user
+                or user.user_group == order_group.user.user_group
+            )
+        )
+        or order_group.user_address.user == user
+    ):
+        return HttpResponse("Unauthorized", status=401)
+
+    context["order_group"] = order_group
+    return render(
+        request, "customer_dashboard/snippets/cart_order_item_po_edit.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+@catch_errors()
 def new_order_5(request):
     context = get_user_context(request)
     context["cart"] = {}
@@ -1135,15 +1418,12 @@ def new_order_5(request):
         seller_product_seller_location_id = request.POST.get(
             "seller_product_seller_location_id"
         )
-        discount = request.POST.get("discount")
         product_id = request.POST.get("product_id")
         user_address_id = request.POST.get("user_address")
         product_waste_types = request.POST.get("product_waste_types")
         if product_waste_types:
             product_waste_types = ast.literal_eval(product_waste_types)
         waste_type_id = request.POST.get("waste_type")
-        placement_details = request.POST.get("placement_details")
-        # product_add_on_choices = request.POST.get("product_add_on_choices")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
         times_per_week = (
             int(request.POST.get("times_per_week"))
@@ -1164,20 +1444,34 @@ def new_order_5(request):
         )
         project_id = request.POST.get("project_id")
 
-        # removal_date = request.POST.get("removal_date")
-        main_product = MainProduct.objects.filter(id=product_id)
-        main_product = main_product.select_related("main_product_category")
-        # main_product = main_product.prefetch_related("products")
-        main_product = main_product.first()
-
-        # Set the discount. If no discount is set, then default to 0.
-        discount = float(discount) if discount else 0
-
+        main_product = MainProduct.objects.select_related("main_product_category").get(
+            id=product_id
+        )
         context["main_product"] = main_product
+
+        # Discount
+        discount: Decimal = 0.0
+
+        if not request.user.is_staff:
+            # User is not staff, meaning discount is set to market discount.
+            discount = main_product.max_discount * Decimal(0.8) * 100
+        else:
+            # User is staff.
+            discount = Decimal(request.POST.get("discount", "0"))
+            max_discount_100 = round(main_product.max_discount * 100, 1)
+
+            if discount > max_discount_100:
+                # Discount is larger than max discount.
+                messages.error(
+                    request,
+                    "The selected discount exceeds the maximum allowed limit. Max discount applied.",
+                )
+                discount = max_discount_100
+
         seller_product_location = SellerProductSellerLocation.objects.get(
             id=seller_product_seller_location_id
         )
-        user_address = UserAddress.objects.filter(id=user_address_id).first()
+        user_address = UserAddress.objects.get(id=user_address_id)
         if main_product.has_material and hasattr(seller_product_location, "material"):
             material_waste_type = (
                 SellerProductSellerLocationMaterialWasteType.objects.filter(
@@ -1194,7 +1488,7 @@ def new_order_5(request):
                 return HttpResponseRedirect(reverse("customer_new_order"))
 
         # Get the default take rate and calculate the take rate based on the discount.
-        default_take_rate_percent = float(main_product.default_take_rate) / 100
+        default_take_rate_percent: Decimal = main_product.default_take_rate / 100
         default_price_multiplier = 1 + default_take_rate_percent
         discount_percent = discount / 100
         price_with_discount = default_price_multiplier * (1 - discount_percent)
@@ -1207,7 +1501,7 @@ def new_order_5(request):
                 user_address=user_address,
                 seller_product_seller_location_id=seller_product_seller_location_id,
                 start_date=delivery_date,
-                take_rate=Decimal(take_rate * 100),
+                take_rate=take_rate * 100,
             )
             if times_per_week:
                 order_group.times_per_week = times_per_week
@@ -1329,10 +1623,13 @@ def new_order_5(request):
             end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
 
         # Pull all orders with submitted_on = None and show them in the cart.
-        orders = get_booking_objects(
-            request, context["user"], context["user_group"], exclude_in_cart=False
+        orders = (
+            get_booking_objects(
+                request, context["user"], context["user_group"], exclude_in_cart=False
+            )
+            .filter(submitted_on__isnull=True)
+            .order_by("-end_date")
         )
-        orders = orders.filter(submitted_on__isnull=True)
 
         if my_carts:
             context["help_text"] = "My "
@@ -1420,63 +1717,31 @@ def new_order_5(request):
             else:
                 context["help_text"] += "open orders."
 
-        orders = orders.prefetch_related("order_line_items")
-        orders = orders.select_related(
-            "order_group__seller_product_seller_location__seller_product__seller",
-            "order_group__user_address",
-            "order_group__user",
-            "order_group__seller_product_seller_location__seller_product__product__main_product",
-        )
-        orders = orders.order_by("-end_date")
-
         if not orders:
             # messages.error(request, "Your cart is empty.")
             pass
         else:
             # Get unique order group objects from the orders and place them in address buckets.
-            for order in orders:
-                # TODO: Grab full price here and show the taxes too.
-                customer_price = order.customer_price()
-                # Create a new address bucket if it doesn't exist.
-                uaid = order.order_group.user_address_id
-                if context["cart"].get(uaid, None) is None:
-                    context["cart"][uaid] = {
-                        "address": order.order_group.user_address,
-                        "total": 0,
-                        "transactions": [],
-                        "ids": [],
-                        "count": 0,
-                        "show_quote": False,
-                    }
-                # Transactions are the individual orders (delivery/swap/removal) in the order group.
-                context["cart"][uaid]["transactions"].append(order)
-                context["cart"][uaid]["ids"].append(str(order.id))
-                context["cart"][uaid]["count"] += 1
-                context["cart"][uaid]["total"] += customer_price
-                if (
-                    order.order_type == Order.Type.DELIVERY
-                    or order.order_type == Order.Type.ONE_TIME
-                ):
-                    context["cart"][uaid]["show_quote"] = True
-                    # # Hide the quote button if this event is part of an active quote.
-                    # if order.checkout_order and not order.checkout_order.is_stale:
-                    #     context["cart"][uaid]["show_quote"] = False
-                context["subtotal"] += customer_price
-                context["cart_count"] += 1
-            for addr in context["cart"]:
+            # This code takes the longest to execute.
+            context.update(CartUtils.get_cart_orders(orders))
+
+            # Get the seller price for each order and add it to the context.
+            for bucket in context["cart"]:
+                bucket["ids"] = [str(item["order"].id) for item in bucket["items"]]
                 supplier_total = 0
                 # context["cart"][addr]["show_quote"] = True
                 checkout_order = None
-                for event in context["cart"][addr]["transactions"]:
-                    if event.checkout_order:
-                        checkout_order = event.checkout_order
-                    supplier_total += event.seller_price()
+                for item in bucket["items"]:
+                    order = item["order"]
+                    if order.checkout_order:
+                        checkout_order = order.checkout_order
+                    supplier_total += order.seller_price()
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price
                     and checkout_order.quote_expiration
                 ):
-                    context["cart"][addr]["quote_sent_on"] = checkout_order.updated_on
+                    bucket["quote_sent_on"] = checkout_order.updated_on
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
@@ -1534,6 +1799,7 @@ def cart_send_quote(request):
                     "transactional_message_id": 4,
                     "subject": checkout_order.subject,
                     "message_data": checkout_order.get_quote(),
+                    "reply_to": request.user.email,
                 }
                 data["message_data"]["accept_url"] = (
                     f"{settings.DASHBOARD_BASE_URL}/customer/cart/"
@@ -2445,7 +2711,10 @@ def order_group_detail(request, order_group_id):
             save_model = None
             if "access_details_button" in request.POST:
                 context["placement_form"] = PlacementDetailsForm(
-                    initial={"placement_details": order_group.placement_details}
+                    initial={
+                        "placement_details": order_group.placement_details,
+                        "delivered_to_street": order_group.delivered_to_street,
+                    }
                 )
                 form = AccessDetailsForm(request.POST)
                 context["access_form"] = form
@@ -2462,7 +2731,10 @@ def order_group_detail(request, order_group_id):
                     raise InvalidFormError(form, "Invalid AccessDetailsForm")
             elif "placement_details_button" in request.POST:
                 context["access_form"] = AccessDetailsForm(
-                    initial={"access_details": user_address.access_details}
+                    initial={
+                        "access_details": user_address.access_details,
+                        "delivered_to_street": order_group.delivered_to_street,
+                    }
                 )
                 form = PlacementDetailsForm(request.POST)
                 context["placement_form"] = form
@@ -2473,6 +2745,14 @@ def order_group_detail(request, order_group_id):
                     ):
                         order_group.placement_details = form.cleaned_data.get(
                             "placement_details"
+                        )
+                        save_model = order_group
+                    if (
+                        form.cleaned_data.get("delivered_to_street")
+                        != order_group.delivered_to_street
+                    ):
+                        order_group.delivered_to_street = form.cleaned_data.get(
+                            "delivered_to_street"
                         )
                         save_model = order_group
                 else:
@@ -2499,7 +2779,10 @@ def order_group_detail(request, order_group_id):
             initial={"access_details": user_address.access_details}
         )
         context["placement_form"] = PlacementDetailsForm(
-            initial={"placement_details": order_group.placement_details}
+            initial={
+                "placement_details": order_group.placement_details,
+                "delivered_to_street": order_group.delivered_to_street,
+            }
         )
 
     return render(request, "customer_dashboard/order_group_detail.html", context)
@@ -2509,15 +2792,30 @@ def order_group_detail(request, order_group_id):
 @catch_errors()
 def order_detail(request, order_id):
     context = get_user_context(request)
-    order = Order.objects.filter(id=order_id)
-    order = order.select_related(
-        "order_group__seller_product_seller_location__seller_product__seller",
-        "order_group__user_address",
-        "order_group__user",
-        "order_group__seller_product_seller_location__seller_product__product__main_product",
-    )
-    order = order.prefetch_related("payouts", "order_line_items")
-    context["order"] = order.first()
+    is_line_item = request.GET.get("line_item", None)
+    if is_line_item:
+        order_line_item = OrderLineItem.objects.filter(id=order_id)
+        order_line_item = order_line_item.select_related(
+            "order__order_group__seller_product_seller_location__seller_product__seller",
+            "order__order_group__user_address",
+            "order__order_group__user",
+            "order__order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        order_line_item = order_line_item.prefetch_related(
+            "order__payouts", "order__order_line_items"
+        )
+        context["order"] = order_line_item.first().order
+    else:
+        order = Order.objects.filter(id=order_id)
+        order = order.select_related(
+            "order_group__seller_product_seller_location__seller_product__seller",
+            "order_group__user_address",
+            "order_group__user",
+            "order_group__seller_product_seller_location__seller_product__product__main_product",
+        )
+        order = order.prefetch_related("payouts", "order_line_items")
+        context["order"] = order.first()
+    context["invoices"] = context["order"].get_invoices()
 
     return render(request, "customer_dashboard/order_detail.html", context)
 
@@ -3352,6 +3650,7 @@ def new_user(request):
             # POST_COPY["email"] = user.email
             form = UserInviteForm(POST_COPY, request.FILES, auth_user=context["user"])
             context["form"] = form
+            show_default_message = True
             # Default to the current user's UserGroup.
             user_group_id = context["user"].user_group_id
             if not context["user_group"] and request.user.is_staff:
@@ -3364,13 +3663,18 @@ def new_user(request):
                 last_name = form.cleaned_data.get("last_name")
                 email = form.cleaned_data.get("email").casefold()
                 phone = form.cleaned_data.get("phone")
-                apollo_id = None
-                if form.cleaned_data.get("apollo_id"):
-                    apollo_id = form.cleaned_data.get("apollo_id")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
-                if User.objects.filter(email__iexact=email).exists():
-                    raise UserAlreadyExistsError()
+                other_user = User.objects.filter(email__iexact=email).first()
+                if other_user:
+                    if other_user.user_group:
+                        raise UserAlreadyExistsError()
+                    else:
+                        # Add the user to the UserGroup.
+                        user_group = UserGroup.objects.get(id=user_group_id)
+                        user_group.invite_user(other_user)
+                        messages.success(request, f"Successfully invited {email}!")
+                        show_default_message = False
                 else:
                     if request.user.is_staff:
                         # directly create the user
@@ -3381,7 +3685,6 @@ def new_user(request):
                             email=email,
                             phone=phone,
                             source=User.Source.SALES,
-                            apollo_id=apollo_id,
                             type=user_type,
                             redirect_url="/customer/",
                         )
@@ -3407,7 +3710,7 @@ def new_user(request):
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
-            else:
+            elif show_default_message:
                 messages.info(request, "No changes detected.")
             return HttpResponseRedirect(reverse("customer_users"))
         except UserAlreadyExistsError:
@@ -3748,6 +4051,9 @@ def company_detail(request, user_group_id=None):
     payment_methods = PaymentMethod.objects.filter(user_group_id=user_group_id)
     # Order payment methods by newest first.
     context["payment_methods"] = payment_methods.order_by("-created_on")
+    context["credit_application"] = (
+        context["user_group"].credit_applications.order_by("-created_on").first()
+    )
 
     # Fill forms with initial data
     context["form"] = UserGroupForm(
@@ -3755,6 +4061,12 @@ def company_detail(request, user_group_id=None):
         user=context["user"],
         auth_user=request.user,
     )
+    context["paymentDetailsForm"] = paymentDetailsForm(
+        instance=user_group,
+        user=context["user"],
+        auth_user=request.user,
+    )
+
     context["branding_formset"] = BrandingFormSet(instance=user_group)
 
     if context.get("user"):
@@ -3780,6 +4092,27 @@ def company_detail(request, user_group_id=None):
                             "theme": get_theme(user_group),
                         }
                     )
+                    messages.success(request, "Successfully saved!")
+                else:
+                    messages.info(request, "No changes detected.")
+
+            return render(request, "customer_dashboard/company_detail.html", context)
+
+        # Update payment details.
+        if "payment_details_button" in request.POST:
+            payment_details_form = paymentDetailsForm(
+                request.POST,
+                request.FILES,
+                instance=user_group,
+                user=context["user"],
+                auth_user=request.user,
+            )
+            context["paymentDetailsForm"] = payment_details_form
+
+            if payment_details_form.is_valid():
+                # Check if any changes to form were made
+                if payment_details_form.has_changed():
+                    payment_details_form.save()
                     messages.success(request, "Successfully saved!")
                 else:
                     messages.info(request, "No changes detected.")
@@ -3904,14 +4237,12 @@ def new_company(request):
             context["phone"] = request.POST.get("phone")
             context["first_name"] = request.POST.get("first_name")
             context["last_name"] = request.POST.get("last_name")
-            context["apollo_id"] = request.POST.get("apollo_id")
             context["form"] = form
 
             if form.is_valid():
                 # Create New UserGroup
                 user_group = UserGroup(
                     name=form.cleaned_data.get("name"),
-                    apollo_id=form.cleaned_data.get("company_apollo_id"),
                 )
                 email = request.POST.get("email").casefold()
 
@@ -3947,8 +4278,8 @@ def new_company(request):
                             last_name=user_form.cleaned_data.get("last_name"),
                             email=email,
                             phone=user_form.cleaned_data.get("phone"),
+                            source=User.Source.SALES,
                             type=user_form.cleaned_data.get("type"),
-                            apollo_id=user_form.cleaned_data.get("apollo_id"),
                             user_group=user_group,
                         )
                         user.save()
@@ -4140,11 +4471,20 @@ def reviews(request):
         if tab == "users":
             context["help_text"] = "Reviews made by Users"
             reviews = (
-                User.objects.values("id", "first_name", "last_name", "photo_url")
+                User.objects.values(
+                    "id", "first_name", "last_name", "photo_url", "email"
+                )
                 .annotate(
                     rating=Sum(
                         Case(
                             When(ordergroup__orders__review__rating=True, then=1),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    negative_rating=Sum(
+                        Case(
+                            When(ordergroup__orders__review__rating=False, then=1),
                             default=0,
                             output_field=IntegerField(),
                         )
@@ -4168,7 +4508,7 @@ def reviews(request):
                     ),
                 )
                 # Don't include rows with no reviews
-                .filter(Q(rating__gt=0))
+                .filter(Q(rating__gt=0) | Q(negative_rating__gt=0))
                 .order_by("-rating")
             )
         elif tab == "sellers":
@@ -4180,6 +4520,16 @@ def reviews(request):
                         Case(
                             When(
                                 seller_locations__seller_product_seller_locations__order_groups__orders__review__rating=True,
+                                then=1,
+                            ),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    negative_rating=Sum(
+                        Case(
+                            When(
+                                seller_locations__seller_product_seller_locations__order_groups__orders__review__rating=False,
                                 then=1,
                             ),
                             default=0,
@@ -4213,7 +4563,7 @@ def reviews(request):
                     ),
                 )
                 # Don't include rows with no reviews
-                .filter(Q(rating__gt=0))
+                .filter(Q(rating__gt=0) | Q(negative_rating__gt=0))
                 .order_by("-rating")
             )
         else:

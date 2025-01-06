@@ -9,57 +9,61 @@
 {% endblock %}
 {% block javascript %}
     <script>
+        const discountElement = document.getElementById("discount");
+
         // Disable the form inputs while htmx request is being sent
         document.body.addEventListener("htmx:beforeSend", function (event) {
             document.getElementById("sort-btn").disabled = true;
-            if ("{{request.user.is_staff}}" == "True") {
-                document.getElementById("discount").disabled = true;
+            if (discountElement) {
+                discountElement.disabled = true;
             }
         });
         // Enable the form inputs again after the swap
         document.body.addEventListener("htmx:afterSwap", function (event) {
             document.getElementById("sort-btn").disabled = false;
-            if ("{{request.user.is_staff}}" == "True") {
-                document.getElementById("discount").disabled = false;
+            if (discountElement) {
+                discountElement.disabled = false;
             }
         });
 
         // listen for the range slider discount change event
-        document.getElementById("discount").addEventListener("input", function () {
-            // get the value of the range slider
-            let discount = this.value;
-            // get all order-form-discount elements
-            let orderFormDiscounts = document.querySelectorAll(".order-form-discount");
-            // loop through all order-form-discount elements
-            orderFormDiscounts.forEach(function (orderFormDiscount) {
-                // update the value of the order-form-discount element
-                orderFormDiscount.value = discount;
+        if (discountElement) {
+            discountElement.addEventListener("input", function () {
+                // get the value of the range slider
+                let discount = this.value;
+                // get all order-form-discount elements
+                let orderFormDiscounts = document.querySelectorAll(".order-form-discount");
+                // loop through all order-form-discount elements
+                orderFormDiscounts.forEach(function (orderFormDiscount) {
+                    // update the value of the order-form-discount element
+                    orderFormDiscount.value = discount;
+                });
+                // get the discountLabel element
+                let discountLabel = document.getElementById("discountLabel");
+                // update the text of the discountLabel element
+                discountLabel.innerText = discount + "%";
+                // get all price-item elements
+                let priceItems = document.querySelectorAll(".price-item");
+                // loop through all price-item elements
+                priceItems.forEach(function (priceItem) {
+                    // get the price of the price-item element
+                    let price = parseFloat(priceItem.getAttribute("data-price"));
+                    // check if the price is NaN
+                    if (isNaN(price)) {
+                        return;
+                    }
+                    // calculate the new price
+                    let newPrice = price * (1 - discount / 100);
+                    // update the price of the price-item element
+                    // check if innerText contained a dollar sign
+                    if (priceItem.innerText.includes("$")) {
+                        priceItem.innerText = "$" + newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+                    } else {
+                        priceItem.innerText = newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+                    }
+                });
             });
-            // get the discountLabel element
-            let discountLabel = document.getElementById("discountLabel");
-            // update the text of the discountLabel element
-            discountLabel.innerText = discount + "%";
-            // get all price-item elements
-            let priceItems = document.querySelectorAll(".price-item");
-            // loop through all price-item elements
-            priceItems.forEach(function (priceItem) {
-                // get the price of the price-item element
-                let price = parseFloat(priceItem.getAttribute("data-price"));
-                // check if the price is NaN
-                if (isNaN(price)) {
-                    return;
-                }
-                // calculate the new price
-                let newPrice = price * (1 - discount / 100);
-                // update the price of the price-item element
-                // check if innerText contained a dollar sign
-                if (priceItem.innerText.includes("$")) {
-                    priceItem.innerText = "$" + newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
-                } else {
-                    priceItem.innerText = newPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
-                }
-            });
-        });
+        }
         
         function onChatClick(event) {
             // open intercom chat. https://developers.intercom.com/installing-intercom/web/methods
@@ -87,15 +91,27 @@
                 case "name":
                     valueSelector = ".supplier-name";
                     break;
+                case "last_checkout":
+                    valueSelector = ".last-checkout";
+                    break;
                 case "price":
                 default:
-                    valueSelector = '[class*="total-price"]';
+                    valueSelector = '.total-price';
             }
         
             // Sort the array based on the value of the inner element
             itemsArray.sort((a, b) => {
-                const aValue = a.querySelector(valueSelector).innerText.trim().toLowerCase();
-                const bValue = b.querySelector(valueSelector).innerText.trim().toLowerCase();
+                let aValue, bValue;
+                if (attr == "last_checkout") {
+                    aValue = new Date(a.querySelector(valueSelector).value);
+                    bValue = new Date(b.querySelector(valueSelector).value);
+                } else if (attr == "name") {
+                    aValue = a.querySelector(valueSelector).innerText.trim().toLowerCase();
+                    bValue = b.querySelector(valueSelector).innerText.trim().toLowerCase();
+                } else {
+                    aValue = parseFloat(a.querySelector(valueSelector).value);
+                    bValue = parseFloat(b.querySelector(valueSelector).value);
+                }
                 if (aValue < bValue) return reverse ? 1 : -1;
                 if (aValue > bValue) return reverse ? -1 : 1;
                 return 0;
@@ -126,6 +142,7 @@
                             <option value="price">Total Price</option>
                             <option value="name">Location Name</option>
                             <option value="rating">Rating</option>
+                            {% if request.user.is_staff %}<option value="last_checkout">Last Checkout</option>{% endif %}
                         </select>
                         <select id="sort-order" class="form-control mr-2" name="sort-order">
                             <option value="asc">Ascending</option>

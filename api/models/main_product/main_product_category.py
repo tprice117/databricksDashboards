@@ -3,6 +3,8 @@ from django.db import models
 
 from api.models.main_product.main_product_category_group import MainProductCategoryGroup
 from common.models import BaseModel
+
+from api.models.common.industry import Industry
 from common.utils.get_file_path import get_file_path
 
 
@@ -34,6 +36,9 @@ class MainProductCategory(BaseModel):
     )
     sort = models.IntegerField()
     main_product_category_code = models.CharField(max_length=255, blank=True, null=True)
+    industry = models.ManyToManyField(
+        Industry, related_name="main_product_categories", blank=True
+    )
 
     def __str__(self):
         return self.name

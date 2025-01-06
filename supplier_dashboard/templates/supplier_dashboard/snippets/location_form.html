@@ -1,0 +1,258 @@
+{% for hidden in form.hidden_fields %}
+  {{ hidden }}
+{% endfor %}
+<div class="row">
+  {% comment %}Location details{% endcomment %}
+  <div class="col-md me-3">
+    <h4>Location Details</h4>
+    {% comment %}Address{% endcomment %}
+    {% with field=form.street %}
+      <div class="form-group mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">
+          {{ field.label }}{{ field.label_suffix }}
+          {% if field.field.required %}* {% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+          <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+        {% endif %}
+        {% if field.errors %}
+          <small class="text-danger">{{ field.errors }}</small>
+        {% endif %}
+      </div>
+    {% endwith %}
+    <div class="form-row d-flex mb-3">
+      {% with field=form.city %}
+        <div class="form-group col-md-6 pe-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+      {% with field=form.state %}
+        <div class="form-group col-md-3 pe-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+      {% with field=form.postal_code %}
+        <div class="form-group col-md-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+    </div>
+    {% comment %}Open Hours{% endcomment %}
+    <div class="form-group mb-3">
+      {% with field=form.open_days %}
+        <label for="{{ field.id_for_label }}" class="form-label">
+          {{ field.label }}{{ field.label_suffix }}
+          {% if field.field.required %}* {% endif %}
+        </label>
+        <div id="{{ field.name }}">
+          {% for checkbox in field %}
+            <div class="form-check form-check-inline">{{ checkbox }}</div>
+          {% endfor %}
+        </div>
+        {% if field.help_text %}
+          <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+        {% endif %}
+        {% if field.errors %}
+          <small class="text-danger">{{ field.errors }}</small>
+        {% endif %}
+      {% endwith %}
+    </div>
+    <div class="form-row d-flex mb-3">
+      {% with field=form.open_time %}
+        <div class="form-group col me-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+      {% with field=form.close_time %}
+        <div class="form-group col">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+    </div>
+    {% comment %}Location Logo{% endcomment %}
+    <div class="mb-3">
+      {% with field=form.location_logo_image %}
+        <label for="{{ field.id_for_label }}" class="form-label">
+          {{ field.label }}{{ field.label_suffix }}
+          {% if field.field.required %}* {% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+          <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+        {% endif %}
+        {% if field.errors %}
+          <small class="text-danger">{{ field.errors }}</small>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+  <div class="col-md">
+    <hr class="d-md-none mt-3" />
+    {% comment %}Payout Details{% endcomment %}
+    <h4>Payout Details</h4>
+    {% comment %}Order Email and Phone{% endcomment %}
+    <div class="form-row d-flex mb-3">
+      {% with field=form.order_email %}
+        <div class="col me-3 form-group">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+      {% with field=form.order_phone %}
+        <div class="col form-group">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+    </div>
+    {% comment %}Payee Name{% endcomment %}
+    <div class="mb-3">
+      {% with field=form.payee_name %}
+        <label for="{{ field.id_for_label }}" class="form-label">
+          {{ field.label }}{{ field.label_suffix }}
+          {% if field.field.required %}* {% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+          <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+        {% endif %}
+        {% if field.errors %}
+          <small class="text-danger">{{ field.errors }}</small>
+        {% endif %}
+      {% endwith %}
+    </div>
+    {% comment %}Mailing Address{% endcomment %}
+    <div class="form-group mb-3">
+      {% with field=form.mailing_street %}
+        <label for="{{ field.id_for_label }}" class="form-label">
+          {{ field.label }}{{ field.label_suffix }}
+          {% if field.field.required %}* {% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+          <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+        {% endif %}
+        {% if field.errors %}
+          <small class="text-danger">{{ field.errors }}</small>
+        {% endif %}
+      {% endwith %}
+    </div>
+    <div class="form-row d-flex mb-3">
+      {% with field=form.mailing_city %}
+        <div class="form-group col-md-6 pe-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+      {% with field=form.mailing_state %}
+        <div class="form-group col-md-3 pe-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+      {% with field=form.mailing_postal_code %}
+        <div class="form-group col-md-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}{{ field.label_suffix }}
+            {% if field.field.required %}* {% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+          {% if field.errors %}
+            <small class="text-danger">{{ field.errors }}</small>
+          {% endif %}
+        </div>
+      {% endwith %}
+    </div>
+  </div>
+</div>
+<small class="text-danger">{{ form.non_field_errors }}</small>

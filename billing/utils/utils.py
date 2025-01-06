@@ -31,35 +31,40 @@ class Utils:
         """
         Check if today is the invoice day for the UserGroup.
         """
-        # If the UserGroup has a specific invoice day of the month, use that.
-        if user_group.invoice_day_of_month:
-            # DAY OF MONTH.
-            # If the user group has a specific invoice day of the month, use that.
-            return datetime.date.today().day == user_group.invoice_day_of_month
+        # First check if the user group has an immediate invoice frequency.
+        if (
+            user_group.invoice_frequency is not None
+            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.IMMEDIATELY
+        ):
+            return True
         elif (
-            user_group.invoice_frequency
+            user_group.invoice_frequency is not None
             and user_group.invoice_frequency == UserGroup.InvoiceFrequency.MONTHLY
         ):
-            # MONTHLY.
-            # If the user group has a monthly billing cycle, check if today is the 5th.
-            return Utils._is_monthly_monthly_invoice_day()
+            if user_group.invoice_day_of_month:
+                # DAY OF MONTH.
+                # If the user group has a specific invoice day of the month, use that.
+                return datetime.date.today().day == user_group.invoice_day_of_month
+            else:
+                # MONTHLY.
+                # If the user group has a monthly billing cycle, check if today is the 5th.
+                return Utils._is_monthly_monthly_invoice_day()
         elif (
-            user_group.invoice_frequency
+            user_group.invoice_frequency is not None
             and user_group.invoice_frequency == UserGroup.InvoiceFrequency.BI_WEEKLY
         ):
             return Utils._is_biweekly_invoice_day()
         elif (
-            user_group.invoice_frequency
+            user_group.invoice_frequency is not None
             and user_group.invoice_frequency == UserGroup.InvoiceFrequency.WEEKLY
         ):
             return Utils._is_weekly_invoice_day()
-        elif (
-            user_group.invoice_frequency
-            and user_group.invoice_frequency == UserGroup.InvoiceFrequency.IMMEDIATELY
-        ):
-            return True
-        else:
-            return True
+        # If none of the above conditions are met and the user group has invoice_at_project_completion,
+        # then let the project completion process handle invoicing.
+        if user_group.invoice_at_project_completion:
+            return False
+
+        return True
 
     def _is_monthly_monthly_invoice_day():
         """
@@ -120,4 +125,4 @@ class Utils:
         while date_obj.weekday() != 2:
             date_obj += datetime.timedelta(days=1)
 
-        return date_obj.strftime("%Y-%m-%d")
+        return date_obj

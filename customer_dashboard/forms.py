@@ -127,12 +127,6 @@ class UserInviteForm(forms.Form):
         auth_user = kwargs.pop("auth_user", None)
         user = kwargs.pop("user", None)
         super(UserInviteForm, self).__init__(*args, **kwargs)
-        if auth_user and auth_user.is_staff:
-            self.fields["apollo_id"] = forms.CharField(
-                max_length=128,
-                widget=forms.TextInput(attrs={"class": "form-control"}),
-                required=True,
-            )
         if auth_user and user and not auth_user.is_staff:
             # if auth_user.type is lower than user.type, then disable the type field.
             if auth_user.type == UserType.BILLING:
@@ -176,12 +170,19 @@ class AccessDetailsForm(forms.Form):
 
 class PlacementDetailsForm(forms.Form):
     placement_details = forms.CharField(
+        label="instructions",
         widget=forms.Textarea(
             attrs={
                 "class": "form-control",
                 "rows": 3,
             }
-        )
+        ),
+    )
+    delivered_to_street = forms.BooleanField(
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input", "role": "switch"}
+        ),
+        required=False,
     )
 
 
@@ -289,38 +290,20 @@ class UserGroupForm(forms.ModelForm):
         fields = [
             "name",
             "account_owner",
-            "apollo_id",
+            # "apollo_id",
             "pay_later",
-            "autopay",
-            "net_terms",
             "industry",
-            "invoice_frequency",
-            "invoice_day_of_month",
-            "invoice_at_project_completion",
             "share_code",
-            "credit_line_limit",
-            "compliance_status",
-            "tax_exempt_status",
+            # "compliance_status",
         ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "account_owner": forms.Select(attrs={"class": "form-select"}),
-            "apollo_id": forms.TextInput(attrs={"class": "form-control"}),
+            # "apollo_id": forms.TextInput(attrs={"class": "form-control"}),
             "pay_later": forms.HiddenInput(),
-            "autopay": forms.CheckboxInput(
-                attrs={"class": "form-check-input", "role": "switch"}
-            ),
-            "net_terms": forms.Select(attrs={"class": "form-select"}),
             "industry": forms.Select(attrs={"class": "form-select"}),
-            "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
-            "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
-            "invoice_at_project_completion": forms.CheckboxInput(
-                attrs={"class": "form-check-input", "role": "switch"}
-            ),
             "share_code": forms.TextInput(attrs={"class": "form-control"}),
-            "credit_line_limit": forms.NumberInput(attrs={"class": "form-control"}),
-            "compliance_status": forms.Select(attrs={"class": "form-select"}),
-            "tax_exempt_status": forms.Select(attrs={"class": "form-select"}),
+            # "compliance_status": forms.Select(attrs={"class": "form-select"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -344,35 +327,64 @@ class UserGroupForm(forms.ModelForm):
             )
 
         # Make Apollo ID required
-        self.fields["apollo_id"].required = True
+        # self.fields["apollo_id"].required = True
         self.fields["share_code"].disabled = True
 
         # Update field visibility based on user type
         if auth_user and not auth_user.is_staff:
-            self.fields["net_terms"].disabled = True
             self.fields["share_code"].widget = forms.HiddenInput()
             self.fields["account_owner"].disabled = True
             self.fields["account_owner"].widget = forms.HiddenInput()
-            self.fields["credit_line_limit"].disabled = True
-            self.fields["compliance_status"].disabled = True
-            self.fields["tax_exempt_status"].disabled = True
-            self.fields["apollo_id"].required = False
-            self.fields["apollo_id"].widget = forms.HiddenInput()
-            self.fields["autopay"].widget = forms.HiddenInput()
+            # self.fields["compliance_status"].disabled = True
+            # self.fields["compliance_status"].widget = forms.HiddenInput()
+            # self.fields["apollo_id"].required = False
+            # self.fields["apollo_id"].widget = forms.HiddenInput()
+
+
+class paymentDetailsForm(forms.ModelForm):
+    class Meta:
+        model = UserGroup
+        fields = [
+            "credit_line_limit",
+            "net_terms",
+            "invoice_frequency",
+            "autopay",
+            "invoice_at_project_completion",
+            "invoice_day_of_month",
+            "tax_exempt_status",
+        ]
+        widgets = {
+            "net_terms": forms.Select(attrs={"class": "form-select"}),
+            "invoice_frequency": forms.Select(attrs={"class": "form-select"}),
+            "invoice_day_of_month": forms.NumberInput(attrs={"class": "form-control"}),
+            "autopay": forms.CheckboxInput(
+                attrs={"class": "form-check-input", "role": "switch"}
+            ),
+            "invoice_at_project_completion": forms.CheckboxInput(
+                attrs={"class": "form-check-input", "role": "switch"}
+            ),
+            "credit_line_limit": forms.NumberInput(attrs={"class": "form-control"}),
+            "tax_exempt_status": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        auth_user = kwargs.pop("auth_user", None)
+        super(paymentDetailsForm, self).__init__(*args, **kwargs)
+        # Update field visibility based on user type
+        if auth_user and not auth_user.is_staff:
+            self.fields["net_terms"].disabled = True
             self.fields["invoice_frequency"].disabled = True
+            self.fields["autopay"].widget = forms.HiddenInput()
             self.fields["invoice_day_of_month"].disabled = True
+            self.fields["credit_line_limit"].disabled = True
+            self.fields["tax_exempt_status"].disabled = True
 
 
 class UserGroupNewForm(forms.Form):
     name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
-    company_apollo_id = forms.CharField(
-        max_length=128,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        label="Apollo id",
-        required=True,
     )
 
     def __init__(self, *args, **kwargs):
@@ -637,6 +649,44 @@ class OrderReviewForm(forms.ModelForm):
             "timeliness": forms.RadioSelect(),
             "comment": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
+
+
+class EditOrderDateForm(forms.Form):
+    date = forms.DateField(
+        widget=forms.DateInput(
+            attrs={
+                "class": "form-control",
+                "type": "date",
+                "min": datetime.date.today(),
+            }
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        order = kwargs.pop("instance", None)
+        super(EditOrderDateForm, self).__init__(*args, **kwargs)
+        self.user_address = order.order_group.user_address
+
+    def clean_date(self):
+        allowed_date = datetime.date.today() + datetime.timedelta(days=0)
+        date = self.cleaned_data["date"]
+        if date < allowed_date:
+            raise ValidationError(
+                "Must be after: %(allowed_date)s",
+                params={"allowed_date": allowed_date - datetime.timedelta(days=1)},
+            )
+        elif date.weekday() == 6:  # 6 corresponds to Sunday
+            allow_sunday_delivery = False
+            if self.user_address:
+                allow_sunday_delivery = self.user_address.allow_sunday_delivery
+            if not allow_sunday_delivery:
+                raise ValidationError("Date cannot be on a Sunday.")
+        elif date.weekday() == 5:
+            allow_saturday_delivery = False
+            if self.user_address:
+                allow_saturday_delivery = self.user_address.allow_saturday_delivery
+            if not allow_saturday_delivery:
+                raise ValidationError("Date cannot be on a Saturday.")
 
 
 OrderReviewFormSet = forms.inlineformset_factory(

@@ -81,18 +81,16 @@
                         <p style="margin-bottom: 0px;">
                             <strong>Total</strong>
                         </p>
-                        <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">${{ order.customer_price|floatformat:2|intcomma }}</p>
+                        <p style="border-bottom-width: 1px;border-bottom-style: solid;padding-bottom: 16px;">${{ order.customer_price_with_tax|floatformat:2|intcomma }}</p>
                         <div class="table-responsive" style="margin-bottom: 16px;">
                             <table class="table">
                                 <thead>
                                     <tr></tr>
                                 </thead>
                                 <tbody>
-                                    {% for order_line_item in order.order_line_items.all %}
+                                    {% for order_line_item in order.order_line_items.ordered_by_type %}
                                         <tr>
-                                            <td>{{ order_line_item.order_line_item_type.name }}</td>
-                                            <td>${{ order_line_item.customer_price|floatformat:2|intcomma }} {{ order_line_item.order_line_item_type.units }}</td>
-                                            <td>{{ order_line_item.description }}</td>
+                                            <td>{{ order_line_item.stripe_description }} | tax: ${{ order_line_item.tax|stringformat:'.2f'|intcomma }}</td>
                                             <td>
                                                 {% if order_line_item.paid %}
                                                     Paid
@@ -133,7 +131,26 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <div class="row" style="padding-bottom: 24px;">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">Related Invoices</h4>
+                                {% for invoice in invoices %}
+                                    <div class="row">
+                                        <a class="btn-link" href="{% url 'customer_invoice_detail' invoice_id=invoice.id %}">
+                                            Invoice{% if invoice.number %}
+                                                &nbsp;{{ invoice.number }}
+                                            {% endif %}&nbsp;- {{ invoice.status }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

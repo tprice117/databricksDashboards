@@ -11,13 +11,13 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
-from django.db import IntegrityError
+from django.db.models import Q, F, Count
+from django.forms import inlineformset_factory, formset_factory
+from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -28,6 +28,9 @@ from rest_framework.response import Response
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
+    MainProduct,
+    MainProductCategory,
+    MainProductCategoryGroup,
     Order,
     OrderGroup,
     Payout,
@@ -36,6 +39,14 @@ from api.models import (
     SellerInvoicePayableLineItem,
     SellerLocation,
     SellerLocationMailingAddress,
+    SellerProductSellerLocation,
+    SellerProductSellerLocationService,
+    SellerProductSellerLocationServiceTimesPerWeek,
+    SellerProductSellerLocationRental,
+    SellerProductSellerLocationRentalOneStep,
+    SellerProductSellerLocationRentalMultiStep,
+    SellerProductSellerLocationMaterial,
+    SellerProductSellerLocationMaterialWasteType,
     User,
     UserAddress,
 )
@@ -43,6 +54,7 @@ from api.models.user.user_group import UserGroup
 from api.models.user.user_seller_location import UserSellerLocation
 from api.utils.utils import decrypt_string
 from common.models.choices.user_type import UserType
+from common.forms import HiddenDeleteFormSet
 from common.utils import DistanceUtils
 from communications.intercom.contact import Contact as IntercomContact
 from communications.intercom.conversation import Conversation as IntercomConversation
@@ -51,12 +63,29 @@ from notifications.utils import internal_email
 
 from .forms import (
     ChatMessageForm,
+    BaseProductLocationFormSet,
+    ProductLocationForm,
     SellerAboutUsForm,
     SellerCommunicationForm,
     SellerForm,
+    NewSellerForm,
+    SellerLocationForm,
     SellerLocationComplianceAdminForm,
     SellerLocationComplianceForm,
     SellerPayoutForm,
+    SellerProductSellerLocationActiveForm,
+    SellerProductSellerLocationSchedulingForm,
+    SellerProductSellerLocationPricingForm,
+    SellerProductSellerLocationServiceForm,
+    SellerProductSellerLocationServiceTimesPerWeekForm,
+    SellerProductSellerLocationRentalForm,
+    SellerProductSellerLocationRentalOneStepForm,
+    SellerProductSellerLocationRentalMultiStepForm,
+    SellerProductSellerLocationMaterialWasteTypeForm,
+    SellerUserForm,
+    BaseSellerProductSellerLocationMaterialFormSet,
+    BaseSellerProductSellerLocationRentalMultiStepFormSet,
+    TabularInlineFormSet,
     UserForm,
     UserInviteForm,
 )
@@ -91,6 +120,16 @@ def to_dict(instance):
             get_json_safe_value(i.id) for i in f.value_from_object(instance)
         ]
     return data
+
+
+def check_completion(seller_product_seller_location, attribute):
+    if not attribute:
+        return True
+    return (
+        getattr(seller_product_seller_location, attribute).is_complete
+        if hasattr(seller_product_seller_location, attribute)
+        else False
+    )
 
 
 def get_dashboard_chart_data(data_by_month: List[int]):
@@ -465,19 +504,25 @@ def supplier_impersonation_start(request):
             return HttpResponse("Not Implemented", status=406)
         try:
             seller = Seller.objects.get(id=seller_id)
+            if not hasattr(seller, "usergroup"):
+                raise UserGroup.DoesNotExist
             user = seller.usergroup.users.filter(type=UserType.ADMIN).first()
             if not user:
                 raise User.DoesNotExist
-            # user = User.objects.get(id=user_id)
             request.session["user_id"] = get_json_safe_value(user.id)
             request.session["seller_id"] = get_json_safe_value(seller_id)
-            return HttpResponseRedirect("/supplier/")
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
+        except UserGroup.DoesNotExist:
+            messages.error(
+                request, "No usergroup found for seller. Seller must have a usergroup."
+            )
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
         except User.DoesNotExist:
             messages.error(
                 request,
                 "No admin user found for seller. Seller must have at least one admin user.",
             )
-            return HttpResponseRedirect("/supplier/")
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
         except Exception:
             return HttpResponse("Not Found", status=404)
     else:
@@ -492,7 +537,7 @@ def supplier_impersonation_stop(request):
         del request.session["seller_id"]
     if request.session.get("seller"):
         del request.session["seller"]
-    return HttpResponseRedirect("/supplier/")
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/supplier/"))
 
 
 @login_required(login_url="/admin/login/")
@@ -611,48 +656,22 @@ def profile(request):
     context["seller"] = get_seller(request)
 
     if request.method == "POST":
-        # NOTE: Since email is disabled, it is never POSTed,
-        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
-        POST_COPY = request.POST.copy()
-        POST_COPY["email"] = context["user"].email
-        form = UserForm(POST_COPY, request.FILES, auth_user=context["user"])
+        form = UserForm(
+            request.POST,
+            request.FILES,
+            instance=context["user"],
+            auth_user=context["user"],
+        )
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("first_name") != context["user"].first_name:
-                context["user"].first_name = form.cleaned_data.get("first_name")
-                save_db = True
-            if form.cleaned_data.get("last_name") != context["user"].last_name:
-                context["user"].last_name = form.cleaned_data.get("last_name")
-                save_db = True
-            if form.cleaned_data.get("phone") != context["user"].phone:
-                context["user"].phone = form.cleaned_data.get("phone")
-                save_db = True
-            if form.cleaned_data.get("type") != context["user"].type:
-                context["user"].type = form.cleaned_data.get("type")
-                save_db = True
-            if request.FILES.get("photo"):
-                context["user"].photo = request.FILES["photo"]
-                save_db = True
-            elif request.POST.get("photo-clear") == "on":
-                context["user"].photo = None
-                save_db = True
-            if save_db:
-                context["user"] = context["user"]
-                context["user"].save()
+            if form.has_changed():
+                form.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
             form = UserForm(
-                initial={
-                    "first_name": context["user"].first_name,
-                    "last_name": context["user"].last_name,
-                    "phone": context["user"].phone,
-                    "photo": context["user"].photo,
-                    "email": context["user"].email,
-                    "type": context["user"].type,
-                },
+                instance=context["user"],
                 auth_user=context["user"],
             )
             context["form"] = form
@@ -667,14 +686,7 @@ def profile(request):
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
         form = UserForm(
-            initial={
-                "first_name": context["user"].first_name,
-                "last_name": context["user"].last_name,
-                "phone": context["user"].phone,
-                "photo": context["user"].photo,
-                "email": context["user"].email,
-                "type": context["user"].type,
-            },
+            instance=context["user"],
             auth_user=context["user"],
         )
         context["form"] = form
@@ -835,6 +847,192 @@ def company(request):
 
 
 @login_required(login_url="/admin/login/")
+def new_company(request):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
+    context = {}
+
+    UserInlineFormSet = inlineformset_factory(
+        UserGroup,
+        User,
+        form=SellerUserForm,
+        formset=HiddenDeleteFormSet,
+        can_delete=True,
+        extra=1,
+    )
+
+    SellerLocationInlineFormSet = inlineformset_factory(
+        Seller,
+        SellerLocation,
+        form=SellerLocationForm,
+        formset=HiddenDeleteFormSet,
+        can_delete=True,
+        extra=1,
+    )
+
+    if request.method == "POST":
+        form = NewSellerForm(request.POST, request.FILES)
+        location_formset = SellerLocationInlineFormSet(request.POST, request.FILES)
+        user_formset = UserInlineFormSet(request.POST)
+        if form.is_valid() and location_formset.is_valid() and user_formset.is_valid():
+            # Do additional validation
+            is_valid = True
+            if not any(form.cleaned_data for form in user_formset.forms):
+                user_formset.non_form_errors = ["New User is required."]
+                is_valid = False
+            if not any(
+                form.cleaned_data
+                for form in location_formset.forms
+                if not form.cleaned_data.get("DELETE", False)
+            ):
+                location_formset.non_form_errors = [
+                    "At least one location is required."
+                ]
+                is_valid = False
+
+            if is_valid:
+                try:
+                    # Try saving all the data
+                    with transaction.atomic():
+                        # Save the seller information
+                        seller = form.save()
+
+                        # Save the seller locations
+                        location_formset.instance = seller
+                        location_formset.save()
+
+                        # Save the new user
+                        user_formset.instance = seller.usergroup
+                        for user_form in user_formset:
+                            # Should only be one user
+                            email = user_form.cleaned_data.get("email")
+                            if User.objects.filter(email__iexact=email).exists():
+                                # Directly assign user to user group
+                                user = User.objects.get(email__iexact=email)
+                                user.user_group = seller.usergroup
+                                user.save()
+                            else:
+                                # Invite a new user to the platform
+                                user_invite = UserGroupAdminApprovalUserInvite(
+                                    user_group=seller.usergroup,
+                                    email=email,
+                                    phone=user_form.cleaned_data.get("phone"),
+                                    first_name=user_form.cleaned_data.get("first_name"),
+                                    last_name=user_form.cleaned_data.get("last_name"),
+                                    type=UserType.ADMIN,  # user will be admin by default
+                                    redirect_url="/supplier/",
+                                )
+                                user_invite.save()
+                        messages.success(request, "Successfully saved!")
+                        return HttpResponseRedirect(reverse("supplier_companies"))
+                except IntegrityError as e:
+                    messages.error(
+                        request, "Error saving, please contact us if this continues."
+                    )
+                    logger.error(
+                        f"Error saving new company [{e}]-data[{request.data}]",
+                        exc_info=True,
+                    )
+            else:
+                messages.error(
+                    request, "An error occurred. Please check the form below."
+                )
+        else:
+            messages.error(request, "An error occurred. Please check the form below.")
+            for field in form.errors:
+                form[field].field.widget.attrs["class"] += " is-invalid"
+            for location_form in location_formset.forms:
+                if not location_form.cleaned_data.get("DELETE", False):
+                    for field in location_form.errors:
+                        if field != "__all__":
+                            location_form[field].field.widget.attrs["class"] += (
+                                " is-invalid"
+                            )
+            for user_form in user_formset.forms:
+                for field in user_form.errors:
+                    if field != "__all__":
+                        user_form[field].field.widget.attrs["class"] += " is-invalid"
+    else:
+        form = NewSellerForm()
+        location_formset = SellerLocationInlineFormSet()
+        user_formset = UserInlineFormSet()
+
+    context.update(
+        {
+            "form": form,
+            "location_formset": location_formset,
+            "user_formset": user_formset,
+        }
+    )
+    return render(request, "supplier_dashboard/company_new.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def companies(request):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
+    pagination_limit = 25
+    page_number = int(request.GET.get("p") or 1)
+
+    context = {}
+    context["help_text"] = "All Suppliers"
+
+    search_q = request.GET.get("q", None)
+
+    if request.headers.get("HX-Request"):
+        query_params = request.GET.copy()
+        context["seller"] = get_seller(request)
+
+        sellers = Seller.objects.all()
+        if search_q:
+            sellers = sellers.filter(Q(name__icontains=search_q))
+        sellers = (
+            sellers.select_related("usergroup")
+            .annotate(
+                users_count=Count("usergroup__users", distinct=True),
+                listings_count=Count(
+                    "seller_locations__seller_product_seller_locations", distinct=True
+                ),
+            )
+            .order_by("name")
+        )
+
+        paginator = Paginator(sellers, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        query_params["p"] = 1
+        context["page_start_link"] = f"/supplier/companies/?{query_params.urlencode()}"
+        query_params["p"] = page_number
+        context["page_current_link"] = (
+            f"/supplier/companies/?{query_params.urlencode()}"
+        )
+        if page_obj.has_previous():
+            query_params["p"] = page_obj.previous_page_number()
+            context["page_prev_link"] = (
+                f"/supplier/companies/?{query_params.urlencode()}"
+            )
+        if page_obj.has_next():
+            query_params["p"] = page_obj.next_page_number()
+            context["page_next_link"] = (
+                f"/supplier/companies/?{query_params.urlencode()}"
+            )
+        query_params["p"] = paginator.num_pages
+        context["page_end_link"] = f"/supplier/companies/?{query_params.urlencode()}"
+        return render(
+            request, "supplier_dashboard/snippets/companies_table.html", context
+        )
+
+    query_params = request.GET.copy()
+    context["companies_table_link"] = (
+        f"{reverse('supplier_companies')}?{query_params.urlencode()}"
+    )
+    return render(request, "supplier_dashboard/companies.html", context)
+
+
+@login_required(login_url="/admin/login/")
 def users(request):
     context = {}
     context["user"] = get_user(request)
@@ -867,7 +1065,7 @@ def users(request):
                     user_id=user.id
                 ).count()
             }
-            print(user.user_group.name)
+            # print(user.user_group.name)
             user_lst.append(user_dict)
 
         paginator = Paginator(user_lst, pagination_limit)
@@ -955,47 +1153,23 @@ def user_detail(request, user_id):
                 break
 
     if request.method == "POST":
-        # NOTE: Since email is disabled, it is never POSTed,
-        # so we need to copy the POST data and add the email back in. This ensures its presence in the form.
-        POST_COPY = request.POST.copy()
-        POST_COPY["email"] = user.email
-        form = UserForm(POST_COPY, request.FILES, auth_user=auth_user, user=user)
+        form = UserForm(
+            request.POST,
+            request.FILES,
+            instance=user,
+            auth_user=auth_user,
+            user=user,
+        )
         context["form"] = form
         if form.is_valid():
-            save_db = False
-            if form.cleaned_data.get("first_name") != user.first_name:
-                user.first_name = form.cleaned_data.get("first_name")
-                save_db = True
-            if form.cleaned_data.get("last_name") != user.last_name:
-                user.last_name = form.cleaned_data.get("last_name")
-                save_db = True
-            if form.cleaned_data.get("phone") != user.phone:
-                user.phone = form.cleaned_data.get("phone")
-                save_db = True
-            if form.cleaned_data.get("type") != user.type:
-                user.type = form.cleaned_data.get("type")
-                save_db = True
-            if request.FILES.get("photo"):
-                user.photo = request.FILES["photo"]
-                save_db = True
-            elif request.POST.get("photo-clear") == "on":
-                user.photo = None
-                save_db = True
-            if save_db:
-                user.save()
+            if form.has_changed():
+                form.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
             # Reload the form with the updated data (for some reason it doesn't update the form with the POST data).
             form = UserForm(
-                initial={
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "phone": user.phone,
-                    "photo": user.photo,
-                    "email": user.email,
-                    "type": user.type,
-                },
+                instance=user,
                 auth_user=auth_user,
                 user=user,
             )
@@ -1011,14 +1185,7 @@ def user_detail(request, user_id):
             # messages.error(request, "Error saving, please contact us if this continues.")
     else:
         form = UserForm(
-            initial={
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "phone": user.phone,
-                "photo": user.photo,
-                "email": user.email,
-                "type": user.type,
-            },
+            instance=user,
             auth_user=auth_user,
             user=user,
         )
@@ -1417,6 +1584,478 @@ def download_bookings(request):
             row.append(f"{order.take_rate}%")
         writer.writerow(row)
     return response
+
+
+@login_required(login_url="/admin/login/")
+def listings(request):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
+    context = {}
+    seller = get_seller(request)
+
+    if not seller:
+        if (
+            hasattr(request.user, "user_group")
+            and hasattr(request.user.user_group, "seller")
+            and request.user.user_group.seller
+        ):
+            seller = request.user.user_group.seller
+            messages.warning(
+                request,
+                f"No seller selected! Using current staff user's seller [{seller.name}].",
+            )
+        else:
+            # Get first available seller.
+            seller = Seller.objects.all().first()
+            messages.warning(
+                request,
+                f"No seller selected! Using first seller found: [{seller.name}].",
+            )
+
+    # Handle listing activation/deactivation
+    if request.method == "POST":
+        id = request.POST.get("listing_id")
+        active = request.POST.get("active")
+        if id and active:
+            spsl = SellerProductSellerLocation.objects.filter(id=id).first()
+            if spsl:
+                spsl.active = True if active == "true" else False
+                spsl.save()
+                messages.success(request, "Successfully saved!")
+            else:
+                messages.error(request, "Listing not found.")
+
+    listings = SellerProductSellerLocation.objects.filter(
+        seller_location__seller_id=seller.id
+    ).select_related("seller_product__product__main_product", "seller_location")
+
+    active = listings.get_active()
+    needs_attention = listings.get_needs_attention()
+    inactive = listings.get_inactive()
+
+    context.update(
+        {
+            "seller": seller,
+            "listings": listings,
+            "active": active,
+            "needs_attention": needs_attention,
+            "inactive": inactive,
+        }
+    )
+
+    return render(request, "supplier_dashboard/listings.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def listing_detail(request, listing_id):
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("supplier_home"))
+
+    context = {}
+    seller = get_seller(request)
+
+    spsl = (
+        SellerProductSellerLocation.objects.filter(id=listing_id)
+        .select_related("seller_product__product__main_product", "seller_location")
+        .first()
+    )
+
+    if not spsl or seller != spsl.seller_location.seller:
+        messages.error(request, "Listing not found.")
+        return HttpResponseRedirect(reverse("supplier_listings"))
+
+    main_product = spsl.seller_product.product.main_product
+    add_ons = spsl.seller_product.product.product_add_on_choices.select_related(
+        "add_on_choice"
+    )
+    product_add_ons = [
+        f"{add_on.add_on_choice.add_on.name}: {add_on.add_on_choice.name}"
+        for add_on in add_ons
+    ]
+
+    # Instantiate formsets
+    # Services
+    service_formset = None
+    service_formset_factory = None
+    if main_product.has_service:
+        service_formset_factory = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationService,
+            form=SellerProductSellerLocationServiceForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+    elif main_product.has_service_times_per_week:
+        service_formset_factory = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationServiceTimesPerWeek,
+            form=SellerProductSellerLocationServiceTimesPerWeekForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+    # Rentals
+    rental_formset = None
+    rental_formset_factory = None
+    if main_product.has_rental:
+        rental_formset_factory = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationRental,
+            form=SellerProductSellerLocationRentalForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+    elif main_product.has_rental_one_step:
+        rental_formset_factory = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationRentalOneStep,
+            form=SellerProductSellerLocationRentalOneStepForm,
+            formset=TabularInlineFormSet,
+            extra=1,
+            can_delete=False,
+        )
+    elif main_product.has_rental_multi_step:
+        rental_formset_factory = inlineformset_factory(
+            SellerProductSellerLocation,
+            SellerProductSellerLocationRentalMultiStep,
+            form=SellerProductSellerLocationRentalMultiStepForm,
+            formset=BaseSellerProductSellerLocationRentalMultiStepFormSet,
+            extra=1,
+            can_delete=False,
+        )
+    # Materials
+    material_formset = None
+    material_formset_factory = None
+    if main_product.has_material:
+        material_formset_factory = inlineformset_factory(
+            SellerProductSellerLocationMaterial,
+            SellerProductSellerLocationMaterialWasteType,
+            form=SellerProductSellerLocationMaterialWasteTypeForm,
+            formset=BaseSellerProductSellerLocationMaterialFormSet,
+            extra=0,
+            can_delete=True,
+        )
+
+    # Initialize forms
+    active_form = SellerProductSellerLocationActiveForm(instance=spsl)
+    scheduling_form = SellerProductSellerLocationSchedulingForm(instance=spsl)
+    pricing_form = SellerProductSellerLocationPricingForm(instance=spsl)
+    if service_formset_factory:
+        service_formset = service_formset_factory(instance=spsl)
+    if rental_formset_factory:
+        rental_formset = rental_formset_factory(instance=spsl)
+    if material_formset_factory:
+        material_formset = material_formset_factory(spsl=spsl)
+
+    # Form Submission
+    if request.method == "POST":
+        if "active_form" in request.POST:
+            active_form = SellerProductSellerLocationActiveForm(
+                request.POST, instance=spsl
+            )
+            if active_form.is_valid():
+                if active_form.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    active_form.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for field in active_form.errors:
+                    active_form[field].field.widget.attrs["class"] += " is-invalid"
+        elif "scheduling_form" in request.POST:
+            scheduling_form = SellerProductSellerLocationSchedulingForm(
+                request.POST, instance=spsl
+            )
+            if scheduling_form.is_valid():
+                if scheduling_form.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    scheduling_form.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for field in scheduling_form.errors:
+                    scheduling_form[field].field.widget.attrs["class"] += " is-invalid"
+
+        elif "pricing_form" in request.POST:
+            pricing_form = SellerProductSellerLocationPricingForm(
+                request.POST, instance=spsl
+            )
+            if pricing_form.is_valid():
+                if pricing_form.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    pricing_form.save()
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for field in pricing_form.errors:
+                    pricing_form[field].field.widget.attrs["class"] += " is-invalid"
+
+        elif "service_form" in request.POST:
+            service_formset = service_formset_factory(request.POST, instance=spsl)
+
+            if service_formset.is_valid():
+                if service_formset.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    service_formset.save()
+                    service_formset = service_formset_factory(instance=spsl)
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for form in service_formset:
+                    for field in form.errors:
+                        if field not in ["__all__", "seller_product_seller_location"]:
+                            form[field].field.widget.attrs["class"] += " is-invalid"
+        elif "rental_form" in request.POST:
+            rental_formset = rental_formset_factory(request.POST, instance=spsl)
+
+            if rental_formset.is_valid():
+                if rental_formset.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    rental_formset.save()
+                    rental_formset = rental_formset_factory(instance=spsl)
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for form in rental_formset:
+                    for field in form.errors:
+                        if field not in ["__all__", "seller_product_seller_location"]:
+                            form[field].field.widget.attrs["class"] += " is-invalid"
+        elif "material_form" in request.POST:
+            material_formset = material_formset_factory(request.POST, spsl=spsl)
+            if material_formset.is_valid():
+                if material_formset.has_changed():
+                    messages.success(request, "Successfully saved!")
+                    material_formset.save()
+                    material_formset = material_formset_factory(spsl=spsl)
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(request, "Error saving, please check the form.")
+                for form in material_formset:
+                    for field in form.errors:
+                        if field not in [
+                            "__all__",
+                            "seller_product_seller_location",
+                            "DELETE",
+                        ]:
+                            form[field].field.widget.attrs["class"] += " is-invalid"
+
+    # Check each condition if it has been completed. If the main product has a pricing section,
+    # but that section does not exist, or that section is incomplete,
+    # then we will consider the listing incomplete.
+    service_is_complete = check_completion(
+        spsl,
+        "service"
+        if main_product.has_service
+        else "service_times_per_week"
+        if main_product.has_service_times_per_week
+        else None,
+    )
+    rental_is_complete = check_completion(
+        spsl,
+        "rental"
+        if main_product.has_rental
+        else "rental_one_step"
+        if main_product.has_rental_one_step
+        else "rental_multi_step"
+        if main_product.has_rental_multi_step
+        else None,
+    )
+    material_is_complete = check_completion(
+        spsl, "material" if main_product.has_material else None
+    )
+
+    # Update context
+    context.update(
+        {
+            "seller": seller,
+            "listing": spsl,
+            "is_incomplete": not spsl.is_complete,
+            "main_product": main_product,
+            "add_ons": product_add_ons,
+            "active_form": active_form,
+            "scheduling_form": scheduling_form,
+            "pricing_form": pricing_form,
+            "service_formset": service_formset,
+            "service_is_incomplete": not service_is_complete,
+            "rental_formset": rental_formset,
+            "rental_is_incomplete": not rental_is_complete,
+            "material_formset": material_formset,
+            "material_is_incomplete": not material_is_complete,
+        }
+    )
+
+    return render(request, "supplier_dashboard/listing_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def products(request):
+    context = {}
+    context["main_product_category_groups"] = (
+        MainProductCategoryGroup.objects.all().order_by("sort")
+    )
+    if (
+        "HX-Request" in request.headers
+        and "HX-History-Restore-Request" not in request.headers
+    ):
+        search_q = request.GET.get("q", None)
+        group_id = request.GET.get("group_id", None)
+        main_product_categories = MainProductCategory.objects.all()
+
+        if search_q:
+            main_product_categories = main_product_categories.filter(
+                name__icontains=search_q
+            )
+
+        if group_id:
+            main_product_categories = main_product_categories.filter(group_id=group_id)
+
+        context["main_product_categories"] = main_product_categories.order_by("name")
+
+        return render(
+            request,
+            "supplier_dashboard/products/main_product_category_table.html",
+            context,
+        )
+
+    return render(
+        request, "supplier_dashboard/products/main_product_categories.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def products_2(request, category_id):
+    context = {}
+    main_product_category = MainProductCategory.objects.prefetch_related(
+        "main_products"
+    ).get(id=category_id)
+    main_products = main_product_category.main_products.all().order_by("sort")
+
+    context["main_product_category"] = main_product_category
+    context["main_products"] = main_products
+
+    return render(request, "supplier_dashboard/products/main_products.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def products_3(request, main_product_id):
+    context = {}
+    main_product = MainProduct.objects.get(id=main_product_id)
+    context["main_product"] = main_product
+
+    return render(
+        request, "supplier_dashboard/products/main_product_detail.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
+def products_3_table(request, main_product_id):
+    # Don't allow non-htmx GET requests to this view
+    if request.method == "GET" and not request.headers.get("HX-Request"):
+        return HttpResponseRedirect(
+            reverse("supplier_products_3", args=[main_product_id])
+        )
+
+    context = {}
+
+    ProductFormSet = formset_factory(
+        form=ProductLocationForm,
+        formset=BaseProductLocationFormSet,
+        extra=0,
+        can_delete=False,
+    )
+
+    # Get seller and locations from request context
+    seller = get_seller(request)
+    if seller:
+        context["seller"] = seller
+        context["locations"] = SellerLocation.objects.filter(
+            seller_id=seller.id
+        ).values("id", "street", "city")
+
+    # Get product and prefetch related data
+    main_product = MainProduct.objects.prefetch_related(
+        "products__product_add_on_choices",
+        "products__seller_products__seller_product_seller_locations",
+    ).get(id=main_product_id)
+    context["main_product"] = main_product
+
+    products = main_product.products.all()
+
+    # Get data to initialize each form in formset
+    products_list = []
+    for product in products:
+        # Get names of add-ons
+        add_ons = product.product_add_on_choices.select_related("add_on_choice")
+        product_add_ons = [
+            f"{add_on.add_on_choice.add_on.name}: {add_on.add_on_choice.name}"
+            for add_on in add_ons
+        ]
+
+        # Get existing listings for this product
+        listings = []
+        if seller:
+            seller_product = product.seller_products.filter(seller_id=seller.id).first()
+            if seller_product:
+                listings = [
+                    str(spsl.seller_location.id)
+                    for spsl in seller_product.seller_product_seller_locations.all().select_related(
+                        "seller_location"
+                    )
+                ]
+        products_list.append(
+            {
+                "product_id": product.id,
+                "product_code": product.product_code or "None",
+                "add_ons": product_add_ons or ["N/A"],
+                "locations": listings,
+            }
+        )
+
+    if request.method == "POST":
+        formset = ProductFormSet(request.POST, initial=products_list, seller=seller)
+
+        if formset.is_valid():
+            if formset.has_changed():
+                # Make sure all forms save properly before committing to database
+                with transaction.atomic():
+                    if formset.save():
+                        messages.success(request, "New listings created successfully.")
+                        # Go back to beginning product list page
+                        return HttpResponseRedirect(
+                            reverse("supplier_products"),
+                        )
+                    else:
+                        messages.info(request, "No new listings created.")
+            else:
+                messages.info(request, "No changes detected.")
+        else:
+            for form in formset:
+                for field in form.errors:
+                    if field == "__all__":
+                        continue
+                    form[field].field.widget.attrs["class"] += " is-invalid"
+            messages.error(request, "Error saving, please check the form.")
+
+    else:
+        formset = ProductFormSet(initial=products_list, seller=seller)
+
+    context["products"] = products_list
+    context["formset"] = formset
+
+    return render(
+        request,
+        "supplier_dashboard/products/main_product_detail_table.html",
+        context,
+    )
 
 
 @login_required(login_url="/admin/login/")

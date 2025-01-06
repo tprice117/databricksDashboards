@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Literal, Union
+from typing import Literal, Union, Optional
 
 import stripe
 from django.conf import settings
@@ -23,6 +23,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
 from .models import (
     AddOn,
     AddOnChoice,
+    Advertisement,
     Branding,
     DayOfWeek,
     DisposalLocation,
@@ -31,6 +32,7 @@ from .models import (
     MainProduct,
     MainProductAddOn,
     MainProductCategory,
+    MainProductCategoryGroup,
     MainProductCategoryInfo,
     MainProductInfo,
     MainProductServiceRecurringFrequency,
@@ -92,6 +94,41 @@ def get_order_approval_serializer():
         )
 
     return ORDER_APPROVAL_SERIALIZER
+
+
+class AdvertisementSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    object_id = serializers.SerializerMethodField(read_only=True)
+    is_active = serializers.SerializerMethodField(required=False, allow_null=True)
+
+    class Meta:
+        model = Advertisement
+        fields = [
+            "id",
+            "text",
+            "image",
+            "background_color",
+            "text_color",
+            "object_type",
+            "object_id",
+            "sort",
+            "is_active",
+            "start_date",
+            "end_date",
+        ]
+
+    def get_is_active(self, obj):
+        """Check if the advertisement is active and falls within the start and end dates."""
+        now = datetime.datetime.now((datetime.timezone.utc))
+        return (
+            obj.is_active
+            and not obj.is_deleted
+            and (not obj.start_date or obj.start_date <= now)
+            and (not obj.end_date or obj.end_date >= now)
+        )
+
+    def get_object_id(self, obj):
+        return obj.linked_object.id
 
 
 class SellerSerializer(serializers.ModelSerializer):
@@ -267,9 +304,7 @@ class UserGroupSerializer(WritableNestedModelSerializer):
         required=False,
         allow_null=True,
     )
-    legal = UserGroupLegalSerializer(
-        allow_null=True,
-    )
+    legal = UserGroupLegalSerializer(read_only=True)
     credit_applications = UserGroupCreditApplicationSerializer(
         many=True,
         read_only=True,
@@ -460,8 +495,41 @@ class DisposalLocationWasteTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = MainProductCategoryInfo
+        fields = "__all__"
+
+
+class MainProductCategorySlimSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    main_product_category_infos = MainProductCategoryInfoSerializer(
+        many=True, read_only=True
+    )
+
+    class Meta:
+        model = MainProductCategory
+        fields = "__all__"
+        extra_fields = ["main_product_category_infos"]
+
+    def get_field_names(self, declared_fields, info):
+        expanded_fields = super(
+            MainProductCategorySlimSerializer, self
+        ).get_field_names(declared_fields, info)
+
+        if getattr(self.Meta, "extra_fields", None):
+            return expanded_fields + self.Meta.extra_fields
+        else:
+            return expanded_fields
+
+
 class IndustrySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    main_product_categories = MainProductCategorySlimSerializer(
+        many=True, read_only=True
+    )
 
     class Meta:
         model = Industry
@@ -476,19 +544,12 @@ class MainProductAddOnSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class MainProductCategoryInfoSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-
-    class Meta:
-        model = MainProductCategoryInfo
-        fields = "__all__"
-
-
 class MainProductCategorySerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product_category_infos = MainProductCategoryInfoSerializer(
         many=True, read_only=True
     )
+    industry = IndustrySerializer(many=True, read_only=True)
 
     class Meta:
         model = MainProductCategory
@@ -504,6 +565,15 @@ class MainProductCategorySerializer(serializers.ModelSerializer):
             return expanded_fields + self.Meta.extra_fields
         else:
             return expanded_fields
+
+
+class MainProductCategoryGroupSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    main_product_categories = MainProductCategorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = MainProductCategoryGroup
+        fields = "__all__"
 
 
 class MainProductInfoSerializer(serializers.ModelSerializer):
@@ -526,13 +596,19 @@ class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
     main_product_category = MainProductCategorySerializer(read_only=True)
     main_product_infos = MainProductInfoSerializer(many=True, read_only=True)
+    images = serializers.SerializerMethodField()
     add_ons = AddOnSerializer(many=True, read_only=True)
     tags = MainProductTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = MainProduct
         fields = "__all__"
-        extra_fields = ["main_product_infos"]
+        extra_fields = ["main_product_infos", "images"]
+
+    def get_images(self, obj):
+        """Get images as a list of urls."""
+        images = obj.images.all()
+        return [image.image.url for image in images]
 
     def get_field_names(self, declared_fields, info):
         expanded_fields = super(MainProductSerializer, self).get_field_names(
@@ -981,6 +1057,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     active = serializers.SerializerMethodField(read_only=True)
     attachments = OrderGroupAttachmentSerializer(many=True, required=False)
     code = serializers.SerializerMethodField(read_only=True)
+    nearest_order_date = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderGroup
@@ -1010,8 +1087,10 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "is_deleted",
             "access_details",
             "placement_details",
+            "delivered_to_street",
             "start_date",
             "end_date",
+            "estimated_end_date",
             "take_rate",
             "tonnage_quantity",
             "times_per_week",
@@ -1027,6 +1106,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "agreement",
             "agreement_signed_by",
             "agreement_signed_on",
+            "nearest_order_date",
         )
 
     def create(self, validated_data):
@@ -1070,3 +1150,6 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
     def get_code(self, obj):
         return obj.get_code
+
+    def get_nearest_order_date(self, obj) -> Optional[datetime.date]:
+        return obj.nearest_order.end_date if obj.nearest_order else None

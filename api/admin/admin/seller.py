@@ -30,8 +30,47 @@ class SellerAdmin(BaseModelAdmin, ExportActionMixin):
         for seller in queryset:
             return HttpResponseRedirect(seller.dashboard_url)
 
+    fieldsets = (
+        ("ID", {"fields": ("id",)}),
+        (
+            "Seller Details",
+            {
+                "fields": tuple(
+                    field.name
+                    for field in Seller._meta.get_fields()
+                    if field.name
+                    not in [
+                        "id",
+                        "seller_locations",
+                        "usergroup",
+                        "seller_products",
+                        "created_by",
+                        "updated_by",
+                        "created_on",
+                        "updated_on",
+                    ]
+                )
+            },
+        ),
+        (
+            "Audit log",
+            {
+                "fields": (
+                    "created_on",
+                    "created_by",
+                    "updated_on",
+                    "updated_by",
+                ),
+                "classes": ["collapse"],
+            },
+        ),
+    )
+
+    readonly_fields = BaseModelAdmin.readonly_fields + ["id"]
+
     search_fields = [
         "name",
+        "id",
     ]
     inlines = [
         SellerProductInline,
@@ -67,7 +106,7 @@ class SellerAdmin(BaseModelAdmin, ExportActionMixin):
                 "status",
                 "lead_time_hrs",
                 "marketplace_display_name",
-                "location_logo_url",
+                "logo",
                 "badge",
             ]
             for row in reader:
@@ -75,7 +114,7 @@ class SellerAdmin(BaseModelAdmin, ExportActionMixin):
                 if not all(key in keys for key in list(row.keys())):
                     self.message_user(
                         request,
-                        "Your csv file must have a header rows with 'name', 'phone', 'website', 'type_display', 'location_type', 'status', 'lead_time_hrs', 'marketplace_display_name', 'location_logo_url', and 'badge' as the first columns.",
+                        "Your csv file must have a header rows with 'name', 'phone', 'website', 'type_display', 'location_type', 'status', 'lead_time_hrs', 'marketplace_display_name', 'logo', and 'badge' as the first columns.",
                     )
                     return redirect("..")
 
@@ -93,7 +132,7 @@ class SellerAdmin(BaseModelAdmin, ExportActionMixin):
                         status=row["status"],
                         lead_time_hrs=row["lead_time_hrs"],
                         marketplace_display_name=row["marketplace_display_name"],
-                        location_logo_url=row["location_logo_url"],
+                        logo=row["logo"],
                         badge=row["badge"],
                     )
                     print(test)

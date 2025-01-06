@@ -23,6 +23,7 @@ from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
 from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method import (
     ensure_invoice_settings_default_payment_method,
 )
+from billing.scheduled_jobs.supplier_remittance import send_supplier_remittance_emails
 from billing.scheduled_jobs.sync_invoices import sync_invoices
 from billing.scheduled_jobs.consolidated_account_summary import (
     send_account_summary_emails,
@@ -207,6 +208,20 @@ class Command(BaseCommand):
                 jitter=360,
             ),
             id="send_account_past_due_emails",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Send supplier remittance emails. Run every Friday at 10pm CT.
+        scheduler.add_job(
+            send_supplier_remittance_emails,
+            trigger=CronTrigger(
+                day_of_week="fri",
+                hour="22",
+                timezone="America/Chicago",
+                jitter=360,
+            ),
+            id="send_supplier_remittance_emails",
             max_instances=1,
             replace_existing=True,
         )

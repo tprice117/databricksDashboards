@@ -1,0 +1,72 @@
+{% extends 'supplier_dashboard/supplier_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+  Select Product
+{% endblock %}
+{% block stylesheet %}
+  <style></style>
+{% endblock %}
+{% block javascript %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const images = document.querySelectorAll('.image-container img')
+    
+      images.forEach((img) => {
+        img.addEventListener('load', function () {
+          img.classList.add('loaded')
+        })
+    
+        // For cached images
+        if (img.complete) {
+          img.classList.add('loaded')
+        }
+      })
+    })
+  </script>
+{% endblock %}
+{% block content %}
+  <div class="container-fluid">
+    <div class="card shadow rounded-3 mb-4">
+      <div class="card-body p-3 d-sm-flex justify-content-between align-items-center">
+        <div class="p-3">
+          <h5 class="text-primary mb-0">{{ main_product_category.name }} - All Products</h5>
+        </div>
+      </div>
+    </div>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
+      {% for main_product in main_products %}
+        <div class="col-lg-4 d-flex align-items-stretch">
+          <div class="card shadow mb-4" style="border-radius: 37px 37px 0 0;">
+            <div class="image-container">
+              <img class="card-img-top img-fluid"
+                style="border-radius: 37px 37px 0 0;{% if main_product.image_del %}object-fit: cover;{% endif %}"
+                src="{% if main_product.image_del %}
+                  {{ main_product.image_del }}
+                {% elif main_product_category.icon %}
+                  {{ main_product_category.icon.url }}
+                {% else %}
+                  {% static 'customer_dashboard/img/logo.png' %}
+                {% endif %}" />
+            </div>
+            <div class="card-body" style="padding-top: 0px;padding-right: 0px;padding-left: 0px;">
+              <div class="row w-100">
+                <div class="col" style="padding-right: 24px;padding-left: 24px;padding-top: 12px;">
+                  <h5>{{ main_product.name }}</h5>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <a class="btn btn-primary float-end" role="button" href="{% url 'supplier_products_3' main_product_id=main_product.id %}">Select Options</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      <div class="col"></div>
+      <div class="col"></div>
+    </div>
+    {% if not main_products %}
+      {% include 'supplier_dashboard/snippets/page_under_construction.html' %}
+    {% endif %}
+  </div>
+{% endblock %}

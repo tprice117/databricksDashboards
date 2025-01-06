@@ -6,6 +6,7 @@ from django.urls import path
 from import_export.admin import ExportActionMixin
 from import_export import resources
 
+from api.admin.filters import StatusFilter
 from api.admin.inlines import (
     SellerProductSellerLocationMaterialInline,
     SellerProductSellerLocationRentalInline,
@@ -29,6 +30,7 @@ class SellerProductSellerLocationResource(resources.ModelResource):
 class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
     resource_classes = [SellerProductSellerLocationResource]
     search_fields = [
+        "id",
         "seller_location__name",
         "seller_location__seller__name",
         "seller_product__product__main_product__name",
@@ -43,6 +45,7 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
     list_filter = (
         "seller_product__product__main_product__main_product_category",
         "seller_location__seller",
+        StatusFilter,
     )
     fieldsets = [
         (
@@ -136,22 +139,11 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
 
     def show_incomplete(self, request):
         # Return html with all SellerProductSellerLocations that are incomplete.
-        spsl = SellerProductSellerLocation.objects.all()
-        spsl = spsl.select_related(
-            "seller_location", "seller_product__product__main_product"
-        )
-        spsl = spsl.prefetch_related(
-            "rental_one_step",
-            "rental",
-            "rental_multi_step",
-            "service_times_per_week",
-            "material",
-        )
-        incompletelist = [sp for sp in spsl if not sp.is_complete]
+        spsl = SellerProductSellerLocation.objects.get_needs_attention()
         return render(
             request,
             "admin/incomplete_seller_product_seller_locations.html",
-            {"seller_product_seller_locations": incompletelist},
+            {"seller_product_seller_locations": spsl},
         )
 
     def import_csv(self, request):

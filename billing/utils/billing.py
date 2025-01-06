@@ -49,10 +49,8 @@ class BillingUtils:
             order_line_item: OrderLineItem
             for order_line_item in order_line_items:
                 # Create Stripe Invoice Line Item.
-                stripe_invoice_line_item = stripe.InvoiceItem.create(
-                    customer=order.order_group.user_address.stripe_customer_id,
-                    invoice=invoice.id,
-                    description=order_line_item.order_line_item_type.name
+                description = (
+                    order_line_item.order_line_item_type.name
                     + " | Qty: "
                     + str(order_line_item.quantity)
                     + " @ $"
@@ -67,7 +65,19 @@ class BillingUtils:
                         if order_line_item.quantity > 0
                         else "0.00"
                     )
-                    + "/unit",
+                    + "/unit"
+                )
+                try:
+                    description = order_line_item.stripe_description
+                except Exception as e:
+                    logger.error(
+                        f"BillingUtils.create_invoice_items_for_order: [line_item: {order_line_item.id}]-[{e}]",
+                        exc_info=e,
+                    )
+                stripe_invoice_line_item = stripe.InvoiceItem.create(
+                    customer=order.order_group.user_address.stripe_customer_id,
+                    invoice=invoice.id,
+                    description=description,
                     amount=round(100 * order_line_item.customer_price()),
                     tax_behavior="exclusive",
                     tax_code=order_line_item.order_line_item_type.stripe_tax_code_id,
@@ -119,6 +129,8 @@ class BillingUtils:
                     )
 
                     print(response)
+            # Update all of the line items to ensure the tax is correct.
+            order.update_line_items_tax()
         except Exception as e:
             print(e)
             logger.error(
@@ -399,17 +411,18 @@ class BillingUtils:
                         for order in orders
                         if not order.all_order_line_items_invoiced()
                     ]
+                    # Only create an invoice if there are orders to invoice.
+                    if orders:
+                        invoice = BillingUtils.create_stripe_invoice_for_user_address(
+                            orders,
+                            user_address,
+                        )
 
-                    invoice = BillingUtils.create_stripe_invoice_for_user_address(
-                        orders,
-                        user_address,
-                    )
-
-                    # Finalize the invoice.
-                    BillingUtils.finalize_and_pay_stripe_invoice(
-                        invoice=invoice,
-                        user_group=user_address.user_group,
-                    )
+                        # Finalize the invoice.
+                        BillingUtils.finalize_and_pay_stripe_invoice(
+                            invoice=invoice,
+                            user_group=user_address.user_group,
+                        )
         except Exception as e:
             logger.error(
                 f"BillingUtils.run_project_end_based_invoicing: [{e}]", exc_info=e

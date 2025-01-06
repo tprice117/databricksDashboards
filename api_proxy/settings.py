@@ -64,8 +64,10 @@ INSTALLED_APPS = [
     "chat",
     "common",
     "communications",
+    "crm",
     "customer_dashboard",
     "dashboards",
+    "explore",
     "external_contracts",
     "matching_engine",
     "pricing_engine",
@@ -97,6 +99,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "common.middleware.save_author.SaveAuthorMiddleware",
+    "common.middleware.htmx_response.HtmxMessageMiddleware",
     "api.middleware.user_last_active.UpdateLastActiveMiddleware",
 ]
 

@@ -1,73 +1,87 @@
 {% load static %}
 {% block javascript %}
-    <script>
-        function handleSidebarToggle() {
-            var sidebar = document.getElementById("sidebar");
-            if (window.innerWidth < 1000) {
-                sidebar.classList.add("toggled");
-            } else {
-                sidebar.classList.remove("toggled");
-            }
-        }
-        
-        window.addEventListener("resize", handleSidebarToggle);
-        window.addEventListener("load", handleSidebarToggle);
-    </script>
+  <script>
+    function handleSidebarToggle() {
+      var sidebar = document.getElementById('sidebar')
+      if (window.innerWidth < 1000) {
+        sidebar.classList.add('toggled')
+      } else {
+        sidebar.classList.remove('toggled')
+      }
+    }
+    
+    window.addEventListener('resize', handleSidebarToggle)
+    window.addEventListener('load', handleSidebarToggle)
+  </script>
 {% endblock %}
 <nav class="navbar align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0 navbar-dark" id="sidebar" style="background: var(--bs-primary);">
-    <div class="container-fluid d-flex flex-column p-0">
-        <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0 p-3" href="#">
-            <img src="{% static 'supplier_dashboard/img/logo-white.png' %}" alt="Company Logo" class="object-fit-contain rounded mw-100 mh-100"/>
+  <div class="container-fluid d-flex flex-column p-0">
+    <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0 p-3" href="#">
+      <img src="{% static 'supplier_dashboard/img/logo-white.png' %}" alt="Company Logo" class="object-fit-contain rounded mw-100 mh-100" />
 
-            <div class="sidebar-brand-text mx-2" style="font-size: 1.4rem;font-weight: 400;text-align: start;text-transform: capitalize;letter-spacing: .075rem;">
-                <span>
-                    {% block tabtitle %}
-                        Downstream
-                    {% endblock %}
-                </span>
-            </div>
+      <div class="sidebar-brand-text mx-2" style="font-size: 1.4rem;font-weight: 400;text-align: start;text-transform: capitalize;letter-spacing: .075rem;">
+        <span>
+          {% block tabtitle %}
+            Downstream
+          {% endblock %}
+        </span>
+      </div>
+    </a>
+    <hr class="sidebar-divider my-0" />
+    <ul class="navbar-nav text-light" id="accordionSidebar">
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_home' %} active{% endif %}" href="{% url 'supplier_home' %}"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+      </li>
+      {% comment %} <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_home' %} active{% endif %}" href="{% url 'supplier_home' %}" hx-get="{% url 'supplier_home' %}" hx-push-url="true" hx-indicator="#htmx-indicator-page" hx-swap="innerHTML" hx-target="#page-content-wrappper">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
         </a>
-        <hr class="sidebar-divider my-0" />
-        <ul class="navbar-nav text-light" id="accordionSidebar">
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_home' %} active{% endif %}" href="{% url 'supplier_home' %}"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-            </li>
-            {% comment %} <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_home' %} active{% endif %}" href="{% url 'supplier_home' %}" hx-get="{% url 'supplier_home' %}" hx-push-url="true" hx-indicator="#htmx-indicator-page" hx-swap="innerHTML" hx-target="#page-content-wrappper">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li> {% endcomment %}
-            <li class="nav-item"></li>
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_bookings' %} active{% endif %}" href="{% url 'supplier_bookings' %}"><i class="icon ion-calendar"></i><span>Bookings</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_payouts' %} active{% endif %}" href="{% url 'supplier_payouts' %}"><i class="far fa-chart-bar"></i><span>Payouts</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_locations' %} active{% endif %}" href="{% url 'supplier_locations' %}"><i class="far fa-map"></i><span>Locations</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_received_invoices' %} active{% endif %}" href="{% url 'supplier_received_invoices' %}"><i class="far fa-file-alt"></i><span>Received Invoices</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_users' %} active{% endif %}" href="{% url 'supplier_users' %}"><i class="far fa-user"></i><span>Users</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_company' %} active{% endif %}" href="{% url 'supplier_company' %}">
-                    <i class="fas fa-building"></i>
-                    <span>Company Settings</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if request.resolver_match.url_name == 'supplier_profile' %} active{% endif %}" href="{% url 'supplier_profile' %}"><i class="fas fa-user"></i><span>Profile</span></a>
-            </li>
-            <li class="nav-item"></li>
-            <li class="nav-item"></li>
-        </ul>
-        <div class="text-center d-none d-md-inline">
-            <button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button>
-        </div>
+      </li> {% endcomment %}
+      <li class="nav-item"></li>
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_bookings' %} active{% endif %}" href="{% url 'supplier_bookings' %}"><i class="icon ion-calendar"></i><span>Bookings</span></a>
+      </li>
+      {% if request.user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link{% if request.resolver_match.url_name == 'supplier_listings' %} active{% endif %}" href="{% url 'supplier_listings' %}"><i class="fa fa-tag"></i><span>Listings</span></a>
+        </li>
+      {% endif %}
+      <li class="nav-item">
+        {% url 'supplier_products' as supplier_products %}
+        <a class="nav-link{% if supplier_products in request.path %} active{% endif %}" href="{{ supplier_products }}"><i class="fa fa-cart-plus"></i><span>Add Products</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_payouts' %} active{% endif %}" href="{% url 'supplier_payouts' %}"><i class="far fa-chart-bar"></i><span>Payouts</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_locations' %} active{% endif %}" href="{% url 'supplier_locations' %}"><i class="far fa-map"></i><span>Locations</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_received_invoices' %} active{% endif %}" href="{% url 'supplier_received_invoices' %}"><i class="far fa-file-alt"></i><span>Received Invoices</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_users' %} active{% endif %}" href="{% url 'supplier_users' %}"><i class="far fa-user"></i><span>Users</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_company' %} active{% endif %}" href="{% url 'supplier_company' %}">
+          <i class="fas fa-building"></i>
+          <span>Company Settings</span>
+        </a>
+      </li>
+      {% if request.user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link{% if request.resolver_match.url_name == 'supplier_companies' %} active{% endif %}" href="{% url 'supplier_companies' %}"><i class="fas fa-building"></i><span>Companies</span></a>
+        </li>
+      {% endif %}
+      <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'supplier_profile' %} active{% endif %}" href="{% url 'supplier_profile' %}"><i class="fas fa-user"></i><span>Profile</span></a>
+      </li>
+      <li class="nav-item"></li>
+      <li class="nav-item"></li>
+    </ul>
+    <div class="text-center d-none d-md-inline">
+      <button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button>
     </div>
+  </div>
 </nav>

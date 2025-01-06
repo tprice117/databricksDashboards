@@ -7,6 +7,7 @@ from api import views
 from api_proxy import login_router
 
 router = routers.DefaultRouter()
+router.register(r"advertisements", views.AdvertisementViewSet, "api")
 router.register(
     r"disposal-location-waste-types", views.DisposalLocationWasteTypeViewSet, "api"
 )
@@ -29,6 +30,9 @@ router.register(r"add-ons", views.AddOnViewSet, "api")
 router.register(r"main-product-add-ons", views.MainProductAddOnViewSet, "api")
 router.register(
     r"main-product-category-infos", views.MainProductCategoryInfoViewSet, "api"
+)
+router.register(
+    r"main-product-category-groups", views.MainProductCategoryGroupViewSet, "api"
 )
 router.register(r"main-product-categories", views.MainProductCategoryViewSet, "api")
 router.register(r"main-product-infos", views.MainProductInfoViewSet, "api")
@@ -169,6 +173,8 @@ urlpatterns = [
     path("", include("supplier_dashboard.urls")),
     # Customer Dashboard.
     path("", include("customer_dashboard.urls")),
+    # Explore.
+    path("", include("explore.urls")),
     # Match Engine.
     path("matching-engine/", include("matching_engine.urls")),
     # Pricing Engine.

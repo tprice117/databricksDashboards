@@ -13,6 +13,33 @@ if TYPE_CHECKING:
     from payment_methods.models.payment_method import PaymentMethod
 
 
+def get_sorted_invoice_items(invoice_items):
+    # Define the order of descriptions
+    item_order = [
+        "Service",
+        "Rental",
+        "Materials",
+        "Fuel & Environmental Fee",
+        "Delivery Fee",
+        "Removal Fee",
+    ]
+
+    # Create a custom sorting function
+    def get_sort_key(item):
+        # Extract the main part of the description before the first space
+        main_description = item["description"].split(" ")[0].strip()
+        # Return the index of the main description in the item_order list
+        index = (
+            item_order.index(main_description)
+            if main_description in item_order
+            else len(item_order)
+        )
+        return index
+
+    # Sort the items using the custom sorting function
+    return sorted(invoice_items, key=get_sort_key)
+
+
 class Invoice(BaseModel):
     class Status(models.TextChoices):
         DRAFT = "draft"
@@ -50,22 +77,40 @@ class Invoice(BaseModel):
 
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def _get_invoice_items(self) -> InvoiceResponse:
-        stripe_invoice_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
-            invoice_id=self.invoice_id,
-        )
+        invoice = StripeUtils.Invoice.get(self.invoice_id)
+        if invoice.lines["has_more"]:
+            stripe_invoice_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
+                self.invoice_id
+            )
+        else:
+            stripe_invoice_items = invoice.lines["data"]
         groups = StripeUtils.SummaryItems.get_all_for_invoice(self.invoice_id)
         response: InvoiceResponse = {
             "items": [],
             "groups": [],
+            "pre_payment_credit": 0,
+            "post_payment_credit": 0,
         }
+
+        if invoice["pre_payment_credit_notes_amount"]:
+            response["pre_payment_credit"] = Decimal(
+                invoice["pre_payment_credit_notes_amount"] / 100
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if invoice["post_payment_credit_notes_amount"]:
+            response["post_payment_credit"] = Decimal(
+                invoice["post_payment_credit_notes_amount"] / 100
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         for item in stripe_invoice_items:
             amount = Decimal(item["amount"] / 100).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )
-            tax = Decimal(item["tax_amounts"][0]["amount"] / 100).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            tax = 0
+            if item["tax_amounts"]:
+                for tax_amount in item["tax_amounts"]:
+                    tax += Decimal(tax_amount["amount"] / 100).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    )
             amount_excluding_tax = amount
             if item.get("amount_excluding_tax", None) is not None:
                 amount_excluding_tax = Decimal(
@@ -95,29 +140,9 @@ class Invoice(BaseModel):
         # setattr(self, "items", response["items"])
         # setattr(self, "groups", response["groups"])
 
-        # Define the order of descriptions
-        item_order = [
-            "Service",
-            "Rental",
-            "Materials",
-            "Fuel & Environmental Fee",
-            "Delivery Fee",
-            "Removal Fee",
-        ]
-
-        # Create a custom sorting function
-        def get_sort_key(item):
-            # Extract the main part of the description before the first "|"
-            main_description = item["description"].split(" | ")[0].strip()
-            # Return the index of the main description in the item_order list
-            return (
-                item_order.index(main_description)
-                if main_description in item_order
-                else len(item_order)
-            )
-
         # Sort the items using the custom sorting function
-        response["items"] = sorted(response["items"], key=get_sort_key)
+        response["items"] = get_sorted_invoice_items(response["items"])
+
         return response
 
     @property
@@ -127,11 +152,12 @@ class Invoice(BaseModel):
     @property
     def invoice_items_grouped(self) -> InvoiceGroupedResponse:
         invoice_items = self._get_invoice_items()
+        # Sort the items using the custom sorting function
+        invoice_items["items"] = get_sorted_invoice_items(invoice_items["items"])
+
         for group in invoice_items["groups"]:
             group["total"] = 0
             group["items"] = []
-            # Remove everything after last | in description.
-            group["description"] = group["description"].rsplit("|", 1)[0]
             for item in invoice_items["items"]:
                 if item["group_id"] == group["id"]:
                     group["items"].append(item)
@@ -150,29 +176,12 @@ class Invoice(BaseModel):
             invoice_items["groups"].append(ungrouped)
         return invoice_items
 
-    def pay_invoice(
-        self,
-        payment_method: "PaymentMethod",
-    ):
-        # Get Stripe Payment Method based on Payment Method.
-        stripe_payment_method = payment_method.get_stripe_payment_method(
-            user_address=self.user_address,
-        )
-        if stripe_payment_method is None:
-            raise ValueError(
-                "Payment method not found in Stripe. Please contact us for help."
-            )
+    def update_invoice(self, stripe_invoice=None):
+        if stripe_invoice is None:
+            invoice = StripeUtils.Invoice.get(self.invoice_id)
+        else:
+            invoice = stripe_invoice
 
-        # Pay the invoice.
-        is_paid = StripeUtils.Invoice.attempt_pay_og(
-            self.invoice_id,
-            payment_method=stripe_payment_method.id,
-            raise_error=True,
-        )
-
-        invoice = StripeUtils.Invoice.get(self.invoice_id)
-
-        # Update the invoice.
         self.amount_due = invoice["amount_due"] / 100
         self.amount_paid = invoice["amount_paid"] / 100
         self.amount_remaining = invoice["amount_remaining"] / 100
@@ -191,4 +200,27 @@ class Invoice(BaseModel):
         self.status = invoice["status"]
         self.total = invoice["total"] / 100
         self.save()
+
+    def pay_invoice(
+        self,
+        payment_method: "PaymentMethod",
+    ):
+        # Get Stripe Payment Method based on Payment Method.
+        stripe_payment_method = payment_method.get_stripe_payment_method(
+            user_address=self.user_address,
+        )
+        if stripe_payment_method is None:
+            raise ValueError(
+                "Payment method not found in Stripe. Please contact us for help."
+            )
+
+        # Pay the invoice.
+        is_paid, invoice = StripeUtils.Invoice.attempt_pay_og(
+            self.invoice_id,
+            payment_method=stripe_payment_method.id,
+            raise_error=True,
+        )
+
+        # Update the invoice.
+        self.update_invoice(invoice)
         return is_paid

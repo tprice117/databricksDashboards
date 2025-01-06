@@ -56,12 +56,13 @@ def save_payment_method(sender, instance: PaymentMethodUserAddress, created, **k
 
 @receiver(pre_delete, sender=PaymentMethodUserAddress)
 def delete_payment_method(sender, instance: PaymentMethodUserAddress, using, **kwargs):
-    # Don't delete the UserAddress if it's the default payment method.
-    if instance.is_default_payment_method():
-        raise ValidationError(
-            "Cannot delete this rrelationship. This PaymentMethod is "
-            "the default for the UserAddress."
-        )
+    # Deprecated: This model is no longer in use.
+    # # Don't delete the UserAddress if it's the default payment method.
+    # if instance.is_default_payment_method():
+    #     raise ValidationError(
+    #         "Cannot delete this rrelationship. This PaymentMethod is "
+    #         "the default for the UserAddress."
+    #     )
 
     # Once there is a PaymentMethodUserAddress, don't let the UserAddress
 

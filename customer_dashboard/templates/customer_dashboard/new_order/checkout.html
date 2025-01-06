@@ -68,13 +68,13 @@
             let cartItems = document.querySelectorAll(".cart-item");
             queryParams.set("count", encodeURIComponent(cartItems.length));
             // Create url for removing item
-            const removeItemUrl = "{% url 'customer_new_order_5' %}?" + queryParams.toString();
+            const removeItemUrl = "{% url 'customer_cart' %}?" + queryParams.toString();
             // Get if of button for htmx
             let buttonId = el.getAttribute("id");
         
             // update hx-get attribute of date filter and tab urls
             htmx.find(`#${buttonId}`).setAttribute("hx-delete", removeItemUrl);
-            // hx-delete="{% url 'customer_new_order_5' %}?id={{ item.order_group.id }}&subtotal={{ subtotal }}&price={{ item.price }}"
+            // hx-delete="{% url 'customer_cart' %}?id={{ item.order_group.id }}&subtotal={{ subtotal }}&price={{ item.price }}"
             // force htmx to process the new hx-get attributes
             htmx.process(`#${buttonId}`);
             // trigger onRemoveClick event

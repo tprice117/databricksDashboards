@@ -83,11 +83,9 @@ def get_user_data(user_id: str):
 
 def get_user_from_email(email: str):
     headers = {"authorization": "Bearer " + get_auth0_access_token()}
-    response = requests.get(
-        "https://" + settings.AUTH0_DOMAIN + "/api/v2/users-by-email?email=" + email,
-        headers=headers,
-        timeout=30,
-    )
+    auth0_endpoint = f"https://{settings.AUTH0_DOMAIN}/api/v2/users-by-email"
+    params = {"email": email}
+    response = requests.get(auth0_endpoint, params=params, headers=headers, timeout=30)
     json = response.json()
     # NOTE: Hitting KeyError json[0] here. Log this with email
     try:

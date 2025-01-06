@@ -81,12 +81,15 @@ class OrderGroup(BaseModel):
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
     access_details = models.TextField(blank=True, null=True)
     placement_details = models.TextField(blank=True, null=True)
+    delivered_to_street = models.BooleanField(default=False)
+    is_delivery = models.BooleanField(default=True)
     service_recurring_frequency = models.ForeignKey(
         ServiceRecurringFrequency, models.PROTECT, blank=True, null=True
     )
     preferred_service_days = models.ManyToManyField(DayOfWeek, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
+    estimated_end_date = models.DateField(blank=True, null=True)
     take_rate = models.DecimalField(max_digits=18, decimal_places=2, default=30)
     tonnage_quantity = models.IntegerField(blank=True, null=True)
     times_per_week = models.SmallIntegerField(
@@ -309,23 +312,24 @@ class OrderGroup(BaseModel):
 
     @property
     def nearest_order(self):
-        # Get the nearest order to the current date.
-        orders = self.orders.order_by("-start_date")
-        if orders.count() == 0:
-            return None
-        else:
-            today = datetime.date.today()
-            order = orders.first()
-            if order.start_date < today:
-                return order
-            else:
-                # Get order that is closest to today.
-                nearest_order = None
-                for order in orders:
-                    nearest_order = order
-                    if order.start_date < today:
-                        break
-                return nearest_order
+        """Get the nearest order to the current date.
+        If it is a future order, return the first future order.
+        If it is a past order, return the most recent past order."""
+        today = datetime.date.today()
+
+        # Get the nearest future order
+        future_orders = self.orders.filter(end_date__gt=today).order_by("end_date")
+
+        if future_orders.exists():
+            return future_orders.first()
+
+        # If no future orders, get the nearest past order
+        past_orders = self.orders.filter(end_date__lte=today).order_by("-end_date")
+
+        if past_orders.exists():
+            return past_orders.first()
+
+        return None
 
     def create_swap(self, swap_date, schedule_window: str = None) -> Order:
         """Create a swap for the OrderGroup.
@@ -469,7 +473,7 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
         if main_product.has_rental_multi_step and hasattr(
             seller_product_seller_location, "rental_multi_step"
         ):
-            OrderGroupRentalMultiStep.objects.create(
+            order_group_rental_multi_step = OrderGroupRentalMultiStep.objects.create(
                 order_group=instance,
                 hour=seller_product_seller_location.rental_multi_step.hour,
                 day=seller_product_seller_location.rental_multi_step.day,
@@ -484,7 +488,7 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 "rental_multi_step_shift",
             ):
                 OrderGroupRentalMultiStepShift.objects.create(
-                    order_group=instance,
+                    order_group_rental_multi_step=order_group_rental_multi_step,
                     two_shift=seller_product_seller_location.rental_multi_step.rental_multi_step_shift.two_shift,
                     three_shift=seller_product_seller_location.rental_multi_step.rental_multi_step_shift.three_shift,
                 )

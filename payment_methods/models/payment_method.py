@@ -37,6 +37,12 @@ class PaymentMethod(BaseModel):
     active = models.BooleanField(default=True)
     reason = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        if self.active:
+            return f"{self.id} - active"
+        else:
+            return f"{self.id} - inactive: {self.inactive_reason}"
+
     @property
     def card_number(self):
         """Return all the digits with * except the last 4 digits."""
@@ -207,15 +213,21 @@ class PaymentMethod(BaseModel):
                 html_content = render_to_string(
                     "emails/internal/bad-payment-method.min.html", payload
                 )
+                additional_to_emails = [
+                    "mwickey@trydownstream.com",
+                    "dleyden@trydownstream.com",
+                    "ctorgerson@trydownstream.com",
+                    "hrobbins@trydownstream.com",
+                    "billing@trydownstream.com",
+                ]
+                if user_address.user_group and user_address.user_group.account_owner:
+                    # Send to the account owner.
+                    additional_to_emails.append(
+                        user_address.user_group.account_owner.email
+                    )
                 add_internal_email_to_queue(
                     from_email="system@trydownstream.com",
-                    additional_to_emails=[
-                        "mwickey@trydownstream.com",
-                        "dleyden@trydownstream.com",
-                        "ctorgerson@trydownstream.com",
-                        "hrobbins@trydownstream.com",
-                        "billing@trydownstream.com",
-                    ],
+                    additional_to_emails=additional_to_emails,
                     subject=subject,
                     html_content=html_content,
                 )

@@ -2,18 +2,18 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Cart
+  Cart
 {% endblock %}
 {% block stylesheet %}
-    <style>
-        .htmx-swapping {
-            opacity: 0;
-            transition: opacity 1s ease-out;
-        }
-    </style>
+  <style>
+    .htmx-swapping {
+      opacity: 0;
+      transition: opacity 1s ease-out;
+    }
+  </style>
 {% endblock %}
 {% block javascript %}
-    <script>
+  <script>
         let allButtons = document.querySelectorAll(".button-remove-item");
         function removeItemFromCart(el) {
             // Get current query params.
@@ -42,13 +42,13 @@
             let cartItems = document.querySelectorAll(".cart-item");
             queryParams.set("count", encodeURIComponent(cartItems.length));
             // Create url for removing item
-            const removeItemUrl = "{% url 'customer_new_order_5' %}?" + queryParams.toString();
+            const removeItemUrl = "{% url 'customer_cart' %}?" + queryParams.toString();
             // Get if of button for htmx
             let buttonId = el.getAttribute("id");
         
             // update hx-get attribute of date filter and tab urls
             htmx.find(`#${buttonId}`).setAttribute("hx-delete", removeItemUrl);
-            // hx-delete="{% url 'customer_new_order_5' %}?id={{ item.order_group.id }}&subtotal={{ subtotal }}&price={{ item.price }}"
+            // hx-delete="{% url 'customer_cart' %}?id={{ item.order_group.id }}&subtotal={{ subtotal }}&price={{ item.price }}"
             // force htmx to process the new hx-get attributes
             htmx.process(`#${buttonId}`);
             // trigger onRemoveClick event
@@ -134,6 +134,7 @@
             {% endif %}
             Swal.fire({
                 title: "Send Quote",
+                footer: 'The reply to email address will be set to the email address of the user who sent the quote [{{request.user.email}}].',
                 input: "textarea",
                 inputLabel: "Comma separated list of email addresses to send the quote to.",
                 inputValue,
@@ -219,65 +220,65 @@
     </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        {% if request.user.is_staff %}
-            <div class="row">
-                <div class="col">
-                    <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
-                        <form class="row g-3" action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'customer_cart' %}" hx-target="#cart-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-                            <div class="col-10 mb-3">
-                                <div class="input-group">
-                                    <label class="input-group-text" for="filterGroupSelect">Options</label>
-                                    <select class="form-select" id="filterGroupSelect" name="filter" aria-label="Filter Data By">
-                                        <option value="new">Created Today</option>
-                                        <option value="starting">Expiring in 5 days</option>
-                                        <option value="inactive">Inactive for 5+ Days</option>
-                                        <option value="expired">Expired</option>
-                                        <option value="active" selected>All Open Orders</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="myCartsCheck" name="my_carts" />
-                                    <label class="form-check-label" for="myCartsCheck">My Orders</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cartStartDate">Start Date Range</label>
-                                <input id="cartStartDate" class="form-control" type="date" name="start_date" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cartEndDate">End Date Range</label>
-                                <input id="cartEndDate" class="form-control" type="date" name="end_date" />
-                            </div>
+  <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+    {% if request.user.is_staff %}
+      <div class="row">
+        <div class="col">
+          <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
+            <form class="row g-3" action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'customer_cart' %}" hx-target="#cart-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+              <div class="col-10 mb-3">
+                <div class="input-group">
+                  <label class="input-group-text" for="filterGroupSelect">Options</label>
+                  <select class="form-select" id="filterGroupSelect" name="filter" aria-label="Filter Data By">
+                    <option value="new">Created Today</option>
+                    <option value="starting">Expiring in 5 days</option>
+                    <option value="inactive">Inactive for 5+ Days</option>
+                    <option value="expired">Expired</option>
+                    <option value="active" selected>All Open Orders</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="myCartsCheck" name="my_carts" />
+                  <label class="form-check-label" for="myCartsCheck">My Orders</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="cartStartDate">Start Date Range</label>
+                <input id="cartStartDate" class="form-control" type="date" name="start_date" />
+              </div>
+              <div class="col-md-6">
+                <label for="cartEndDate">End Date Range</label>
+                <input id="cartEndDate" class="form-control" type="date" name="end_date" />
+              </div>
 
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <div class="row">
-                    <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}">
-                        Shopping Cart ({{ cart_count }}){% if help_text %}
-                            - {{ help_text }}
-                        {% endif %}
-                    </h3>
-                    <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="accordion" role="tablist" id="cart-results" hx-get="{{ cart_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></div>
-            </div>
-            <div class="card-footer">
-                <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
-            </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
+    {% endif %}
+    <div class="card shadow">
+      <div class="card-header py-3">
+        <div class="row">
+          <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}">
+            Shopping Cart ({{ cart_count }}){% if help_text %}
+              - {{ help_text }}
+            {% endif %}
+          </h3>
+          <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="accordion" role="tablist" id="cart-results" hx-get="{{ cart_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></div>
+      </div>
+      <div class="card-footer">
+        <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
+      </div>
     </div>
-    <div class="container-fluid mb-1"></div>
+  </div>
+  <div class="container-fluid mb-1"></div>
 {% endblock %}

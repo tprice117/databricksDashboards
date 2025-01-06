@@ -1,5 +1,5 @@
 import logging
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from functools import lru_cache
 from typing import List, Optional
 
@@ -292,6 +292,15 @@ class Order(BaseModel):
             ]
         )
 
+    @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
+    def customer_price_with_tax(self):
+        return sum(
+            [
+                order_line_item.customer_price_with_tax()
+                for order_line_item in self.order_line_items.exclude_adjustments()
+            ]
+        )
+
     def full_price(self):
         default_take_rate = self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
         return self.seller_price() * (1 + (default_take_rate / 100))
@@ -326,9 +335,11 @@ class Order(BaseModel):
         description = f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type}'
         description2 = description
         if self.order_group.project_id:
-            description2 = f"{description2} | {self.order_group.project_id}"
+            description2 = f"{description2} ({self.order_group.project_id})"
         elif self.order_group.user_address.project_id:
-            description2 = f"{description2} | {self.order_group.project_id}"
+            description2 = (
+                f"{description2} ({self.order_group.user_address.project_id})"
+            )
         description = f"{description} | {str(self.id)[:5]}"
         description2 = f"{description2} | {str(self.id)[:5]}"
         return description, description2
@@ -412,18 +423,19 @@ class Order(BaseModel):
         """Return all the invoices for this Order."""
         inv_resp = []
         stripe_invoice_ids = []
-        for order_line_item in self.order_line_items.all():
-            if order_line_item.stripe_invoice_line_item_id:
-                try:
-                    invoice_line_item = StripeUtils.InvoiceItem.get(
-                        order_line_item.stripe_invoice_line_item_id
-                    )
-                    stripe_invoice_ids.append(invoice_line_item.invoice)
-                except Exception as e:
-                    logger.error(
-                        f"order_line_item.id:{order_line_item.id} stripe_invoice_line_item_id:{order_line_item.stripe_invoice_line_item_id} does not exist. [{e}]",
-                        exc_info=e,
-                    )
+        for order_line_item in self.order_line_items.exclude_adjustments():
+            if not order_line_item.stripe_invoice_line_item_id:
+                continue
+            try:
+                invoice_line_item = StripeUtils.InvoiceItem.get(
+                    order_line_item.stripe_invoice_line_item_id
+                )
+                stripe_invoice_ids.append(invoice_line_item.invoice)
+            except Exception as e:
+                logger.error(
+                    f"order_line_item.id:{order_line_item.id} stripe_invoice_line_item_id:{order_line_item.stripe_invoice_line_item_id} does not exist. [{e}]",
+                    exc_info=e,
+                )
 
         stripe_invoice_ids = list(set(stripe_invoice_ids))
 
@@ -707,6 +719,17 @@ class Order(BaseModel):
 
         instance.add_line_items(created)
         notifications_signals.on_order_post_save(sender, instance, created, **kwargs)
+        if (
+            instance.status == Order.Status.CANCELLED
+            and instance.old_value("status") != Order.Status.CANCELLED
+        ):
+            # if all the orders are canceled, add an end date to the group
+            for order in instance.order_group.orders.all():
+                if order.status != Order.Status.CANCELLED:
+                    break
+            else:
+                instance.order_group.end_date = instance.order_group.start_date
+                instance.order_group.save()
 
     def admin_policy_checks(self, orders=None):
         """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
@@ -1125,13 +1148,9 @@ class Order(BaseModel):
             all_line_items = []
             delivery_fee = 0
             re_get_taxes = False
-            for order_line_item in self.order_line_items.all():
-                if order_line_item.stripe_invoice_line_item_id != "BYPASS":
-                    if (
-                        order_line_item.tax is None
-                        and order_line_item.customer_price() > 0
-                    ):
-                        re_get_taxes = True
+            for order_line_item in self.order_line_items.exclude_adjustments():
+                if order_line_item.tax is None and order_line_item.customer_price() > 0:
+                    re_get_taxes = True
                 all_line_items.append(order_line_item)
                 if order_line_item.order_line_item_type.code == "DELIVERY":
                     delivery_fee = float(order_line_item.customer_price())
@@ -1161,7 +1180,7 @@ class Order(BaseModel):
                     description=order_line_item.description,
                     unit_price=customer_rate,
                     quantity=order_line_item.quantity,
-                    units=order_line_item.order_line_item_type.units,
+                    units=order_line_item.get_units(),
                     tax=order_line_item.tax,
                 )
                 key = order_line_item.order_line_item_type.code
@@ -1180,6 +1199,55 @@ class Order(BaseModel):
         except Exception as e:
             logger.error(f"Order.get_price: [{self.id}]-[{e}]", exc_info=e)
             return None
+
+    def update_line_items_tax(self):
+        """Update the tax for all line items in this Order (and all associated invoices)."""
+        stripe_invoice_ids = []
+        for order_line_item in self.order_line_items.exclude_adjustments().exclude(
+            stripe_invoice_line_item_id__isnull=True
+        ):
+            try:
+                invoice_line_item = StripeUtils.InvoiceItem.get(
+                    order_line_item.stripe_invoice_line_item_id
+                )
+                stripe_invoice_ids.append(invoice_line_item.invoice)
+            except Exception as e:
+                logger.error(
+                    f"update_line_item_tax:order_line_item.id:{order_line_item.id} stripe_invoice_line_item_id:{order_line_item.stripe_invoice_line_item_id} does not exist. [{e}]",
+                    exc_info=e,
+                )
+
+        stripe_invoice_ids = list(set(stripe_invoice_ids))
+        for stripe_invoice_id in stripe_invoice_ids:
+            try:
+                invoice = StripeUtils.Invoice.get(stripe_invoice_id)
+                for line in invoice.lines.data:
+                    order_line_item = OrderLineItem.objects.get(
+                        stripe_invoice_line_item_id=line["invoice_item"]
+                    )
+                    tax = 0
+                    if line["tax_amounts"]:
+                        for tax_amount in line["tax_amounts"]:
+                            tax += Decimal(tax_amount["amount"] / 100).quantize(
+                                Decimal("0.01"), rounding=ROUND_HALF_UP
+                            )
+                    if (
+                        order_line_item.tax is None
+                        or abs(order_line_item.tax - tax) > 0.01
+                    ):
+                        # print(
+                        #     f"{settings.API_URL}/admin/api/order/{order_line_item.order_id}/change/"
+                        # )
+                        print(
+                            f"{settings.DASHBOARD_BASE_URL}/customer/order/{order_line_item.order_id}/"
+                        )
+                        order_line_item.tax = tax
+                        order_line_item.save()
+            except Exception as e:
+                logger.error(
+                    f"update_line_item_tax:stripe_invoice_id:{stripe_invoice_id} does not exist. [{e}]",
+                    exc_info=e,
+                )
 
     def submit_order(self, override_approval_policy=False):
         """This method is used to submit an Order (set status to PENDING and set submitted_on to now).

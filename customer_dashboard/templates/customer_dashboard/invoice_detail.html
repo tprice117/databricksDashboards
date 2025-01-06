@@ -213,6 +213,13 @@
                             {% endif %}
                         </p>
                         <p class="card-text">Total: ${{ invoice.total|stringformat:'.2f'|intcomma }}</p>
+                        {% if invoice.invoice_items_grouped.pre_payment_credit %}
+                            <p class="card-text">Pre-Payment Credit: -${{ invoice.invoice_items_grouped.pre_payment_credit|stringformat:'.2f'|intcomma }}</p>
+                            <p class="card-text">Amount Due: ${{ invoice.amount_due|stringformat:'.2f'|intcomma }}</p>
+                        {% endif %}
+                        {% if invoice.invoice_items_grouped.post_payment_credit %}
+                            <p class="card-text">Credit Still Available: ${{ invoice.invoice_items_grouped.post_payment_credit|stringformat:'.2f'|intcomma }}</p>
+                        {% endif %}
                         <p class="card-text">Status: {{ invoice.status }}</p>
                         <p class="card-text">Invoice #: {{ invoice.number }}</p>
                         <p class="card-text">Location: {{ invoice.user_address.formatted_address }}</p>
@@ -240,7 +247,11 @@
                                         {% endfor %}
                                         {% comment %} <button class="btn btn-primary mt-2" type="submit" name="form_submit" id="form_submit">Save</button> {% endcomment %}
                                         <div class="col-12 mt-4 mb-4">
-                                            <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Pay Now</button>
+                                            {% if payment_methods %}
+                                                <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Pay Now</button>
+                                            {% else %}
+                                                <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit" disabled="true">Add Card To Pay Now</button>
+                                            {% endif %}
                                         </div>
                                     </form>
                                 </div>
@@ -276,13 +287,17 @@
                                         <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}
                                                 
                                                 
+                                                
                                                 show
+
 
 
                                             {% else %}
                                                 
                                                 
+                                                
                                                 collapsed
+
 
 
                                             {% endif %}"
@@ -294,6 +309,9 @@
                                                 {% for item in item.items %}
                                                     <div class="d-flex justify-content-between">
                                                         <span class="text-muted">{{ item.description }} | tax: ${{ item.tax|stringformat:'.2f'|intcomma }}</span>
+                                                        {% if item.order_line_item_id %}
+                                                            <a class="btn-link" href="{% url 'customer_order_detail' order_id=item.order_line_item_id %}?line_item=true">order</a>
+                                                        {% endif %}
                                                     </div>
                                                     <hr />
                                                 {% endfor %}

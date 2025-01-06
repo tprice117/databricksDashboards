@@ -79,7 +79,9 @@ class UserAddressAdmin(BaseModelAdmin, ExportActionMixin):
 
             # If autopay is enabled, pay the invoice.
             if user_address.user_group.autopay:
-                StripeUtils.Invoice.attempt_pay(invoice.id)
+                is_paid, invoice = StripeUtils.Invoice.attempt_pay(
+                    invoice.id, update_invoice_db=False
+                )
             Invoice.objects.update_or_create(
                 invoice_id=invoice["id"],
                 defaults={
