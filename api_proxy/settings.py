@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "crm",
     "customer_dashboard",
     "dashboards",
+    "explore",
     "external_contracts",
     "matching_engine",
     "pricing_engine",

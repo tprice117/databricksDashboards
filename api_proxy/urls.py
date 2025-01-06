@@ -173,6 +173,8 @@ urlpatterns = [
     path("", include("supplier_dashboard.urls")),
     # Customer Dashboard.
     path("", include("customer_dashboard.urls")),
+    # Explore.
+    path("", include("explore.urls")),
     # Match Engine.
     path("matching-engine/", include("matching_engine.urls")),
     # Pricing Engine.
