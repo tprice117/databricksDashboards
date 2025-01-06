@@ -46,28 +46,48 @@ class OrderItem(BaseModel):
     class Meta:
         abstract = True
 
+    @property
     def customer_price(self):
         """
         The customer price is the customer rate times the quantity.
         """
-        return self.customer_rate * self.quantity
+        return (
+            self.customer_rate * self.quantity
+            if self.customer_rate and self.quantity
+            else None
+        )
 
+    @property
     def seller_price(self):
         """
         The seller price is the seller rate times the quantity.
         """
-        return self.seller_rate * self.quantity
+        return (
+            self.seller_rate * self.quantity
+            if self.seller_rate and self.quantity
+            else None
+        )
 
+    @property
     def platform_fee(self):
         """
         The platform fee is the difference between the customer rate and the seller rate.
         This is the amount the platform takes from the transaction in dollars.
         """
-        return self.customer_rate - self.seller_rate
+        return (
+            self.customer_rate - self.seller_rate
+            if self.customer_rate and self.seller_rate
+            else None
+        )
 
+    @property
     def platform_fee_percent(self):
         """
         The platform fee is the difference between the customer rate and the seller rate.
         This is the amount the platform takes from the transaction as a percentage.
         """
-        return 100 * ((self.customer_price() / self.seller_price()) - 1)
+        return (
+            100 * ((self.customer_price / self.seller_price) - 1)
+            if self.customer_price and self.seller_price
+            else None
+        )
