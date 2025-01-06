@@ -1443,6 +1443,7 @@ def new_order_5(request):
             int(request.POST.get("quantity")) if request.POST.get("quantity") else 1
         )
         project_id = request.POST.get("project_id")
+        is_pick_up = request.POST.get("is_pick_up", "False").lower() == "true"
 
         main_product = MainProduct.objects.select_related("main_product_category").get(
             id=product_id
@@ -1502,6 +1503,7 @@ def new_order_5(request):
                 seller_product_seller_location_id=seller_product_seller_location_id,
                 start_date=delivery_date,
                 take_rate=take_rate * 100,
+                is_delivery=not is_pick_up,
             )
             if times_per_week:
                 order_group.times_per_week = times_per_week
