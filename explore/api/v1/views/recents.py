@@ -30,7 +30,8 @@ class RecentsView(APIView):
 
         # Get the 5 most recent orders, grouping by main product
         most_recent_orders = (
-            most_recent_orders.values(
+            most_recent_orders.filter(agreement_signed_on__isnull=False)
+            .values(
                 "seller_product_seller_location__seller_product__product__main_product",
             )
             .annotate(latest_date=Max("created_on"))
