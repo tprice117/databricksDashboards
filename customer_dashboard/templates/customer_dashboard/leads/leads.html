@@ -13,12 +13,16 @@
     htmx.onLoad(function (content) {
       const sortables = content.querySelectorAll('.sortable')
       const selectableStatuses = '{{ selectable_statuses|escapejs }}'
+      // prevent multiple requests from being sent concurrently
+      let isRequestInProgress = false
+    
       sortables.forEach((sortable) => {
-        new Sortable(sortable, {
+        const instance = new Sortable(sortable, {
           group: 'kanban',
           sort: false,
           onMove: function (evt) {
-            return selectableStatuses.includes(evt.to.id)
+            // prevent moving to a non-selectable status
+            return selectableStatuses.includes(evt.to.id) && !isRequestInProgress
           },
           onEnd: function (evt) {
             if (selectableStatuses.includes(evt.to.id) && evt.from.id !== evt.to.id) {
@@ -31,6 +35,15 @@
               evt.preventDefault()
             }
           }
+        })
+        htmx.on('htmx:beforeRequest', function () {
+          isRequestInProgress = true
+          instance.option('disabled', true)
+        })
+    
+        htmx.on('htmx:afterRequest', function () {
+          isRequestInProgress = false
+          instance.option('disabled', false)
         })
       })
     })

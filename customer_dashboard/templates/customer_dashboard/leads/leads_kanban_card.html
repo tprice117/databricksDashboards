@@ -16,7 +16,7 @@
         {% endif %}
       </h6>
     </div>
-    <div class="card-text">
+    <div class="card-text text-truncate">
       <small class="mb-0"><strong>User:</strong> {{ lead.user.full_name|default:lead.user.email }}</small><br />
       <small class="mb-0"><strong>User Address:</strong> {{ lead.user_address|default:'----' }}</small><br />
       <small class="mb-0"><strong>Est Conversion:</strong> {{ lead.est_conversion_date }}</small>
@@ -24,12 +24,16 @@
   </div>
   <div class="card-footer">
     <div class="d-flex flex-row-reverse align-items-center">
-      {% if lead.owner and lead.owner.photo %}
-        <img class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem;" src="{{ lead.owner.photo.url }}" />
+      {% if lead.owner %}
+        {% if lead.owner.photo %}
+          <img class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem;" src="{{ lead.owner.photo.url }}" />
+        {% else %}
+          <span class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+        {% endif %}
+        <div class="text-sm me-2 text-nowrap">{{ lead.owner.full_name|default:lead.owner.email }}</div>
       {% else %}
-        <span class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+        <div class="text-sm me-2 text-nowrap">{{ _('Unassigned') }}</div>
       {% endif %}
-      <div class="text-sm me-2 text-nowrap">{{ lead.owner.full_name|default:lead.owner.email|default:'' }}</div>
     </div>
   </div>
 </div>
