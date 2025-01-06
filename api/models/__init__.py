@@ -31,6 +31,7 @@ from .order.order_group_rental_multi_step_shift import OrderGroupRentalMultiStep
 from .order.order_group_rental_one_step import OrderGroupRentalOneStep
 from .order.order_group_service import OrderGroupService
 from .order.order_group_service_times_per_week import OrderGroupServiceTimesPerWeek
+from .order.order_items import *
 from .order.order_line_item import OrderLineItem
 from .order.order_line_item_type import OrderLineItemType
 from .order.order_review import OrderReview
