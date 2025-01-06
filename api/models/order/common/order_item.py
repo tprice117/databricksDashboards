@@ -42,9 +42,6 @@ class OrderItem(BaseModel):
     paid = models.BooleanField(
         default=False,
     )
-    backbill = models.BooleanField(
-        default=False,
-    )
 
     class Meta:
         abstract = True

@@ -5,5 +5,5 @@ class OrderAdjustment(OrderItem):
     pass
 
     class Meta:
-        verbose_name = "Booking Adjustment"
-        verbose_name_plural = "Booking Adjustments"
+        verbose_name = "Transaction Adjustment"
+        verbose_name_plural = "Transaction Adjustments"

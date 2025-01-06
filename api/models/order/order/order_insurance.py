@@ -5,5 +5,5 @@ class OrderInsurance(OrderItem):
     pass
 
     class Meta:
-        verbose_name = "Booking Insurance"
-        verbose_name_plural = "Booking Insurance"
+        verbose_name = "Transaction Insurance"
+        verbose_name_plural = "Transaction Insurance"
