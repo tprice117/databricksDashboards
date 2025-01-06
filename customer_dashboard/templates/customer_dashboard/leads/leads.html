@@ -22,11 +22,9 @@
           },
           onEnd: function (evt) {
             if (selectableStatuses.includes(evt.to.id)) {
-              const fromStatus = document.getElementById('fromStatus')
-              const toStatus = document.getElementById('toStatus')
+              const status = document.getElementById('status')
               const movedCard = document.getElementById('movedCard')
-              fromStatus.value = evt.from.id
-              toStatus.value = evt.to.id
+              status.value = evt.to.id
               movedCard.value = evt.item.dataset.leadId
               htmx.trigger('#board', 'cardMoved')
             } else {
@@ -39,9 +37,8 @@
   </script>
 {% endblock %}
 {% block content %}
-  <form hx-post="{% url 'customer_leads_card_move' %}" hx-trigger="cardMoved" hx-target="#board">
-    <input id="fromStatus" type="hidden" name="status_old" />
-    <input id="toStatus" type="hidden" name="status" />
+  <form hx-post="{% url 'customer_leads_card_move' %}" hx-trigger="cardMoved" hx-target="#board" hx-push-url="false">
+    <input id="status" type="hidden" name="status" />
     <input id="movedCard" type="hidden" name="lead_id" />
     <div class="container-fluid">
       <div class="board" id="board">
