@@ -234,6 +234,21 @@ urlpatterns = [
     path("customer/reviews/", views.reviews, name="customer_reviews"),
     path("customer/leads/", views.leads, name="customer_leads"),
     path(
+        "customer/leads/new/",
+        views.leads_new,
+        name="customer_leads_new",
+    ),
+    path(
+        "customer/leads/<uuid:lead_id>/",
+        views.leads_card,
+        name="customer_leads_card",
+    ),
+    path(
+        "customer/leads/<uuid:lead_id>/edit/",
+        views.leads_card_edit,
+        name="customer_leads_card_edit",
+    ),
+    path(
         "customer/leads/card/move",
         views.leads_card_move,
         name="customer_leads_card_move",

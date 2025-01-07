@@ -17,8 +17,8 @@ class LeadAdmin(BaseModelAdmin):
         "created_by",
     )
     search_fields = ("id",)
-    list_filter = ("status", "created_on", "owner")
-    raw_id_fields = ("user", "user_address")
+    list_filter = ("status", "type", "created_on", "est_conversion_date", "owner")
+    autocomplete_fields = ("user", "user_address")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "owner":

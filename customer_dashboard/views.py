@@ -93,6 +93,7 @@ from .forms import (
     AccessDetailsForm,
     BrandingFormSet,
     CreditApplicationForm,
+    LeadForm,
     OrderGroupForm,
     OrderGroupSwapForm,
     OrderReviewFormSet,
@@ -4696,25 +4697,119 @@ def leads(request):
             }
         )
 
-    context["board"] = board
-    context["selectable_statuses"] = [
-        status[0] for status in UserSelectableLeadStatus.choices
-    ]
+    context.update(
+        {
+            "board": board,
+            "selectable_statuses": [
+                status[0] for status in UserSelectableLeadStatus.choices
+            ],
+            "lost_reasons": {
+                value: text for value, text in Lead.LostReason.choices if value
+            },
+            "new_lead_form": LeadForm(),
+        }
+    )
 
     return render(request, "customer_dashboard/leads/leads.html", context)
 
 
 @login_required(login_url="/admin/login/")
+def leads_new(request):
+    context = {}
+    if not request.user.is_staff:
+        return HttpResponse("Unauthorized", status=401)
+
+    if request.method == "POST":
+        form = LeadForm(request.POST)
+        if form.is_valid():
+            form.save()
+
+            # Replace board with updated lead
+            leads = Lead.objects.all().order_by("-created_on")
+            board = []
+            for status, status_name in Lead.Status.choices:
+                board.append(
+                    {
+                        "name": status_name,
+                        "value": status,
+                        "leads": leads.filter(status=status),
+                    }
+                )
+
+            context["board"] = board
+
+            return render(
+                request, "customer_dashboard/leads/leads_kanban_board.html", context
+            )
+        else:
+            messages.error(request, "Error creating lead.")
+
+
+@login_required(login_url="/admin/login/")
+def leads_card(request, lead_id):
+    context = {}
+    if not request.user.is_staff:
+        return HttpResponse("Unauthorized", status=401)
+
+    lead = Lead.objects.get(id=lead_id)
+
+    if request.method == "POST":
+        form = LeadForm(request.POST, instance=lead)
+        if form.is_valid():
+            if form.has_changed():
+                lead = form.save()
+
+    context.update({"lead": lead})
+
+    return render(request, "customer_dashboard/leads/leads_kanban_card.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def leads_card_edit(request, lead_id):
+    context = {}
+    if not request.user.is_staff:
+        return HttpResponse("Unauthorized", status=401)
+    if not Lead.objects.filter(id=lead_id).exists():
+        return HttpResponse("Not found", status=404)
+
+    lead = Lead.objects.get(id=lead_id)
+    form = LeadForm(instance=lead)
+
+    context.update(
+        {
+            "form": form,
+            "lead": lead,
+        }
+    )
+
+    return render(
+        request, "customer_dashboard/leads/leads_kanban_card_edit.html", context
+    )
+
+
+@login_required(login_url="/admin/login/")
 def leads_card_move(request):
-    context = get_user_context(request)
+    context = {}
     if not request.user.is_staff:
         return HttpResponse("Unauthorized", status=401)
 
     if request.method == "POST":
         lead_id = request.POST.get("lead_id")
         status = request.POST.get("status")
+        if not Lead.objects.filter(id=lead_id).exists():
+            return HttpResponse("Not found", status=404)
+
         lead = Lead.objects.get(id=lead_id)
-        if not (status == lead.status):
+        if status != lead.status:
+            if status == Lead.Status.JUNK:
+                lost_reason = request.POST.get("lost_reason")
+                if not lost_reason:
+                    messages.error(request, "Lost Reason is required")
+                    return HttpResponse("Lost Reason is required", status=400)
+                lead.lost_reason = lost_reason
+            else:
+                lead.lost_reason = None
+
             lead.status = status
             lead.save()
 
