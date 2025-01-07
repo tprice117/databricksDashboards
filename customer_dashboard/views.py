@@ -81,6 +81,7 @@ from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
 from common.utils.shade_hex import shade_hex_color
 from communications.intercom.utils.utils import get_json_safe_value
+from crm.models.lead import Lead, UserSelectableLeadStatus
 from matching_engine.matching_engine import MatchingEngine
 from payment_methods.models import PaymentMethod
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
@@ -4676,3 +4677,58 @@ def reviews(request):
         )
 
     return render(request, "customer_dashboard/reviews.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def leads(request):
+    context = get_user_context(request)
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    leads = Lead.objects.all().order_by("-created_on")
+    board = []
+    for status, status_name in Lead.Status.choices:
+        board.append(
+            {
+                "name": status_name,
+                "value": status,
+                "leads": leads.filter(status=status),
+            }
+        )
+
+    context["board"] = board
+    context["selectable_statuses"] = [
+        status[0] for status in UserSelectableLeadStatus.choices
+    ]
+
+    return render(request, "customer_dashboard/leads/leads.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def leads_card_move(request):
+    context = get_user_context(request)
+    if not request.user.is_staff:
+        return HttpResponse("Unauthorized", status=401)
+
+    if request.method == "POST":
+        lead_id = request.POST.get("lead_id")
+        status = request.POST.get("status")
+        lead = Lead.objects.get(id=lead_id)
+        if not (status == lead.status):
+            lead.status = status
+            lead.save()
+
+    leads = Lead.objects.all().order_by("-created_on")
+    board = []
+    for status, status_name in Lead.Status.choices:
+        board.append(
+            {
+                "name": status_name,
+                "value": status,
+                "leads": leads.filter(status=status),
+            }
+        )
+
+    context["board"] = board
+
+    return render(request, "customer_dashboard/leads/leads_kanban_board.html", context)
