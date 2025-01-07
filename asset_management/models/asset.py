@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from api.models import MainProduct, SellerLocation
+from api.models import MainProduct, SellerLocation, SellerProductSellerLocation
 from api.models.track_data import track_data
 from asset_management.models.asset_model import AssetModel
 from common.models import BaseModel
@@ -12,7 +12,7 @@ from common.models import BaseModel
 
 class Asset(BaseModel):
     seller_location = models.ForeignKey(
-        SellerLocation,
+        SellerProductSellerLocation,
         on_delete=models.PROTECT,
     )
     model = models.ForeignKey(
