@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from api.models import MainProduct, OrderGroup
-from explore.api.v1.serializers import (
-    ExploreMainProductSerializer,
+from api.serializers import (
+    MainProductSerializer,
 )
 
 
@@ -16,11 +16,11 @@ class RecentsView(APIView):
 
     @extend_schema(
         responses={
-            200: ExploreMainProductSerializer(),
+            200: MainProductSerializer(),
         },
     )
     def get(self, request):
-        """Gets the 5 most recently ordered products from the request User."""
+        """Gets the most recently ordered products from the request User."""
         # Get the most recent orders for the user (staff gets all orders)
         most_recent_orders = (
             OrderGroup.objects.filter(user=request.user).distinct()
@@ -28,17 +28,17 @@ class RecentsView(APIView):
             else OrderGroup.objects.all()
         )
 
-        # Get the 5 most recent orders, grouping by main product
+        # Get the most recent orders, grouping by main product
         most_recent_orders = (
             most_recent_orders.filter(agreement_signed_on__isnull=False)
             .values(
                 "seller_product_seller_location__seller_product__product__main_product",
             )
             .annotate(latest_date=Max("created_on"))
-            .order_by("-latest_date")[:5]
+            .order_by("-latest_date")
         )
 
-        # A list of at most 5 unique main product ids, ordered from most recent to least recent
+        # A list of unique main product ids, ordered from most recent to least recent
         main_product_ids = [
             ordergroup[
                 "seller_product_seller_location__seller_product__product__main_product"
@@ -52,7 +52,7 @@ class RecentsView(APIView):
         main_products = sorted(main_products, key=lambda x: preserved_order[x.id])
 
         # Serialize the main products
-        data = ExploreMainProductSerializer(
+        data = MainProductSerializer(
             main_products,
             many=True,
         ).data
