@@ -47,6 +47,8 @@ from notifications.utils import internal_email
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
 from common.models.choices.user_type import UserType
 
+from asset_management.models.asset import Asset
+
 from .models import (
     AddOn,
     AddOnChoice,
@@ -103,6 +105,7 @@ from .serializers import (
     AddOnChoiceSerializer,
     AddOnSerializer,
     AdvertisementSerializer,
+    AssetSerializer,
     DayOfWeekSerializer,
     DisposalLocationSerializer,
     DisposalLocationWasteTypeSerializer,
@@ -429,6 +432,11 @@ class MainProductWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductWasteType.objects.all()
     serializer_class = MainProductWasteTypeSerializer
     filterset_fields = ["main_product"]
+
+
+class assetViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Asset.objects.all()
+    serializer_class = AssetSerializer
 
 
 class OrderGroupViewSet(viewsets.ModelViewSet):
