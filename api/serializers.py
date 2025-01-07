@@ -609,6 +609,7 @@ class MainProductSerializer(serializers.ModelSerializer):
         fields = "__all__"
         extra_fields = ["main_product_infos", "images", "listings_count", "likes_count"]
 
+    @extend_schema_field(serializers.ListField(child=serializers.URLField()))
     def get_images(self, obj):
         """Get images as a list of urls."""
         images = obj.images.all()
