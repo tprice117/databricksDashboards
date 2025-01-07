@@ -417,6 +417,9 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
         return self.queryset.prefetch_related(
             "add_ons",
             "add_ons__choices",
+            "images",
+            "products__seller_products__seller_product_seller_locations",
+            "products__seller_products__seller_product_seller_locations__order_groups__orders__review",
         )
 
 
