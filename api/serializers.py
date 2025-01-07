@@ -4,6 +4,7 @@ from typing import Literal, Union, Optional
 
 import stripe
 from django.conf import settings
+from django.db.models import Count, Q
 from drf_spectacular.utils import OpenApiTypes, extend_schema_field
 from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
@@ -46,6 +47,7 @@ from .models import (
     OrderGroupService,
     OrderLineItem,
     OrderLineItemType,
+    OrderReview,
     Payout,
     Product,
     ProductAddOnChoice,
@@ -599,16 +601,40 @@ class MainProductSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
     add_ons = AddOnSerializer(many=True, read_only=True)
     tags = MainProductTagSerializer(many=True, read_only=True)
+    listings_count = serializers.SerializerMethodField(read_only=True)
+    likes_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = MainProduct
         fields = "__all__"
-        extra_fields = ["main_product_infos", "images"]
+        extra_fields = ["main_product_infos", "images", "listings_count", "likes_count"]
 
+    @extend_schema_field(serializers.ListField(child=serializers.URLField()))
     def get_images(self, obj):
         """Get images as a list of urls."""
         images = obj.images.all()
         return [image.image.url for image in images]
+
+    @extend_schema_field(serializers.IntegerField)
+    def get_listings_count(self, obj):
+        return obj.products.aggregate(
+            listings_count=Count(
+                "seller_products__seller_product_seller_locations",
+                distinct=True,
+            ),
+        )["listings_count"]
+
+    @extend_schema_field(serializers.IntegerField)
+    def get_likes_count(self, obj):
+        return obj.products.aggregate(
+            likes_count=Count(
+                "seller_products__seller_product_seller_locations__order_groups__orders__review",
+                filter=Q(
+                    seller_products__seller_product_seller_locations__order_groups__orders__review__rating=True
+                ),
+                distinct=True,
+            ),
+        )["likes_count"]
 
     def get_field_names(self, declared_fields, info):
         expanded_fields = super(MainProductSerializer, self).get_field_names(
