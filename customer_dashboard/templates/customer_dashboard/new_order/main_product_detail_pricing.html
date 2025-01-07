@@ -9,11 +9,8 @@
 {% endblock %}
 {% block javascript %}
     <script>
-        const discountElement = document.getElementById("discount");
-
-        // Add event listener to the is_delivery checkbox
-        const isDeliveryCheckbox = document.getElementById("is_delivery");
-        isDeliveryCheckbox.addEventListener("change", () => {
+        // create a function for updating the supplier list
+        function updateSupplierList(is_delivery) {
             // Get the parent element
             const parent = document.querySelector("#main-product-detail-pricing-list");
             if (!parent) return;
@@ -25,18 +22,18 @@
                 data_allow_pickup = itemsArray[i].getAttribute("data-allow-pickup");
                 // if the checkbox is checked and the data-allow-pickup is false
                 itemsArray[i].style.display = "";
-                const isPickUpInput = document.querySelector('input[name="is_pick_up"]')
+                const isDeliveryInput = document.querySelector('input[name="is_delivery"]')
                 // default to show the freit section
                 const freitSection = itemsArray[i].querySelector('[id^="freit-section"]');
                 freitSection.style.display = "";
                 // the value passed back
-                isPickUpInput.setAttribute("value", "False");
+                isDeliveryInput.setAttribute("value", "True");
                 // show the total
                 const displayPrice = itemsArray[i].querySelector("#display-price");
                 const price = parseFloat(displayPrice.getAttribute('data-price'));
                 const betterPrice = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 displayPrice.textContent=`$${betterPrice}`
-                if (isDeliveryCheckbox.checked) {
+                if (is_delivery) {
                     // data_allow_pickup is false then remove the element
                     if (data_allow_pickup.toLowerCase() === "false") {
                         itemsArray[i].style.display = "none";
@@ -47,10 +44,30 @@
                         const price = parseFloat(displayPrice.getAttribute('data-price'))-parseFloat(displayPrice.getAttribute('data-delivery-price'));
                         const betterPrice = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                         displayPrice.textContent=`$${betterPrice}`
-                        isPickUpInput.setAttribute("value", "True");
+                        isDeliveryInput.setAttribute("value", "False");
                     }
                 }
             }
+        }
+        const deliveryButton = document.getElementById('for-delivery-check');
+        const pickupButton = document.getElementById('for-pickup-check');
+
+        deliveryButton.addEventListener('change', () => {
+            if (deliveryButton.checked) {
+                updateSupplierList(true);
+            }
+        });
+        pickupButton.addEventListener('change', () => {
+            if (pickupButton.checked) {
+                updateSupplierList(false);
+            }
+        });
+        const discountElement = document.getElementById("discount");
+
+        // Add event listener to the is_delivery checkbox
+        const isDeliveryCheckbox = document.getElementById("is_delivery");
+        isDeliveryCheckbox.addEventListener("change", () => {
+            
         });
         // Disable the form inputs while htmx request is being sent
         document.body.addEventListener("htmx:beforeSend", function (event) {
@@ -178,8 +195,10 @@
                 <!-- Sorting Controls -->
                 <div class="float-right justify-content-end mb-3 d-flex flex-row">
                     <div class="form-check form-switch d-flex flex-row form-group align-items-center w-50">
-                        <input class="form-check-input" type="checkbox" id="is_delivery">
-                        <label class="form-check-label" for="is_delivery"> For pickup</label>
+                        <input type="radio" class="btn-check" name="options-outlined" id="for-delivery-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="for-delivery-check">For pickup</label>
+                        <input type="radio" class="btn-check" name="options-outlined" id="for-pickup-check" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="for-pickup-check">For delivery</label>
                     </div>
                     <div id="sorting-controls" class="d-flex flex-row form-group align-items-center w-50">
                         <label for="sort-attribute" class="form-label mb-0 mr-2 text-nowrap">Sort by:</label>
@@ -198,7 +217,7 @@
                 </div>
                 <span class="htmx-indicator" id="htmx-indicator-loading-status">Loading <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
 
-                <div id="main-product-detail-pricing-list" hx-get="{{ data_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="#is_delivery"></div>
+                <div id="main-product-detail-pricing-list" hx-get="{{ data_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="#for-delivery-check"></div>
             </div>
         </div>
     </div>
