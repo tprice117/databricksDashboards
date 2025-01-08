@@ -81,18 +81,7 @@ class UserGroupAdmin(BaseModelAdmin, ExportActionMixin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "account_owner":
             # Only show users in the Downstream Team UserGroup.
-            if settings.ENVIRONMENT == "TEST":
-                kwargs["queryset"] = User.objects.filter(
-                    user_group="bd49eaab-4b46-46c0-a9bf-bace2896b795"
-                )
-            else:
-                # DEV: Customer Team #1 (CORE), Random Company
-                kwargs["queryset"] = User.objects.filter(
-                    user_group__in=[
-                        "3e717df9-f811-4ddd-8d2f-a5f19b807321",
-                        "38309b8e-0205-45dc-b12c-3bfa365825e2",
-                    ]
-                )
+            kwargs["queryset"] = User.customer_team_users.all()
         elif db_field.name == "default_payment_method":
             from payment_methods.models import PaymentMethod
 
