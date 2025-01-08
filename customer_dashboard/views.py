@@ -325,50 +325,6 @@ def get_user_group_user_objects(
     return users
 
 
-def get_booking_objects(
-    request: HttpRequest, user: User, user_group: UserGroup, exclude_in_cart=True
-):
-    """Returns the orders for the current UserGroup.
-
-    If user is:
-        - staff, then all orders for all of UserGroups are returned.
-        - not staff
-            - is admin, then return all orders for the UserGroup.
-            - not admin, then only orders for the UserGroup locations the user is associated with are returned.
-
-    Args:
-        request (HttpRequest): Request object from the view.
-        user (User): User object.
-        user_group (UserGroup): UserGroup object. NOTE: May be None.
-
-    Returns:
-        QuerySet[Order]: The orders queryset.
-    """
-    if not request.user.is_staff and user.type != UserType.ADMIN:
-        user_user_location_ids = (
-            UserUserAddress.objects.filter(user_id=user.id)
-            .select_related("user_address")
-            .values_list("user_address_id", flat=True)
-        )
-        orders = Order.objects.filter(
-            order_group__user_address__in=user_user_location_ids
-        )
-    else:
-        if request.user.is_staff and not is_impersonating(request):
-            # Global View: Get all orders.
-            orders = Order.objects.all()
-        elif user_group:
-            orders = Order.objects.filter(
-                order_group__user__user_group_id=user_group.id
-            )
-        else:
-            # Individual user. Get all orders for the user.
-            orders = Order.objects.filter(order_group__user_id=user.id)
-    if exclude_in_cart:
-        orders = orders.filter(submitted_on__isnull=False)
-    return orders
-
-
 def get_order_group_objects(request: HttpRequest, user: User, user_group: UserGroup):
     """Returns the order_groups for the current UserGroup.
 
@@ -726,8 +682,10 @@ def get_theme(user_group: UserGroup):
 def index(request):
     context = get_user_context(request)
     if request.headers.get("HX-Request"):
-        orders = get_booking_objects(request, context["user"], context["user_group"])
-        orders = orders.select_related(
+        orders = CartUtils.get_booking_objects(
+            request, context["user"], context["user_group"], is_impersonating(request)
+        )
+        orders = orders.filter(submitted_on__isnull=False).select_related(
             "order_group__seller_product_seller_location__seller_product__seller",
             "order_group__user_address",
             "order_group__user",
@@ -1627,12 +1585,11 @@ def new_order_5(request):
             end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
 
         # Pull all orders with submitted_on = None and show them in the cart.
-        orders = (
-            get_booking_objects(
-                request, context["user"], context["user_group"], exclude_in_cart=False
-            )
-            .filter(submitted_on__isnull=True)
-            .order_by("-end_date")
+        orders = CartUtils.get_booking_objects(
+            request,
+            context["user"],
+            context["user_group"],
+            is_impersonating(request),
         )
 
         if my_carts:
