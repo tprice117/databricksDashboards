@@ -20,7 +20,7 @@ class CartView(APIView):
         Returns:
           A Cart containing a list of CartGroups of CartItems.
         """
-        orders = CartUtils.get_booking_objects(request.user)
+        orders = CartUtils.get_booking_objects(request)
         cart_data = CartUtils.get_cart_orders(orders)
 
         data = CartSerializer(cart_data).data
