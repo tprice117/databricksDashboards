@@ -10,7 +10,7 @@
 {% block javascript %}
     <script>
         // create a function for updating the supplier list
-        function updateSupplierList(is_delivery) {
+        function updateSupplierList(is_pickup) {
             // Get the parent element
             const parent = document.querySelector("#main-product-detail-pricing-list");
             if (!parent) return;
@@ -22,7 +22,7 @@
                 data_allow_pickup = itemsArray[i].getAttribute("data-allow-pickup");
                 // if the checkbox is checked and the data-allow-pickup is false
                 itemsArray[i].style.display = "";
-                const isDeliveryInput = document.querySelector('input[name="is_delivery"]')
+                const isDeliveryInput = itemsArray[i].querySelector('input[name="is_delivery"]')
                 // default to show the freit section
                 const freitSection = itemsArray[i].querySelector('[id^="freit-section"]');
                 freitSection.style.display = "";
@@ -33,7 +33,7 @@
                 const price = parseFloat(displayPrice.getAttribute('data-price'));
                 const betterPrice = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 displayPrice.textContent=`$${betterPrice}`
-                if (is_delivery) {
+                if (is_pickup) {
                     // data_allow_pickup is false then remove the element
                     if (data_allow_pickup.toLowerCase() === "false") {
                         itemsArray[i].style.display = "none";
@@ -54,21 +54,18 @@
 
         deliveryButton.addEventListener('change', () => {
             if (deliveryButton.checked) {
-                updateSupplierList(true);
+                // is_pickup is false
+                updateSupplierList(false);
             }
         });
         pickupButton.addEventListener('change', () => {
             if (pickupButton.checked) {
-                updateSupplierList(false);
+                // is_pickup is true
+                updateSupplierList(true);
             }
         });
         const discountElement = document.getElementById("discount");
 
-        // Add event listener to the is_delivery checkbox
-        const isDeliveryCheckbox = document.getElementById("is_delivery");
-        isDeliveryCheckbox.addEventListener("change", () => {
-            
-        });
         // Disable the form inputs while htmx request is being sent
         document.body.addEventListener("htmx:beforeSend", function (event) {
             document.getElementById("sort-btn").disabled = true;
@@ -195,10 +192,10 @@
                 <!-- Sorting Controls -->
                 <div class="float-right justify-content-end mb-3 d-flex flex-row">
                     <div class="form-check form-switch d-flex flex-row form-group align-items-center w-50">
-                        <input type="radio" class="btn-check" name="options-outlined" id="for-delivery-check" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="for-delivery-check">For pickup</label>
-                        <input type="radio" class="btn-check" name="options-outlined" id="for-pickup-check" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary" for="for-pickup-check">For delivery</label>
+                        <input type="radio" class="btn-check" name="options-outlined" id="for-pickup-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="for-pickup-check">For pickup</label>
+                        <input type="radio" class="btn-check" name="options-outlined" id="for-delivery-check" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="for-delivery-check">For delivery</label>
                     </div>
                     <div id="sorting-controls" class="d-flex flex-row form-group align-items-center w-50">
                         <label for="sort-attribute" class="form-label mb-0 mr-2 text-nowrap">Sort by:</label>
@@ -217,7 +214,7 @@
                 </div>
                 <span class="htmx-indicator" id="htmx-indicator-loading-status">Loading <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
 
-                <div id="main-product-detail-pricing-list" hx-get="{{ data_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="#for-delivery-check"></div>
+                <div id="main-product-detail-pricing-list" hx-get="{{ data_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="#for-pickup-check"></div>
             </div>
         </div>
     </div>
