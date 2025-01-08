@@ -25,8 +25,7 @@ class MainProductCategory(BaseModel):
     )
     name = models.CharField(max_length=80)
     description = models.TextField(blank=True, null=True)
-    image = models.TextField(blank=True, null=True)
-    image2 = models.FileField(
+    image = models.FileField(
         upload_to=get_file_path,
         blank=True,
         null=True,

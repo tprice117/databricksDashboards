@@ -11,6 +11,8 @@ from common.models.choices.user_type import UserType
 from matching_engine.utils.prep_seller_product_seller_locations_for_response import (
     prep_seller_product_seller_locations_for_response,
 )
+from billing.utils.billing import BillingUtils
+from common.utils.stripe.invoice import CardError
 
 from .models import CheckoutOrder
 
@@ -91,8 +93,28 @@ class CheckoutUtils:
                         f"Company does not have enough credit to checkout [credit: {user_address.user_group.credit_limit_remaining} | total: {total:.2f}]."
                     )
             else:
-                # TODO: Add in logic to create the invoice and check if the user has enough credit on their account in Stripe.
                 pass
+                # invoice_and_pay = False
+                # if not user_address.user_group:
+                #     invoice_and_pay = True
+                # elif (
+                #     user_address.user_group.invoice_frequency
+                #     == user_address.user_group.InvoiceFrequency.IMMEDIATELY
+                # ):
+                #     invoice_and_pay = True
+                # if invoice_and_pay:
+                #     # Create a stripe invoice and pay it.
+                #     is_paid, stripe_invoice = (
+                #         BillingUtils.create_stripe_invoice_for_cart(
+                #             user_address,
+                #             orders,
+                #             raise_error=True,
+                #         )
+                #     )
+                #     if not is_paid:
+                #         raise ValidationError(
+                #             f"Failed to pay invoice. Please contact us for help. [{stripe_invoice}]"
+                #         )
 
             # Submit all the orders.
             for order in orders:
@@ -126,12 +148,18 @@ class CheckoutUtils:
                     checkout_order=checkout_order
                 )
             return checkout_order
+        except CardError as e:
+            # Catch and log the exception and then re-raise it.
+            logger.exception(
+                f"CheckoutUtils.checkout:CardError: [{user_address}]-[{orders}]-[{payment_method_id}]-[{e}]-[{e.code}]-[{e.param}]"
+            )
+            raise
         except Exception as e:
             # Catch and log the exception and then re-raise it.
             logger.exception(
                 f"CheckoutUtils.checkout: [{user_address}]-[{orders}]-[{payment_method_id}]-[{e}]"
             )
-            raise e
+            raise
 
 
 class QuoteUtils:

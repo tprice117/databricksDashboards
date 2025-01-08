@@ -1,10 +1,11 @@
 import calendar
 import datetime
 import logging
-from typing import List
+from typing import List, Iterable
 
 import stripe
 from django.conf import settings
+from django.utils import timezone
 
 from api.models import Order, OrderLineItem, UserAddress, UserGroup
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
@@ -47,7 +48,9 @@ class BillingUtils:
             # Create Stripe Invoice Line Item for each OrderLineItem that
             # doesn't have a StripeInvoiceLineItemId.
             order_line_item: OrderLineItem
+            order_line_item_ids = []
             for order_line_item in order_line_items:
+                order_line_item_ids.append(str(order_line_item.id))
                 # Create Stripe Invoice Line Item.
                 description = (
                     order_line_item.order_line_item_type.name
@@ -74,7 +77,7 @@ class BillingUtils:
                         f"BillingUtils.create_invoice_items_for_order: [line_item: {order_line_item.id}]-[{e}]",
                         exc_info=e,
                     )
-                stripe_invoice_line_item = stripe.InvoiceItem.create(
+                stripe_invoice_item = stripe.InvoiceItem.create(
                     customer=order.order_group.user_address.stripe_customer_id,
                     invoice=invoice.id,
                     description=description,
@@ -95,40 +98,37 @@ class BillingUtils:
                 )
 
                 # Update OrderLineItem with StripeInvoiceLineItemId.
-                order_line_item.stripe_invoice_line_item_id = (
-                    stripe_invoice_line_item.id
-                )
+                order_line_item.stripe_invoice_line_item_id = stripe_invoice_item.id
                 order_line_item.save()
 
-                # Get all Stripe Invoice Items for this Stripe Invoice.
-                stripe_invoice_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
-                    invoice_id=invoice.id,
-                )
+            # Get all Stripe Invoice Items for this Stripe Invoice.
+            stripe_invoice_line_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
+                invoice_id=invoice.id,
+            )
 
+            stripe_invoice_line_item_subset = []
+            for order_line_item_id in order_line_item_ids:
                 # Get the Stripe Invoice Item for this OrderLineItem.
-                stripe_invoice_items = stripe_invoice_items
-                stripe_invoice_item = next(
-                    (
+                stripe_invoice_line_item_subset.extend(
+                    [
                         item
-                        for item in stripe_invoice_items
+                        for item in stripe_invoice_line_items
                         if item["metadata"]["order_line_item_id"]
-                        and item["metadata"]["order_line_item_id"]
-                        == str(order_line_item.id)
-                    ),
-                    None,
+                        and item["metadata"]["order_line_item_id"] == order_line_item_id
+                    ]
                 )
 
-                # Add Stripe Invoice Line Item to Stripe Invoice Summary Item.
-                if stripe_invoice_item:
-                    response = (
-                        StripeUtils.SummaryItems.add_invoice_item_to_summary_item(
-                            invoice=invoice,
-                            invoice_item_id=stripe_invoice_item["id"],
-                            invoice_summary_item_id=stripe_invoice_summary_item["id"],
-                        )
+            # Add Stripe Invoice Line Item to Stripe Invoice Summary Item.
+            if stripe_invoice_line_item_subset:
+                invoice = (
+                    StripeUtils.SummaryItems.add_invoice_item_to_summary_item_bulk(
+                        invoice=invoice,
+                        invoice_line_items=stripe_invoice_line_item_subset,
+                        invoice_summary_item_id=stripe_invoice_summary_item["id"],
                     )
+                )
 
-                    print(response)
+                # print(invoice)
             # Update all of the line items to ensure the tax is correct.
             order.update_line_items_tax()
         except Exception as e:
@@ -136,6 +136,7 @@ class BillingUtils:
             logger.error(
                 f"BillingUtils.create_invoice_items_for_order: [{e}]", exc_info=e
             )
+        return invoice
 
     @staticmethod
     def create_stripe_invoice_for_user_address(
@@ -161,6 +162,41 @@ class BillingUtils:
             )
 
         return invoice
+
+    @staticmethod
+    def create_stripe_invoice_for_cart(
+        user_address: UserAddress, orders: Iterable[Order], raise_error: bool = False
+    ):
+        """
+        Create Stripe Invoice for all Orders that are passed in for the UserAddress.
+        """
+        # Filter Orders. Only include Orders that have not been fully invoiced.
+        orders = [
+            order for order in orders if not order.all_order_line_items_invoiced()
+        ]
+
+        if not orders:
+            return True, None
+
+        # Get the current draft invoice or create a new one.
+        invoice = BillingUtils.create_stripe_invoice_for_user_address(
+            orders=orders,
+            user_address=user_address,
+        )
+        invoice_id = invoice.id
+
+        # Finalize the invoice.
+        is_paid, invoice = BillingUtils.finalize_and_pay_stripe_invoice(
+            invoice=invoice,
+            user_group=user_address.user_group,
+            autopay=True,
+            raise_error=raise_error,
+        )
+        if not is_paid:
+            stripe.Invoice.void_invoice(invoice_id)
+            for order in orders:
+                order.order_line_items.all().update(stripe_invoice_line_item_id=None)
+        return is_paid, invoice
 
     @staticmethod
     def create_stripe_invoices_for_user_group(
@@ -306,6 +342,8 @@ class BillingUtils:
         invoice: stripe.Invoice,
         user_group: UserGroup,
         send_invoice: bool = True,
+        autopay: bool = False,
+        raise_error: bool = False,
     ):
         """
         Finalizes and pays a Stripe Invoice for a UserGroup.
@@ -314,9 +352,15 @@ class BillingUtils:
         StripeUtils.Invoice.finalize(invoice.id)
 
         # If autopay is enabled, pay the invoice.
-        if user_group.autopay:
+        # This should respect the due date of the invoice.
+        is_paid = False
+        if (
+            user_group.autopay and invoice["due_date"] <= timezone.now().timestamp()
+        ) or autopay:
             try:
-                StripeUtils.Invoice.attempt_pay(invoice.id)
+                is_paid, invoice = StripeUtils.Invoice.attempt_pay(
+                    invoice.id, raise_error=raise_error
+                )
             except Exception as e:
                 print("Attempt pay error: ", e)
                 logger.error(
@@ -334,6 +378,8 @@ class BillingUtils:
                     f"BillingUtils.finalize_and_pay_stripe_invoice: [Send Invoice]-[{e}]",
                     exc_info=e,
                 )
+
+        return is_paid, invoice
 
     @staticmethod
     def run_interval_based_invoicing():

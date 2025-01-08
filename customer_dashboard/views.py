@@ -72,11 +72,7 @@ from api.models.user.user_user_address import UserUserAddress
 from api.models.waste_type import WasteType
 from api.utils import auth0
 from billing.models import Invoice
-from cart.utils import (
-    CheckoutUtils,
-    QuoteUtils,
-    CartUtils,
-)
+from cart.utils import CheckoutUtils, QuoteUtils, CartUtils, CardError
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
 from common.utils.shade_hex import shade_hex_color
@@ -2197,6 +2193,11 @@ def checkout(request, user_address_id):
                 )
                 messages.success(request, "Successfully checked out!")
                 return HttpResponseRedirect(reverse("customer_cart"))
+            except CardError as e:
+                messages.error(
+                    request, f"Error processing payment: {e.code}-[{e.param}]"
+                )
+                context["form_error"] = e.message
             except ValidationError as e:
                 messages.error(request, e.message)
                 context["form_error"] = e.message

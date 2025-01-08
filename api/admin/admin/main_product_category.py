@@ -37,7 +37,7 @@ class MainProductCategoryAdmin(BaseModelAdmin, ExportActionMixin):
                     "name",
                     "industry",
                     "description",
-                    "image",
+                    "image2",
                     "icon",
                     "main_product_category_code",
                     "sort",
