@@ -96,8 +96,8 @@ class CheckoutUtils:
                 if not user_address.user_group:
                     invoice_and_pay = True
                 elif (
-                    user_address.user_group.invoice_frequency
-                    == user_address.user_group.InvoiceFrequency.IMMEDIATELY
+                    user_address.user_group.net_terms
+                    == user_address.user_group.NetTerms.IMMEDIATELY
                 ):
                     invoice_and_pay = True
                 if invoice_and_pay:
