@@ -224,3 +224,40 @@ class Invoice(BaseModel):
         # Update the invoice.
         self.update_invoice(invoice)
         return is_paid
+
+    @classmethod
+    def update_or_create_from_invoice(cls, invoice, user_address):
+        """Updates or creates an invoice from a Stripe invoice and UserAddress.
+
+        Args:
+            invoice (Dict): Stripe invoice object.
+            user_address (Obj): UserAddress object.
+
+        Returns:
+            (obj, bool): The created or updated Invoice object and boolean denoting if it was created.
+        """
+        obj, created = cls.objects.update_or_create(
+            invoice_id=invoice["id"],
+            defaults={
+                "user_address": user_address,
+                "amount_due": invoice["amount_due"] / 100,
+                "amount_paid": invoice["amount_paid"] / 100,
+                "amount_remaining": invoice["amount_remaining"] / 100,
+                "due_date": (
+                    timezone.make_aware(
+                        timezone.datetime.fromtimestamp(invoice["due_date"]),
+                        timezone.get_current_timezone(),
+                    )
+                    if invoice["due_date"]
+                    else None
+                ),
+                "hosted_invoice_url": invoice["hosted_invoice_url"],
+                "invoice_pdf": invoice["invoice_pdf"],
+                "metadata": invoice["metadata"],
+                "number": invoice["number"],
+                "paid": invoice["paid"],
+                "status": invoice["status"],
+                "total": invoice["total"] / 100,
+            },
+        )
+        return obj, created
