@@ -174,6 +174,7 @@ class User(AbstractUser):
     )
 
     # Managers
+    objects = models.Manager()  # Default manager
     customer_team_users = CustomerTeamManager()
 
     def __str__(self):
