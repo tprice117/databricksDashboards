@@ -21,6 +21,8 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
 
+from asset_management.models.asset import Asset
+
 from .models import (
     AddOn,
     AddOnChoice,
@@ -96,6 +98,14 @@ def get_order_approval_serializer():
         )
 
     return ORDER_APPROVAL_SERIALIZER
+
+
+class AssetSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = Asset
+        fields = "__all__"
 
 
 class AdvertisementSerializer(serializers.ModelSerializer):

@@ -9,9 +9,16 @@ from django.utils.html import format_html
 from api.admin.filters import CreatedDateFilter
 from api.admin.filters.order.admin_tasks import OrderAdminTasksFilter
 from api.admin.inlines import (
+    OrderAdjustmentInline,
+    OrderDamageFeeInline,
     OrderDisposalTicketInline,
+    OrderInsuranceInline,
     OrderLineItemInline,
+    OrderMaintenanceFeeInline,
+    OrderMaterialFeeInline,
+    OrderPermitFeeInline,
     OrderReviewInline,
+    OrderTransferFeeInline,
     PayoutInline,
     SellerInvoicePayableLineItemInline,
 )
@@ -58,6 +65,13 @@ class OrderAdmin(admin.ModelAdmin):
     )
     inlines = [
         OrderLineItemInline,
+        OrderAdjustmentInline,
+        OrderInsuranceInline,
+        OrderDamageFeeInline,
+        OrderMaintenanceFeeInline,
+        OrderMaterialFeeInline,
+        OrderPermitFeeInline,
+        OrderTransferFeeInline,
         OrderDisposalTicketInline,
         OrderReviewInline,
         PayoutInline,
