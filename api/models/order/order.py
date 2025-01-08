@@ -516,8 +516,9 @@ class Order(BaseModel):
 
                 is_equiptment_order = self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
 
+                # if it is a not a dilivery order delivery_fee is $0
                 delivery_fee = 0
-                if is_first_order:
+                if is_first_order and self.order_group.is_delivery:
                     new_order_line_items.extend(
                         self._add_order_line_item_delivery(),
                     )
@@ -533,12 +534,14 @@ class Order(BaseModel):
                 standard_removal = is_last_order and not is_equiptment_order
                 # Add Removal Line Item for first and last Order.
                 # The first order will get any actual removal fee, the last order will get a $0 removal line item.
-                if is_first_order:
-                    new_order_line_items.extend(self._add_order_line_item_removal())
-                elif is_last_order:
-                    new_order_line_items.extend(
-                        self._add_order_line_item_removal(add_empty=True)
-                    )
+                # only charge if oder_group is a delivery
+                if self.order_group.is_delivery:
+                    if is_first_order:
+                        new_order_line_items.extend(self._add_order_line_item_removal())
+                    elif is_last_order:
+                        new_order_line_items.extend(
+                            self._add_order_line_item_removal(add_empty=True)
+                        )
 
                 # If the OrderGroup has Material, add those line items.
                 if not standard_removal and hasattr(self.order_group, "material"):

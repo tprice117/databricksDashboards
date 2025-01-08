@@ -4,7 +4,7 @@
   {% if forloop.first %}
     <hr />
   {% endif %}
-  <div class="supplier-item">
+  <div class="supplier-item" data-allow-pickup="{{ item.seller_product_seller_location.allows_pick_up }}">
     <div id="item-{{ forloop.counter }}" class="row mb-4">
       <div class="col-auto">
         <img class="img-thumbnail img-fluid"
@@ -79,32 +79,34 @@
               </div>
             {% endfor %}
             <div class="col-12 align-self-end">
+              <div class="col-12 align-self-end" id="freit-section">
+                <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
+                  Delivery:{% if item.price_breakdown.delivery %}
+                    <span class="price-item" data-price="{{ item.price_breakdown.delivery.total }}">${{ item.price_breakdown.delivery.total|floatformat:2|intcomma }}</span>
+                  {% else %}
+                    No charge
+                  {% endif %}
+                </p>
+                <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
+                  Removal:{% if item.price_breakdown.removal %}
+                    <span class="price-item" data-price="{{ item.price_breakdown.removal.total }}">${{ item.price_breakdown.removal.total|floatformat:2|intcomma }}</span>
+                  {% else %}
+                    No charge
+                  {% endif %}
+                </p>
+                <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
+                  Fuel &amp; Fees ({{ item.price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%):{% if item.price_breakdown.fuel_and_environmental %}
+                    <strong><span class="price-item" data-price="{{ item.price_breakdown.fuel_and_environmental.total }}">${{ item.price_breakdown.fuel_and_environmental.total|floatformat:2|intcomma }}</span></strong>
+                  {% else %}
+                    No charge
+                  {% endif %}
+                </p>
+                <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;border-bottom-style: solid;">
+                  Freight (One time): <strong><span class="price-item" data-price="{{ item.price_breakdown.one_time.total }}">${{ item.price_breakdown.one_time.total|floatformat:2|intcomma }}</span></strong>
+                </p>
+              </div>
               <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
-                Delivery:{% if item.price_breakdown.delivery %}
-                  <span class="price-item" data-price="{{ item.price_breakdown.delivery.total }}">${{ item.price_breakdown.delivery.total|floatformat:2|intcomma }}</span>
-                {% else %}
-                  No charge
-                {% endif %}
-              </p>
-              <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
-                Removal:{% if item.price_breakdown.removal %}
-                  <span class="price-item" data-price="{{ item.price_breakdown.removal.total }}">${{ item.price_breakdown.removal.total|floatformat:2|intcomma }}</span>
-                {% else %}
-                  No charge
-                {% endif %}
-              </p>
-              <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
-                Fuel &amp; Fees ({{ item.price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%):{% if item.price_breakdown.fuel_and_environmental %}
-                  <strong><span class="price-item" data-price="{{ item.price_breakdown.fuel_and_environmental.total }}">${{ item.price_breakdown.fuel_and_environmental.total|floatformat:2|intcomma }}</span></strong>
-                {% else %}
-                  No charge
-                {% endif %}
-              </p>
-              <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;border-bottom-style: solid;">
-                Freight (One time): <strong><span class="price-item" data-price="{{ item.price_breakdown.one_time.total }}">${{ item.price_breakdown.one_time.total|floatformat:2|intcomma }}</span></strong>
-              </p>
-              <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
-                Due on Delivery (plus taxes): <strong><span class="price-item" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
+                Due on Delivery (plus taxes): <strong><span id="display-price" class="price-item" data-delivery-price="{{item.price_breakdown.one_time.total}}"  data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
                 <input type="hidden" class="total-price" value="{{ item.price_breakdown.total }}" />
               </p>
             </div>
@@ -209,75 +211,77 @@
                 <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-bottom-style: solid;">
                   Per Service: <strong><span class="price-item" data-price="{{ item.price_breakdown.other.total }}">${{ item.price_breakdown.other.total|floatformat:2|intcomma }}</span></strong>
                 </p>
-                {% if item.price_breakdown.delivery %}
-                  <p style="margin-bottom: 0px;">
-                    <strong>Delivery</strong>
-                  </p>
-                  <div class="row">
-                    <div class="col-9">
-                      <p style="margin-bottom: 0px;">
-                        <em>
-                          {% for order_line_item in item.price_breakdown.delivery.items %}
-                            <span class="price-item" data-price="{{ order_line_item.unit_price }}">${{ order_line_item.unit_price|floatformat:2|intcomma }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
-                              {{ order_line_item.units|lower }}
-                            {% endif %}
-                            {% if order_line_item.description %}
-                              ({{ order_line_item.description|lower }})
-                            {% endif %}
-                          {% endfor %}
-                        </em>
-                      </p>
-                    </div>
-                    <div class="col-3">
-                      <p style="text-align: right;margin-bottom: 0px;">
-                        <em><span class="price-item" data-price="{{ item.price_breakdown.delivery.total }}">${{ item.price_breakdown.delivery.total|floatformat:2|intcomma }}</span></em>
-                      </p>
-                    </div>
-                  </div>
-                {% endif %}
-                {% if item.price_breakdown.removal %}
-                  <p style="margin-bottom: 0px;">
-                    <strong>Removal</strong>
-                  </p>
-                  <div class="row">
-                    <div class="col-9">
-                      <p style="margin-bottom: 0px;">
-                        <em>
-                          {% for order_line_item in item.price_breakdown.removal.items %}
-                            <span class="price-item" data-price="{{ order_line_item.unit_price }}">${{ order_line_item.unit_price|floatformat:2|intcomma }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
-                              {{ order_line_item.units|lower }}
-                            {% endif %}
-                            {% if order_line_item.description %}
-                              ({{ order_line_item.description|lower }})
-                            {% endif %}
-                          {% endfor %}
-                        </em>
-                      </p>
-                    </div>
-                    <div class="col-3">
-                      <p style="text-align: right;margin-bottom: 0px;">
-                        <em><span class="price-item" data-price="{{ item.price_breakdown.removal.total }}">${{ item.price_breakdown.removal.total|floatformat:2|intcomma }}</span></em>
-                      </p>
-                    </div>
-                  </div>
-                {% endif %}
-                <div class="row">
-                  <div class="col">
+                <div id="freit-section">
+                  {% if item.price_breakdown.delivery %}
                     <p style="margin-bottom: 0px;">
-                      <strong>Fuel and Fees</strong> ({{ item.price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%)
+                      <strong>Delivery</strong>
                     </p>
-                  </div>
-                  <div class="col">
-                    <p style="text-align: right;margin-bottom: 0px;">
-                      <em><span class="price-item" data-price="{{ item.price_breakdown.one_time.fuel_and_environmental }}">${{ item.price_breakdown.one_time.fuel_and_environmental|floatformat:2|intcomma }}</span></em>
+                    <div class="row">
+                      <div class="col-9">
+                        <p style="margin-bottom: 0px;">
+                          <em>
+                            {% for order_line_item in item.price_breakdown.delivery.items %}
+                              <span class="price-item" data-price="{{ order_line_item.unit_price }}">${{ order_line_item.unit_price|floatformat:2|intcomma }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                                {{ order_line_item.units|lower }}
+                              {% endif %}
+                              {% if order_line_item.description %}
+                                ({{ order_line_item.description|lower }})
+                              {% endif %}
+                            {% endfor %}
+                          </em>
+                        </p>
+                      </div>
+                      <div class="col-3">
+                        <p style="text-align: right;margin-bottom: 0px;">
+                          <em><span class="price-item" data-price="{{ item.price_breakdown.delivery.total }}">${{ item.price_breakdown.delivery.total|floatformat:2|intcomma }}</span></em>
+                        </p>
+                      </div>
+                    </div>
+                  {% endif %}
+                  {% if item.price_breakdown.removal %}
+                    <p style="margin-bottom: 0px;">
+                      <strong>Removal</strong>
                     </p>
+                    <div class="row">
+                      <div class="col-9">
+                        <p style="margin-bottom: 0px;">
+                          <em>
+                            {% for order_line_item in item.price_breakdown.removal.items %}
+                              <span class="price-item" data-price="{{ order_line_item.unit_price }}">${{ order_line_item.unit_price|floatformat:2|intcomma }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                                {{ order_line_item.units|lower }}
+                              {% endif %}
+                              {% if order_line_item.description %}
+                                ({{ order_line_item.description|lower }})
+                              {% endif %}
+                            {% endfor %}
+                          </em>
+                        </p>
+                      </div>
+                      <div class="col-3">
+                        <p style="text-align: right;margin-bottom: 0px;">
+                          <em><span class="price-item" data-price="{{ item.price_breakdown.removal.total }}">${{ item.price_breakdown.removal.total|floatformat:2|intcomma }}</span></em>
+                        </p>
+                      </div>
+                    </div>
+                  {% endif %}
+                  <div class="row">
+                    <div class="col">
+                      <p style="margin-bottom: 0px;">
+                        <strong>Fuel and Fees</strong> ({{ item.price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%)
+                      </p>
+                    </div>
+                    <div class="col">
+                      <p style="text-align: right;margin-bottom: 0px;">
+                        <em><span class="price-item" data-price="{{ item.price_breakdown.one_time.fuel_and_environmental }}">${{ item.price_breakdown.one_time.fuel_and_environmental|floatformat:2|intcomma }}</span></em>
+                      </p>
+                    </div>
                   </div>
+                  <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-bottom-style: solid;">
+                    Freight (One time): <strong><span class="price-item" data-price="{{ item.price_breakdown.one_time.total }}">${{ item.price_breakdown.one_time.total|floatformat:2|intcomma }}</span></strong>
+                  </p>
                 </div>
-                <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-bottom-style: solid;">
-                  Freight (One time): <strong><span class="price-item" data-price="{{ item.price_breakdown.one_time.total }}">${{ item.price_breakdown.one_time.total|floatformat:2|intcomma }}</span></strong>
-                </p>
                 <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;">
-                  Due on Delivery (plus taxes): <strong><span class="price-item" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
+                  Due on Delivery (plus taxes): <strong><span id="display-price" class="price-item" data-delivery-price="{{item.price_breakdown.one_time.total}}" data-price="{{ item.price_breakdown.total }}">${{ item.price_breakdown.total|floatformat:2|intcomma }}</span></strong>
                   <input type="hidden" class="total-price" value="{{ item.price_breakdown.total }}" />
                 </p>
               </div>
@@ -304,6 +308,7 @@
           <input name="removal_date" type="hidden" value="{{ removal_date }}" />
           <input name="quantity" type="hidden" value="{{ quantity }}" />
           <input name="project_id" type="hidden" value="{{ project_id }}" />
+          <input name="is_delivery" type="hidden" value="True" />
           {% if request.user.is_staff %}
             <input class="order-form-discount" type="hidden" name="discount" value="{{ discount }}" />
           {% endif %}
