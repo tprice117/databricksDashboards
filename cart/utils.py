@@ -724,14 +724,19 @@ class CartUtils:
             QuerySet[Order]: The orders queryset.
         """
 
-        current_user = user or request.user
-        current_user_group = user_group or current_user.user_group
         orders = Order.objects.none()
 
-        if not request.user.is_staff and user.type != UserType.ADMIN:
+        current_user = user or request.user
+        if not current_user:
+            # Return empty queryset.
+            return orders
+
+        current_user_group = user_group or current_user.user_group
+
+        if not request.user.is_staff and current_user.type != UserType.ADMIN:
             # Company Non-Admin User.
             user_user_location_ids = (
-                UserUserAddress.objects.filter(user_id=user.id)
+                UserUserAddress.objects.filter(user_id=current_user.id)
                 .select_related("user_address")
                 .values_list("user_address_id", flat=True)
             )
@@ -749,7 +754,7 @@ class CartUtils:
                 )
             else:
                 # Individual User. Get all orders for the user.
-                orders = Order.objects.filter(order_group__user_id=user.id)
+                orders = Order.objects.filter(order_group__user_id=current_user.id)
 
         return orders.order_by("-end_date")
 
