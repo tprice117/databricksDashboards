@@ -293,7 +293,7 @@
         {% endif %}
       </div>
       <div class="col-auto">
-        <form id="orderForm" action="{% url 'customer_cart' %}" method="post" enctype="multipart/form-data">
+        <form id="newOrderForm{{ forloop.counter }}" action="{% url 'customer_cart' %}" method="post" enctype="multipart/form-data">
           {% csrf_token %}
           <input name="seller_product_seller_location_id" type="hidden" value="{{ item.seller_product_seller_location.id }}" />
           <input name="product_id" type="hidden" value="{{ product_id }}" />
@@ -313,8 +313,29 @@
             <input class="order-form-discount" type="hidden" name="discount" value="{{ discount }}" />
           {% endif %}
           <div class="d-flex justify-content-center">
-            <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">Add to Cart</button>
+            <button class="btn btn-primary" type="button" name="action_button" id="submit-button-order-form-{{ forloop.counter }}">Add to Cart</button>
           </div>
+          <script>
+            submitButton = document.getElementById("submit-button-order-form-{{ forloop.counter }}");
+            submitButton.addEventListener('click', () => {
+              if (pickupButton.checked) {
+                Swal.fire({
+                  title: 'Pickup Order',
+                  text: 'You will need to pick up this item yourself',
+                  icon: 'question',
+                  showCancelButton: true,
+                  confirmButtonText: 'OK',
+                  cancelButtonText: 'Cancel'
+                }).then((result) => {
+                  if (result.value) {
+                    document.getElementById("newOrderForm{{ forloop.counter }}").submit();
+                  }
+                });
+              } else {
+                document.getElementById("newOrderForm{{ forloop.counter }}").submit();
+              }
+            });
+          </script>
         </form>
         <button class="btn btn-link mt-2" type="button" data-bs-target="#modal-price-detail-{{ forloop.counter }}" data-bs-toggle="modal">Pricing Details</button>
         {% include 'customer_dashboard/snippets/price_details_modal.html' %}

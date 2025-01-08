@@ -2242,6 +2242,7 @@ def checkout(request, user_address_id):
     context["total"] = 0
     context["show_terms"] = False
     context["has_delivery"] = False
+    context["contains_pickup_order"] = False
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
@@ -2271,6 +2272,8 @@ def checkout(request, user_address_id):
         context["total"] += price_data["total"]
         context["cart_count"] += 1
         order_id_lst.append(order.id)
+        if not order.order_group.is_delivery:
+            context["contains_pickup_order"] = True
 
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
