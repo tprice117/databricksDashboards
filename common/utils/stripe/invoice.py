@@ -110,7 +110,9 @@ class Invoice:
             return False, None
 
     @staticmethod
-    def attempt_pay(invoice_id: str, update_invoice_db: bool = True):
+    def attempt_pay(
+        invoice_id: str, update_invoice_db: bool = True, raise_error: bool = False
+    ):
         # Import here to avoid circular import of partially initialized module api.module.
         from api.models import UserAddress
         from payment_methods.models.payment_method import (
@@ -178,9 +180,6 @@ class Invoice:
                             user_address=user_address,
                         )
                     )
-                    downstream_invoice = DownstreamInvoice.objects.get(
-                        invoice_id=invoice_id
-                    )
                     if payment_method is None:
                         raise ValueError(
                             "Payment method not found in Stripe. Please contact us for help [1]."
@@ -191,10 +190,9 @@ class Invoice:
                 is_paid = True if invoice.status == "paid" else False
                 if is_paid and update_invoice_db:
                     # Update the invoice.
-                    downstream_invoice = DownstreamInvoice.objects.get(
-                        invoice_id=invoice_id
+                    DownstreamInvoice.update_or_create_from_invoice(
+                        invoice, user_address
                     )
-                    downstream_invoice.update_invoice(invoice)
                 return is_paid, invoice
             else:
                 raise ValueError(
@@ -209,10 +207,8 @@ class Invoice:
             )
         except NoDefaultPaymentMethodError as e:
             # No default payment method for the customer.
-            logger.error(f"Invoice.attempt_pay: try attempt_pay_og [{e}]", exc_info=e)
-            return Invoice.attempt_pay_og(
-                invoice_id,
-                payment_method=customer.invoice_settings.default_payment_method,
+            logger.error(
+                f"Invoice.attempt_pay:NoDefaultPaymentMethodError: [{e}]", exc_info=e
             )
         except DownstreamPaymentMethod.DoesNotExist as e:
             # Downstream PaymentMethod does not exist.
@@ -236,6 +232,8 @@ class Invoice:
                 exc_info=e,
             )
             downstream_payment_method.send_internal_email(user_address)
+            if raise_error:
+                raise
         except RateLimitError as e:
             # Too many requests made to the API too quickly
             logger.error(
