@@ -9,6 +9,61 @@
 {% endblock %}
 {% block javascript %}
     <script>
+        // create a function for updating the supplier list
+        function updateSupplierList(is_pickup) {
+            // Get the parent element
+            const parent = document.querySelector("#main-product-detail-pricing-list");
+            if (!parent) return;
+            // Convert the list items into an array
+            const itemsArray = Array.from(parent.querySelectorAll(".supplier-item"));
+            // for a test show the item id in their respective elements
+            for (let i = 0; i < itemsArray.length; i++) {
+                // get data-seller-product-seller-location from the elements 
+                data_allow_pickup = itemsArray[i].getAttribute("data-allow-pickup");
+                // if the checkbox is checked and the data-allow-pickup is false
+                itemsArray[i].style.display = "";
+                const isDeliveryInput = itemsArray[i].querySelector('input[name="is_delivery"]')
+                // default to show the freit section
+                const freitSection = itemsArray[i].querySelector('[id^="freit-section"]');
+                freitSection.style.display = "";
+                // the value passed back
+                isDeliveryInput.setAttribute("value", "True");
+                // show the total
+                const displayPrice = itemsArray[i].querySelector("#display-price");
+                const price = parseFloat(displayPrice.getAttribute('data-price'));
+                const betterPrice = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                displayPrice.textContent=`$${betterPrice}`
+                if (is_pickup) {
+                    // data_allow_pickup is false then remove the element
+                    if (data_allow_pickup.toLowerCase() === "false") {
+                        itemsArray[i].style.display = "none";
+                    }else{
+                        // remove a child element with id starts with "freit-section-"
+                        freitSection.style.display = "none";
+                        // show the total without delivery
+                        const price = parseFloat(displayPrice.getAttribute('data-price'))-parseFloat(displayPrice.getAttribute('data-delivery-price'));
+                        const betterPrice = price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        displayPrice.textContent=`$${betterPrice}`
+                        isDeliveryInput.setAttribute("value", "False");
+                    }
+                }
+            }
+        }
+        const deliveryButton = document.getElementById('for-delivery-check');
+        const pickupButton = document.getElementById('for-pickup-check');
+
+        deliveryButton.addEventListener('change', () => {
+            if (deliveryButton.checked) {
+                // is_pickup is false
+                updateSupplierList(false);
+            }
+        });
+        pickupButton.addEventListener('change', () => {
+            if (pickupButton.checked) {
+                // is_pickup is true
+                updateSupplierList(true);
+            }
+        });
         const discountElement = document.getElementById("discount");
 
         // Disable the form inputs while htmx request is being sent
@@ -135,7 +190,13 @@
                 {% endif %}
 
                 <!-- Sorting Controls -->
-                 <div class="float-right justify-content-end mb-3 d-flex flex-row">
+                <div class="float-right justify-content-end mb-3 d-flex flex-row">
+                    <div class="form-check form-switch d-flex flex-row form-group align-items-center w-50">
+                        <input type="radio" class="btn-check" name="options-outlined" id="for-pickup-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="for-pickup-check">For pickup</label>
+                        <input type="radio" class="btn-check" name="options-outlined" id="for-delivery-check" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="for-delivery-check">For delivery</label>
+                    </div>
                     <div id="sorting-controls" class="d-flex flex-row form-group align-items-center w-50">
                         <label for="sort-attribute" class="form-label mb-0 mr-2 text-nowrap">Sort by:</label>
                         <select id="sort-attribute" class="form-control mr-2" name="sort-attribute">
@@ -153,7 +214,7 @@
                 </div>
                 <span class="htmx-indicator" id="htmx-indicator-loading-status">Loading <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
 
-                <div id="main-product-detail-pricing-list" hx-get="{{ data_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-loading-status"></div>
+                <div id="main-product-detail-pricing-list" hx-get="{{ data_link }}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="#for-pickup-check"></div>
             </div>
         </div>
     </div>

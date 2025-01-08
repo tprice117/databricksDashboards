@@ -1445,6 +1445,7 @@ def new_order_5(request):
             int(request.POST.get("quantity")) if request.POST.get("quantity") else 1
         )
         project_id = request.POST.get("project_id")
+        is_delivery = request.POST.get("is_delivery", "True").lower() == "true"
 
         main_product = MainProduct.objects.select_related("main_product_category").get(
             id=product_id
@@ -1504,6 +1505,7 @@ def new_order_5(request):
                 seller_product_seller_location_id=seller_product_seller_location_id,
                 start_date=delivery_date,
                 take_rate=take_rate * 100,
+                is_delivery=is_delivery,
             )
             if times_per_week:
                 order_group.times_per_week = times_per_week
@@ -2282,6 +2284,7 @@ def checkout(request, user_address_id):
     context["total"] = 0
     context["show_terms"] = False
     context["has_delivery"] = False
+    context["contains_pickup_order"] = False
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
@@ -2311,6 +2314,8 @@ def checkout(request, user_address_id):
         context["total"] += price_data["total"]
         context["cart_count"] += 1
         order_id_lst.append(order.id)
+        if not order.order_group.is_delivery:
+            context["contains_pickup_order"] = True
 
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
