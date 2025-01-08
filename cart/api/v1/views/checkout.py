@@ -10,7 +10,7 @@ from cart.api.v1.serializers import (
     CheckoutRequestSerializer,
     CheckoutResponseSerializer,
 )
-from cart.utils import CheckoutUtils
+from cart.utils import CheckoutUtils, CardError
 from cart.models import CheckoutOrder
 from common.utils.json_encoders import DecimalFloatEncoder
 
@@ -61,9 +61,12 @@ class CheckoutView(APIView):
                     detail="Payment method is required. Company does not have credit terms."
                 )
 
-        checkout_order = CheckoutUtils.checkout(
-            user_address, cart_orders, payment_method_id
-        )
+        try:
+            checkout_order = CheckoutUtils.checkout(
+                user_address, cart_orders, payment_method_id
+            )
+        except CardError as e:
+            raise DRFValidationError(detail=f"Credit Card Error: {e.code}-[{e.param}]")
 
         # Return CheckoutOrder serialized data.
         data = CheckoutResponseSerializer(

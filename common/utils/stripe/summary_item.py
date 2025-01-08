@@ -111,3 +111,20 @@ class SummaryItems:
 
         # Return JSON response, if successful. Else, return Exception.
         return response.json() if response.status_code == 200 else Exception(response)
+
+    @staticmethod
+    def add_invoice_item_to_summary_item_bulk(
+        invoice: stripe.Invoice,
+        invoice_line_items: list,
+        invoice_summary_item_id: str,
+    ):
+        # https://docs.stripe.com/api/invoice-line-item/bulk
+        lines = []
+        for invoice_line_item in invoice_line_items:
+            lines.append(
+                {
+                    "id": invoice_line_item["id"],
+                    "rendering[summary_item]": invoice_summary_item_id,
+                }
+            )
+        return stripe.Invoice.update_lines(invoice.id, lines=lines)
