@@ -84,6 +84,12 @@ class Lead(BaseModel):
         blank=True,
     )
 
+    est_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=1000.00,
+        verbose_name="Estimated Value",
+    )
     est_conversion_date = models.DateField(
         null=True,
         blank=True,

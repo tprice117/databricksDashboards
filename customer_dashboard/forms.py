@@ -17,6 +17,7 @@ from api.models import (
 )
 from common.forms import HiddenDeleteFormSet
 from common.models.choices.user_type import UserType
+from crm.models.lead import Lead
 
 
 def validate_swap_start_date(value):
@@ -784,3 +785,28 @@ class BrandingForm(forms.ModelForm):
 BrandingFormSet = forms.inlineformset_factory(
     UserGroup, Branding, form=BrandingForm, formset=HiddenDeleteFormSet, extra=1
 )
+
+
+class LeadForm(forms.ModelForm):
+    template_name = "customer_dashboard/snippets/form.html"
+
+    class Meta:
+        model = Lead
+        fields = [
+            "user",
+            "user_address",
+            "owner",
+            "est_conversion_date",
+            "est_value",
+            "type",
+        ]
+        widgets = {
+            "user": forms.Select(attrs={"class": "form-select"}),
+            "user_address": forms.Select(attrs={"class": "form-select"}),
+            "owner": forms.Select(attrs={"class": "form-select"}),
+            "est_conversion_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
+            "est_value": forms.NumberInput(attrs={"class": "form-control"}),
+            "type": forms.Select(attrs={"class": "form-select"}),
+        }
