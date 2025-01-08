@@ -1,7 +1,7 @@
 {% load static %}
-<div class="modal-dialog modal-dialog-centered" hx-disabled-elt="button, .form-control, .form-select">
+<div class="modal-dialog modal-dialog-centered">
   <div class="modal-content">
-    <form id="form-card-new" method="post" hx-post="{% url 'customer_leads_board' %}" hx-indicator="#htmx-indicator-new-card" hx-target="#board">
+    <form id="form-card-new" method="post" hx-post="{% url 'customer_leads_board' %}" hx-indicator="#htmx-indicator-card" hx-target="#board">
       {% csrf_token %}
       <div class="modal-header">
         <h5 class="modal-title">New Lead</h5>
@@ -9,9 +9,9 @@
       <div class="modal-body">{{ form }}</div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" class="btn btn-success" name="new_card">
+        <button id="new-card-submit" type="submit" class="btn btn-success" name="new_card">
           Save
-          <span class="htmx-indicator" id="htmx-indicator-new-card"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+          <span class="htmx-indicator" id="htmx-indicator-card"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
         </button>
       </div>
     </form>
