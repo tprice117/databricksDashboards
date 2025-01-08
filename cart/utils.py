@@ -703,17 +703,26 @@ class CartUtils:
         """Get all the booking objects the user has permission to see."""
 
         orders = Order.objects.none()
-        if user.is_staff:
-            orders = Order.objects.all()
-        elif user.type == UserType.ADMIN and user.user_group:
-            orders = Order.objects.filter(order_group__user__user_group=user.user_group)
-        else:
-            user_addresses = UserUserAddress.objects.filter(user=user).values_list(
-                "user_address_id", flat=True
+        if not user.is_staff and user.type != UserType.ADMIN:
+            user_user_location_ids = (
+                UserUserAddress.objects.filter(user_id=user.id)
+                .select_related("user_address")
+                .values_list("user_address_id", flat=True)
             )
             orders = Order.objects.filter(
-                order_group__user_address_id__in=user_addresses
+                order_group__user_address__in=user_user_location_ids
             )
+        else:
+            if user.is_staff:
+                # Global View: Get all orders.
+                orders = Order.objects.all()
+            elif user.user_group:
+                orders = Order.objects.filter(
+                    order_group__user__user_group_id=user.user_group.id
+                )
+            else:
+                # Individual user. Get all orders for the user.
+                orders = Order.objects.filter(order_group__user_id=user.id)
 
         return orders.filter(
             submitted_on__isnull=True,
