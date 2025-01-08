@@ -66,6 +66,11 @@
         });
         const discountElement = document.getElementById("discount");
 
+        // Add event listener to the is_delivery checkbox
+        const isDeliveryCheckbox = document.getElementById("is_delivery");
+        isDeliveryCheckbox.addEventListener("change", () => {
+            
+        });
         // Disable the form inputs while htmx request is being sent
         document.body.addEventListener("htmx:beforeSend", function (event) {
             document.getElementById("sort-btn").disabled = true;
