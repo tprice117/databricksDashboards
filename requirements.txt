@@ -5,12 +5,12 @@ basistheory==2.1.0
 blinker==1.6.2
 boto3==1.28.49
 botocore==1.31.49
-certifi==2023.5.7
+certifi==2024.7.4
 cffi==1.16.0
 chardet==5.2.0
 charset-normalizer==3.2.0
 click==8.1.4
-cryptography==42.0.8
+cryptography==43.0.1
 diff-match-patch==20241021
 dj-database-url==2.0.0
 django==4.2.17
@@ -26,7 +26,7 @@ django-filter==23.2
 django-import-export==4.2.1
 django-multiselectfield==0.1.12
 django-storages==1.14
-djangorestframework==3.14.0
+djangorestframework==3.15.2
 drf-spectacular==0.27.2
 drf-standardized-errors[openapi]==0.13.0
 drf-writable-nested==0.7.0
@@ -38,7 +38,7 @@ idna==3.4
 importlib-metadata==6.8.0
 inflection==0.5.1
 itsdangerous==2.1.2
-jinja2==3.1.2
+jinja2==3.1.5
 jmespath==1.0.1
 josepy==1.14.0
 jsonschema==4.18.0
@@ -66,11 +66,11 @@ pyyaml==6.0
 pyzmq==25.1.0
 referencing==0.29.1
 reportlab==4.2.5
-requests==2.31.0
+requests==2.32.2
 rpds-py==0.8.10
 s3transfer==0.6.2
 setuptools==75.5.0
-six==1.16.0;
+six==1.16.0
 sqlparse==0.4.4
 stripe==11.2.0
 tablib==3.7.0
@@ -78,6 +78,6 @@ typing-extensions==4.7.1
 tzdata==2023.3
 tzlocal==5.2
 uritemplate==4.1.1
-urllib3==1.26.16
-werkzeug==2.3.6
-zipp==3.16.0
+urllib3==1.26.19
+werkzeug==3.0.6
+zipp==3.19.1
