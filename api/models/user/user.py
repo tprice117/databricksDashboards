@@ -14,6 +14,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.template.loader import render_to_string
 
+from api.managers import CustomerTeamManager
 from api.models.order.order import Order
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
