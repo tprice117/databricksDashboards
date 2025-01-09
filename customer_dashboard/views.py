@@ -2253,7 +2253,7 @@ def checkout(request, user_address_id):
     context["estimated_taxes"] = 0
     context["total"] = 0
     context["show_terms"] = False
-    context["has_delivery"] = False
+    context["is_first_order"] = False
     context["contains_pickup_order"] = False
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
@@ -2265,7 +2265,7 @@ def checkout(request, user_address_id):
             or order.order_type == Order.Type.PICKUP
             or order.order_type == Order.Type.ONE_TIME
         ):
-            context["has_delivery"] = True
+            context["is_first_order"] = True
         customer_price = order.customer_price()
         customer_price_full = order.full_price()
         context["subtotal"] += customer_price_full
