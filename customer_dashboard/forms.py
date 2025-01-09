@@ -13,6 +13,7 @@ from api.models import (
     User,
     Order,
     OrderGroup,
+    OrderGroupAttachment,
     OrderReview,
 )
 from common.forms import HiddenDeleteFormSet
@@ -185,6 +186,12 @@ class PlacementDetailsForm(forms.Form):
         ),
         required=False,
     )
+
+
+class OrderGroupAttachmentsForm(forms.ModelForm):
+    class Meta:
+        model = OrderGroupAttachment
+        fields = ["file"]
 
 
 class UserAddressForm(forms.Form):

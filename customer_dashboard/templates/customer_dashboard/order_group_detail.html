@@ -235,6 +235,36 @@
                                     </div>
                                 {% endif %}
                             {% endfor %}
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <h3 class="text-dark mb-1 me-3">Add Attachments</h3>
+                                    <button type="button" class="btn btn-success" id="add-attachments"><i class="fas fa-plus fa-sm text-white"></i></button>
+                                </div>
+                                {% if attachments_formset.non_form_errors %}
+                                    {% for error in attachments_formset.non_form_errors %}
+                                            <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                {% endif %}
+                                <hr />
+                                {{ attachments_formset.management_form }}
+                                <!-- Hidden template for new forms -->
+                                <div id="empty-form-template" style="display: none;">
+                                    <div class="location-form">
+                                            {{ attachments_formset.empty_form }}
+                                                <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                                            <hr />
+                                    </div>
+                                </div>
+                                <div id="location-formset">
+                                    {% for inline in attachments_formset %}
+                                        <div class="location-form">
+                                            {{ inline }}
+                                                <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                                            <hr />
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                             <div class="d-flex flex-row-reverse">
                                 <button class="btn btn-primary btn-sm" type="submit" name="placement_details_button" style="margin-top: 12px;">Save</button>
                             </div>

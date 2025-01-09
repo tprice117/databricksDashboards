@@ -38,6 +38,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
+from django.forms import inlineformset_factory, formset_factory
+from common.forms import HiddenDeleteFormSet
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -49,6 +51,7 @@ from api.models import (
     Order,
     OrderLineItem,
     OrderGroup,
+    OrderGroupAttachment,
     OrderReview,
     Product,
     ProductAddOnChoice,
@@ -94,6 +97,7 @@ from .forms import (
     OrderGroupSwapForm,
     OrderReviewFormSet,
     PlacementDetailsForm,
+    OrderGroupAttachmentsForm,
     UserAddressForm,
     UserForm,
     UserGroupForm,
@@ -2748,6 +2752,17 @@ def order_group_detail(request, order_group_id):
                 "placement_details": order_group.placement_details,
                 "delivered_to_street": order_group.delivered_to_street,
             }
+        )
+        OrderGroupAttachmentsFormSet = inlineformset_factory(
+            OrderGroup,
+            OrderGroupAttachment,
+            form=OrderGroupAttachmentsForm,
+            formset=HiddenDeleteFormSet,
+            can_delete=True,
+            extra=1,
+        )
+        context["attachments_formset"] = OrderGroupAttachmentsFormSet(
+            instance=order_group
         )
 
     return render(request, "customer_dashboard/order_group_detail.html", context)
