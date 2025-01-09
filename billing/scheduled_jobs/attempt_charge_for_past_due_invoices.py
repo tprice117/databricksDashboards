@@ -1,5 +1,6 @@
 import datetime
 
+from api.models import UserGroup
 from common.utils.stripe.stripe_utils import StripeUtils
 
 
@@ -12,20 +13,33 @@ def attempt_charge_for_past_due_invoices():
     # Get the date 14 days ago.
     two_weeks_ago = datetime.datetime.now() - datetime.timedelta(days=14)
 
-    # Filter for only past due invoices.
-    past_due_invoices = list(
+    # Filter for open invoices with a non zero amount due.
+    all_open_invoices = list(
         filter(
             lambda invoice: invoice["status"] == "open"
-            and invoice["amount_remaining"] > 0
-            and (
-                invoice["due_date"] is None
-                or invoice["due_date"] < two_weeks_ago.timestamp()
-            ),
+            and invoice["amount_remaining"] > 0,
             invoices,
         )
     )
+    # Filter for invoices that are due for the UserGroup/Account.
+    invoices_due = []
+    for invoice in all_open_invoices:
+        # Get UserGroup for this invoice.
+        user_group_id = invoice["metadata"].get("user_group_id")
+        # Check if invoice is due.
+        if user_group_id and invoice["due_date"]:
+            user_group = UserGroup.objects.get(id=user_group_id)
+            if user_group.net_terms == UserGroup.NetTerms.IMMEDIATELY:
+                invoices_due.append(invoice)
+            elif invoice["due_date"] < two_weeks_ago.timestamp():
+                # Give a 2 week grace period for net terms customers since we allow payment by check.
+                # This allows for the check to be mailed and received by us before attempting to charge the card.
+                invoices_due.append(invoice)
+        else:
+            # If no due date (or no UserGroup), then we assume it is due immediately.
+            invoices_due.append(invoice)
 
-    # Attempt to charge all past due invoices.
-    for past_due_invoice in past_due_invoices:
+    # Attempt to charge invoices that are due.
+    for past_due_invoice in invoices_due:
         # Attempt to pay the invoice. This function will attempt to pay with the default payment method.
         StripeUtils.Invoice.attempt_pay(past_due_invoice["id"])
