@@ -142,6 +142,8 @@ class BillingUtils:
     def create_stripe_invoice_for_user_address(
         orders: List[Order],
         user_address: UserAddress,
+        is_cart=False,
+        is_booking=False,
     ) -> stripe.Invoice:
         # Validation: Ensure all orders are for the same user address.
         if not all(order.order_group.user_address == user_address for order in orders):
@@ -150,13 +152,15 @@ class BillingUtils:
         # Get the current draft invoice or create a new one.
         invoice = BillingUtils.get_or_create_invoice_for_user_address(
             user_address,
+            is_cart=is_cart,
+            is_booking=is_booking,
         )
 
         # Loop through each order and add any OrderLineItems that don't have
         # a StripeInvoiceLineItemId on the OrderLineItem.
         order: Order
         for order in orders:
-            BillingUtils.create_invoice_items_for_order(
+            invoice = BillingUtils.create_invoice_items_for_order(
                 invoice=invoice,
                 order=order,
             )
@@ -182,6 +186,7 @@ class BillingUtils:
         invoice = BillingUtils.create_stripe_invoice_for_user_address(
             orders=orders,
             user_address=user_address,
+            is_cart=True,
         )
         invoice_id = invoice.id
 
@@ -282,17 +287,20 @@ class BillingUtils:
                 )
 
     @staticmethod
-    def get_or_create_invoice_for_user_address(user_address: UserAddress):
+    def get_or_create_invoice_for_user_address(
+        user_address: UserAddress, is_cart=False, is_booking=False
+    ):
         """
         Get the current draft invoice or create a new one. Also,
         enable automatic taxes on the invoice (if not already enabled).
         """
         # Get the current draft invoice or create a new one.
-        draft_invoices = stripe.Invoice.search(
-            query='customer:"'
-            + user_address.stripe_customer_id
-            + '" AND status:"draft"',
-        )
+        query = 'customer:"' + user_address.stripe_customer_id + '" AND status:"draft"'
+        if is_cart:
+            query = f'{query} AND metadata["cart_invoice"]:"True"'
+        elif is_booking:
+            query = f'{query} AND metadata["booking_invoice"]:"True"'
+        draft_invoices = stripe.Invoice.search(query=query)
 
         # Should taxes be collected for this customer?
         collect_tax = (
