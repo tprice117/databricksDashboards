@@ -312,20 +312,8 @@ class UserGroupForm(forms.ModelForm):
         auth_user = kwargs.pop("auth_user", None)
         super(UserGroupForm, self).__init__(*args, **kwargs)
 
-        # Update the possible account owners if in prod
-        if settings.ENVIRONMENT == "TEST":
-            # Customer Team #1 (CORE)
-            self.fields["account_owner"].queryset = User.objects.filter(
-                user_group="bd49eaab-4b46-46c0-a9bf-bace2896b795"
-            )
-        else:
-            # DEV: Customer Team #1 (CORE), Random Company
-            self.fields["account_owner"].queryset = User.objects.filter(
-                user_group__in=[
-                    "3e717df9-f811-4ddd-8d2f-a5f19b807321",
-                    "38309b8e-0205-45dc-b12c-3bfa365825e2",
-                ]
-            )
+        # Update the possible account owners
+        self.fields["account_owner"].queryset = User.customer_team_users.all()
 
         # Make Apollo ID required
         # self.fields["apollo_id"].required = True
@@ -810,3 +798,7 @@ class LeadForm(forms.ModelForm):
             "est_value": forms.NumberInput(attrs={"class": "form-control"}),
             "type": forms.Select(attrs={"class": "form-select"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(LeadForm, self).__init__(*args, **kwargs)
+        self.fields["owner"].queryset = User.customer_team_users.all()

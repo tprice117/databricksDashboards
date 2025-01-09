@@ -4643,15 +4643,12 @@ def reviews(request):
     return render(request, "customer_dashboard/reviews.html", context)
 
 
-@login_required(login_url="/admin/login/")
-def leads(request):
-    context = get_user_context(request)
-    if not request.user.is_staff:
-        return HttpResponseRedirect(reverse("customer_home"))
-
-    leads = Lead.objects.all().order_by("-created_on")
+def create_lead_board(leads):
+    """
+    Create a board structure from the given leads queryset.
+    """
     board = []
-    for status, status_name in Lead.Status.choices:
+    for status, status_name in Lead.Status.get_ordered_choices():
         board.append(
             {
                 "name": status_name,
@@ -4659,16 +4656,24 @@ def leads(request):
                 "leads": leads.filter(status=status),
             }
         )
+    return board
+
+
+@login_required(login_url="/admin/login/")
+def leads(request):
+    context = get_user_context(request)
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
 
     context.update(
         {
-            "board": board,
             "selectable_statuses": [
                 status[0] for status in UserSelectableLeadStatus.choices
             ],
             "lost_reasons": {
                 value: text for value, text in Lead.LostReason.choices if value
             },
+            "owners": User.customer_team_users.all(),
             "new_lead_form": LeadForm(),
         }
     )
@@ -4677,35 +4682,79 @@ def leads(request):
 
 
 @login_required(login_url="/admin/login/")
-def leads_new(request):
+def leads_board(request):
     context = {}
     if not request.user.is_staff:
         return HttpResponse("Unauthorized", status=401)
 
     if request.method == "POST":
-        form = LeadForm(request.POST)
-        if form.is_valid():
-            form.save()
+        # Get filter parameters from the request
+        owner_filter = request.POST.get("owner")
+        est_conversion_filter = request.POST.get("est")
 
-            # Replace board with updated lead
-            leads = Lead.objects.all().order_by("-created_on")
-            board = []
-            for status, status_name in Lead.Status.choices:
-                board.append(
-                    {
-                        "name": status_name,
-                        "value": status,
-                        "leads": leads.filter(status=status),
-                    }
-                )
+        if "update_status" in request.POST:
+            lead_id = request.POST.get("lead_id")
+            status = request.POST.get("status")
+            if not Lead.objects.filter(id=lead_id).exists():
+                return HttpResponse("Not found", status=404)
 
-            context["board"] = board
+            lead = Lead.objects.get(id=lead_id)
+            if status != lead.status:
+                if status == Lead.Status.JUNK:
+                    lost_reason = request.POST.get("lost_reason")
+                    if not lost_reason:
+                        messages.error(request, "Lost Reason is required")
+                        return HttpResponse("Lost Reason is required", status=400)
+                    lead.lost_reason = lost_reason
+                else:
+                    lead.lost_reason = None
 
-            return render(
-                request, "customer_dashboard/leads/leads_kanban_board.html", context
-            )
+                lead.status = status
+                lead.save()
+        elif "new_card" in request.POST:
+            form = LeadForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Lead created successfully.")
+            else:
+                messages.error(request, "Error creating lead.")
+    else:
+        # Get filter parameters from the request
+        owner_filter = request.GET.get("owner")
+        est_conversion_filter = request.GET.get("est")
+
+    leads = Lead.objects.all().order_by("-created_on")
+
+    # Filter the queryset based on the filter parameters
+    leads = Lead.objects.all().order_by("-created_on")
+    if owner_filter:
+        if owner_filter == "unassigned":
+            leads = leads.filter(owner__isnull=True)
         else:
-            messages.error(request, "Error creating lead.")
+            leads = leads.filter(owner=owner_filter)
+    if est_conversion_filter:
+        if est_conversion_filter == "today":
+            leads = leads.filter(est_conversion_date=datetime.date.today())
+        elif est_conversion_filter == "this_week":
+            leads = leads.filter(
+                est_conversion_date__week=datetime.date.today().isocalendar()[1]
+            )
+        elif est_conversion_filter == "this_month":
+            leads = leads.filter(est_conversion_date__month=datetime.date.today().month)
+        elif est_conversion_filter == "overdue":
+            leads = leads.filter(est_conversion_date__lt=datetime.date.today())
+
+    board = create_lead_board(leads)
+
+    context.update(
+        {
+            "board": board,
+            "owner_filter": owner_filter,
+            "est_conversion_filter": est_conversion_filter,
+        }
+    )
+
+    return render(request, "customer_dashboard/leads/leads_kanban_board.html", context)
 
 
 @login_required(login_url="/admin/login/")
@@ -4721,6 +4770,11 @@ def leads_card(request, lead_id):
         if form.is_valid():
             if form.has_changed():
                 lead = form.save()
+                messages.success(request, "Lead saved successfully")
+            else:
+                messages.info(request, "No changes detected.")
+        else:
+            messages.error(request, "Error saving lead.")
 
     context.update({"lead": lead})
 
@@ -4748,45 +4802,3 @@ def leads_card_edit(request, lead_id):
     return render(
         request, "customer_dashboard/leads/leads_kanban_card_edit.html", context
     )
-
-
-@login_required(login_url="/admin/login/")
-def leads_card_move(request):
-    context = {}
-    if not request.user.is_staff:
-        return HttpResponse("Unauthorized", status=401)
-
-    if request.method == "POST":
-        lead_id = request.POST.get("lead_id")
-        status = request.POST.get("status")
-        if not Lead.objects.filter(id=lead_id).exists():
-            return HttpResponse("Not found", status=404)
-
-        lead = Lead.objects.get(id=lead_id)
-        if status != lead.status:
-            if status == Lead.Status.JUNK:
-                lost_reason = request.POST.get("lost_reason")
-                if not lost_reason:
-                    messages.error(request, "Lost Reason is required")
-                    return HttpResponse("Lost Reason is required", status=400)
-                lead.lost_reason = lost_reason
-            else:
-                lead.lost_reason = None
-
-            lead.status = status
-            lead.save()
-
-    leads = Lead.objects.all().order_by("-created_on")
-    board = []
-    for status, status_name in Lead.Status.choices:
-        board.append(
-            {
-                "name": status_name,
-                "value": status,
-                "leads": leads.filter(status=status),
-            }
-        )
-
-    context["board"] = board
-
-    return render(request, "customer_dashboard/leads/leads_kanban_board.html", context)
