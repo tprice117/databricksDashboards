@@ -56,12 +56,14 @@
             if (deliveryButton.checked) {
                 // is_pickup is false
                 updateSupplierList(false);
+                document.getElementById("pickup-order-alert").classList.add("d-none");
             }
         });
         pickupButton.addEventListener("change", () => {
             if (pickupButton.checked) {
                 // is_pickup is true
                 updateSupplierList(true);
+                document.getElementById("pickup-order-alert").classList.remove("d-none");
             }
         });
         const discountElement = document.getElementById("discount");
@@ -213,6 +215,9 @@
                         </select>
                         <button id="sort-btn" class="btn btn-outline-primary" onclick="sortList()">Go</button>
                     </div>
+                </div>
+                <div id="pickup-order-alert" class="d-none mt-2">
+                    <i class="fas fa-exclamation-triangle text-danger">You will need to pick up this item yourself!</i>
                 </div>
                 <span class="htmx-indicator" id="htmx-indicator-loading-status">Loading <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
 
