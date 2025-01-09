@@ -2,6 +2,9 @@ import datetime
 
 from api.models import UserGroup
 from common.utils.stripe.stripe_utils import StripeUtils
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def attempt_charge_for_past_due_invoices():
@@ -28,7 +31,12 @@ def attempt_charge_for_past_due_invoices():
         user_group_id = invoice["metadata"].get("user_group_id")
         # Check if invoice is due.
         if user_group_id and invoice["due_date"]:
-            user_group = UserGroup.objects.get(id=user_group_id)
+            user_group = UserGroup.objects.filter(id=user_group_id).first()
+            if not user_group:
+                logger.error(
+                    f"attempt_charge_for_past_due_invoices: UserGroup: {user_group_id} not found for invoice {invoice['id']}"
+                )
+                continue
             if user_group.net_terms == UserGroup.NetTerms.IMMEDIATELY:
                 invoices_due.append(invoice)
             elif invoice["due_date"] < two_weeks_ago.timestamp():
