@@ -126,6 +126,8 @@ class Invoice:
         try:
             # Get the Stripe Invoice object.
             invoice = stripe.Invoice.retrieve(invoice_id)
+            if invoice.status == "paid" or invoice.status == "void":
+                return True, invoice
 
             # Get the Stripe Customer object.
             customer = Customer.get(invoice["customer"])
