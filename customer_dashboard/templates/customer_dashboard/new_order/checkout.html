@@ -444,7 +444,7 @@
                 <!-- Only customers and staff superusers can checkout -->
                 {% if request.user.is_staff and request.user.is_superuser %}
                     <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
-                {% elif request.user.is_staff and not has_delivery %}
+                {% elif request.user.is_staff and not is_first_order %}
                     <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>
                 {% elif not request.user.is_staff %}
                     <button id="form_submit" class="btn btn-primary float-end" type="submit" name="form_submit">Checkout</button>

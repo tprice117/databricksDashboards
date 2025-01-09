@@ -183,8 +183,9 @@ class OrderGroup(BaseModel):
         Based on the OrderGroup.SellerProductSellerLocation's pricing, update the pricing.
         """
         # Update the Delivery Fee and Removal Fee.
-        self.delivery_fee = self.seller_product_seller_location.delivery_fee
-        self.removal_fee = self.seller_product_seller_location.removal_fee
+        if self.is_delivery:
+            self.delivery_fee = self.seller_product_seller_location.delivery_fee
+            self.removal_fee = self.seller_product_seller_location.removal_fee
 
         # Update tonnage_quantity.
         seller_product_seller_location_material_waste_type = (
@@ -200,11 +201,14 @@ class OrderGroup(BaseModel):
         self.save()
 
     def can_seller_decline(self):
-        # Ensure that the only Order in the OrderGroup has a TYPE of DELIVERY. Also, ensure
+        # Ensure that the only Order in the OrderGroup has a TYPE of DELIVERY or PICKUP. Also, ensure
         # that the status of the Order is PENDING.
         if (
             self.orders.count() == 1
-            and self.orders.first().type == Order.Type.DELIVERY
+            and (
+                self.orders.first().type == Order.Type.DELIVERY
+                or self.orders.first().type == Order.Type.PICKUP
+            )
             and self.orders.first().status == Order.Status.PENDING
         ):
             return True
@@ -259,7 +263,7 @@ class OrderGroup(BaseModel):
                 if hasattr(self, "service"):
                     self.service.update_pricing()
 
-                # Update the Pricing of the DELIVERY Order.
+                # Update the Pricing of the DELIVERY or PICKUP Order.
                 order = self.orders.first()
                 order.update_pricing()
 
@@ -380,7 +384,10 @@ class OrderGroup(BaseModel):
             )
         else:
             last_order = orders.first()
-            if last_order.order_type == Order.Type.REMOVAL:
+            if (
+                last_order.order_type == Order.Type.REMOVAL
+                or last_order.order_type == Order.Type.RETURN
+            ):
                 raise Exception(
                     f"Cannot create a removal because last order is already a removal, set for {last_order.end_date}."
                 )
