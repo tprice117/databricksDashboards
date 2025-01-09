@@ -33,6 +33,46 @@
 {% endblock %}
 {% block javascript %}
     <script>
+        const addAttachmentButton = document.getElementById('add-attachments')
+        const formsetDiv = document.getElementById('Attachments-formset')
+        const totalForms = document.getElementById('id_attachments-TOTAL_FORMS')
+        const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML
+        const attachmentForms = document.querySelectorAll('.attachment-form')
+        attachmentForms.forEach(function (form) {
+            const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]')
+            if (deleteInput && deleteInput.value === 'on') {
+                form.style.display = 'none'
+            }
+            const link = form.querySelector('[href]');
+            try {
+                if (link) {
+                    // add an image with the link 30 x 30
+                    const image = document.createElement('img')
+                    image.src = link.href
+                    image.style.width = '50px'
+                    image.style.height = '50px'
+                    // add the image at the end of this form just after the href
+                    const nextSibling = link.nextSibling
+                    form.insertBefore(image, nextSibling)
+                }
+            } catch (error) {
+            }   
+        })
+        addAttachmentButton.addEventListener('click', function () {
+            const currentFormCount = parseInt(totalForms.value)
+            const newFormCount = currentFormCount + 1
+            const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount)
+        
+            formsetDiv.insertAdjacentHTML('beforeend', newFormHtml)
+            totalForms.value = newFormCount
+        })
+        formsetDiv.addEventListener('click', function (event) {
+            if (event.target.classList.contains('remove-location')) {
+                const formToRemove = event.target.closest('.attachment-form')
+                formToRemove.style.display = 'none'
+                formToRemove.querySelector('input[type="hidden"][name$="-DELETE"]').value = 'on'
+            }
+        })
         document.body.addEventListener('htmx:afterRequest', function(evt) {
             if (evt.detail.target.id.startsWith("rating")) {
                 // This should only occur after the rating request is successful
@@ -198,7 +238,7 @@
                         <p style="margin-bottom: 15px;">
                             <strong>Placement Details</strong>
                         </p>
-                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post">
+                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post" enctype="multipart/form-data">
                             {% csrf_token %}
                             <!-- Include the hidden fields -->
                             {% for hidden in placement_form.hidden_fields %}
@@ -249,15 +289,15 @@
                                 {{ attachments_formset.management_form }}
                                 <!-- Hidden template for new forms -->
                                 <div id="empty-form-template" style="display: none;">
-                                    <div class="location-form">
+                                    <div class="attachment-form">
                                             {{ attachments_formset.empty_form }}
                                                 <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
                                             <hr />
                                     </div>
                                 </div>
-                                <div id="location-formset">
+                                <div id="Attachments-formset">
                                     {% for inline in attachments_formset %}
-                                        <div class="location-form">
+                                        <div class="attachment-form">
                                             {{ inline }}
                                                 <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
                                             <hr />

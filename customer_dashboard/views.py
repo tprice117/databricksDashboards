@@ -2663,6 +2663,15 @@ def order_group_detail(request, order_group_id):
     user_address = order_group.user_address
     context["user_address"] = user_address
 
+    OrderGroupAttachmentsFormSet = inlineformset_factory(
+        OrderGroup,
+        OrderGroupAttachment,
+        form=OrderGroupAttachmentsForm,
+        formset=HiddenDeleteFormSet,
+        can_delete=True,
+        extra=0,
+    )
+
     # Get the time since the order was reviewed to prevent old reviews from being changed
     current_time = timezone.now()
     context["orders"] = (
@@ -2707,6 +2716,14 @@ def order_group_detail(request, order_group_id):
                 )
                 form = PlacementDetailsForm(request.POST)
                 context["placement_form"] = form
+                attachments_formset = OrderGroupAttachmentsFormSet(
+                    request.POST, request.FILES, instance=order_group
+                )
+                if attachments_formset.is_valid():
+                    if attachments_formset.has_changed():
+                        attachments_formset.instance = order_group
+                        attachments_formset.save()
+                        save_model = order_group
                 if form.is_valid():
                     if (
                         form.cleaned_data.get("placement_details")
@@ -2725,12 +2742,17 @@ def order_group_detail(request, order_group_id):
                         )
                         save_model = order_group
                 else:
+                    for formy in attachments_formset.forms:
+                        print(formy.errors)
                     raise InvalidFormError(form, "Invalid PlacementDetailsForm")
             if save_model:
                 save_model.save()
                 messages.success(request, "Successfully saved!")
             else:
                 messages.info(request, "No changes detected.")
+            context["attachments_formset"] = OrderGroupAttachmentsFormSet(
+                instance=order_group
+            )
             return render(
                 request, "customer_dashboard/order_group_detail.html", context
             )
@@ -2752,14 +2774,6 @@ def order_group_detail(request, order_group_id):
                 "placement_details": order_group.placement_details,
                 "delivered_to_street": order_group.delivered_to_street,
             }
-        )
-        OrderGroupAttachmentsFormSet = inlineformset_factory(
-            OrderGroup,
-            OrderGroupAttachment,
-            form=OrderGroupAttachmentsForm,
-            formset=HiddenDeleteFormSet,
-            can_delete=True,
-            extra=1,
         )
         context["attachments_formset"] = OrderGroupAttachmentsFormSet(
             instance=order_group
