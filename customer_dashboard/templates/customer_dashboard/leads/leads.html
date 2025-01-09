@@ -12,13 +12,26 @@
   <script>
     const inputOptions = {}
     document
-      .getElementById('lostReason')
+      .getElementById('lost-reason')
       .querySelectorAll('option')
       .forEach((option) => {
         inputOptions[option.value] = option.text
       })
     
+    // Make the owner filter searchable
+    const ownerFilter = document.querySelector('#filter-owner')
+    if (ownerFilter) {
+      new Choices(ownerFilter, {
+        searchEnabled: true,
+        searchChoices: true,
+        removeItemButton: true,
+        noResultsText: 'No results found.',
+        shouldSort: false
+      })
+    }
+    
     function handleLostReason(evt) {
+      // Send a modal popup asking for Lost Reason
       Swal.fire({
         title: 'Please select the reason for losing this lead:',
         input: 'select',
@@ -32,6 +45,7 @@
         }
       }).then((result) => {
         if (result.isConfirmed) {
+          const lostReason = document.getElementById('lost-reason')
           lostReason.value = result.value
           htmx.trigger('#board', 'cardMoved')
         } else {
@@ -60,7 +74,7 @@
           onEnd: function (evt) {
             if (selectableStatuses.includes(evt.to.id) && evt.from.id !== evt.to.id) {
               const status = document.getElementById('status')
-              const movedCard = document.getElementById('movedCard')
+              const movedCard = document.getElementById('moved-card')
               status.value = evt.to.id
               movedCard.value = evt.item.dataset.leadId
               if (evt.to.id === 'junk') {
@@ -90,7 +104,7 @@
     htmx.on('htmx:beforeRequest', function (evt) {
       // On events that trigger an "Edit" modal
       if (evt.detail.target == document.getElementById('edit-card-modal')) {
-        // Don't load card information if it's already loaded
+        // Don't load card information from server if it's already loaded
         const form = document.getElementById('form-card-edit')
         const card = evt.detail.elt
         if (form && form.dataset.leadId == card.dataset.leadId) {
@@ -100,6 +114,7 @@
     })
     
     htmx.on('htmx:afterSwap', function (evt) {
+      // Hide the modals after a submission
       if (evt.detail.requestConfig && evt.detail.requestConfig.verb == 'post') {
         const modals = document.querySelectorAll('.modal')
         modals.forEach((modal) => {
@@ -109,33 +124,69 @@
           }
         })
       }
+      // Save button not being re-enabled for some reason
+      document.getElementById('new-card-submit').disabled = false
     })
   </script>
 {% endblock %}
 {% block content %}
   <div class="container-fluid" hx-disabled-elt="button, .form-control, .form-select">
+    <!-- New Lead Button -->
     <div class="d-flex justify-content-end align-items-center mb-3">
-      <button id="new-lead-button" data-bs-toggle="modal" data-bs-target="#new-card-modal" class="btn btn-primary"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;New Lead</button>
+      <button id="new-lead-button" data-bs-toggle="modal" data-bs-target="#new-card-modal" class="btn btn-primary btn-sm"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;New Lead</button>
     </div>
-    <form hx-post="{% url 'customer_leads_card_move' %}" hx-trigger="cardMoved" hx-target="#board" hx-push-url="false">
+
+    <!-- Filters -->
+    <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
+      <form id="filter-form" action="{% url 'customer_leads' %}" class="row g-3" method="get" hx-get="{% url 'customer_leads_board' %}" hx-target="#board" hx-swap="innerHTML" hx-push-url="false" hx-indicator="#htmx-loading-indicator-status">
+        <div class="row mb-3">
+          <div class="col">
+            <label for="filter-owner">Lead Owner</label>
+            <select id="filter-owner" name="owner" class="form-select" aria-label="Filter by Lead Owner">
+              <option value="">All</option>
+              <option value="unassigned">Unassigned</option>
+              {% for owner in owners %}
+                <option value="{{ owner.id }}">{{ owner }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-group-text" for="filter-date">Estimated Conversion</label>
+          <select class="form-select" id="filter-date" name="est" aria-label="Filter by Estimated Conversion Date">
+            <option value="" selected>Any</option>
+            <option value="today">Today</option>
+            <option value="this_week">This Week</option>
+            <option value="this_month">This Month</option>
+            <option value="overdue">Past Conversion Date</option>
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Move Card Form -->
+    <form hx-post="{% url 'customer_leads_board' %}" hx-trigger="cardMoved" hx-target="#board" hx-push-url="false" hx-include="#filter-form">
+      <input id="action" type="hidden" name="update_status" />
       <input id="status" type="hidden" name="status" />
-      <input id="movedCard" type="hidden" name="lead_id" />
-      <select id="lostReason" name="lost_reason" style="display: none;">
+      <input id="moved-card" type="hidden" name="lead_id" />
+      <select id="lost-reason" name="lost_reason" style="display: none;">
         {% for key, value in lost_reasons.items %}
           <option value="{{ key }}">{{ value }}</option>
         {% endfor %}
       </select>
-      <div class="board" id="board">
-        {% include 'customer_dashboard/leads/leads_kanban_board.html' with board=board %}
-      </div>
+      <!-- Board -->
+      <span id="htmx-indicator-board" class="htmx-indicator">Loading <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+      <div class="board" id="board" hx-get="{% url 'customer_leads_board' %}" hx-swap="innerHTML" hx-indicator="#htmx-indicator-board" hx-trigger="load, change from:#filter-form" hx-include="#filter-form"></div>
     </form>
   </div>
 {% endblock %}
 {% block modals %}
-  <div id="new-card-modal" class="modal modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1">
+  <!-- New Lead -->
+  <div id="new-card-modal" class="modal modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button, .form-control, .form-select">
     {% include 'customer_dashboard/leads/leads_kanban_card_new.html' with form=new_lead_form %}
   </div>
-  <div id="edit-card-modal" class="modal modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1">
+  <!-- Lead Details -->
+  <div id="edit-card-modal" class="modal modal-lg modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button, .form-control, .form-select">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div id="htmx-indicator-loading-card" class="modal-content">
         <div class="modal-header">

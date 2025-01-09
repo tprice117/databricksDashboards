@@ -234,9 +234,9 @@ urlpatterns = [
     path("customer/reviews/", views.reviews, name="customer_reviews"),
     path("customer/leads/", views.leads, name="customer_leads"),
     path(
-        "customer/leads/new/",
-        views.leads_new,
-        name="customer_leads_new",
+        "customer/leads/board/",
+        views.leads_board,
+        name="customer_leads_board",
     ),
     path(
         "customer/leads/<uuid:lead_id>/",
@@ -247,10 +247,5 @@ urlpatterns = [
         "customer/leads/<uuid:lead_id>/edit/",
         views.leads_card_edit,
         name="customer_leads_card_edit",
-    ),
-    path(
-        "customer/leads/card/move",
-        views.leads_card_move,
-        name="customer_leads_card_move",
     ),
 ]

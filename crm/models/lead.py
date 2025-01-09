@@ -37,6 +37,20 @@ class Lead(BaseModel):
         INTERESTED = "interested", _("Interest Expressed/Nurturing")
         JUNK = "junk", _("Junk")
 
+        @classmethod
+        def get_ordered_choices(cls):
+            """Return the Lead.Status.choices in a specific order."""
+            ordered_statuses = [
+                cls.SIGN_UP,
+                cls.LOCATION,
+                cls.MANUAL,
+                cls.INTERESTED,
+                cls.CONVERTED,
+                cls.JUNK,
+            ]
+            choices_dict = dict(cls.choices)
+            return [(status, choices_dict[status]) for status in ordered_statuses]
+
     class Type(models.TextChoices):
         """
         Lead.Type is an enumeration of possible types for a lead in the CRM system.
