@@ -93,28 +93,27 @@ class CheckoutUtils:
                         f"Company does not have enough credit to checkout [credit: {user_address.user_group.credit_limit_remaining} | total: {total:.2f}]."
                     )
             else:
-                pass
-                # invoice_and_pay = False
-                # if not user_address.user_group:
-                #     invoice_and_pay = True
-                # elif (
-                #     user_address.user_group.invoice_frequency
-                #     == user_address.user_group.InvoiceFrequency.IMMEDIATELY
-                # ):
-                #     invoice_and_pay = True
-                # if invoice_and_pay:
-                #     # Create a stripe invoice and pay it.
-                #     is_paid, stripe_invoice = (
-                #         BillingUtils.create_stripe_invoice_for_cart(
-                #             user_address,
-                #             orders,
-                #             raise_error=True,
-                #         )
-                #     )
-                #     if not is_paid:
-                #         raise ValidationError(
-                #             f"Failed to pay invoice. Please contact us for help. [{stripe_invoice}]"
-                #         )
+                invoice_and_pay = False
+                if not user_address.user_group:
+                    invoice_and_pay = True
+                elif (
+                    user_address.user_group.net_terms
+                    == user_address.user_group.NetTerms.IMMEDIATELY
+                ):
+                    invoice_and_pay = True
+                if invoice_and_pay:
+                    # Create a stripe invoice and pay it.
+                    is_paid, stripe_invoice = (
+                        BillingUtils.create_stripe_invoice_for_cart(
+                            user_address,
+                            orders,
+                            raise_error=True,
+                        )
+                    )
+                    if not is_paid:
+                        raise ValidationError(
+                            f"Failed to pay invoice. Please contact us for help. [{stripe_invoice}]"
+                        )
 
             # Submit all the orders.
             for order in orders:
