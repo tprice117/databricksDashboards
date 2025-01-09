@@ -844,7 +844,11 @@ class CartUtils:
             address_bucket["total"] += customer_price
             address_bucket["count"] += 1
 
-            if order.order_type in {Order.Type.DELIVERY, Order.Type.ONE_TIME}:
+            if order.order_type in {
+                Order.Type.DELIVERY,
+                Order.Type.PICKUP,
+                Order.Type.ONE_TIME,
+            }:
                 address_bucket["show_quote"] = True
 
             cart_data["subtotal"] += customer_price

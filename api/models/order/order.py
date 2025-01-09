@@ -124,6 +124,8 @@ def get_pricing_engine_response_serializer():
 class Order(BaseModel):
     class Type(models.TextChoices):
         DELIVERY = "DELIVERY"
+        PICKUP = "PICKUP"
+        RETURN = "RETURN"
         SWAP = "SWAP"
         REMOVAL = "REMOVAL"
         AUTO_RENEWAL = "AUTO_RENEWAL"
@@ -260,6 +262,7 @@ class Order(BaseModel):
     def requires_terms_agreement(self):
         if (
             self.order_type == Order.Type.DELIVERY
+            or self.order_type == Order.Type.PICKUP
             or self.order_type == Order.Type.ONE_TIME
         ):
             return True
@@ -365,7 +368,10 @@ class Order(BaseModel):
             )
             and is_first_order
         ):
-            return Order.Type.DELIVERY
+            if self.order_group.is_delivery:
+                return Order.Type.DELIVERY
+            else:
+                return Order.Type.PICKUP
         elif (
             order_count == 1
             and order_group_start_equal
@@ -375,8 +381,14 @@ class Order(BaseModel):
             return Order.Type.ONE_TIME
         elif order_group_end_equal and order_count > 1:
             if is_first_order:
-                return Order.Type.DELIVERY
-            return Order.Type.REMOVAL
+                if self.order_group.is_delivery:
+                    return Order.Type.DELIVERY
+                else:
+                    return Order.Type.PICKUP
+            if not self.order_group.is_delivery:
+                return Order.Type.RETURN
+            else:
+                return Order.Type.REMOVAL
         elif order_count > 1 and not order_group_end_equal and not auto_renews:
             return Order.Type.SWAP
         elif auto_renews:
