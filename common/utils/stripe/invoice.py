@@ -126,6 +126,8 @@ class Invoice:
         try:
             # Get the Stripe Invoice object.
             invoice = stripe.Invoice.retrieve(invoice_id)
+            if invoice.status == "paid" or invoice.status == "void":
+                return True, invoice
 
             # Get the Stripe Customer object.
             customer = Customer.get(invoice["customer"])
@@ -135,6 +137,10 @@ class Invoice:
                 stripe_customer_id=invoice["customer"]
             )
             user_address_id = str(user_address.id)
+
+            if not customer.invoice_settings.default_payment_method:
+                # Attempt to attach a default payment method to the customer.
+                customer = Customer.ensure_default_payment_method(customer.id)
 
             if customer.invoice_settings.default_payment_method:
                 # Get the Stripe PaymentMethod object.
