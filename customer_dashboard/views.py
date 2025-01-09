@@ -1157,7 +1157,10 @@ def customer_cart_date_edit(request, order_id):
                 context,
             )
         if not request.POST.get("save"):
-            if order.get_order_type() == Order.Type.DELIVERY:
+            if (
+                order.get_order_type() == Order.Type.DELIVERY
+                or order.get_order_type() == Order.Type.PICKUP
+            ):
                 form = EditOrderDateForm(
                     instance=order,
                     initial={"date": order.start_date.strftime("%Y-%m-%d")},
@@ -1181,7 +1184,10 @@ def customer_cart_date_edit(request, order_id):
 
         if request.POST.get("save"):
             oldDate = order_group.start_date
-            if order.get_order_type() == Order.Type.DELIVERY:
+            if (
+                order.get_order_type() == Order.Type.DELIVERY
+                or order.get_order_type() == Order.Type.PICKUP
+            ):
                 form = EditOrderDateForm(
                     request.POST,
                     request.FILES,
@@ -1247,7 +1253,10 @@ def customer_cart_date_edit(request, order_id):
                             next_order.save()
 
                     # recreate all the order line items
-                    if order.get_order_type() == Order.Type.DELIVERY:
+                    if (
+                        order.get_order_type() == Order.Type.DELIVERY
+                        or order.get_order_type() == Order.Type.PICKUP
+                    ):
                         # for a DELIVERY edit the start date
                         # the start date on the order group is the same
                         # the start date of the next order is the same
@@ -1259,7 +1268,10 @@ def customer_cart_date_edit(request, order_id):
                         bumpOrders(is_swap=True)
                         # for a SWAP edit the end date
                         # the end date of the next order is the same
-                    elif order.get_order_type() == Order.Type.REMOVAL:
+                    elif (
+                        order.get_order_type() == Order.Type.REMOVAL
+                        or order.get_order_type() == Order.Type.RETURN
+                    ):
                         # for a REMOVAL edit the end date
                         # the end date on the order group is the same
                         oldDate = order.end_date
@@ -1471,9 +1483,9 @@ def new_order_5(request):
             # This means that we never set the removal date on the OrderGroup when creating it.
             # if removal_date:
             #     order_group.end_date = removal_date
-            if seller_product_location.delivery_fee:
+            if seller_product_location.delivery_fee and is_delivery:
                 order_group.delivery_fee = seller_product_location.delivery_fee
-            if seller_product_location.removal_fee:
+            if seller_product_location.removal_fee and is_delivery:
                 order_group.removal_fee = seller_product_location.removal_fee
             if schedule_window:
                 time_slot_name = schedule_window.split(" ")[0]
@@ -2250,6 +2262,7 @@ def checkout(request, user_address_id):
             context["show_terms"] = True
         if (
             order.order_type == Order.Type.DELIVERY
+            or order.order_type == Order.Type.PICKUP
             or order.order_type == Order.Type.ONE_TIME
         ):
             context["has_delivery"] = True

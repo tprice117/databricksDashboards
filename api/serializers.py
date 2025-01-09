@@ -710,6 +710,8 @@ class OrderSerializer(serializers.ModelSerializer):
         Union[
             Literal[
                 Order.Type.DELIVERY,
+                Order.Type.PICKUP,
+                Order.Type.RETURN,
                 Order.Type.ONE_TIME,
                 Order.Type.REMOVAL,
                 Order.Type.SWAP,
