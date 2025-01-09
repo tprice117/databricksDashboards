@@ -386,48 +386,34 @@ def get_location_objects(
         owner_id (str): [Optional] ID of owner of usergroup. (Only if user is staff)
 
     Returns:
-        QuerySet[Location] | list[Location]: The locations queryset.
+        QuerySet[UserAddress] : The locations queryset.
     """
     if not request.user.is_staff and user.type != UserType.ADMIN:
-        user_user_locations = UserUserAddress.objects.filter(
-            user_id=user.id
-        ).select_related("user_address")
-
-        if search_q:
-            user_user_locations = user_user_locations.filter(
-                Q(user_address__name__icontains=search_q)
-                | Q(user_address__street__icontains=search_q)
-                | Q(user_address__city__icontains=search_q)
-                | Q(user_address__state__icontains=search_q)
-                | Q(user_address__postal_code__icontains=search_q)
-            )
-        user_user_locations = user_user_locations.order_by("-user_address__created_on")
-        locations = [
-            user_user_location.user_address
-            for user_user_location in user_user_locations
-        ]
+        locations = UserAddress.objects.for_user(user).order_by("-created_on")
     else:
         if request.user.is_staff and not is_impersonating(request):
             # Global View: Get all locations.
-            locations = UserAddress.objects.all()
-            locations = locations.order_by("name", "-created_on")
+            locations = UserAddress.objects.for_user(request.user).order_by(
+                "name", "-created_on"
+            )
         elif user_group:
-            locations = UserAddress.objects.filter(user_group_id=user_group.id)
-            locations = locations.order_by("-created_on")
+            locations = UserAddress.objects.filter(
+                user_group_id=user_group.id
+            ).order_by("-created_on")
         else:
             # Individual user. Get all locations for the user.
-            locations = UserAddress.objects.filter(user_id=user.id)
-            locations = locations.order_by("-created_on")
-        if search_q:
-            locations = locations.filter(
-                Q(name__icontains=search_q)
-                | Q(street__icontains=search_q)
-                | Q(city__icontains=search_q)
-                | Q(state__icontains=search_q)
-                | Q(postal_code__icontains=search_q)
-            )
-        if owner_id:
-            locations = locations.filter(user_group__account_owner_id=owner_id)
+            locations = UserAddress.objects.for_user(user).order_by("-created_on")
+
+    if search_q:
+        locations = locations.filter(
+            Q(name__icontains=search_q)
+            | Q(street__icontains=search_q)
+            | Q(city__icontains=search_q)
+            | Q(state__icontains=search_q)
+            | Q(postal_code__icontains=search_q)
+        )
+    if owner_id:
+        locations = locations.filter(user_group__account_owner_id=owner_id)
     return locations
 
 
@@ -645,6 +631,12 @@ def customer_impersonation_stop(request):
     if request.session.get("customer_user_group_id"):
         del request.session["customer_user_group_id"]
     return HttpResponseRedirect("/customer/")
+
+
+@login_required(login_url="/admin/login/")
+def customer_user_addresses(request, user_id):
+    user = User.objects.get(id=user_id)
+    user_addresses = UserAddress.objects.for_user(user)
 
 
 def get_user_context(request: HttpRequest, add_user_group=True):
@@ -4705,6 +4697,10 @@ def create_lead_board(leads):
 def leads(request):
     context = get_user_context(request)
     if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    if settings.ENVIRONMENT == "TEST":
+        messages.info(request, "This feature is not ready yet! Check again later :).")
         return HttpResponseRedirect(reverse("customer_home"))
 
     context.update(

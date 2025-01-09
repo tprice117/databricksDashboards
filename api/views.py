@@ -204,20 +204,8 @@ class UserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
-            return self.queryset
-        elif self.request.user.user_group and self.request.user.type == UserType.ADMIN:
-            # If User is in a UserGroup and is Admin.
-            return self.queryset.filter(user_group=self.request.user.user_group)
-        elif self.request.user.user_group and self.request.user.type != UserType.ADMIN:
-            # If User is in a UserGroup and is not Admin.
-            user_address_ids = UserUserAddress.objects.filter(
-                user=self.request.user
-            ).values_list("user_address__id", flat=True)
-            return self.queryset.filter(id__in=user_address_ids)
-        else:
-            # If User is not in a UserGroup.
-            return self.queryset.filter(user=self.request.user)
+        # Using queryset defined in api/managers/user_address.py
+        return self.queryset.for_user(self.request.user)
 
 
 class UserViewSet(viewsets.ModelViewSet):
