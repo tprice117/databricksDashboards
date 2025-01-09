@@ -1,8 +1,8 @@
 import datetime
 
+from django.conf import settings
 from django.db.models import F, Q
 from django.utils import timezone
-from django.conf import settings
 
 from api.models import Order, OrderGroup
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
@@ -21,6 +21,11 @@ def create_auto_renewal_orders():
     active_order_groups = OrderGroup.objects.filter(
         Q(end_date__gte=timezone.now()) | Q(end_date__isnull=True)
     )
+
+    # Double check that only active OrderGroups are being processed.
+    active_order_groups = [
+        order_group for order_group in active_order_groups if order_group.is_active
+    ]
 
     # Create list of OrderGroups that need to auto-renew.
     order_groups_that_needs_to_auto_renew = []
