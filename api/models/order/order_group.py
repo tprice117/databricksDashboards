@@ -1,11 +1,12 @@
+import datetime
 import logging
 import uuid
-import datetime
 
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from api.models import Order
 from api.models.day_of_week import DayOfWeek
@@ -146,6 +147,25 @@ class OrderGroup(BaseModel):
     @property
     def get_code(self):
         return f"B-{self.code}"
+
+    @property
+    def is_active(self):
+        # Check if the OrderGroup is "closed".
+        # An OrderGroup is closed if:
+        # 1) The EndDate is NOT None.
+        # 2) The EndDate is in the past.
+        end_date_past = self.end_date and self.end_date < timezone.now().date()
+
+        # Check if this OrderGroup is "stale".
+        # An OrderGroup is stale if any are True:
+        # 1) There are no Orders for the OrderGroup.
+        # 2) There is 1 Order in the OrderGroup and the Order.Status is CANCELLED.
+        is_stale = self.orders.count() == 0 or (
+            self.orders.count() == 1
+            and self.orders.first().status == Order.Status.CANCELLED
+        )
+
+        return not end_date_past and not is_stale
 
     @property
     def status(self):
