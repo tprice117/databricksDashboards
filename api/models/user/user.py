@@ -6,7 +6,7 @@ from typing import List
 
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save
@@ -152,7 +152,7 @@ class User(AbstractUser):
     )
 
     # Managers
-    objects = BaseUserManager()  # Default manager
+    objects = UserManager()  # Default manager
     customer_team_users = CustomerTeamManager()
 
     def __str__(self):
