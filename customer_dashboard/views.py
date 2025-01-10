@@ -2378,7 +2378,10 @@ def order_group_swap(request, order_group_id, is_removal=False):
     if request.method == "POST":
         try:
             form = OrderGroupSwapForm(
-                request.POST, request.FILES, auth_user=request.user
+                request.POST,
+                request.FILES,
+                auth_user=request.user,
+                is_removal=is_removal,
             )
             context["form"] = form
             if form.is_valid():
@@ -2426,6 +2429,7 @@ def order_group_swap(request, order_group_id, is_removal=False):
                 "order_group_start_date": order_group.start_date,
             },
             auth_user=request.user,
+            is_removal=is_removal,
         )
 
     return render(request, "customer_dashboard/snippets/order_group_swap.html", context)
