@@ -1,8 +1,8 @@
 from django.conf import settings
-from django.db import models
+from django.contrib.auth.models import BaseUserManager
 
 
-class CustomerTeamManager(models.Manager):
+class CustomerTeamManager(BaseUserManager):
     def get_queryset(self):
         if settings.ENVIRONMENT == "TEST":
             # PROD: Downstream Team

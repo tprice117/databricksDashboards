@@ -10,6 +10,8 @@
 {% block javascript %}
   <script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <script>
+    // Dictionary to map the lost reasons to their respective values
+    // Used for handleLostReason Modal
     const inputOptions = {}
     document
       .getElementById('lost-reason')
@@ -17,18 +19,6 @@
       .forEach((option) => {
         inputOptions[option.value] = option.text
       })
-    
-    // Make the owner filter searchable
-    const ownerFilter = document.querySelector('#filter-owner')
-    if (ownerFilter) {
-      new Choices(ownerFilter, {
-        searchEnabled: true,
-        searchChoices: true,
-        removeItemButton: true,
-        noResultsText: 'No results found.',
-        shouldSort: false
-      })
-    }
     
     function handleLostReason(evt) {
       // Send a modal popup asking for Lost Reason
@@ -43,24 +33,73 @@
             return 'Please select a reason.'
           }
         }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          const lostReason = document.getElementById('lost-reason')
-          lostReason.value = result.value
-          htmx.trigger('#board', 'cardMoved')
-        } else {
-          // Refresh the board
+      })
+        .then((result) => {
+          if (result.isConfirmed) {
+            const lostReason = document.getElementById('lost-reason')
+            lostReason.value = result.value
+            htmx.trigger('#board', 'cardMoved')
+          } else {
+            // Refresh the board
+            const status = document.getElementById('status')
+            status.value = evt.from.id
+            htmx.trigger('#board', 'cardMoved')
+          }
+        })
+        .catch(() => {
+          // Refresh the board in case of an error
           const status = document.getElementById('status')
           status.value = evt.from.id
           htmx.trigger('#board', 'cardMoved')
-        }
+        })
+    }
+    
+    // Removes the dropdown results from an element
+    function removeAutocompleteDropdown() {
+      let dropdownItems = document.querySelectorAll('.my-dropdown-item')
+      dropdownItems.forEach(function (item) {
+        item.remove()
+      })
+    }
+    
+    // Sets dropdown selection to input[#id_user_address] value
+    function addUserAddressAutocompleteListeners() {
+      let dropdownItems = document.querySelectorAll('.my-dropdown-item')
+      dropdownItems.forEach(function (item) {
+        item.addEventListener('click', function () {
+          // Update the display field with the user_address's name
+          document.getElementById('user_address-search').value = item.getAttribute('data-name')
+          // Update the hidden field with the user_address's ID
+          document.getElementById('id_user_address').value = item.getAttribute('data-id')
+          removeAutocompleteDropdown()
+        })
+      })
+    }
+    
+    // On Click event, close the dropdown unless the user is clicking on the search input
+    document.addEventListener('click', function (e) {
+      if (e.target != document.getElementById('user_address-search')) {
+        removeAutocompleteDropdown()
+      }
+    })
+    
+    // Make the owner filter searchable
+    const ownerFilter = document.getElementById('filter-owner')
+    if (ownerFilter) {
+      new Choices(ownerFilter, {
+        searchEnabled: true,
+        searchChoices: true,
+        removeItemButton: true,
+        noResultsText: 'No results found.',
+        shouldSort: false
       })
     }
     
     htmx.onLoad(function (content) {
+      // Kanban Sorting functionality START
       const sortables = content.querySelectorAll('.sortable')
       const selectableStatuses = '{{ selectable_statuses|escapejs }}'
-      // prevent multiple requests from being sent concurrently
+      // Prevent multiple requests from being sent concurrently
       let isRequestInProgress = false
     
       sortables.forEach((sortable) => {
@@ -68,7 +107,7 @@
           group: 'kanban',
           sort: false,
           onMove: function (evt) {
-            // prevent moving to a non-selectable status
+            // Prevent moving to a non-selectable status
             return selectableStatuses.includes(evt.to.id) && !isRequestInProgress
           },
           onEnd: function (evt) {
@@ -99,6 +138,33 @@
           instance.option('disabled', false)
         })
       })
+      // Kanban Sorting functionality END
+    
+      // Card Edit Form functionality START
+      addUserAddressAutocompleteListeners()
+    
+      // Make the user select searchable
+      const userSelect = document.querySelectorAll('.select-user').forEach((userSelect) => {
+        new Choices(userSelect, {
+          searchEnabled: true,
+          searchChoices: true,
+          removeItemButton: true,
+          noResultsText: 'No results found.',
+          shouldSort: false
+        })
+      })
+    
+      // Prevent the form from submitting when Enter is pressed
+      // This is so the form isn't accidently submitted while searching for an address
+      const form = content.querySelector('form')
+      if (form) {
+        form.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+          }
+        })
+      }
+      // Card Edit Form functionality END
     })
     
     htmx.on('htmx:beforeRequest', function (evt) {
@@ -124,8 +190,6 @@
           }
         })
       }
-      // Save button not being re-enabled for some reason
-      document.getElementById('new-card-submit').disabled = false
     })
   </script>
 {% endblock %}
@@ -133,7 +197,7 @@
   <div class="container-fluid" hx-disabled-elt="button, .form-control, .form-select">
     <!-- New Lead Button -->
     <div class="d-flex justify-content-end align-items-center mb-3">
-      <button id="new-lead-button" data-bs-toggle="modal" data-bs-target="#new-card-modal" class="btn btn-primary btn-sm"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;New Lead</button>
+      <button id="new-lead-button" hx-get="{% url 'customer_leads_card_new' %}" hx-target="#edit-card-modal" hx-swap="innerHTML" hx-indicator=".htmx-indicator-card" data-bs-toggle="modal" data-bs-target="#edit-card-modal" data-lead-id="new" class="btn btn-primary btn-sm"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;New Lead</button>
     </div>
 
     <!-- Filters -->
@@ -179,14 +243,12 @@
       <div class="board" id="board" hx-get="{% url 'customer_leads_board' %}" hx-swap="innerHTML" hx-indicator="#htmx-indicator-board" hx-trigger="load, change from:#filter-form" hx-include="#filter-form"></div>
     </form>
   </div>
+  <!-- Empty object to avoid errors from hx-indicator -->
+  <div class="htmx-indicator-card" style="display: none;"></div>
 {% endblock %}
 {% block modals %}
-  <!-- New Lead -->
-  <div id="new-card-modal" class="modal modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button, .form-control, .form-select">
-    {% include 'customer_dashboard/leads/leads_kanban_card_new.html' with form=new_lead_form %}
-  </div>
   <!-- Lead Details -->
-  <div id="edit-card-modal" class="modal modal-lg modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button, .form-control, .form-select">
+  <div id="edit-card-modal" class="modal modal-lg modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div id="htmx-indicator-loading-card" class="modal-content">
         <div class="modal-header">

@@ -244,6 +244,12 @@ urlpatterns = [
         name="customer_leads_card",
     ),
     path(
+        "customer/leads/new",
+        views.leads_card_edit,
+        {"lead_id": None},
+        name="customer_leads_card_new",
+    ),
+    path(
         "customer/leads/<uuid:lead_id>/edit/",
         views.leads_card_edit,
         name="customer_leads_card_edit",

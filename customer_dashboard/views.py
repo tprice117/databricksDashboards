@@ -819,21 +819,28 @@ def new_order_category_price(request, category_id):
 
 
 @login_required(login_url="/admin/login/")
+@require_GET
 def user_address_search(request):
-    context = get_user_context(request)
-    if request.method == "POST":
-        search = request.POST.get("q")
-        search = search.strip()
-        if not search:
-            return HttpResponse(status=204)
-        try:
-            user_address_id = uuid.UUID(search)
-            user_addresses = UserAddress.objects.filter(id=user_address_id)
-        except ValueError:
+    search = request.GET.get("q")
+    if not search:
+        return HttpResponse(status=204)
+
+    context = {}
+    search = search.strip()
+    user_addresses = UserAddress.objects.none()
+    if user_id := request.GET.get("user"):
+        if user_id != "None":
+            user = User.objects.get(id=user_id)
             user_addresses = get_location_objects(
-                request, context["user"], context["user_group"], search_q=search
+                request, user, user.user_group, search_q=search
             )
-        context["user_addresses"] = user_addresses
+    else:
+        context.update(get_user_context(request))
+        user_addresses = get_location_objects(
+            request, context["user"], context["user_group"], search_q=search
+        )
+
+    context["user_addresses"] = user_addresses
 
     return render(
         request,
@@ -3636,11 +3643,19 @@ def user_update_email(request, user_id):
 @catch_errors()
 def new_user(request):
     context = get_user_context(request)
+    redirect_url = request.GET.get("return_to")
 
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
         messages.error(request, "Only admins can create new users.")
-        return HttpResponseRedirect(reverse("customer_users"))
+
+        if redirect_url:
+            return HttpResponseRedirect(redirect_url)
+        else:
+            return HttpResponseRedirect(reverse("customer_users"))
+
+    if redirect_url:
+        request.session["new_user_return_to"] = redirect_url
 
     if request.method == "POST":
         try:
@@ -3711,7 +3726,14 @@ def new_user(request):
                 messages.success(request, "Successfully saved!")
             elif show_default_message:
                 messages.info(request, "No changes detected.")
-            return HttpResponseRedirect(reverse("customer_users"))
+
+            redirect_url = request.session.get(
+                "new_user_return_to",
+                reverse("customer_users"),
+            )
+            if "new_user_return_to" in request.session:
+                del request.session["new_user_return_to"]
+            return HttpResponseRedirect(redirect_url)
         except UserAlreadyExistsError:
             messages.error(request, "User with that email already exists.")
         except InvalidFormError as e:
@@ -4738,24 +4760,25 @@ def leads_board(request):
 
             lead = Lead.objects.get(id=lead_id)
             if status != lead.status:
-                if status == Lead.Status.JUNK:
-                    lost_reason = request.POST.get("lost_reason")
-                    if not lost_reason:
-                        messages.error(request, "Lost Reason is required")
-                        return HttpResponse("Lost Reason is required", status=400)
-                    lead.lost_reason = lost_reason
-                else:
-                    lead.lost_reason = None
-
                 lead.status = status
-                lead.save()
+                if status != Lead.Status.JUNK:
+                    lead.lost_reason = None
+                try:
+                    lead.clean()
+                    lead.save()
+                except ValidationError as e:
+                    messages.error(
+                        request, f"Error updating lead: {','.join(e.messages)}"
+                    )
         elif "new_card" in request.POST:
             form = LeadForm(request.POST)
             if form.is_valid():
                 form.save()
                 messages.success(request, "Lead created successfully.")
             else:
-                messages.error(request, "Error creating lead.")
+                messages.error(
+                    request, f"Error creating lead. {form.non_field_errors().as_text()}"
+                )
     else:
         # Get filter parameters from the request
         owner_filter = request.GET.get("owner")
@@ -4806,13 +4829,12 @@ def leads_card(request, lead_id):
     if request.method == "POST":
         form = LeadForm(request.POST, instance=lead)
         if form.is_valid():
-            if form.has_changed():
-                lead = form.save()
-                messages.success(request, "Lead saved successfully")
-            else:
-                messages.info(request, "No changes detected.")
+            lead = form.save()
+            messages.success(request, "Lead saved successfully")
         else:
-            messages.error(request, "Error saving lead.")
+            messages.error(
+                request, f"Error saving lead: {form.non_field_errors().as_text()}"
+            )
 
     context.update({"lead": lead})
 
@@ -4820,15 +4842,20 @@ def leads_card(request, lead_id):
 
 
 @login_required(login_url="/admin/login/")
-def leads_card_edit(request, lead_id):
+def leads_card_edit(request, lead_id=None):
     context = {}
     if not request.user.is_staff:
         return HttpResponse("Unauthorized", status=401)
-    if not Lead.objects.filter(id=lead_id).exists():
-        return HttpResponse("Not found", status=404)
 
-    lead = Lead.objects.get(id=lead_id)
-    form = LeadForm(instance=lead)
+    if lead_id:
+        if not Lead.objects.filter(id=lead_id).exists():
+            return HttpResponse("Not found", status=404)
+
+        lead = Lead.objects.get(id=lead_id)
+        form = LeadForm(instance=lead)
+    else:
+        lead = None
+        form = LeadForm()
 
     context.update(
         {
