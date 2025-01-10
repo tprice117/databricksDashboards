@@ -4792,7 +4792,7 @@ def leads_board(request):
                 )
     else:
         # Get filter parameters from the request
-        owner_filter = request.GET.get("owner")
+        owner_filter = request.GET.get("owned_by")
         est_conversion_filter = request.GET.get("est")
 
     leads = Lead.objects.all().order_by("-created_on")
@@ -4821,7 +4821,7 @@ def leads_board(request):
     context.update(
         {
             "board": board,
-            "owner_filter": owner_filter,
+            "owned_by": owner_filter,
             "est_conversion_filter": est_conversion_filter,
         }
     )

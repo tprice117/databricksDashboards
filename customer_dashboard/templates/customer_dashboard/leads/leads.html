@@ -66,6 +66,11 @@
     function addUserAddressAutocompleteListeners() {
       let dropdownItems = document.querySelectorAll('.my-dropdown-item')
       dropdownItems.forEach(function (item) {
+        if (item.getAttribute('data-id') === '') {
+          // Empty element
+          document.getElementById('id_user_address').value = null
+          return
+        }
         item.addEventListener('click', function () {
           // Update the display field with the user_address's name
           document.getElementById('user_address-search').value = item.getAttribute('data-name')
