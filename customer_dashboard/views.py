@@ -386,48 +386,34 @@ def get_location_objects(
         owner_id (str): [Optional] ID of owner of usergroup. (Only if user is staff)
 
     Returns:
-        QuerySet[Location] | list[Location]: The locations queryset.
+        QuerySet[UserAddress] : The locations queryset.
     """
     if not request.user.is_staff and user.type != UserType.ADMIN:
-        user_user_locations = UserUserAddress.objects.filter(
-            user_id=user.id
-        ).select_related("user_address")
-
-        if search_q:
-            user_user_locations = user_user_locations.filter(
-                Q(user_address__name__icontains=search_q)
-                | Q(user_address__street__icontains=search_q)
-                | Q(user_address__city__icontains=search_q)
-                | Q(user_address__state__icontains=search_q)
-                | Q(user_address__postal_code__icontains=search_q)
-            )
-        user_user_locations = user_user_locations.order_by("-user_address__created_on")
-        locations = [
-            user_user_location.user_address
-            for user_user_location in user_user_locations
-        ]
+        locations = UserAddress.objects.for_user(user).order_by("-created_on")
     else:
         if request.user.is_staff and not is_impersonating(request):
             # Global View: Get all locations.
-            locations = UserAddress.objects.all()
-            locations = locations.order_by("name", "-created_on")
+            locations = UserAddress.objects.for_user(request.user).order_by(
+                "name", "-created_on"
+            )
         elif user_group:
-            locations = UserAddress.objects.filter(user_group_id=user_group.id)
-            locations = locations.order_by("-created_on")
+            locations = UserAddress.objects.filter(
+                user_group_id=user_group.id
+            ).order_by("-created_on")
         else:
             # Individual user. Get all locations for the user.
-            locations = UserAddress.objects.filter(user_id=user.id)
-            locations = locations.order_by("-created_on")
-        if search_q:
-            locations = locations.filter(
-                Q(name__icontains=search_q)
-                | Q(street__icontains=search_q)
-                | Q(city__icontains=search_q)
-                | Q(state__icontains=search_q)
-                | Q(postal_code__icontains=search_q)
-            )
-        if owner_id:
-            locations = locations.filter(user_group__account_owner_id=owner_id)
+            locations = UserAddress.objects.for_user(user).order_by("-created_on")
+
+    if search_q:
+        locations = locations.filter(
+            Q(name__icontains=search_q)
+            | Q(street__icontains=search_q)
+            | Q(city__icontains=search_q)
+            | Q(state__icontains=search_q)
+            | Q(postal_code__icontains=search_q)
+        )
+    if owner_id:
+        locations = locations.filter(user_group__account_owner_id=owner_id)
     return locations
 
 
@@ -647,6 +633,12 @@ def customer_impersonation_stop(request):
     return HttpResponseRedirect("/customer/")
 
 
+@login_required(login_url="/admin/login/")
+def customer_user_addresses(request, user_id):
+    user = User.objects.get(id=user_id)
+    user_addresses = UserAddress.objects.for_user(user)
+
+
 def get_user_context(request: HttpRequest, add_user_group=True):
     """Returns the common context data for the views."""
     context = {}
@@ -827,21 +819,37 @@ def new_order_category_price(request, category_id):
 
 
 @login_required(login_url="/admin/login/")
+@require_GET
 def user_address_search(request):
-    context = get_user_context(request)
-    if request.method == "POST":
-        search = request.POST.get("q")
-        search = search.strip()
-        if not search:
-            return HttpResponse(status=204)
-        try:
-            user_address_id = uuid.UUID(search)
-            user_addresses = UserAddress.objects.filter(id=user_address_id)
-        except ValueError:
-            user_addresses = get_location_objects(
-                request, context["user"], context["user_group"], search_q=search
+    search = request.GET.get("q")
+    if not search:
+        return HttpResponse(status=204)
+
+    context = {}
+    search = search.strip()
+    user_addresses = UserAddress.objects.none()
+    if user_id := request.GET.get("user"):
+        if user_id != "None":
+            user = User.objects.get(id=user_id)
+            # Don't use request.user here, as we want to show the locations for the user only.
+            user_addresses = (
+                UserAddress.objects.for_user(user)
+                .filter(
+                    Q(name__icontains=search)
+                    | Q(street__icontains=search)
+                    | Q(city__icontains=search)
+                    | Q(state__icontains=search)
+                    | Q(postal_code__icontains=search)
+                )
+                .order_by("-created_on")
             )
-        context["user_addresses"] = user_addresses
+    else:
+        context.update(get_user_context(request))
+        user_addresses = get_location_objects(
+            request, context["user"], context["user_group"], search_q=search
+        )
+
+    context["user_addresses"] = user_addresses
 
     return render(
         request,
@@ -3660,11 +3668,19 @@ def user_update_email(request, user_id):
 @catch_errors()
 def new_user(request):
     context = get_user_context(request)
+    redirect_url = request.GET.get("return_to")
 
     # Only allow admin to create new users.
     if context["user"].type != UserType.ADMIN:
         messages.error(request, "Only admins can create new users.")
-        return HttpResponseRedirect(reverse("customer_users"))
+
+        if redirect_url:
+            return HttpResponseRedirect(redirect_url)
+        else:
+            return HttpResponseRedirect(reverse("customer_users"))
+
+    if redirect_url:
+        request.session["new_user_return_to"] = redirect_url
 
     if request.method == "POST":
         try:
@@ -3735,7 +3751,14 @@ def new_user(request):
                 messages.success(request, "Successfully saved!")
             elif show_default_message:
                 messages.info(request, "No changes detected.")
-            return HttpResponseRedirect(reverse("customer_users"))
+
+            redirect_url = request.session.get(
+                "new_user_return_to",
+                reverse("customer_users"),
+            )
+            if "new_user_return_to" in request.session:
+                del request.session["new_user_return_to"]
+            return HttpResponseRedirect(redirect_url)
         except UserAlreadyExistsError:
             messages.error(request, "User with that email already exists.")
         except InvalidFormError as e:
@@ -4723,6 +4746,10 @@ def leads(request):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
 
+    if settings.ENVIRONMENT == "TEST":
+        messages.info(request, "This feature is not ready yet! Check again later.")
+        return HttpResponseRedirect(reverse("customer_home"))
+
     context.update(
         {
             "selectable_statuses": [
@@ -4747,7 +4774,7 @@ def leads_board(request):
 
     if request.method == "POST":
         # Get filter parameters from the request
-        owner_filter = request.POST.get("owner")
+        owner_filter = request.POST.get("owned_by")
         est_conversion_filter = request.POST.get("est")
 
         if "update_status" in request.POST:
@@ -4758,27 +4785,30 @@ def leads_board(request):
 
             lead = Lead.objects.get(id=lead_id)
             if status != lead.status:
-                if status == Lead.Status.JUNK:
-                    lost_reason = request.POST.get("lost_reason")
-                    if not lost_reason:
-                        messages.error(request, "Lost Reason is required")
-                        return HttpResponse("Lost Reason is required", status=400)
-                    lead.lost_reason = lost_reason
-                else:
-                    lead.lost_reason = None
-
                 lead.status = status
-                lead.save()
+                if status != Lead.Status.JUNK:
+                    lead.lost_reason = None
+                else:
+                    lead.lost_reason = request.POST.get("lost_reason")
+                try:
+                    lead.clean()
+                    lead.save()
+                except ValidationError as e:
+                    messages.error(
+                        request, f"Error updating lead: {','.join(e.messages)}"
+                    )
         elif "new_card" in request.POST:
             form = LeadForm(request.POST)
             if form.is_valid():
                 form.save()
                 messages.success(request, "Lead created successfully.")
             else:
-                messages.error(request, "Error creating lead.")
+                messages.error(
+                    request, f"Error creating lead. {form.non_field_errors().as_text()}"
+                )
     else:
         # Get filter parameters from the request
-        owner_filter = request.GET.get("owner")
+        owner_filter = request.GET.get("owned_by")
         est_conversion_filter = request.GET.get("est")
 
     leads = Lead.objects.all().order_by("-created_on")
@@ -4807,7 +4837,7 @@ def leads_board(request):
     context.update(
         {
             "board": board,
-            "owner_filter": owner_filter,
+            "owned_by": owner_filter,
             "est_conversion_filter": est_conversion_filter,
         }
     )
@@ -4826,13 +4856,14 @@ def leads_card(request, lead_id):
     if request.method == "POST":
         form = LeadForm(request.POST, instance=lead)
         if form.is_valid():
-            if form.has_changed():
-                lead = form.save()
-                messages.success(request, "Lead saved successfully")
-            else:
-                messages.info(request, "No changes detected.")
+            lead = form.save()
+            messages.success(request, "Lead saved successfully")
         else:
-            messages.error(request, "Error saving lead.")
+            # Reset the value of lead
+            lead = Lead.objects.get(id=lead_id)
+            messages.error(
+                request, f"Error saving lead: {form.non_field_errors().as_text()}"
+            )
 
     context.update({"lead": lead})
 
@@ -4840,15 +4871,20 @@ def leads_card(request, lead_id):
 
 
 @login_required(login_url="/admin/login/")
-def leads_card_edit(request, lead_id):
+def leads_card_edit(request, lead_id=None):
     context = {}
     if not request.user.is_staff:
         return HttpResponse("Unauthorized", status=401)
-    if not Lead.objects.filter(id=lead_id).exists():
-        return HttpResponse("Not found", status=404)
 
-    lead = Lead.objects.get(id=lead_id)
-    form = LeadForm(instance=lead)
+    if lead_id:
+        if not Lead.objects.filter(id=lead_id).exists():
+            return HttpResponse("Not found", status=404)
+
+        lead = Lead.objects.get(id=lead_id)
+        form = LeadForm(instance=lead)
+    else:
+        lead = None
+        form = LeadForm()
 
     context.update(
         {

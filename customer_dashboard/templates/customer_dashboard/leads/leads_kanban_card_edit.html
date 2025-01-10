@@ -1,17 +1,71 @@
 {% load static %}
 <div class="modal-dialog modal-dialog-centered">
   <div class="modal-content">
-    <form id="form-card-edit" data-lead-id="{{ lead.id }}" method="post" hx-post="{% url 'customer_leads_card' lead.id %}" hx-indicator="#htmx-indicator-card" hx-target="#card-{{ lead.id }}">
+    <!-- prettier-ignore -->
+    <form id="form-card-edit" 
+          data-lead-id="{{ lead.id|default:'new' }}"
+          method="post" 
+          hx-post="{% if lead %}{% url 'customer_leads_card' lead.id %}{% else %}{% url 'customer_leads_board' %}{% endif %}" 
+          hx-indicator=".htmx-indicator-card" 
+          hx-target="{% if lead %}#card-{{ lead.id }}{% else %}#board{% endif %}">
       {% csrf_token %}
       <div class="modal-header">
-        <h5 class="modal-title">Lead Details</h5>
+        <h5 class="modal-title">{% if lead %}Edit Lead{% else %}New Lead{% endif %}</h5>
       </div>
-      <div class="modal-body">{{ form }}</div>
+      <div class="modal-body">
+        <!-- Form -->
+        {% for hidden in form.hidden_fields %}
+          {{ hidden }}
+        {% endfor %}
+        {% for field in form.visible_fields %}
+          {% if field.widget_type == 'checkbox' %}
+            <div class="mb-3 form-switch">
+              {{ field }}
+              <label for="{{ field.id_for_label }}" class="form-check-label">
+                {{ field.label }}{{ field.label_suffix }}
+                {% if field.field.required %} * {% endif %}
+              </label>
+              {% if field.help_text %}
+                <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+              {% endif %}
+              {% if field.errors %}
+                <small class="text-danger">{{ field.errors }}</small>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">
+                {{ field.label }}{{ field.label_suffix }}
+                {% if field.field.required %}* {% endif %}
+                {% if field.name == 'user' %}<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_user' %}?return_to={% url 'customer_leads' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.help_text %}
+                <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+              {% endif %}
+              {% if field.errors %}
+                <small class="text-danger">{{ field.errors }}</small>
+              {% endif %}
+            </div>
+            {% if field.name == 'user' %}
+              <div class="dropdown mb-3">
+                <label for="user_address-search" class="form-label">Search Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}?return_to={% url 'customer_leads' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a> <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+                <!-- prettier-ignore -->
+                <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" value="{{ lead.user_address|default:'' }}" hx-get="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" hx-include="#id_user" />
+                <!-- Hidden input field for user_address ID is added by forms.py id=id_user_address -->
+                <div class="dropdown-content" id="user_address-search-results"></div>
+              </div>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        <small class="text-danger">{{ form.non_field_errors }}</small>
+        <!--  End Form -->
+      </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" class="btn btn-success" name="edit_card">
+        <button type="submit" class="btn btn-success" name="{% if lead %}edit_card{% else %}new_card{% endif %}">
           Save
-          <span class="htmx-indicator" id="htmx-indicator-card"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+          <span class="htmx-indicator htmx-indicator-card"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
         </button>
       </div>
     </form>

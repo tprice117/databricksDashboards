@@ -1,7 +1,8 @@
 from django.db import models
+from django.forms import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from api.models import User, UserAddress
+from api.models import User, UserAddress, OrderGroup
 from common.models import BaseModel
 from django.utils import timezone
 
@@ -126,10 +127,74 @@ class Lead(BaseModel):
             else f"{self.user} - {self.status}"
         )
 
+    def clean(self):
+        if self.user_address:
+            # Clean the User Address
+            available_user_addresses = UserAddress.objects.for_user(
+                self.user
+            ).values_list("id", flat=True)
+            if self.user_address.id not in available_user_addresses:
+                raise ValidationError(_("UserAddress is not associated with the User."))
+        else:
+            # UserAddress is required for an interested lead
+            if self.status == Lead.Status.INTERESTED:
+                raise ValidationError(
+                    _("UserAddress is required for an interested lead.")
+                )
+
+        # Clean the Lost Reason
+        if self.status == Lead.Status.JUNK and not self.lost_reason:
+            raise ValidationError(_("Lost Reason is required for a junk lead."))
+
+        return super().clean()
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            # New Leads should automatically set status
+            if not self.user_address:
+                # New User Sign Up
+                self.status = Lead.Status.SIGN_UP
+            elif not OrderGroup.objects.filter(user_address=self.user_address).exists():
+                # New Location Added
+                self.status = Lead.Status.LOCATION
+            else:
+                # Default to Manual
+                self.status = Lead.Status.MANUAL
+
+        self.update_conversion_status()
+
+        return super().save(*args, **kwargs)
+
+    def update_conversion_status(self, today=timezone.now().date()):
+        """Logic to update lead statuses based on if conversion date has passed."""
+        if (
+            not self.lost_reason
+            and self.status != Lead.Status.CONVERTED
+            and self.est_conversion_date < today
+        ):
+            # Conversion Date has passed
+            self.lost_reason = Lead.LostReason.EXPIRED
+        elif (
+            self.lost_reason == Lead.LostReason.EXPIRED
+            and self.est_conversion_date >= today
+        ):
+            # Lost Reason should not be expired if conversion date has not passed
+            self.lost_reason = None
+            if self.status == Lead.Status.JUNK:
+                self.status = Lead.Status.MANUAL
+
+        if (
+            self.lost_reason == Lead.LostReason.EXPIRED
+            and self.status != Lead.Status.JUNK
+        ):
+            # Status should be junk if lost reason is expired
+            self.status = Lead.Status.JUNK
+
 
 class UserSelectableLeadStatus(models.TextChoices):
     """
     UserSelectableLeadStatus is an enumeration of lead statuses that a user can select.
+    If you want the user to be able to add more statuses, add them here.
 
     Attributes:
         INTERESTED: Represents a lead that has shown interest.

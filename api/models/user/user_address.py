@@ -5,13 +5,13 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.signals import pre_save
 
+from api.managers import UserAddressManager
 from api.models.order.order import Order
 from api.models.track_data import track_data
 from api.models.user.user import User
 from api.models.user.user_address_type import UserAddressType
 from api.models.user.user_group import UserGroup
 from api.utils.google_maps import geocode_address
-from common.middleware.save_author import get_request
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
 import logging
@@ -76,6 +76,9 @@ class UserAddress(BaseModel):
     is_archived = models.BooleanField(default=False)
     allow_saturday_delivery = models.BooleanField(default=False)
     allow_sunday_delivery = models.BooleanField(default=False)
+
+    # Managers
+    objects = UserAddressManager()
 
     def __str__(self):
         return f"{(self.name or '[No Name]')} ({self.formatted_address()})"

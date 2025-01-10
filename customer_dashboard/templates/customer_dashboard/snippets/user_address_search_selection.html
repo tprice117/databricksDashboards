@@ -1,5 +1,9 @@
 {% for user_address in user_addresses %}
-    <div class="my-dropdown-item" data-name="{{ user_address.name }} | {{ user_address.formatted_address }}" data-id="{{ user_address.id }}">
-        <strong>{{ user_address.name }} | {{ user_address.formatted_address }}</strong>
-    </div>
+  <div class="my-dropdown-item" data-name="{{ user_address.name }} | {{ user_address.formatted_address }}" data-id="{{ user_address.id }}">
+    <strong>{{ user_address.name }} | {{ user_address.formatted_address }}</strong>
+  </div>
+{% empty %}
+  <div class="my-dropdown-item" style="pointer-events: none;" data-id="">
+    <strong>No results found</strong>
+  </div>
 {% endfor %}
