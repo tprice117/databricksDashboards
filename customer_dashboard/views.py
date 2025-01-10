@@ -831,8 +831,17 @@ def user_address_search(request):
     if user_id := request.GET.get("user"):
         if user_id != "None":
             user = User.objects.get(id=user_id)
-            user_addresses = get_location_objects(
-                request, user, user.user_group, search_q=search
+            # Don't use request.user here, as we want to show the locations for the user only.
+            user_addresses = (
+                UserAddress.objects.for_user(user)
+                .filter(
+                    Q(name__icontains=search)
+                    | Q(street__icontains=search)
+                    | Q(city__icontains=search)
+                    | Q(state__icontains=search)
+                    | Q(postal_code__icontains=search)
+                )
+                .order_by("-created_on")
             )
     else:
         context.update(get_user_context(request))
@@ -4722,7 +4731,7 @@ def leads(request):
         return HttpResponseRedirect(reverse("customer_home"))
 
     if settings.ENVIRONMENT == "TEST":
-        messages.info(request, "This feature is not ready yet! Check again later :).")
+        messages.info(request, "This feature is not ready yet! Check again later.")
         return HttpResponseRedirect(reverse("customer_home"))
 
     context.update(
