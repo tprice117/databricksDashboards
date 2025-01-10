@@ -330,6 +330,11 @@ class BillingUtils:
                 custom_fields=custom_fields,
             )
         else:
+            metadata = {}
+            if is_cart:
+                metadata["cart_invoice"] = "True"
+            elif is_booking:
+                metadata["booking_invoice"] = "True"
             stripe_invoice = stripe.Invoice.create(
                 customer=user_address.stripe_customer_id,
                 auto_advance=user_address.autopay,
@@ -341,6 +346,7 @@ class BillingUtils:
                     "enabled": collect_tax,
                 },
                 custom_fields=custom_fields,
+                metadata=metadata,
             )
 
         return stripe_invoice
