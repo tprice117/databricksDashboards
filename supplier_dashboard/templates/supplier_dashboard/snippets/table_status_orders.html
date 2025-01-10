@@ -6,6 +6,7 @@
             <td>{{order.order_group.seller_product_seller_location.seller_location.seller.name}}</td>
             <td>{% if order.order_group.created_by %}{{ order.order_group.created_by.full_name }}{% else %}N/A{% endif %}</td>
         {% endif %}
+        <td>{{user.first_name}}<br>{{user.last_name}}</td>
         <td>{{order.end_date}}</td>
         <td>{{order.order_group.seller_product_seller_location.seller_product.product.main_product.name}}
         </td>
