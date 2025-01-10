@@ -32,7 +32,8 @@
                 } else if (column === "booking_project_id") {
                     sessionValue = "{{ request.session.bookings_page_settings_booking_project_id }}";
                 } else if (column === "company_name") {
-                    sessionValue = "{{ request.session.bookings_page_settings_company_name }}";
+                    sessionValue = '{{ request.session.bookings_page_settings_company_name|default_if_none:"True" }}';
+                    sessionValue = sessionValue === "" ? "True" : sessionValue;
                 } else if (column === "supplier") {
                     sessionValue = '{{ request.session.bookings_page_settings_supplier|default_if_none:"True" }}';
                     sessionValue = sessionValue === "" ? "True" : sessionValue;
