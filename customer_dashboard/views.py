@@ -858,7 +858,12 @@ def new_order_2(request, category_id):
     main_product_category = main_product_category.prefetch_related("main_products")
     main_product_category = main_product_category.first()
     main_products = main_product_category.main_products.all().order_by("sort")
+    # if this is a search then filter the main products
+    search_q = request.GET.get("q", None)
+    if search_q:
+        main_products = main_products.filter(name__icontains=search_q)
     context["main_product_category"] = main_product_category
+    context["category_id"] = category_id
     context["main_products"] = []
     for main_product in main_products:
         main_product_dict = {}
@@ -867,6 +872,13 @@ def new_order_2(request, category_id):
             "sort"
         )
         context["main_products"].append(main_product_dict)
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "customer_dashboard/new_order/main_product_table.html",
+            context,
+        )
 
     return render(request, "customer_dashboard/new_order/main_products.html", context)
 
