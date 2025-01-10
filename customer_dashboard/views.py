@@ -4772,6 +4772,8 @@ def leads_board(request):
                 lead.status = status
                 if status != Lead.Status.JUNK:
                     lead.lost_reason = None
+                else:
+                    lead.lost_reason = request.POST.get("lost_reason")
                 try:
                     lead.clean()
                     lead.save()
