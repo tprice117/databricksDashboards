@@ -4758,7 +4758,7 @@ def leads_board(request):
 
     if request.method == "POST":
         # Get filter parameters from the request
-        owner_filter = request.POST.get("owner")
+        owner_filter = request.POST.get("owned_by")
         est_conversion_filter = request.POST.get("est")
 
         if "update_status" in request.POST:
