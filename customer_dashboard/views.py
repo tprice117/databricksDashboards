@@ -4843,6 +4843,8 @@ def leads_card(request, lead_id):
             lead = form.save()
             messages.success(request, "Lead saved successfully")
         else:
+            # Reset the value of lead
+            lead = Lead.objects.get(id=lead_id)
             messages.error(
                 request, f"Error saving lead: {form.non_field_errors().as_text()}"
             )
