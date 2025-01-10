@@ -31,6 +31,9 @@
                     sessionValue = "{{ request.session.bookings_page_settings_location_name }}";
                 } else if (column === "booking_project_id") {
                     sessionValue = "{{ request.session.bookings_page_settings_booking_project_id }}";
+                } else if (column === "company_name") {
+                    sessionValue = '{{ request.session.bookings_page_settings_company_name|default_if_none:"True" }}';
+                    sessionValue = sessionValue === "" ? "True" : sessionValue;
                 } else if (column === "supplier") {
                     sessionValue = '{{ request.session.bookings_page_settings_supplier|default_if_none:"True" }}';
                     sessionValue = sessionValue === "" ? "True" : sessionValue;
@@ -236,6 +239,12 @@
                         </li>
                         <li>
                             <div class="form-check">
+                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="company_name" id="column-company_name" checked />
+                                <label class="form-check-label" for="column-supplier">Company Name</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-check">
                                 <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="supplier" id="column-supplier" checked />
                                 <label class="form-check-label" for="column-supplier">Supplier</label>
                             </div>
@@ -283,7 +292,8 @@
                                 <th class="location">Location</th>
                                 <th class="d-none location_name">Location Name</th>
                                 <th class="d-none booking_project_id">Booking Project</th>
-                                <th class="supplier">Supplier</th>
+                                <th class="company">Company Name</th>
+                                <th class="company_name">Supplier</th>
                                 <th class="d-none order_type">Order Type</th>
                                 <th class="d-none status">Status</th>
                                 <th class="d-none account_manager">Account Manager</th>
