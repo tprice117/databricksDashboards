@@ -787,8 +787,6 @@ BrandingFormSet = forms.inlineformset_factory(
 
 
 class LeadForm(forms.ModelForm):
-    template_name = "customer_dashboard/snippets/form.html"
-
     class Meta:
         model = Lead
         fields = [
@@ -797,19 +795,29 @@ class LeadForm(forms.ModelForm):
             "owner",
             "est_conversion_date",
             "est_value",
-            "type",
         ]
         widgets = {
-            "user": forms.Select(attrs={"class": "form-select"}),
-            "user_address": forms.Select(attrs={"class": "form-select"}),
-            "owner": forms.Select(attrs={"class": "form-select"}),
+            "user": forms.Select(attrs={"class": "form-select select-user"}),
+            "user_address": forms.HiddenInput(),
+            "owner": forms.Select(attrs={"class": "form-select select-user"}),
             "est_conversion_date": forms.DateInput(
                 attrs={"class": "form-control", "type": "date"}
             ),
             "est_value": forms.NumberInput(attrs={"class": "form-control"}),
-            "type": forms.Select(attrs={"class": "form-select"}),
         }
 
     def __init__(self, *args, **kwargs):
         super(LeadForm, self).__init__(*args, **kwargs)
         self.fields["owner"].queryset = User.customer_team_users.all()
+
+    def save(self, commit=True):
+        lead = super().save(commit=False)
+        # Automatically set lead type based on if user's company is a seller
+        if lead.user.user_group and lead.user.user_group.seller:
+            lead.type = Lead.Type.SELLER
+        else:
+            lead.type = Lead.Type.CUSTOMER
+
+        if commit:
+            lead.save()
+        return lead

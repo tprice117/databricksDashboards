@@ -29,6 +29,11 @@
       {% if field.errors %}
         <small class="text-danger">{{ field.errors }}</small>
       {% endif %}
+      {% if field.name == 'street' %}
+        <div class="form-text">
+          <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
+        </div>
+      {% endif %}
     </div>
   {% endif %}
 {% endfor %}
