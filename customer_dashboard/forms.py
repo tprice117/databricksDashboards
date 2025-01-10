@@ -595,7 +595,11 @@ class OrderGroupSwapForm(forms.Form):
     # NOTE: Below is an example of how to validate against a dynamic swap_date field.
     def __init__(self, *args, **kwargs):
         auth_user = kwargs.pop("auth_user", None)
+        is_removal = kwargs.pop("is_removal", False)
         super(OrderGroupSwapForm, self).__init__(*args, **kwargs)
+        # different label for is_removal
+        if is_removal:
+            self.fields["swap_date"].label = "Removal Date"
         # Do not allow same day swaps for customers
         # Set min attribute for swap_date input
         today = datetime.date.today()
