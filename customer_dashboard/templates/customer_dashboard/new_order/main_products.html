@@ -1,6 +1,33 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
 {% load humanize %}
+{% block javascript %}
+    <script>
+        // On dom load update search field
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchFilter = document.getElementById("category-search-filter");
+            const urlParams = new URLSearchParams(window.location.search);
+            const search = urlParams.get("q");
+            if (search) {
+                searchFilter.value = search;
+            }
+        });
+        let debounceTimeout;
+        
+        function onInputChanged(el) {
+            // Only trigger the search if the value is not empty and has more than 1 character and the user has stopped typing.
+            // Clear the previous timeout
+            clearTimeout(debounceTimeout);
+        
+            // Set a new timeout
+            debounceTimeout = setTimeout(function () {
+                if (!el.value || el.value.length > 1) {
+                    htmx.trigger(el, "confirmed");
+                }
+            }, 500);
+        }
+    </script>
+{% endblock %}
 {% block title %}
     Select Product
 {% endblock %}
@@ -9,49 +36,24 @@
 {% endblock %}
 {% block content %}
     <div class="container-fluid">
-        <div class="d-sm-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-dark mb-0">New Booking: {{ main_product_category.name }}</h3>
-        </div>
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4">
-            {% for main_product in main_products %}
-                <div class="col-lg-4 d-flex align-items-stretch">
-                    <div class="card shadow mb-4" style="border-radius: 37px 37px 0 0;">
-                        <img class="card-img-top img-fluid"
-                            style="border-radius: 37px 37px 0 0;"
-                            src="{% if main_product.product.image_del %}
-                                {{ main_product.product.image_del }}
-                            {% elif main_product_category.icon %}
-                                {{ main_product_category.icon.url }}
-                            {% else %}
-                                {% static 'customer_dashboard/img/logo.png' %}
-                            {% endif %}" />
-                        <div class="card-body" style="padding-top: 0px;padding-right: 0px;padding-left: 0px;">
-                            <div class="row">
-                                <div class="col" style="padding-right: 24px;padding-left: 24px;padding-top: 12px;">
-                                    <h5>{{ main_product.product.name }}</h5>
-                                    <p style="margin-bottom: 0px;">{{ main_product.product.description }}</p>
-                                </div>
-                            </div>
-
-                            <div class="row ms-3 me-3 mt-2 mb-0">
-                                <ul class="mb-0">
-                                    {% for main_product_info in main_product.infos %}
-                                        <li style="font-size: smaller;">{{ main_product_info.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <a class="btn btn-primary float-end" role="button" href="{% url 'customer_new_order_3' product_id=main_product.product.id %}">Select Options</a>
-                        </div>
+        <div class="card-header p-3 mb-2 border">
+            <div class="row">
+                <div class="col">
+                    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+                        <h3 class="text-dark mb-0">New Booking: {{ main_product_category.name }}</h3>
+                    </div>
+                    {% comment %} <h3 class="text-dark mb-0">Create New Booking</h3> {% endcomment %}
+                    <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                </div>
+            </div>
+            <form class="row mt-2 row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-2 row-cols-xxl-2" hx-trigger="confirmed" hx-get="{% url 'customer_new_order_2' category_id %}" hx-target="#product-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+                <div class="col">
+                    <div class="input-group">
+                        <span class="input-group-text" id="inputGroup-sizing-lg">Search</span>
+                        <input id="category-search-filter" class="form-control" type="search" name="q" oninput="onInputChanged(this)" />
                     </div>
                 </div>
-            {% endfor %}
-            <div class="col"></div>
-            <div class="col"></div>
+            </form>
         </div>
-        {% if not main_products %}
-            {% include 'customer_dashboard/new_order/chat_info_bar.html' %}
-        {% endif %}
-    </div>
+        {% include "./main_product_table.html" %}
 {% endblock %}
