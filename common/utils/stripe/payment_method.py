@@ -41,3 +41,7 @@ class PaymentMethod:
             payment_method_id,
             customer=customer_id,
         )
+
+    @staticmethod
+    def detach(payment_method_id: str):
+        stripe.PaymentMethod.detach(payment_method_id)

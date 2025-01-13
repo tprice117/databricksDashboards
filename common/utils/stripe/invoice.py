@@ -138,46 +138,39 @@ class Invoice:
             )
             user_address_id = str(user_address.id)
 
-            if not customer.invoice_settings.default_payment_method:
-                # Attempt to attach a default payment method to the customer.
-                customer = Customer.ensure_default_payment_method(customer.id)
+            payment_method = StripePaymentMethod.get(
+                customer.invoice_settings.default_payment_method,
+            )
 
-            if customer.invoice_settings.default_payment_method:
-                # Get the Stripe PaymentMethod object.
-                payment_method = StripePaymentMethod.get(
-                    customer.invoice_settings.default_payment_method,
-                )
-
+            # Get the Downstream PaymentMethod id from metadata.
+            downstream_payment_method_id = payment_method["metadata"].get(
+                "payment_method_id", None
+            )
+            if downstream_payment_method_id is not None:
                 # Get the Downstream PaymentMethod object.
-                downstream_payment_method_id = payment_method["metadata"].get(
-                    "payment_method_id", None
-                )
-                if downstream_payment_method_id is not None:
-                    downstream_payment_method = DownstreamPaymentMethod.objects.get(
-                        id=downstream_payment_method_id
-                    )
-                else:
-                    raise NoPaymentMethodIDInMetadataError(
-                        invoice.id, customer.id, user_address_id, payment_method.id
-                    )
+                downstream_payment_method = DownstreamPaymentMethod.objects.filter(
+                    id=downstream_payment_method_id
+                ).first()
             else:
-                raise NoDefaultPaymentMethodError(
-                    invoice.id, customer.id, user_address_id
+                # The Downstream PaymentMethod ID is not found in the Stripe PaymentMethod metadata.
+                downstream_payment_method = None
+
+            if not downstream_payment_method:
+                # This means that the Stripe PaymentMethod is not found in our system.
+                # Get a Downstream PaymentMethod for the UserAddress and update the Stripe default payment method.
+                downstream_payment_method = user_address.get_payment_method()
+                downstream_payment_method_id = str(downstream_payment_method.id)
+                # Update the the Stripe default payment method
+                payment_method = (
+                    downstream_payment_method.set_stripe_default_payment_method(
+                        user_address
+                    )
                 )
+
             # Check if the Downstream PaymentMethod is active.
             if not downstream_payment_method.active:
-                if (
-                    user_address.user_group.default_payment_method
-                    and user_address.user_group.default_payment_method.active
-                ):
-                    downstream_payment_method = (
-                        user_address.user_group.default_payment_method
-                    )
-                else:
-                    # Check if UserGroup has another active PaymentMethod.
-                    downstream_payment_method = DownstreamPaymentMethod.objects.filter(
-                        user_group=user_address.user_group, active=True
-                    ).first()
+                downstream_payment_method = user_address.get_payment_method()
+
                 if downstream_payment_method:
                     downstream_payment_method_id = str(downstream_payment_method.id)
                     # Get the Stripe PaymentMethod object.
