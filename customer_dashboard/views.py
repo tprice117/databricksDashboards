@@ -2922,14 +2922,14 @@ def locations(request):
                 context[
                     "help_text"
                 ] = f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
-                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
             else:
                 context[
                     "help_text"
                 ] = f"""Churning locations are those with a smaller revenue when compared to the previous
-                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    30 day period (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
         else:
             user_addresses = get_location_objects(
                 request,
@@ -3435,14 +3435,14 @@ def users(request):
                 context[
                     "help_text"
                 ] = f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
-                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
             else:
                 context[
                     "help_text"
                 ] = f"""Churning users are those with a smaller revenue when compared to the previous
-                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    30 day period (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
         else:
             users = get_user_group_user_objects(
                 request, context["user"], context["user_group"], search_q=search_q
@@ -3631,6 +3631,7 @@ def user_update_email(request, user_id):
                     auth0.update_user_email(
                         context["user"].user_id, new_email, verify_email=False
                     )
+                    context["user"].username = new_email
                     context["user"].email = new_email
                     context["user"].save()
                     messages.success(request, "Successfully updated email!")
@@ -3996,14 +3997,14 @@ def companies(request):
                 context[
                     "help_text"
                 ] = f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
-                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
             else:
                 context[
                     "help_text"
                 ] = f"""Churning Companies are those with a smaller revenue when compared to the previous
-                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    30 day period (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
         else:
             user_groups = UserGroup.objects.filter(seller__isnull=True)
             if account_owner_id:
