@@ -182,6 +182,35 @@ class UserAddress(BaseModel):
             logger.error(f"Error updating Stripe Customer: {e}")
             return False
 
+    def get_payment_method(self):
+        """Get the default payment method for this address.
+        If the address has a default payment method, use that,
+        otherwise, use the default payment method for the user group, if it exists,
+        otherwise, use the first active payment method for the user group."""
+        from payment_methods.models import PaymentMethod
+
+        if self.default_payment_method and self.default_payment_method.active:
+            downstream_payment_method = self.default_payment_method
+        elif (
+            self.user_group
+            and self.user_group.default_payment_method
+            and self.user_group.default_payment_method.active
+        ):
+            downstream_payment_method = self.user_group.default_payment_method
+        else:
+            if self.user_group:
+                # Check if UserGroup has another active PaymentMethod.
+                downstream_payment_method = PaymentMethod.objects.filter(
+                    user_group=self.user_group, active=True
+                ).first()
+            else:
+                # Check if UserGroup has another active PaymentMethod.
+                downstream_payment_method = PaymentMethod.objects.filter(
+                    user=self.user, active=True
+                ).first()
+
+        return downstream_payment_method
+
     def pre_save(sender, instance, *args, **kwargs):
         # Only update latitude and longitude if the address has changed.
         if (

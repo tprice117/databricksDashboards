@@ -252,11 +252,32 @@ class PaymentMethod(BaseModel):
             (
                 stripe_payment_method
                 for stripe_payment_method in stripe_payment_methods
-                if stripe_payment_method["metadata"]["payment_method_id"]
+                if stripe_payment_method["metadata"].get("payment_method_id")
                 == str(self.id)
             ),
             None,
         )
+
+    def set_stripe_default_payment_method(self, user_address: UserAddress):
+        """
+        Set the default payment method for the UserAddress in Stripe.
+        return: Stripe PaymentMethod or None on failure.
+        """
+        # Get the Stripe PaymentMethod for the Downstream PaymentMethod.
+        stripe_payment_method = self.get_stripe_payment_method(user_address)
+        if stripe_payment_method:
+            # Update the Stripe Customer with the new DefaultPaymentMethod.
+            StripeUtils.Customer.ensure_default_payment_method(
+                user_address.stripe_customer_id,
+                payment_method_id=stripe_payment_method["id"],
+            )
+        else:
+            # The Downstream PaymentMethod is not found in Stripe.
+            # Try syncing the Downstream PaymentMethods for this UserAddress to Stripe.
+            self.sync_stripe_payment_method(user_address=user_address)
+            # Re-fetch the Stripe PaymentMethod.
+            stripe_payment_method = self.get_stripe_payment_method(user_address)
+        return stripe_payment_method
 
 
 @receiver(post_save, sender=PaymentMethod)
@@ -280,6 +301,12 @@ def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
         )
     # Delete the token from Basis Theory.
     DSPaymentMethods.Tokens.delete(instance.token)
+
+    # If this card is used as a default payment in Stripe, then update the default payment method.
+    stripe_payment_method = instance.get_stripe_payment_method()
+    StripeUtils.PaymentMethod.detach(stripe_payment_method["id"])
+    # NOTE: If this payment method is the default payment method on Stripe,
+    # then it will be updated on the next invoice pay attempt or on the nightly payment sync.
 
     # Remove the Payment Method from all UserAddresses.
     UserAddress.objects.filter(default_payment_method=instance).update(

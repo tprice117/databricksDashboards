@@ -1,5 +1,8 @@
 from api.models.user.user_address import UserAddress
 from common.utils.stripe.stripe_utils import StripeUtils
+from payment_methods.models.payment_method import (
+    PaymentMethod as DownstreamPaymentMethod,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -52,22 +55,45 @@ def ensure_invoice_settings_default_payment_method():
             else None
         )
 
-        # If the DefaultPaymentMethod is not set or is not a Card, then fetch
-        # all Payment Methods and set the DefaultPaymentMethod to a Card, if
-        # one exists.
-        if not default_payment_method or default_payment_method.type != "card":
-            # Get all Payment Methods for the Stripe Customer (card type only).
-            payment_methods = StripeUtils.PaymentMethod.list(
-                customer_id=user_address.stripe_customer_id,
+        # If the DefaultPaymentMethod is set and is a Card, then ensure that it exists in our system and is active.
+        if default_payment_method and default_payment_method.type == "card":
+            # Get downstream payment method id from metadata.
+            downstream_payment_method_id = default_payment_method["metadata"].get(
+                "payment_method_id", None
             )
+            if downstream_payment_method_id is not None:
+                # Get the Downstream PaymentMethod object.
+                downstream_payment_method = DownstreamPaymentMethod.objects.filter(
+                    id=downstream_payment_method_id
+                ).first()
+            else:
+                # The Downstream PaymentMethod ID is not found in the Stripe PaymentMethod metadata.
+                downstream_payment_method = None
 
-            # Iterate over all Payment Methods and ensure that the DefaultPaymentMethod is set.
-            for payment_method in payment_methods:
-                if payment_method["type"] == "card":
-                    StripeUtils.Customer.update(
-                        user_address.stripe_customer_id,
-                        invoice_settings={
-                            "default_payment_method": payment_method["id"],
-                        },
+            if not downstream_payment_method:
+                # This means that the Stripe PaymentMethod is not found in our system.
+                default_payment_method = None
+            elif not downstream_payment_method.active:
+                # The Downstream PaymentMethod is inactive.
+                default_payment_method = None
+
+        # If the DefaultPaymentMethod is not set or is not a Card,
+        # or the Downstream PaymentMethod is not found or inactive.
+        if not default_payment_method or default_payment_method.type != "card":
+            # Get a Downstream PaymentMethod for the UserAddress and update the Stripe default payment method.
+            downstream_payment_method = user_address.get_payment_method()
+            if downstream_payment_method:
+                downstream_payment_method_id = str(downstream_payment_method.id)
+                # Update the the Stripe default payment method
+                stripe_payment_method = (
+                    downstream_payment_method.set_stripe_default_payment_method(
+                        user_address
                     )
-                    break
+                )
+                if not stripe_payment_method:
+                    # This payment method is not found in Stripe, though it is in our system.
+                    # Reset DefaultPaymentMethod to None so that it can be re-set.
+                    default_payment_method = None
+                    logger.error(
+                        f"ensure_invoice_settings_default_payment_method: Downstream PaymentMethod: [{downstream_payment_method_id}] not found in Stripe"
+                    )
