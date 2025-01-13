@@ -88,18 +88,18 @@ class Utils:
         Returns:
             bool: True if today is a bi-weekly invoice day, False otherwise.
         """
-
+        today = datetime.date.today()
         # Replace these with your specific values
-        inital_wednesday = Utils._get_first_wednesday_of_year(2024)
+        inital_wednesday = Utils._get_first_wednesday_of_year(today.year)
         invoice_interval = 14  # 14 days between invoices.
 
         # Is today a Wednesday and is divisible by 14 days from the initial Wednesday
         # (means today is a bi-weekly invoice day)?
-        is_wednesday = datetime.date.today().weekday() == 2
-        days_between = (
-            datetime.date.today() - inital_wednesday
-        ) % invoice_interval == 0
-        return is_wednesday and days_between
+        is_wednesday = today.weekday() == 2
+        days_between = today - inital_wednesday
+        is_right_interval = days_between.days % invoice_interval == 0
+
+        return is_wednesday and is_right_interval
 
     def _is_weekly_invoice_day():
         """
