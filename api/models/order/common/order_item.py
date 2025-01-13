@@ -1,12 +1,11 @@
 from django.db import models
 
-from api.models import Order
 from common.models import BaseModel
 
 
 class OrderItem(BaseModel):
     order = models.ForeignKey(
-        Order,
+        "api.Order",
         models.PROTECT,
     )
     quantity = models.DecimalField(

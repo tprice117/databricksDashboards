@@ -1,11 +1,12 @@
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
+from api.models.order.order_items.order_insurance import OrderInsurance
 from api.models.order.order_line_item_type import OrderLineItemType
+from api.models.track_data import track_data
 from common.models import BaseModel
 from common.utils.stripe.stripe_utils import StripeUtils
-from api.models.track_data import track_data
 
 TIME_UNITS = [
     "day",
@@ -84,25 +85,51 @@ class OrderLineItem(BaseModel):
         PAID = "paid"
 
     order = models.ForeignKey(
-        "api.Order", models.CASCADE, related_name="order_line_items"
+        "api.Order",
+        models.CASCADE,
+        related_name="order_line_items",
     )
-    order_line_item_type = models.ForeignKey(OrderLineItemType, models.PROTECT)
-    rate = models.DecimalField(max_digits=18, decimal_places=2)
-    quantity = models.DecimalField(max_digits=18, decimal_places=4)
+    order_line_item_type = models.ForeignKey(
+        OrderLineItemType,
+        models.PROTECT,
+    )
+    rate = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+    )
+    quantity = models.DecimalField(
+        max_digits=18,
+        decimal_places=4,
+    )
     platform_fee_percent = models.DecimalField(
         max_digits=18,
         decimal_places=2,
         default=20,
         help_text="Enter as a percentage without the percent symbol (ex: 25.00)",
     )
-    tax = models.DecimalField(max_digits=18, decimal_places=4, blank=True, null=True)
-    description = models.CharField(max_length=255, blank=True, null=True)
+    tax = models.DecimalField(
+        max_digits=18,
+        decimal_places=4,
+        blank=True,
+        null=True,
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
     is_flat_rate = models.BooleanField(default=False)
     stripe_invoice_line_item_id = models.CharField(
-        max_length=255, blank=True, null=True
+        max_length=255,
+        blank=True,
+        null=True,
     )
-    paid = models.BooleanField(default=False)
-    backbill = models.BooleanField(default=False)
+    paid = models.BooleanField(
+        default=False,
+    )
+    backbill = models.BooleanField(
+        default=False,
+    )
 
     objects = OrderLineItemManager()  # Use the custom manager
 
@@ -388,3 +415,16 @@ def order_line_item_pre_save(sender, instance, **kwargs):
     ):
         # Invalidate tax: It will be updated the next time this order is retrieved to be viewed via the API or Quoted
         instance.taxes = None
+
+
+# Signal to handle post_save event for new instances with PENDING status
+@receiver(post_save, sender=OrderLineItem)
+def order_line_item_post_save(
+    sender,
+    instance: OrderLineItem,
+    created,
+    **kwargs,
+):
+    # On every save, call the update_order_insurance method to adjust the
+    # OrderInsurance items, if necessary.
+    OrderInsurance.update_order_insurance(instance.order)

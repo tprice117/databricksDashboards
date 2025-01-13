@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "explore",
     "external_contracts",
     "matching_engine",
+    "permits",
     "pricing_engine",
     "notifications",
     "payment_methods",
