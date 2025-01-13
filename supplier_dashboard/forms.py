@@ -436,6 +436,7 @@ class ProductLocationForm(forms.Form):
                 SellerProductSellerLocation(
                     seller_product=seller_product,
                     seller_location=seller_location,
+                    allows_pick_up=seller_product.product.main_product.allows_pick_up,
                 )
             )
 
