@@ -4,6 +4,7 @@ from django.contrib import admin
 from api.models import User
 from common.admin.admin import BaseModelAdmin
 from crm.models import Lead
+from crm.admin.inlines import LeadNoteInline
 
 
 @admin.register(Lead)
@@ -19,6 +20,9 @@ class LeadAdmin(BaseModelAdmin):
     search_fields = ("id",)
     list_filter = ("status", "type", "created_on", "est_conversion_date", "owner")
     autocomplete_fields = ("user", "user_address")
+    inlines = [
+        LeadNoteInline,
+    ]
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "owner":
