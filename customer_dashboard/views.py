@@ -4811,10 +4811,9 @@ def leads_board(request):
         owner_filter = request.GET.get("owned_by")
         est_conversion_filter = request.GET.get("est")
 
-    leads = Lead.objects.all().order_by("-created_on")
+    leads = Lead.objects.all().order_by("est_conversion_date", "-created_on")
 
     # Filter the queryset based on the filter parameters
-    leads = Lead.objects.all().order_by("-created_on")
     if owner_filter:
         if owner_filter == "unassigned":
             leads = leads.filter(owner__isnull=True)
