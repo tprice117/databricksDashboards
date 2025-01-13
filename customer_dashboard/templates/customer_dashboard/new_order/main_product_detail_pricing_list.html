@@ -317,24 +317,26 @@
                     </div>
                     <script>
                         submitButton = document.getElementById("submit-button-order-form-{{ forloop.counter }}");
-                        submitButton.addEventListener('click', () => {
-                          if (pickupButton.checked) {
-                            Swal.fire({
-                              title: 'Pickup Order',
-                              text: 'You will need to pick up this item yourself',
-                              icon: 'question',
-                              showCancelButton: true,
-                              confirmButtonText: 'OK',
-                              cancelButtonText: 'Cancel'
-                            }).then((result) => {
-                              if (result.value) {
+                        if (submitButton) {
+                            submitButton.addEventListener('click', () => {
+                            if (pickupButton.checked) {
+                                Swal.fire({
+                                title: 'Pickup Order',
+                                text: 'You will need to pick up this item yourself',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: 'OK',
+                                cancelButtonText: 'Cancel'
+                                }).then((result) => {
+                                if (result.value) {
+                                    document.getElementById("newOrderForm{{ forloop.counter }}").submit();
+                                }
+                                });
+                            } else {
                                 document.getElementById("newOrderForm{{ forloop.counter }}").submit();
-                              }
+                            }
                             });
-                          } else {
-                            document.getElementById("newOrderForm{{ forloop.counter }}").submit();
-                          }
-                        });
+                        }
                       </script>
                 </form>
                 <button class="btn btn-link mt-2" type="button" data-bs-target="#modal-price-detail-{{ forloop.counter }}" data-bs-toggle="modal">Pricing Details</button>
