@@ -1,12 +1,19 @@
 {% load static %}
 <div class="modal-dialog modal-dialog-centered">
-  <div class="modal-content">
+  <div id="htmx-indicator-loading-card" class="htmx-indicator htmx-indicator-card modal-content">
+    <div class="modal-body d-flex justify-content-center align-items-center p-3" style="min-height: 500px;">
+      <div class="spinner-border text-primary m-3" role="status"></div>
+    </div>
+  </div>
+  <div class="modal-content htmx-loading-hide">
     <!-- prettier-ignore -->
     <form id="form-card-edit" 
           data-lead-id="{{ lead.id|default:'new' }}"
           method="post" 
           hx-post="{% if lead %}{% url 'customer_leads_card' lead.id %}{% else %}{% url 'customer_leads_board' %}{% endif %}" 
-          hx-indicator=".htmx-indicator-card" 
+          hx-indicator="#htmx-indicator-save-btn" 
+          hx-disabled-elt="button, .form-control, .form-select"
+          hx-swap="outerHTML"
           hx-target="{% if lead %}#card-{{ lead.id }}{% else %}#board{% endif %}">
       {% csrf_token %}
       <div class="modal-header">
@@ -51,8 +58,8 @@
               <div class="dropdown mb-3">
                 <label for="user_address-search" class="form-label">Search Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}?return_to={% url 'customer_leads' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a> <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
                 <!-- prettier-ignore -->
-                <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" value="{{ lead.user_address|default:'' }}" hx-get="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" hx-include="#id_user" />
-                <!-- Hidden input field for user_address ID is added by forms.py id=id_user_address -->
+                <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" value="{{ lead.user_address|default:'' }}" hx-get="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-swap="innerHTML" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" hx-include="#id_user" />
+                {% comment %} Hidden input field for user_address ID is added by forms.py id=id_user_address {% endcomment %}
                 <div class="dropdown-content" id="user_address-search-results"></div>
               </div>
             {% endif %}
@@ -65,7 +72,7 @@
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
         <button type="submit" class="btn btn-success" name="{% if lead %}edit_card{% else %}new_card{% endif %}">
           Save
-          <span class="htmx-indicator htmx-indicator-card"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+          <span id="htmx-indicator-save-btn" class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
         </button>
       </div>
     </form>
