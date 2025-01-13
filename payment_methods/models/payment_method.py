@@ -304,9 +304,10 @@ def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
 
     # If this card is used as a default payment in Stripe, then update the default payment method.
     stripe_payment_method = instance.get_stripe_payment_method()
-    StripeUtils.PaymentMethod.detach(stripe_payment_method["id"])
-    # NOTE: If this payment method is the default payment method on Stripe,
-    # then it will be updated on the next invoice pay attempt or on the nightly payment sync.
+    if stripe_payment_method:
+        StripeUtils.PaymentMethod.detach(stripe_payment_method["id"])
+        # NOTE: If this payment method is the default payment method on Stripe,
+        # then it will be updated on the next invoice pay attempt or on the nightly payment sync.
 
     # Remove the Payment Method from all UserAddresses.
     UserAddress.objects.filter(default_payment_method=instance).update(
