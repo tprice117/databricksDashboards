@@ -163,15 +163,9 @@ class OrderLineItem(BaseModel):
 
     @property
     def stripe_description(self):
-        has_rental_one_step = (
-            self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
-        )
-        has_rental_multi_step = (
-            self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
-        )
-        has_service_times_per_week = (
-            self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
-        )
+        has_rental_one_step = self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step
+        has_rental_multi_step = self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+        has_service_times_per_week = self.order.order_group.seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
         unit_str = (
             self.order_line_item_type.units
             if self.order_line_item_type.units
@@ -433,4 +427,4 @@ def order_line_item_post_save(
 ):
     # On every save, call the update_order_insurance method to adjust the
     # OrderInsurance items, if necessary.
-    OrderInsurance.update_order_insurance()
+    OrderInsurance.update_order_insurance(instance.order)
