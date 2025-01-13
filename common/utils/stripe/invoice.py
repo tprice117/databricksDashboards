@@ -30,6 +30,18 @@ class NoDefaultPaymentMethodError(Exception):
         return f"NoDefaultPaymentMethodError: [invoice_id:{self.invoice_id}]-[customer_id:{self.customer_id}]-[user_address_id:{self.user_address_id}]"
 
 
+class NoPaymentMethodError(Exception):
+    """Raised when the customer has no payment method listed."""
+
+    def __init__(self, invoice_id: str, customer_id: str, user_address_id: str):
+        self.invoice_id = invoice_id
+        self.customer_id = customer_id
+        self.user_address_id = user_address_id
+
+    def __str__(self):
+        return f"NoPaymentMethodError: [invoice_id:{self.invoice_id}]-[customer_id:{self.customer_id}]-[user_address_id:{self.user_address_id}]"
+
+
 class NoPaymentMethodIDInMetadataError(Exception):
     """Raised when there is no payment method ID in the Stripe PaymentMethod metadata."""
 
@@ -138,14 +150,17 @@ class Invoice:
             )
             user_address_id = str(user_address.id)
 
-            payment_method = StripePaymentMethod.get(
-                customer.invoice_settings.default_payment_method,
-            )
+            if customer.invoice_settings.default_payment_method:
+                payment_method = StripePaymentMethod.get(
+                    customer.invoice_settings.default_payment_method,
+                )
 
-            # Get the Downstream PaymentMethod id from metadata.
-            downstream_payment_method_id = payment_method["metadata"].get(
-                "payment_method_id", None
-            )
+                # Get the Downstream PaymentMethod id from metadata.
+                downstream_payment_method_id = payment_method["metadata"].get(
+                    "payment_method_id", None
+                )
+            else:
+                downstream_payment_method_id = None
             if downstream_payment_method_id is not None:
                 # Get the Downstream PaymentMethod object.
                 downstream_payment_method = DownstreamPaymentMethod.objects.filter(
@@ -159,6 +174,8 @@ class Invoice:
                 # This means that the Stripe PaymentMethod is not found in our system.
                 # Get a Downstream PaymentMethod for the UserAddress and update the Stripe default payment method.
                 downstream_payment_method = user_address.get_payment_method()
+                if not downstream_payment_method:
+                    raise NoPaymentMethodError(invoice_id, customer.id, user_address_id)
                 downstream_payment_method_id = str(downstream_payment_method.id)
                 # Update the the Stripe default payment method
                 payment_method = (
@@ -209,6 +226,9 @@ class Invoice:
             logger.error(
                 f"Invoice.attempt_pay:NoDefaultPaymentMethodError: [{e}]", exc_info=e
             )
+        except NoPaymentMethodError as e:
+            # No payment method for the customer.
+            logger.error(f"Invoice.attempt_pay:NoPaymentMethodError: [{e}]", exc_info=e)
         except DownstreamPaymentMethod.DoesNotExist as e:
             # Downstream PaymentMethod does not exist.
             logger.error(
