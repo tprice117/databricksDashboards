@@ -192,15 +192,22 @@ class UserAddress(BaseModel):
         if self.default_payment_method and self.default_payment_method.active:
             downstream_payment_method = self.default_payment_method
         elif (
-            self.user_group.default_payment_method
+            self.user_group
+            and self.user_group.default_payment_method
             and self.user_group.default_payment_method.active
         ):
             downstream_payment_method = self.user_group.default_payment_method
         else:
-            # Check if UserGroup has another active PaymentMethod.
-            downstream_payment_method = PaymentMethod.objects.filter(
-                user_group=self.user_group, active=True
-            ).first()
+            if self.user_group:
+                # Check if UserGroup has another active PaymentMethod.
+                downstream_payment_method = PaymentMethod.objects.filter(
+                    user_group=self.user_group, active=True
+                ).first()
+            else:
+                # Check if UserGroup has another active PaymentMethod.
+                downstream_payment_method = PaymentMethod.objects.filter(
+                    user=self.user, active=True
+                ).first()
 
         return downstream_payment_method
 
