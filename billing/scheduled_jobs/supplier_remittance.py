@@ -97,5 +97,5 @@ def send_supplier_remittance_emails():
             )
         except Exception as e:
             logger.error(
-                f"send_supplier_remittance_emails:error: [payout:{payout}]-[{seller_location_id:{seller_location_id}}]-[{e}]"
+                f"send_supplier_remittance_emails:error: [payout:{payout}]-[seller_location_id:{seller_location_id}]-[{e}]"
             )
