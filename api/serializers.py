@@ -101,7 +101,7 @@ def get_order_approval_serializer():
 
 
 class AssetSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
+    id = serializers.CharField(required=False, allow_null=True, read_only=True)
 
     class Meta:
         model = Asset
@@ -1096,6 +1096,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     attachments = OrderGroupAttachmentSerializer(many=True, required=False)
     code = serializers.SerializerMethodField(read_only=True)
     nearest_order_date = serializers.SerializerMethodField(read_only=True)
+    asset = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderGroup
@@ -1145,6 +1146,7 @@ class OrderGroupSerializer(serializers.ModelSerializer):
             "agreement_signed_by",
             "agreement_signed_on",
             "nearest_order_date",
+            "asset",
         )
 
     def create(self, validated_data):
@@ -1191,3 +1193,13 @@ class OrderGroupSerializer(serializers.ModelSerializer):
 
     def get_nearest_order_date(self, obj) -> Optional[datetime.date]:
         return obj.nearest_order.end_date if obj.nearest_order else None
+
+    def get_asset(self, obj):
+        # pass this in to asset serializer and return that
+        asset = Asset.objects.filter(
+            model__main_product=obj.seller_product_seller_location.seller_product.product.main_product
+        ).first()
+        if asset:
+            return AssetSerializer(asset).data
+        else:
+            return None
