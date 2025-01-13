@@ -252,7 +252,7 @@ class PaymentMethod(BaseModel):
             (
                 stripe_payment_method
                 for stripe_payment_method in stripe_payment_methods
-                if stripe_payment_method["metadata"]["payment_method_id"]
+                if stripe_payment_method["metadata"].get("payment_method_id")
                 == str(self.id)
             ),
             None,
