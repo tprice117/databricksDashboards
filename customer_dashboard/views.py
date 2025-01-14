@@ -38,7 +38,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
-from django.forms import inlineformset_factory, formset_factory
+from django.forms import inlineformset_factory
 from common.forms import HiddenDeleteFormSet
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
@@ -80,7 +80,7 @@ from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
 from common.utils.shade_hex import shade_hex_color
 from communications.intercom.utils.utils import get_json_safe_value
-from crm.models.lead import Lead, UserSelectableLeadStatus
+from crm.models import Lead, UserSelectableLeadStatus, LeadNote
 from matching_engine.matching_engine import MatchingEngine
 from payment_methods.models import PaymentMethod
 from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
@@ -93,6 +93,8 @@ from .forms import (
     BrandingFormSet,
     CreditApplicationForm,
     LeadForm,
+    LeadNoteForm,
+    BaseLeadNoteFormset,
     OrderGroupForm,
     OrderGroupSwapForm,
     OrderReviewFormSet,
@@ -631,12 +633,6 @@ def customer_impersonation_stop(request):
     if request.session.get("customer_user_group_id"):
         del request.session["customer_user_group_id"]
     return HttpResponseRedirect("/customer/")
-
-
-@login_required(login_url="/admin/login/")
-def customer_user_addresses(request, user_id):
-    user = User.objects.get(id=user_id)
-    user_addresses = UserAddress.objects.for_user(user)
 
 
 def get_user_context(request: HttpRequest, add_user_group=True):
@@ -4794,6 +4790,12 @@ def leads_board(request):
                 try:
                     lead.clean()
                     lead.save()
+                    # If status did not update due to expiration, then show user why
+                    if (
+                        status != lead.status
+                        and lead.lost_reason == Lead.LostReason.EXPIRED
+                    ):
+                        messages.error(request, "Lead Conversion Date has passed.")
                 except ValidationError as e:
                     messages.error(
                         request, f"Error updating lead: {','.join(e.messages)}"
@@ -4896,3 +4898,146 @@ def leads_card_edit(request, lead_id=None):
     return render(
         request, "customer_dashboard/leads/leads_kanban_card_edit.html", context
     )
+
+
+@login_required(login_url="/admin/login/")
+def lead_detail(request, lead_id):
+    context = {}
+    context.update(get_user_context(request))
+
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    if settings.ENVIRONMENT == "TEST":
+        messages.info(request, "This feature is not ready yet! Check again later.")
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    lead = Lead.objects.prefetch_related("notes").filter(id=lead_id).first()
+    if not lead:
+        messages.error(request, "Lead not found.")
+        return HttpResponseRedirect(reverse("customer_leads"))
+
+    lead_note_queryset = lead.notes.order_by("created_on")
+    lead_statuses = Lead.Status.get_ordered_choices()
+
+    LeadNoteFormset = inlineformset_factory(
+        Lead,
+        LeadNote,
+        form=LeadNoteForm,
+        formset=BaseLeadNoteFormset,
+        extra=1,
+    )
+    lead_note_formset = LeadNoteFormset(
+        instance=lead,
+        queryset=lead_note_queryset,
+    )
+
+    if request.method == "POST":
+        # Note Formset
+        if "note-formset" in request.POST:
+            lead_note_formset = LeadNoteFormset(
+                request.POST,
+                instance=lead,
+                queryset=lead_note_queryset,
+            )
+            action = request.POST.get("action", "create")
+
+            if "add_note" in request.POST:
+                # Handle creation
+                for form in lead_note_formset.extra_forms:
+                    if form.is_valid():
+                        form.save()
+                        messages.success(request, "Note added successfully.")
+                        lead_note_formset = LeadNoteFormset(
+                            instance=lead,
+                            queryset=lead_note_queryset,
+                        )
+                        break
+                    else:
+                        messages.error(
+                            request,
+                            f"Error adding note: {form.non_field_errors().as_text()}",
+                        )
+                        break
+            elif not (form_id := request.POST.get("form_id")) or not form_id.isdigit():
+                messages.error(request, "Invalid form submission.")
+            else:
+                form_id = int(form_id)
+                form = lead_note_formset.forms[form_id]
+                if form.instance.created_by != request.user:
+                    # Prevent other users from editing notes
+                    messages.error(request, "Invalid form submission.")
+                elif action == "edit":
+                    # Handle editing
+                    if form.has_changed():
+                        if form.is_valid():
+                            form.save()
+                            messages.success(request, "Notes saved successfully.")
+                            lead_note_formset = LeadNoteFormset(
+                                instance=lead,
+                                queryset=lead_note_queryset,
+                            )
+                        else:
+                            messages.error(
+                                request,
+                                "Error saving notes. Please contact us if this continues.",
+                            )
+                    else:
+                        messages.info(request, "No changes detected.")
+                elif action == "delete":
+                    # Handle deletion
+                    for keep_form in lead_note_formset:
+                        # Reset all the other forms so that they aren't altered
+                        if keep_form.instance != form.instance:
+                            keep_form = LeadNoteForm(instance=keep_form.instance)
+
+                    if lead_note_formset.is_valid():
+                        # Saving the formset handles the deletion
+                        lead_note_formset.save()
+                        messages.success(request, "Notes saved successfully.")
+                        lead_note_formset = LeadNoteFormset(
+                            instance=lead,
+                            queryset=lead_note_queryset,
+                        )
+                    else:
+                        messages.error(
+                            request,
+                            "Error saving notes. Please contact us if this continues.",
+                        )
+                else:
+                    messages.error(request, "Invalid action.")
+
+        # Mark as Junk
+        elif "update_status" in request.POST:
+            status = request.POST.get("status")
+            if status != lead.status:
+                lead.status = status
+                if status != Lead.Status.JUNK:
+                    lead.lost_reason = None
+                else:
+                    lead.lost_reason = request.POST.get("lost_reason")
+                try:
+                    lead.clean()
+                    lead.save()
+                    messages.success(request, "Status updated successfully.")
+                except ValidationError as e:
+                    messages.error(
+                        request, f"Error updating status: {','.join(e.messages)}"
+                    )
+                    lead.refresh_from_db()
+
+    context.update(
+        {
+            "lead": lead,
+            "lead_note_formset": lead_note_formset,
+            "lead_statuses": lead_statuses,
+            "lead_status_index": [status for (status, _) in lead_statuses].index(
+                lead.status
+            ),
+            "lost_reasons": {
+                value: label for (value, label) in Lead.LostReason.choices if value
+            },
+        }
+    )
+
+    return render(request, "customer_dashboard/leads/lead_detail.html", context)
