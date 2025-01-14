@@ -1,0 +1,312 @@
+{% extends 'customer_dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load sales_stream_tags %}
+{% block title %}
+  Lead Details
+{% endblock %}
+{% block stylesheet %}
+  <style></style>
+{% endblock %}
+{% block javascript %}
+  <script>
+    function toggleEdit(index) {
+      var editDiv = document.getElementById('text-edit-' + index)
+      var textDiv = document.getElementById('text-' + index)
+    
+      if (editDiv.classList.contains('d-none')) {
+        editDiv.classList.remove('d-none')
+        textDiv.classList.add('d-none')
+      } else {
+        editDiv.classList.add('d-none')
+        textDiv.classList.remove('d-none')
+      }
+    }
+    function editNote(formID) {
+      document.getElementById('note-formset-form').value = formID
+      document.getElementById('note-formset-action').value = 'edit'
+      console.log(document.getElementById('note-formset-form').value)
+      document.getElementById('note-formset').submit()
+    }
+    function deleteNote(formId, deleteFieldId) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById(deleteFieldId).value = 'true'
+          document.getElementById('note-formset-form').value = formId
+          document.getElementById('note-formset-action').value = 'delete'
+          document.getElementById('note-formset').submit()
+        }
+      })
+    }
+  </script>
+{% endblock %}
+{% block content %}
+  <div class="container-fluid">
+    <!-- Lead Header -->
+    <div class="card shadow mb-3">
+      <div class="card-header">
+        <div class="row align-items-center px-2">
+          {% if lead.user.photo %}
+            <img class="border rounded-circle img-profile object-fit-cover p-0" style="height: 4rem; width: 4rem;" src="{{ lead.user.photo.url }}" />
+          {% else %}
+            <span class="border rounded-circle img-profile d-flex justify-content-center align-items-center" style="height: 4rem; width: 4rem;"><i class="fas fa-user fa-2x"></i></span>
+          {% endif %}
+          <div class="col">
+            <h6 class="mb-1">Lead</h6>
+            <h5 class="text-primary mb-1"><strong>{{ lead.user.full_name|default_if_none:lead.user.email }}</strong></h5>
+            {% if lead.user_address %}
+              <h5 class="text-dark mb-1">{{ lead.user_address }}</h5>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-3">
+        <div class="row">
+          <div class="col me-3">
+            <h6 class="mb-1">Lead Owner</h6>
+            <h6 class="text-muted mb-1">
+              {% if lead.owner %}
+                {{ lead.owner.full_name|default:lead.owner.email }}
+              {% else %}
+                Unassigned
+              {% endif %}
+            </h6>
+          </div>
+          <div class="col me-3">
+            <h6 class="mb-1">Phone</h6>
+            <h6 class="text-muted mb-1">{{ lead.user.phone|default:'-----' }}</h6>
+          </div>
+          <div class="col me-3">
+            <h6 class="mb-1">Email</h6>
+            <h6 class="text-muted mb-1">{{ lead.user.email }}</h6>
+          </div>
+          <div class="col me-3">
+            <h6 class="mb-1">Lead Type</h6>
+            <h6 class="text-muted mb-1">{{ lead.get_type_display }}</h6>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Lead Status -->
+    <div class="card shadow mb-3">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-10 mb-md-0 mb-1">
+            <div class="progress small" style="height: 2rem;">
+              {% with status_count=lead_statuses|length %}
+                {% for status, label in lead_statuses %}
+                  <!-- prettier-ignore -->
+                  {% if lead.status == 'junk' %}
+              <div 
+              class="progress-bar p-3 text-truncate {% if status == lead.status %} progress-bar bg-danger {% else %} bg-light text-dark {% endif %}" 
+              role="progressbar" 
+              style="width: {% widthratio 1 status_count 100 %}%" 
+              aria-valuenow="{{ forloop.counter }}" 
+              aria-valuemin="1" 
+              aria-valuemax="{{ status_count }}">
+              {{ label }}
+            </div>
+            {% else %}
+            <div 
+            class="progress-bar p-3 text-truncate {% if status == lead.status %}bg-secondary{% elif forloop.counter0 < lead_status_index %}bg-success {% else %} bg-light text-dark{% endif %}" 
+            role="progressbar" 
+            style="width: {% widthratio 1 status_count 100 %}%" 
+            aria-valuenow="{{ forloop.counter }}" 
+            aria-valuemin="1" 
+            aria-valuemax="{{ status_count }}">
+            {{ label }}
+          </div>
+            {% endif %}
+                {% endfor %}
+              {% endwith %}
+            </div>
+          </div>
+          <div class="col-md-2">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="junk" />
+              <input type="hidden" name="reason" value="" />
+              {% if lead.status == 'junk' %}
+                <button class="btn btn-danger btn-sm w-100 disabled" type="submit" disabled><i class="fas fa-times me-3"></i>Mark as Junk</button>
+              {% else %}
+                <button class="btn btn-danger btn-sm w-100" type="submit" name="update_status"><i class="fas fa-times me-3"></i>Mark as Junk</button>
+              {% endif %}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Lead Information -->
+    <div class="row">
+      <!-- Details -->
+      <div class="col-md-8">
+        <div class="card shadow mb-3">
+          <div class="card-body">
+            <ul class="nav nav-tabs" id="leadTab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">Details</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab" aria-controls="activity" aria-selected="false">Activity</button>
+              </li>
+            </ul>
+            <div class="tab-content p-3" id="leadTabContent">
+              <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                {% if lead.lost_reason %}
+                  <div class="alert alert-danger" role="alert">
+                    <h6 class="alert-heading mb-0"><strong>Lead Lost:</strong> {{ lead.get_lost_reason_display }}</h6>
+                  </div>
+                {% endif %}
+                <div class="row">
+                  <div class="col">
+                    {% with user=lead.user %}
+                      <table class="table small">
+                        <tbody>
+                          <tr>
+                            <td class="text-muted">Name</td>
+                            <td>{{ user.full_name|default:'' }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-muted">Company</td>
+                            <td>{{ user.user_group|default:'' }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-muted">Email</td>
+                            <td>{{ user.email }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-muted">Phone</td>
+                            <td>{{ user.phone|default:'' }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-muted">Estimated Conversion Date</td>
+                            <td>{{ lead.est_conversion_date }}</td>
+                          </tr>
+                          <tr>
+                            <td class="text-muted">Estimated Value</td>
+                            <td>{{ lead.est_value|currency }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    {% endwith %}
+                  </div>
+                  <div class="col">
+                    <table class="table small">
+                      <tbody>
+                        <tr>
+                          <td class="text-muted">Lead Number</td>
+                          <td>{{ lead.id }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-muted">Lead Status</td>
+                          <td>{{ lead.get_status_display }}</td>
+                        </tr>
+                        <tr>
+                          <td class="text-muted">Lead Owner</td>
+                          <td>
+                            {% if lead.owner %}
+                              {{ lead.owner.full_name|default:lead.owner.email }}
+                            {% else %}
+                              Unassigned
+                            {% endif %}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="text-muted">Lead Type</td>
+                          <td>{{ lead.get_type_display }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="activity" role="tabpanel" aria-labelledby="activity-tab">
+                <h6 class="mb-1">No Logged Activity</h6>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Notes -->
+      <div class="col-md-4">
+        <div class="card shadow mb-3">
+          <div class="card-body">
+            <h5 class="card-title mb-3"><i class="fas fa-comments me-3"></i>Lead Notes</h5>
+            <div class="card-text">
+              <form id="note-formset" method="post">
+                {% csrf_token %}
+                {{ lead_note_formset.management_form }}
+                <input type="hidden" name="note-formset" />
+                <input type="hidden" id="note-formset-form" name="form_id" value="" />
+                <input type="hidden" id="note-formset-action" name="action" value="create" />
+                {% for form in lead_note_formset %}
+                  {% with note=form.instance %}
+                    {% with user=note.created_by %}
+                      {% if user %}
+                        <div class="d-flex mb-3 small">
+                          <div class="me-2">
+                            {% if user.photo %}
+                              <img class="border rounded-circle img-profile object-fit-cover p-0" style="height: 2rem; width: 2rem;" src="{{ user.photo.url }}" />
+                            {% else %}
+                              <span class="border rounded-circle img-profile d-flex justify-content-center align-items-center" style="height: 2rem; width: 2rem;"><i class="fas fa-user"></i></span>
+                            {% endif %}
+                          </div>
+                          <div class="col">
+                            <div class="d-flex justify-content-between">
+                              <small>{{ user.full_name|default:user.email }}</small>
+                              <small>{{ note.created_on|naturaltime }}{% if note.created_on|time:'H\h i\m' != note.updated_on|time:'H\h i\m' %} (Edited){% endif %}</small>
+                            </div>
+                            {% if user == request.user %}
+                              {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                              {% endfor %}
+                              <div id="text-edit-{{ forloop.counter0 }}" class="d-none">
+                                {{ form.text }}
+                                <small class="d-inline">
+                                  <button class="me-1 text-muted" onclick="toggleEdit({{ forloop.counter0 }}); return false;">Cancel</button>
+                                  <button class="text-primary" onclick="editNote({{ forloop.counter0 }}); return false;">Save</button>
+                                </small>
+                              </div>
+                              <div id="text-{{ forloop.counter0 }}">
+                                <p class="mb-2">{{ note.text }}</p>
+                                <small class="d-inline">
+                                  <button class="me-1 text-primary" onclick="toggleEdit({{ forloop.counter0 }}); return false;">Edit</button>
+                                  <button class="text-danger" onclick="deleteNote({{ forloop.counter0 }}, '{{ form.DELETE.auto_id }}'); return false;">Delete</button>
+                                </small>
+                              </div>
+                            {% else %}
+                              <p class="mb-2">{{ note.text }}</p>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% else %}
+                        <div class="form-group mt-3">
+                          {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                          {% endfor %}
+                          <label for="{{ form.text.label_for_id }}">Add a Note:</label>
+                          <div class="input-group mb-3">
+                            {{ form.text }}
+                            <button class="btn btn-primary" type="submit" name="add_note"><i class="fas fa-paper-plane"></i></button>
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                  {% endwith %}
+                {% empty %}
+                  <p>No notes have been added to this lead.</p>
+                {% endfor %}
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

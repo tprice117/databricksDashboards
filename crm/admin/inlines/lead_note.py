@@ -11,6 +11,7 @@ class LeadNoteInline(BaseModelTabularInline):
         "text",
         "created_by",
         "created_on",
+        "updated_on",
     )
     show_change_link = True
     extra = 1

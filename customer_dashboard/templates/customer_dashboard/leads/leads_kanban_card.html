@@ -5,7 +5,7 @@
   <!-- Card Content -->
   <div class="inner">
     <!-- Card Action -->
-    {% comment %} <a href="#" class="card-action btn btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="See Lead Details"><i class="fas fa-external-link-alt"></i></a> {% endcomment %}
+    <a href="{% url 'customer_lead_detail' lead.id %}" class="card-action btn btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="See Lead Details"><i class="fas fa-external-link-alt"></i></a>
     <!-- Card Body -->
     <div class="card-body p-2">
       <div class="card-title">

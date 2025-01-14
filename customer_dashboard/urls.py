@@ -254,4 +254,9 @@ urlpatterns = [
         views.leads_card_edit,
         name="customer_leads_card_edit",
     ),
+    path(
+        "customer/lead/<uuid:lead_id>/",
+        views.lead_detail,
+        name="customer_lead_detail",
+    ),
 ]
