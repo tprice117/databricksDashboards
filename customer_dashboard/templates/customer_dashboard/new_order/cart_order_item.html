@@ -105,7 +105,9 @@
                                 {% endif %}
                             </div>
                             <div class="col-auto">
-                                <p class="text-end">${{ item.customer_price|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1">Subtotal: ${{ item.subtotal|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1">Estimated Taxes: ${{ item.tax|floatformat:2|intcomma }}</p>
+                                <p class="text-end">Total: ${{ item.total|floatformat:2|intcomma }}</p>
                             </div>
                             <div class="col-auto">
                                 <div class="row justify-content-center">
