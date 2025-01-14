@@ -87,6 +87,7 @@ class Lead(BaseModel):
         OTHER = "other", _("Other")
         __empty__ = _("N/A")
 
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, related_name="user_leads", on_delete=models.CASCADE)
     user_address = models.ForeignKey(
         UserAddress, on_delete=models.CASCADE, null=True, blank=True

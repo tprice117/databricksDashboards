@@ -4960,13 +4960,39 @@ def lead_detail(request, lead_id):
                         break
             elif not (form_id := request.POST.get("form_id")) or not form_id.isdigit():
                 messages.error(request, "Invalid form submission.")
-            elif action == "edit":
-                # Handle editing
+            else:
                 form_id = int(form_id)
                 form = lead_note_formset.forms[form_id]
-                if form.has_changed():
-                    if form.is_valid():
-                        form.save()
+                if form.instance.created_by != request.user:
+                    # Prevent other users from editing notes
+                    messages.error(request, "Invalid form submission.")
+                elif action == "edit":
+                    # Handle editing
+                    if form.has_changed():
+                        if form.is_valid():
+                            form.save()
+                            messages.success(request, "Notes saved successfully.")
+                            lead_note_formset = LeadNoteFormset(
+                                instance=lead,
+                                queryset=lead_note_queryset,
+                            )
+                        else:
+                            messages.error(
+                                request,
+                                "Error saving notes. Please contact us if this continues.",
+                            )
+                    else:
+                        messages.info(request, "No changes detected.")
+                elif action == "delete":
+                    # Handle deletion
+                    for keep_form in lead_note_formset:
+                        # Reset all the other forms so that they aren't altered
+                        if keep_form.instance != form.instance:
+                            keep_form = LeadNoteForm(instance=keep_form.instance)
+
+                    if lead_note_formset.is_valid():
+                        # Saving the formset handles the deletion
+                        lead_note_formset.save()
                         messages.success(request, "Notes saved successfully.")
                         lead_note_formset = LeadNoteFormset(
                             instance=lead,
@@ -4978,31 +5004,7 @@ def lead_detail(request, lead_id):
                             "Error saving notes. Please contact us if this continues.",
                         )
                 else:
-                    messages.info(request, "No changes detected.")
-            elif action == "delete":
-                # Handle deletion
-                form_id = int(form_id)
-                form = lead_note_formset.forms[form_id]
-                # Reset all the other forms so that they aren't altered
-                for keep_form in lead_note_formset:
-                    if keep_form.instance != form.instance:
-                        keep_form = LeadNoteForm(instance=keep_form.instance)
-
-                if lead_note_formset.is_valid():
-                    # Saving the formset handles the deletion
-                    lead_note_formset.save()
-                    messages.success(request, "Notes saved successfully.")
-                    lead_note_formset = LeadNoteFormset(
-                        instance=lead,
-                        queryset=lead_note_queryset,
-                    )
-                else:
-                    messages.error(
-                        request,
-                        "Error saving notes. Please contact us if this continues.",
-                    )
-            else:
-                messages.error(request, "Invalid action.")
+                    messages.error(request, "Invalid action.")
 
         # Mark as Junk
         elif "update_status" in request.POST:

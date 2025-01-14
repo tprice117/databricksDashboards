@@ -239,7 +239,7 @@ urlpatterns = [
         name="customer_leads_board",
     ),
     path(
-        "customer/leads/<uuid:lead_id>/",
+        "customer/leads/<int:lead_id>/",
         views.leads_card,
         name="customer_leads_card",
     ),
@@ -250,12 +250,12 @@ urlpatterns = [
         name="customer_leads_card_new",
     ),
     path(
-        "customer/leads/<uuid:lead_id>/edit/",
+        "customer/leads/<int:lead_id>/edit/",
         views.leads_card_edit,
         name="customer_leads_card_edit",
     ),
     path(
-        "customer/lead/<uuid:lead_id>/",
+        "customer/lead/<int:lead_id>/",
         views.lead_detail,
         name="customer_lead_detail",
     ),
