@@ -1212,7 +1212,8 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     def get_nearest_order_date(self, obj) -> Optional[datetime.date]:
         return obj.nearest_order.end_date if obj.nearest_order else None
 
-    def get_asset(self, obj):
+    def get_asset(self, obj) -> dict:  # Type hint
+        # -> dict: will show object, but -> object: will show string
         # pass this in to asset serializer and return that
         asset = Asset.objects.filter(
             model__main_product=obj.seller_product_seller_location.seller_product.product.main_product
