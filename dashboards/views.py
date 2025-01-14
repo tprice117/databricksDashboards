@@ -53,8 +53,8 @@ def sales_dashboard(request):
 
 def get_sales_dashboard_context(account_owner_id=None):
     context = {}
-    date_range_start_date = dt(2024, 1, 1)
-    date_range_end_date = dt(2024, 12, 31)
+    date_range_end_date = timezone.now().replace(tzinfo=None)
+    date_range_start_date = date_range_end_date - timedelta(days=365)
     delta_month = timezone.now() - timedelta(days=30)
 
     if account_owner_id:

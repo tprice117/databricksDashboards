@@ -22,6 +22,8 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from api.models import Order, SellerLocation, User, UserAddress, UserGroup
+import csv
+from django.http import HttpResponse
 
 
 def seller_location_dashboard(request):
@@ -575,15 +577,15 @@ def user_addresses_dashboard(request):
 
 def time_to_acceptance(request):
     context = {}
-    # one_month_ago = timezone.now() - timedelta(days=30)
-    time_delta = timezone.now() - timedelta(days=17)
+    one_month_ago = timezone.now() - timedelta(days=30)
+    # time_delta = timezone.now() - timedelta(days=17)
 
     orders_with_time_to_acceptance = (
         Order.objects.filter(
             accepted_on__isnull=False,
             completed_on__isnull=False,
             submitted_on__isnull=False,
-            end_date__gt=time_delta,
+            end_date__gt=one_month_ago,
         )
         .values(
             "id",
@@ -646,7 +648,7 @@ def time_to_acceptance(request):
     # Calculate the count of orders created internally and externally by month for the past year
     orders_by_day = (
         Order.objects.filter(
-            end_date__gt=time_delta,
+            end_date__gt=one_month_ago,
             accepted_on__isnull=False,
             completed_on__isnull=False,
             submitted_on__isnull=False,
@@ -744,3 +746,83 @@ def time_to_acceptance(request):
     context["orders"] = list(orders_with_time_to_acceptance)
 
     return render(request, "dashboards/time_to_acceptance.html", context)
+def export_time_to_acceptance_csv(request):
+    one_month_ago = timezone.now() - timedelta(days=30)
+    orders_with_time_to_acceptance = (
+        Order.objects.filter(
+            accepted_on__isnull=False,
+            completed_on__isnull=False,
+            submitted_on__isnull=False,
+            end_date__gt=one_month_ago,
+        )
+        .values(
+            "id",
+            "end_date",
+            "accepted_on",
+            "accepted_by",
+            "completed_on",
+            "completed_by",
+            "submitted_on",
+            "submitted_by",
+        )
+        .annotate(
+            new_end_date=ExpressionWrapper(
+                F("end_date") + timedelta(hours=15), output_field=DateField()
+            ),
+            time_to_accepted=ExpressionWrapper(
+                F("accepted_on") - F("submitted_on"), output_field=DurationField()
+            ),
+            time_to_completed=ExpressionWrapper(
+                F("completed_on") - F("new_end_date"), output_field=DurationField()
+            ),
+        )
+        .annotate(
+            time_to_accepted_hours=ExpressionWrapper(
+                Cast(Extract(F("time_to_accepted"), "epoch"), output_field=FloatField())
+                / 3600,
+                output_field=FloatField(),
+            ),
+            time_to_completed_hours=ExpressionWrapper(
+                Cast(
+                    Extract(F("time_to_completed"), "epoch"), output_field=FloatField()
+                )
+                / 3600,
+                output_field=FloatField(),
+            ),
+        )
+    )
+
+    user_ids = (
+        set(order["accepted_by"] for order in orders_with_time_to_acceptance)
+        .union(order["submitted_by"] for order in orders_with_time_to_acceptance)
+        .union(order["completed_by"] for order in orders_with_time_to_acceptance)
+    )
+
+    users = User.objects.filter(id__in=user_ids).values("id", "username")
+    user_dict = {user["id"]: user["username"] for user in users}
+
+    for order in orders_with_time_to_acceptance:
+        order["accepted_by_username"] = user_dict.get(order["accepted_by"], "Unknown")
+        order["submitted_by_username"] = user_dict.get(order["submitted_by"], "Unknown")
+        order["completed_by_username"] = user_dict.get(order["completed_by"], "Unknown")
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="time_to_acceptance.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "Order ID", "End Date", "Accepted On", "Accepted By", "Completed On", 
+        "Completed By", "Submitted On", "Submitted By", "Time to Accepted (hours)", 
+        "Time to Completed (hours)"
+    ])
+
+    for order in orders_with_time_to_acceptance:
+        writer.writerow([
+            order["id"], order["end_date"], order["accepted_on"], 
+            order["accepted_by_username"], order["completed_on"], 
+            order["completed_by_username"], order["submitted_on"], 
+            order["submitted_by_username"], order["time_to_accepted_hours"], 
+            order["time_to_completed_hours"]
+        ])
+
+    return response

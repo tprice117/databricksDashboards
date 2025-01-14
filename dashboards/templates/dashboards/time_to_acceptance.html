@@ -51,7 +51,7 @@ timetoacceptance
 
     </header>
     <main style="text-align: center; margin-top: 20px;">
-        <button id="toggleSectionBtn" style="background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Switch Section</button>
+        <button id="toggleSectionBtn" class="btn btn-primary">Switch Section</button>
         <section id="section1">
             <h3>Time to Acceptance: {{orders_count}} Orders Tracked</h3>
             <div class="row">
@@ -228,6 +228,10 @@ timetoacceptance
                     });
                 </script>
         </section>
+        <div class="col-md-12 mb-4" style="text-align: left; margin-bottom: 20px; padding-top: 20px;">
+            <a href="{% url 'export_time_to_acceptance_csv' %}" class="btn btn-primary">Download CSV</a>
+        </div>
+
         <div style="overflow-x: auto; max-height: 60em;">
             <table id="orders-table" class="display">
                 <thead>
@@ -262,6 +266,12 @@ timetoacceptance
                 </tbody>
             </table>
         </div>
+
+        <script>
+            document.getElementById('exportCsvBtn').addEventListener('click', function() {
+                window.location.href = "{% url 'export_time_to_acceptance_csv' %}";
+            });
+        </script>
         <script>
             document.getElementById('toggleSectionBtn').addEventListener('click', function() {
                 var section1 = document.getElementById('section1');

@@ -7,6 +7,7 @@ from .views_new.metrics_dashboards import (
     user_addresses_dashboard,
     user_groups_dashboard,
     users_dashboard,
+    export_time_to_acceptance_csv,
 )
 from .views_new.order_origination import order_origination
 from .views_new.sales_leaderboard import (
@@ -123,5 +124,10 @@ urlpatterns = [
         "time-to-acceptance/",
         time_to_acceptance,
         name="time_to_acceptance",
+    ),
+    path(
+        "export-time-to-acceptance-csv/",
+        export_time_to_acceptance_csv,
+        name="export_time_to_acceptance_csv",
     ),
 ]
