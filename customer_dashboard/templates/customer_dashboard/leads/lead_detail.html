@@ -10,6 +10,34 @@
 {% endblock %}
 {% block javascript %}
   <script>
+    const inputOptions = {}
+    document
+      .getElementById('lost-reason')
+      .querySelectorAll('option')
+      .forEach((option) => {
+        inputOptions[option.value] = option.text
+      })
+    
+    function markAsJunk() {
+      // Send a modal popup asking for Lost Reason
+      Swal.fire({
+        title: 'Please select the reason for losing this lead:',
+        input: 'select',
+        inputOptions: inputOptions,
+        inputPlaceholder: 'Select a reason...',
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if (!value) {
+            return 'Please select a reason.'
+          }
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById('lost-reason').value = result.value
+          document.getElementById('mark-as-junk-form').submit()
+        }
+      })
+    }
     function toggleEdit(index) {
       var editDiv = document.getElementById('text-edit-' + index)
       var textDiv = document.getElementById('text-' + index)
@@ -128,14 +156,19 @@
             </div>
           </div>
           <div class="col-md-2">
-            <form method="post">
+            <form id="mark-as-junk-form" method="post">
               {% csrf_token %}
+              <input type="hidden" name="update_status" />
               <input type="hidden" name="status" value="junk" />
-              <input type="hidden" name="reason" value="" />
+              <select id="lost-reason" class="d-none" name="lost_reason">
+                {% for reason, label in lost_reasons.items %}
+                  <option value="{{ reason }}">{{ label }}</option>
+                {% endfor %}
+              </select>
               {% if lead.status == 'junk' %}
-                <button class="btn btn-danger btn-sm w-100 disabled" type="submit" disabled><i class="fas fa-times me-3"></i>Mark as Junk</button>
+                <button class="btn btn-danger btn-sm w-100 disabled" disabled><i class="fas fa-times me-3"></i>Mark as Junk</button>
               {% else %}
-                <button class="btn btn-danger btn-sm w-100" type="submit" name="update_status"><i class="fas fa-times me-3"></i>Mark as Junk</button>
+                <button class="btn btn-danger btn-sm w-100" onclick="markAsJunk(); return false;"><i class="fas fa-times me-3"></i>Mark as Junk</button>
               {% endif %}
             </form>
           </div>
@@ -245,10 +278,23 @@
                 <input type="hidden" name="note-formset" />
                 <input type="hidden" id="note-formset-form" name="form_id" value="" />
                 <input type="hidden" id="note-formset-action" name="action" value="create" />
+
+                {% comment %}Render Notes{% endcomment %}
                 {% for form in lead_note_formset %}
-                  {% with note=form.instance %}
-                    {% with user=note.created_by %}
-                      {% if user %}
+                  {% if forloop.first %}
+                    <div class="form-group mt-3">
+                      {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                      {% endfor %}
+                      <label for="{{ form.text.label_for_id }}">Add a Note:</label>
+                      <div class="input-group mb-3">
+                        {{ form.text }}
+                        <button class="btn btn-primary" type="submit" name="add_note"><i class="fas fa-paper-plane"></i></button>
+                      </div>
+                    </div>
+                  {% else %}
+                    {% with note=form.instance %}
+                      {% with user=note.created_by %}
                         <div class="d-flex mb-3 small">
                           <div class="me-2">
                             {% if user.photo %}
@@ -259,46 +305,42 @@
                           </div>
                           <div class="col">
                             <div class="d-flex justify-content-between">
-                              <small>{{ user.full_name|default:user.email }}</small>
-                              <small>{{ note.created_on|naturaltime }}{% if note.created_on|time:'H\h i\m' != note.updated_on|time:'H\h i\m' %} (Edited){% endif %}</small>
+                              <small class="me-1">{{ user.full_name|default:user.email }}</small>
+                              <small class="text-end">
+                                {{ note.created_on|naturaltime }}
+                                {% comment %}Check for difference in Create/Update time, down to second.{% endcomment %}
+                                {% if note.created_on|date:'Y-m-d H:i:s' != note.updated_on|date:'Y-m-d H:i:s' %} (Edited){% endif %}
+                              </small>
                             </div>
                             {% if user == request.user %}
                               {% for hidden in form.hidden_fields %}
                                 {{ hidden }}
                               {% endfor %}
-                              <div id="text-edit-{{ forloop.counter0 }}" class="d-none">
-                                {{ form.text }}
-                                <small class="d-inline">
-                                  <button class="me-1 text-muted" onclick="toggleEdit({{ forloop.counter0 }}); return false;">Cancel</button>
-                                  <button class="text-primary" onclick="editNote({{ forloop.counter0 }}); return false;">Save</button>
-                                </small>
-                              </div>
-                              <div id="text-{{ forloop.counter0 }}">
-                                <p class="mb-2">{{ note.text }}</p>
-                                <small class="d-inline">
-                                  <button class="me-1 text-primary" onclick="toggleEdit({{ forloop.counter0 }}); return false;">Edit</button>
-                                  <button class="text-danger" onclick="deleteNote({{ forloop.counter0 }}, '{{ form.DELETE.auto_id }}'); return false;">Delete</button>
-                                </small>
-                              </div>
+                              {% comment %}Form prefix is "notes-X" where X is the id number of the form. We need to extract the number from the prefix to use it in the javascript functions and view, to save the correct form.{% endcomment %}
+                              {% with form_number=form.prefix|slice:'6:' %}
+                                <div id="text-edit-{{ form_number }}" class="d-none">
+                                  {{ form.text }}
+                                  <small class="d-inline">
+                                    <button class="btn btn-sm p-0 me-1 text-muted" onclick="toggleEdit({{ form_number }}); return false;">Cancel</button>
+                                    <button class="btn btn-sm btn-primary py-0 px-1" onclick="editNote({{ form_number }}); return false;">Save</button>
+                                  </small>
+                                </div>
+                                <div id="text-{{ form_number }}">
+                                  <p class="mb-2">{{ note.text }}</p>
+                                  <small class="d-inline">
+                                    <button class="btn btn-sm p-0 me-1 text-primary" onclick="toggleEdit({{ form_number }}); return false;">Edit</button>
+                                    <button class="btn btn-sm p-0 text-danger" onclick="deleteNote({{ form_number }}, '{{ form.DELETE.auto_id }}'); return false;">Delete</button>
+                                  </small>
+                                </div>
+                              {% endwith %}
                             {% else %}
                               <p class="mb-2">{{ note.text }}</p>
                             {% endif %}
                           </div>
                         </div>
-                      {% else %}
-                        <div class="form-group mt-3">
-                          {% for hidden in form.hidden_fields %}
-                            {{ hidden }}
-                          {% endfor %}
-                          <label for="{{ form.text.label_for_id }}">Add a Note:</label>
-                          <div class="input-group mb-3">
-                            {{ form.text }}
-                            <button class="btn btn-primary" type="submit" name="add_note"><i class="fas fa-paper-plane"></i></button>
-                          </div>
-                        </div>
-                      {% endif %}
+                      {% endwith %}
                     {% endwith %}
-                  {% endwith %}
+                  {% endif %}
                 {% empty %}
                   <p>No notes have been added to this lead.</p>
                 {% endfor %}

@@ -838,3 +838,14 @@ class LeadNoteForm(forms.ModelForm):
                 }
             ),
         }
+
+
+class BaseLeadNoteFormset(HiddenDeleteFormSet):
+    """Formset to reverse the order of the forms (extra form first)."""
+
+    def __iter__(self):
+        return reversed(list(super(BaseLeadNoteFormset, self).__iter__()))
+
+    def __getitem__(self, index):
+        items = list(super(BaseLeadNoteFormset, self).__iter__())
+        return items[-(index + 1)]

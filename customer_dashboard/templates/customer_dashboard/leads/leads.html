@@ -240,7 +240,7 @@
       <input id="action" type="hidden" name="update_status" />
       <input id="status" type="hidden" name="status" />
       <input id="moved-card" type="hidden" name="lead_id" />
-      <select id="lost-reason" name="lost_reason" style="display: none;">
+      <select id="lost-reason" class="d-none" name="lost_reason">
         {% for key, value in lost_reasons.items %}
           <option value="{{ key }}">{{ value }}</option>
         {% endfor %}

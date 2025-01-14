@@ -38,7 +38,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
-from django.forms import inlineformset_factory, formset_factory
+from django.forms import inlineformset_factory
 from common.forms import HiddenDeleteFormSet
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
@@ -94,6 +94,7 @@ from .forms import (
     CreditApplicationForm,
     LeadForm,
     LeadNoteForm,
+    BaseLeadNoteFormset,
     OrderGroupForm,
     OrderGroupSwapForm,
     OrderReviewFormSet,
@@ -632,12 +633,6 @@ def customer_impersonation_stop(request):
     if request.session.get("customer_user_group_id"):
         del request.session["customer_user_group_id"]
     return HttpResponseRedirect("/customer/")
-
-
-@login_required(login_url="/admin/login/")
-def customer_user_addresses(request, user_id):
-    user = User.objects.get(id=user_id)
-    user_addresses = UserAddress.objects.for_user(user)
 
 
 def get_user_context(request: HttpRequest, add_user_group=True):
@@ -4794,6 +4789,12 @@ def leads_board(request):
                 try:
                     lead.clean()
                     lead.save()
+                    # If status did not update due to expiration, then show user why
+                    if (
+                        status != lead.status
+                        and lead.lost_reason == Lead.LostReason.EXPIRED
+                    ):
+                        messages.error(request, "Lead Conversion Date has passed.")
                 except ValidationError as e:
                     messages.error(
                         request, f"Error updating lead: {','.join(e.messages)}"
@@ -4915,14 +4916,29 @@ def lead_detail(request, lead_id):
         messages.error(request, "Lead not found.")
         return HttpResponseRedirect(reverse("customer_leads"))
 
+    lead_note_queryset = lead.notes.order_by("created_on")
+    lead_statuses = Lead.Status.get_ordered_choices()
+
     LeadNoteFormset = inlineformset_factory(
-        Lead, LeadNote, form=LeadNoteForm, formset=HiddenDeleteFormSet, extra=1
+        Lead,
+        LeadNote,
+        form=LeadNoteForm,
+        formset=BaseLeadNoteFormset,
+        extra=1,
     )
-    lead_note_formset = LeadNoteFormset(instance=lead)
+    lead_note_formset = LeadNoteFormset(
+        instance=lead,
+        queryset=lead_note_queryset,
+    )
 
     if request.method == "POST":
+        # Note Formset
         if "note-formset" in request.POST:
-            lead_note_formset = LeadNoteFormset(request.POST, instance=lead)
+            lead_note_formset = LeadNoteFormset(
+                request.POST,
+                instance=lead,
+                queryset=lead_note_queryset,
+            )
             action = request.POST.get("action", "create")
 
             if "add_note" in request.POST:
@@ -4931,7 +4947,10 @@ def lead_detail(request, lead_id):
                     if form.is_valid():
                         form.save()
                         messages.success(request, "Note added successfully.")
-                        lead_note_formset = LeadNoteFormset(instance=lead)
+                        lead_note_formset = LeadNoteFormset(
+                            instance=lead,
+                            queryset=lead_note_queryset,
+                        )
                         break
                     else:
                         messages.error(
@@ -4949,7 +4968,10 @@ def lead_detail(request, lead_id):
                     if form.is_valid():
                         form.save()
                         messages.success(request, "Notes saved successfully.")
-                        lead_note_formset = LeadNoteFormset(instance=lead)
+                        lead_note_formset = LeadNoteFormset(
+                            instance=lead,
+                            queryset=lead_note_queryset,
+                        )
                     else:
                         messages.error(
                             request,
@@ -4970,7 +4992,10 @@ def lead_detail(request, lead_id):
                     # Saving the formset handles the deletion
                     lead_note_formset.save()
                     messages.success(request, "Notes saved successfully.")
-                    lead_note_formset = LeadNoteFormset(instance=lead)
+                    lead_note_formset = LeadNoteFormset(
+                        instance=lead,
+                        queryset=lead_note_queryset,
+                    )
                 else:
                     messages.error(
                         request,
@@ -4979,6 +5004,7 @@ def lead_detail(request, lead_id):
             else:
                 messages.error(request, "Invalid action.")
 
+        # Mark as Junk
         elif "update_status" in request.POST:
             status = request.POST.get("status")
             if status != lead.status:
@@ -4997,17 +5023,17 @@ def lead_detail(request, lead_id):
                     )
                     lead.refresh_from_db()
 
-    lead_statuses = Lead.Status.get_ordered_choices()
-
     context.update(
         {
             "lead": lead,
-            "notes": lead.notes.all(),
             "lead_note_formset": lead_note_formset,
             "lead_statuses": lead_statuses,
-            "lead_status_index": [status for (status, label) in lead_statuses].index(
+            "lead_status_index": [status for (status, _) in lead_statuses].index(
                 lead.status
             ),
+            "lost_reasons": {
+                value: label for (value, label) in Lead.LostReason.choices if value
+            },
         }
     )
 
