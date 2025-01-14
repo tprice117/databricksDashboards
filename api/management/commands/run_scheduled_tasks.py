@@ -32,6 +32,7 @@ from billing.scheduled_jobs.consolidated_account_past_due import (
     send_account_past_due_emails,
 )
 from billing.utils.billing import BillingUtils
+from crm.utils import LeadUtils
 from notifications.scheduled_jobs.send_emails import (
     send_emails,
     send_seller_order_emails,
@@ -182,6 +183,18 @@ class Command(BaseCommand):
                 jitter=640,
             ),
             id="create_auto_renewal_orders",
+            max_instances=1,
+            replace_existing=True,
+        )
+
+        # Update Leads that have passed their conversion date.
+        scheduler.add_job(
+            LeadUtils.update_lead_statuses,
+            trigger=CronTrigger(
+                hour="3",
+                jitter=640,
+            ),
+            id="update_conversion_statuses",
             max_instances=1,
             replace_existing=True,
         )
