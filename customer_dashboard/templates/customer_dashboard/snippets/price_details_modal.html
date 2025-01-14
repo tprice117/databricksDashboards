@@ -1,288 +1,288 @@
 {% load humanize %}
 {% load sales_stream_tags %}
 {% block modals %}
-  <div class="modal fade" role="dialog" tabindex="-1" id="modal-price-detail-{{ forloop.counter }}">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Price Details</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+    <div class="modal fade" role="dialog" tabindex="-1" id="modal-price-detail-{{ forloop.counter }}">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Price Details</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ item.seller_product_seller_location.seller_location.seller.name }}</p>
+                    <div id="price-detail-one-time-charges-card" class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">One Time Charges</h4>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Delivery</td>
+                                            <td>
+                                                {% if item.price_breakdown.delivery %}
+                                                    {% for order_line_item in item.price_breakdown.delivery.items %}
+                                                        <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    No charge
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Removal</td>
+                                            <td>
+                                                {% if item.price_breakdown.removal %}
+                                                    {% for order_line_item in item.price_breakdown.removal.items %}
+                                                        <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    No charge
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% if item.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step %}
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-body">
+                                <p>
+                                    <strong>Rental</strong>
+                                </p>
+                                <p>Rent for any period up to 28 days is a flat rate. Each additional 28-day period incurs a full rental fee.</p>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Per Each Period</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_one_step.rate|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_one_step.rate|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if item.seller_product_seller_location.seller_product.product.main_product.has_rental %}
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-body">
+                                <p>
+                                    <strong>Rental</strong>
+                                </p>
+                                <p>
+                                    The rental price has two tiers. A base fee of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup|floatformat:2|intcomma }}</span> applies to all rentals. After {{ item.seller_product_seller_location.rental.included_days }}&nbsp;days, a rate of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup|floatformat:2|intcomma }}</span> per day applies.
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Base Rate</th>
+                                                <th>Per Day After {{ item.seller_product_seller_location.rental.included_days }} Days</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup }}">
+                                                        {% if item.seller_product_seller_location.rental.base_price %}
+                                                            ${{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup|floatformat:2|intcomma }}
+                                                        {% else %}
+                                                            $0
+                                                        {% endif %}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if item.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step %}
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-body">
+                                <p>
+                                    <strong>Rental</strong>
+                                </p>
+                                <p>We offer flexible rental pricing with hourly, daily, weekly, biweekly, and monthly rates (availability varies by supplier). Our system automatically calculates the most affordable option based on your rental duration.</p>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Hourly</th>
+                                                <th>Daily</th>
+                                                <th>Weekly</th>
+                                                <th>Biweekly</th>
+                                                <th>Monthly</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.hour|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.hour|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.day|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.day|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.week|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.week|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.two_weeks|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.two_weeks|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.month|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.month|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if item.seller_product_seller_location.seller_product.product.main_product.has_service %}
+                        {% with service=item.seller_product_seller_location.service %}
+                            <div class="card" style="margin-top: 20px;">
+                                <div class="card-body">
+                                    <p>
+                                        <strong>Service</strong>
+                                    </p>
+                                    <p>
+                                        A service fee applies to each order. This fee can be calculated either by distance (per mile from the supplier) or as a flat rate. This supplier has opted for a{% if service.price_per_mile %}
+                                            per mile rate
+                                        {% else %}
+                                            flat rate
+                                        {% endif %}of{% if service.price_per_mile %}
+                                            <span class="price-item" data-price="{{ service.price_per_mile|add_markup:default_markup }}">{{ service.price_per_mile|add_markup:default_markup|currency }}</span>
+                                        {% else %}
+                                            <span class="price-item" data-price="{{ service.flat_rate_price|add_markup:default_markup }}">{{ service.flat_rate_price|add_markup:default_markup|currency }}</span>
+                                        {% endif %}.&nbsp;
+                                    </p>
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Per Service</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>
+                                                        {% if service.price_per_mile %}
+                                                            <span class="price-item" data-price="{{ service.price_per_mile|add_markup:default_markup }}">{{ service.price_per_mile|add_markup:default_markup|currency }}</span> per mile
+                                                        {% else %}
+                                                            <span class="price-item" data-price="{{ service.flat_rate_price|add_markup:default_markup }}">{{ service.flat_rate_price|add_markup:default_markup|currency }}</span> flat rate
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endwith %}
+                    {% endif %}
+                    {% if item.seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week %}
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-body">
+                                <p>
+                                    <strong>Service</strong>
+                                </p>
+                                <p>
+                                    Pricing is based on the number of services you need per week. You pay a fixed monthly rate for up to four weeks of service. For example, choosing three services per week would cost <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup }}">${{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup|floatformat:2|intcomma }}</span> per month, regardless of whether you use the service for one week or four.
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>1x Per Week</th>
+                                                <th>2x</th>
+                                                <th>3x</th>
+                                                <th>4x</th>
+                                                <th>5x</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.two_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.two_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.four_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.four_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.five_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.five_times_per_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if item.seller_product_seller_location.seller_product.product.main_product.has_material %}
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-body">
+                                <p>
+                                    <strong>Material</strong>
+                                </p>
+                                <!-- Add material_waste_type.tonnage_included if larger -->
+                                {% if item.price_breakdown.material.items.0.quantity %}
+                                    <p>Pricing is based on the amount of material produced, similar to fuel costs for a rental car. Each product has a standard base tonnage that applies to all suppliers, allowing for easy price comparisons. For this product, the base tonnage is {{ item.price_breakdown.material.items.0.quantity }}. You'll always be charged for {{ item.price_breakdown.material.items.0.quantity }} tons per service. If you exceed {{ item.price_breakdown.material.items.0.quantity }} tons, an additional fee will apply based on the material type.</p>
+                                {% else %}
+                                    <p>Pricing is based on the amount of material produced, similar to fuel costs for a rental car. Each product has a standard base tonnage that applies to all suppliers, allowing for easy price comparisons. For this product, the base tonnage is {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}. You'll always be charged for {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}&nbsp;tons per service. If you exceed {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}&nbsp;tons, an additional fee will apply based on the material type.</p>
+                                {% endif %}
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Waste Type</th>
+                                                <th>Base Price</th>
+                                                <th>Price Per Additional Ton</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for material_waste_type in item.seller_product_seller_location.material.waste_types.all %}
+                                                <tr>
+                                                    <td>{{ material_waste_type.main_product_waste_type.waste_type.name }}</td>
+                                                    <td>
+                                                        <span class="price-item" data-price="{{ material_waste_type.base_price|add_markup:default_markup }}">${{ material_waste_type.base_price|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="price-item" data-price="{{ material_waste_type.price_per_ton|add_markup:default_markup }}">${{ material_waste_type.price_per_ton|add_markup:default_markup|floatformat:2|intcomma }}</span>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
-          <p>{{ item.seller_product_seller_location.seller_location.seller.name }}</p>
-          <div class="card">
-            <div class="card-body">
-              <h4 class="card-title">One Time Charges</h4>
-              <div class="table-responsive">
-                <table class="table">
-                  <thead>
-                    <tr></tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Delivery</td>
-                      <td>
-                        {% if item.price_breakdown.delivery %}
-                          {% for order_line_item in item.price_breakdown.delivery.items %}
-                            <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
-                          {% endfor %}
-                        {% else %}
-                          No charge
-                        {% endif %}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Removal</td>
-                      <td>
-                        {% if item.price_breakdown.removal %}
-                          {% for order_line_item in item.price_breakdown.removal.items %}
-                            <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
-                          {% endfor %}
-                        {% else %}
-                          No charge
-                        {% endif %}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          {% if item.seller_product_seller_location.seller_product.product.main_product.has_rental_one_step %}
-            <div class="card" style="margin-top: 20px;">
-              <div class="card-body">
-                <p>
-                  <strong>Rental</strong>
-                </p>
-                <p>Rent for any period up to 28 days is a flat rate. Each additional 28-day period incurs a full rental fee.</p>
-                <div class="table-responsive">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Per Each Period</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_one_step.rate|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_one_step.rate|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          {% endif %}
-          {% if item.seller_product_seller_location.seller_product.product.main_product.has_rental %}
-            <div class="card" style="margin-top: 20px;">
-              <div class="card-body">
-                <p>
-                  <strong>Rental</strong>
-                </p>
-                <p>
-                  The rental price has two tiers. A base fee of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup|floatformat:2|intcomma }}</span> applies to all rentals. After {{ item.seller_product_seller_location.rental.included_days }}&nbsp;days, a rate of <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup|floatformat:2|intcomma }}</span> per day applies.
-                </p>
-                <div class="table-responsive">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Base Rate</th>
-                        <th>Per Day After {{ item.seller_product_seller_location.rental.included_days }} Days</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup }}">
-                            {% if item.seller_product_seller_location.rental.base_price %}
-                              ${{ item.seller_product_seller_location.rental.base_price|add_markup:default_markup|floatformat:2|intcomma }}
-                            {% else %}
-                              $0
-                            {% endif %}
-                          </span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          {% endif %}
-          {% if item.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step %}
-            <div class="card" style="margin-top: 20px;">
-              <div class="card-body">
-                <p>
-                  <strong>Rental</strong>
-                </p>
-                <p>We offer flexible rental pricing with hourly, daily, weekly, biweekly, and monthly rates (availability varies by supplier). Our system automatically calculates the most affordable option based on your rental duration.</p>
-                <div class="table-responsive">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Hourly</th>
-                        <th>Daily</th>
-                        <th>Weekly</th>
-                        <th>Biweekly</th>
-                        <th>Monthly</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.hour|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.hour|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.day|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.day|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.week|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.week|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.two_weeks|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.two_weeks|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.rental_multi_step.month|add_markup:default_markup }}">${{ item.seller_product_seller_location.rental_multi_step.month|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          {% endif %}
-          {% if item.seller_product_seller_location.seller_product.product.main_product.has_service %}
-            {% with service=item.seller_product_seller_location.service %}
-              <div class="card" style="margin-top: 20px;">
-                <div class="card-body">
-                  <p>
-                    <strong>Service</strong>
-                  </p>
-                  <p>
-                    A service fee applies to each order. This fee can be calculated either by distance (per mile from the supplier) or as a flat rate. This supplier has opted for a{% if service.price_per_mile %}
-                      per mile rate
-                    {% else %}
-                      flat rate
-                    {% endif %}of{% if service.price_per_mile %}
-                      <span class="price-item" data-price="{{ service.price_per_mile|add_markup:default_markup }}">{{ service.price_per_mile|add_markup:default_markup|currency }}</span>
-                    {% else %}
-                      <span class="price-item" data-price="{{ service.flat_rate_price|add_markup:default_markup }}">{{ service.flat_rate_price|add_markup:default_markup|currency }}</span>
-                    {% endif %}.&nbsp;
-                  </p>
-                  <div class="table-responsive">
-                    <table class="table">
-                      <thead>
-                        <tr>
-                          <th>Per Service</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>
-                            {% if service.price_per_mile %}
-                              <span class="price-item" data-price="{{ service.price_per_mile|add_markup:default_markup }}">{{ service.price_per_mile|add_markup:default_markup|currency }}</span> per mile
-                            {% else %}
-                              <span class="price-item" data-price="{{ service.flat_rate_price|add_markup:default_markup }}">{{ service.flat_rate_price|add_markup:default_markup|currency }}</span> flat rate
-                            {% endif %}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            {% endwith %}
-          {% endif %}
-          {% if item.seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week %}
-            <div class="card" style="margin-top: 20px;">
-              <div class="card-body">
-                <p>
-                  <strong>Service</strong>
-                </p>
-                <p>
-                  Pricing is based on the number of services you need per week. You pay a fixed monthly rate for up to four weeks of service. For example, choosing three services per week would cost <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup }}">${{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup|floatformat:2|intcomma }}</span> per month, regardless of whether you use the service for one week or four.
-                </p>
-                <div class="table-responsive">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>1x Per Week</th>
-                        <th>2x</th>
-                        <th>3x</th>
-                        <th>4x</th>
-                        <th>5x</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup|currency }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.two_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.two_times_per_week|add_markup:default_markup|currency }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.three_times_per_week|add_markup:default_markup|currency }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.four_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.four_times_per_week|add_markup:default_markup|currency }}</span>
-                        </td>
-                        <td>
-                          <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.five_times_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.five_times_per_week|add_markup:default_markup|currency }}</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          {% endif %}
-          {% if item.seller_product_seller_location.seller_product.product.main_product.has_material %}
-            <div class="card" style="margin-top: 20px;">
-              <div class="card-body">
-                <p>
-                  <strong>Material</strong>
-                </p>
-                <!-- Add material_waste_type.tonnage_included if larger -->
-                {% if item.price_breakdown.material.items.0.quantity %}
-                  <p>Pricing is based on the amount of material produced, similar to fuel costs for a rental car. Each product has a standard base tonnage that applies to all suppliers, allowing for easy price comparisons. For this product, the base tonnage is {{ item.price_breakdown.material.items.0.quantity }}. You'll always be charged for {{ item.price_breakdown.material.items.0.quantity }} tons per service. If you exceed {{ item.price_breakdown.material.items.0.quantity }} tons, an additional fee will apply based on the material type.</p>
-                {% else %}
-                  <p>Pricing is based on the amount of material produced, similar to fuel costs for a rental car. Each product has a standard base tonnage that applies to all suppliers, allowing for easy price comparisons. For this product, the base tonnage is {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}. You'll always be charged for {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}&nbsp;tons per service. If you exceed {{ item.seller_product_seller_location.seller_product.product.main_product.included_tonnage_quantity }}&nbsp;tons, an additional fee will apply based on the material type.</p>
-                {% endif %}
-                <div class="table-responsive">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th>Waste Type</th>
-                        <th>Base Price</th>
-                        <th>Price Per Additional Ton</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for material_waste_type in item.seller_product_seller_location.material.waste_types.all %}
-                        <tr>
-                          <td>{{ material_waste_type.main_product_waste_type.waste_type.name }}</td>
-                          <td>
-                            <span class="price-item" data-price="{{ material_waste_type.base_price|add_markup:default_markup }}">${{ material_waste_type.base_price|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                          </td>
-                          <td>
-                            <span class="price-item" data-price="{{ material_waste_type.price_per_ton|add_markup:default_markup }}">${{ material_waste_type.price_per_ton|add_markup:default_markup|floatformat:2|intcomma }}</span>
-                          </td>
-                        </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          {% endif %}
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
     </div>
-  </div>
 {% endblock %}
