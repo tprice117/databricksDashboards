@@ -8,6 +8,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
+from api.managers import OrderGroupManager
 from api.models import Order
 from api.models.day_of_week import DayOfWeek
 from api.models.main_product.main_product import MainProduct
@@ -137,8 +138,11 @@ class OrderGroup(BaseModel):
     )
     project_id = models.CharField(max_length=50, blank=True, null=True)
 
+    # Managers
+    objects = OrderGroupManager()
+
     def __str__(self):
-        return f'{self.user.user_group.name if self.user.user_group else ""} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}'
+        return f"{self.user.user_group.name if self.user.user_group else ''} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}"
 
     class Meta:
         verbose_name = "Booking"

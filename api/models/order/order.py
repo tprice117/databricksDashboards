@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from api.managers import OrderManager
 from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
@@ -223,6 +224,9 @@ class Order(BaseModel):
         help_text="Unique code for the Transaction.",
     )
 
+    # Managers
+    objects = OrderManager()
+
     class Meta:
         verbose_name = "Transaction"
         verbose_name_plural = "Transactions"
@@ -335,7 +339,7 @@ class Order(BaseModel):
         Returns:
             tuple(str, str): Orignal description and new expaned description (could be exactly the same).
         """
-        description = f'{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime("%a, %b %-d")} - {self.end_date.strftime("%a, %b %-d")} | {self.order_type}'
+        description = f"{self.order_group.seller_product_seller_location.seller_product.product.main_product.name} | {self.start_date.strftime('%a, %b %-d')} - {self.end_date.strftime('%a, %b %-d')} | {self.order_type}"
         description2 = description
         if self.order_group.project_id:
             description2 = f"{description2} ({self.order_group.project_id})"
@@ -1095,9 +1099,9 @@ class Order(BaseModel):
         Create an Intercom Conversation for the Order between the Seller and the Customer.
         """
         if self.order_type is None:
-            subject = f"Downstream Booking: { self.order_group.seller_product_seller_location.seller_product.product.main_product.name } at {self.order_group.user_address.formatted_address()} | reference ID: {self.id}."
+            subject = f"Downstream Booking: {self.order_group.seller_product_seller_location.seller_product.product.main_product.name} at {self.order_group.user_address.formatted_address()} | reference ID: {self.id}."
         else:
-            subject = f"Downstream Booking: {self.order_type} on { self.order_group.seller_product_seller_location.seller_product.product.main_product.name } at {self.order_group.user_address.formatted_address()} | reference ID: {self.id}."
+            subject = f"Downstream Booking: {self.order_type} on {self.order_group.seller_product_seller_location.seller_product.product.main_product.name} at {self.order_group.user_address.formatted_address()} | reference ID: {self.id}."
         if self.custmer_intercom_id:
             try:
                 body = subject
