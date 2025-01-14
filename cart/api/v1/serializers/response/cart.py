@@ -106,6 +106,10 @@ class CartGroupSerializer(serializers.Serializer):
 
     address = UserAddressSerializer(read_only=True)
     items = CartItemSerializer(many=True, read_only=True)
+    # Deprecated, use subtotal, remove after next app version
+    customer_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     count = serializers.IntegerField(read_only=True)
     show_quote = serializers.BooleanField(read_only=True)
