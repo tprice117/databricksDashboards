@@ -838,6 +838,8 @@ class CartUtils:
             bucket_data = {
                 "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
                 "order": order,
+                # Deprecated, use subtotal, remove after next app version
+                "customer_price": customer_price,
                 "subtotal": customer_price,
                 "tax": customer_price_with_tax - customer_price,
                 "total": customer_price_with_tax,
