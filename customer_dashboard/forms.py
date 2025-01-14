@@ -18,7 +18,7 @@ from api.models import (
 )
 from common.forms import HiddenDeleteFormSet
 from common.models.choices.user_type import UserType
-from crm.models.lead import Lead
+from crm.models import Lead, LeadNote
 
 
 def validate_swap_start_date(value):
@@ -821,3 +821,31 @@ class LeadForm(forms.ModelForm):
         if commit:
             lead.save()
         return lead
+
+
+class LeadNoteForm(forms.ModelForm):
+    class Meta:
+        model = LeadNote
+        fields = ["text"]
+        widgets = {
+            "text": forms.Textarea(
+                attrs={
+                    "cols": 30,
+                    "rows": 2,
+                    "class": "form-control",
+                    "placeholder": "Add a note...",
+                    "required": "true",
+                }
+            ),
+        }
+
+
+class BaseLeadNoteFormset(HiddenDeleteFormSet):
+    """Formset to reverse the order of the forms (extra form first)."""
+
+    def __iter__(self):
+        return reversed(list(super(BaseLeadNoteFormset, self).__iter__()))
+
+    def __getitem__(self, index):
+        items = list(super(BaseLeadNoteFormset, self).__iter__())
+        return items[-(index + 1)]

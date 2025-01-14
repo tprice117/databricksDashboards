@@ -124,6 +124,26 @@ Used for showing a button on hover
     display: block;
 }
 
+/* HTMX Loading Indicator */
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline;
+    /* animation: flash 1s infinite; */
+}
+
+.htmx-request.htmx-indicator {
+    display: inline;
+    /* animation: flash 2.0s infinite; */
+}
+
+#htmx-indicator-page {
+    animation: flash 2.0s infinite;
+}
+
 .htmx-request ~ .htmx-loading-hide {
     display: none;
 }
@@ -154,24 +174,6 @@ gmp-map {
     75% {
         opacity: 0;
     }
-}
-
-.htmx-indicator {
-    display: none;
-}
-
-.htmx-request .htmx-indicator {
-    display: inline;
-    /* animation: flash 1s infinite; */
-}
-
-.htmx-request.htmx-indicator {
-    display: inline;
-    /* animation: flash 2.0s infinite; */
-}
-
-#htmx-indicator-page {
-    animation: flash 2.0s infinite;
 }
 
 .svg-loader {
