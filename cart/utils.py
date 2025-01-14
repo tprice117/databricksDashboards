@@ -826,6 +826,7 @@ class CartUtils:
         # Process each order
         for order in orders:
             customer_price = order.customer_price()
+            customer_price_with_tax = order.customer_price_with_tax()
             uaid = order.order_group.user_address_id
 
             # Get or create the address bucket
@@ -837,11 +838,13 @@ class CartUtils:
             bucket_data = {
                 "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
                 "order": order,
-                "customer_price": customer_price,
+                "subtotal": customer_price,
+                "tax": customer_price_with_tax - customer_price,
+                "total": customer_price_with_tax,
             }
 
             address_bucket["items"].append(bucket_data)
-            address_bucket["total"] += customer_price
+            address_bucket["total"] += customer_price_with_tax
             address_bucket["count"] += 1
 
             if order.order_type in {
@@ -851,7 +854,7 @@ class CartUtils:
             }:
                 address_bucket["show_quote"] = True
 
-            cart_data["subtotal"] += customer_price
+            cart_data["subtotal"] += customer_price_with_tax
             cart_data["cart_count"] += 1
 
         # Convert address_buckets to the required format for CartSerializer
