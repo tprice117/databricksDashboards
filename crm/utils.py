@@ -1,12 +1,9 @@
-from django.core.management.base import BaseCommand
 from django.utils import timezone
-from crm.models import Lead
+from crm.models.lead import Lead
 
 
-class Command(BaseCommand):
-    help = "Bulk update lead statuses based on if conversion date has passed"
-
-    def handle(self, *args, **kwargs):
+class LeadUtils:
+    def update_lead_statuses(self):
         leads = Lead.objects.all()
         today = timezone.now().date()
         leads_to_update = []
@@ -15,7 +12,7 @@ class Command(BaseCommand):
             original_status = lead.status
             original_lost_reason = lead.lost_reason
 
-            lead.update_conversion_status(today=today)
+            lead.update_expiration_status(today=today)
 
             if (
                 lead.status != original_status
@@ -25,8 +22,5 @@ class Command(BaseCommand):
 
         if leads_to_update:
             Lead.objects.bulk_update(leads_to_update, ["status", "lost_reason"])
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Successfully updated {len(leads_to_update)} lead statuses"
-                )
-            )
+            return len(leads_to_update)
+        return 0
